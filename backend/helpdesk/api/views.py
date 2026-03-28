@@ -21,6 +21,7 @@ from helpdesk.services.faq_matcher import match_faq
 from helpdesk.services.grounded_generator import generate_answer
 from helpdesk.services.policy_guard import evaluate_policy
 from helpdesk.services.retrieval_gateway import retrieve_chunks
+from helpdesk.services.retrieval_event_logger import log_retrieval_events
 
 from .serializers import (
     AnswerRequestSerializer,
@@ -122,6 +123,7 @@ class QuestionAnswerView(APIView):
         retrieval_event_ids = []
         evidence_link_ids = []
         citations = []
+        retrieved_chunks = []
 
         # 1) FAQ-first: fast, deterministic, and usually high confidence.
         faq_match = match_faq(question=question, scope=scope)
@@ -140,6 +142,7 @@ class QuestionAnswerView(APIView):
                 min_score=retrieval_min_score,
                 scope=scope,
             )
+            retrieved_chunks = chunks
             retrieval_event_ids = [chunk["retrievalEventId"] for chunk in chunks]
 
             if not chunks and allow_abstain:
@@ -189,10 +192,7 @@ class QuestionAnswerView(APIView):
                     review_required = policy["review_required"] or review_required
 
         answer_id = f"ans-{uuid4().hex[:12]}"
-        # Create traceable evidence-link IDs for downstream review and audit.
-        evidence_link_ids = map_evidence(answer_id=answer_id, chunks=citations)
-
-        # Persist the full orchestration outcome as question telemetry.
+        # Persist the orchestration outcome as a question event before child trace records.
         event = log_question_event(
             {
                 "request_id": request_id,
@@ -213,6 +213,13 @@ class QuestionAnswerView(APIView):
             }
         )
 
+        # Persist retrieval/evidence rows and mirror their IDs into event trace arrays.
+        persisted_retrieval_ids = log_retrieval_events(question_event=event, chunks=retrieved_chunks)
+        evidence_link_ids = map_evidence(question_event=event, answer_id=answer_id, chunks=citations)
+        event.retrieval_event_ids = persisted_retrieval_ids
+        event.evidence_link_ids = evidence_link_ids
+        event.save(update_fields=["retrieval_event_ids", "evidence_link_ids", "updated_at"])
+
         return Response(
             {
                 "answerId": answer_id,
@@ -227,7 +234,7 @@ class QuestionAnswerView(APIView):
                     "requestId": request_id,
                     "questionEventId": str(event.id),
                     "matchedFaqEntryId": matched_faq_entry_id,
-                    "retrievalEventIds": retrieval_event_ids,
+                    "retrievalEventIds": persisted_retrieval_ids,
                     "evidenceLinkIds": evidence_link_ids,
                 }
             },

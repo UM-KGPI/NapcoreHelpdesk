@@ -1,10 +1,14 @@
 from django.contrib import admin
 from .models import (
+	AnswerEvidenceLink,
 	EditorialQueueItem,
 	EditorialQueueTransition,
+	FAQEntry,
+	FAQVersion,
 	IndexedSourceFile,
 	IndexRunMetric,
 	QuestionEvent,
+	RetrievalEvent,
 	SourceChunk,
 )
 
@@ -22,6 +26,20 @@ class QuestionEventAdmin(admin.ModelAdmin):
 	)
 	search_fields = ("request_id", "question", "session_id", "user_id")
 	list_filter = ("mode", "abstained", "review_required", "language")
+
+
+@admin.register(FAQEntry)
+class FAQEntryAdmin(admin.ModelAdmin):
+	list_display = ("faq_entry_id", "normalized_intent", "is_active", "updated_at")
+	search_fields = ("faq_entry_id", "normalized_intent")
+	list_filter = ("is_active",)
+
+
+@admin.register(FAQVersion)
+class FAQVersionAdmin(admin.ModelAdmin):
+	list_display = ("faq_entry", "version", "confidence", "review_required", "is_published", "created_at")
+	search_fields = ("faq_entry__faq_entry_id", "answer")
+	list_filter = ("is_published", "review_required")
 
 
 @admin.register(EditorialQueueItem)
@@ -43,6 +61,20 @@ class EditorialQueueTransitionAdmin(admin.ModelAdmin):
 	)
 	search_fields = ("queue_item__queue_item_id", "actor_id", "comment")
 	list_filter = ("action", "from_status", "to_status")
+
+
+@admin.register(RetrievalEvent)
+class RetrievalEventAdmin(admin.ModelAdmin):
+	list_display = ("retrieval_event_id", "question_event", "repository_url", "source_path", "score", "created_at")
+	search_fields = ("retrieval_event_id", "repository_url", "source_path", "chunk_id")
+	list_filter = ("repository_url",)
+
+
+@admin.register(AnswerEvidenceLink)
+class AnswerEvidenceLinkAdmin(admin.ModelAdmin):
+	list_display = ("evidence_link_id", "answer_id", "question_event", "repository_url", "source_path", "created_at")
+	search_fields = ("evidence_link_id", "answer_id", "repository_url", "source_path", "chunk_id")
+	list_filter = ("repository_url",)
 
 
 @admin.register(SourceChunk)

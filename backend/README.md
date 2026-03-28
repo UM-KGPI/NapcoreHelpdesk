@@ -5,6 +5,8 @@ This folder contains the initial backend scaffold for NAPCORE Helpdesk.
 ## What is included
 - Django project config in `config/`.
 - Helpdesk app in `helpdesk/`.
+- Canonical FAQ persistence with versioning (`FAQEntry`, `FAQVersion`).
+- Retrieval and evidence audit persistence (`RetrievalEvent`, `AnswerEvidenceLink`).
 - DRF endpoints for:
   - `POST /api/v1/questions/answer`
   - `GET /api/v1/faqs/promotion-candidates`
@@ -17,6 +19,10 @@ This folder contains the initial backend scaffold for NAPCORE Helpdesk.
 2. Copy `.env.example` to `.env` and adjust values.
 3. Run migrations.
 4. Start the server.
+
+## Database baseline
+- Architecture baseline is PostgreSQL-first (`DJANGO_USE_SQLITE=False`) with pgvector-ready schema.
+- SQLite remains supported for local tests and lightweight development by setting `DJANGO_USE_SQLITE=True`.
 
 ## API request headers
 - `Authorization: Bearer <jwt-token>`

@@ -5,6 +5,7 @@ import environ
 BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env(
     DJANGO_DEBUG=(bool, True),
+    # Keep SQLite fallback for local tests; production/staging should set this to False.
     DJANGO_USE_SQLITE=(bool, True),
     JWT_SECRET_KEY=(str, "change-me-jwt-secret-key-at-least-32-bytes"),
     JWT_ALGORITHM=(str, "HS256"),
@@ -24,6 +25,7 @@ ALLOWED_HOSTS = [h.strip() for h in env("DJANGO_ALLOWED_HOSTS", default="localho
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
+    "django.contrib.postgres",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",

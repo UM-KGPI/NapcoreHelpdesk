@@ -17,7 +17,12 @@ from rest_framework.test import APIRequestFactory
 from rest_framework.test import APITestCase
 
 from helpdesk.api.exceptions import custom_exception_handler
-from helpdesk.models import EditorialQueueTransition
+from helpdesk.models import (
+    AnswerEvidenceLink,
+    EditorialQueueTransition,
+    FAQVersion,
+    RetrievalEvent,
+)
 
 
 class HelpdeskApiTests(APITestCase):
@@ -149,6 +154,12 @@ class HelpdeskApiTests(APITestCase):
         self.assertFalse(response.data["abstained"])
         self.assertTrue(response.data["citations"])
         self.assertTrue(response.data["trace"]["questionEventId"])
+        self.assertTrue(
+            FAQVersion.objects.filter(
+                faq_entry__faq_entry_id=response.data["trace"]["matchedFaqEntryId"],
+                is_published=True,
+            ).exists()
+        )
 
     def test_answer_returns_rag_mode_for_unknown_question(self):
         """Ensure unmatched intent falls back to RAG with retrieval trace IDs."""
@@ -169,6 +180,16 @@ class HelpdeskApiTests(APITestCase):
         self.assertFalse(response.data["abstained"])
         self.assertTrue(response.data["citations"])
         self.assertTrue(response.data["trace"]["retrievalEventIds"])
+
+        question_event_id = int(response.data["trace"]["questionEventId"])
+        self.assertGreaterEqual(
+            RetrievalEvent.objects.filter(question_event_id=question_event_id).count(),
+            1,
+        )
+        self.assertGreaterEqual(
+            AnswerEvidenceLink.objects.filter(question_event_id=question_event_id).count(),
+            1,
+        )
 
     def test_promotion_candidates_returns_aggregated_items(self):
         """Ensure repeated questions aggregate into promotion candidates."""

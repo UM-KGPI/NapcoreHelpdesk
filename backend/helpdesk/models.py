@@ -26,6 +26,8 @@ class SourceChunk(TimestampedModel):
     text = models.TextField()
     standards_scope = models.JSONField(default=list, blank=True)
     quality_score = models.FloatField(default=0.5)
+    # Stored as JSON list for SQLite compatibility; migrate to native pgvector field on PostgreSQL rollout.
+    embedding_vector = models.JSONField(default=list, blank=True)
 
     class Meta:
         ordering = ["-quality_score", "source_path", "chunk_id"]
@@ -157,6 +159,118 @@ class QuestionEvent(TimestampedModel):
 
     def __str__(self):
         return f"QuestionEvent(id={self.id}, mode={self.mode}, request_id={self.request_id})"
+
+
+class FAQEntry(TimestampedModel):
+    """Canonical FAQ intent entity used by the FAQ-first orchestration path."""
+
+    faq_entry_id = models.CharField(max_length=128, unique=True)
+    normalized_intent = models.CharField(max_length=512)
+    standards_scope = models.JSONField(default=list, blank=True)
+    keyword_tokens = models.JSONField(default=list, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["faq_entry_id"]
+        indexes = [
+            models.Index(fields=["faq_entry_id"], name="faqentry_id_idx"),
+            models.Index(fields=["is_active"], name="faqentry_active_idx"),
+        ]
+
+    def __str__(self):
+        return f"FAQEntry(faq_entry_id={self.faq_entry_id})"
+
+
+class FAQVersion(TimestampedModel):
+    """Versioned FAQ answer record to preserve history of canonical responses."""
+
+    faq_entry = models.ForeignKey(
+        FAQEntry,
+        on_delete=models.CASCADE,
+        related_name="versions",
+    )
+    version = models.IntegerField(default=1)
+    answer = models.TextField()
+    citations = models.JSONField(default=list, blank=True)
+    confidence = models.FloatField(default=0.85)
+    review_required = models.BooleanField(default=False)
+    is_published = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["faq_entry", "-version"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["faq_entry", "version"],
+                name="uniq_faq_version_per_entry",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["is_published"], name="faqversion_pub_idx"),
+        ]
+
+    def __str__(self):
+        return f"FAQVersion(entry={self.faq_entry.faq_entry_id}, version={self.version})"
+
+
+class RetrievalEvent(TimestampedModel):
+    """Per-chunk retrieval telemetry emitted by the RAG fallback flow."""
+
+    retrieval_event_id = models.CharField(max_length=128, unique=True)
+    question_event = models.ForeignKey(
+        QuestionEvent,
+        on_delete=models.CASCADE,
+        related_name="retrieval_events",
+    )
+    repository_url = models.URLField()
+    commit_sha = models.CharField(max_length=64)
+    source_path = models.CharField(max_length=512)
+    chunk_id = models.CharField(max_length=128)
+    score = models.FloatField(default=0.0)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["retrieval_event_id"], name="ret_event_id_idx"),
+            models.Index(fields=["repository_url"], name="ret_repo_idx"),
+            models.Index(fields=["source_path"], name="ret_source_idx"),
+        ]
+
+    def __str__(self):
+        return (
+            f"RetrievalEvent(retrieval_event_id={self.retrieval_event_id}, "
+            f"chunk_id={self.chunk_id})"
+        )
+
+
+class AnswerEvidenceLink(TimestampedModel):
+    """Persisted claim/evidence links to support answer auditability."""
+
+    evidence_link_id = models.CharField(max_length=128, unique=True)
+    question_event = models.ForeignKey(
+        QuestionEvent,
+        on_delete=models.CASCADE,
+        related_name="answer_evidence_links",
+    )
+    answer_id = models.CharField(max_length=128)
+    repository_url = models.URLField()
+    commit_sha = models.CharField(max_length=64)
+    source_path = models.CharField(max_length=512)
+    chunk_id = models.CharField(max_length=128)
+    label = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["evidence_link_id"], name="evlink_id_idx"),
+            models.Index(fields=["answer_id"], name="evlink_answer_idx"),
+            models.Index(fields=["source_path"], name="evlink_source_idx"),
+        ]
+
+    def __str__(self):
+        return (
+            f"AnswerEvidenceLink(evidence_link_id={self.evidence_link_id}, "
+            f"answer_id={self.answer_id})"
+        )
 
 
 class EditorialQueueItem(TimestampedModel):
