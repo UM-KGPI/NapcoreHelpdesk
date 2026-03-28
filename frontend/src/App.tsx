@@ -3,6 +3,8 @@ import { FormEvent, useMemo, useState } from "react";
 import { HelpdeskApiClient } from "./api";
 import type {
   AnswerResponse,
+  EditorialBoardItem,
+  EditorialBoardResponse,
   EditorialQueueResponse,
   EditorialQueueTransitionResponse,
   PromotionCandidatesResponse,
@@ -18,8 +20,14 @@ const TRANSITION_ACTIONS = [
   "publish",
   "reopen",
 ] as const;
+const BOARD_STATUSES = ["draft", "review", "approved", "rejected", "published"] as const;
+const BOARD_REASONS = ["LOW_CONFIDENCE", "CITATION_GAP", "POLICY_REVIEW", "USER_ESCALATION"] as const;
+const BOARD_PRIORITIES = ["low", "normal", "high"] as const;
 
 type TransitionAction = (typeof TRANSITION_ACTIONS)[number];
+type BoardStatus = (typeof BOARD_STATUSES)[number];
+type BoardReason = (typeof BOARD_REASONS)[number];
+type BoardPriority = (typeof BOARD_PRIORITIES)[number];
 
 function createRequestId(): string {
   return `req-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -38,6 +46,7 @@ export default function App() {
   const [promotionResult, setPromotionResult] = useState<PromotionCandidatesResponse | null>(null);
   const [editorialResult, setEditorialResult] = useState<EditorialQueueResponse | null>(null);
   const [transitionResult, setTransitionResult] = useState<EditorialQueueTransitionResponse | null>(null);
+  const [boardResult, setBoardResult] = useState<EditorialBoardResponse | null>(null);
 
   const [windowDays, setWindowDays] = useState(14);
   const [minCount, setMinCount] = useState(3);
@@ -48,6 +57,12 @@ export default function App() {
   const [transitionQueueItemId, setTransitionQueueItemId] = useState("");
   const [transitionAction, setTransitionAction] = useState<TransitionAction>("submit_for_review");
   const [transitionComment, setTransitionComment] = useState("");
+  const [boardStatus, setBoardStatus] = useState<BoardStatus | "">("");
+  const [boardReason, setBoardReason] = useState<BoardReason | "">("");
+  const [boardPriority, setBoardPriority] = useState<BoardPriority | "">("");
+  const [boardSearch, setBoardSearch] = useState("");
+  const [boardPage, setBoardPage] = useState(1);
+  const [boardPageSize, setBoardPageSize] = useState(10);
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -149,6 +164,46 @@ export default function App() {
         comment: transitionComment,
       });
       setTransitionResult(result);
+      await onLoadEditorialBoard();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onLoadEditorialBoard(): Promise<void> {
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await client.listEditorialBoard({
+        status: boardStatus || undefined,
+        reason: boardReason || undefined,
+        priority: boardPriority || undefined,
+        search: boardSearch,
+        page: boardPage,
+        pageSize: boardPageSize,
+      });
+      setBoardResult(result);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onQuickTransition(item: EditorialBoardItem, action: TransitionAction): Promise<void> {
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await client.transitionEditorialQueue({
+        queueItemId: item.queueItemId,
+        action,
+        comment: `board action: ${action}`,
+      });
+      setTransitionQueueItemId(item.queueItemId);
+      setTransitionResult(result);
+      await onLoadEditorialBoard();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
     } finally {
@@ -235,6 +290,114 @@ export default function App() {
 
               <h4>Trace</h4>
               <pre>{JSON.stringify(answerResult.trace, null, 2)}</pre>
+            </article>
+          )}
+        </section>
+
+        <section className="panel">
+          <h2>Editorial Board</h2>
+          <p className="muted">Filter queue items and apply inline workflow actions.</p>
+          <div className="grid-three">
+            <label>
+              Status
+              <select value={boardStatus} onChange={(event) => setBoardStatus(event.target.value as BoardStatus | "") }>
+                <option value="">any</option>
+                {BOARD_STATUSES.map((value) => (
+                  <option key={value} value={value}>{value}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Reason
+              <select value={boardReason} onChange={(event) => setBoardReason(event.target.value as BoardReason | "") }>
+                <option value="">any</option>
+                {BOARD_REASONS.map((value) => (
+                  <option key={value} value={value}>{value}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Priority
+              <select value={boardPriority} onChange={(event) => setBoardPriority(event.target.value as BoardPriority | "") }>
+                <option value="">any</option>
+                {BOARD_PRIORITIES.map((value) => (
+                  <option key={value} value={value}>{value}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <div className="grid-two">
+            <label>
+              Search question/requestId
+              <input value={boardSearch} onChange={(event) => setBoardSearch(event.target.value)} placeholder="search text" />
+            </label>
+            <label>
+              pageSize
+              <input type="number" min={1} max={100} value={boardPageSize} onChange={(event) => setBoardPageSize(Number(event.target.value))} />
+            </label>
+          </div>
+          <div className="button-row">
+            <button onClick={onLoadEditorialBoard} disabled={busy || !token}>Load Board</button>
+            <button
+              onClick={() => {
+                setBoardPage((prev) => Math.max(1, prev - 1));
+              }}
+              disabled={busy || boardPage <= 1}
+            >
+              Prev
+            </button>
+            <button
+              onClick={() => {
+                setBoardPage((prev) => prev + 1);
+              }}
+              disabled={busy}
+            >
+              Next
+            </button>
+          </div>
+
+          {boardResult && (
+            <article className="result-card">
+              <h3>Board Rows</h3>
+              <p className="muted">page {boardResult.page} · size {boardResult.pageSize} · total {boardResult.total}</p>
+              {boardResult.items.length === 0 && <p className="muted">No queue items found.</p>}
+              {boardResult.items.length > 0 && (
+                <div className="table-wrap">
+                  <table className="board-table">
+                    <thead>
+                      <tr>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>Reason</th>
+                        <th>Question</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {boardResult.items.map((item) => (
+                        <tr key={item.queueItemId}>
+                          <td>{item.status}</td>
+                          <td>{item.priority}</td>
+                          <td>{item.reason}</td>
+                          <td>
+                            <div>{item.question}</div>
+                            <div className="muted tiny">{item.requestId}</div>
+                            <div className="muted tiny">{item.queueItemId}</div>
+                          </td>
+                          <td>
+                            <div className="button-column">
+                              <button onClick={() => onQuickTransition(item, "submit_for_review")} disabled={busy || !token}>submit</button>
+                              <button onClick={() => onQuickTransition(item, "approve")} disabled={busy || !token}>approve</button>
+                              <button onClick={() => onQuickTransition(item, "publish")} disabled={busy || !token}>publish</button>
+                              <button onClick={() => onQuickTransition(item, "reopen")} disabled={busy || !token}>reopen</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </article>
           )}
         </section>

@@ -385,3 +385,60 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(invalid_response.status_code, status.HTTP_409_CONFLICT)
         self.assert_matches_schema("ErrorResponse", invalid_response.data)
         self.assertEqual(invalid_response.data["error"]["code"], "INVALID_STATE_TRANSITION")
+
+    def test_editorial_queue_list_returns_board_items_with_filters(self):
+        """Ensure editorial board endpoint returns paginated queue rows and supports filters."""
+        answer_response = self.client.post(
+            reverse("answer-question"),
+            {"question": "Explain OJP operational exchange setup sequence."},
+            format="json",
+            HTTP_X_REQUEST_ID="req-board-source-1",
+            **self.auth_headers(),
+        )
+        question_event_id = answer_response.data["trace"]["questionEventId"]
+
+        self.client.post(
+            reverse("editorial-queue"),
+            {
+                "questionEventId": question_event_id,
+                "reason": "LOW_CONFIDENCE",
+                "priority": "normal",
+            },
+            format="json",
+            **self.auth_headers(),
+        )
+
+        self.client.post(
+            reverse("editorial-queue"),
+            {
+                "questionEventId": question_event_id,
+                "reason": "POLICY_REVIEW",
+                "priority": "high",
+            },
+            format="json",
+            **self.auth_headers(),
+        )
+
+        response = self.client.get(
+            reverse("editorial-queue"),
+            {
+                "status": "review",
+                "priority": "high",
+                "search": "operational exchange",
+                "page": 1,
+                "pageSize": 10,
+            },
+            format="json",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["page"], 1)
+        self.assertEqual(response.data["pageSize"], 10)
+        self.assertGreaterEqual(response.data["total"], 1)
+        self.assertGreaterEqual(len(response.data["items"]), 1)
+        first = response.data["items"][0]
+        self.assertEqual(first["status"], "review")
+        self.assertEqual(first["priority"], "high")
+        self.assertIn("question", first)
+        self.assertIn("queueItemId", first)

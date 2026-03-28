@@ -154,6 +154,50 @@ button:disabled {
   gap: 0.75rem;
 }
 
+.button-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+}
+
+.button-row button {
+  width: auto;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.board-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.board-table th,
+.board-table td {
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+  padding: 0.45rem;
+}
+
+.button-column {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.button-column button {
+  width: 100%;
+  min-width: 6rem;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.82rem;
+}
+
+.tiny {
+  font-size: 0.78rem;
+}
+
 .scope-grid {
   margin: 0;
   border: 1px solid var(--line);

@@ -1,6 +1,7 @@
 import type {
   AnswerResponse,
   ApiErrorEnvelope,
+  EditorialBoardResponse,
   EditorialQueueResponse,
   EditorialQueueTransitionResponse,
   PromotionCandidatesResponse,
@@ -32,6 +33,15 @@ export interface EditorialQueueTransitionRequest {
   queueItemId: string;
   action: "submit_for_review" | "request_changes" | "approve" | "reject" | "publish" | "reopen";
   comment?: string;
+}
+
+export interface EditorialBoardQuery {
+  status?: "draft" | "review" | "approved" | "rejected" | "published";
+  reason?: "LOW_CONFIDENCE" | "CITATION_GAP" | "POLICY_REVIEW" | "USER_ESCALATION";
+  priority?: "low" | "normal" | "high";
+  search?: string;
+  page?: number;
+  pageSize?: number;
 }
 
 interface ApiClientConfig {
@@ -84,6 +94,19 @@ export class HelpdeskApiClient {
     return this.request<EditorialQueueTransitionResponse>("/editorial/queue/transition", {
       method: "POST",
       body: JSON.stringify(payload),
+    });
+  }
+
+  async listEditorialBoard(query: EditorialBoardQuery): Promise<EditorialBoardResponse> {
+    const params = new URLSearchParams();
+    if (query.status) params.set("status", query.status);
+    if (query.reason) params.set("reason", query.reason);
+    if (query.priority) params.set("priority", query.priority);
+    if (query.search && query.search.trim()) params.set("search", query.search.trim());
+    params.set("page", String(query.page ?? 1));
+    params.set("pageSize", String(query.pageSize ?? 20));
+    return this.request<EditorialBoardResponse>(`/editorial/queue?${params.toString()}`, {
+      method: "GET",
     });
   }
 

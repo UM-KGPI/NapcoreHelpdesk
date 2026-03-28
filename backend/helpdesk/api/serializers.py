@@ -57,6 +57,26 @@ class EditorialQueueRequestSerializer(serializers.Serializer):
     )
 
 
+class EditorialQueueListQuerySerializer(serializers.Serializer):
+    """Query params for listing editorial queue board items with paging and filters."""
+
+    status = serializers.ChoiceField(
+        choices=["draft", "review", "approved", "rejected", "published"],
+        required=False,
+    )
+    reason = serializers.ChoiceField(
+        choices=["LOW_CONFIDENCE", "CITATION_GAP", "POLICY_REVIEW", "USER_ESCALATION"],
+        required=False,
+    )
+    priority = serializers.ChoiceField(
+        choices=["low", "normal", "high"],
+        required=False,
+    )
+    search = serializers.CharField(required=False, allow_blank=True, default="")
+    page = serializers.IntegerField(required=False, min_value=1, default=1)
+    pageSize = serializers.IntegerField(required=False, min_value=1, max_value=100, default=20)
+
+
 class EditorialQueueTransitionRequestSerializer(serializers.Serializer):
     """Payload for transitioning editorial queue item state with workflow actions."""
 

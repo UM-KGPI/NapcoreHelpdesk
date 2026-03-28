@@ -64,6 +64,25 @@ export interface EditorialQueueTransitionResponse {
   transition: EditorialTransition;
 }
 
+export interface EditorialBoardItem {
+  queueItemId: string;
+  status: "draft" | "review" | "approved" | "rejected" | "published";
+  reason: "LOW_CONFIDENCE" | "CITATION_GAP" | "POLICY_REVIEW" | "USER_ESCALATION";
+  priority: "low" | "normal" | "high";
+  questionEventId: string;
+  requestId: string;
+  question: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EditorialBoardResponse {
+  page: number;
+  pageSize: number;
+  total: number;
+  items: EditorialBoardItem[];
+}
+
 export interface ApiErrorEnvelope {
   error?: {
     code?: string;

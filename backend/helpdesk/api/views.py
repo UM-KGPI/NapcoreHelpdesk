@@ -2,6 +2,7 @@ from collections import defaultdict
 from datetime import timedelta
 from uuid import uuid4
 
+from django.db.models import Q
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -25,6 +26,7 @@ from helpdesk.services.retrieval_event_logger import log_retrieval_events
 
 from .serializers import (
     AnswerRequestSerializer,
+    EditorialQueueListQuerySerializer,
     EditorialQueueRequestSerializer,
     EditorialQueueTransitionRequestSerializer,
     PromotionCandidatesQuerySerializer,
@@ -310,6 +312,62 @@ class PromotionCandidatesView(APIView):
 
 class EditorialQueueView(APIView):
     permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Return paginated board rows for editorial triage and state transitions.
+        serializer = EditorialQueueListQuerySerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        queryset = EditorialQueueItem.objects.select_related("question_event").all()
+
+        status_value = data.get("status")
+        if status_value:
+            queryset = queryset.filter(status=status_value)
+
+        reason = data.get("reason")
+        if reason:
+            queryset = queryset.filter(reason=reason)
+
+        priority = data.get("priority")
+        if priority:
+            queryset = queryset.filter(priority=priority)
+
+        search = data.get("search", "").strip()
+        if search:
+            queryset = queryset.filter(
+                Q(question_event__question__icontains=search)
+                | Q(question_event__request_id__icontains=search)
+            )
+
+        page = data["page"]
+        page_size = data["pageSize"]
+        total = queryset.count()
+        offset = (page - 1) * page_size
+        items = list(queryset[offset: offset + page_size])
+
+        return Response(
+            {
+                "page": page,
+                "pageSize": page_size,
+                "total": total,
+                "items": [
+                    {
+                        "queueItemId": str(item.queue_item_id),
+                        "status": item.status,
+                        "reason": item.reason,
+                        "priority": item.priority,
+                        "questionEventId": str(item.question_event_id),
+                        "requestId": item.question_event.request_id,
+                        "question": item.question_event.question,
+                        "createdAt": item.created_at.isoformat().replace("+00:00", "Z"),
+                        "updatedAt": item.updated_at.isoformat().replace("+00:00", "Z"),
+                    }
+                    for item in items
+                ],
+            },
+            status=status.HTTP_200_OK,
+        )
 
     def post(self, request):
         # Route already-generated answers to editorial review queues.

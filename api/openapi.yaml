@@ -212,6 +212,68 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
   /api/v1/editorial/queue:
+    get:
+      tags: [Editorial]
+      summary: List editorial queue board items
+      operationId: listEditorialQueue
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [draft, review, approved, rejected, published]
+        - name: reason
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [LOW_CONFIDENCE, CITATION_GAP, POLICY_REVIEW, USER_ESCALATION]
+        - name: priority
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [low, normal, high]
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Editorial queue board items returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditorialBoardResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     post:
       tags: [Editorial]
       summary: Route an answer outcome to editorial queue
@@ -237,6 +299,54 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/editorial/queue/transition:
+    post:
+      tags: [Editorial]
+      summary: Apply an editorial workflow transition action
+      operationId: transitionEditorialQueue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditorialQueueTransitionRequest'
+      responses:
+        '200':
+          description: Transition applied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditorialQueueTransitionResponse'
+        '400':
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden transition for caller roles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid transition for current queue state
           content:
             application/json:
               schema:
@@ -326,10 +436,9 @@ components:
         abstained:
           type: boolean
         abstentionReason:
-          type: string
+          type: [string, "null"]
           enum:
-            [INSUFFICIENT_EVIDENCE, POLICY_BLOCK, RETRIEVAL_LOW_QUALITY, UNKNOWN]
-          nullable: true
+            [INSUFFICIENT_EVIDENCE, POLICY_BLOCK, RETRIEVAL_LOW_QUALITY, UNKNOWN, null]
         reviewRequired:
           type: boolean
         trace:
@@ -360,8 +469,7 @@ components:
         questionEventId:
           type: string
         matchedFaqEntryId:
-          type: string
-          nullable: true
+          type: [string, "null"]
         retrievalEventIds:
           type: array
           items:
@@ -429,6 +537,100 @@ components:
         status:
           type: string
           enum: [draft, review]
+      additionalProperties: false
+    EditorialQueueTransitionRequest:
+      type: object
+      required: [queueItemId, action]
+      properties:
+        queueItemId:
+          type: string
+          format: uuid
+        action:
+          type: string
+          enum:
+            [submit_for_review, request_changes, approve, reject, publish, reopen]
+        comment:
+          type: string
+      additionalProperties: false
+    EditorialQueueTransitionResponse:
+      type: object
+      required: [queueItemId, status, transition]
+      properties:
+        queueItemId:
+          type: string
+        status:
+          type: string
+          enum: [draft, review, approved, rejected, published]
+        transition:
+          $ref: '#/components/schemas/EditorialTransition'
+      additionalProperties: false
+    EditorialTransition:
+      type: object
+      required: [action, fromStatus, toStatus, actorId, actorRoles]
+      properties:
+        action:
+          type: string
+          enum:
+            [submit_for_review, request_changes, approve, reject, publish, reopen]
+        fromStatus:
+          type: string
+          enum: [draft, review, approved, rejected, published]
+        toStatus:
+          type: string
+          enum: [draft, review, approved, rejected, published]
+        actorId:
+          type: string
+        actorRoles:
+          type: array
+          items:
+            type: string
+      additionalProperties: false
+    EditorialBoardResponse:
+      type: object
+      required: [page, pageSize, total, items]
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+        total:
+          type: integer
+          minimum: 0
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EditorialBoardItem'
+      additionalProperties: false
+    EditorialBoardItem:
+      type: object
+      required:
+        [queueItemId, status, reason, priority, questionEventId, requestId, question, createdAt, updatedAt]
+      properties:
+        queueItemId:
+          type: string
+        status:
+          type: string
+          enum: [draft, review, approved, rejected, published]
+        reason:
+          type: string
+          enum: [LOW_CONFIDENCE, CITATION_GAP, POLICY_REVIEW, USER_ESCALATION]
+        priority:
+          type: string
+          enum: [low, normal, high]
+        questionEventId:
+          type: string
+        requestId:
+          type: string
+        question:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
       additionalProperties: false
     ErrorResponse:
       type: object

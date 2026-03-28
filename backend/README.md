@@ -11,6 +11,8 @@ This folder contains the initial backend scaffold for NAPCORE Helpdesk.
   - `POST /api/v1/questions/answer`
   - `GET /api/v1/faqs/promotion-candidates`
   - `POST /api/v1/editorial/queue`
+  - `GET /api/v1/editorial/queue`
+  - `POST /api/v1/editorial/queue/transition`
 - FAQ-first plus RAG-fallback orchestration in service modules aligned with C4 Level 3 mapping.
 - JWT bearer authentication (`Authorization: Bearer <jwt>`) validated with `JWT_SECRET_KEY` and `JWT_ALGORITHM`.
 
