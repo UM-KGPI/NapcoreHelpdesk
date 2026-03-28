@@ -16,6 +16,8 @@ servers:
 security:
   - bearerAuth: []
 tags:
+  - name: Operations
+    description: Operational health and readiness checks
   - name: QnA
     description: Question answering and orchestration
   - name: FAQOps
@@ -23,6 +25,50 @@ tags:
   - name: Editorial
     description: Editorial workflow integrations
 paths:
+  /api/v1/health/live:
+    get:
+      tags: [Operations]
+      summary: Liveness probe
+      operationId: healthLive
+      security: []
+      responses:
+        '200':
+          description: Service process is alive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '429':
+          description: Probe rate limit reached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/health/ready:
+    get:
+      tags: [Operations]
+      summary: Readiness probe
+      operationId: healthReady
+      security: []
+      responses:
+        '200':
+          description: Service dependencies are ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '429':
+          description: Probe rate limit reached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Dependency unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
   /api/v1/questions/answer:
     post:
       tags: [QnA]
@@ -424,6 +470,21 @@ components:
           default: en
         options:
           $ref: '#/components/schemas/AnswerOptions'
+      additionalProperties: false
+    HealthResponse:
+      type: object
+      required: [status, service, check]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+        service:
+          type: string
+        check:
+          type: string
+          enum: [live, ready]
+        database:
+          type: string
       additionalProperties: false
     AnswerOptions:
       type: object

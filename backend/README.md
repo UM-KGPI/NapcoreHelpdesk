@@ -8,6 +8,8 @@ This folder contains the initial backend scaffold for NAPCORE Helpdesk.
 - Canonical FAQ persistence with versioning (`FAQEntry`, `FAQVersion`).
 - Retrieval and evidence audit persistence (`RetrievalEvent`, `AnswerEvidenceLink`).
 - DRF endpoints for:
+  - `GET /api/v1/health/live`
+  - `GET /api/v1/health/ready`
   - `POST /api/v1/questions/answer`
   - `GET /api/v1/faqs/promotion-candidates`
   - `POST /api/v1/editorial/queue`
@@ -72,3 +74,9 @@ From repository root:
 - `make frontend-build`
 
 Frontend Web GUI container docs: `../frontend/README.md`
+
+## Operations automation
+- CI workflow: `../.github/workflows/ci.yml`
+- Security workflow: `../.github/workflows/security.yml`
+- Release workflow: `../.github/workflows/release.yml`
+- Deployment checklist: `../docs/architecture/deployment-operations-checklist.md`

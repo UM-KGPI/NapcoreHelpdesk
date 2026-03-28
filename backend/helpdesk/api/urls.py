@@ -4,11 +4,15 @@ from .views import (
     EditorialQueueMetricsView,
     EditorialQueueView,
     EditorialQueueTransitionView,
+    HealthLiveView,
+    HealthReadyView,
     PromotionCandidatesView,
     QuestionAnswerView,
 )
 
 urlpatterns = [
+    path("health/live", HealthLiveView.as_view(), name="health-live"),
+    path("health/ready", HealthReadyView.as_view(), name="health-ready"),
     path("questions/answer", QuestionAnswerView.as_view(), name="answer-question"),
     path("faqs/promotion-candidates", PromotionCandidatesView.as_view(), name="promotion-candidates"),
     path("editorial/queue", EditorialQueueView.as_view(), name="editorial-queue"),

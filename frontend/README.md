@@ -33,3 +33,4 @@ This folder contains the C4 Web GUI container for NAPCORE Helpdesk.
 - Backend default base URL is `http://localhost:8000/api/v1`.
 - Endpoints require a JWT bearer token.
 - `POST /questions/answer` also requires `X-Request-Id` (auto-generated in UI).
+- Health probes are available without auth: `GET /health/live`, `GET /health/ready`.

@@ -1,0 +1,84 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version label (e.g., v1.0.0)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-release-artifacts:
+    name: Build and Publish Release Artifacts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install backend dependencies
+        run: pip install -r backend/requirements.txt
+
+      - name: Install frontend dependencies
+        run: npm --prefix frontend install
+
+      - name: Run backend tests
+        run: |
+          cd backend
+          DJANGO_USE_SQLITE=True DJANGO_SECRET_KEY=release-secret JWT_SECRET_KEY=release-jwt-secret-key-at-least-32-bytes python manage.py test -v 1
+
+      - name: Run frontend tests and build
+        run: |
+          npm --prefix frontend run test
+          npm --prefix frontend run build
+
+      - name: Build documentation artifacts
+        run: |
+          make diagrams-c4
+          make slides-pdf slides-pptx
+
+      - name: Package release bundle
+        run: |
+          mkdir -p release-bundle
+          tar -czf release-bundle/napcore-helpdesk-${{ github.ref_name || inputs.version || 'manual' }}.tar.gz \
+            backend \
+            frontend \
+            api \
+            docs \
+            db \
+            scripts \
+            Makefile \
+            .github/workflows
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/napcore-helpdesk-presentation.pdf
+            dist/napcore-helpdesk-presentation.pptx
+            docs/architecture/c4-system-context.svg
+            docs/architecture/c4-container.svg
+            docs/architecture/c4-orchestrator-components.svg
+            release-bundle/*.tar.gz

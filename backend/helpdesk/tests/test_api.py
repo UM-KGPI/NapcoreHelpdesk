@@ -109,6 +109,23 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(response.data["error"]["code"], "UNAUTHORIZED")
         self.assertEqual(response.data["error"]["requestId"], "req-no-auth")
 
+    def test_health_live_reports_ok_without_auth(self):
+        """Ensure liveness endpoint is public and returns healthy state."""
+        response = self.client.get(reverse("health-live"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["status"], "ok")
+        self.assertEqual(response.data["check"], "live")
+
+    def test_health_ready_reports_ok_with_database_probe(self):
+        """Ensure readiness endpoint reports healthy when database check succeeds."""
+        response = self.client.get(reverse("health-ready"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["status"], "ok")
+        self.assertEqual(response.data["check"], "ready")
+        self.assertEqual(response.data["database"], "ok")
+
     def test_invalid_jwt_returns_openapi_error_response(self):
         """Ensure malformed JWTs return the standardized OpenAPI error payload."""
         response = self.client.post(

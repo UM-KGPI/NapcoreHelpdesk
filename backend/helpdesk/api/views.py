@@ -2,9 +2,11 @@ from collections import defaultdict
 from datetime import timedelta
 from uuid import uuid4
 
+from django.db import connection
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -89,6 +91,52 @@ def _request_actor_id(request):
     user = getattr(request, "user", None)
     username = getattr(user, "username", "") if user else ""
     return username or "unknown"
+
+
+class HealthLiveView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        # Liveness reflects process availability without dependency checks.
+        return Response(
+            {
+                "status": "ok",
+                "service": "napcore-helpdesk",
+                "check": "live",
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class HealthReadyView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        # Readiness requires successful DB connectivity before accepting traffic.
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+                cursor.fetchone()
+        except Exception:
+            return Response(
+                {
+                    "status": "degraded",
+                    "service": "napcore-helpdesk",
+                    "check": "ready",
+                    "database": "unavailable",
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        return Response(
+            {
+                "status": "ok",
+                "service": "napcore-helpdesk",
+                "check": "ready",
+                "database": "ok",
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class QuestionAnswerView(APIView):
