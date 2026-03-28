@@ -44,6 +44,10 @@ class SourceIndexBuilderTests(TestCase):
         self.assertIn("NeTEx", scopes)
         self.assertIn("SIRI", scopes)
         self.assertIn("Transmodel", scopes)
+        first_chunk = chunks.first()
+        self.assertIsNotNone(first_chunk)
+        self.assertTrue(isinstance(first_chunk.embedding_vector, list))
+        self.assertGreater(len(first_chunk.embedding_vector), 0)
         self.assertTrue(IndexedSourceFile.objects.filter(source_path="docs/guide.md").exists())
         self.assertEqual(IndexRunMetric.objects.filter(status=IndexRunMetric.STATUS_SUCCESS).count(), 1)
 

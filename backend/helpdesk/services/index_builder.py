@@ -10,6 +10,7 @@ from functools import lru_cache
 
 import yaml
 from helpdesk.models import IndexedSourceFile, IndexRunMetric, SourceChunk
+from helpdesk.services.embeddings import build_text_embedding
 
 
 DEFAULT_EXTENSIONS = {".md", ".txt", ".yaml", ".yml", ".xml", ".json"}
@@ -255,6 +256,7 @@ def index_repository(
                     "text": chunk_text,
                     "standards_scope": infer_scope(relative_path, chunk_text),
                     "quality_score": 0.75,
+                    "embedding_vector": build_text_embedding(chunk_text),
                 }
 
                 _, created = SourceChunk.objects.update_or_create(
