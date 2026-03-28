@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: diagrams-db diagrams-c4 slides-pdf slides-pptx openapi-validate backend-check backend-migrate backend-run backend-index
+.PHONY: diagrams-db diagrams-c4 slides-pdf slides-pptx openapi-validate backend-check backend-migrate backend-run backend-index frontend-install frontend-dev frontend-build
 
 diagrams-db:
 	@bash scripts/render-plantuml.sh db/database-er-diagram.puml
@@ -30,3 +30,12 @@ backend-index:
 	@test -n "$(REPO_URL)" || (echo "REPO_URL is required" && exit 1)
 	@test -n "$(REPO_PATH)" || (echo "REPO_PATH is required" && exit 1)
 	@cd backend && ../.venv/bin/python manage.py build_source_index --repo-url "$(REPO_URL)" --repo-path "$(REPO_PATH)" --profile "$${PROFILE:-netex}" $$( [ "$${INCREMENTAL:-0}" = "1" ] && echo "--incremental" ) --prune
+
+frontend-install:
+	@cd frontend && npm install
+
+frontend-dev:
+	@cd frontend && npm run dev
+
+frontend-build:
+	@cd frontend && npm run build

@@ -64,3 +64,8 @@ From repository root:
 - `make backend-migrate`
 - `make backend-run`
 - `make backend-index REPO_URL=https://github.com/NeTEx-CEN/NeTEx REPO_PATH=/absolute/path/to/NeTEx PROFILE=netex INCREMENTAL=1`
+- `make frontend-install`
+- `make frontend-dev`
+- `make frontend-build`
+
+Frontend Web GUI container docs: `../frontend/README.md`
