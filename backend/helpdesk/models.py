@@ -1,6 +1,8 @@
 from django.db import models
 import uuid
 
+from helpdesk.db_fields import PortableVectorField
+
 
 class TimestampedModel(models.Model):
     """Shared timestamp fields for future domain models."""
@@ -26,8 +28,8 @@ class SourceChunk(TimestampedModel):
     text = models.TextField()
     standards_scope = models.JSONField(default=list, blank=True)
     quality_score = models.FloatField(default=0.5)
-    # Stored as JSON list for SQLite compatibility; migrate to native pgvector field on PostgreSQL rollout.
-    embedding_vector = models.JSONField(default=list, blank=True)
+    # PostgreSQL uses pgvector; SQLite falls back to JSON via PortableVectorField.
+    embedding_vector = PortableVectorField(dimensions=64, default=list, blank=True)
 
     class Meta:
         ordering = ["-quality_score", "source_path", "chunk_id"]

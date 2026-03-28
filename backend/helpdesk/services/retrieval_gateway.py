@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from uuid import uuid4
-from django.db import connection
+from django.db import connection, models
 
 try:
     from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
@@ -11,7 +11,13 @@ except Exception:  # pragma: no cover - only unavailable in non-postgres-only en
     SearchVector = None
 
 from helpdesk.models import SourceChunk
+from helpdesk.db_fields import HAS_NATIVE_PGVECTOR
 from helpdesk.services.embeddings import build_text_embedding, cosine_similarity
+
+try:
+    from pgvector.django import CosineDistance  # type: ignore
+except Exception:  # pragma: no cover - optional dependency in SQLite-only environments
+    CosineDistance = None
 
 
 DEFAULT_CHUNKS = [
@@ -93,6 +99,29 @@ def _postgres_fts_candidates(question: str, top_k: int):
     )
 
 
+def _postgres_hybrid_candidates(question: str, query_embedding: list[float], top_k: int):
+    """Return combined vector+lexical ranked candidates on PostgreSQL with pgvector."""
+
+    if not (
+        connection.vendor == "postgresql"
+        and HAS_NATIVE_PGVECTOR
+        and CosineDistance is not None
+        and all([SearchQuery, SearchRank, SearchVector])
+    ):
+        return None
+
+    search_query = SearchQuery(question)
+    # Cosine distance is lower-is-better; convert to similarity with (1 - distance).
+    return (
+        SourceChunk.objects.annotate(
+            lexical_rank=SearchRank(SearchVector("text", config="english"), search_query),
+            vector_distance=CosineDistance("embedding_vector", query_embedding),
+        )
+        .annotate(vector_similarity=1.0 - models.F("vector_distance"))
+        .order_by("-vector_similarity", "-lexical_rank")[: max(25, top_k * 5)]
+    )
+
+
 def _scope_matches(chunk_scope: list[str], requested_scope: list[str] | None) -> bool:
     if not requested_scope:
         return True
@@ -117,7 +146,14 @@ def retrieve_chunks(
 
     query_embedding = build_text_embedding(question)
 
-    postgres_candidates = _postgres_fts_candidates(question=question, top_k=top_k)
+    postgres_candidates = _postgres_hybrid_candidates(
+        question=question,
+        query_embedding=query_embedding,
+        top_k=top_k,
+    )
+    if postgres_candidates is None:
+        postgres_candidates = _postgres_fts_candidates(question=question, top_k=top_k)
+
     if postgres_candidates is not None:
         chunk_iterable = postgres_candidates
     else:
