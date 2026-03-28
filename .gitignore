@@ -22,5 +22,3 @@ venv/
 # Django / local DB
 backend/db.sqlite3
 
-# Build artifacts
-dist/
