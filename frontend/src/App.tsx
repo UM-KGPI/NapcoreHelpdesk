@@ -360,6 +360,7 @@ export default function App() {
             <article className="result-card">
               <h3>Board Rows</h3>
               <p className="muted">page {boardResult.page} · size {boardResult.pageSize} · total {boardResult.total}</p>
+              <p className="muted">roles: {boardResult.actorRoles.join(", ") || "none"}</p>
               {boardResult.items.length === 0 && <p className="muted">No queue items found.</p>}
               {boardResult.items.length > 0 && (
                 <div className="table-wrap">
@@ -386,10 +387,12 @@ export default function App() {
                           </td>
                           <td>
                             <div className="button-column">
-                              <button onClick={() => onQuickTransition(item, "submit_for_review")} disabled={busy || !token}>submit</button>
-                              <button onClick={() => onQuickTransition(item, "approve")} disabled={busy || !token}>approve</button>
-                              <button onClick={() => onQuickTransition(item, "publish")} disabled={busy || !token}>publish</button>
-                              <button onClick={() => onQuickTransition(item, "reopen")} disabled={busy || !token}>reopen</button>
+                              {item.allowedActions.length === 0 && <span className="muted tiny">No allowed actions</span>}
+                              {item.allowedActions.map((action) => (
+                                <button key={`${item.queueItemId}-${action}`} onClick={() => onQuickTransition(item, action)} disabled={busy || !token}>
+                                  {action}
+                                </button>
+                              ))}
                             </div>
                           </td>
                         </tr>

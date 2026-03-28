@@ -442,3 +442,48 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(first["priority"], "high")
         self.assertIn("question", first)
         self.assertIn("queueItemId", first)
+
+    def test_editorial_queue_list_includes_role_based_allowed_actions(self):
+        """Ensure board rows expose only actions permitted for the caller's roles."""
+        answer_response = self.client.post(
+            reverse("answer-question"),
+            {"question": "Explain OJP operational exchange setup sequence."},
+            format="json",
+            HTTP_X_REQUEST_ID="req-board-source-roles",
+            **self.auth_headers(),
+        )
+        question_event_id = answer_response.data["trace"]["questionEventId"]
+
+        self.client.post(
+            reverse("editorial-queue"),
+            {
+                "questionEventId": question_event_id,
+                "reason": "LOW_CONFIDENCE",
+                "priority": "normal",
+            },
+            format="json",
+            **self.auth_headers(),
+        )
+
+        editor_response = self.client.get(
+            reverse("editorial-queue"),
+            {"status": "draft", "page": 1, "pageSize": 10},
+            format="json",
+            **self.auth_headers(roles=["editor"]),
+        )
+        self.assertEqual(editor_response.status_code, status.HTTP_200_OK)
+        self.assertIn("editor", editor_response.data["actorRoles"])
+        self.assertGreaterEqual(len(editor_response.data["items"]), 1)
+        self.assertEqual(
+            editor_response.data["items"][0]["allowedActions"],
+            ["submit_for_review"],
+        )
+
+        viewer_response = self.client.get(
+            reverse("editorial-queue"),
+            {"status": "draft", "page": 1, "pageSize": 10},
+            format="json",
+            **self.auth_headers(roles=["viewer"]),
+        )
+        self.assertEqual(viewer_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(viewer_response.data["items"][0]["allowedActions"], [])

@@ -74,12 +74,16 @@ export interface EditorialBoardItem {
   question: string;
   createdAt: string;
   updatedAt: string;
+  allowedActions: Array<
+    "submit_for_review" | "request_changes" | "approve" | "reject" | "publish" | "reopen"
+  >;
 }
 
 export interface EditorialBoardResponse {
   page: number;
   pageSize: number;
   total: number;
+  actorRoles: string[];
   items: EditorialBoardItem[];
 }
 

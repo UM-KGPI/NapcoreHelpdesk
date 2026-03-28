@@ -587,7 +587,7 @@ components:
       additionalProperties: false
     EditorialBoardResponse:
       type: object
-      required: [page, pageSize, total, items]
+      required: [page, pageSize, total, actorRoles, items]
       properties:
         page:
           type: integer
@@ -598,6 +598,10 @@ components:
         total:
           type: integer
           minimum: 0
+        actorRoles:
+          type: array
+          items:
+            type: string
         items:
           type: array
           items:
@@ -606,7 +610,7 @@ components:
     EditorialBoardItem:
       type: object
       required:
-        [queueItemId, status, reason, priority, questionEventId, requestId, question, createdAt, updatedAt]
+        [queueItemId, status, reason, priority, questionEventId, requestId, question, createdAt, updatedAt, allowedActions]
       properties:
         queueItemId:
           type: string
@@ -631,6 +635,12 @@ components:
         updatedAt:
           type: string
           format: date-time
+        allowedActions:
+          type: array
+          items:
+            type: string
+            enum:
+              [submit_for_review, request_changes, approve, reject, publish, reopen]
       additionalProperties: false
     ErrorResponse:
       type: object

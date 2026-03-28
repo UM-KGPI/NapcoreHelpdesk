@@ -81,6 +81,22 @@ class WorkflowTransitionForbidden(PermissionError):
     """Raised when actor roles do not satisfy a valid transition rule."""
 
 
+def allowed_actions_for_status(*, status: str, actor_roles: set[str]) -> list[str]:
+    """Return transition actions permitted for the given status and caller roles."""
+
+    if not actor_roles:
+        return []
+
+    actions: list[str] = []
+    for (from_status, action), rule in TRANSITION_RULES.items():
+        if from_status != status:
+            continue
+        if actor_roles.isdisjoint(rule.allowed_roles):
+            continue
+        actions.append(action)
+    return sorted(actions)
+
+
 def apply_transition(
     *,
     queue_item: EditorialQueueItem,

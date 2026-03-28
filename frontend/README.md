@@ -8,7 +8,7 @@ This folder contains the C4 Web GUI container for NAPCORE Helpdesk.
 - Route current answer to editorial queue via `POST /api/v1/editorial/queue`.
 - Apply editorial workflow transitions via `POST /api/v1/editorial/queue/transition`.
 - List/filter editorial queue board items via `GET /api/v1/editorial/queue`.
-- Perform inline transition actions directly from board rows.
+- Show role-aware `allowedActions` from API and perform only permitted inline transitions.
 - Load FAQ promotion candidates via `GET /api/v1/faqs/promotion-candidates`.
 
 ## Local usage

@@ -14,6 +14,7 @@ from helpdesk.services.editorial_router import route_to_editorial_queue
 from helpdesk.services.editorial_workflow import (
     WorkflowTransitionForbidden,
     WorkflowTransitionNotAllowed,
+    allowed_actions_for_status,
     apply_transition,
 )
 from helpdesk.services.evidence_mapper import map_evidence
@@ -318,6 +319,7 @@ class EditorialQueueView(APIView):
         serializer = EditorialQueueListQuerySerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
+        actor_roles = _request_roles(request)
 
         queryset = EditorialQueueItem.objects.select_related("question_event").all()
 
@@ -351,6 +353,7 @@ class EditorialQueueView(APIView):
                 "page": page,
                 "pageSize": page_size,
                 "total": total,
+                "actorRoles": sorted(actor_roles),
                 "items": [
                     {
                         "queueItemId": str(item.queue_item_id),
@@ -362,6 +365,10 @@ class EditorialQueueView(APIView):
                         "question": item.question_event.question,
                         "createdAt": item.created_at.isoformat().replace("+00:00", "Z"),
                         "updatedAt": item.updated_at.isoformat().replace("+00:00", "Z"),
+                        "allowedActions": allowed_actions_for_status(
+                            status=item.status,
+                            actor_roles=actor_roles,
+                        ),
                     }
                     for item in items
                 ],
