@@ -25,6 +25,7 @@ This folder contains the initial backend scaffold for NAPCORE Helpdesk.
 - SQLite remains supported for local tests and lightweight development by setting `DJANGO_USE_SQLITE=True`.
 - On PostgreSQL, migration `0006_pgvector_native_alignment` enables the `vector` extension and creates an IVF Flat index on `SourceChunk.embedding_vector`.
 - On SQLite, embeddings transparently fall back to JSON storage while keeping the same service interfaces.
+- Operational rollout checklist: [docs/architecture/postgresql-pgvector-runbook.md](../docs/architecture/postgresql-pgvector-runbook.md)
 
 ## API request headers
 - `Authorization: Bearer <jwt-token>`
