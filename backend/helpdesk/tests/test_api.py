@@ -17,6 +17,7 @@ from rest_framework.test import APIRequestFactory
 from rest_framework.test import APITestCase
 
 from helpdesk.api.exceptions import custom_exception_handler
+from helpdesk.models import EditorialQueueTransition
 
 
 class HelpdeskApiTests(APITestCase):
@@ -30,7 +31,7 @@ class HelpdeskApiTests(APITestCase):
         with open(openapi_path, "r", encoding="utf-8") as handle:
             cls.openapi = yaml.safe_load(handle)
 
-    def _token(self, subject: str = "test-user") -> str:
+    def _token(self, subject: str = "test-user", roles: list[str] | None = None) -> str:
         """Create a short-lived JWT that matches application auth settings."""
         now = dt.datetime.now(dt.timezone.utc)
         payload = {
@@ -38,6 +39,8 @@ class HelpdeskApiTests(APITestCase):
             "iat": int(now.timestamp()),
             "exp": int((now + dt.timedelta(minutes=30)).timestamp()),
         }
+        if roles:
+            payload["roles"] = roles
         if settings.JWT_ISSUER:
             payload["iss"] = settings.JWT_ISSUER
         if settings.JWT_AUDIENCE:
@@ -80,10 +83,10 @@ class HelpdeskApiTests(APITestCase):
         normalize(document)
         return document
 
-    def auth_headers(self):
+    def auth_headers(self, roles: list[str] | None = None):
         """Return standard authenticated headers used by endpoint tests."""
         return {
-            "HTTP_AUTHORIZATION": f"Bearer {self._token()}",
+            "HTTP_AUTHORIZATION": f"Bearer {self._token(roles=roles)}",
         }
 
     def test_answer_requires_bearer_auth(self):
@@ -218,3 +221,146 @@ class HelpdeskApiTests(APITestCase):
         self.assertTrue(response.data["queued"])
         self.assertEqual(response.data["status"], "review")
         self.assertTrue(response.data["queueItemId"])
+
+    def test_editorial_transition_rejects_missing_role(self):
+        """Ensure transition requests fail when caller lacks required workflow role."""
+        answer_response = self.client.post(
+            reverse("answer-question"),
+            {"question": "Explain OJP operational exchange setup sequence."},
+            format="json",
+            HTTP_X_REQUEST_ID="req-transition-source-1",
+            **self.auth_headers(),
+        )
+        question_event_id = answer_response.data["trace"]["questionEventId"]
+
+        queue_response = self.client.post(
+            reverse("editorial-queue"),
+            {
+                "questionEventId": question_event_id,
+                "reason": "LOW_CONFIDENCE",
+                "priority": "normal",
+            },
+            format="json",
+            **self.auth_headers(),
+        )
+
+        transition_response = self.client.post(
+            reverse("editorial-queue-transition"),
+            {
+                "queueItemId": queue_response.data["queueItemId"],
+                "action": "submit_for_review",
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-transition-forbidden",
+            **self.auth_headers(roles=["viewer"]),
+        )
+
+        self.assertEqual(transition_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assert_matches_schema("ErrorResponse", transition_response.data)
+        self.assertEqual(transition_response.data["error"]["code"], "TRANSITION_FORBIDDEN")
+
+    def test_editorial_transition_allows_valid_roles_and_records_audit(self):
+        """Ensure valid role-based transitions update state and persist audit entries."""
+        answer_response = self.client.post(
+            reverse("answer-question"),
+            {"question": "Explain OJP operational exchange setup sequence."},
+            format="json",
+            HTTP_X_REQUEST_ID="req-transition-source-2",
+            **self.auth_headers(),
+        )
+        question_event_id = answer_response.data["trace"]["questionEventId"]
+
+        queue_response = self.client.post(
+            reverse("editorial-queue"),
+            {
+                "questionEventId": question_event_id,
+                "reason": "LOW_CONFIDENCE",
+                "priority": "normal",
+            },
+            format="json",
+            **self.auth_headers(),
+        )
+
+        submit_response = self.client.post(
+            reverse("editorial-queue-transition"),
+            {
+                "queueItemId": queue_response.data["queueItemId"],
+                "action": "submit_for_review",
+                "comment": "Ready for reviewer pass",
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-transition-submit",
+            **self.auth_headers(roles=["editor"]),
+        )
+        self.assertEqual(submit_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(submit_response.data["status"], "review")
+
+        approve_response = self.client.post(
+            reverse("editorial-queue-transition"),
+            {
+                "queueItemId": queue_response.data["queueItemId"],
+                "action": "approve",
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-transition-approve",
+            **self.auth_headers(roles=["reviewer"]),
+        )
+        self.assertEqual(approve_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(approve_response.data["status"], "approved")
+
+        publish_response = self.client.post(
+            reverse("editorial-queue-transition"),
+            {
+                "queueItemId": queue_response.data["queueItemId"],
+                "action": "publish",
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-transition-publish",
+            **self.auth_headers(roles=["publisher"]),
+        )
+        self.assertEqual(publish_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(publish_response.data["status"], "published")
+
+        self.assertEqual(
+            EditorialQueueTransition.objects.filter(
+                queue_item__queue_item_id=queue_response.data["queueItemId"]
+            ).count(),
+            3,
+        )
+
+    def test_editorial_transition_rejects_invalid_state_change(self):
+        """Ensure impossible transitions return conflict instead of mutating state."""
+        answer_response = self.client.post(
+            reverse("answer-question"),
+            {"question": "Explain OJP operational exchange setup sequence."},
+            format="json",
+            HTTP_X_REQUEST_ID="req-transition-source-3",
+            **self.auth_headers(),
+        )
+        question_event_id = answer_response.data["trace"]["questionEventId"]
+
+        queue_response = self.client.post(
+            reverse("editorial-queue"),
+            {
+                "questionEventId": question_event_id,
+                "reason": "LOW_CONFIDENCE",
+                "priority": "normal",
+            },
+            format="json",
+            **self.auth_headers(),
+        )
+
+        invalid_response = self.client.post(
+            reverse("editorial-queue-transition"),
+            {
+                "queueItemId": queue_response.data["queueItemId"],
+                "action": "publish",
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-transition-invalid",
+            **self.auth_headers(roles=["publisher"]),
+        )
+
+        self.assertEqual(invalid_response.status_code, status.HTTP_409_CONFLICT)
+        self.assert_matches_schema("ErrorResponse", invalid_response.data)
+        self.assertEqual(invalid_response.data["error"]["code"], "INVALID_STATE_TRANSITION")

@@ -10,6 +10,11 @@ from rest_framework.views import APIView
 
 from helpdesk.models import EditorialQueueItem, QuestionEvent
 from helpdesk.services.editorial_router import route_to_editorial_queue
+from helpdesk.services.editorial_workflow import (
+    WorkflowTransitionForbidden,
+    WorkflowTransitionNotAllowed,
+    apply_transition,
+)
 from helpdesk.services.evidence_mapper import map_evidence
 from helpdesk.services.event_logger import log_question_event
 from helpdesk.services.faq_matcher import match_faq
@@ -20,6 +25,7 @@ from helpdesk.services.retrieval_gateway import retrieve_chunks
 from .serializers import (
     AnswerRequestSerializer,
     EditorialQueueRequestSerializer,
+    EditorialQueueTransitionRequestSerializer,
     PromotionCandidatesQuerySerializer,
 )
 
@@ -41,6 +47,43 @@ def _error_response(code, message, request_id, http_status=status.HTTP_400_BAD_R
         },
         status=http_status,
     )
+
+
+def _request_roles(request):
+    """Extract normalized role set from JWT claims plus local admin fallback."""
+
+    roles = set()
+    token = request.auth if isinstance(request.auth, dict) else {}
+
+    role = token.get("role")
+    if isinstance(role, str) and role.strip():
+        roles.add(role.strip().lower())
+
+    token_roles = token.get("roles", [])
+    if isinstance(token_roles, str):
+        token_roles = [token_roles]
+    if isinstance(token_roles, list):
+        for item in token_roles:
+            if isinstance(item, str) and item.strip():
+                roles.add(item.strip().lower())
+
+    user = getattr(request, "user", None)
+    if user and (getattr(user, "is_staff", False) or getattr(user, "is_superuser", False)):
+        roles.add("admin")
+
+    return roles
+
+
+def _request_actor_id(request):
+    """Resolve actor identifier used in transition audit entries."""
+
+    token = request.auth if isinstance(request.auth, dict) else {}
+    subject = token.get("sub")
+    if isinstance(subject, str) and subject.strip():
+        return subject.strip()
+    user = getattr(request, "user", None)
+    username = getattr(user, "username", "") if user else ""
+    return username or "unknown"
 
 
 class QuestionAnswerView(APIView):
@@ -296,6 +339,68 @@ class EditorialQueueView(APIView):
                 "queued": True,
                 "queueItemId": str(item.queue_item_id),
                 "status": item.status,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class EditorialQueueTransitionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # Enforce workflow transitions with explicit role checks and audit trail creation.
+        request_id = _request_id(request)
+        serializer = EditorialQueueTransitionRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        try:
+            item = EditorialQueueItem.objects.get(queue_item_id=data["queueItemId"])
+        except EditorialQueueItem.DoesNotExist:
+            return _error_response(
+                code="QUEUE_ITEM_NOT_FOUND",
+                message="queueItemId does not reference an existing queue item.",
+                request_id=request_id,
+                http_status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        actor_roles = _request_roles(request)
+        actor_id = _request_actor_id(request)
+
+        try:
+            transition = apply_transition(
+                queue_item=item,
+                action=data["action"],
+                actor_id=actor_id,
+                actor_roles=actor_roles,
+                comment=data.get("comment", ""),
+            )
+        except WorkflowTransitionNotAllowed as exc:
+            return _error_response(
+                code="INVALID_STATE_TRANSITION",
+                message=str(exc),
+                request_id=request_id,
+                http_status=status.HTTP_409_CONFLICT,
+            )
+        except WorkflowTransitionForbidden as exc:
+            return _error_response(
+                code="TRANSITION_FORBIDDEN",
+                message=str(exc),
+                request_id=request_id,
+                http_status=status.HTTP_403_FORBIDDEN,
+            )
+
+        return Response(
+            {
+                "queueItemId": str(item.queue_item_id),
+                "status": item.status,
+                "transition": {
+                    "action": transition.action,
+                    "fromStatus": transition.from_status,
+                    "toStatus": transition.to_status,
+                    "actorId": transition.actor_id,
+                    "actorRoles": transition.actor_roles,
+                },
             },
             status=status.HTTP_200_OK,
         )

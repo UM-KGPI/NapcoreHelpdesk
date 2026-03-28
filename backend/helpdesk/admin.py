@@ -1,5 +1,12 @@
 from django.contrib import admin
-from .models import EditorialQueueItem, IndexedSourceFile, IndexRunMetric, QuestionEvent, SourceChunk
+from .models import (
+	EditorialQueueItem,
+	EditorialQueueTransition,
+	IndexedSourceFile,
+	IndexRunMetric,
+	QuestionEvent,
+	SourceChunk,
+)
 
 
 @admin.register(QuestionEvent)
@@ -22,6 +29,20 @@ class EditorialQueueItemAdmin(admin.ModelAdmin):
 	list_display = ("queue_item_id", "question_event", "reason", "priority", "status", "created_at")
 	search_fields = ("queue_item_id", "question_event__request_id", "question_event__question")
 	list_filter = ("reason", "priority", "status")
+
+
+@admin.register(EditorialQueueTransition)
+class EditorialQueueTransitionAdmin(admin.ModelAdmin):
+	list_display = (
+		"queue_item",
+		"action",
+		"from_status",
+		"to_status",
+		"actor_id",
+		"created_at",
+	)
+	search_fields = ("queue_item__queue_item_id", "actor_id", "comment")
+	list_filter = ("action", "from_status", "to_status")
 
 
 @admin.register(SourceChunk)

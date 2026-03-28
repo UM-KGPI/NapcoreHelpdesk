@@ -184,9 +184,15 @@ class EditorialQueueItem(TimestampedModel):
 
     STATUS_DRAFT = "draft"
     STATUS_REVIEW = "review"
+    STATUS_APPROVED = "approved"
+    STATUS_REJECTED = "rejected"
+    STATUS_PUBLISHED = "published"
     STATUS_CHOICES = [
         (STATUS_DRAFT, "Draft"),
         (STATUS_REVIEW, "Review"),
+        (STATUS_APPROVED, "Approved"),
+        (STATUS_REJECTED, "Rejected"),
+        (STATUS_PUBLISHED, "Published"),
     ]
 
     # External/public identifier for queue integrations.
@@ -209,3 +215,43 @@ class EditorialQueueItem(TimestampedModel):
 
     def __str__(self):
         return f"EditorialQueueItem(queue_item_id={self.queue_item_id}, status={self.status})"
+
+
+class EditorialQueueTransition(TimestampedModel):
+    """Audit record for state transitions performed on editorial queue items."""
+
+    ACTION_SUBMIT_FOR_REVIEW = "submit_for_review"
+    ACTION_REQUEST_CHANGES = "request_changes"
+    ACTION_APPROVE = "approve"
+    ACTION_REJECT = "reject"
+    ACTION_PUBLISH = "publish"
+    ACTION_REOPEN = "reopen"
+    ACTION_CHOICES = [
+        (ACTION_SUBMIT_FOR_REVIEW, "Submit for review"),
+        (ACTION_REQUEST_CHANGES, "Request changes"),
+        (ACTION_APPROVE, "Approve"),
+        (ACTION_REJECT, "Reject"),
+        (ACTION_PUBLISH, "Publish"),
+        (ACTION_REOPEN, "Reopen"),
+    ]
+
+    queue_item = models.ForeignKey(
+        EditorialQueueItem,
+        on_delete=models.CASCADE,
+        related_name="transitions",
+    )
+    action = models.CharField(max_length=32, choices=ACTION_CHOICES)
+    from_status = models.CharField(max_length=16, choices=EditorialQueueItem.STATUS_CHOICES)
+    to_status = models.CharField(max_length=16, choices=EditorialQueueItem.STATUS_CHOICES)
+    actor_id = models.CharField(max_length=128, blank=True)
+    actor_roles = models.JSONField(default=list, blank=True)
+    comment = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return (
+            f"EditorialQueueTransition(queue_item_id={self.queue_item.queue_item_id}, "
+            f"action={self.action}, from={self.from_status}, to={self.to_status})"
+        )

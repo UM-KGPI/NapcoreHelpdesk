@@ -57,6 +57,23 @@ class EditorialQueueRequestSerializer(serializers.Serializer):
     )
 
 
+class EditorialQueueTransitionRequestSerializer(serializers.Serializer):
+    """Payload for transitioning editorial queue item state with workflow actions."""
+
+    queueItemId = serializers.UUIDField()
+    action = serializers.ChoiceField(
+        choices=[
+            "submit_for_review",
+            "request_changes",
+            "approve",
+            "reject",
+            "publish",
+            "reopen",
+        ]
+    )
+    comment = serializers.CharField(required=False, allow_blank=True, default="")
+
+
 class ErrorResponseSerializer(serializers.Serializer):
     """Reusable error structure mirroring OpenAPI error envelope fields."""
 
