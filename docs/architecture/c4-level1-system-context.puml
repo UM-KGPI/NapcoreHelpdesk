@@ -1,0 +1,41 @@
+@startuml
+title C4 Level 1 - System Context (NAPCORE Helpdesk)
+
+skinparam shadowing false
+skinparam roundcorner 12
+skinparam rectangle {
+  BorderColor #2B5FAB
+  FontColor #1F2F4A
+  BackgroundColor #F8FBFF
+}
+skinparam actor {
+  BorderColor #2B5FAB
+  FontColor #1F2F4A
+  BackgroundColor #EAF2FF
+}
+
+actor "PTO\n(Public Transport Operator)" as PTO
+actor "PTA\n(Public Transport Authority)" as PTA
+actor "Developer" as DEV
+actor "ITS System Integrator" as INTEGRATOR
+actor "Ticketing Agent" as TICKET
+
+rectangle "NAPCORE Helpdesk System\n(FAQ-first + RAG fallback)" as HELPDESK #DCE9FF
+rectangle "Approved GitHub Repositories\n(NeTEx-CEN/NeTEx + allowlisted sources)" as GITHUB
+rectangle "LLM Provider API" as LLM
+
+PTO --> HELPDESK : Asks standards\nimplementation questions
+PTA --> HELPDESK : Asks policy and\ncompliance-related questions
+DEV --> HELPDESK : Asks technical\nintegration questions
+INTEGRATOR --> HELPDESK : Asks interoperability\nand deployment questions
+TICKET --> HELPDESK : Asks ticketing\nintegration questions
+
+HELPDESK --> GITHUB : Retrieves approved\nsource documents and chunks
+HELPDESK --> LLM : Generates grounded answers\nfrom retrieved evidence only
+
+note bottom of HELPDESK
+Knowledge boundary: approved GitHub repositories only.
+If evidence is insufficient, system abstains.
+end note
+
+@enduml

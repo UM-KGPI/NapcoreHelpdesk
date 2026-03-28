@@ -1,0 +1,152 @@
+@startuml
+title NAPCORE Helpdesk Database Model (PlantUML)
+
+hide methods
+hide stereotypes
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam linetype ortho
+
+skinparam class {
+  BackgroundColor #F8FBFF
+  BorderColor #2B5FAB
+  ArrowColor #38598A
+  FontColor #1F2F4A
+}
+
+class approved_repositories {
+  +id : UUID <<PK>>
+  repository_url : TEXT <<UK>>
+  repository_owner : TEXT
+  repository_name : TEXT
+  default_ref : TEXT
+  is_active : BOOLEAN
+  notes : TEXT
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+}
+
+class source_documents {
+  +id : UUID <<PK>>
+  repository_id : UUID <<FK>>
+  git_ref : TEXT
+  commit_sha : TEXT
+  source_path : TEXT
+  document_type : TEXT
+  standard_tag : TEXT
+  version_tag : TEXT
+  content_hash : TEXT
+  indexed_at : TIMESTAMPTZ
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+}
+
+class source_chunks {
+  +id : UUID <<PK>>
+  document_id : UUID <<FK>>
+  chunk_index : INTEGER
+  section_heading : TEXT
+  chunk_text : TEXT
+  citation_label : TEXT
+  metadata : JSONB
+  created_at : TIMESTAMPTZ
+}
+
+class faq_entries {
+  +id : UUID <<PK>>
+  canonical_question : TEXT
+  normalized_intent : TEXT <<UK>>
+  standard_tag : TEXT
+  status : faq_status
+  current_version_id : UUID <<FK>>
+  first_published_at : TIMESTAMPTZ
+  last_reviewed_at : TIMESTAMPTZ
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+}
+
+class faq_versions {
+  +id : UUID <<PK>>
+  faq_entry_id : UUID <<FK>>
+  version_number : INTEGER
+  answer_markdown : TEXT
+  answer_mode : answer_mode
+  confidence_score : NUMERIC(5,4)
+  has_complete_citations : BOOLEAN
+  has_unsupported_claims : BOOLEAN
+  created_by : TEXT
+  created_at : TIMESTAMPTZ
+}
+
+class review_events {
+  +id : UUID <<PK>>
+  faq_version_id : UUID <<FK>>
+  reviewer_id : TEXT
+  decision : review_decision
+  review_notes : TEXT
+  created_at : TIMESTAMPTZ
+}
+
+class question_events {
+  +id : UUID <<PK>>
+  session_id : TEXT
+  user_id : TEXT
+  raw_question : TEXT
+  normalized_intent : TEXT
+  matched_faq_entry_id : UUID <<FK>>
+  answer_mode : answer_mode
+  confidence_score : NUMERIC(5,4)
+  feedback : feedback_value
+  abstention_reason : TEXT
+  created_at : TIMESTAMPTZ
+}
+
+class retrieval_events {
+  +id : UUID <<PK>>
+  question_event_id : UUID <<FK>>
+  repository_id : UUID <<FK>>
+  retrieval_query : TEXT
+  top_k : INTEGER
+  retrieval_score : NUMERIC(8,6)
+  evidence_sufficient : BOOLEAN
+  created_at : TIMESTAMPTZ
+}
+
+class answer_evidence_links {
+  +id : UUID <<PK>>
+  faq_version_id : UUID <<FK>>
+  question_event_id : UUID <<FK>>
+  source_chunk_id : UUID <<FK>>
+  claim_label : TEXT
+  created_at : TIMESTAMPTZ
+}
+
+approved_repositories "1" -- "0..*" source_documents : allowlists
+source_documents "1" -- "0..*" source_chunks : splits_into
+
+faq_entries "1" -- "0..*" faq_versions : has_versions
+faq_entries "0..1" -- "0..*" question_events : matched_by
+faq_entries "0..1" -- "0..*" faq_versions : current_version
+
+faq_versions "1" -- "0..*" review_events : reviewed_by
+question_events "1" -- "0..*" retrieval_events : triggers
+approved_repositories "0..1" -- "0..*" retrieval_events : filtered_to
+
+source_chunks "1" -- "0..*" answer_evidence_links : supports
+faq_versions "0..1" -- "0..*" answer_evidence_links : cites
+question_events "0..1" -- "0..*" answer_evidence_links : cites
+
+note right of answer_evidence_links
+Either faq_version_id or question_event_id
+must be present (CHECK constraint).
+end note
+
+legend right
+|= Tag |= Meaning |
+| <<PK>> | Primary key |
+| <<FK>> | Foreign key |
+| <<UK>> | Unique key |
+endlegend
+
+@enduml

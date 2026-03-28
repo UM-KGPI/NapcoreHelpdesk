@@ -1,0 +1,46 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_LEFT_RIGHT()
+
+title C4 Level 3 (Planned Next) - Question API / Orchestrator Components
+
+Person(user, "End User", "PTO/PTA/Developer/ITS Integrator/Ticketing Agent")
+Container(gui, "Web GUI", "Web App", "Question entry and answer view")
+ContainerDb(pg, "PostgreSQL", "Database", "Events, FAQ, reviews, evidence links")
+Container(vdb, "Vector Index", "Vector DB", "Embeddings and metadata")
+System_Ext(llm, "LLM Provider API", "Grounded generation")
+
+Container_Boundary(orchestrator, "Question API / Orchestrator") {
+  Component(router, "Request Router", "REST Controller", "Validates request and starts answer pipeline")
+  Component(faqmatcher, "FAQ Matcher", "Domain Component", "Finds high-confidence canonical FAQ answer")
+  Component(retrievalgw, "Retrieval Gateway", "Domain Component", "Executes top-k retrieval from allowlisted sources")
+  Component(generation, "Grounded Generator", "Domain Component", "Builds answer from retrieved evidence")
+  Component(policy, "Policy Guard", "Domain Component", "Enforces citation/support checks and abstention policy")
+  Component(evidence, "Evidence Mapper", "Domain Component", "Maps claims to source chunk evidence links")
+  Component(logger, "Event Logger", "Domain Component", "Writes question and retrieval telemetry")
+  Component(editorialroute, "Editorial Router", "Domain Component", "Routes low-confidence/flagged answers")
+}
+
+Rel(user, gui, "Asks question")
+Rel(gui, router, "POST /api/v1/questions/answer")
+Rel(router, faqmatcher, "FAQ-first check")
+Rel(router, retrievalgw, "Fallback retrieval")
+Rel(router, generation, "Generate answer")
+Rel(router, policy, "Validate output")
+Rel(router, evidence, "Persist evidence links")
+Rel(router, logger, "Persist events")
+Rel(router, editorialroute, "Queue if needed")
+
+Rel(faqmatcher, pg, "Read FAQ entries/versions")
+Rel(retrievalgw, vdb, "Query top-k chunks")
+Rel(retrievalgw, pg, "Store retrieval events")
+Rel(generation, llm, "Generate from retrieved context only")
+Rel(policy, pg, "Store policy outcomes")
+Rel(evidence, pg, "Store answer_evidence_links")
+Rel(logger, pg, "Store question_events")
+Rel(editorialroute, pg, "Store queue/review records")
+
+SHOW_LEGEND()
+
+@enduml

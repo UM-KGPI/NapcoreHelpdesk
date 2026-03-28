@@ -1,0 +1,448 @@
+openapi: 3.1.0
+info:
+  title: NAPCORE Helpdesk API
+  version: 1.0.0
+  summary: FAQ-first plus RAG-fallback API with strict source-grounding guardrails
+  description: |
+    API contract for the NAPCORE Helpdesk.
+    The service answers questions using FAQ-first lookup with RAG fallback,
+    enforces approved GitHub repository boundaries, and returns abstention
+    when evidence is insufficient.
+servers:
+  - url: https://api.example.org
+    description: Production placeholder
+  - url: http://localhost:8000
+    description: Local development
+security:
+  - bearerAuth: []
+tags:
+  - name: QnA
+    description: Question answering and orchestration
+  - name: FAQOps
+    description: FAQ operations and promotion candidates
+  - name: Editorial
+    description: Editorial workflow integrations
+paths:
+  /api/v1/questions/answer:
+    post:
+      tags: [QnA]
+      summary: Answer question with FAQ-first and RAG fallback
+      operationId: answerQuestion
+      parameters:
+        - name: X-Request-Id
+          in: header
+          required: true
+          description: Request correlation identifier
+          schema:
+            type: string
+            minLength: 1
+        - name: X-User-Id
+          in: header
+          required: false
+          schema:
+            type: string
+        - name: X-Session-Id
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnswerRequest'
+            examples:
+              default:
+                value:
+                  question: How to use NeTEx for exchanging a timetable?
+                  sessionId: sess-123
+                  userId: user-42
+                  standardsScope: [NeTEx, SIRI]
+                  language: en
+                  options:
+                    maxCitations: 5
+                    allowAbstain: true
+                    faqMinConfidence: 0.85
+                    retrievalTopK: 6
+                    retrievalMinScore: 0.62
+      responses:
+        '200':
+          description: Answer produced in faq, rag, or abstain mode
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnswerResponse'
+              examples:
+                faq:
+                  value:
+                    answerId: ans-001
+                    mode: faq
+                    confidence: 0.93
+                    answer: Start with the relevant timetable frame.
+                    citations:
+                      - repositoryUrl: https://github.com/NeTEx-CEN/NeTEx
+                        commitSha: abc1234
+                        sourcePath: docs/timetable-guide.md
+                        chunkId: c-001
+                        label: Timetable overview
+                    abstained: false
+                    abstentionReason: null
+                    reviewRequired: false
+                    trace:
+                      requestId: req-001
+                      questionEventId: qe-001
+                      matchedFaqEntryId: faq-001
+                      retrievalEventIds: []
+                rag:
+                  value:
+                    answerId: ans-002
+                    mode: rag
+                    confidence: 0.77
+                    answer: For timetable exchange, start by defining service and timetable frames.
+                    citations:
+                      - repositoryUrl: https://github.com/NeTEx-CEN/NeTEx
+                        commitSha: abc1234
+                        sourcePath: profile/part-2.xml
+                        chunkId: c-067
+                        label: Service frame example
+                    abstained: false
+                    abstentionReason: null
+                    reviewRequired: true
+                    trace:
+                      requestId: req-002
+                      questionEventId: qe-002
+                      matchedFaqEntryId: null
+                      retrievalEventIds: [re-991]
+                      evidenceLinkIds: [el-51]
+                abstain:
+                  value:
+                    answerId: ans-003
+                    mode: abstain
+                    confidence: 0
+                    answer: I do not have sufficient approved-source evidence to answer this safely.
+                    citations: []
+                    abstained: true
+                    abstentionReason: INSUFFICIENT_EVIDENCE
+                    reviewRequired: false
+                    trace:
+                      requestId: req-003
+                      questionEventId: qe-003
+                      matchedFaqEntryId: null
+                      retrievalEventIds: [re-992]
+        '400':
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Policy conflict (for example unsupported claims)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Valid request but cannot be answered within policy constraints
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/faqs/promotion-candidates:
+    get:
+      tags: [FAQOps]
+      summary: List FAQ promotion candidates from question telemetry
+      operationId: listPromotionCandidates
+      parameters:
+        - name: windowDays
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 14
+        - name: minCount
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 5
+        - name: onlyUnresolved
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Promotion candidates returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromotionCandidatesResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/editorial/queue:
+    post:
+      tags: [Editorial]
+      summary: Route an answer outcome to editorial queue
+      operationId: routeToEditorialQueue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditorialQueueRequest'
+      responses:
+        '200':
+          description: Queue action accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditorialQueueResponse'
+        '400':
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    AnswerRequest:
+      type: object
+      required: [question]
+      properties:
+        question:
+          type: string
+          minLength: 1
+        sessionId:
+          type: string
+        userId:
+          type: string
+        standardsScope:
+          type: array
+          items:
+            type: string
+            enum: [Transmodel, NeTEx, SIRI, OJP/OpRa, DATEX II]
+        language:
+          type: string
+          default: en
+        options:
+          $ref: '#/components/schemas/AnswerOptions'
+      additionalProperties: false
+    AnswerOptions:
+      type: object
+      properties:
+        maxCitations:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 5
+        allowAbstain:
+          type: boolean
+          default: true
+        faqMinConfidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.85
+        retrievalTopK:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 6
+        retrievalMinScore:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.62
+      additionalProperties: false
+    AnswerResponse:
+      type: object
+      required:
+        [answerId, mode, confidence, answer, citations, abstained, reviewRequired, trace]
+      properties:
+        answerId:
+          type: string
+        mode:
+          type: string
+          enum: [faq, rag, abstain]
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        answer:
+          type: string
+        citations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Citation'
+        abstained:
+          type: boolean
+        abstentionReason:
+          type: string
+          enum:
+            [INSUFFICIENT_EVIDENCE, POLICY_BLOCK, RETRIEVAL_LOW_QUALITY, UNKNOWN]
+          nullable: true
+        reviewRequired:
+          type: boolean
+        trace:
+          $ref: '#/components/schemas/AnswerTrace'
+      additionalProperties: false
+    Citation:
+      type: object
+      required: [repositoryUrl, commitSha, sourcePath, chunkId]
+      properties:
+        repositoryUrl:
+          type: string
+          format: uri
+        commitSha:
+          type: string
+        sourcePath:
+          type: string
+        chunkId:
+          type: string
+        label:
+          type: string
+      additionalProperties: false
+    AnswerTrace:
+      type: object
+      required: [requestId, questionEventId, retrievalEventIds]
+      properties:
+        requestId:
+          type: string
+        questionEventId:
+          type: string
+        matchedFaqEntryId:
+          type: string
+          nullable: true
+        retrievalEventIds:
+          type: array
+          items:
+            type: string
+        evidenceLinkIds:
+          type: array
+          items:
+            type: string
+      additionalProperties: false
+    PromotionCandidatesResponse:
+      type: object
+      required: [windowDays, minCount, items]
+      properties:
+        windowDays:
+          type: integer
+        minCount:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromotionCandidate'
+      additionalProperties: false
+    PromotionCandidate:
+      type: object
+      required:
+        [normalizedIntent, questionCount, notHelpfulRate, lastAskedAt, recommendedAction]
+      properties:
+        normalizedIntent:
+          type: string
+        questionCount:
+          type: integer
+        notHelpfulRate:
+          type: number
+          minimum: 0
+          maximum: 1
+        lastAskedAt:
+          type: string
+          format: date-time
+        recommendedAction:
+          type: string
+          enum: [CREATE_FAQ_DRAFT, REVIEW_EXISTING_FAQ, MONITOR]
+      additionalProperties: false
+    EditorialQueueRequest:
+      type: object
+      required: [questionEventId, reason]
+      properties:
+        questionEventId:
+          type: string
+        reason:
+          type: string
+          enum: [LOW_CONFIDENCE, CITATION_GAP, POLICY_REVIEW, USER_ESCALATION]
+        priority:
+          type: string
+          enum: [low, normal, high]
+          default: normal
+      additionalProperties: false
+    EditorialQueueResponse:
+      type: object
+      required: [queued, queueItemId, status]
+      properties:
+        queued:
+          type: boolean
+        queueItemId:
+          type: string
+        status:
+          type: string
+          enum: [draft, review]
+      additionalProperties: false
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, requestId]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            requestId:
+              type: string
+          additionalProperties: false
+      additionalProperties: false

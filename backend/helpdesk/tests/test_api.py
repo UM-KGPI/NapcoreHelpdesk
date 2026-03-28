@@ -1,0 +1,220 @@
+from __future__ import annotations
+
+import datetime as dt
+import json
+import copy
+from pathlib import Path
+
+import jwt
+import yaml
+from django.conf import settings
+from django.urls import reverse
+from jsonschema import Draft202012Validator, RefResolver
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.request import Request
+from rest_framework import status
+from rest_framework.test import APIRequestFactory
+from rest_framework.test import APITestCase
+
+from helpdesk.api.exceptions import custom_exception_handler
+
+
+class HelpdeskApiTests(APITestCase):
+    """Verify API contracts for authentication, answer orchestration, and editorial routing."""
+
+    @classmethod
+    def setUpClass(cls):
+        # Load OpenAPI once so each test can assert response payload compatibility.
+        super().setUpClass()
+        openapi_path = Path(__file__).resolve().parents[3] / "api" / "openapi.yaml"
+        with open(openapi_path, "r", encoding="utf-8") as handle:
+            cls.openapi = yaml.safe_load(handle)
+
+    def _token(self, subject: str = "test-user") -> str:
+        """Create a short-lived JWT that matches application auth settings."""
+        now = dt.datetime.now(dt.timezone.utc)
+        payload = {
+            "sub": subject,
+            "iat": int(now.timestamp()),
+            "exp": int((now + dt.timedelta(minutes=30)).timestamp()),
+        }
+        if settings.JWT_ISSUER:
+            payload["iss"] = settings.JWT_ISSUER
+        if settings.JWT_AUDIENCE:
+            payload["aud"] = settings.JWT_AUDIENCE
+        return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+
+    def assert_matches_schema(self, schema_name: str, payload: dict) -> None:
+        """Assert that a payload matches the referenced OpenAPI schema component."""
+        normalized_openapi = self._normalized_openapi()
+        schema = {"$ref": f"#/components/schemas/{schema_name}"}
+        validator = Draft202012Validator(schema, resolver=RefResolver.from_schema(normalized_openapi))
+        errors = sorted(validator.iter_errors(payload), key=lambda error: list(error.path))
+        if errors:
+            messages = [f"{list(error.path)}: {error.message}" for error in errors]
+            self.fail("Schema validation failed: " + json.dumps(messages, indent=2))
+
+    def _normalized_openapi(self) -> dict:
+        """Normalize nullable OpenAPI fields to JSON Schema Draft 2020-12 equivalents."""
+        document = copy.deepcopy(self.openapi)
+
+        def normalize(node):
+            if isinstance(node, dict):
+                if node.get("nullable") is True:
+                    if "type" in node:
+                        node_type = node["type"]
+                        if isinstance(node_type, list):
+                            if "null" not in node_type:
+                                node["type"] = [*node_type, "null"]
+                        else:
+                            node["type"] = [node_type, "null"]
+                    if "enum" in node and None not in node["enum"]:
+                        node["enum"] = [*node["enum"], None]
+                    node.pop("nullable", None)
+                for value in node.values():
+                    normalize(value)
+            elif isinstance(node, list):
+                for item in node:
+                    normalize(item)
+
+        normalize(document)
+        return document
+
+    def auth_headers(self):
+        """Return standard authenticated headers used by endpoint tests."""
+        return {
+            "HTTP_AUTHORIZATION": f"Bearer {self._token()}",
+        }
+
+    def test_answer_requires_bearer_auth(self):
+        """Ensure anonymous callers cannot access the answer endpoint."""
+        response = self.client.post(
+            reverse("answer-question"),
+            {"question": "How do I use NeTEx?"},
+            format="json",
+            HTTP_X_REQUEST_ID="req-no-auth",
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assert_matches_schema("ErrorResponse", response.data)
+        self.assertEqual(response.data["error"]["code"], "UNAUTHORIZED")
+        self.assertEqual(response.data["error"]["requestId"], "req-no-auth")
+
+    def test_invalid_jwt_returns_openapi_error_response(self):
+        """Ensure malformed JWTs return the standardized OpenAPI error payload."""
+        response = self.client.post(
+            reverse("answer-question"),
+            {"question": "How do I use NeTEx?"},
+            format="json",
+            HTTP_X_REQUEST_ID="req-bad-jwt",
+            HTTP_AUTHORIZATION="Bearer invalid.jwt.token",
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assert_matches_schema("ErrorResponse", response.data)
+        self.assertEqual(response.data["error"]["code"], "UNAUTHORIZED")
+        self.assertEqual(response.data["error"]["requestId"], "req-bad-jwt")
+
+    def test_permission_denied_exception_handler_returns_openapi_error(self):
+        """Ensure permission-denied errors are serialized as a 403 OpenAPI error."""
+        factory = APIRequestFactory()
+        django_request = factory.get("/api/v1/questions/answer", HTTP_X_REQUEST_ID="req-forbidden")
+        request = Request(django_request)
+
+        response = custom_exception_handler(PermissionDenied("Forbidden"), {"request": request})
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assert_matches_schema("ErrorResponse", response.data)
+        self.assertEqual(response.data["error"]["code"], "FORBIDDEN")
+        self.assertEqual(response.data["error"]["requestId"], "req-forbidden")
+
+    def test_answer_returns_faq_mode_for_known_question(self):
+        """Ensure known FAQ intent follows the FAQ-first path with citations."""
+        response = self.client.post(
+            reverse("answer-question"),
+            {
+                "question": "How to use NeTEx for exchanging a timetable?",
+                "standardsScope": ["NeTEx"],
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-faq-001",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_matches_schema("AnswerResponse", response.data)
+        self.assertEqual(response.data["mode"], "faq")
+        self.assertGreaterEqual(response.data["confidence"], 0.85)
+        self.assertFalse(response.data["abstained"])
+        self.assertTrue(response.data["citations"])
+        self.assertTrue(response.data["trace"]["questionEventId"])
+
+    def test_answer_returns_rag_mode_for_unknown_question(self):
+        """Ensure unmatched intent falls back to RAG with retrieval trace IDs."""
+        response = self.client.post(
+            reverse("answer-question"),
+            {
+                "question": "Explain OJP operational exchange setup sequence.",
+                "standardsScope": ["OJP/OpRa"],
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-rag-001",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_matches_schema("AnswerResponse", response.data)
+        self.assertEqual(response.data["mode"], "rag")
+        self.assertFalse(response.data["abstained"])
+        self.assertTrue(response.data["citations"])
+        self.assertTrue(response.data["trace"]["retrievalEventIds"])
+
+    def test_promotion_candidates_returns_aggregated_items(self):
+        """Ensure repeated questions aggregate into promotion candidates."""
+        for index in range(2):
+            self.client.post(
+                reverse("answer-question"),
+                {"question": "How to use NeTEx for exchanging a timetable?"},
+                format="json",
+                HTTP_X_REQUEST_ID=f"req-prom-{index}",
+                **self.auth_headers(),
+            )
+
+        response = self.client.get(
+            reverse("promotion-candidates"),
+            {"windowDays": 30, "minCount": 1},
+            format="json",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_matches_schema("PromotionCandidatesResponse", response.data)
+        self.assertEqual(response.data["windowDays"], 30)
+        self.assertEqual(response.data["minCount"], 1)
+        self.assertGreaterEqual(len(response.data["items"]), 1)
+
+    def test_editorial_queue_routes_policy_review_to_review_status(self):
+        """Ensure policy-review reasons route queue items directly to review status."""
+        answer_response = self.client.post(
+            reverse("answer-question"),
+            {"question": "Explain OJP operational exchange setup sequence."},
+            format="json",
+            HTTP_X_REQUEST_ID="req-editorial-source",
+            **self.auth_headers(),
+        )
+        question_event_id = answer_response.data["trace"]["questionEventId"]
+
+        response = self.client.post(
+            reverse("editorial-queue"),
+            {
+                "questionEventId": question_event_id,
+                "reason": "POLICY_REVIEW",
+                "priority": "high",
+            },
+            format="json",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_matches_schema("EditorialQueueResponse", response.data)
+        self.assertTrue(response.data["queued"])
+        self.assertEqual(response.data["status"], "review")
+        self.assertTrue(response.data["queueItemId"])

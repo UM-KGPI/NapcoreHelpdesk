@@ -1,0 +1,54 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_LEFT_RIGHT()
+
+title C4 Level 2 - NAPCORE Helpdesk Container Diagram
+
+Person(pto, "PTO", "Public Transport Operator")
+Person(pta, "PTA", "Public Transport Authority")
+Person(dev, "Developer", "Implementation stakeholder")
+Person(integrator, "ITS System Integrator", "Integration stakeholder")
+Person(ticketing, "Ticketing Agent", "Ticketing stakeholder")
+
+System_Ext(github, "Approved GitHub Repositories", "Authoritative standards sources")
+System_Ext(llm, "LLM Provider API", "Grounded answer generation")
+
+System_Boundary(boundary, "NAPCORE Helpdesk") {
+  Container(gui, "Web GUI", "Web App", "Question input, references display, feedback capture")
+  Container(api, "Question API / Orchestrator", "REST API", "FAQ-first decisioning and RAG fallback orchestration")
+  Container(faq, "FAQ Service", "Service", "Canonical FAQ lookup and version management")
+  Container(retrieval, "Retrieval Service", "Service", "Embedding search over indexed source chunks")
+  Container(guardrails, "Generation & Guardrails", "Service", "Grounded generation, citation checks, abstention policy")
+  Container(editorial, "Editorial Workflow Service", "Service", "Draft, review, approve, publish flow")
+  Container(ingest, "Ingestion Worker", "Worker", "Pull, parse, chunk, index allowlisted sources")
+  ContainerDb(pg, "PostgreSQL", "Database", "FAQ, events, reviews, evidence links")
+  ContainerDb(vdb, "Vector Index", "Vector DB", "Chunk embeddings and retrieval metadata")
+}
+
+Rel(pto, gui, "Asks questions")
+Rel(pta, gui, "Asks questions")
+Rel(dev, gui, "Asks questions")
+Rel(integrator, gui, "Asks questions")
+Rel(ticketing, gui, "Asks questions")
+
+Rel(gui, api, "Submits question and context", "HTTPS/JSON")
+Rel(api, faq, "High-confidence FAQ lookup")
+Rel(api, retrieval, "Fallback retrieval request")
+Rel(api, guardrails, "Grounded generation request")
+Rel(api, editorial, "Route low-confidence or flagged answers")
+Rel(api, pg, "Store question events and outcomes")
+
+Rel(faq, pg, "Read/write FAQ entries and versions")
+Rel(retrieval, vdb, "Top-k semantic retrieval")
+Rel(retrieval, pg, "Store retrieval events")
+Rel(guardrails, llm, "Generate from retrieved context only")
+Rel(guardrails, pg, "Store evidence links and policy results")
+Rel(editorial, pg, "Store review decisions")
+Rel(ingest, github, "Pull allowlisted sources")
+Rel(ingest, vdb, "Upsert embeddings")
+Rel(ingest, pg, "Store source metadata")
+
+SHOW_LEGEND()
+
+@enduml

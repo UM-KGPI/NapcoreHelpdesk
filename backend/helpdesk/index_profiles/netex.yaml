@@ -1,0 +1,14 @@
+include:
+  - docs
+  - part
+  - profile
+  - examples
+  - xsd
+  - readme
+exclude:
+  - images
+  - assets
+  - media
+  - tests
+  - test
+  - node_modules

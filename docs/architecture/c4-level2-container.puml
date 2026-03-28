@@ -1,0 +1,68 @@
+@startuml
+title C4 Level 2 - Container Diagram (NAPCORE Helpdesk)
+
+skinparam shadowing false
+skinparam roundcorner 12
+skinparam rectangle {
+  BorderColor #2B5FAB
+  FontColor #1F2F4A
+  BackgroundColor #F8FBFF
+}
+skinparam actor {
+  BorderColor #2B5FAB
+  FontColor #1F2F4A
+  BackgroundColor #EAF2FF
+}
+
+actor "PTO" as PTO
+actor "PTA" as PTA
+actor "Developer" as DEV
+actor "ITS System Integrator" as INTEGRATOR
+actor "Ticketing Agent" as TICKET
+
+rectangle "NAPCORE Helpdesk" as SYSTEM {
+  rectangle "Web GUI\n(Container)" as GUI #EAF2FF
+  rectangle "Question API / Orchestrator\n(Container)\nFAQ-first, then RAG fallback" as API #DCE9FF
+  rectangle "FAQ Service\n(Container)\nApproved FAQ lookup + versions" as FAQ #F0F6FF
+  rectangle "Retrieval Service\n(Container)\nEmbedding + vector search" as RETRIEVAL #F0F6FF
+  rectangle "Generation & Guardrails\n(Container)\nCitation checks, support checks, abstention" as GUARDRAILS #F0F6FF
+  rectangle "Editorial Workflow Service\n(Container)\nDraft/Review/Approve/Publish" as EDITORIAL #F0F6FF
+  database "PostgreSQL\n(Data Store)\nFAQ, events, evidence links" as PG #EEF5FF
+  database "Vector Index\n(Data Store)\nSource chunk embeddings" as VDB #EEF5FF
+  rectangle "Ingestion Worker\n(Container)\nSync + chunk + index" as INGEST #F0F6FF
+}
+
+rectangle "Approved GitHub Repositories" as GITHUB
+rectangle "LLM Provider API" as LLM
+
+PTO --> GUI : Ask questions
+PTA --> GUI : Ask questions
+DEV --> GUI : Ask questions
+INTEGRATOR --> GUI : Ask questions
+TICKET --> GUI : Ask questions
+
+GUI --> API : Submit question
+API --> FAQ : Try canonical FAQ match
+API --> RETRIEVAL : Fallback retrieval request
+API --> GUARDRAILS : Grounded generation\nand validation
+API --> EDITORIAL : Route low-confidence\nor flagged answers
+API --> PG : Store question events\nand outcomes
+
+FAQ --> PG : Read/write FAQ entries\nand versions
+RETRIEVAL --> VDB : Query top-k chunks
+RETRIEVAL --> PG : Log retrieval events
+GUARDRAILS --> LLM : Generate answer from\nretrieved context only
+GUARDRAILS --> PG : Write evidence links\nand policy outcomes
+EDITORIAL --> PG : Store review decisions
+INGEST --> GITHUB : Pull allowlisted sources
+INGEST --> VDB : Upsert embeddings
+INGEST --> PG : Store source metadata
+
+note bottom of API
+Decision policy:
+1) FAQ high-confidence -> return canonical answer.
+2) Else run retrieval + generation.
+3) If evidence insufficient or unsupported claim -> abstain.
+end note
+
+@enduml

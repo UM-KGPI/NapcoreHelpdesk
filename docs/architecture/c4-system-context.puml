@@ -1,0 +1,31 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_LEFT_RIGHT()
+
+title C4 Level 1 - NAPCORE Helpdesk System Context
+
+Person(pto, "PTO", "Public Transport Operator")
+Person(pta, "PTA", "Public Transport Authority")
+Person(dev, "Developer", "Implements standards and integrations")
+Person(integrator, "ITS System Integrator", "Integrates transport and ITS systems")
+Person(ticketing, "Ticketing Agent", "Implements and operates ticketing workflows")
+
+System(helpdesk, "NAPCORE Helpdesk", "FAQ-first + RAG fallback helpdesk for multimodal standards")
+System_Ext(github, "Approved GitHub Repositories", "NeTEx-CEN/NeTEx and allowlisted repositories")
+System_Ext(llm, "LLM Provider API", "Used only for grounded answer generation")
+
+Rel(pto, helpdesk, "Asks standards implementation questions", "Web GUI")
+Rel(pta, helpdesk, "Asks governance and policy implementation questions", "Web GUI")
+Rel(dev, helpdesk, "Asks technical integration questions", "Web GUI")
+Rel(integrator, helpdesk, "Asks interoperability and deployment questions", "Web GUI")
+Rel(ticketing, helpdesk, "Asks ticketing integration questions", "Web GUI")
+
+Rel(helpdesk, github, "Retrieves approved source content", "Git fetch + indexing")
+Rel(helpdesk, llm, "Generates answer from retrieved evidence", "API")
+
+UpdateRelStyle(helpdesk, llm, $textColor="black", $lineColor="#38598A")
+
+SHOW_LEGEND()
+
+@enduml

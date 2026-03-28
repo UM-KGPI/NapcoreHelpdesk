@@ -1,0 +1,293 @@
+<svg width="1780" height="1160" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .title {
+      font-family: Arial, sans-serif;
+      font-size: 26px;
+      font-weight: bold;
+      fill: #1f2f4a;
+    }
+    .subtitle {
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      fill: #4f6482;
+    }
+    .entity {
+      fill: #f8fbff;
+      stroke: #2b5fab;
+      stroke-width: 1.8;
+      rx: 10;
+      ry: 10;
+    }
+    .entity-header {
+      fill: #dce9ff;
+      stroke: #2b5fab;
+      stroke-width: 1.8;
+      rx: 10;
+      ry: 10;
+    }
+    .header-text {
+      font-family: Arial, sans-serif;
+      font-size: 17px;
+      font-weight: bold;
+      fill: #17335c;
+    }
+    .field-text {
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      fill: #1f2f4a;
+    }
+    .field-pk {
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      font-weight: bold;
+      fill: #9a6700;
+    }
+    .field-fk {
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      font-weight: bold;
+      fill: #0c6b58;
+    }
+    .relation {
+      stroke: #38598a;
+      stroke-width: 2;
+      fill: none;
+    }
+    .relation-optional {
+      stroke: #5a7cab;
+      stroke-width: 2;
+      stroke-dasharray: 7 5;
+      fill: none;
+    }
+    .relation-label {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      fill: #38598a;
+    }
+    .note {
+      fill: #fff9e6;
+      stroke: #b08a1d;
+      stroke-width: 1.4;
+      rx: 8;
+      ry: 8;
+    }
+    .note-text {
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+      fill: #6f5410;
+    }
+  </style>
+
+  <defs>
+    <marker id="one" viewBox="0 0 12 14" refX="0" refY="7" markerWidth="12" markerHeight="14" orient="auto-start-reverse">
+      <path d="M 4 1 L 4 13" stroke="#38598a" stroke-width="1.7" fill="none"/>
+    </marker>
+    <marker id="many" viewBox="0 0 16 14" refX="0" refY="7" markerWidth="16" markerHeight="14" orient="auto-start-reverse">
+      <path d="M 0 7 L 12 1 M 0 7 L 12 7 M 0 7 L 12 13" stroke="#38598a" stroke-width="1.5" fill="none"/>
+    </marker>
+    <marker id="zeroone" viewBox="0 0 18 14" refX="0" refY="7" markerWidth="18" markerHeight="14" orient="auto-start-reverse">
+      <circle cx="4" cy="7" r="2.4" stroke="#5a7cab" stroke-width="1.4" fill="#ffffff"/>
+      <path d="M 11 1 L 11 13" stroke="#5a7cab" stroke-width="1.6" fill="none"/>
+    </marker>
+    <marker id="zeromany" viewBox="0 0 24 14" refX="0" refY="7" markerWidth="24" markerHeight="14" orient="auto-start-reverse">
+      <circle cx="4" cy="7" r="2.4" stroke="#5a7cab" stroke-width="1.4" fill="#ffffff"/>
+      <path d="M 8 7 L 18 1 M 8 7 L 18 7 M 8 7 L 18 13" stroke="#5a7cab" stroke-width="1.5" fill="none"/>
+    </marker>
+  </defs>
+
+  <text x="40" y="42" class="title">UML Class Diagram - NAPCORE Helpdesk Database Schema</text>
+  <text x="40" y="68" class="subtitle">Crow's-foot notation, PK/FK field highlighting, and routed non-crossing connectors</text>
+
+  <g transform="translate(40,120)">
+    <rect class="entity" width="320" height="220"/>
+    <rect class="entity-header" width="320" height="42"/>
+    <text x="16" y="27" class="header-text">approved_repositories</text>
+    <text x="16" y="66" class="field-pk">+ id : UUID [PK]</text>
+    <text x="16" y="86" class="field-text">+ repository_url : TEXT [UNIQUE]</text>
+    <text x="16" y="106" class="field-text">+ repository_owner : TEXT</text>
+    <text x="16" y="126" class="field-text">+ repository_name : TEXT</text>
+    <text x="16" y="146" class="field-text">+ default_ref : TEXT</text>
+    <text x="16" y="166" class="field-text">+ is_active : BOOLEAN</text>
+    <text x="16" y="186" class="field-text">+ notes : TEXT</text>
+    <text x="16" y="206" class="field-text">+ created_at : TIMESTAMPTZ</text>
+    <text x="16" y="226" class="field-text">+ updated_at : TIMESTAMPTZ</text>
+  </g>
+
+  <g transform="translate(460,120)">
+    <rect class="entity" width="340" height="260"/>
+    <rect class="entity-header" width="340" height="42"/>
+    <text x="16" y="27" class="header-text">source_documents</text>
+    <text x="16" y="66" class="field-pk">+ id : UUID [PK]</text>
+    <text x="16" y="86" class="field-fk">+ repository_id : UUID [FK]</text>
+    <text x="16" y="106" class="field-text">+ git_ref : TEXT</text>
+    <text x="16" y="126" class="field-text">+ commit_sha : TEXT</text>
+    <text x="16" y="146" class="field-text">+ source_path : TEXT</text>
+    <text x="16" y="166" class="field-text">+ document_type : TEXT</text>
+    <text x="16" y="186" class="field-text">+ standard_tag : TEXT</text>
+    <text x="16" y="206" class="field-text">+ version_tag : TEXT</text>
+    <text x="16" y="226" class="field-text">+ content_hash : TEXT</text>
+    <text x="16" y="246" class="field-text">+ indexed_at : TIMESTAMPTZ</text>
+  </g>
+
+  <g transform="translate(900,120)">
+    <rect class="entity" width="340" height="230"/>
+    <rect class="entity-header" width="340" height="42"/>
+    <text x="16" y="27" class="header-text">source_chunks</text>
+    <text x="16" y="66" class="field-pk">+ id : UUID [PK]</text>
+    <text x="16" y="86" class="field-fk">+ document_id : UUID [FK]</text>
+    <text x="16" y="106" class="field-text">+ chunk_index : INTEGER</text>
+    <text x="16" y="126" class="field-text">+ section_heading : TEXT</text>
+    <text x="16" y="146" class="field-text">+ chunk_text : TEXT</text>
+    <text x="16" y="166" class="field-text">+ citation_label : TEXT</text>
+    <text x="16" y="186" class="field-text">+ metadata : JSONB</text>
+    <text x="16" y="206" class="field-text">+ created_at : TIMESTAMPTZ</text>
+  </g>
+
+  <g transform="translate(40,450)">
+    <rect class="entity" width="340" height="230"/>
+    <rect class="entity-header" width="340" height="42"/>
+    <text x="16" y="27" class="header-text">faq_entries</text>
+    <text x="16" y="66" class="field-pk">+ id : UUID [PK]</text>
+    <text x="16" y="86" class="field-text">+ canonical_question : TEXT</text>
+    <text x="16" y="106" class="field-text">+ normalized_intent : TEXT [UNIQUE]</text>
+    <text x="16" y="126" class="field-text">+ standard_tag : TEXT</text>
+    <text x="16" y="146" class="field-text">+ status : faq_status</text>
+    <text x="16" y="166" class="field-fk">+ current_version_id : UUID [FK]</text>
+    <text x="16" y="186" class="field-text">+ first_published_at : TIMESTAMPTZ</text>
+    <text x="16" y="206" class="field-text">+ last_reviewed_at : TIMESTAMPTZ</text>
+  </g>
+
+  <g transform="translate(460,450)">
+    <rect class="entity" width="360" height="260"/>
+    <rect class="entity-header" width="360" height="42"/>
+    <text x="16" y="27" class="header-text">faq_versions</text>
+    <text x="16" y="66" class="field-pk">+ id : UUID [PK]</text>
+    <text x="16" y="86" class="field-fk">+ faq_entry_id : UUID [FK]</text>
+    <text x="16" y="106" class="field-text">+ version_number : INTEGER</text>
+    <text x="16" y="126" class="field-text">+ answer_markdown : TEXT</text>
+    <text x="16" y="146" class="field-text">+ answer_mode : answer_mode</text>
+    <text x="16" y="166" class="field-text">+ confidence_score : NUMERIC(5,4)</text>
+    <text x="16" y="186" class="field-text">+ has_complete_citations : BOOLEAN</text>
+    <text x="16" y="206" class="field-text">+ has_unsupported_claims : BOOLEAN</text>
+    <text x="16" y="226" class="field-text">+ created_by : TEXT</text>
+    <text x="16" y="246" class="field-text">+ created_at : TIMESTAMPTZ</text>
+  </g>
+
+  <g transform="translate(1240,450)">
+    <rect class="entity" width="320" height="190"/>
+    <rect class="entity-header" width="320" height="42"/>
+    <text x="16" y="27" class="header-text">review_events</text>
+    <text x="16" y="66" class="field-pk">+ id : UUID [PK]</text>
+    <text x="16" y="86" class="field-fk">+ faq_version_id : UUID [FK]</text>
+    <text x="16" y="106" class="field-text">+ reviewer_id : TEXT</text>
+    <text x="16" y="126" class="field-text">+ decision : review_decision</text>
+    <text x="16" y="146" class="field-text">+ review_notes : TEXT</text>
+    <text x="16" y="166" class="field-text">+ created_at : TIMESTAMPTZ</text>
+  </g>
+
+  <g transform="translate(40,820)">
+    <rect class="entity" width="380" height="230"/>
+    <rect class="entity-header" width="380" height="42"/>
+    <text x="16" y="27" class="header-text">question_events</text>
+    <text x="16" y="66" class="field-pk">+ id : UUID [PK]</text>
+    <text x="16" y="86" class="field-text">+ session_id : TEXT</text>
+    <text x="16" y="106" class="field-text">+ user_id : TEXT</text>
+    <text x="16" y="126" class="field-text">+ raw_question : TEXT</text>
+    <text x="16" y="146" class="field-text">+ normalized_intent : TEXT</text>
+    <text x="16" y="166" class="field-fk">+ matched_faq_entry_id : UUID [FK]</text>
+    <text x="16" y="186" class="field-text">+ answer_mode, confidence_score</text>
+    <text x="16" y="206" class="field-text">+ feedback, abstention_reason</text>
+    <text x="16" y="226" class="field-text">+ created_at : TIMESTAMPTZ</text>
+  </g>
+
+  <g transform="translate(500,820)">
+    <rect class="entity" width="340" height="210"/>
+    <rect class="entity-header" width="340" height="42"/>
+    <text x="16" y="27" class="header-text">retrieval_events</text>
+    <text x="16" y="66" class="field-pk">+ id : UUID [PK]</text>
+    <text x="16" y="86" class="field-fk">+ question_event_id : UUID [FK]</text>
+    <text x="16" y="106" class="field-fk">+ repository_id : UUID [FK]</text>
+    <text x="16" y="126" class="field-text">+ retrieval_query : TEXT</text>
+    <text x="16" y="146" class="field-text">+ top_k : INTEGER</text>
+    <text x="16" y="166" class="field-text">+ retrieval_score : NUMERIC(8,6)</text>
+    <text x="16" y="186" class="field-text">+ evidence_sufficient, created_at</text>
+  </g>
+
+  <g transform="translate(920,790)">
+    <rect class="entity" width="380" height="250"/>
+    <rect class="entity-header" width="380" height="42"/>
+    <text x="16" y="27" class="header-text">answer_evidence_links</text>
+    <text x="16" y="66" class="field-pk">+ id : UUID [PK]</text>
+    <text x="16" y="86" class="field-fk">+ faq_version_id : UUID [FK, nullable]</text>
+    <text x="16" y="106" class="field-fk">+ question_event_id : UUID [FK, nullable]</text>
+    <text x="16" y="126" class="field-fk">+ source_chunk_id : UUID [FK]</text>
+    <text x="16" y="146" class="field-text">+ claim_label : TEXT</text>
+    <text x="16" y="166" class="field-text">+ created_at : TIMESTAMPTZ</text>
+    <text x="16" y="196" class="field-text">constraint: faq_version_id OR</text>
+    <text x="16" y="216" class="field-text">            question_event_id required</text>
+  </g>
+
+  <g transform="translate(1360,120)">
+    <rect class="note" width="360" height="230"/>
+    <text x="16" y="34" class="header-text">Legend</text>
+    <text x="16" y="68" class="note-text">Gold fields: primary keys</text>
+    <text x="16" y="98" class="note-text">Green fields: foreign keys</text>
+    <text x="16" y="128" class="note-text">Crow's-foot notation is used on</text>
+    <text x="16" y="148" class="note-text">relationship ends instead of text</text>
+    <text x="16" y="168" class="note-text">multiplicity labels.</text>
+    <text x="16" y="198" class="note-text">Dashed lines mark optional FKs.</text>
+  </g>
+
+  <g transform="translate(1360,430)">
+    <rect class="note" width="360" height="180"/>
+    <text x="16" y="34" class="header-text">Enums</text>
+    <text x="16" y="68" class="note-text">faq_status = draft | review | approved |</text>
+    <text x="16" y="88" class="note-text">published | archived</text>
+    <text x="16" y="118" class="note-text">answer_mode = faq | rag | abstain</text>
+    <text x="16" y="148" class="note-text">review_decision = approve | reject |</text>
+    <text x="16" y="168" class="note-text">request_changes</text>
+  </g>
+
+  <g transform="translate(1360,690)">
+    <rect class="note" width="360" height="170"/>
+    <text x="16" y="34" class="header-text">Layout Rule</text>
+    <text x="16" y="68" class="note-text">All connectors are routed through outer</text>
+    <text x="16" y="88" class="note-text">channels or clear gaps between entities.</text>
+    <text x="16" y="118" class="note-text">No connector crosses a class box.</text>
+  </g>
+
+  <line class="relation" x1="360" y1="230" x2="460" y2="230" marker-start="url(#one)" marker-end="url(#many)"/>
+  <text x="388" y="252" class="relation-label">repository_id</text>
+
+  <line class="relation" x1="800" y1="235" x2="900" y2="235" marker-start="url(#one)" marker-end="url(#many)"/>
+  <text x="828" y="257" class="relation-label">document_id</text>
+
+  <line class="relation" x1="380" y1="590" x2="460" y2="590" marker-start="url(#one)" marker-end="url(#many)"/>
+  <text x="392" y="612" class="relation-label">faq_entry_id</text>
+
+  <line class="relation-optional" x1="380" y1="530" x2="460" y2="530" marker-start="url(#many)" marker-end="url(#zeroone)"/>
+  <text x="386" y="518" class="relation-label">current_version_id</text>
+
+  <line class="relation" x1="820" y1="540" x2="1240" y2="540" marker-start="url(#one)" marker-end="url(#many)"/>
+  <text x="982" y="526" class="relation-label">faq_version_id</text>
+
+  <line class="relation-optional" x1="210" y1="820" x2="210" y2="680" marker-start="url(#many)" marker-end="url(#zeroone)"/>
+  <text x="224" y="752" class="relation-label">matched_faq_entry_id</text>
+
+  <line class="relation" x1="420" y1="925" x2="500" y2="925" marker-start="url(#one)" marker-end="url(#many)"/>
+  <text x="430" y="947" class="relation-label">question_event_id</text>
+
+  <path class="relation-optional" d="M 670 820 L 670 90 L 200 90 L 200 340" marker-start="url(#many)" marker-end="url(#zeroone)"/>
+  <text x="678" y="468" class="relation-label">repository_id</text>
+
+  <line class="relation" x1="1030" y1="350" x2="1030" y2="790" marker-start="url(#one)" marker-end="url(#many)"/>
+  <text x="1042" y="584" class="relation-label">source_chunk_id</text>
+
+  <path class="relation-optional" d="M 820 620 L 880 620 L 880 840 L 920 840" marker-start="url(#zeroone)" marker-end="url(#many)"/>
+  <text x="834" y="608" class="relation-label">faq_version_id</text>
+
+  <path class="relation-optional" d="M 420 980 L 420 1090 L 1110 1090 L 1110 1040" marker-start="url(#zeroone)" marker-end="url(#many)"/>
+  <text x="654" y="1080" class="relation-label">question_event_id</text>
+
+  <text x="40" y="1110" class="subtitle">Crow's-foot symbols show multiplicity at each end. Optional relationships are dashed and routed in dedicated channels to prevent visual overlap with class boxes.</text>
+</svg>
