@@ -153,4 +153,90 @@ describe("Editorial Board flows", () => {
     expect(await screen.findByRole("button", { name: "publish" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "approve" })).not.toBeInTheDocument();
   });
+
+  it("loads KPI metrics and renders key tiles", async () => {
+    const fetchMock = vi.mocked(globalThis.fetch);
+    fetchMock.mockResolvedValueOnce(
+      mockJsonResponse({
+        windowDays: 14,
+        slaHours: 48,
+        generatedAt: "2026-03-28T12:00:00Z",
+        totalItems: 9,
+        unresolvedItems: 6,
+        overdueItems: 2,
+        byStatus: {
+          draft: 2,
+          review: 3,
+          approved: 1,
+          rejected: 1,
+          published: 2,
+        },
+        byPriority: {
+          low: 1,
+          normal: 5,
+          high: 3,
+        },
+        byReason: {
+          LOW_CONFIDENCE: 3,
+          CITATION_GAP: 2,
+          POLICY_REVIEW: 3,
+          USER_ESCALATION: 1,
+        },
+        agingBuckets: {
+          lt24h: 2,
+          h24to72: 3,
+          gt72h: 1,
+        },
+      })
+    );
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.type(screen.getByPlaceholderText("Paste token"), "jwt-token");
+    await user.clear(screen.getByLabelText("metricsWindowDays"));
+    await user.type(screen.getByLabelText("metricsWindowDays"), "14");
+    await user.clear(screen.getByLabelText("metricsSlaHours"));
+    await user.type(screen.getByLabelText("metricsSlaHours"), "48");
+
+    await user.click(screen.getByRole("button", { name: "KPIs" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    const calledUrl = fetchMock.mock.calls[0][0] as string;
+    expect(calledUrl).toContain("/editorial/queue/metrics?");
+    expect(calledUrl).toContain("windowDays=14");
+    expect(calledUrl).toContain("slaHours=48");
+
+    expect(await screen.findByText("Queue KPIs")).toBeInTheDocument();
+    expect(screen.getByText("generated 2026-03-28T12:00:00Z")).toBeInTheDocument();
+    expect(screen.getByText("Overdue")).toBeInTheDocument();
+    expect(screen.getByText("gt72h")).toBeInTheDocument();
+  });
+
+  it("shows error banner when KPI metrics request fails", async () => {
+    const fetchMock = vi.mocked(globalThis.fetch);
+    fetchMock.mockResolvedValueOnce(
+      mockJsonResponse(
+        {
+          error: {
+            code: "HTTP_500",
+            message: "Metrics backend unavailable",
+            requestId: "req-metrics-fail-1",
+          },
+        },
+        500
+      )
+    );
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.type(screen.getByPlaceholderText("Paste token"), "jwt-token");
+    await user.click(screen.getByRole("button", { name: "KPIs" }));
+
+    expect(await screen.findByText("HTTP_500: Metrics backend unavailable (requestId: req-metrics-fail-1)")).toBeInTheDocument();
+  });
 });
