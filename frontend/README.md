@@ -21,7 +21,11 @@ This folder contains the C4 Web GUI container for NAPCORE Helpdesk.
 
    `npm run dev`
 
-3. Build for production check:
+3. Run frontend tests:
+
+   `npm run test`
+
+4. Build for production check:
 
    `npm run build`
 

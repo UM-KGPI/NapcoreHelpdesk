@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: diagrams-db diagrams-c4 slides-pdf slides-pptx openapi-validate backend-check backend-migrate backend-run backend-index frontend-install frontend-dev frontend-build
+.PHONY: diagrams-db diagrams-c4 slides-pdf slides-pptx openapi-validate backend-check backend-migrate backend-run backend-index frontend-install frontend-dev frontend-build frontend-test
 
 diagrams-db:
 	@bash scripts/render-plantuml.sh db/database-er-diagram.puml
@@ -39,3 +39,6 @@ frontend-dev:
 
 frontend-build:
 	@cd frontend && npm run build
+
+frontend-test:
+	@cd frontend && npm run test
