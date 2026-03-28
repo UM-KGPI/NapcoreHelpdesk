@@ -34,3 +34,8 @@ This folder contains the C4 Web GUI container for NAPCORE Helpdesk.
 - Endpoints require a JWT bearer token.
 - `POST /questions/answer` also requires `X-Request-Id` (auto-generated in UI).
 - Health probes are available without auth: `GET /health/live`, `GET /health/ready`.
+
+## Pilot operations
+- Scenario matrix and acceptance criteria: `../docs/testing/first-user-testing-pack.md`
+- Live session worksheet: `../docs/testing/day-1-execution-sheet.md`
+- Feedback issue form: `../.github/ISSUE_TEMPLATE/pilot-feedback.yml`

@@ -1,0 +1,69 @@
+name: Pilot Feedback
+about: Capture first-user testing findings with traceable context
+labels: [pilot-feedback]
+body:
+  - type: input
+    id: scenario
+    attributes:
+      label: Scenario ID
+      description: Example: S1, S2, ... from docs/testing/first-user-testing-pack.md
+      placeholder: S1
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Critical
+        - High
+        - Medium
+        - Low
+    validations:
+      required: true
+
+  - type: input
+    id: role
+    attributes:
+      label: User role
+      placeholder: viewer/editor/reviewer/publisher/admin
+    validations:
+      required: true
+
+  - type: textarea
+    id: request_ids
+    attributes:
+      label: Request ID(s)
+      description: Include one or more API request IDs for traceability.
+      placeholder: req-abc123
+    validations:
+      required: true
+
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed behavior
+      description: What happened, including mode/status and any errors.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should have happened according to scenario definition.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Screenshots, logs, payload snippets.
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Workaround
+      description: If known, describe temporary workaround.
