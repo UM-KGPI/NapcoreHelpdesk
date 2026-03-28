@@ -2,6 +2,7 @@ import type {
   AnswerResponse,
   ApiErrorEnvelope,
   EditorialQueueResponse,
+  EditorialQueueTransitionResponse,
   PromotionCandidatesResponse,
   StandardsScope,
 } from "./types";
@@ -25,6 +26,12 @@ export interface EditorialQueueRequest {
   questionEventId: string;
   reason: "LOW_CONFIDENCE" | "CITATION_GAP" | "POLICY_REVIEW" | "USER_ESCALATION";
   priority?: "low" | "normal" | "high";
+}
+
+export interface EditorialQueueTransitionRequest {
+  queueItemId: string;
+  action: "submit_for_review" | "request_changes" | "approve" | "reject" | "publish" | "reopen";
+  comment?: string;
 }
 
 interface ApiClientConfig {
@@ -68,6 +75,13 @@ export class HelpdeskApiClient {
 
   async routeToEditorialQueue(payload: EditorialQueueRequest): Promise<EditorialQueueResponse> {
     return this.request<EditorialQueueResponse>("/editorial/queue", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async transitionEditorialQueue(payload: EditorialQueueTransitionRequest): Promise<EditorialQueueTransitionResponse> {
+    return this.request<EditorialQueueTransitionResponse>("/editorial/queue/transition", {
       method: "POST",
       body: JSON.stringify(payload),
     });

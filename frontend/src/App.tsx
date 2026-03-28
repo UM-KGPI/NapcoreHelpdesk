@@ -1,9 +1,25 @@
 import { FormEvent, useMemo, useState } from "react";
 
 import { HelpdeskApiClient } from "./api";
-import type { AnswerResponse, EditorialQueueResponse, PromotionCandidatesResponse, StandardsScope } from "./types";
+import type {
+  AnswerResponse,
+  EditorialQueueResponse,
+  EditorialQueueTransitionResponse,
+  PromotionCandidatesResponse,
+  StandardsScope,
+} from "./types";
 
 const STANDARDS: StandardsScope[] = ["Transmodel", "NeTEx", "SIRI", "OJP/OpRa", "DATEX II"];
+const TRANSITION_ACTIONS = [
+  "submit_for_review",
+  "request_changes",
+  "approve",
+  "reject",
+  "publish",
+  "reopen",
+] as const;
+
+type TransitionAction = (typeof TRANSITION_ACTIONS)[number];
 
 function createRequestId(): string {
   return `req-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -21,6 +37,7 @@ export default function App() {
   const [answerResult, setAnswerResult] = useState<AnswerResponse | null>(null);
   const [promotionResult, setPromotionResult] = useState<PromotionCandidatesResponse | null>(null);
   const [editorialResult, setEditorialResult] = useState<EditorialQueueResponse | null>(null);
+  const [transitionResult, setTransitionResult] = useState<EditorialQueueTransitionResponse | null>(null);
 
   const [windowDays, setWindowDays] = useState(14);
   const [minCount, setMinCount] = useState(3);
@@ -28,6 +45,9 @@ export default function App() {
 
   const [queueReason, setQueueReason] = useState<"LOW_CONFIDENCE" | "CITATION_GAP" | "POLICY_REVIEW" | "USER_ESCALATION">("LOW_CONFIDENCE");
   const [queuePriority, setQueuePriority] = useState<"low" | "normal" | "high">("normal");
+  const [transitionQueueItemId, setTransitionQueueItemId] = useState("");
+  const [transitionAction, setTransitionAction] = useState<TransitionAction>("submit_for_review");
+  const [transitionComment, setTransitionComment] = useState("");
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -105,6 +125,30 @@ export default function App() {
         priority: queuePriority,
       });
       setEditorialResult(result);
+      setTransitionQueueItemId(result.queueItemId);
+      setTransitionResult(null);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onTransitionEditorial(): Promise<void> {
+    if (!transitionQueueItemId.trim()) {
+      setError("queueItemId is required for transition.");
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await client.transitionEditorialQueue({
+        queueItemId: transitionQueueItemId.trim(),
+        action: transitionAction,
+        comment: transitionComment,
+      });
+      setTransitionResult(result);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
     } finally {
@@ -225,6 +269,55 @@ export default function App() {
               <p>queued: <strong>{String(editorialResult.queued)}</strong></p>
               <p>queueItemId: <code>{editorialResult.queueItemId}</code></p>
               <p>status: <strong>{editorialResult.status}</strong></p>
+            </article>
+          )}
+
+          <h3>Editorial Transition</h3>
+          <p className="muted">Apply workflow actions to a queue item.</p>
+          <div className="stack">
+            <label>
+              queueItemId
+              <input
+                value={transitionQueueItemId}
+                onChange={(event) => setTransitionQueueItemId(event.target.value)}
+                placeholder="Paste queueItemId"
+              />
+            </label>
+            <label>
+              Action
+              <select value={transitionAction} onChange={(event) => setTransitionAction(event.target.value as TransitionAction)}>
+                {TRANSITION_ACTIONS.map((action) => (
+                  <option key={action} value={action}>{action}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Comment
+              <textarea
+                value={transitionComment}
+                onChange={(event) => setTransitionComment(event.target.value)}
+                rows={2}
+                placeholder="Optional transition comment"
+              />
+            </label>
+            <button onClick={onTransitionEditorial} disabled={busy || !token || !transitionQueueItemId.trim()}>
+              Apply Transition
+            </button>
+          </div>
+
+          {transitionResult && (
+            <article className="result-card">
+              <h3>Transition Result</h3>
+              <p>queueItemId: <code>{transitionResult.queueItemId}</code></p>
+              <p>status: <strong>{transitionResult.status}</strong></p>
+              <p>
+                action: <strong>{transitionResult.transition.action}</strong>
+                <span className="muted"> · {transitionResult.transition.fromStatus} to {transitionResult.transition.toStatus}</span>
+              </p>
+              <p>
+                actor: <strong>{transitionResult.transition.actorId}</strong>
+                <span className="muted"> · roles: {transitionResult.transition.actorRoles.join(", ") || "none"}</span>
+              </p>
             </article>
           )}
         </section>

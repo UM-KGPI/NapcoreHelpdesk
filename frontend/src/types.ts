@@ -50,6 +50,20 @@ export interface EditorialQueueResponse {
   status: string;
 }
 
+export interface EditorialTransition {
+  action: "submit_for_review" | "request_changes" | "approve" | "reject" | "publish" | "reopen";
+  fromStatus: string;
+  toStatus: string;
+  actorId: string;
+  actorRoles: string[];
+}
+
+export interface EditorialQueueTransitionResponse {
+  queueItemId: string;
+  status: string;
+  transition: EditorialTransition;
+}
+
 export interface ApiErrorEnvelope {
   error?: {
     code?: string;
