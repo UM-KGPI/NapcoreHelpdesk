@@ -357,6 +357,45 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/editorial/queue/metrics:
+    get:
+      tags: [Editorial]
+      summary: Return editorial board KPI metrics
+      operationId: getEditorialQueueMetrics
+      parameters:
+        - name: windowDays
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 30
+        - name: slaHours
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 72
+      responses:
+        '200':
+          description: Editorial queue metrics returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditorialQueueMetricsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   securitySchemes:
     bearerAuth:
@@ -641,6 +680,95 @@ components:
             type: string
             enum:
               [submit_for_review, request_changes, approve, reject, publish, reopen]
+      additionalProperties: false
+    EditorialQueueMetricsResponse:
+      type: object
+      required:
+        [windowDays, slaHours, generatedAt, totalItems, unresolvedItems, overdueItems, byStatus, byPriority, byReason, agingBuckets]
+      properties:
+        windowDays:
+          type: integer
+          minimum: 1
+        slaHours:
+          type: integer
+          minimum: 1
+        generatedAt:
+          type: string
+          format: date-time
+        totalItems:
+          type: integer
+          minimum: 0
+        unresolvedItems:
+          type: integer
+          minimum: 0
+        overdueItems:
+          type: integer
+          minimum: 0
+        byStatus:
+          type: object
+          required: [draft, review, approved, rejected, published]
+          properties:
+            draft:
+              type: integer
+              minimum: 0
+            review:
+              type: integer
+              minimum: 0
+            approved:
+              type: integer
+              minimum: 0
+            rejected:
+              type: integer
+              minimum: 0
+            published:
+              type: integer
+              minimum: 0
+          additionalProperties: false
+        byPriority:
+          type: object
+          required: [low, normal, high]
+          properties:
+            low:
+              type: integer
+              minimum: 0
+            normal:
+              type: integer
+              minimum: 0
+            high:
+              type: integer
+              minimum: 0
+          additionalProperties: false
+        byReason:
+          type: object
+          required: [LOW_CONFIDENCE, CITATION_GAP, POLICY_REVIEW, USER_ESCALATION]
+          properties:
+            LOW_CONFIDENCE:
+              type: integer
+              minimum: 0
+            CITATION_GAP:
+              type: integer
+              minimum: 0
+            POLICY_REVIEW:
+              type: integer
+              minimum: 0
+            USER_ESCALATION:
+              type: integer
+              minimum: 0
+          additionalProperties: false
+        agingBuckets:
+          type: object
+          required: [lt24h, h24to72, gt72h]
+          properties:
+            lt24h:
+              type: integer
+              minimum: 0
+            h24to72:
+              type: integer
+              minimum: 0
+            gt72h:
+              type: integer
+              minimum: 0
+          additionalProperties: false
       additionalProperties: false
     ErrorResponse:
       type: object

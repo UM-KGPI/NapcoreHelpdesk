@@ -198,6 +198,30 @@ button:disabled {
   font-size: 0.78rem;
 }
 
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.5rem;
+}
+
+.kpi-tile {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f8f5ed;
+  padding: 0.55rem;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.kpi-tile span {
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
+.kpi-tile strong {
+  font-size: 1rem;
+}
+
 .scope-grid {
   margin: 0;
   border: 1px solid var(--line);

@@ -9,6 +9,7 @@ import jwt
 import yaml
 from django.conf import settings
 from django.urls import reverse
+from django.utils import timezone
 from jsonschema import Draft202012Validator, RefResolver
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.request import Request
@@ -19,6 +20,7 @@ from rest_framework.test import APITestCase
 from helpdesk.api.exceptions import custom_exception_handler
 from helpdesk.models import (
     AnswerEvidenceLink,
+    EditorialQueueItem,
     EditorialQueueTransition,
     FAQVersion,
     RetrievalEvent,
@@ -487,3 +489,63 @@ class HelpdeskApiTests(APITestCase):
         )
         self.assertEqual(viewer_response.status_code, status.HTTP_200_OK)
         self.assertEqual(viewer_response.data["items"][0]["allowedActions"], [])
+
+    def test_editorial_queue_metrics_returns_kpi_distributions_and_aging(self):
+        """Ensure board metrics endpoint returns status and aging aggregates."""
+        answer_response = self.client.post(
+            reverse("answer-question"),
+            {"question": "Explain OJP operational exchange setup sequence."},
+            format="json",
+            HTTP_X_REQUEST_ID="req-metrics-source-1",
+            **self.auth_headers(),
+        )
+        question_event_id = answer_response.data["trace"]["questionEventId"]
+
+        draft_response = self.client.post(
+            reverse("editorial-queue"),
+            {
+                "questionEventId": question_event_id,
+                "reason": "LOW_CONFIDENCE",
+                "priority": "normal",
+            },
+            format="json",
+            **self.auth_headers(),
+        )
+
+        review_response = self.client.post(
+            reverse("editorial-queue"),
+            {
+                "questionEventId": question_event_id,
+                "reason": "POLICY_REVIEW",
+                "priority": "high",
+            },
+            format="json",
+            **self.auth_headers(),
+        )
+
+        # Force one item older than SLA threshold to validate overdue and aging counts.
+        EditorialQueueItem.objects.filter(queue_item_id=draft_response.data["queueItemId"]).update(
+            created_at=timezone.now() - dt.timedelta(hours=80)
+        )
+        EditorialQueueItem.objects.filter(queue_item_id=review_response.data["queueItemId"]).update(
+            created_at=timezone.now() - dt.timedelta(hours=10)
+        )
+
+        response = self.client.get(
+            reverse("editorial-queue-metrics"),
+            {"windowDays": 30, "slaHours": 72},
+            format="json",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["windowDays"], 30)
+        self.assertEqual(response.data["slaHours"], 72)
+        self.assertGreaterEqual(response.data["totalItems"], 2)
+        self.assertGreaterEqual(response.data["unresolvedItems"], 2)
+        self.assertGreaterEqual(response.data["overdueItems"], 1)
+        self.assertGreaterEqual(response.data["byStatus"]["draft"], 1)
+        self.assertGreaterEqual(response.data["byStatus"]["review"], 1)
+        self.assertGreaterEqual(response.data["byPriority"]["high"], 1)
+        self.assertGreaterEqual(response.data["byReason"]["POLICY_REVIEW"], 1)
+        self.assertGreaterEqual(response.data["agingBuckets"]["gt72h"], 1)

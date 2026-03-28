@@ -3,6 +3,7 @@ import { FormEvent, useMemo, useState } from "react";
 import { HelpdeskApiClient } from "./api";
 import type {
   AnswerResponse,
+  EditorialBoardMetricsResponse,
   EditorialBoardItem,
   EditorialBoardResponse,
   EditorialQueueResponse,
@@ -47,6 +48,7 @@ export default function App() {
   const [editorialResult, setEditorialResult] = useState<EditorialQueueResponse | null>(null);
   const [transitionResult, setTransitionResult] = useState<EditorialQueueTransitionResponse | null>(null);
   const [boardResult, setBoardResult] = useState<EditorialBoardResponse | null>(null);
+  const [boardMetrics, setBoardMetrics] = useState<EditorialBoardMetricsResponse | null>(null);
 
   const [windowDays, setWindowDays] = useState(14);
   const [minCount, setMinCount] = useState(3);
@@ -63,6 +65,8 @@ export default function App() {
   const [boardSearch, setBoardSearch] = useState("");
   const [boardPage, setBoardPage] = useState(1);
   const [boardPageSize, setBoardPageSize] = useState(10);
+  const [metricsWindowDays, setMetricsWindowDays] = useState(30);
+  const [metricsSlaHours, setMetricsSlaHours] = useState(72);
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -211,6 +215,22 @@ export default function App() {
     }
   }
 
+  async function onLoadBoardMetrics(): Promise<void> {
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await client.getEditorialBoardMetrics({
+        windowDays: metricsWindowDays,
+        slaHours: metricsSlaHours,
+      });
+      setBoardMetrics(result);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="page-shell">
       <header className="hero">
@@ -297,6 +317,39 @@ export default function App() {
         <section className="panel">
           <h2>Editorial Board</h2>
           <p className="muted">Filter queue items and apply inline workflow actions.</p>
+          <div className="grid-three">
+            <label>
+              metricsWindowDays
+              <input type="number" min={1} value={metricsWindowDays} onChange={(event) => setMetricsWindowDays(Number(event.target.value))} />
+            </label>
+            <label>
+              metricsSlaHours
+              <input type="number" min={1} value={metricsSlaHours} onChange={(event) => setMetricsSlaHours(Number(event.target.value))} />
+            </label>
+            <label>
+              KPIs
+              <button onClick={onLoadBoardMetrics} disabled={busy || !token}>Load Metrics</button>
+            </label>
+          </div>
+
+          {boardMetrics && (
+            <article className="result-card">
+              <h3>Queue KPIs</h3>
+              <p className="muted">generated {boardMetrics.generatedAt}</p>
+              <div className="kpi-grid">
+                <div className="kpi-tile"><span>Total</span><strong>{boardMetrics.totalItems}</strong></div>
+                <div className="kpi-tile"><span>Unresolved</span><strong>{boardMetrics.unresolvedItems}</strong></div>
+                <div className="kpi-tile"><span>Overdue</span><strong>{boardMetrics.overdueItems}</strong></div>
+                <div className="kpi-tile"><span>Draft</span><strong>{boardMetrics.byStatus.draft}</strong></div>
+                <div className="kpi-tile"><span>Review</span><strong>{boardMetrics.byStatus.review}</strong></div>
+                <div className="kpi-tile"><span>Approved</span><strong>{boardMetrics.byStatus.approved}</strong></div>
+                <div className="kpi-tile"><span>lt24h</span><strong>{boardMetrics.agingBuckets.lt24h}</strong></div>
+                <div className="kpi-tile"><span>24to72h</span><strong>{boardMetrics.agingBuckets.h24to72}</strong></div>
+                <div className="kpi-tile"><span>gt72h</span><strong>{boardMetrics.agingBuckets.gt72h}</strong></div>
+              </div>
+            </article>
+          )}
+
           <div className="grid-three">
             <label>
               Status

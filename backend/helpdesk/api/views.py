@@ -28,6 +28,7 @@ from helpdesk.services.retrieval_event_logger import log_retrieval_events
 from .serializers import (
     AnswerRequestSerializer,
     EditorialQueueListQuerySerializer,
+    EditorialQueueMetricsQuerySerializer,
     EditorialQueueRequestSerializer,
     EditorialQueueTransitionRequestSerializer,
     PromotionCandidatesQuerySerializer,
@@ -472,6 +473,66 @@ class EditorialQueueTransitionView(APIView):
                     "toStatus": transition.to_status,
                     "actorId": transition.actor_id,
                     "actorRoles": transition.actor_roles,
+                },
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class EditorialQueueMetricsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Compute queue health KPIs for board-level monitoring widgets.
+        serializer = EditorialQueueMetricsQuerySerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        window_days = data["windowDays"]
+        sla_hours = data["slaHours"]
+        now = timezone.now()
+        since = now - timedelta(days=window_days)
+        queryset = EditorialQueueItem.objects.filter(created_at__gte=since)
+
+        by_status = {
+            status_value: queryset.filter(status=status_value).count()
+            for status_value, _ in EditorialQueueItem.STATUS_CHOICES
+        }
+        by_priority = {
+            priority_value: queryset.filter(priority=priority_value).count()
+            for priority_value, _ in EditorialQueueItem.PRIORITY_CHOICES
+        }
+        by_reason = {
+            reason_value: queryset.filter(reason=reason_value).count()
+            for reason_value, _ in EditorialQueueItem.REASON_CHOICES
+        }
+
+        unresolved = queryset.exclude(status=EditorialQueueItem.STATUS_PUBLISHED)
+        overdue_threshold = now - timedelta(hours=sla_hours)
+        overdue_count = unresolved.filter(created_at__lt=overdue_threshold).count()
+
+        age_0_24 = unresolved.filter(created_at__gte=now - timedelta(hours=24)).count()
+        age_24_72 = unresolved.filter(
+            created_at__lt=now - timedelta(hours=24),
+            created_at__gte=now - timedelta(hours=72),
+        ).count()
+        age_over_72 = unresolved.filter(created_at__lt=now - timedelta(hours=72)).count()
+
+        return Response(
+            {
+                "windowDays": window_days,
+                "slaHours": sla_hours,
+                "generatedAt": now.isoformat().replace("+00:00", "Z"),
+                "totalItems": queryset.count(),
+                "unresolvedItems": unresolved.count(),
+                "overdueItems": overdue_count,
+                "byStatus": by_status,
+                "byPriority": by_priority,
+                "byReason": by_reason,
+                "agingBuckets": {
+                    "lt24h": age_0_24,
+                    "h24to72": age_24_72,
+                    "gt72h": age_over_72,
                 },
             },
             status=status.HTTP_200_OK,

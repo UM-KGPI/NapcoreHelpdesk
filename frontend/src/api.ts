@@ -1,6 +1,7 @@
 import type {
   AnswerResponse,
   ApiErrorEnvelope,
+  EditorialBoardMetricsResponse,
   EditorialBoardResponse,
   EditorialQueueResponse,
   EditorialQueueTransitionResponse,
@@ -42,6 +43,11 @@ export interface EditorialBoardQuery {
   search?: string;
   page?: number;
   pageSize?: number;
+}
+
+export interface EditorialBoardMetricsQuery {
+  windowDays?: number;
+  slaHours?: number;
 }
 
 interface ApiClientConfig {
@@ -106,6 +112,15 @@ export class HelpdeskApiClient {
     params.set("page", String(query.page ?? 1));
     params.set("pageSize", String(query.pageSize ?? 20));
     return this.request<EditorialBoardResponse>(`/editorial/queue?${params.toString()}`, {
+      method: "GET",
+    });
+  }
+
+  async getEditorialBoardMetrics(query: EditorialBoardMetricsQuery): Promise<EditorialBoardMetricsResponse> {
+    const params = new URLSearchParams();
+    params.set("windowDays", String(query.windowDays ?? 30));
+    params.set("slaHours", String(query.slaHours ?? 72));
+    return this.request<EditorialBoardMetricsResponse>(`/editorial/queue/metrics?${params.toString()}`, {
       method: "GET",
     });
   }

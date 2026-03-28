@@ -77,6 +77,13 @@ class EditorialQueueListQuerySerializer(serializers.Serializer):
     pageSize = serializers.IntegerField(required=False, min_value=1, max_value=100, default=20)
 
 
+class EditorialQueueMetricsQuerySerializer(serializers.Serializer):
+    """Query params for computing editorial board KPI aggregates."""
+
+    windowDays = serializers.IntegerField(required=False, min_value=1, default=30)
+    slaHours = serializers.IntegerField(required=False, min_value=1, default=72)
+
+
 class EditorialQueueTransitionRequestSerializer(serializers.Serializer):
     """Payload for transitioning editorial queue item state with workflow actions."""
 
