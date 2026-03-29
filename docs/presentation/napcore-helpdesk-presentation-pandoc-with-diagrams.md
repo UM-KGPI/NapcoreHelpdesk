@@ -1,8 +1,8 @@
 ---
-title: "NAPCORE Helpdesk: From Search To Grounded Chat Helpdesk"
+title: "NAPCORE Helpdesk: requirements and development"
 subtitle: "Presentation Draft"
 author: "NAPCORE Helpdesk Team"
-date: "2026-03-28"
+date: "2026-03-29"
 lang: "en"
 colorlinks: true
 ---
@@ -13,64 +13,38 @@ colorlinks: true
 - Main risk is fast but uncited guidance that creates delivery risk.
 - Goal is practical answers with traceable references and controlled escalation.
 
-# System Context (C4 Level 1)
+# Stakeholders And System Context (C4 Level 1)
 
 **Five stakeholder groups share one helpdesk interface:**
 
-- PTO (Public Transport Operator) — responsible for daily service delivery
-- PTA (Public Transport Authority) — sets policy and compliance standards
-- Developer — implements integrations and APIs
-- ITS System Integrator — connects helpdesk to broader mobility ecosystem
-- Ticketing Agent — manages passenger-facing systems
+- PTO (Public Transport Operator) — responsible for daily service delivery.
+- PTA (Public Transport Authority) — sets policy and compliance standards.
+- Developer — implements integrations and APIs.
+- ITS System Integrator — connects helpdesk to broader mobility ecosystem.
+- Ticketing Agent — manages passenger-facing systems.
 
 **External systems:**
 
-- Approved GitHub repositories (NeTEx-CEN/NeTEx) — knowledge source
-- LLM provider — grounded generation only; no unconstrained model memory
+- Approved GitHub repositories (NeTEx-CEN/NeTEx) — knowledge source.
+- LLM provider — optional grounded generation path.
 
-**Key architectural constraint:**
+![](docs/architecture/c4-system-context.png){ width=92% }
 
-- All answers sourced from approved repositories only.
-- If evidence is insufficient, the system abstains rather than speculating.
-
-![C4 System Context Diagram](docs/architecture/c4-system-context.png)
-
-# Scope
+# Documentation Scope
 
 - Standards: Transmodel, NeTEx, SIRI, OJP/OpRa, DATEX II.
 - Priority source: NeTEx-CEN/NeTEx and approved companion repositories.
-- Demo surfaces are now split into `/user` and `/operator` routes over one shared backend/session shell.
-
-# Evolution Of Helpdesk Implementations
-
-- Stage 1: keyword search over standards documents.
-- Stage 2: grounded Q and A with FAQ-first orchestration.
-- Stage 3: editorial workflow, routing, and KPI visibility.
-- Stage 4: chat-style sessions ready for deterministic and LLM-backed generation.
-- The trust model stays fixed: allow-listed repositories, citations, and review gates.
-
-# Why The Evolution Matters
-
-- Search helps lookup, but not decision-ready guidance.
-- FAQ-first gives low-latency canonical answers for recurring issues.
-- Editorial workflow converts runtime demand into governed knowledge.
-- Chat sessions improve usability without weakening provenance.
-- Companion repositories expand coverage without relaxing the trust boundary.
+- Surfaces: separate user route (`/user`) and operator route (`/operator`) over one shared backend shell.
 
 # Core Approach
 
 - FAQ-first with RAG fallback.[^rag-fallback]
 - FAQ-first: return approved answers when confidence is high.
-- RAG fallback: retrieve source chunks, then generate a grounded answer (deterministic templates now, LLM synthesis when enabled).
-- Generation profiles: deterministic-grounded now, LLM-ready when configured.
+- RAG fallback: retrieve source chunks, then generate a grounded answer.
+- Generation profiles:
+  - `deterministic-grounded` (active): question-adaptive deterministic templates with retrieval-score confidence.
+  - `llm-ready` (optional): retrieved chunks passed to LLM synthesis when enabled.
 - If evidence is weak, abstain explicitly.
-
-# Trust And Safety
-
-- Repository allowlist enforces the knowledge boundary.
-- Generation is limited to retrieved evidence.
-- Citation gate blocks uncited publication.
-- Editorial gate controls draft, review, approve, and publish states.
 
 # Functional Requirements Highlights
 
@@ -79,22 +53,6 @@ colorlinks: true
 - FR-005: retrieval and grounded generation.
 - FR-006: anti-hallucination and boundary enforcement.
 - FR-002 and FR-003: editorial curation and FAQ promotion.
-
-# Data Model Logic
-
-- Source governance: approved_repositories -> source_documents -> source_chunks.
-- FAQ lifecycle: faq_entries -> faq_versions -> review_events.
-- Runtime telemetry: question_events -> retrieval_events.
-- Evidence mapping: answer_evidence_links ties answers to source chunks.
-
-# User Experience Flow
-
-- User opens `/user` for conversation or `/operator` for operational review.
-- System attempts FAQ match first.
-- On miss or low confidence, the system executes retrieval plus grounded generation.
-- Response includes references, confidence, and request trace.
-- Session history supports iterative questioning without losing provenance.
-- Feedback and editorial routing support continuous improvement.
 
 # Current Product State
 
@@ -105,49 +63,35 @@ colorlinks: true
 
 # Current Chat UX
 
-- Live `/user` chat route with per-turn evidence, confidence, and request trace.
-- Separate `/operator` route handles orchestration, board, KPI, and editorial actions.
+- User route and operator route are shown in full-size screenshots.
+- Connection fields are intentionally blank for presentation clarity.
 
-![](docs/presentation/assets/chat-session-ui.png){ width=90% }
+![](docs/presentation/assets/user-chat-empty-full.png){ width=96% }
 
-# Operations And Governance
+![](docs/presentation/assets/operator-console-empty-full.png){ width=96% }
 
-- Reviewer decisions are logged and auditable.
-- Editorial operations run through Django Admin.
-- Recurring intents are promoted into curated FAQ backlog.
-- Re-indexing handles source and standards updates.
-- Metrics monitor quality and safety continuously.
-
-# MVP Success Metrics
-
-- Citation coverage for published FAQs: 100%.
-- Unsupported-claim publication rate: 0%.
-- P95 latency: <= 8 seconds.
-- Retrieval success on covered intents: >= 90%.
-
-# Current Artifacts
+# Documentation And Delivery Artifacts
 
 - Functional requirements, testing pack, and local run guide.
-- RAG architecture, database logic, and updated C4 architecture documents.
-- Technology baseline: Django 5 + DRF backend, React/Vite frontend, editorial workflow.
-- Separate routed user/operator UX, deterministic grounded answering, and LLM-ready generation adapter.
+- RAG architecture and updated C4 architecture documents.
+- Technology baseline: Django 5 + DRF backend, React/Vite frontend.
+- Separate routed user/operator UX and deterministic grounded answering.
 - PlantUML and exported SVG architecture assets for reproducible documentation.
 
 # Next Steps
 
-1. Complete pilot testing across chat UX, editorial workflow, and promotion flows.
-2. Enable and evaluate grounded LLM mode against deterministic fallback behavior.
-3. Refine ingestion profiles for companion repositories and standards-specific scopes.
-4. Use pilot evidence to decide production hardening and deployment model.
+1. Complete pilot testing across user chat, operator flow, and promotion workflow.
+2. Evaluate deterministic mode outcomes against grounded LLM mode on the same question set.
+3. Finalize repository ingestion profiles and production hardening backlog.
 
 # Appendix: Example Questions
 
-- How to use NeTEx for exchanging a timetable?
-- How to implement IDs for a Stop Place registry?
+**Question 1:** How to use NeTEx for exchanging a timetable?
 
-Expected outputs:
-- practical implementation guidance,
-- explicit citations,
-- abstention where evidence is insufficient.
+![](docs/presentation/assets/question-timetable.png){ width=96% }
 
-[^rag-fallback]: In a helpdesk or FAQ system, a RAG fallback (Retrieval‑Augmented Generation) happens when the system cannot find a good direct match (e.g., exact FAQ answer). It then falls back to RAG: retrieves the most relevant documents from approved sources, and generates an answer grounded in that retrieved context. The generation method depends on the profile: (1) **Deterministic mode** (now): uses pattern-matched templates adapted to the question, with confidence based on retrieval scores. (2) **LLM-ready mode** (future): feeds retrieved chunks to an LLM for synthesis. Both approaches prevent hallucination by grounding answers in real retrieved text.
+**Question 2:** How to implement IDs for a Stop Place registry?
+
+![](docs/presentation/assets/question-stop-place-ids.png){ width=96% }
+
+[^rag-fallback]: RAG fallback means that when no high-confidence FAQ answer is available, the system retrieves relevant source chunks from approved repositories and generates an answer grounded in that retrieved evidence. In deterministic mode this is template-driven and score-based; in LLM-ready mode retrieved chunks are synthesized by the LLM while remaining evidence-bound.
