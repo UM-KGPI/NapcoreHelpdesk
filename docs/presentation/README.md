@@ -14,10 +14,9 @@ From repository root:
 
 - `make slides-pdf`
 - `make slides-pptx`
-- `make slides-odp`
 
 ## Requirements
-- `pandoc` for PDF, PPTX, and ODP outputs.
+- `pandoc` for PDF and PPTX outputs.
 - For PDF: one of `xelatex`, `lualatex`, or `pdflatex`.
 
 ## Manual command

@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: diagrams-db diagrams-c4 slides-pdf slides-pptx slides-odp openapi-validate backend-check backend-migrate backend-run backend-index frontend-install frontend-dev frontend-build frontend-test
+.PHONY: diagrams-db diagrams-c4 slides-pdf slides-pptx openapi-validate backend-check backend-migrate backend-run backend-index frontend-install frontend-dev frontend-build frontend-test
 
 diagrams-db:
 	@bash scripts/render-plantuml.sh db/database-er-diagram.puml
@@ -13,9 +13,6 @@ slides-pdf:
 
 slides-pptx:
 	@bash scripts/render-slides.sh pptx docs/presentation/napcore-helpdesk-presentation-pandoc-with-diagrams.md dist/napcore-helpdesk-presentation.pptx
-
-slides-odp:
-	@bash scripts/render-slides.sh odp docs/presentation/napcore-helpdesk-presentation-pandoc-with-diagrams.md dist/napcore-helpdesk-presentation.odp
 
 openapi-validate:
 	@bash scripts/validate-openapi.sh api/openapi.yaml
