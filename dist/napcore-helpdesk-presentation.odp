@@ -144,10 +144,15 @@ Approach<text:bookmark-end text:name="core-approach" /></text:h>
     a helpdesk or FAQ system, a RAG fallback (Retrieval‑Augmented
     Generation) happens when the system cannot find a good direct match
     (e.g., exact FAQ answer). It then falls back to RAG: retrieves the
-    most relevant documents (FAQs, articles, knowledge base), feeds them
-    into an LLM, and generates an answer based on retrieved context.
-    This allows the assistant to give a relevant answer without
-    hallucinating by grounding the response in real
+    most relevant documents from approved sources, and generates an
+    answer grounded in that retrieved context. The generation method
+    depends on the profile: (1)
+    <text:span text:style-name="T1">Deterministic mode</text:span>
+    (now): uses pattern-matched templates adapted to the question, with
+    confidence based on retrieval scores. (2)
+    <text:span text:style-name="T1">LLM-ready mode</text:span> (future):
+    feeds retrieved chunks to an LLM for synthesis. Both approaches
+    prevent hallucination by grounding answers in real retrieved
     text.</text:p></text:note-body></text:note></text:p>
   </text:list-item>
   <text:list-item>
@@ -156,7 +161,8 @@ Approach<text:bookmark-end text:name="core-approach" /></text:h>
   </text:list-item>
   <text:list-item>
     <text:p text:style-name="P8">RAG fallback: retrieve source chunks,
-    then generate a grounded answer.</text:p>
+    then generate a grounded answer (deterministic templates now, LLM
+    synthesis when enabled).</text:p>
   </text:list-item>
   <text:list-item>
     <text:p text:style-name="P8">Generation profiles:

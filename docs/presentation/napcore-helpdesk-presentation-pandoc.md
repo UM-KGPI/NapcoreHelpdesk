@@ -59,8 +59,10 @@ colorlinks: true
 
 - FAQ-first with RAG fallback.[^rag-fallback]
 - FAQ-first: return approved answers when confidence is high.
-- RAG fallback: retrieve source chunks, then generate a grounded answer.
-- Generation profiles: deterministic-grounded now, LLM-ready when configured.
+- RAG fallback: retrieve source chunks, then generate a grounded answer using deterministic pattern matching or LLM synthesis (depending on profile).
+- Generation profiles:
+  - `deterministic-grounded` (default): pattern-matched templates adapted to question; grounded in retrieval scores; zero hallucination risk.
+  - `llm-ready` (when LLM enabled): feeds retrieved chunks + question to OpenAI-compatible API; synthesizes answers; still bounded by retrieved evidence.
 - If evidence is weak, abstain explicitly.
 
 # Trust And Safety
@@ -148,4 +150,4 @@ Expected outputs:
 - explicit citations,
 - abstention where evidence is insufficient.
 
-[^rag-fallback]: In a helpdesk or FAQ system, a RAG fallback (Retrieval‑Augmented Generation) happens when the system cannot find a good direct match (e.g., exact FAQ answer). It then falls back to RAG: retrieves the most relevant documents (FAQs, articles, knowledge base), feeds them into an LLM, and generates an answer based on retrieved context. This allows the assistant to give a relevant answer without hallucinating by grounding the response in real text.
+[^rag-fallback]: In a helpdesk or FAQ system, a RAG fallback (Retrieval‑Augmented Generation) happens when the system cannot find a good direct match (e.g., exact FAQ answer). It then falls back to RAG: retrieves the most relevant documents from approved sources, and generates an answer grounded in that retrieved context. The generation method depends on the profile: (1) **Deterministic mode** (now): uses pattern-matched templates adapted to the question, with confidence based on retrieval scores. (2) **LLM-ready mode** (future): feeds retrieved chunks to an LLM for synthesis. Both approaches prevent hallucination by grounding answers in real retrieved text.

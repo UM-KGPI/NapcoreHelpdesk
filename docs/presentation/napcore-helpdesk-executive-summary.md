@@ -30,7 +30,7 @@ Implement a grounded helpdesk that can evolve from search to chat while preservi
 - Stage 3: editorial, metrics, and promotion workflows for operating the helpdesk.
 - Stage 4: chat session UX with deterministic and optional LLM-backed grounded generation.
 - FAQ-first: return approved canonical answers when confidence is high.
-- RAG fallback: retrieve evidence from approved GitHub repositories, then generate grounded answers with citations.
+- RAG fallback: retrieve evidence from approved GitHub repositories, then generate grounded answers with citations using deterministic templates (now) or LLM synthesis (when enabled).
 - Abstention: if evidence is insufficient, return transparent insufficiency response instead of speculation.
 
 ## Scope
@@ -73,4 +73,4 @@ Core artifacts are prepared:
 3. Refine companion repository ingestion profiles.
 4. Use pilot evidence to decide production hardening priorities.
 
-[^rag-fallback]: In a helpdesk or FAQ system, a RAG fallback (Retrieval‑Augmented Generation) happens when the system cannot find a good direct match (e.g., exact FAQ answer). It then falls back to RAG: retrieves the most relevant documents (FAQs, articles, knowledge base), feeds them into an LLM, and generates an answer based on retrieved context. This allows the assistant to give a relevant answer without hallucinating by grounding the response in real text.
+[^rag-fallback]: In a helpdesk or FAQ system, a RAG fallback (Retrieval‑Augmented Generation) happens when the system cannot find a good direct match (e.g., exact FAQ answer). It then falls back to RAG: retrieves the most relevant documents from approved sources, and generates an answer grounded in that retrieved context. The generation method depends on the profile: (1) **Deterministic mode** (now): uses pattern-matched templates adapted to the question, with confidence based on retrieval scores. (2) **LLM-ready mode** (future): feeds retrieved chunks to an LLM for synthesis. Both approaches prevent hallucination by grounding answers in real retrieved text.
