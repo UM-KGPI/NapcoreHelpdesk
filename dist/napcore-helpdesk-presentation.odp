@@ -140,11 +140,15 @@ Approach<text:bookmark-end text:name="core-approach" /></text:h>
 <text:list text:style-name="L8">
   <text:list-item>
     <text:p text:style-name="P8">FAQ-first with RAG
-    fallback.<text:note text:id="ftn0" text:note-class="footnote"><text:note-citation>1</text:note-citation><text:note-body><text:p text:style-name="Footnote">RAG
-    fallback means that when no high-confidence FAQ answer is available,
-    the system retrieves relevant source chunks and then generates an
-    answer grounded in that retrieved
-    evidence.</text:p></text:note-body></text:note></text:p>
+    fallback.<text:note text:id="ftn0" text:note-class="footnote"><text:note-citation>1</text:note-citation><text:note-body><text:p text:style-name="Footnote">In
+    a helpdesk or FAQ system, a RAG fallback (Retrieval‑Augmented
+    Generation) happens when the system cannot find a good direct match
+    (e.g., exact FAQ answer). It then falls back to RAG: retrieves the
+    most relevant documents (FAQs, articles, knowledge base), feeds them
+    into an LLM, and generates an answer based on retrieved context.
+    This allows the assistant to give a relevant answer without
+    hallucinating by grounding the response in real
+    text.</text:p></text:note-body></text:note></text:p>
   </text:list-item>
   <text:list-item>
     <text:p text:style-name="P8">FAQ-first: return approved answers when

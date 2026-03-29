@@ -150,4 +150,4 @@ Expected outputs:
 - explicit citations,
 - abstention where evidence is insufficient.
 
-[^rag-fallback]: RAG fallback means that when no high-confidence FAQ answer is available, the system retrieves relevant source chunks and then generates an answer grounded in that retrieved evidence.
+[^rag-fallback]: In a helpdesk or FAQ system, a RAG fallback (Retrieval‑Augmented Generation) happens when the system cannot find a good direct match (e.g., exact FAQ answer). It then falls back to RAG: retrieves the most relevant documents (FAQs, articles, knowledge base), feeds them into an LLM, and generates an answer based on retrieved context. This allows the assistant to give a relevant answer without hallucinating by grounding the response in real text.
