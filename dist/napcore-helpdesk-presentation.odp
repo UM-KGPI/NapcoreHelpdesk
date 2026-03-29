@@ -1,0 +1,418 @@
+<text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="problem-and-goal" />Problem
+And Goal<text:bookmark-end text:name="problem-and-goal" /></text:h>
+<text:list text:style-name="L1">
+  <text:list-item>
+    <text:p text:style-name="P1">Need a trusted answer layer for
+    multimodal standards implementation.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P1">Main risk is fast but uncited guidance
+    that creates delivery risk.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P1">Goal is practical answers with
+    traceable references and controlled escalation.</text:p>
+  </text:list-item>
+</text:list>
+<text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="system-context-c4-level-1" />System
+Context (C4 Level
+1)<text:bookmark-end text:name="system-context-c4-level-1" /></text:h>
+<text:p text:style-name="First_20_paragraph"><text:span text:style-name="T1">Five
+stakeholder groups share one helpdesk interface:</text:span></text:p>
+<text:list text:style-name="L2">
+  <text:list-item>
+    <text:p text:style-name="P2">PTO (Public Transport Operator) —
+    responsible for daily service delivery</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P2">PTA (Public Transport Authority) — sets
+    policy and compliance standards</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P2">Developer — implements integrations and
+    APIs</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P2">ITS System Integrator — connects
+    helpdesk to broader mobility ecosystem</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P2">Ticketing Agent — manages
+    passenger-facing systems</text:p>
+  </text:list-item>
+</text:list>
+<text:p text:style-name="First_20_paragraph"><text:span text:style-name="T1">External
+systems:</text:span></text:p>
+<text:list text:style-name="L3">
+  <text:list-item>
+    <text:p text:style-name="P3">Approved GitHub repositories
+    (NeTEx-CEN/NeTEx) — knowledge source</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P3">LLM provider — grounded generation
+    only; no unconstrained model memory</text:p>
+  </text:list-item>
+</text:list>
+<text:p text:style-name="First_20_paragraph"><text:span text:style-name="T1">Key
+architectural constraint:</text:span></text:p>
+<text:list text:style-name="L4">
+  <text:list-item>
+    <text:p text:style-name="P4">All answers sourced from approved
+    repositories only.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P4">If evidence is insufficient, the system
+    abstains rather than speculating.</text:p>
+  </text:list-item>
+</text:list>
+<text:p text:style-name="FigureWithCaption"><draw:frame draw:name="img1"><draw:image xlink:href="docs/architecture/c4-system-context.png" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad" /></draw:frame></text:p>
+<text:p text:style-name="FigureCaption">C4 System Context
+Diagram</text:p>
+<text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="scope" />Scope<text:bookmark-end text:name="scope" /></text:h>
+<text:list text:style-name="L5">
+  <text:list-item>
+    <text:p text:style-name="P5">Standards: Transmodel, NeTEx, SIRI,
+    OJP/OpRa, DATEX II.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P5">Priority source: NeTEx-CEN/NeTEx and
+    approved companion repositories.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P5">User channel: one operator console with
+    a chat-style helpdesk experience.</text:p>
+  </text:list-item>
+</text:list>
+<text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="evolution-of-helpdesk-implementations" />Evolution
+Of Helpdesk
+Implementations<text:bookmark-end text:name="evolution-of-helpdesk-implementations" /></text:h>
+<text:list text:style-name="L6">
+  <text:list-item>
+    <text:p text:style-name="P6">Stage 1: keyword search over standards
+    documents.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P6">Stage 2: grounded Q and A with
+    FAQ-first orchestration.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P6">Stage 3: editorial workflow, routing,
+    and KPI visibility.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P6">Stage 4: chat-style sessions ready for
+    deterministic and LLM-backed generation.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P6">The trust model stays fixed:
+    allow-listed repositories, citations, and review gates.</text:p>
+  </text:list-item>
+</text:list>
+<text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="why-the-evolution-matters" />Why
+The Evolution
+Matters<text:bookmark-end text:name="why-the-evolution-matters" /></text:h>
+<text:list text:style-name="L7">
+  <text:list-item>
+    <text:p text:style-name="P7">Search helps lookup, but not
+    decision-ready guidance.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P7">FAQ-first gives low-latency canonical
+    answers for recurring issues.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P7">Editorial workflow converts runtime
+    demand into governed knowledge.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P7">Chat sessions improve usability without
+    weakening provenance.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P7">Companion repositories expand coverage
+    without relaxing the trust boundary.</text:p>
+  </text:list-item>
+</text:list>
+<text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="core-approach" />Core
+Approach<text:bookmark-end text:name="core-approach" /></text:h>
+<text:list text:style-name="L8">
+  <text:list-item>
+    <text:p text:style-name="P8">FAQ-first with RAG
+    fallback.<text:note text:id="ftn0" text:note-class="footnote"><text:note-citation>1</text:note-citation><text:note-body><text:p text:style-name="Footnote">RAG
+    fallback means that when no high-confidence FAQ answer is available,
+    the system retrieves relevant source chunks and then generates an
+    answer grounded in that retrieved
+    evidence.</text:p></text:note-body></text:note></text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P8">FAQ-first: return approved answers when
+    confidence is high.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P8">RAG fallback: retrieve source chunks,
+    then generate a grounded answer.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P8">Generation profiles:
+    deterministic-grounded now, LLM-ready when configured.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P8">If evidence is weak, abstain
+    explicitly.</text:p>
+  </text:list-item>
+</text:list>
+<text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="trust-and-safety" />Trust
+And Safety<text:bookmark-end text:name="trust-and-safety" /></text:h>
+<text:list text:style-name="L9">
+  <text:list-item>
+    <text:p text:style-name="P9">Repository allowlist enforces the
+    knowledge boundary.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P9">Generation is limited to retrieved
+    evidence.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P9">Citation gate blocks uncited
+    publication.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P9">Editorial gate controls draft, review,
+    approve, and publish states.</text:p>
+  </text:list-item>
+</text:list>
+<text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="functional-requirements-highlights" />Functional
+Requirements
+Highlights<text:bookmark-end text:name="functional-requirements-highlights" /></text:h>
+<text:list text:style-name="L10">
+  <text:list-item>
+    <text:p text:style-name="P10">FR-001: question answering through the
+    helpdesk UI.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P10">FR-004: ingestion and indexing of
+    approved GitHub sources.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P10">FR-005: retrieval and grounded
+    generation.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P10">FR-006: anti-hallucination and
+    boundary enforcement.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P10">FR-002 and FR-003: editorial curation
+    and FAQ promotion.</text:p>
+  </text:list-item>
+</text:list>
+<text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="data-model-logic" />Data
+Model Logic<text:bookmark-end text:name="data-model-logic" /></text:h>
+<text:list text:style-name="L11">
+  <text:list-item>
+    <text:p text:style-name="P11">Source governance:
+    approved_repositories -&gt; source_documents -&gt;
+    source_chunks.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P11">FAQ lifecycle: faq_entries -&gt;
+    faq_versions -&gt; review_events.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P11">Runtime telemetry: question_events
+    -&gt; retrieval_events.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P11">Evidence mapping:
+    answer_evidence_links ties answers to source chunks.</text:p>
+  </text:list-item>
+</text:list>
+<text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="why-hallucinations-are-prevented" />Why
+Hallucinations Are
+Prevented<text:bookmark-end text:name="why-hallucinations-are-prevented" /></text:h>
+<text:list text:style-name="L12">
+  <text:list-item>
+    <text:p text:style-name="P12">Only approved repositories are
+    retrievable.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P12">Unsupported claims fail citation and
+    support checks.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P12">Evidence links provide claim-to-source
+    traceability.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P12">Unknown questions produce abstention,
+    not speculation.</text:p>
+  </text:list-item>
+</text:list>
+<text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="user-experience-flow" />User
+Experience
+Flow<text:bookmark-end text:name="user-experience-flow" /></text:h>
+<text:list text:style-name="L13">
+  <text:list-item>
+    <text:p text:style-name="P13">User opens chat session or operator
+    console and submits question.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P13">System attempts FAQ match
+    first.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P13">On miss or low confidence, the system
+    executes retrieval plus grounded generation.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P13">Response includes references,
+    confidence, and request trace.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P13">Session history supports iterative
+    questioning without losing provenance.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P13">Feedback and editorial routing support
+    continuous improvement.</text:p>
+  </text:list-item>
+</text:list>
+<text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="current-product-state" />Current
+Product
+State<text:bookmark-end text:name="current-product-state" /></text:h>
+<text:list text:style-name="L14">
+  <text:list-item>
+    <text:p text:style-name="P14">Frontend now includes a chat-style
+    session UX alongside the editorial console.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P14">Backend supports deterministic
+    grounded generation and an optional LLM-ready mode.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P14">Knowledge index is built from approved
+    repositories and selected companion repositories.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P14">Editorial board, KPI metrics, and
+    promotion candidate flows remain part of the same product.</text:p>
+  </text:list-item>
+</text:list>
+<text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="current-chat-ux" />Current
+Chat UX<text:bookmark-end text:name="current-chat-ux" /></text:h>
+<text:list text:style-name="L15">
+  <text:list-item>
+    <text:p text:style-name="P15">Live chat session view with per-turn
+    evidence, confidence, and request trace.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P15">Same surface supports deterministic
+    grounded answers today and LLM-ready mode later.</text:p>
+  </text:list-item>
+</text:list>
+<text:p text:style-name="First_20_paragraph"><draw:frame draw:name="img2" svg:width="90%"><draw:image xlink:href="docs/presentation/assets/chat-session-ui.png" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad" /></draw:frame></text:p>
+<text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="operations-and-governance" />Operations
+And
+Governance<text:bookmark-end text:name="operations-and-governance" /></text:h>
+<text:list text:style-name="L16">
+  <text:list-item>
+    <text:p text:style-name="P16">Reviewer decisions are logged and
+    auditable.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P16">Editorial operations run through
+    Django Admin.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P16">Recurring intents are promoted into
+    curated FAQ backlog.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P16">Re-indexing handles source and
+    standards updates.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P16">Metrics monitor quality and safety
+    continuously.</text:p>
+  </text:list-item>
+</text:list>
+<text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="mvp-success-metrics" />MVP
+Success
+Metrics<text:bookmark-end text:name="mvp-success-metrics" /></text:h>
+<text:list text:style-name="L17">
+  <text:list-item>
+    <text:p text:style-name="P17">Citation coverage for published FAQs:
+    100%.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P17">Unsupported-claim publication rate:
+    0%.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P17">P95 latency: &lt;= 8 seconds.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P17">Retrieval success on covered intents:
+    &gt;= 90%.</text:p>
+  </text:list-item>
+</text:list>
+<text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="current-artifacts" />Current
+Artifacts<text:bookmark-end text:name="current-artifacts" /></text:h>
+<text:list text:style-name="L18">
+  <text:list-item>
+    <text:p text:style-name="P18">Functional requirements, testing pack,
+    and local run guide.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P18">RAG architecture, database logic, and
+    updated C4 architecture documents.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P18">Technology baseline: Django 5 + DRF
+    backend, React/Vite frontend, editorial workflow.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P18">Chat session UX, deterministic
+    grounded answering, and LLM-ready generation adapter.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P18">PlantUML and exported SVG architecture
+    assets for reproducible documentation.</text:p>
+  </text:list-item>
+</text:list>
+<text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="next-steps" />Next
+Steps<text:bookmark-end text:name="next-steps" /></text:h>
+<text:list text:style-name="L19">
+  <text:list-item>
+    <text:p text:style-name="P19">Complete pilot testing across chat UX,
+    editorial workflow, and promotion flows.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P19">Enable and evaluate grounded LLM mode
+    against deterministic fallback behavior.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P19">Refine ingestion profiles for
+    companion repositories and standards-specific scopes.</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P19">Use pilot evidence to decide
+    production hardening and deployment model.</text:p>
+  </text:list-item>
+</text:list>
+<text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="appendix-example-questions" />Appendix:
+Example
+Questions<text:bookmark-end text:name="appendix-example-questions" /></text:h>
+<text:list text:style-name="L20">
+  <text:list-item>
+    <text:p text:style-name="P20">How to use NeTEx for exchanging a
+    timetable?</text:p>
+  </text:list-item>
+  <text:list-item>
+    <text:p text:style-name="P20">How to implement IDs for a Stop Place
+    registry?</text:p>
+  </text:list-item>
+</text:list>
+<text:p text:style-name="First_20_paragraph">Expected outputs: -
+practical implementation guidance, - explicit citations, - abstention
+where evidence is insufficient.</text:p>

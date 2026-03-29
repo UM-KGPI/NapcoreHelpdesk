@@ -3,6 +3,8 @@
 This folder contains the C4 Web GUI container for NAPCORE Helpdesk.
 
 ## Features in current slice
+- Chat-style session UX with multi-turn history, per-turn evidence, and request IDs.
+- `Generation Profile` selector for deterministic grounded mode and LLM-ready backend mode.
 - Ask questions via `POST /api/v1/questions/answer`.
 - Inspect answer mode, confidence, citations, and trace IDs.
 - Route current answer to editorial queue via `POST /api/v1/editorial/queue`.
@@ -30,13 +32,24 @@ This folder contains the C4 Web GUI container for NAPCORE Helpdesk.
    `npm run build`
 
 ## API expectations
-- Backend default base URL is `http://localhost:8000/api/v1`.
+- Backend default base URL in local dev is `/api/v1` via Vite proxy to `http://localhost:8000/api/v1`.
 - Endpoints require a JWT bearer token.
 - `POST /questions/answer` also requires `X-Request-Id` (auto-generated in UI).
 - Health probes are available without auth: `GET /health/live`, `GET /health/ready`.
 
+`POST /questions/answer` accepts:
+- `sessionId`
+- `userId`
+- `standardsScope`
+- `generationProfile` (`deterministic-grounded` or `llm-ready`)
+
+Current backend behavior:
+- `deterministic-grounded` is always available.
+- `llm-ready` works when backend `LLM_ENABLED=True`; otherwise the backend falls back safely.
+
 ## Pilot operations
 - Local run quickstart: `../docs/testing/local-run-quickstart.md`
+- Console usage steps: `../docs/testing/console-usage-steps.md`
 - Scenario matrix and acceptance criteria: `../docs/testing/first-user-testing-pack.md`
 - Live session worksheet: `../docs/testing/day-1-execution-sheet.md`
 - Feedback issue form: `../.github/ISSUE_TEMPLATE/pilot-feedback.yml`

@@ -7,6 +7,8 @@ This folder contains the initial backend scaffold for NAPCORE Helpdesk.
 - Helpdesk app in `helpdesk/`.
 - Canonical FAQ persistence with versioning (`FAQEntry`, `FAQVersion`).
 - Retrieval and evidence audit persistence (`RetrievalEvent`, `AnswerEvidenceLink`).
+- Chat-session compatible answer orchestration keyed by `sessionId` / `userId`.
+- Deterministic grounded generation plus optional LLM-ready provider adapter with safe fallback.
 - DRF endpoints for:
   - `GET /api/v1/health/live`
   - `GET /api/v1/health/ready`
@@ -36,6 +38,21 @@ This folder contains the initial backend scaffold for NAPCORE Helpdesk.
 - `Authorization: Bearer <jwt-token>`
 - `X-Request-Id: <non-empty-id>` for `POST /api/v1/questions/answer`
 
+## Answer generation modes
+- `generationProfile=deterministic-grounded` uses the built-in grounded generator.
+- `generationProfile=llm-ready` attempts provider-backed generation when `LLM_ENABLED=True`.
+- If LLM generation fails, the service falls back to deterministic grounded generation.
+
+LLM settings are configured through:
+- `LLM_ENABLED`
+- `LLM_PROVIDER`
+- `LLM_API_BASE_URL`
+- `LLM_API_KEY`
+- `LLM_MODEL`
+- `LLM_TIMEOUT_SECONDS`
+- `LLM_MAX_TOKENS`
+- `LLM_TEMPERATURE`
+
 ## Build retrieval index from repository sources
 Run from `backend/`:
 
@@ -55,7 +72,17 @@ Add new profiles by creating additional `<profile>.yaml` files with:
 
 Repository allow-list is enforced via `ALLOWED_SOURCE_REPOSITORIES`.
 
+Multiple approved repositories can be ingested side-by-side, for example:
+- `https://github.com/NeTEx-CEN/NeTEx`
+- `https://github.com/NeTEx-CEN/test-Profile-Documentation`
+
+Store them as a comma-separated list in `ALLOWED_SOURCE_REPOSITORIES`.
+
 Each run records telemetry in `IndexRunMetric` and incremental state in `IndexedSourceFile`.
+
+Note for local SQLite:
+- `--prune` may hit SQLite parameter limits on very large repositories.
+- If that happens, run without `--prune` or use PostgreSQL for production-scale indexing.
 
 ## Scheduled incremental indexing
 Celery Beat runs `helpdesk.reindex_default_repository` daily. Configure:
@@ -77,6 +104,7 @@ Frontend Web GUI container docs: `../frontend/README.md`
 
 ## Operations automation
 - Local run quickstart: `../docs/testing/local-run-quickstart.md`
+- Console usage steps: `../docs/testing/console-usage-steps.md`
 - CI workflow: `../.github/workflows/ci.yml`
 - Security workflow: `../.github/workflows/security.yml`
 - Release workflow: `../.github/workflows/release.yml`

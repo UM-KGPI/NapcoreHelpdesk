@@ -17,7 +17,18 @@ All groups access a single shared helpdesk interface. The system maintains a str
 Standards implementers need fast, reliable guidance for topics such as NeTEx timetable exchange and Stop Place identifier design. Traditional documentation search is slow and inconsistent, while generic AI assistants risk uncited or incorrect answers.
 
 ## Proposed Solution
-Implement a GUI-based helpdesk using FAQ-first with RAG fallback:[^rag-fallback]
+Implement a grounded helpdesk that can evolve from search to chat while preserving provenance:[^rag-fallback]
+- Traditional keyword search remains useful for direct document lookup.
+- FAQ-first grounded Q and A handles recurring questions with canonical answers.
+- Editorial workflow and KPI views support governance and backlog promotion.
+- Chat-style sessions provide a more natural operator experience.
+- Optional LLM-ready generation can be introduced without relaxing evidence controls.
+
+## Evolution Path
+- Stage 1: keyword search over approved repositories.
+- Stage 2: simple FAQ-first and grounded Q and A interface.
+- Stage 3: editorial, metrics, and promotion workflows for operating the helpdesk.
+- Stage 4: chat session UX with deterministic and optional LLM-backed grounded generation.
 - FAQ-first: return approved canonical answers when confidence is high.
 - RAG fallback: retrieve evidence from approved GitHub repositories, then generate grounded answers with citations.
 - Abstention: if evidence is insufficient, return transparent insufficiency response instead of speculation.
@@ -49,14 +60,17 @@ Implement a GUI-based helpdesk using FAQ-first with RAG fallback:[^rag-fallback]
 ## Current Readiness
 Core artifacts are prepared:
 - Functional requirements
+- Local run and testing guides
 - RAG architecture design
+- Updated C4 architecture diagrams
 - Database model and migration schema
 - PlantUML diagram source and render target
+- Chat-style frontend and LLM-ready backend wiring
 
 ## Immediate Next Steps
-1. Finalize approved repository allowlist and ingestion profile.
-2. Implement Django/DRF FAQ-first orchestration plus RAG fallback API.
-3. Configure Django Admin editorial workflow and publication gates.
-4. Run pilot scenarios and measure KPI targets.
+1. Complete pilot testing across chat, editorial, and promotion workflows.
+2. Evaluate grounded LLM mode against deterministic fallback behavior.
+3. Refine companion repository ingestion profiles.
+4. Use pilot evidence to decide production hardening priorities.
 
 [^rag-fallback]: RAG fallback means that when no high-confidence FAQ answer is available, the system retrieves relevant source chunks and then generates an answer grounded in that retrieved evidence.

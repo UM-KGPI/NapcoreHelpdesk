@@ -30,6 +30,17 @@ type BoardStatus = (typeof BOARD_STATUSES)[number];
 type BoardReason = (typeof BOARD_REASONS)[number];
 type BoardPriority = (typeof BOARD_PRIORITIES)[number];
 
+type ChatRole = "user" | "assistant";
+
+interface ChatTurn {
+  id: string;
+  role: ChatRole;
+  text: string;
+  createdAt: string;
+  answer?: AnswerResponse;
+  requestId?: string;
+}
+
 function createRequestId(): string {
   return `req-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -67,6 +78,10 @@ export default function App() {
   const [boardPageSize, setBoardPageSize] = useState(10);
   const [metricsWindowDays, setMetricsWindowDays] = useState(30);
   const [metricsSlaHours, setMetricsSlaHours] = useState(72);
+  const [chatPrompt, setChatPrompt] = useState("How can I validate a NeTEx timetable profile before publishing?");
+  const [chatTurns, setChatTurns] = useState<ChatTurn[]>([]);
+  const [chatProfile, setChatProfile] = useState<"deterministic-grounded" | "llm-ready">("deterministic-grounded");
+  const [chatApplyScope, setChatApplyScope] = useState(true);
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,6 +97,78 @@ export default function App() {
       }
       return [...prev, scope];
     });
+  }
+
+  function createSessionId(): string {
+    return `sess-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  }
+
+  async function onSendChat(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    const prompt = chatPrompt.trim();
+    if (!prompt) {
+      return;
+    }
+
+    const requestId = createRequestId();
+    setChatTurns((prev) => [
+      ...prev,
+      {
+        id: `u-${requestId}`,
+        role: "user",
+        text: prompt,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+
+    setBusy(true);
+    setError(null);
+
+    try {
+      const result = await client.answerQuestion(
+        {
+          question: prompt,
+          sessionId,
+          userId,
+          standardsScope: chatApplyScope ? standardsScope : undefined,
+          language: "en",
+          generationProfile: chatProfile,
+          options: {
+            maxCitations: 5,
+            allowAbstain: true,
+            faqMinConfidence: 0.85,
+            retrievalTopK: 6,
+            retrievalMinScore: 0.62,
+          },
+        },
+        requestId
+      );
+
+      setAnswerResult(result);
+      setQuestion(prompt);
+      setEditorialResult(null);
+      setChatTurns((prev) => [
+        ...prev,
+        {
+          id: `a-${requestId}`,
+          role: "assistant",
+          text: result.answer,
+          createdAt: new Date().toISOString(),
+          answer: result,
+          requestId: result.trace.requestId,
+        },
+      ]);
+      setChatPrompt("");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function onResetChatSession(): void {
+    setChatTurns([]);
+    setSessionId(createSessionId());
   }
 
   async function onAskQuestion(event: FormEvent<HTMLFormElement>): Promise<void> {
@@ -254,6 +341,79 @@ export default function App() {
       </section>
 
       <main className="dashboard">
+        <section className="panel chat-panel">
+          <h2>Chat Session</h2>
+          <p className="muted">Multi-turn UX with per-turn evidence, trace IDs, and session continuity. LLM-ready profile can be enabled in backend later.</p>
+
+          <div className="grid-three">
+            <label>
+              Session ID
+              <input value={sessionId} onChange={(event) => setSessionId(event.target.value)} />
+            </label>
+            <label>
+              User ID
+              <input value={userId} onChange={(event) => setUserId(event.target.value)} />
+            </label>
+            <label>
+              Generation Profile
+              <select value={chatProfile} onChange={(event) => setChatProfile(event.target.value as typeof chatProfile)}>
+                <option value="deterministic-grounded">deterministic-grounded (active)</option>
+                <option value="llm-ready">llm-ready (wiring pending backend)</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="chat-log" aria-live="polite">
+            {chatTurns.length === 0 && <p className="muted">Start a conversation. The client remembers turn history in this session.</p>}
+            {chatTurns.map((turn) => (
+              <article key={turn.id} className={`chat-bubble ${turn.role === "user" ? "chat-user" : "chat-assistant"}`}>
+                <p className="chat-role">{turn.role}</p>
+                <p>{turn.text}</p>
+                {turn.answer && (
+                  <>
+                    <p className="muted tiny">
+                      mode: {turn.answer.mode} · confidence: {turn.answer.confidence.toFixed(2)} · reviewRequired: {String(turn.answer.reviewRequired)}
+                    </p>
+                    {turn.answer.citations.length > 0 && (
+                      <ul>
+                        {turn.answer.citations.map((citation) => (
+                          <li key={`${turn.id}-${citation.chunkId}`}>
+                            <a href={citation.repositoryUrl} target="_blank" rel="noreferrer">{citation.label ?? citation.sourcePath}</a>
+                            <span className="muted"> · {citation.sourcePath} · {citation.commitSha.slice(0, 7)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <p className="muted tiny">requestId: {turn.requestId ?? turn.answer.trace.requestId}</p>
+                  </>
+                )}
+              </article>
+            ))}
+          </div>
+
+          <form onSubmit={onSendChat} className="stack">
+            <label>
+              Message
+              <textarea
+                value={chatPrompt}
+                onChange={(event) => setChatPrompt(event.target.value)}
+                rows={3}
+                placeholder="Ask a standards question..."
+                required
+              />
+            </label>
+
+            <div className="chat-actions">
+              <label className="checkbox-label">
+                <input type="checkbox" checked={chatApplyScope} onChange={(event) => setChatApplyScope(event.target.checked)} />
+                apply selected standards scope ({standardsScope.join(", ") || "none"})
+              </label>
+              <button type="submit" disabled={busy || !token || !chatPrompt.trim()}>Send</button>
+              <button type="button" onClick={onResetChatSession} disabled={busy}>New Session</button>
+            </div>
+          </form>
+        </section>
+
         <section className="panel">
           <h2>Ask Question</h2>
           <form onSubmit={onAskQuestion} className="stack">

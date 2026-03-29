@@ -17,72 +17,91 @@ This summary is intended as the base narrative for a future PPTX or PDF presenta
 ## Slide 3 - Scope
 - Domain scope: Transmodel, NeTEx, SIRI, OJP/OpRa, DATEX II.
 - Priority source: NeTEx-CEN/NeTEx and selected companion repositories.
-- User channel: GUI-based Q and A for developers and practitioners.
+- User channel: operator console and chat-style Q and A for developers and practitioners.
 
-## Slide 4 - Core Approach
+## Slide 4 - Evolution Of Helpdesk Implementations
+- Stage 1: traditional keyword search across standards documents.
+- Stage 2: simple grounded Q and A with FAQ-first orchestration.
+- Stage 3: editorial and KPI console for governance and promotion.
+- Stage 4: chat session UX with deterministic and LLM-ready generation profiles.
+- The trust model stays fixed across all stages: allow-listed repositories and citations only.
+
+## Slide 5 - Why The Evolution Matters
+- Search alone is too manual for recurring implementation questions.
+- FAQ-first gives fast canonical answers for known intents.
+- Editorial workflow turns runtime demand into curated knowledge.
+- Chat UX improves usability while keeping evidence grounding.
+
+## Slide 6 - Core Approach
 - Architecture: FAQ-first with RAG fallback.[^rag-fallback]
 - FAQ-first path: if a high-confidence approved FAQ exists, return canonical answer.
 - RAG fallback path: retrieve approved source chunks, then generate grounded answer with citations.
+- Generation profile can remain deterministic or switch to LLM-ready mode.
 - If evidence is insufficient: abstain with transparent response.
 
-## Slide 5 - Trust And Safety Principles
+## Slide 7 - Trust And Safety Principles
 - Knowledge boundary: only approved GitHub repositories are allowed.
 - No unsupported claims: answers must be backed by retrieved evidence.
 - Citation gate: publication blocked if citations are missing.
 - Editorial gate: draft, review, approve, publish states before FAQ publication.
 
-## Slide 6 - Functional Requirements Highlights
+## Slide 8 - Functional Requirements Highlights
 - FR-001: developer question answering through GUI.
 - FR-004: ingestion and indexing of approved GitHub sources.
 - FR-005: retrieval and grounded generation.
 - FR-006: anti-hallucination and knowledge-boundary enforcement.
 - FR-002 and FR-003: curation workflow and recurring-question promotion.
 
-## Slide 7 - Data Model Logic
+## Slide 9 - Data Model Logic
 - Source governance: approved_repositories -> source_documents -> source_chunks.
 - FAQ lifecycle: faq_entries -> faq_versions -> review_events.
 - Runtime telemetry: question_events -> retrieval_events.
 - Evidence mapping: answer_evidence_links ties answers to exact source_chunks.
 
-## Slide 8 - Why This Prevents Hallucinations
+## Slide 10 - Why This Prevents Hallucinations
 - Retrieval constrained to approved repositories.
 - Generation constrained to retrieved context.
 - Evidence links provide auditable claim-to-source mapping.
 - Unsupported answers are blocked or abstained.
 
-## Slide 9 - User Experience Flow
-- User asks a question in GUI.
+## Slide 11 - User Experience Flow
+- User asks a question in chat session or operator console.
 - System attempts FAQ match.
 - If needed, system performs RAG retrieval plus generation.
-- Response includes references and confidence signal.
+- Response includes references, confidence signal, and request trace.
 - User feedback is captured for quality improvement.
 
-## Slide 10 - Operations And Governance
+## Slide 12 - Current Product State
+- Chat-style multi-turn UX is now implemented in the frontend.
+- Backend supports deterministic grounded answers and optional LLM-ready generation.
+- Approved companion repositories can be indexed alongside NeTEx-CEN/NeTEx.
+- Editorial board, KPI metrics, and promotion candidates remain part of the same workflow.
+
+## Slide 13 - Operations And Governance
 - Review workflow records reviewer identity and decisions.
 - Internal editorial console is provided via Django Admin.
 - Promotion rule identifies recurring intents for curated FAQ backlog.
 - Re-indexing handles repository updates and standards drift.
 - Audit trail supports quality and compliance reviews.
 
-## Slide 11 - MVP Success Metrics
+## Slide 14 - MVP Success Metrics
 - 100 percent citation coverage for published FAQs.
 - 0 percent unsupported-claim publication rate.
 - P95 answer latency target: 8 seconds or less.
 - Retrieval success target on covered intents: at least 90 percent.
 
-## Slide 12 - Current Artifacts In Repository
-- Functional requirements: docs/requirements/functional-requirements.md
-- RAG architecture: docs/architecture/rag-architecture.md
-- Database logic narrative: docs/architecture/database-logic.md
-- Technology baseline: Django 5 + DRF + Django Admin + Celery/Redis.
-- PlantUML database model: db/database-er-diagram.puml
-- SQL schema: db/migrations/001_initial_schema.sql
+## Slide 15 - Current Artifacts In Repository
+- Functional requirements and first-user testing pack.
+- Local run guide and console usage guide.
+- Updated C4 architecture and RAG/database documentation.
+- Technology baseline: Django 5 + DRF backend, React/Vite frontend.
+- PlantUML and exported SVG assets.
 
-## Slide 13 - Next Steps
-- Finalize repository allowlist and ingestion profile.
-- Implement Django/DRF API and orchestration logic for FAQ-first and RAG fallback.
-- Configure Django Admin editorial workflow and publish gates.
-- Run pilot scenarios and validate metrics.
+## Slide 16 - Next Steps
+- Complete pilot scenarios across chat, editorial, and promotion flows.
+- Evaluate LLM-ready mode against deterministic fallback.
+- Refine companion-repository ingestion profiles.
+- Decide production hardening steps from pilot evidence.
 
 ## Optional Appendix - Example User Questions
 - How to use NeTEx for exchanging a timetable?

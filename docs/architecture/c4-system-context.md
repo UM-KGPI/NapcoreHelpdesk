@@ -14,9 +14,9 @@ It shows who uses the helpdesk and which external systems it depends on.
 - Ticketing Agent
 
 ## Key messages
-1. All stakeholder groups use one shared helpdesk interface.
-2. The helpdesk uses approved GitHub repositories as knowledge sources.
-3. LLM generation is constrained by retrieved evidence, not open-ended model memory.
+1. All stakeholder groups use one shared chat-style helpdesk interface.
+2. The helpdesk uses approved GitHub repositories, including allowlisted companion repositories, as knowledge sources.
+3. LLM generation is optional and constrained by retrieved evidence, not open-ended model memory.
 4. If evidence is insufficient, the system abstains rather than speculating.
 
 ## Discussion prompts for non-IT stakeholders

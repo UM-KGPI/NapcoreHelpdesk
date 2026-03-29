@@ -2,6 +2,7 @@ from collections import defaultdict
 from datetime import timedelta
 from uuid import uuid4
 
+from django.conf import settings
 from django.db import connection
 from django.db.models import Q
 from django.utils import timezone
@@ -23,6 +24,7 @@ from helpdesk.services.evidence_mapper import map_evidence
 from helpdesk.services.event_logger import log_question_event
 from helpdesk.services.faq_matcher import match_faq
 from helpdesk.services.grounded_generator import generate_answer
+from helpdesk.services.llm_generator import LLMGenerationError, generate_answer_llm
 from helpdesk.services.policy_guard import evaluate_policy
 from helpdesk.services.retrieval_gateway import retrieve_chunks
 from helpdesk.services.retrieval_event_logger import log_retrieval_events
@@ -160,6 +162,7 @@ class QuestionAnswerView(APIView):
         options = data.get("options", {})
         question = data["question"].strip()
         scope = data.get("standardsScope", [])
+        generation_profile = data.get("generationProfile", "deterministic-grounded")
         allow_abstain = options.get("allowAbstain", True)
         faq_min_confidence = options.get("faqMinConfidence", 0.85)
         max_citations = options.get("maxCitations", 5)
@@ -206,7 +209,14 @@ class QuestionAnswerView(APIView):
                 review_required = False
                 answer_text = "I do not have sufficient approved-source evidence to answer this safely."
             else:
-                generated = generate_answer(question=question, chunks=chunks)
+                use_llm = generation_profile == "llm-ready" and settings.LLM_ENABLED
+                if use_llm:
+                    try:
+                        generated = generate_answer_llm(question=question, chunks=chunks)
+                    except LLMGenerationError:
+                        generated = generate_answer(question=question, chunks=chunks)
+                else:
+                    generated = generate_answer(question=question, chunks=chunks)
                 answer_text = generated["answer"]
                 confidence = generated["confidence"]
                 review_required = generated["review_required"]

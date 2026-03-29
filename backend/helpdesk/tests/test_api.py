@@ -4,10 +4,12 @@ import datetime as dt
 import json
 import copy
 from pathlib import Path
+from unittest.mock import patch
 
 import jwt
 import yaml
 from django.conf import settings
+from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 from jsonschema import Draft202012Validator, RefResolver
@@ -18,6 +20,7 @@ from rest_framework.test import APIRequestFactory
 from rest_framework.test import APITestCase
 
 from helpdesk.api.exceptions import custom_exception_handler
+from helpdesk.services.llm_generator import LLMGenerationError
 from helpdesk.models import (
     AnswerEvidenceLink,
     EditorialQueueItem,
@@ -209,6 +212,69 @@ class HelpdeskApiTests(APITestCase):
             AnswerEvidenceLink.objects.filter(question_event_id=question_event_id).count(),
             1,
         )
+
+    @override_settings(LLM_ENABLED=True)
+    @patch("helpdesk.api.views.generate_answer_llm")
+    def test_answer_uses_llm_ready_profile_when_enabled(self, llm_mock):
+        """Ensure llm-ready profile uses LLM generator when feature flag is enabled."""
+
+        llm_mock.return_value = {
+            "answer": "LLM grounded answer with [E1] citation marker.",
+            "confidence": 0.88,
+            "review_required": False,
+            "provider": "openai-compatible",
+            "model": "gpt-4o-mini",
+        }
+
+        response = self.client.post(
+            reverse("answer-question"),
+            {
+                "question": "Explain OJP operational exchange setup sequence.",
+                "standardsScope": ["OJP/OpRa"],
+                "generationProfile": "llm-ready",
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-llm-ready-001",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_matches_schema("AnswerResponse", response.data)
+        self.assertEqual(response.data["mode"], "rag")
+        self.assertIn("LLM grounded answer", response.data["answer"])
+        self.assertTrue(llm_mock.called)
+
+    @override_settings(LLM_ENABLED=True)
+    @patch("helpdesk.api.views.generate_answer")
+    @patch("helpdesk.api.views.generate_answer_llm")
+    def test_answer_falls_back_to_deterministic_when_llm_errors(self, llm_mock, deterministic_mock):
+        """Ensure llm-ready path gracefully falls back when LLM provider fails."""
+
+        llm_mock.side_effect = LLMGenerationError("timeout")
+        deterministic_mock.return_value = {
+            "answer": "Deterministic fallback answer.",
+            "confidence": 0.77,
+            "review_required": True,
+        }
+
+        response = self.client.post(
+            reverse("answer-question"),
+            {
+                "question": "Explain OJP operational exchange setup sequence.",
+                "standardsScope": ["OJP/OpRa"],
+                "generationProfile": "llm-ready",
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-llm-fallback-001",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_matches_schema("AnswerResponse", response.data)
+        self.assertEqual(response.data["mode"], "rag")
+        self.assertEqual(response.data["answer"], "Deterministic fallback answer.")
+        self.assertTrue(llm_mock.called)
+        self.assertTrue(deterministic_mock.called)
 
     def test_promotion_candidates_returns_aggregated_items(self):
         """Ensure repeated questions aggregate into promotion candidates."""

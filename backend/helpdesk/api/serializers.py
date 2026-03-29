@@ -34,6 +34,11 @@ class AnswerRequestSerializer(serializers.Serializer):
         allow_empty=True,
     )
     language = serializers.CharField(required=False, default="en")
+    generationProfile = serializers.ChoiceField(
+        choices=["deterministic-grounded", "llm-ready"],
+        required=False,
+        default="deterministic-grounded",
+    )
     options = AnswerOptionsSerializer(required=False)
 
 

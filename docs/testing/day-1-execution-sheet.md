@@ -5,7 +5,7 @@ Use this live during pilot execution.
 ## Session metadata
 - Date: 29.3.2026
 - Environment URL: http://localhost:5173
-- Build/commit: 8ef5431e0f4a
+- Build/commit: a2bc13ffd331
 - Facilitator: Andrej
 - Note taker:
 

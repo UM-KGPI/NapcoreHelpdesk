@@ -7,14 +7,14 @@ This view explains how the system is split into deployable/runtime containers.
 It helps align architecture decisions across product, engineering, and governance teams.
 
 ## Containers explained in plain language
-1. Web GUI: where stakeholders ask questions and see answers/references.
-2. Question API / Orchestrator: decides FAQ-first vs RAG fallback path.
+1. Web GUI: where stakeholders run chat sessions, ask questions, and see answers/references.
+2. Question API / Orchestrator: decides FAQ-first vs RAG fallback path and accepts session-aware requests.
 3. FAQ Service: returns approved canonical answers.
-4. Retrieval Service: finds relevant source chunks from index.
-5. Generation and Guardrails: creates grounded answer and enforces policy checks.
+4. Retrieval Service: finds relevant source chunks from hybrid lexical and vector index.
+5. Generation and Guardrails: creates grounded answer, optionally calls LLM provider, and enforces policy checks.
 6. Editorial Workflow Service: handles review and publication approvals.
-7. Ingestion Worker: imports and indexes allowlisted GitHub content.
-8. PostgreSQL: stores FAQs, events, review records, and evidence links.
+7. Ingestion Worker: imports and indexes allowlisted GitHub content, including companion documentation repositories.
+8. Application Database: stores FAQs, events, review records, and evidence links.
 9. Vector Index: stores embeddings for retrieval.
 
 ## Container to technology mapping (v1 baseline)
@@ -30,7 +30,7 @@ It helps align architecture decisions across product, engineering, and governanc
 
 ## Key messages
 1. FAQ-first lowers latency and improves consistency for known questions.
-2. RAG fallback is isolated behind retrieval and guardrail services.
+2. RAG fallback is isolated behind retrieval and generation/guardrail services.
 3. Trust controls are architectural, not optional runtime behavior.
 4. Editorial workflow is a first-class container, not an afterthought.
 

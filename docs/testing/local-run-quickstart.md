@@ -22,6 +22,10 @@ The local SQLite environment file is already prepared at:
 Important active setting:
 - `DJANGO_USE_SQLITE=True`
 
+Current source setup can include multiple allow-listed repositories, for example:
+- `https://github.com/NeTEx-CEN/NeTEx`
+- `https://github.com/NeTEx-CEN/test-Profile-Documentation`
+
 ## 2. Apply backend migrations
 From repository root:
 
@@ -70,6 +74,7 @@ In the frontend:
 - paste JWT token
 - use default API base URL: `/api/v1`
 - run these checks:
+  - Send one message in `Chat Session` and confirm turn history with citations
   - Ask a known FAQ question
   - Load Editorial Board
   - Load KPI metrics
@@ -104,7 +109,19 @@ make frontend-build
 cd backend && ../.venv/bin/python manage.py test -v 1
 ```
 
-## 8. First-user testing pack
+## 8. Optional LLM-ready mode
+To enable provider-backed generation in `Chat Session`:
+
+1. Edit `backend/.env` and set:
+  - `LLM_ENABLED=True`
+  - `LLM_API_KEY=<your key>`
+  - optionally override `LLM_API_BASE_URL`, `LLM_MODEL`, `LLM_TIMEOUT_SECONDS`, `LLM_MAX_TOKENS`, `LLM_TEMPERATURE`
+2. Restart backend.
+3. In frontend `Chat Session`, choose `llm-ready` as `Generation Profile`.
+
+If provider configuration is missing or the request fails, backend falls back to deterministic grounded generation.
+
+## 9. First-user testing pack
 Console usage steps:
 - `docs/testing/console-usage-steps.md`
 
@@ -117,7 +134,7 @@ Live worksheet:
 Feedback template:
 - `.github/ISSUE_TEMPLATE/pilot-feedback.yml`
 
-## 9. When to switch to PostgreSQL
+## 10. When to switch to PostgreSQL
 Switch from SQLite to PostgreSQL when:
 - local flow is already working
 - you want production-like validation
@@ -126,7 +143,7 @@ Switch from SQLite to PostgreSQL when:
 PostgreSQL runbook:
 - `docs/architecture/postgresql-pgvector-runbook.md`
 
-## 10. Related docs
+## 11. Related docs
 - `backend/README.md`
 - `frontend/README.md`
 - `docs/architecture/deployment-operations-checklist.md`

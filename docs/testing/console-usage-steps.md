@@ -4,6 +4,7 @@ This guide describes the operator flow in the FAQ-first and Evidence-grounded Q&
 
 ## Goal
 Use the console to:
+- run multi-turn chat sessions with per-turn evidence and trace
 - run a grounded answer
 - route low-confidence outcomes to editorial queue
 - process queue transitions
@@ -41,7 +42,23 @@ In the `Connection` panel:
 Expected result:
 - buttons become usable (not disabled by missing token)
 
-## Step 2. Run question orchestration
+## Step 2. Use chat session UX
+In the `Chat Session` panel:
+- keep or edit `Session ID` and `User ID`
+- select `Generation Profile`:
+  - `deterministic-grounded` for current default backend mode
+  - `llm-ready` when backend `LLM_ENABLED=True`
+- type a message and click `Send`
+
+Expected result:
+- conversation history appears with user and assistant turns
+- assistant turns include mode, confidence, citations, and request id
+- `New Session` resets chat history and rotates session id
+
+Note:
+- If `llm-ready` is selected but backend LLM configuration is unavailable or fails, the backend falls back to deterministic grounded generation.
+
+## Step 3. Run question orchestration
 In the `Ask Question` panel:
 - keep or edit the sample question
 - set `Session ID` and `User ID`
@@ -53,7 +70,7 @@ Expected result:
 - confidence and citations are shown
 - trace includes a `questionEventId`
 
-## Step 3. Route answer to editorial queue
+## Step 4. Route answer to editorial queue
 In `Editorial Routing`:
 - choose `Reason` and `Priority`
 - click `Queue for Editorial`
@@ -62,7 +79,7 @@ Expected result:
 - `Editorial Queue Result` appears with a `queueItemId`
 - `queueItemId` is copied into the `Editorial Transition` input
 
-## Step 4. Load editorial board
+## Step 5. Load editorial board
 In `Editorial Board`:
 - optionally set filters (`Status`, `Reason`, `Priority`, `Search`, `pageSize`)
 - click `Load Board`
@@ -72,7 +89,7 @@ Expected result:
 - each row shows status, priority, reason, question, request id, queue item id
 - row action buttons reflect role-based `allowedActions`
 
-## Step 5. Apply transition
+## Step 6. Apply transition
 Use one of two methods.
 
 Method A: Inline board actions
@@ -88,7 +105,7 @@ Expected result:
 - transition result panel updates
 - board reloads with new status
 
-## Step 6. Load KPI metrics
+## Step 7. Load KPI metrics
 In `Editorial Board` KPI section:
 - set `metricsWindowDays` and `metricsSlaHours`
 - click `Load Metrics`
@@ -101,7 +118,7 @@ Expected result:
   - By status
   - Aging buckets (`lt24h`, `24to72h`, `gt72h`)
 
-## Step 7. Load promotion candidates
+## Step 8. Load promotion candidates
 In `Promotion Candidates`:
 - set `windowDays`, `minCount`, and `onlyUnresolved`
 - click `Load Candidates`
@@ -112,12 +129,13 @@ Expected result:
 ## Recommended operator sequence
 For first-user testing, use this order:
 1. Connect with token
-2. Run Orchestration
-3. Queue for Editorial
-4. Load Board
-5. Apply transition
-6. Load Metrics
-7. Load Candidates
+2. Run Chat Session prompt
+3. Run Orchestration
+4. Queue for Editorial
+5. Load Board
+6. Apply transition
+7. Load Metrics
+8. Load Candidates
 
 ## Troubleshooting
 If you see `Load failed`:

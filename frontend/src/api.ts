@@ -15,6 +15,7 @@ export interface AnswerRequest {
   userId?: string;
   standardsScope?: StandardsScope[];
   language?: string;
+  generationProfile?: "deterministic-grounded" | "llm-ready";
   options?: {
     maxCitations?: number;
     allowAbstain?: boolean;

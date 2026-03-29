@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ $# -ne 3 ]]; then
-  echo "Usage: bash scripts/render-slides.sh <pdf|pptx> <input-md> <output-file>" >&2
+  echo "Usage: bash scripts/render-slides.sh <pdf|pptx|odp> <input-md> <output-file>" >&2
   exit 1
 fi
 
@@ -10,8 +10,8 @@ format="$1"
 input_md="$2"
 output_file="$3"
 
-if [[ "$format" != "pdf" && "$format" != "pptx" ]]; then
-  echo "Error: format must be 'pdf' or 'pptx'." >&2
+if [[ "$format" != "pdf" && "$format" != "pptx" && "$format" != "odp" ]]; then
+  echo "Error: format must be 'pdf', 'pptx', or 'odp'." >&2
   exit 1
 fi
 
@@ -46,9 +46,12 @@ if [[ "$format" == "pdf" ]]; then
 
   echo "Rendering PDF slides with $pdf_engine"
   pandoc "$input_md" -t beamer --pdf-engine="$pdf_engine" -o "$output_file"
-else
+elif [[ "$format" == "pptx" ]]; then
   echo "Rendering PPTX slides"
   pandoc "$input_md" -t pptx -o "$output_file"
+else
+  echo "Rendering ODP slides"
+  pandoc "$input_md" -t opendocument -o "$output_file"
 fi
 
 echo "Created $output_file"

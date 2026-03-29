@@ -1,9 +1,6 @@
-# C4 Orchestrator Components (Level 3 - Planned Next)
+# C4 Orchestrator Components (Level 3)
 
 Diagram source: [c4-orchestrator-components.puml](docs/architecture/c4-orchestrator-components.puml)
-
-## Status
-This is a pre-implementation draft to guide Level 3 work before coding begins.
 
 ## Why this diagram matters
 It decomposes the Question API / Orchestrator into components so implementation tasks can be assigned clearly.
@@ -12,7 +9,7 @@ It decomposes the Question API / Orchestrator into components so implementation 
 1. Request Router: validates incoming request and coordinates the pipeline.
 2. FAQ Matcher: attempts high-confidence canonical FAQ answer first.
 3. Retrieval Gateway: performs fallback retrieval from allowlisted indexed sources.
-4. Grounded Generator: creates answer from retrieved evidence.
+4. Generation Adapter: creates answer from retrieved evidence using deterministic grounded logic or optional provider-backed LLM mode.
 5. Policy Guard: blocks unsupported claims and enforces abstention/citation rules.
 6. Evidence Mapper: links answer claims to source chunks.
 7. Event Logger: stores question and retrieval telemetry.
@@ -24,12 +21,6 @@ It decomposes the Question API / Orchestrator into components so implementation 
 3. Fallback behavior is structured and testable.
 4. Component ownership can be split across implementation teams.
 
-## Recommended pre-implementation checks
-1. Confirm confidence and retrieval thresholds.
-2. Confirm policy guard fail behavior (abstain vs hard fail).
-3. Confirm evidence-link minimum for non-abstain answers.
-4. Confirm editorial routing criteria and priority model.
-
 ## Relationship to implementation planning
 Use this level as the basis for:
 - API handler boundaries,
@@ -40,7 +31,7 @@ Use this level as the basis for:
 1. Request Router -> `backend/helpdesk/api/views/questions.py`
 2. FAQ Matcher -> `backend/helpdesk/services/faq_matcher.py`
 3. Retrieval Gateway -> `backend/helpdesk/services/retrieval_gateway.py`
-4. Grounded Generator -> `backend/helpdesk/services/grounded_generator.py`
+4. Generation Adapter -> `backend/helpdesk/services/grounded_generator.py` + `backend/helpdesk/services/llm_generator.py`
 5. Policy Guard -> `backend/helpdesk/services/policy_guard.py`
 6. Evidence Mapper -> `backend/helpdesk/services/evidence_mapper.py`
 7. Event Logger -> `backend/helpdesk/services/event_logger.py`
@@ -53,9 +44,9 @@ Use this level as the basis for:
 2. Retrieval Gateway
 	- Input: normalized question, scope filters, top-k, min score.
 	- Output: ranked chunk set with repository, path, commit, chunk id.
-3. Grounded Generator
+3. Generation Adapter
 	- Input: user question + retrieved chunks.
-	- Output: draft answer text + provisional claim-to-chunk references.
+	- Output: draft answer text via deterministic grounded generation or LLM-ready provider call.
 4. Policy Guard
 	- Input: draft answer + chunk set + citation list.
 	- Output: pass/fail, abstention reason, review-required flag.

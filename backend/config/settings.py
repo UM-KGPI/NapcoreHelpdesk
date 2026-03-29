@@ -15,6 +15,14 @@ env = environ.Env(
     INDEX_SCHEDULE_REPO_URL=(str, ""),
     INDEX_SCHEDULE_REPO_PATH=(str, ""),
     INDEX_SCHEDULE_PROFILE=(str, "netex"),
+    LLM_ENABLED=(bool, False),
+    LLM_PROVIDER=(str, "openai-compatible"),
+    LLM_API_BASE_URL=(str, "https://api.openai.com/v1"),
+    LLM_API_KEY=(str, ""),
+    LLM_MODEL=(str, "gpt-4o-mini"),
+    LLM_TIMEOUT_SECONDS=(int, 20),
+    LLM_MAX_TOKENS=(int, 500),
+    LLM_TEMPERATURE=(float, 0.2),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -120,6 +128,15 @@ ALLOWED_SOURCE_REPOSITORIES = {
 INDEX_SCHEDULE_REPO_URL = env("INDEX_SCHEDULE_REPO_URL").strip()
 INDEX_SCHEDULE_REPO_PATH = env("INDEX_SCHEDULE_REPO_PATH").strip()
 INDEX_SCHEDULE_PROFILE = env("INDEX_SCHEDULE_PROFILE", default="netex").strip() or "netex"
+
+LLM_ENABLED = env("LLM_ENABLED")
+LLM_PROVIDER = env("LLM_PROVIDER").strip() or "openai-compatible"
+LLM_API_BASE_URL = env("LLM_API_BASE_URL").strip() or "https://api.openai.com/v1"
+LLM_API_KEY = env("LLM_API_KEY").strip()
+LLM_MODEL = env("LLM_MODEL").strip() or "gpt-4o-mini"
+LLM_TIMEOUT_SECONDS = env("LLM_TIMEOUT_SECONDS")
+LLM_MAX_TOKENS = env("LLM_MAX_TOKENS")
+LLM_TEMPERATURE = env("LLM_TEMPERATURE")
 
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://localhost:6379/1")

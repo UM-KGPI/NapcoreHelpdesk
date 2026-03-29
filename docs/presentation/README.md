@@ -14,11 +14,15 @@ From repository root:
 
 - `make slides-pdf`
 - `make slides-pptx`
+- `make slides-odp`
 
 ## Requirements
-- `pandoc` for both PDF and PPTX outputs.
+- `pandoc` for PDF, PPTX, and ODP outputs.
 - For PDF: one of `xelatex`, `lualatex`, or `pdflatex`.
 
 ## Manual command
 - `bash scripts/render-slides.sh pdf docs/presentation/napcore-helpdesk-presentation-pandoc.md dist/napcore-helpdesk-presentation.pdf`
-- `bash scripts/render-slides.sh pptx docs/presentation/napcore-helpdesk-presentation-pandoc.md dist/napcore-helpdesk-presentation.pptx`
+- `bash scripts/render-slides.sh pptx docs/presentation/napcore-helpdesk-presentation-pandoc-with-diagrams.md dist/napcore-helpdesk-presentation.pptx`
+- `bash scripts/render-slides.sh odp docs/presentation/napcore-helpdesk-presentation-pandoc-with-diagrams.md dist/napcore-helpdesk-presentation.odp`
+
+`odp` is the OpenDocument Presentation output format used for ODF-compatible presentation tools.

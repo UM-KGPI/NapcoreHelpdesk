@@ -1,5 +1,5 @@
 ---
-title: "NAPCORE Helpdesk: Trusted FAQ + RAG Architecture"
+title: "NAPCORE Helpdesk: From Search To Grounded Chat Helpdesk"
 subtitle: "Presentation Draft"
 author: "NAPCORE Helpdesk Team"
 date: "2026-03-28"
@@ -9,9 +9,9 @@ colorlinks: true
 
 # Problem And Goal
 
-- Need a trustworthy helpdesk for multimodal standards implementation.
-- Main risk is hallucinated or uncited AI guidance.
-- Goal is grounded answers with traceable references.
+- Need a trusted answer layer for multimodal standards implementation.
+- Main risk is fast but uncited guidance that creates delivery risk.
+- Goal is practical answers with traceable references and controlled escalation.
 
 # System Context (C4 Level 1)
 
@@ -39,25 +39,42 @@ colorlinks: true
 
 - Standards: Transmodel, NeTEx, SIRI, OJP/OpRa, DATEX II.
 - Priority source: NeTEx-CEN/NeTEx and approved companion repositories.
-- User channel: GUI-based technical Q and A.
+- User channel: one operator console with a chat-style helpdesk experience.
+
+# Evolution Of Helpdesk Implementations
+
+- Stage 1: keyword search over standards documents.
+- Stage 2: grounded Q and A with FAQ-first orchestration.
+- Stage 3: editorial workflow, routing, and KPI visibility.
+- Stage 4: chat-style sessions ready for deterministic and LLM-backed generation.
+- The trust model stays fixed: allow-listed repositories, citations, and review gates.
+
+# Why The Evolution Matters
+
+- Search helps lookup, but not decision-ready guidance.
+- FAQ-first gives low-latency canonical answers for recurring issues.
+- Editorial workflow converts runtime demand into governed knowledge.
+- Chat sessions improve usability without weakening provenance.
+- Companion repositories expand coverage without relaxing the trust boundary.
 
 # Core Approach
 
 - FAQ-first with RAG fallback.[^rag-fallback]
-- FAQ-first: return approved canonical answers when confidence is high.
-- RAG fallback: retrieve source chunks then generate grounded answer.
-- If evidence is insufficient, abstain explicitly.
+- FAQ-first: return approved answers when confidence is high.
+- RAG fallback: retrieve source chunks, then generate a grounded answer.
+- Generation profiles: deterministic-grounded now, LLM-ready when configured.
+- If evidence is weak, abstain explicitly.
 
 # Trust And Safety
 
-- Repository allowlist enforces knowledge boundary.
-- Generation limited to retrieved evidence.
+- Repository allowlist enforces the knowledge boundary.
+- Generation is limited to retrieved evidence.
 - Citation gate blocks uncited publication.
-- Editorial gate enforces draft, review, approve, publish states.
+- Editorial gate controls draft, review, approve, and publish states.
 
 # Functional Requirements Highlights
 
-- FR-001: developer question answering in GUI.
+- FR-001: question answering through the helpdesk UI.
 - FR-004: ingestion and indexing of approved GitHub sources.
 - FR-005: retrieval and grounded generation.
 - FR-006: anti-hallucination and boundary enforcement.
@@ -79,11 +96,26 @@ colorlinks: true
 
 # User Experience Flow
 
-- User submits question in GUI.
+- User opens chat session or operator console and submits question.
 - System attempts FAQ match first.
-- On miss or low confidence, system executes RAG retrieval plus generation.
-- Response includes references and confidence signal.
-- Feedback is captured for continuous improvement.
+- On miss or low confidence, the system executes retrieval plus grounded generation.
+- Response includes references, confidence, and request trace.
+- Session history supports iterative questioning without losing provenance.
+- Feedback and editorial routing support continuous improvement.
+
+# Current Product State
+
+- Frontend now includes a chat-style session UX alongside the editorial console.
+- Backend supports deterministic grounded generation and an optional LLM-ready mode.
+- Knowledge index is built from approved repositories and selected companion repositories.
+- Editorial board, KPI metrics, and promotion candidate flows remain part of the same product.
+
+# Current Chat UX
+
+- Live chat session view with per-turn evidence, confidence, and request trace.
+- Same surface supports deterministic grounded answers today and LLM-ready mode later.
+
+![](docs/presentation/assets/chat-session-ui.png){ width=90% }
 
 # Operations And Governance
 
@@ -102,18 +134,18 @@ colorlinks: true
 
 # Current Artifacts
 
-- Functional requirements document.
-- RAG architecture and database logic documents.
-- Technology baseline: Django 5 + DRF + Django Admin + Celery/Redis.
-- PlantUML database model and SQL migration.
-- Diagram render target for reproducible outputs.
+- Functional requirements, testing pack, and local run guide.
+- RAG architecture, database logic, and updated C4 architecture documents.
+- Technology baseline: Django 5 + DRF backend, React/Vite frontend, editorial workflow.
+- Chat session UX, deterministic grounded answering, and LLM-ready generation adapter.
+- PlantUML and exported SVG architecture assets for reproducible documentation.
 
 # Next Steps
 
-1. Finalize repository allowlist and ingestion profile.
-2. Implement Django/DRF orchestration API for FAQ-first plus RAG fallback.
-3. Configure Django Admin editorial workflow and publication gates.
-4. Run pilot validation against KPI targets.
+1. Complete pilot testing across chat UX, editorial workflow, and promotion flows.
+2. Enable and evaluate grounded LLM mode against deterministic fallback behavior.
+3. Refine ingestion profiles for companion repositories and standards-specific scopes.
+4. Use pilot evidence to decide production hardening and deployment model.
 
 # Appendix: Example Questions
 
