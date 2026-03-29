@@ -36,6 +36,7 @@ This folder contains the C4 Web GUI container for NAPCORE Helpdesk.
 - Health probes are available without auth: `GET /health/live`, `GET /health/ready`.
 
 ## Pilot operations
+- Local run quickstart: `../docs/testing/local-run-quickstart.md`
 - Scenario matrix and acceptance criteria: `../docs/testing/first-user-testing-pack.md`
 - Live session worksheet: `../docs/testing/day-1-execution-sheet.md`
 - Feedback issue form: `../.github/ISSUE_TEMPLATE/pilot-feedback.yml`

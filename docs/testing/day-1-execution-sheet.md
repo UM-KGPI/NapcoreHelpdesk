@@ -3,10 +3,10 @@
 Use this live during pilot execution.
 
 ## Session metadata
-- Date:
-- Environment URL:
-- Build/commit:
-- Facilitator:
+- Date: 29.3.2026
+- Environment URL: http://localhost:5173
+- Build/commit: 8ef5431e0f4a
+- Facilitator: Andrej
 - Note taker:
 
 ## Scenario run log

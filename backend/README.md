@@ -76,6 +76,7 @@ From repository root:
 Frontend Web GUI container docs: `../frontend/README.md`
 
 ## Operations automation
+- Local run quickstart: `../docs/testing/local-run-quickstart.md`
 - CI workflow: `../.github/workflows/ci.yml`
 - Security workflow: `../.github/workflows/security.yml`
 - Release workflow: `../.github/workflows/release.yml`

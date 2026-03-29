@@ -35,7 +35,7 @@ function createRequestId(): string {
 }
 
 export default function App() {
-  const [apiBaseUrl, setApiBaseUrl] = useState("http://localhost:8000/api/v1");
+  const [apiBaseUrl, setApiBaseUrl] = useState("/api/v1");
   const [token, setToken] = useState("");
 
   const [question, setQuestion] = useState("How to use NeTEx for exchanging a timetable?");
@@ -244,7 +244,7 @@ export default function App() {
         <div className="grid-two">
           <label>
             API Base URL
-            <input value={apiBaseUrl} onChange={(event) => setApiBaseUrl(event.target.value)} placeholder="http://localhost:8000/api/v1" />
+            <input value={apiBaseUrl} onChange={(event) => setApiBaseUrl(event.target.value)} placeholder="/api/v1" />
           </label>
           <label>
             JWT Bearer Token
