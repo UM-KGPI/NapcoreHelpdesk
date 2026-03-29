@@ -37,7 +37,7 @@ colorlinks: true
 
 - Standards: Transmodel, NeTEx, SIRI, OJP/OpRa, DATEX II.
 - Priority source: NeTEx-CEN/NeTEx and approved companion repositories.
-- User channel: one operator console with a chat-style helpdesk experience.
+- Demo surfaces are now split into `/user` and `/operator` routes over one shared backend/session shell.
 
 # Evolution Of Helpdesk Implementations
 
@@ -85,16 +85,9 @@ colorlinks: true
 - Runtime telemetry: question_events -> retrieval_events.
 - Evidence mapping: answer_evidence_links ties answers to source chunks.
 
-# Why Hallucinations Are Prevented
-
-- Only approved repositories are retrievable.
-- Unsupported claims fail citation and support checks.
-- Evidence links provide claim-to-source traceability.
-- Unknown questions produce abstention, not speculation.
-
 # User Experience Flow
 
-- User opens chat session or operator console and submits question.
+- User opens `/user` for conversation or `/operator` for operational review.
 - System attempts FAQ match first.
 - On miss or low confidence, the system executes retrieval plus grounded generation.
 - Response includes references, confidence, and request trace.
@@ -103,15 +96,15 @@ colorlinks: true
 
 # Current Product State
 
-- Frontend now includes a chat-style session UX alongside the editorial console.
+- Frontend now exposes separate routed surfaces for user chat and operator console.
 - Backend supports deterministic grounded generation and an optional LLM-ready mode.
 - Knowledge index is built from approved repositories and selected companion repositories.
-- Editorial board, KPI metrics, and promotion candidate flows remain part of the same product.
+- Shared connection state keeps auth and backend targeting consistent across both routes.
 
 # Current Chat UX
 
-- Live chat session view with per-turn evidence, confidence, and request trace.
-- Same surface supports deterministic grounded answers today and LLM-ready mode later.
+- Live `/user` chat route with per-turn evidence, confidence, and request trace.
+- Separate `/operator` route handles orchestration, board, KPI, and editorial actions.
 
 ![](docs/presentation/assets/chat-session-ui.png){ width=90% }
 
@@ -135,7 +128,7 @@ colorlinks: true
 - Functional requirements, testing pack, and local run guide.
 - RAG architecture, database logic, and updated C4 architecture documents.
 - Technology baseline: Django 5 + DRF backend, React/Vite frontend, editorial workflow.
-- Chat session UX, deterministic grounded answering, and LLM-ready generation adapter.
+- Separate routed user/operator UX, deterministic grounded answering, and LLM-ready generation adapter.
 - PlantUML and exported SVG architecture assets for reproducible documentation.
 
 # Next Steps

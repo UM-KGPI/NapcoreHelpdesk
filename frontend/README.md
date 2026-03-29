@@ -3,6 +3,8 @@
 This folder contains the C4 Web GUI container for NAPCORE Helpdesk.
 
 ## Features in current slice
+- Route-based split UX: `/user` for chat and `/operator` for editorial/orchestration console.
+- Shared connection shell with route switcher and common JWT/API configuration.
 - Chat-style session UX with multi-turn history, per-turn evidence, and request IDs.
 - `Generation Profile` selector for deterministic grounded mode and LLM-ready backend mode.
 - Ask questions via `POST /api/v1/questions/answer`.
@@ -31,11 +33,23 @@ This folder contains the C4 Web GUI container for NAPCORE Helpdesk.
 
    `npm run build`
 
+## Demo routes
+- `http://localhost:5173/user` for the user-facing chat surface.
+- `http://localhost:5173/operator` for the operator console surface.
+- `http://localhost:5173/` redirects to `/user`.
+
 ## API expectations
 - Backend default base URL in local dev is `/api/v1` via Vite proxy to `http://localhost:8000/api/v1`.
 - Endpoints require a JWT bearer token.
 - `POST /questions/answer` also requires `X-Request-Id` (auto-generated in UI).
 - Health probes are available without auth: `GET /health/live`, `GET /health/ready`.
+
+Local auth convenience in the UI:
+- JWT token is persisted in browser localStorage.
+- `auto-create dev JWT on page reload` is enabled by default.
+- When enabled and token is empty, frontend calls `POST /api/v1/auth/dev-token` and auto-fills the bearer token.
+- If the dev-token endpoint is disabled, manual token paste still works.
+- The shared connection panel applies to both `/user` and `/operator` routes.
 
 `POST /questions/answer` accepts:
 - `sessionId`

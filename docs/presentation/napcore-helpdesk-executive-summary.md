@@ -21,7 +21,7 @@ Implement a grounded helpdesk that can evolve from search to chat while preservi
 - Traditional keyword search remains useful for direct document lookup.
 - FAQ-first grounded Q and A handles recurring questions with canonical answers.
 - Editorial workflow and KPI views support governance and backlog promotion.
-- Chat-style sessions provide a more natural operator experience.
+- Separate routed user and operator surfaces improve demonstration clarity and future product separation.
 - Optional LLM-ready generation can be introduced without relaxing evidence controls.
 
 ## Evolution Path
@@ -65,7 +65,7 @@ Core artifacts are prepared:
 - Updated C4 architecture diagrams
 - Database model and migration schema
 - PlantUML diagram source and render target
-- Chat-style frontend and LLM-ready backend wiring
+- Route-based frontend split (`/user`, `/operator`) and LLM-ready backend wiring
 
 ## Immediate Next Steps
 1. Complete pilot testing across chat, editorial, and promotion workflows.

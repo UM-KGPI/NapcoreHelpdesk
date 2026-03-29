@@ -1,9 +1,30 @@
 from __future__ import annotations
 
+from urllib.parse import urlparse
+
 
 APPROVED_REPOSITORIES = {
     "https://github.com/NeTEx-CEN/NeTEx",
 }
+
+
+def _normalize_repository_url(raw_url: str) -> str:
+    """Normalize citation URLs to repository roots for allow-list checks.
+
+    Supports both repository URLs and GitHub file URLs such as
+    https://github.com/<owner>/<repo>/blob/<sha>/<path>.
+    """
+
+    parsed = urlparse(raw_url)
+    if not parsed.scheme or not parsed.netloc:
+        return raw_url.rstrip("/")
+
+    path_parts = [part for part in parsed.path.split("/") if part]
+    if parsed.netloc.lower() == "github.com" and len(path_parts) >= 2:
+        owner, repo = path_parts[0], path_parts[1]
+        return f"{parsed.scheme}://{parsed.netloc}/{owner}/{repo}"
+
+    return f"{parsed.scheme}://{parsed.netloc}{parsed.path}".rstrip("/")
 
 
 def evaluate_policy(answer_text: str, citations: list[dict]) -> dict:
@@ -24,7 +45,7 @@ def evaluate_policy(answer_text: str, citations: list[dict]) -> dict:
         }
 
     for citation in citations:
-        repo_url = citation.get("repositoryUrl")
+        repo_url = _normalize_repository_url(citation.get("repositoryUrl", ""))
         if repo_url not in APPROVED_REPOSITORIES:
             return {
                 "allowed": False,

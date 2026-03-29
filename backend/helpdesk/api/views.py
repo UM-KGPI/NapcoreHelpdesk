@@ -1,7 +1,9 @@
 from collections import defaultdict
+import datetime as dt
 from datetime import timedelta
 from uuid import uuid4
 
+import jwt
 from django.conf import settings
 from django.db import connection
 from django.db.models import Q
@@ -42,6 +44,15 @@ from .serializers import (
 def _request_id(request):
     # Keep a stable correlation ID for traceability in logs, DB events, and error payloads.
     return request.headers.get("X-Request-Id") or f"req-{uuid4().hex[:12]}"
+
+
+def _build_file_url(repo_url: str, commit_sha: str, source_path: str) -> str:
+    """Construct a direct GitHub file URL pointing to the exact blob at a commit."""
+    # Remove trailing .git if present, normalize the repo URL.
+    repo_url = repo_url.rstrip("/").rstrip(".git")
+    # Build the GitHub blob URL: https://github.com/OWNER/REPO/blob/COMMIT/PATH
+    return f"{repo_url}/blob/{commit_sha}/{source_path}"
+
 
 
 def _error_response(code, message, request_id, http_status=status.HTTP_400_BAD_REQUEST):
@@ -141,6 +152,48 @@ class HealthReadyView(APIView):
         )
 
 
+class DevTokenView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        # Dev convenience endpoint to avoid manual token copy/paste after page reload.
+        if not (settings.DEBUG and settings.DEV_JWT_AUTO_ISSUE):
+            return Response(
+                {
+                    "error": {
+                        "code": "FORBIDDEN",
+                        "message": "Dev token endpoint is disabled.",
+                        "requestId": _request_id(request),
+                    }
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        now = dt.datetime.now(dt.timezone.utc)
+        payload = {
+            "sub": settings.DEV_JWT_DEFAULT_SUBJECT,
+            "roles": settings.DEV_JWT_DEFAULT_ROLES,
+            "iat": int(now.timestamp()),
+            "exp": int((now + dt.timedelta(minutes=settings.DEV_JWT_TTL_MINUTES)).timestamp()),
+        }
+        if settings.JWT_ISSUER:
+            payload["iss"] = settings.JWT_ISSUER
+        if settings.JWT_AUDIENCE:
+            payload["aud"] = settings.JWT_AUDIENCE
+
+        token = jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+        return Response(
+            {
+                "token": token,
+                "tokenType": "Bearer",
+                "expiresInSeconds": settings.DEV_JWT_TTL_MINUTES * 60,
+                "subject": payload["sub"],
+                "roles": payload["roles"],
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
 class QuestionAnswerView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -222,7 +275,11 @@ class QuestionAnswerView(APIView):
                 review_required = generated["review_required"]
                 citations = [
                     {
-                        "repositoryUrl": chunk["repositoryUrl"],
+                        "repositoryUrl": _build_file_url(
+                            repo_url=chunk["repositoryUrl"],
+                            commit_sha=chunk["commitSha"],
+                            source_path=chunk["sourcePath"],
+                        ),
                         "commitSha": chunk["commitSha"],
                         "sourcePath": chunk["sourcePath"],
                         "chunkId": chunk["chunkId"],

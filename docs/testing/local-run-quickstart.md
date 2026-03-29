@@ -57,25 +57,32 @@ make frontend-dev
 
 Frontend URL:
 - `http://localhost:5173`
+- `http://localhost:5173/user`
+- `http://localhost:5173/operator`
 
-## 5. Generate a local JWT token
-Open a third terminal:
+## 5. Get a local JWT token
+Preferred local mode:
+- open `http://localhost:5173/user` or `http://localhost:5173/operator`
+- keep `auto-create dev JWT on page reload` enabled in the shared `Connection` panel
+- reload once if needed; frontend will call `POST /api/v1/auth/dev-token`
+
+Manual fallback:
 
 ```bash
 cd backend
 DJANGO_USE_SQLITE=True ../.venv/bin/python manage.py shell -c "import jwt, datetime as dt; from django.conf import settings; now=dt.datetime.now(dt.timezone.utc); print(jwt.encode({'sub':'local-user','roles':['admin'],'iat':int(now.timestamp()),'exp':int((now+dt.timedelta(hours=8)).timestamp())}, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM))"
 ```
 
-Use the printed token in the frontend field:
+Use the printed token in the shared frontend field:
 - `JWT Bearer Token`
 
 ## 6. First functional checks
 In the frontend:
-- paste JWT token
+- confirm the shared `Connection` panel already contains a JWT or paste one manually
 - use default API base URL: `/api/v1`
 - run these checks:
-  - Send one message in `Chat Session` and confirm turn history with citations
-  - Ask a known FAQ question
+  - Open `/user`, send one message, and confirm turn history with citations
+  - Open `/operator`, ask a known FAQ question
   - Load Editorial Board
   - Load KPI metrics
   - Route an item to editorial queue
@@ -89,10 +96,11 @@ Use this for a fast go/no-go check.
 
 1. Open `http://localhost:5173`.
 2. Confirm `API Base URL` is `/api/v1`.
-3. Paste a valid JWT token.
-4. Click `Load Metrics` in `Editorial Board`.
-5. Click `Load Board` in `Editorial Board`.
-6. In `Ask Question`, click `Run Orchestration` with default values.
+3. Confirm `JWT Bearer Token` is present or wait for auto-create to fill it.
+4. Open `/operator`.
+5. Click `Load Metrics` in `Editorial Board`.
+6. Click `Load Board` in `Editorial Board`.
+7. In `Ask Question`, click `Run Orchestration` with default values.
 
 Pass criteria:
 - no `Load failed` banner appears
@@ -117,7 +125,7 @@ To enable provider-backed generation in `Chat Session`:
   - `LLM_API_KEY=<your key>`
   - optionally override `LLM_API_BASE_URL`, `LLM_MODEL`, `LLM_TIMEOUT_SECONDS`, `LLM_MAX_TOKENS`, `LLM_TEMPERATURE`
 2. Restart backend.
-3. In frontend `Chat Session`, choose `llm-ready` as `Generation Profile`.
+3. In frontend `/user`, choose `llm-ready` as `Generation Profile`.
 
 If provider configuration is missing or the request fails, backend falls back to deterministic grounded generation.
 

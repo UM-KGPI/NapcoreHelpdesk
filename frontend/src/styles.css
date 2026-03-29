@@ -65,6 +65,29 @@ h1 {
   grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
 }
 
+.workspace-section {
+  margin-top: 1.1rem;
+  border-radius: 18px;
+  padding: 0.9rem;
+  border: 1px solid var(--line);
+}
+
+.workspace-header {
+  padding: 0.2rem 0.15rem 0.8rem;
+}
+
+.workspace-header h2 {
+  margin-bottom: 0.35rem;
+}
+
+.user-workspace {
+  background: linear-gradient(180deg, #effaf5 0%, #f8fcfa 100%);
+}
+
+.operator-workspace {
+  background: linear-gradient(180deg, #fff5ea 0%, #fffaf2 100%);
+}
+
 .chat-panel {
   grid-column: 1 / -1;
 }
@@ -125,6 +148,45 @@ h1 {
 
 .credentials-panel {
   margin-top: 1rem;
+}
+
+.route-switcher-panel {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: 1.4fr 1fr;
+  align-items: center;
+}
+
+.route-switcher-copy h2 {
+  margin-bottom: 0.35rem;
+}
+
+.route-switcher-nav {
+  display: flex;
+  gap: 0.7rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.route-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 10rem;
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.route-link-active {
+  background: var(--accent);
+  color: #f7fcfb;
+  border-color: var(--accent);
 }
 
 h2 {
@@ -363,6 +425,18 @@ a {
 
   .hero {
     padding: 1rem;
+  }
+
+  .route-switcher-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .route-switcher-nav {
+    justify-content: stretch;
+  }
+
+  .route-link {
+    width: 100%;
   }
 
   .chat-actions {

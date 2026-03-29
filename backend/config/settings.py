@@ -11,6 +11,10 @@ env = environ.Env(
     JWT_ALGORITHM=(str, "HS256"),
     JWT_ISSUER=(str, ""),
     JWT_AUDIENCE=(str, ""),
+    DEV_JWT_AUTO_ISSUE=(bool, True),
+    DEV_JWT_DEFAULT_SUBJECT=(str, "user-local"),
+    DEV_JWT_DEFAULT_ROLES=(str, "editor,reviewer,publisher"),
+    DEV_JWT_TTL_MINUTES=(int, 480),
     ALLOWED_SOURCE_REPOSITORIES=(str, "https://github.com/NeTEx-CEN/NeTEx"),
     INDEX_SCHEDULE_REPO_URL=(str, ""),
     INDEX_SCHEDULE_REPO_PATH=(str, ""),
@@ -118,6 +122,14 @@ JWT_SECRET_KEY = env("JWT_SECRET_KEY")
 JWT_ALGORITHM = env("JWT_ALGORITHM")
 JWT_ISSUER = env("JWT_ISSUER").strip() or None
 JWT_AUDIENCE = env("JWT_AUDIENCE").strip() or None
+DEV_JWT_AUTO_ISSUE = env("DEV_JWT_AUTO_ISSUE")
+DEV_JWT_DEFAULT_SUBJECT = env("DEV_JWT_DEFAULT_SUBJECT").strip() or "user-local"
+DEV_JWT_DEFAULT_ROLES = [
+    role.strip()
+    for role in env("DEV_JWT_DEFAULT_ROLES", default="editor,reviewer,publisher").split(",")
+    if role.strip()
+]
+DEV_JWT_TTL_MINUTES = env("DEV_JWT_TTL_MINUTES")
 
 ALLOWED_SOURCE_REPOSITORIES = {
     value.strip()

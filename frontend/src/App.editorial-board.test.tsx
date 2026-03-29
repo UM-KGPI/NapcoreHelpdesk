@@ -14,6 +14,9 @@ function mockJsonResponse(payload: unknown, status = 200): Response {
 describe("Editorial Board flows", () => {
   beforeEach(() => {
     vi.spyOn(globalThis, "fetch");
+    localStorage.setItem("napcore.helpdesk.autoToken", "false");
+    localStorage.removeItem("napcore.helpdesk.jwt");
+    window.history.pushState({}, "", "/operator");
   });
 
   afterEach(() => {

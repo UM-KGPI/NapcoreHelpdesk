@@ -79,8 +79,10 @@ Diagram</text:p>
     approved companion repositories.</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P5">User channel: one operator console with
-    a chat-style helpdesk experience.</text:p>
+    <text:p text:style-name="P5">Demo surfaces are now split into
+    <text:span text:style-name="Source_Text">/user</text:span> and
+    <text:span text:style-name="Source_Text">/operator</text:span>
+    routes over one shared backend/session shell.</text:p>
   </text:list-item>
 </text:list>
 <text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="evolution-of-helpdesk-implementations" />Evolution
@@ -227,189 +229,175 @@ Model Logic<text:bookmark-end text:name="data-model-logic" /></text:h>
     answer_evidence_links ties answers to source chunks.</text:p>
   </text:list-item>
 </text:list>
-<text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="why-hallucinations-are-prevented" />Why
-Hallucinations Are
-Prevented<text:bookmark-end text:name="why-hallucinations-are-prevented" /></text:h>
-<text:list text:style-name="L12">
-  <text:list-item>
-    <text:p text:style-name="P12">Only approved repositories are
-    retrievable.</text:p>
-  </text:list-item>
-  <text:list-item>
-    <text:p text:style-name="P12">Unsupported claims fail citation and
-    support checks.</text:p>
-  </text:list-item>
-  <text:list-item>
-    <text:p text:style-name="P12">Evidence links provide claim-to-source
-    traceability.</text:p>
-  </text:list-item>
-  <text:list-item>
-    <text:p text:style-name="P12">Unknown questions produce abstention,
-    not speculation.</text:p>
-  </text:list-item>
-</text:list>
 <text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="user-experience-flow" />User
 Experience
 Flow<text:bookmark-end text:name="user-experience-flow" /></text:h>
-<text:list text:style-name="L13">
+<text:list text:style-name="L12">
   <text:list-item>
-    <text:p text:style-name="P13">User opens chat session or operator
-    console and submits question.</text:p>
+    <text:p text:style-name="P12">User opens
+    <text:span text:style-name="Source_Text">/user</text:span> for
+    conversation or
+    <text:span text:style-name="Source_Text">/operator</text:span> for
+    operational review.</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P13">System attempts FAQ match
+    <text:p text:style-name="P12">System attempts FAQ match
     first.</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P13">On miss or low confidence, the system
+    <text:p text:style-name="P12">On miss or low confidence, the system
     executes retrieval plus grounded generation.</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P13">Response includes references,
+    <text:p text:style-name="P12">Response includes references,
     confidence, and request trace.</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P13">Session history supports iterative
+    <text:p text:style-name="P12">Session history supports iterative
     questioning without losing provenance.</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P13">Feedback and editorial routing support
+    <text:p text:style-name="P12">Feedback and editorial routing support
     continuous improvement.</text:p>
   </text:list-item>
 </text:list>
 <text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="current-product-state" />Current
 Product
 State<text:bookmark-end text:name="current-product-state" /></text:h>
-<text:list text:style-name="L14">
+<text:list text:style-name="L13">
   <text:list-item>
-    <text:p text:style-name="P14">Frontend now includes a chat-style
-    session UX alongside the editorial console.</text:p>
+    <text:p text:style-name="P13">Frontend now exposes separate routed
+    surfaces for user chat and operator console.</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P14">Backend supports deterministic
+    <text:p text:style-name="P13">Backend supports deterministic
     grounded generation and an optional LLM-ready mode.</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P14">Knowledge index is built from approved
+    <text:p text:style-name="P13">Knowledge index is built from approved
     repositories and selected companion repositories.</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P14">Editorial board, KPI metrics, and
-    promotion candidate flows remain part of the same product.</text:p>
+    <text:p text:style-name="P13">Shared connection state keeps auth and
+    backend targeting consistent across both routes.</text:p>
   </text:list-item>
 </text:list>
 <text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="current-chat-ux" />Current
 Chat UX<text:bookmark-end text:name="current-chat-ux" /></text:h>
-<text:list text:style-name="L15">
+<text:list text:style-name="L14">
   <text:list-item>
-    <text:p text:style-name="P15">Live chat session view with per-turn
-    evidence, confidence, and request trace.</text:p>
+    <text:p text:style-name="P14">Live
+    <text:span text:style-name="Source_Text">/user</text:span> chat
+    route with per-turn evidence, confidence, and request
+    trace.</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P15">Same surface supports deterministic
-    grounded answers today and LLM-ready mode later.</text:p>
+    <text:p text:style-name="P14">Separate
+    <text:span text:style-name="Source_Text">/operator</text:span> route
+    handles orchestration, board, KPI, and editorial actions.</text:p>
   </text:list-item>
 </text:list>
 <text:p text:style-name="First_20_paragraph"><draw:frame draw:name="img2" svg:width="90%"><draw:image xlink:href="docs/presentation/assets/chat-session-ui.png" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad" /></draw:frame></text:p>
 <text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="operations-and-governance" />Operations
 And
 Governance<text:bookmark-end text:name="operations-and-governance" /></text:h>
-<text:list text:style-name="L16">
+<text:list text:style-name="L15">
   <text:list-item>
-    <text:p text:style-name="P16">Reviewer decisions are logged and
+    <text:p text:style-name="P15">Reviewer decisions are logged and
     auditable.</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P16">Editorial operations run through
+    <text:p text:style-name="P15">Editorial operations run through
     Django Admin.</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P16">Recurring intents are promoted into
+    <text:p text:style-name="P15">Recurring intents are promoted into
     curated FAQ backlog.</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P16">Re-indexing handles source and
+    <text:p text:style-name="P15">Re-indexing handles source and
     standards updates.</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P16">Metrics monitor quality and safety
+    <text:p text:style-name="P15">Metrics monitor quality and safety
     continuously.</text:p>
   </text:list-item>
 </text:list>
 <text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="mvp-success-metrics" />MVP
 Success
 Metrics<text:bookmark-end text:name="mvp-success-metrics" /></text:h>
-<text:list text:style-name="L17">
+<text:list text:style-name="L16">
   <text:list-item>
-    <text:p text:style-name="P17">Citation coverage for published FAQs:
+    <text:p text:style-name="P16">Citation coverage for published FAQs:
     100%.</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P17">Unsupported-claim publication rate:
+    <text:p text:style-name="P16">Unsupported-claim publication rate:
     0%.</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P17">P95 latency: &lt;= 8 seconds.</text:p>
+    <text:p text:style-name="P16">P95 latency: &lt;= 8 seconds.</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P17">Retrieval success on covered intents:
+    <text:p text:style-name="P16">Retrieval success on covered intents:
     &gt;= 90%.</text:p>
   </text:list-item>
 </text:list>
 <text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="current-artifacts" />Current
 Artifacts<text:bookmark-end text:name="current-artifacts" /></text:h>
-<text:list text:style-name="L18">
+<text:list text:style-name="L17">
   <text:list-item>
-    <text:p text:style-name="P18">Functional requirements, testing pack,
+    <text:p text:style-name="P17">Functional requirements, testing pack,
     and local run guide.</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P18">RAG architecture, database logic, and
+    <text:p text:style-name="P17">RAG architecture, database logic, and
     updated C4 architecture documents.</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P18">Technology baseline: Django 5 + DRF
+    <text:p text:style-name="P17">Technology baseline: Django 5 + DRF
     backend, React/Vite frontend, editorial workflow.</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P18">Chat session UX, deterministic
-    grounded answering, and LLM-ready generation adapter.</text:p>
+    <text:p text:style-name="P17">Separate routed user/operator UX,
+    deterministic grounded answering, and LLM-ready generation
+    adapter.</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P18">PlantUML and exported SVG architecture
+    <text:p text:style-name="P17">PlantUML and exported SVG architecture
     assets for reproducible documentation.</text:p>
   </text:list-item>
 </text:list>
 <text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="next-steps" />Next
 Steps<text:bookmark-end text:name="next-steps" /></text:h>
-<text:list text:style-name="L19">
+<text:list text:style-name="L18">
   <text:list-item>
-    <text:p text:style-name="P19">Complete pilot testing across chat UX,
+    <text:p text:style-name="P18">Complete pilot testing across chat UX,
     editorial workflow, and promotion flows.</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P19">Enable and evaluate grounded LLM mode
+    <text:p text:style-name="P18">Enable and evaluate grounded LLM mode
     against deterministic fallback behavior.</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P19">Refine ingestion profiles for
+    <text:p text:style-name="P18">Refine ingestion profiles for
     companion repositories and standards-specific scopes.</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P19">Use pilot evidence to decide
+    <text:p text:style-name="P18">Use pilot evidence to decide
     production hardening and deployment model.</text:p>
   </text:list-item>
 </text:list>
 <text:h text:style-name="Heading_20_1" text:outline-level="1"><text:bookmark-start text:name="appendix-example-questions" />Appendix:
 Example
 Questions<text:bookmark-end text:name="appendix-example-questions" /></text:h>
-<text:list text:style-name="L20">
+<text:list text:style-name="L19">
   <text:list-item>
-    <text:p text:style-name="P20">How to use NeTEx for exchanging a
+    <text:p text:style-name="P19">How to use NeTEx for exchanging a
     timetable?</text:p>
   </text:list-item>
   <text:list-item>
-    <text:p text:style-name="P20">How to implement IDs for a Stop Place
+    <text:p text:style-name="P19">How to implement IDs for a Stop Place
     registry?</text:p>
   </text:list-item>
 </text:list>

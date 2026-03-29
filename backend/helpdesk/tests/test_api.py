@@ -129,6 +129,24 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(response.data["check"], "ready")
         self.assertEqual(response.data["database"], "ok")
 
+    @override_settings(DEBUG=True, DEV_JWT_AUTO_ISSUE=True)
+    def test_dev_token_endpoint_issues_token_in_debug(self):
+        """Ensure local development can mint a JWT without manual shell commands."""
+        response = self.client.post(reverse("auth-dev-token"), {}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("token", response.data)
+        self.assertEqual(response.data["tokenType"], "Bearer")
+        self.assertGreater(response.data["expiresInSeconds"], 0)
+
+    @override_settings(DEBUG=False, DEV_JWT_AUTO_ISSUE=True)
+    def test_dev_token_endpoint_rejects_when_not_debug(self):
+        """Ensure dev token mint endpoint cannot be used when debug mode is off."""
+        response = self.client.post(reverse("auth-dev-token"), {}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assert_matches_schema("ErrorResponse", response.data)
+
     def test_invalid_jwt_returns_openapi_error_response(self):
         """Ensure malformed JWTs return the standardized OpenAPI error payload."""
         response = self.client.post(

@@ -17,7 +17,7 @@ This summary is intended as the base narrative for a future PPTX or PDF presenta
 ## Slide 3 - Scope
 - Domain scope: Transmodel, NeTEx, SIRI, OJP/OpRa, DATEX II.
 - Priority source: NeTEx-CEN/NeTEx and selected companion repositories.
-- User channel: operator console and chat-style Q and A for developers and practitioners.
+- Routed demo surfaces: `/user` for chat and `/operator` for governance/orchestration.
 
 ## Slide 4 - Evolution Of Helpdesk Implementations
 - Stage 1: traditional keyword search across standards documents.
@@ -65,17 +65,17 @@ This summary is intended as the base narrative for a future PPTX or PDF presenta
 - Unsupported answers are blocked or abstained.
 
 ## Slide 11 - User Experience Flow
-- User asks a question in chat session or operator console.
+- User asks a question in `/user` or performs governed operations in `/operator`.
 - System attempts FAQ match.
 - If needed, system performs RAG retrieval plus generation.
 - Response includes references, confidence signal, and request trace.
 - User feedback is captured for quality improvement.
 
 ## Slide 12 - Current Product State
-- Chat-style multi-turn UX is now implemented in the frontend.
+- Chat-style multi-turn UX is implemented as a separate `/user` route.
 - Backend supports deterministic grounded answers and optional LLM-ready generation.
 - Approved companion repositories can be indexed alongside NeTEx-CEN/NeTEx.
-- Editorial board, KPI metrics, and promotion candidates remain part of the same workflow.
+- `/operator` contains editorial board, KPI metrics, and promotion candidates under the same shared auth shell.
 
 ## Slide 13 - Operations And Governance
 - Review workflow records reviewer identity and decisions.

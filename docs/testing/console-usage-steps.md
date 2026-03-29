@@ -1,10 +1,9 @@
 # Console Usage Steps
 
-This guide describes the operator flow in the FAQ-first and Evidence-grounded Q&A Console.
+This guide describes the routed operator flow in the FAQ-first and Evidence-grounded Q&A Console.
 
 ## Goal
 Use the console to:
-- run multi-turn chat sessions with per-turn evidence and trace
 - run a grounded answer
 - route low-confidence outcomes to editorial queue
 - process queue transitions
@@ -15,15 +14,17 @@ Use the console to:
 Before running these steps:
 - backend is running on `http://localhost:8000`
 - frontend is running on `http://localhost:5173`
+- operator route is `http://localhost:5173/operator`
+- user chat route is `http://localhost:5173/user`
 - API base URL in the UI is `/api/v1`
-- a valid JWT token is pasted into `JWT Bearer Token`
+- a valid JWT token is available in the shared `Connection` panel
 
 ## 2-minute smoke test
 Use this for a fast go/no-go check.
 
-1. Open `http://localhost:5173`.
+1. Open `http://localhost:5173/operator`.
 2. Confirm `API Base URL` is `/api/v1`.
-3. Paste a valid JWT token.
+3. Confirm a valid JWT token is present.
 4. Click `Load Metrics` in `Editorial Board`.
 5. Click `Load Board` in `Editorial Board`.
 6. In `Ask Question`, click `Run Orchestration` with default values.
@@ -42,8 +43,8 @@ In the `Connection` panel:
 Expected result:
 - buttons become usable (not disabled by missing token)
 
-## Step 2. Use chat session UX
-In the `Chat Session` panel:
+## Step 2. Use the separate user chat route
+In `http://localhost:5173/user`:
 - keep or edit `Session ID` and `User ID`
 - select `Generation Profile`:
   - `deterministic-grounded` for current default backend mode
@@ -58,8 +59,8 @@ Expected result:
 Note:
 - If `llm-ready` is selected but backend LLM configuration is unavailable or fails, the backend falls back to deterministic grounded generation.
 
-## Step 3. Run question orchestration
-In the `Ask Question` panel:
+## Step 3. Run question orchestration on the operator route
+In `http://localhost:5173/operator`, in the `Ask Question` panel:
 - keep or edit the sample question
 - set `Session ID` and `User ID`
 - choose one or more `Standards Scope` values
@@ -129,8 +130,8 @@ Expected result:
 ## Recommended operator sequence
 For first-user testing, use this order:
 1. Connect with token
-2. Run Chat Session prompt
-3. Run Orchestration
+2. Open `/user` and run chat prompt
+3. Open `/operator` and run orchestration
 4. Queue for Editorial
 5. Load Board
 6. Apply transition

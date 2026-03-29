@@ -102,6 +102,21 @@ From repository root:
 
 Frontend Web GUI container docs: `../frontend/README.md`
 
+## JWT for local development
+Manual token generation (from `backend/`):
+
+`../.venv/bin/python manage.py shell -c "import datetime as dt, jwt; from django.conf import settings; now=dt.datetime.now(dt.timezone.utc); payload={'sub':'user-local','roles':['editor','reviewer','publisher'],'iat':int(now.timestamp()),'exp':int((now+dt.timedelta(hours=8)).timestamp())}; print(jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM))"`
+
+Automatic token generation for the UI is available via dev-only endpoint:
+- `POST /api/v1/auth/dev-token`
+- Enabled only when `DEBUG=True` and `DEV_JWT_AUTO_ISSUE=True`
+
+Related settings in `.env`:
+- `DEV_JWT_AUTO_ISSUE=true`
+- `DEV_JWT_DEFAULT_SUBJECT=user-local`
+- `DEV_JWT_DEFAULT_ROLES=editor,reviewer,publisher`
+- `DEV_JWT_TTL_MINUTES=480`
+
 ## Operations automation
 - Local run quickstart: `../docs/testing/local-run-quickstart.md`
 - Console usage steps: `../docs/testing/console-usage-steps.md`

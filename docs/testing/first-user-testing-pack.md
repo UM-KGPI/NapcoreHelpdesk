@@ -7,7 +7,8 @@ Run a controlled first-user pilot to validate FAQ-first accuracy, RAG fallback s
 
 ## Pilot scope
 - Product surfaces:
-  - Web GUI Chat Session, Editorial Board, and QnA flow
+  - Routed Web GUI user chat at `/user`
+  - Routed Web GUI operator console at `/operator`
   - API endpoints in `/api/v1/*`
 - Standards focus:
   - NeTEx primary
@@ -44,7 +45,9 @@ Run a controlled first-user pilot to validate FAQ-first accuracy, RAG fallback s
 - At least 3 low-confidence/policy-review outcomes queued for editorial board.
 
 ## Current implementation notes
-- Chat-style UX is available in the frontend and preserves turn history inside the active browser session.
+- Frontend is split into two independently addressable routes: `/user` and `/operator`.
+- Chat-style UX is available on `/user` and preserves turn history inside the active browser session.
+- Editorial board, orchestration, routing, and KPI flows are available on `/operator`.
 - Backend answer generation supports:
   - `deterministic-grounded` mode
   - `llm-ready` mode with safe deterministic fallback if provider config is missing or fails
@@ -55,7 +58,7 @@ Run a controlled first-user pilot to validate FAQ-first accuracy, RAG fallback s
 ### S0 Chat session continuity
 - Role: viewer
 - Action:
-  - Ask two related questions in the `Chat Session` panel using the same `Session ID`.
+  - Open `/user` and ask two related questions using the same `Session ID`.
 - Expected:
   - both turns remain visible in session history
   - each assistant turn includes citations and request id
@@ -111,7 +114,7 @@ Run a controlled first-user pilot to validate FAQ-first accuracy, RAG fallback s
 ### S4 Editorial queue routing
 - Role: editor
 - Action:
-  - Route a question outcome to editorial queue.
+  - Open `/operator` and route a question outcome to editorial queue.
 - Expected:
   - queue item created
   - status and reason reflect routing input
@@ -121,7 +124,7 @@ Run a controlled first-user pilot to validate FAQ-first accuracy, RAG fallback s
 ### S5 Role-aware board actions
 - Role: viewer then reviewer
 - Action:
-  - Load Editorial Board as viewer and reviewer.
+  - Open `/operator` and load Editorial Board as viewer and reviewer.
 - Expected:
   - viewer sees no allowed actions
   - reviewer sees only valid review actions for item status

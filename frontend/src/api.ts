@@ -56,6 +56,14 @@ interface ApiClientConfig {
   token: string;
 }
 
+export interface DevTokenResponse {
+  token: string;
+  tokenType: "Bearer";
+  expiresInSeconds: number;
+  subject: string;
+  roles: string[];
+}
+
 const defaultHeaders = {
   "Content-Type": "application/json",
 };
@@ -77,6 +85,13 @@ export class HelpdeskApiClient {
       },
       body: JSON.stringify(payload),
     });
+  }
+
+  async issueDevToken(): Promise<DevTokenResponse> {
+    return this.request<DevTokenResponse>("/auth/dev-token", {
+      method: "POST",
+      body: "{}",
+    }, false);
   }
 
   async listPromotionCandidates(windowDays: number, minCount: number, onlyUnresolved: boolean): Promise<PromotionCandidatesResponse> {
@@ -126,12 +141,12 @@ export class HelpdeskApiClient {
     });
   }
 
-  private async request<T>(path: string, init: RequestInit): Promise<T> {
+  private async request<T>(path: string, init: RequestInit, withAuth = true): Promise<T> {
     const response = await fetch(`${this.baseUrl}${path}`, {
       ...init,
       headers: {
         ...defaultHeaders,
-        Authorization: `Bearer ${this.token}`,
+        ...(withAuth ? { Authorization: `Bearer ${this.token}` } : {}),
         ...(init.headers ?? {}),
       },
     });
