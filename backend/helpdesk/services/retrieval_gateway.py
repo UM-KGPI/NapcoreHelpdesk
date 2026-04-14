@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import re
+import time
 from uuid import uuid4
 from django.db import connection, models
+from django.conf import settings
 
 try:
     from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
@@ -10,8 +12,6 @@ except Exception:  # pragma: no cover - only unavailable in non-postgres-only en
     SearchQuery = None
     SearchRank = None
     SearchVector = None
-
-from django.conf import settings
 
 from helpdesk.models import SourceChunk
 from helpdesk.db_fields import HAS_NATIVE_PGVECTOR
@@ -462,6 +462,7 @@ def retrieve_chunks_with_trace(
     - 30% lexical relevance
     - 20% indexed quality score
     """
+    retrieval_start_time = time.time()
 
     _ensure_seed_chunks()
 
@@ -630,6 +631,7 @@ def retrieve_chunks_with_trace(
             candidate.pop("_graphProvenanceConceptIds", None)
 
     trace = {
+        "graphRagVariant": "control" if not graph_rag_enabled else "graph-rag",
         "graphExpansionHops": graph_expansion_hops,
         "graphExpansionSource": graph_expansion_source,
         "graphConceptIds": sorted(expanded_concepts) if graph_rag_enabled else [],
@@ -637,5 +639,6 @@ def retrieve_chunks_with_trace(
         "graphEvidenceCount": graph_hits if graph_rag_enabled else 0,
         "graphScoreContribution": round(graph_total / len(trimmed), 4) if graph_rag_enabled and trimmed else 0.0,
         "graphProvenanceChainCount": len(provenance_chains) if graph_rag_enabled else 0,
+        "retrievalLatencyMs": round((time.time() - retrieval_start_time) * 1000, 1),
     }
     return trimmed, trace

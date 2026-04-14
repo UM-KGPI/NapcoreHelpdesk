@@ -39,6 +39,7 @@ env = environ.Env(
     EMBEDDING_MODEL=(str, "text-embedding-3-small"),
     EMBEDDING_TIMEOUT_SECONDS=(int, 30),
     GRAPH_RAG_ENABLED=(bool, False),
+    GRAPH_RAG_VARIANT=(str, "baseline"),
     NEO4J_ENABLED=(bool, False),
     NEO4J_URI=(str, ""),
     NEO4J_USER=(str, "neo4j"),

@@ -338,3 +338,57 @@ class Neo4jImportTests(TestCase):
                 if chunk.get("graphProvenanceConceptIds"):
                     self.assertIsInstance(chunk["graphProvenanceConceptIds"], list)
             self.assertTrue(found_provenance)
+
+    @override_settings(
+        NEO4J_ENABLED=False,
+        GRAPH_RAG_ENABLED=True,
+    )
+    def test_retrieval_variant_tracking_graph_rag(self):
+        """Trace includes graphRagVariant=graph-rag when enabled."""
+        from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
+
+        _chunks, trace = retrieve_chunks_with_trace(
+            question="test query",
+            top_k=5,
+            min_score=0.0,
+            graph_rag_enabled=True,
+        )
+
+        self.assertIn("graphRagVariant", trace)
+        self.assertEqual(trace["graphRagVariant"], "graph-rag")
+
+    @override_settings(
+        NEO4J_ENABLED=False,
+        GRAPH_RAG_ENABLED=False,
+    )
+    def test_retrieval_variant_tracking_control(self):
+        """Trace includes graphRagVariant=control when disabled."""
+        from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
+
+        _chunks, trace = retrieve_chunks_with_trace(
+            question="test query",
+            top_k=5,
+            min_score=0.0,
+            graph_rag_enabled=False,
+        )
+
+        self.assertIn("graphRagVariant", trace)
+        self.assertEqual(trace["graphRagVariant"], "control")
+
+    @override_settings(
+        NEO4J_ENABLED=False,
+    )
+    def test_retrieval_latency_measurement(self):
+        """Trace includes retrievalLatencyMs measurement."""
+        from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
+
+        _chunks, trace = retrieve_chunks_with_trace(
+            question="test query",
+            top_k=1,
+            min_score=0.0,
+            graph_rag_enabled=False,
+        )
+
+        self.assertIn("retrievalLatencyMs", trace)
+        self.assertIsInstance(trace["retrievalLatencyMs"], float)
+        self.assertGreaterEqual(trace["retrievalLatencyMs"], 0)
