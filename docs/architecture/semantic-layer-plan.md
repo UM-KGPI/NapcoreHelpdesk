@@ -1,5 +1,8 @@
 # Semantic Layer Plan (Graph + RAG)
 
+Related document:
+- `docs/architecture/semantic-layer-findings.md`
+
 ## Purpose
 Define a practical semantic layer that improves:
 - reasoning and multi-hop inference over standards concepts,
