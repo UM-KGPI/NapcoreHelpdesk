@@ -31,7 +31,7 @@ from helpdesk.services.grounded_generator import generate_answer
 from helpdesk.services.llm_generator import LLMGenerationError, generate_answer_llm
 from helpdesk.services.policy_guard import evaluate_policy
 from helpdesk.services.index_builder import index_repository
-from helpdesk.services.retrieval_gateway import retrieve_chunks
+from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 from helpdesk.services.retrieval_event_logger import log_retrieval_events
 
 from .serializers import (
@@ -340,6 +340,12 @@ class QuestionAnswerView(APIView):
         evidence_link_ids = []
         citations = []
         retrieved_chunks = []
+        graph_trace = {
+            "graphExpansionHops": 0,
+            "graphConceptIds": [],
+            "graphEvidenceCount": 0,
+            "graphScoreContribution": 0.0,
+        }
 
         # 1) FAQ-first: fast, deterministic, and usually high confidence.
         faq_match = match_faq(question=question, scope=scope)
@@ -352,22 +358,25 @@ class QuestionAnswerView(APIView):
             citations = faq_match["citations"][:max_citations]
         else:
             # 2) RAG fallback: retrieve evidence, generate, then run policy gate.
-            chunks = retrieve_chunks(
+            graph_rag_enabled = bool(options.get("graphRagEnabled", False) and settings.GRAPH_RAG_ENABLED)
+            chunks, graph_trace = retrieve_chunks_with_trace(
                 question=question,
                 top_k=retrieval_top_k,
                 min_score=retrieval_min_score,
                 scope=scope,
+                graph_rag_enabled=graph_rag_enabled,
             )
 
             # Retry with a relaxed threshold to avoid abstaining on terse asks that still
             # have relevant evidence in indexed sources.
             relaxed_min_score = min(retrieval_min_score, 0.45)
             if not chunks and relaxed_min_score < retrieval_min_score:
-                chunks = retrieve_chunks(
+                chunks, graph_trace = retrieve_chunks_with_trace(
                     question=question,
                     top_k=retrieval_top_k,
                     min_score=relaxed_min_score,
                     scope=scope,
+                    graph_rag_enabled=graph_rag_enabled,
                 )
 
             retrieved_chunks = chunks
@@ -462,6 +471,10 @@ class QuestionAnswerView(APIView):
                     "matchedFaqEntryId": matched_faq_entry_id,
                     "retrievalEventIds": persisted_retrieval_ids,
                     "evidenceLinkIds": evidence_link_ids,
+                    "graphExpansionHops": graph_trace["graphExpansionHops"],
+                    "graphConceptIds": graph_trace["graphConceptIds"],
+                    "graphEvidenceCount": graph_trace["graphEvidenceCount"],
+                    "graphScoreContribution": graph_trace["graphScoreContribution"],
                 }
             },
             status=status.HTTP_200_OK,

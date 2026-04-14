@@ -38,6 +38,7 @@ env = environ.Env(
     EMBEDDING_API_KEY=(str, ""),
     EMBEDDING_MODEL=(str, "text-embedding-3-small"),
     EMBEDDING_TIMEOUT_SECONDS=(int, 30),
+    GRAPH_RAG_ENABLED=(bool, False),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -176,6 +177,7 @@ EMBEDDING_API_BASE_URL = env("EMBEDDING_API_BASE_URL").strip() or "https://api.o
 EMBEDDING_API_KEY = env("EMBEDDING_API_KEY").strip()
 EMBEDDING_MODEL = env("EMBEDDING_MODEL").strip() or "text-embedding-3-small"
 EMBEDDING_TIMEOUT_SECONDS = env("EMBEDDING_TIMEOUT_SECONDS")
+GRAPH_RAG_ENABLED = env("GRAPH_RAG_ENABLED")
 
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://localhost:6379/1")

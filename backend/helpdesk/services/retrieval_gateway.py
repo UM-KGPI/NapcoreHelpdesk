@@ -327,6 +327,111 @@ STANDARD_HINTS = {
 }
 
 
+# Minimal Phase-PoC concept graph for graph-aware retrieval scoring.
+GRAPH_CONCEPT_ALIASES = {
+    "opra:delayed-journey": {
+        "delayed journey",
+        "delayed journeys",
+        "late journey",
+        "late journeys",
+    },
+    "opra:cancelled-journey": {
+        "cancelled journey",
+        "cancelled journeys",
+        "canceled journey",
+        "canceled journeys",
+    },
+    "opra:delay-statistics": {
+        "delay statistic",
+        "delay statistics",
+        "delayedjourneycount",
+    },
+    "opra:late-dated-vehicle-journey-entry": {
+        "latedatedvehiclejourneyentry",
+        "late dated vehicle journey entry",
+    },
+    "opra:journey-events-example": {
+        "delayedandcancelledjourneyswithevents",
+        "journeys with events",
+    },
+}
+
+GRAPH_RELATIONS = {
+    "opra:delayed-journey": {
+        "opra:delay-statistics",
+        "opra:late-dated-vehicle-journey-entry",
+        "opra:journey-events-example",
+    },
+    "opra:cancelled-journey": {
+        "opra:journey-events-example",
+    },
+    "opra:delay-statistics": {
+        "opra:delayed-journey",
+    },
+    "opra:late-dated-vehicle-journey-entry": {
+        "opra:delayed-journey",
+    },
+    "opra:journey-events-example": {
+        "opra:delayed-journey",
+        "opra:cancelled-journey",
+    },
+}
+
+
+def _extract_graph_concepts(text: str) -> set[str]:
+    lower_text = text.lower()
+    concepts: set[str] = set()
+    for concept_id, aliases in GRAPH_CONCEPT_ALIASES.items():
+        if any(alias in lower_text for alias in aliases):
+            concepts.add(concept_id)
+    return concepts
+
+
+def _expand_graph_concepts(concepts: set[str], hops: int = 1) -> set[str]:
+    expanded = set(concepts)
+    frontier = set(concepts)
+    for _ in range(max(0, hops)):
+        next_frontier: set[str] = set()
+        for concept_id in frontier:
+            for neighbor in GRAPH_RELATIONS.get(concept_id, set()):
+                if neighbor not in expanded:
+                    expanded.add(neighbor)
+                    next_frontier.add(neighbor)
+        frontier = next_frontier
+        if not frontier:
+            break
+    return expanded
+
+
+def _graph_score_adjustment(
+    graph_enabled: bool,
+    question_concepts: set[str],
+    expanded_concepts: set[str],
+    chunk_text: str,
+    source_path: str,
+    label: str,
+    heading: str,
+) -> tuple[float, bool]:
+    if not graph_enabled:
+        return 0.0, False
+
+    chunk_concepts = _extract_graph_concepts(
+        "\n".join([chunk_text, source_path, label, heading])
+    )
+    if not chunk_concepts:
+        return 0.0, False
+
+    direct_overlap = chunk_concepts.intersection(question_concepts)
+    if direct_overlap:
+        return 0.18, True
+
+    expanded_overlap = chunk_concepts.intersection(expanded_concepts)
+    if expanded_overlap:
+        return 0.10, True
+
+    return 0.0, False
+
+
 def _question_standard_hints(question: str) -> set[str]:
     """Extract standards explicitly referenced in the user question."""
     lower_question = question.lower()
@@ -372,6 +477,23 @@ def retrieve_chunks(
     min_score: float,
     scope: list[str] | None = None,
 ) -> list[dict]:
+    chunks, _trace = retrieve_chunks_with_trace(
+        question=question,
+        top_k=top_k,
+        min_score=min_score,
+        scope=scope,
+        graph_rag_enabled=False,
+    )
+    return chunks
+
+
+def retrieve_chunks_with_trace(
+    question: str,
+    top_k: int,
+    min_score: float,
+    scope: list[str] | None = None,
+    graph_rag_enabled: bool = False,
+) -> tuple[list[dict], dict]:
     """Retrieve chunks using hybrid vector and lexical ranking.
 
     Ranking weights:
@@ -391,6 +513,10 @@ def retrieve_chunks(
             hinted_doc_types=hinted_doc_types,
         )
     )
+
+    question_concepts = _extract_graph_concepts(question) if graph_rag_enabled else set()
+    expanded_concepts = _expand_graph_concepts(question_concepts, hops=1) if graph_rag_enabled else set()
+    graph_expansion_hops = 1 if graph_rag_enabled and question_concepts else 0
 
     postgres_candidates = _postgres_hybrid_candidates(
         question=question,
@@ -453,6 +579,16 @@ def retrieve_chunks(
                 source_path=chunk.source_path,
             )
         )
+        graph_adjustment, graph_hit = _graph_score_adjustment(
+            graph_enabled=graph_rag_enabled,
+            question_concepts=question_concepts,
+            expanded_concepts=expanded_concepts,
+            chunk_text=chunk.text,
+            source_path=chunk.source_path,
+            label=chunk.label,
+            heading=getattr(chunk, "heading", "") or "",
+        )
+        raw_score += graph_adjustment
         score = min(1.0, max(0.0, raw_score))
         if score < min_score:
             continue
@@ -471,11 +607,26 @@ def retrieve_chunks(
                 "chunkId": chunk.chunk_id,
                 "label": chunk.label,
                 "retrievalEventId": f"re-{uuid4().hex[:8]}",
+                "_graphContribution": graph_adjustment,
+                "_graphHit": graph_hit,
             }
         )
 
     candidates.sort(key=lambda value: (value["_rankScore"], value["score"]), reverse=True)
     trimmed = candidates[:top_k]
+    graph_hits = 0
+    graph_total = 0.0
     for candidate in trimmed:
+        graph_hits += 1 if candidate.get("_graphHit") else 0
+        graph_total += float(candidate.get("_graphContribution") or 0.0)
         candidate.pop("_rankScore", None)
-    return trimmed
+        candidate.pop("_graphContribution", None)
+        candidate.pop("_graphHit", None)
+
+    trace = {
+        "graphExpansionHops": graph_expansion_hops,
+        "graphConceptIds": sorted(expanded_concepts) if graph_rag_enabled else [],
+        "graphEvidenceCount": graph_hits if graph_rag_enabled else 0,
+        "graphScoreContribution": round(graph_total / len(trimmed), 4) if graph_rag_enabled and trimmed else 0.0,
+    }
+    return trimmed, trace

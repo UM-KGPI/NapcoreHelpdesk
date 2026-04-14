@@ -17,6 +17,19 @@ The plan keeps current PostgreSQL + pgvector retrieval as baseline and adds a gr
 - Semantic layer is additive, behind a feature flag, with deterministic fallback always available.
 - All answers must stay source-grounded to approved repositories and include citations.
 
+## Implementation Status (2026-04-15)
+- Added `options.graphRagEnabled` to `POST /api/v1/questions/answer` (defaults to `false`).
+- Added backend feature flag `GRAPH_RAG_ENABLED` for safe rollout gating.
+- Implemented a first graph-aware retrieval slice:
+  - concept extraction from query/chunk text,
+  - 1-hop concept expansion,
+  - graph contribution scoring integrated into ranking when enabled.
+- Added response trace fields:
+  - `graphExpansionHops`
+  - `graphConceptIds`
+  - `graphEvidenceCount`
+  - `graphScoreContribution`
+
 ## Overall Implementation Plan
 1. Build semantic extraction during indexing.
 2. Materialize concept graph in a graph database.

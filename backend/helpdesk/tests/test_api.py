@@ -232,6 +232,34 @@ class HelpdeskApiTests(APITestCase):
             1,
         )
 
+    @override_settings(GRAPH_RAG_ENABLED=True)
+    def test_answer_includes_graph_trace_when_graph_mode_enabled(self):
+        """Ensure graph trace fields are populated when graph mode is requested and enabled."""
+        response = self.client.post(
+            reverse("answer-question"),
+            {
+                "question": "How are delayed journey statistics represented in OpRa examples?",
+                "standardsScope": ["OpRa"],
+                "options": {
+                    "graphRagEnabled": True,
+                    "retrievalTopK": 6,
+                    "retrievalMinScore": 0.30,
+                },
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-rag-graph-001",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_matches_schema("AnswerResponse", response.data)
+        self.assertIn("graphExpansionHops", response.data["trace"])
+        self.assertIn("graphConceptIds", response.data["trace"])
+        self.assertIn("graphEvidenceCount", response.data["trace"])
+        self.assertIn("graphScoreContribution", response.data["trace"])
+        self.assertGreaterEqual(response.data["trace"]["graphExpansionHops"], 0)
+        self.assertGreaterEqual(response.data["trace"]["graphEvidenceCount"], 0)
+
     def test_select_citations_deduplicates_and_prefers_dominant_repo_docs(self):
         """Ensure citation selection prefers substantive chunks from the dominant repository."""
         citations = _select_citations(

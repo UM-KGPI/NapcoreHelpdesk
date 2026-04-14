@@ -112,6 +112,7 @@ paths:
                     faqMinConfidence: 0.85
                     retrievalTopK: 6
                     retrievalMinScore: 0.62
+                    graphRagEnabled: false
       responses:
         '200':
           description: Answer produced in faq, rag, or abstain mode
@@ -140,6 +141,10 @@ paths:
                       questionEventId: qe-001
                       matchedFaqEntryId: faq-001
                       retrievalEventIds: []
+                      graphExpansionHops: 0
+                      graphConceptIds: []
+                      graphEvidenceCount: 0
+                      graphScoreContribution: 0.0
                 rag:
                   value:
                     answerId: ans-002
@@ -161,6 +166,10 @@ paths:
                       matchedFaqEntryId: null
                       retrievalEventIds: [re-991]
                       evidenceLinkIds: [el-51]
+                      graphExpansionHops: 1
+                      graphConceptIds: [opra:delay-statistics, opra:delayed-journey]
+                      graphEvidenceCount: 1
+                      graphScoreContribution: 0.09
                 abstain:
                   value:
                     answerId: ans-003
@@ -176,6 +185,10 @@ paths:
                       questionEventId: qe-003
                       matchedFaqEntryId: null
                       retrievalEventIds: [re-992]
+                      graphExpansionHops: 0
+                      graphConceptIds: []
+                      graphEvidenceCount: 0
+                      graphScoreContribution: 0.0
         '400':
           description: Invalid request payload
           content:
@@ -569,6 +582,9 @@ components:
           minimum: 0
           maximum: 1
           default: 0.62
+        graphRagEnabled:
+          type: boolean
+          default: false
       additionalProperties: false
     AnswerResponse:
       type: object
@@ -619,7 +635,8 @@ components:
       additionalProperties: false
     AnswerTrace:
       type: object
-      required: [requestId, questionEventId, retrievalEventIds]
+      required:
+        [requestId, questionEventId, retrievalEventIds, graphExpansionHops, graphConceptIds, graphEvidenceCount, graphScoreContribution]
       properties:
         requestId:
           type: string
@@ -635,6 +652,19 @@ components:
           type: array
           items:
             type: string
+        graphExpansionHops:
+          type: integer
+          minimum: 0
+        graphConceptIds:
+          type: array
+          items:
+            type: string
+        graphEvidenceCount:
+          type: integer
+          minimum: 0
+        graphScoreContribution:
+          type: number
+          minimum: 0
       additionalProperties: false
     PromotionCandidatesResponse:
       type: object

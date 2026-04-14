@@ -20,6 +20,9 @@ class AnswerOptionsSerializer(serializers.Serializer):
     retrievalTopK = serializers.IntegerField(required=False, min_value=1, max_value=20, default=6)
     retrievalMinScore = serializers.FloatField(required=False, min_value=0.0, max_value=1.0, default=0.62)
 
+    # Feature-flagged graph-aware retrieval expansion for semantic PoC.
+    graphRagEnabled = serializers.BooleanField(required=False, default=False)
+
 
 class AnswerRequestSerializer(serializers.Serializer):
     """Primary request payload for the answer orchestration endpoint."""
