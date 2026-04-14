@@ -31,6 +31,10 @@
 ## Adopted Baseline Recommendation
 Reuse common core vocabularies and gradually build a project ontology for NAPCORE concepts.
 
+Initial ontology draft artifacts:
+- `docs/ontology/README.md`
+- `docs/ontology/napcore-core.ttl`
+
 ### Core Reuse Set
 - SKOS for concept schemes, preferred labels, alternative labels, and broader/narrower relations.
 - PROV-O for provenance and extraction traceability.
@@ -38,16 +42,17 @@ Reuse common core vocabularies and gradually build a project ontology for NAPCOR
 
 ### Project Extension
 - Introduce a project namespace for transport-specific relations not covered by the reused cores.
-- Working namespace placeholder: `https://napcore.eu/ontology/napcore#`
-- Candidate prefix: `tmx:`
+- Working namespace placeholder: `https://napcore.eu/ontology/helpdesk#`
+- Candidate prefix: `nch:`
+- Current positioning: experimental helpdesk application ontology; may evolve into broader NAPCORE domain ontology with wider consensus.
 
 ## Minimum Modeling Profile (Phase 1)
-- `tmx:Concept` mapped with SKOS semantics.
-- `tmx:StandardArtifact` for source files and normative assets.
-- `tmx:ExampleArtifact` for executable/illustrative examples.
-- `tmx:conceptInStandard` linking concepts to standard families.
-- `tmx:evidencedByArtifact` linking concepts to citable sources.
-- `tmx:artifactHasChunk` linking assets to retrievable chunks.
+- `skos:Concept` as the concept backbone, with `nch:` extensions only where needed.
+- `nch:StandardArtifact` for source files and normative assets.
+- `nch:ExampleArtifact` for executable/illustrative examples.
+- `nch:conceptInStandard` linking concepts to standard families.
+- `nch:evidencedByArtifact` linking concepts to citable sources.
+- `nch:artifactHasChunk` linking assets to retrievable chunks.
 
 ## Governance And Change Control
 - Keep ontology changes under editorial workflow: draft -> review -> approved.

@@ -2,6 +2,7 @@
 
 Related document:
 - `docs/architecture/semantic-layer-findings.md`
+- `docs/ontology/napcore-core.ttl`
 
 ## Purpose
 Define a practical semantic layer that improves:

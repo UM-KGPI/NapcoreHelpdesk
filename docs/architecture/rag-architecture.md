@@ -18,6 +18,7 @@ Implement the helpdesk as a retrieval-augmented generation (RAG) system that pro
 ## Semantic Layer Extension
 - Graph-based semantic layer plan: [semantic-layer-plan.md](docs/architecture/semantic-layer-plan.md)
 - Semantic layer findings and ontology baseline: [semantic-layer-findings.md](docs/architecture/semantic-layer-findings.md)
+- Initial ontology draft: [../ontology/napcore-core.ttl](docs/ontology/napcore-core.ttl)
 
 ## Ontology Namespace Policy
 - Baseline policy: reuse common core vocabularies before adding project-specific terms.
@@ -30,8 +31,9 @@ Implement the helpdesk as a retrieval-augmented generation (RAG) system that pro
   - PROV-O for provenance of extracted concepts, links, and retrieval evidence lineage.
   - DCTERMS for document and artifact metadata fields.
 - Project extension namespace:
-  - Working namespace: `https://napcore.eu/ontology/napcore#`
-  - Working prefix: `tmx`
+  - Working namespace: `https://napcore.eu/ontology/helpdesk#`
+  - Working prefix: `nch`
+  - Scope: experimental helpdesk application ontology (not yet a full NAPCORE domain ontology).
   - Usage: only for transport relations not already covered by SKOS, PROV-O, or DCTERMS.
 - Governance rules:
   - All new project terms must include definition, scope note, and source provenance.
