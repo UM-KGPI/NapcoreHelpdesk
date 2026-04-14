@@ -1,0 +1,152 @@
+from __future__ import annotations
+
+from typing import Iterable
+
+from helpdesk.models import SourceChunk
+
+
+# Minimal Phase-PoC concept graph for graph-aware retrieval scoring.
+GRAPH_CONCEPT_ALIASES = {
+    "opra:delayed-journey": {
+        "delayed journey",
+        "delayed journeys",
+        "late journey",
+        "late journeys",
+    },
+    "opra:cancelled-journey": {
+        "cancelled journey",
+        "cancelled journeys",
+        "canceled journey",
+        "canceled journeys",
+    },
+    "opra:delay-statistics": {
+        "delay statistic",
+        "delay statistics",
+        "delayedjourneycount",
+    },
+    "opra:late-dated-vehicle-journey-entry": {
+        "latedatedvehiclejourneyentry",
+        "late dated vehicle journey entry",
+    },
+    "opra:journey-events-example": {
+        "delayedandcancelledjourneyswithevents",
+        "journeys with events",
+    },
+}
+
+GRAPH_RELATIONS = {
+    "opra:delayed-journey": {
+        "opra:delay-statistics",
+        "opra:late-dated-vehicle-journey-entry",
+        "opra:journey-events-example",
+    },
+    "opra:cancelled-journey": {
+        "opra:journey-events-example",
+    },
+    "opra:delay-statistics": {
+        "opra:delayed-journey",
+    },
+    "opra:late-dated-vehicle-journey-entry": {
+        "opra:delayed-journey",
+    },
+    "opra:journey-events-example": {
+        "opra:delayed-journey",
+        "opra:cancelled-journey",
+    },
+}
+
+
+def extract_graph_concepts(text: str) -> set[str]:
+    lower_text = text.lower()
+    concepts: set[str] = set()
+    for concept_id, aliases in GRAPH_CONCEPT_ALIASES.items():
+        if any(alias in lower_text for alias in aliases):
+            concepts.add(concept_id)
+    return concepts
+
+
+def expand_graph_concepts(concepts: set[str], hops: int = 1) -> set[str]:
+    expanded = set(concepts)
+    frontier = set(concepts)
+    for _ in range(max(0, hops)):
+        next_frontier: set[str] = set()
+        for concept_id in frontier:
+            for neighbor in GRAPH_RELATIONS.get(concept_id, set()):
+                if neighbor not in expanded:
+                    expanded.add(neighbor)
+                    next_frontier.add(neighbor)
+        frontier = next_frontier
+        if not frontier:
+            break
+    return expanded
+
+
+def build_semantic_graph_snapshot(chunks: Iterable[SourceChunk]) -> dict:
+    concept_nodes: dict[str, dict] = {}
+    chunk_nodes: dict[str, dict] = {}
+    mention_edges: list[dict] = []
+
+    for chunk in chunks:
+        chunk_text = "\n".join(
+            [chunk.text, chunk.source_path, chunk.label, getattr(chunk, "heading", "") or ""]
+        )
+        concepts = extract_graph_concepts(chunk_text)
+        if not concepts:
+            continue
+
+        chunk_nodes[chunk.chunk_id] = {
+            "id": f"chunk:{chunk.chunk_id}",
+            "type": "Chunk",
+            "chunkId": chunk.chunk_id,
+            "repositoryUrl": chunk.repository_url,
+            "sourcePath": chunk.source_path,
+            "commitSha": chunk.commit_sha,
+            "qualityScore": float(chunk.quality_score),
+            "standardsScope": chunk.standards_scope or [],
+            "docType": getattr(chunk, "doc_type", "") or "",
+        }
+
+        for concept_id in sorted(concepts):
+            concept_nodes[concept_id] = {
+                "id": f"concept:{concept_id}",
+                "type": "Concept",
+                "conceptId": concept_id,
+                "namespace": "nch",
+            }
+            mention_edges.append(
+                {
+                    "type": "MENTIONS_CONCEPT",
+                    "from": f"chunk:{chunk.chunk_id}",
+                    "to": f"concept:{concept_id}",
+                    "sourceUrl": chunk.repository_url,
+                    "sourcePath": chunk.source_path,
+                    "commitSha": chunk.commit_sha,
+                }
+            )
+
+    related_edges: list[dict] = []
+    for source_concept, neighbors in GRAPH_RELATIONS.items():
+        if source_concept not in concept_nodes:
+            continue
+        for target_concept in sorted(neighbors):
+            if target_concept not in concept_nodes:
+                continue
+            related_edges.append(
+                {
+                    "type": "RELATED_TO",
+                    "from": f"concept:{source_concept}",
+                    "to": f"concept:{target_concept}",
+                    "relationType": "semantic-proximity",
+                }
+            )
+
+    return {
+        "nodes": [*concept_nodes.values(), *chunk_nodes.values()],
+        "edges": [*mention_edges, *related_edges],
+        "stats": {
+            "conceptNodeCount": len(concept_nodes),
+            "chunkNodeCount": len(chunk_nodes),
+            "mentionEdgeCount": len(mention_edges),
+            "relatedEdgeCount": len(related_edges),
+        },
+    }

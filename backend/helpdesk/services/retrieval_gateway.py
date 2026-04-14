@@ -14,6 +14,7 @@ except Exception:  # pragma: no cover - only unavailable in non-postgres-only en
 from helpdesk.models import SourceChunk
 from helpdesk.db_fields import HAS_NATIVE_PGVECTOR
 from helpdesk.services.embeddings import build_text_embedding, cosine_similarity, normalize_text_tokens
+from helpdesk.services.semantic_graph import expand_graph_concepts, extract_graph_concepts
 
 try:
     from pgvector.django import CosineDistance  # type: ignore
@@ -327,82 +328,6 @@ STANDARD_HINTS = {
 }
 
 
-# Minimal Phase-PoC concept graph for graph-aware retrieval scoring.
-GRAPH_CONCEPT_ALIASES = {
-    "opra:delayed-journey": {
-        "delayed journey",
-        "delayed journeys",
-        "late journey",
-        "late journeys",
-    },
-    "opra:cancelled-journey": {
-        "cancelled journey",
-        "cancelled journeys",
-        "canceled journey",
-        "canceled journeys",
-    },
-    "opra:delay-statistics": {
-        "delay statistic",
-        "delay statistics",
-        "delayedjourneycount",
-    },
-    "opra:late-dated-vehicle-journey-entry": {
-        "latedatedvehiclejourneyentry",
-        "late dated vehicle journey entry",
-    },
-    "opra:journey-events-example": {
-        "delayedandcancelledjourneyswithevents",
-        "journeys with events",
-    },
-}
-
-GRAPH_RELATIONS = {
-    "opra:delayed-journey": {
-        "opra:delay-statistics",
-        "opra:late-dated-vehicle-journey-entry",
-        "opra:journey-events-example",
-    },
-    "opra:cancelled-journey": {
-        "opra:journey-events-example",
-    },
-    "opra:delay-statistics": {
-        "opra:delayed-journey",
-    },
-    "opra:late-dated-vehicle-journey-entry": {
-        "opra:delayed-journey",
-    },
-    "opra:journey-events-example": {
-        "opra:delayed-journey",
-        "opra:cancelled-journey",
-    },
-}
-
-
-def _extract_graph_concepts(text: str) -> set[str]:
-    lower_text = text.lower()
-    concepts: set[str] = set()
-    for concept_id, aliases in GRAPH_CONCEPT_ALIASES.items():
-        if any(alias in lower_text for alias in aliases):
-            concepts.add(concept_id)
-    return concepts
-
-
-def _expand_graph_concepts(concepts: set[str], hops: int = 1) -> set[str]:
-    expanded = set(concepts)
-    frontier = set(concepts)
-    for _ in range(max(0, hops)):
-        next_frontier: set[str] = set()
-        for concept_id in frontier:
-            for neighbor in GRAPH_RELATIONS.get(concept_id, set()):
-                if neighbor not in expanded:
-                    expanded.add(neighbor)
-                    next_frontier.add(neighbor)
-        frontier = next_frontier
-        if not frontier:
-            break
-    return expanded
-
-
 def _graph_score_adjustment(
     graph_enabled: bool,
     question_concepts: set[str],
@@ -415,7 +340,7 @@ def _graph_score_adjustment(
     if not graph_enabled:
         return 0.0, False
 
-    chunk_concepts = _extract_graph_concepts(
+    chunk_concepts = extract_graph_concepts(
         "\n".join([chunk_text, source_path, label, heading])
     )
     if not chunk_concepts:
@@ -514,8 +439,8 @@ def retrieve_chunks_with_trace(
         )
     )
 
-    question_concepts = _extract_graph_concepts(question) if graph_rag_enabled else set()
-    expanded_concepts = _expand_graph_concepts(question_concepts, hops=1) if graph_rag_enabled else set()
+    question_concepts = extract_graph_concepts(question) if graph_rag_enabled else set()
+    expanded_concepts = expand_graph_concepts(question_concepts, hops=1) if graph_rag_enabled else set()
     graph_expansion_hops = 1 if graph_rag_enabled and question_concepts else 0
 
     postgres_candidates = _postgres_hybrid_candidates(
