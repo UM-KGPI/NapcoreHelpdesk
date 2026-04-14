@@ -240,6 +240,66 @@ def _neo4j_http_endpoint(uri: str, database: str) -> str:
     raise ValueError(f"Unsupported Neo4j URI scheme: {parsed.scheme}")
 
 
+def query_neo4j_concept_expansion(
+    *,
+    concept_ids: set[str],
+    hops: int = 1,
+    uri: str,
+    username: str,
+    password: str,
+    database: str,
+    timeout_seconds: int = 10,
+) -> set[str]:
+    """Query Neo4j for related concepts via RELATED_TO traversal and return all concept IDs.
+
+    Executes a variable-length path query up to *hops* hops and returns the union of the
+    original *concept_ids* and any related concept IDs found in the graph.  Returns the
+    original set unchanged when *concept_ids* is empty or Neo4j is unreachable.
+    """
+
+    if not concept_ids:
+        return set(concept_ids)
+
+    safe_hops = max(1, int(hops))
+    cypher = (
+        f"MATCH (c:Concept)-[:RELATED_TO*1..{safe_hops}]-(r:Concept) "
+        "WHERE c.conceptId IN $conceptIds "
+        "RETURN DISTINCT r.conceptId AS conceptId"
+    )
+    statement = {"statement": cypher, "parameters": {"conceptIds": sorted(concept_ids)}}
+
+    endpoint = _neo4j_http_endpoint(uri=uri, database=database)
+    token = base64.b64encode(f"{username}:{password}".encode("utf-8")).decode("ascii")
+    payload = json.dumps({"statements": [statement]}).encode("utf-8")
+    request = Request(
+        endpoint,
+        data=payload,
+        headers={
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": f"Basic {token}",
+        },
+        method="POST",
+    )
+
+    with urlopen(request, timeout=timeout_seconds) as response:
+        body = response.read().decode("utf-8")
+
+    parsed = json.loads(body)
+    errors = parsed.get("errors", [])
+    if errors:
+        joined = "; ".join(error.get("message", "Unknown Neo4j error") for error in errors)
+        raise RuntimeError(f"Neo4j concept expansion query failed: {joined}")
+
+    expanded: set[str] = set(concept_ids)
+    for result in parsed.get("results", []):
+        for row in result.get("data", []):
+            row_data = row.get("row", [])
+            if row_data and row_data[0]:
+                expanded.add(row_data[0])
+    return expanded
+
+
 def submit_neo4j_statements(
     *,
     uri: str,

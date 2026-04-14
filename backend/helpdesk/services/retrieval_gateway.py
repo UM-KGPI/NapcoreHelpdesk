@@ -11,9 +11,12 @@ except Exception:  # pragma: no cover - only unavailable in non-postgres-only en
     SearchRank = None
     SearchVector = None
 
+from django.conf import settings
+
 from helpdesk.models import SourceChunk
 from helpdesk.db_fields import HAS_NATIVE_PGVECTOR
 from helpdesk.services.embeddings import build_text_embedding, cosine_similarity, normalize_text_tokens
+from helpdesk.services.neo4j_importer import query_neo4j_concept_expansion
 from helpdesk.services.semantic_graph import expand_graph_concepts, extract_graph_concepts
 
 try:
@@ -440,8 +443,30 @@ def retrieve_chunks_with_trace(
     )
 
     question_concepts = extract_graph_concepts(question) if graph_rag_enabled else set()
-    expanded_concepts = expand_graph_concepts(question_concepts, hops=1) if graph_rag_enabled else set()
-    graph_expansion_hops = 1 if graph_rag_enabled and question_concepts else 0
+    graph_expansion_source = "none"
+    if graph_rag_enabled and question_concepts:
+        neo4j_enabled = getattr(settings, "NEO4J_ENABLED", False)
+        if neo4j_enabled:
+            try:
+                expanded_concepts = query_neo4j_concept_expansion(
+                    concept_ids=question_concepts,
+                    hops=1,
+                    uri=settings.NEO4J_URI,
+                    username=settings.NEO4J_USER,
+                    password=settings.NEO4J_PASSWORD,
+                    database=settings.NEO4J_DATABASE,
+                )
+                graph_expansion_source = "neo4j"
+            except Exception:
+                expanded_concepts = expand_graph_concepts(question_concepts, hops=1)
+                graph_expansion_source = "memory_fallback"
+        else:
+            expanded_concepts = expand_graph_concepts(question_concepts, hops=1)
+            graph_expansion_source = "memory"
+        graph_expansion_hops = 1
+    else:
+        expanded_concepts = set()
+        graph_expansion_hops = 0
 
     postgres_candidates = _postgres_hybrid_candidates(
         question=question,
@@ -550,6 +575,7 @@ def retrieve_chunks_with_trace(
 
     trace = {
         "graphExpansionHops": graph_expansion_hops,
+        "graphExpansionSource": graph_expansion_source,
         "graphConceptIds": sorted(expanded_concepts) if graph_rag_enabled else [],
         "graphEvidenceCount": graph_hits if graph_rag_enabled else 0,
         "graphScoreContribution": round(graph_total / len(trimmed), 4) if graph_rag_enabled and trimmed else 0.0,
