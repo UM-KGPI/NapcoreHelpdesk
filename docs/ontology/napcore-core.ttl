@@ -13,6 +13,8 @@
     a owl:Ontology ;
     dcterms:title "NAPCORE Helpdesk Application Ontology"@en ;
     dcterms:description "Experimental ontology draft for the NAPCORE helpdesk application layer, reusing SKOS, PROV-O, and DCTERMS with a minimal set of application-specific extensions."@en ;
+    dcterms:creator "TODO: Author Name" ;
+    dcterms:publisher "TODO: Organization Name" ;
     dcterms:created "2026-04-14"^^xsd:date ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
     owl:versionInfo "0.1.0-draft" ;

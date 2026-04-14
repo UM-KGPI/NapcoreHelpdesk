@@ -22,6 +22,10 @@ The draft is intentionally small:
 ## Files
 - `napcore-core.ttl`: initial ontology draft in Turtle.
 
+## Maintainers
+- Author: TODO: Author Name
+- Organization: TODO: Organization Name
+
 ## Modeling Conventions
 - Use `nch:` for project-specific terms.
 - Prefer `skos:Concept` and `skos:ConceptScheme` over custom class hierarchies unless there is a strong implementation need.
