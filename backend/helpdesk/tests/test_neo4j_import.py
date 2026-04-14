@@ -243,3 +243,34 @@ class Neo4jImportTests(TestCase):
         expand_mock.assert_called_once()
         self.assertEqual(trace["graphExpansionSource"], "neo4j")
         self.assertIn("opra:delayed-journey", trace["graphConceptIds"])
+
+    @override_settings(
+        NEO4J_ENABLED=False,
+    )
+    def test_graph_concept_candidates_injected_into_pool(self):
+        """Graph-concept alias matching adds new chunks into the candidate pool."""
+        from helpdesk.models import SourceChunk
+        from helpdesk.services.embeddings import build_text_embedding
+        from helpdesk.services.retrieval_gateway import _graph_concept_candidates
+
+        chunk_text = "The delayed journey count was 5 on this route."
+        SourceChunk.objects.get_or_create(
+            chunk_id="graph-seed-test-001",
+            defaults={
+                "repository_url": "https://github.com/OpRa-CEN/OpRa",
+                "commit_sha": "abc",
+                "source_path": "test/delay.xml",
+                "label": "Delay test",
+                "text": chunk_text,
+                "standards_scope": ["OpRa"],
+                "quality_score": 0.80,
+                "embedding_vector": build_text_embedding(chunk_text),
+            },
+        )
+
+        qs = _graph_concept_candidates(
+            expanded_concepts={"opra:delayed-journey"},
+            top_k=5,
+        )
+        chunk_ids = [c.chunk_id for c in qs]
+        self.assertIn("graph-seed-test-001", chunk_ids)

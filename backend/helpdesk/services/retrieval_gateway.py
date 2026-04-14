@@ -17,7 +17,7 @@ from helpdesk.models import SourceChunk
 from helpdesk.db_fields import HAS_NATIVE_PGVECTOR
 from helpdesk.services.embeddings import build_text_embedding, cosine_similarity, normalize_text_tokens
 from helpdesk.services.neo4j_importer import query_neo4j_concept_expansion
-from helpdesk.services.semantic_graph import expand_graph_concepts, extract_graph_concepts
+from helpdesk.services.semantic_graph import GRAPH_CONCEPT_ALIASES, expand_graph_concepts, extract_graph_concepts
 
 try:
     from pgvector.django import CosineDistance  # type: ignore
@@ -360,6 +360,34 @@ def _graph_score_adjustment(
     return 0.0, False
 
 
+def _graph_concept_candidates(
+    expanded_concepts: set[str],
+    top_k: int,
+    scope: list[str] | None = None,
+):
+    """Return DB chunks whose text mentions any alias of the expanded concept set.
+
+    Builds an OR filter across all aliases for each concept ID present in
+    *expanded_concepts*, capped at ``max(20, top_k * 4)`` results.
+    Returns an empty queryset when *expanded_concepts* is empty.
+    """
+
+    if not expanded_concepts:
+        return SourceChunk.objects.none()
+
+    alias_filter = models.Q()
+    for concept_id in expanded_concepts:
+        for alias in GRAPH_CONCEPT_ALIASES.get(concept_id, set()):
+            alias_filter |= models.Q(text__icontains=alias)
+
+    if not alias_filter:
+        return SourceChunk.objects.none()
+
+    return SourceChunk.objects.filter(_scope_query_filter(scope)).filter(alias_filter)[
+        : max(20, top_k * 4)
+    ]
+
+
 def _question_standard_hints(question: str) -> set[str]:
     """Extract standards explicitly referenced in the user question."""
     lower_question = question.lower()
@@ -484,7 +512,21 @@ def retrieve_chunks_with_trace(
             if hinted_chunk.id not in existing_ids:
                 chunk_iterable.append(hinted_chunk)
     else:
-        chunk_iterable = SourceChunk.objects.all().iterator()
+        chunk_iterable = list(SourceChunk.objects.all())
+        existing_ids = {chunk.id for chunk in chunk_iterable}
+
+    graph_candidates_added = 0
+    if graph_rag_enabled and expanded_concepts:
+        if not isinstance(chunk_iterable, list):
+            chunk_iterable = list(chunk_iterable)
+            existing_ids = {chunk.id for chunk in chunk_iterable}
+        for graph_chunk in _graph_concept_candidates(
+            expanded_concepts=expanded_concepts, top_k=top_k, scope=scope
+        ):
+            if graph_chunk.id not in existing_ids:
+                chunk_iterable.append(graph_chunk)
+                existing_ids.add(graph_chunk.id)
+                graph_candidates_added += 1
 
     candidates = []
     for chunk in chunk_iterable:
@@ -577,6 +619,7 @@ def retrieve_chunks_with_trace(
         "graphExpansionHops": graph_expansion_hops,
         "graphExpansionSource": graph_expansion_source,
         "graphConceptIds": sorted(expanded_concepts) if graph_rag_enabled else [],
+        "graphCandidatesAdded": graph_candidates_added if graph_rag_enabled else 0,
         "graphEvidenceCount": graph_hits if graph_rag_enabled else 0,
         "graphScoreContribution": round(graph_total / len(trimmed), 4) if graph_rag_enabled and trimmed else 0.0,
     }
