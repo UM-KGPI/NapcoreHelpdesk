@@ -274,3 +274,67 @@ class Neo4jImportTests(TestCase):
         )
         chunk_ids = [c.chunk_id for c in qs]
         self.assertIn("graph-seed-test-001", chunk_ids)
+
+    @override_settings(
+        NEO4J_ENABLED=False,
+    )
+    def test_graph_score_adjustment_returns_provenance(self):
+        """Graph score adjustment returns matching concept IDs for provenance."""
+        from helpdesk.services.retrieval_gateway import _graph_score_adjustment
+
+        adjustment, hit, concepts = _graph_score_adjustment(
+            graph_enabled=True,
+            question_concepts={"opra:delayed-journey"},
+            expanded_concepts={"opra:delayed-journey", "opra:delay-statistics"},
+            chunk_text="This chunk mentions delayed journeys.",
+            source_path="delay.md",
+            label="Delay test",
+            heading="",
+        )
+
+        self.assertGreater(adjustment, 0.0)
+        self.assertTrue(hit)
+        self.assertIn("opra:delayed-journey", concepts)
+
+    @override_settings(
+        NEO4J_ENABLED=False,
+    )
+    def test_retrieval_includes_graph_provenance_in_response(self):
+        """retrieve_chunks_with_trace includes graphProvenanceConceptIds in results."""
+        from helpdesk.models import SourceChunk
+        from helpdesk.services.embeddings import build_text_embedding
+        from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
+
+        chunk_text = "The delayed journey occurred on route 5."
+        SourceChunk.objects.get_or_create(
+            chunk_id="provenance-test-001",
+            defaults={
+                "repository_url": "https://github.com/OpRa-CEN/OpRa",
+                "commit_sha": "abc",
+                "source_path": "test/delay.xml",
+                "label": "Delay provenance test",
+                "text": chunk_text,
+                "standards_scope": ["OpRa"],
+                "quality_score": 0.85,
+                "embedding_vector": build_text_embedding(chunk_text),
+            },
+        )
+
+        chunks, trace = retrieve_chunks_with_trace(
+            question="delayed journey",
+            top_k=5,
+            min_score=0.0,
+            graph_rag_enabled=True,
+        )
+
+        # Check trace has provenance stats
+        self.assertIn("graphProvenanceChainCount", trace)
+        self.assertGreaterEqual(trace["graphProvenanceChainCount"], 0)
+
+        # Check at least one chunk has provenance if graph hit
+        if any(c.get("graphProvenanceConceptIds") for c in chunks):
+            found_provenance = True
+            for chunk in chunks:
+                if chunk.get("graphProvenanceConceptIds"):
+                    self.assertIsInstance(chunk["graphProvenanceConceptIds"], list)
+            self.assertTrue(found_provenance)

@@ -339,25 +339,30 @@ def _graph_score_adjustment(
     source_path: str,
     label: str,
     heading: str,
-) -> tuple[float, bool]:
+) -> tuple[float, bool, set[str]]:
+    """Score adjustment for graph reasoning with provenance tracking.
+
+    Returns:
+        (adjustment_score, is_graph_hit, matching_concept_ids)
+    """
     if not graph_enabled:
-        return 0.0, False
+        return 0.0, False, set()
 
     chunk_concepts = extract_graph_concepts(
         "\n".join([chunk_text, source_path, label, heading])
     )
     if not chunk_concepts:
-        return 0.0, False
+        return 0.0, False, set()
 
     direct_overlap = chunk_concepts.intersection(question_concepts)
     if direct_overlap:
-        return 0.18, True
+        return 0.22, True, direct_overlap
 
     expanded_overlap = chunk_concepts.intersection(expanded_concepts)
     if expanded_overlap:
-        return 0.10, True
+        return 0.15, True, expanded_overlap
 
-    return 0.0, False
+    return 0.0, False, set()
 
 
 def _graph_concept_candidates(
@@ -571,7 +576,7 @@ def retrieve_chunks_with_trace(
                 source_path=chunk.source_path,
             )
         )
-        graph_adjustment, graph_hit = _graph_score_adjustment(
+        graph_adjustment, graph_hit, matching_concepts = _graph_score_adjustment(
             graph_enabled=graph_rag_enabled,
             question_concepts=question_concepts,
             expanded_concepts=expanded_concepts,
@@ -601,6 +606,7 @@ def retrieve_chunks_with_trace(
                 "retrievalEventId": f"re-{uuid4().hex[:8]}",
                 "_graphContribution": graph_adjustment,
                 "_graphHit": graph_hit,
+                "_graphProvenanceConceptIds": sorted(matching_concepts),
             }
         )
 
@@ -608,12 +614,20 @@ def retrieve_chunks_with_trace(
     trimmed = candidates[:top_k]
     graph_hits = 0
     graph_total = 0.0
+    provenance_chains: set[str] = set()
     for candidate in trimmed:
         graph_hits += 1 if candidate.get("_graphHit") else 0
         graph_total += float(candidate.get("_graphContribution") or 0.0)
+        for concept_id in candidate.get("_graphProvenanceConceptIds", []):
+            provenance_chains.add(concept_id)
         candidate.pop("_rankScore", None)
         candidate.pop("_graphContribution", None)
         candidate.pop("_graphHit", None)
+        # Include provenance in final response
+        if candidate.get("_graphProvenanceConceptIds"):
+            candidate["graphProvenanceConceptIds"] = candidate.pop("_graphProvenanceConceptIds")
+        else:
+            candidate.pop("_graphProvenanceConceptIds", None)
 
     trace = {
         "graphExpansionHops": graph_expansion_hops,
@@ -622,5 +636,6 @@ def retrieve_chunks_with_trace(
         "graphCandidatesAdded": graph_candidates_added if graph_rag_enabled else 0,
         "graphEvidenceCount": graph_hits if graph_rag_enabled else 0,
         "graphScoreContribution": round(graph_total / len(trimmed), 4) if graph_rag_enabled and trimmed else 0.0,
+        "graphProvenanceChainCount": len(provenance_chains) if graph_rag_enabled else 0,
     }
     return trimmed, trace
