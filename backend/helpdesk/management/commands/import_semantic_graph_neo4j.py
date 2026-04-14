@@ -6,7 +6,11 @@ from pathlib import Path
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
-from helpdesk.services.neo4j_importer import build_neo4j_statements, submit_neo4j_statements
+from helpdesk.services.neo4j_importer import (
+    build_neo4j_schema_statements,
+    build_neo4j_statements,
+    submit_neo4j_statements,
+)
 
 
 class Command(BaseCommand):
@@ -24,11 +28,18 @@ class Command(BaseCommand):
             default="",
             help="Neo4j database name override (defaults to NEO4J_DATABASE).",
         )
+        parser.add_argument(
+            "--no-ensure-schema",
+            action="store_false",
+            dest="ensure_schema",
+            help="Skip schema bootstrap statements before data upserts.",
+        )
 
     def handle(self, *args, **options):
         input_path = Path(options["input"]).expanduser().resolve()
         apply_changes = bool(options["apply"])
         database = (options.get("database") or "").strip() or settings.NEO4J_DATABASE
+        ensure_schema = bool(options.get("ensure_schema", True))
 
         if not input_path.exists() or not input_path.is_file():
             raise CommandError(f"--input file not found: {input_path}")
@@ -37,15 +48,26 @@ class Command(BaseCommand):
         if not isinstance(payload, dict):
             raise CommandError("Snapshot JSON must be an object")
 
-        statements = build_neo4j_statements(payload)
+        data_statements = build_neo4j_statements(payload)
+        schema_statements = build_neo4j_schema_statements() if ensure_schema else []
+        statements = [*schema_statements, *data_statements]
         stats = payload.get("stats", {}) if isinstance(payload.get("stats"), dict) else {}
 
         self.stdout.write("Semantic graph Neo4j import plan:")
         self.stdout.write(f"input={input_path}")
         self.stdout.write(f"database={database}")
+        self.stdout.write(f"ensure_schema={ensure_schema}")
+        self.stdout.write(f"schema_statement_count={len(schema_statements)}")
+        self.stdout.write(f"data_statement_count={len(data_statements)}")
         self.stdout.write(f"statement_count={len(statements)}")
+        self.stdout.write(f"repository_nodes={stats.get('repositoryNodeCount', 0)}")
+        self.stdout.write(f"document_nodes={stats.get('documentNodeCount', 0)}")
         self.stdout.write(f"concept_nodes={stats.get('conceptNodeCount', 0)}")
         self.stdout.write(f"chunk_nodes={stats.get('chunkNodeCount', 0)}")
+        self.stdout.write(
+            f"repository_document_edges={stats.get('repositoryDocumentEdgeCount', 0)}"
+        )
+        self.stdout.write(f"document_chunk_edges={stats.get('documentChunkEdgeCount', 0)}")
         self.stdout.write(f"mention_edges={stats.get('mentionEdgeCount', 0)}")
         self.stdout.write(f"related_edges={stats.get('relatedEdgeCount', 0)}")
 

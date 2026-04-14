@@ -35,8 +35,12 @@ class SemanticGraphExportTests(TestCase):
 
         self.assertIn("nodes", payload)
         self.assertIn("edges", payload)
+        self.assertGreaterEqual(payload["stats"]["repositoryNodeCount"], 1)
+        self.assertGreaterEqual(payload["stats"]["documentNodeCount"], 1)
         self.assertGreaterEqual(payload["stats"]["conceptNodeCount"], 1)
         self.assertGreaterEqual(payload["stats"]["chunkNodeCount"], 1)
+        self.assertGreaterEqual(payload["stats"]["repositoryDocumentEdgeCount"], 1)
+        self.assertGreaterEqual(payload["stats"]["documentChunkEdgeCount"], 1)
         self.assertGreaterEqual(payload["stats"]["mentionEdgeCount"], 1)
         self.assertEqual(payload["meta"]["repositoryUrl"], "all")
 

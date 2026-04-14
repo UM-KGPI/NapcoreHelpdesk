@@ -58,7 +58,13 @@ class Command(BaseCommand):
         self.stdout.write(f"output={output}")
         self.stdout.write(f"repository_url={snapshot['meta']['repositoryUrl']}")
         self.stdout.write(f"chunk_count_scanned={snapshot['meta']['chunkCountScanned']}")
+        self.stdout.write(f"repository_nodes={snapshot['stats']['repositoryNodeCount']}")
+        self.stdout.write(f"document_nodes={snapshot['stats']['documentNodeCount']}")
         self.stdout.write(f"concept_nodes={snapshot['stats']['conceptNodeCount']}")
         self.stdout.write(f"chunk_nodes={snapshot['stats']['chunkNodeCount']}")
+        self.stdout.write(
+            f"repository_document_edges={snapshot['stats']['repositoryDocumentEdgeCount']}"
+        )
+        self.stdout.write(f"document_chunk_edges={snapshot['stats']['documentChunkEdgeCount']}")
         self.stdout.write(f"mention_edges={snapshot['stats']['mentionEdgeCount']}")
         self.stdout.write(f"related_edges={snapshot['stats']['relatedEdgeCount']}")

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from typing import Iterable
 
 from helpdesk.models import SourceChunk
@@ -82,8 +83,12 @@ def expand_graph_concepts(concepts: set[str], hops: int = 1) -> set[str]:
 
 
 def build_semantic_graph_snapshot(chunks: Iterable[SourceChunk]) -> dict:
+    repository_nodes: dict[str, dict] = {}
+    document_nodes: dict[str, dict] = {}
     concept_nodes: dict[str, dict] = {}
     chunk_nodes: dict[str, dict] = {}
+    repository_document_edges: list[dict] = []
+    document_chunk_edges: list[dict] = []
     mention_edges: list[dict] = []
 
     for chunk in chunks:
@@ -93,6 +98,30 @@ def build_semantic_graph_snapshot(chunks: Iterable[SourceChunk]) -> dict:
         concepts = extract_graph_concepts(chunk_text)
         if not concepts:
             continue
+
+        repository_key = hashlib.sha1(chunk.repository_url.encode("utf-8")).hexdigest()[:16]
+        repository_id = f"repository:{repository_key}"
+        document_key = hashlib.sha1(
+            f"{chunk.repository_url}|{chunk.source_path}".encode("utf-8")
+        ).hexdigest()[:20]
+        document_id = f"document:{document_key}"
+
+        repository_name = chunk.repository_url.rstrip("/").split("/")[-1] if chunk.repository_url else ""
+        repository_nodes[repository_id] = {
+            "id": repository_id,
+            "type": "Repository",
+            "repositoryUrl": chunk.repository_url,
+            "name": repository_name,
+        }
+        document_nodes[document_id] = {
+            "id": document_id,
+            "type": "Document",
+            "documentId": document_key,
+            "repositoryUrl": chunk.repository_url,
+            "sourcePath": chunk.source_path,
+            "commitSha": chunk.commit_sha,
+            "docType": getattr(chunk, "doc_type", "") or "",
+        }
 
         chunk_nodes[chunk.chunk_id] = {
             "id": f"chunk:{chunk.chunk_id}",
@@ -105,6 +134,21 @@ def build_semantic_graph_snapshot(chunks: Iterable[SourceChunk]) -> dict:
             "standardsScope": chunk.standards_scope or [],
             "docType": getattr(chunk, "doc_type", "") or "",
         }
+
+        repository_document_edges.append(
+            {
+                "type": "CONTAINS_DOCUMENT",
+                "from": repository_id,
+                "to": document_id,
+            }
+        )
+        document_chunk_edges.append(
+            {
+                "type": "HAS_CHUNK",
+                "from": document_id,
+                "to": f"chunk:{chunk.chunk_id}",
+            }
+        )
 
         for concept_id in sorted(concepts):
             concept_nodes[concept_id] = {
@@ -141,11 +185,25 @@ def build_semantic_graph_snapshot(chunks: Iterable[SourceChunk]) -> dict:
             )
 
     return {
-        "nodes": [*concept_nodes.values(), *chunk_nodes.values()],
-        "edges": [*mention_edges, *related_edges],
+        "nodes": [
+            *repository_nodes.values(),
+            *document_nodes.values(),
+            *concept_nodes.values(),
+            *chunk_nodes.values(),
+        ],
+        "edges": [
+            *repository_document_edges,
+            *document_chunk_edges,
+            *mention_edges,
+            *related_edges,
+        ],
         "stats": {
+            "repositoryNodeCount": len(repository_nodes),
+            "documentNodeCount": len(document_nodes),
             "conceptNodeCount": len(concept_nodes),
             "chunkNodeCount": len(chunk_nodes),
+            "repositoryDocumentEdgeCount": len(repository_document_edges),
+            "documentChunkEdgeCount": len(document_chunk_edges),
             "mentionEdgeCount": len(mention_edges),
             "relatedEdgeCount": len(related_edges),
         },

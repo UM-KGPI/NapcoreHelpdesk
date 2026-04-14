@@ -6,6 +6,39 @@ from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 
+def build_neo4j_schema_statements() -> list[dict]:
+    """Return idempotent schema setup statements for semantic graph labels."""
+
+    raw_statements = [
+        (
+            "CREATE CONSTRAINT repository_id IF NOT EXISTS "
+            "FOR (r:Repository) REQUIRE r.repositoryId IS UNIQUE"
+        ),
+        (
+            "CREATE CONSTRAINT document_id IF NOT EXISTS "
+            "FOR (d:Document) REQUIRE d.documentId IS UNIQUE"
+        ),
+        (
+            "CREATE CONSTRAINT chunk_id IF NOT EXISTS "
+            "FOR (ch:Chunk) REQUIRE ch.chunkId IS UNIQUE"
+        ),
+        (
+            "CREATE CONSTRAINT concept_id IF NOT EXISTS "
+            "FOR (c:Concept) REQUIRE c.conceptId IS UNIQUE"
+        ),
+        (
+            "CREATE INDEX repository_url IF NOT EXISTS "
+            "FOR (r:Repository) ON (r.repositoryUrl)"
+        ),
+        (
+            "CREATE INDEX document_source_path IF NOT EXISTS "
+            "FOR (d:Document) ON (d.sourcePath)"
+        ),
+    ]
+
+    return [{"statement": statement, "parameters": {}} for statement in raw_statements]
+
+
 def _parse_identifier(identifier: str, expected_prefix: str) -> str:
     prefix = f"{expected_prefix}:"
     if not identifier.startswith(prefix):
@@ -17,11 +50,31 @@ def build_neo4j_statements(snapshot: dict) -> list[dict]:
     nodes = snapshot.get("nodes", [])
     edges = snapshot.get("edges", [])
 
+    repository_rows = []
+    document_rows = []
     concept_rows = []
     chunk_rows = []
     for node in nodes:
         node_type = node.get("type")
-        if node_type == "Concept":
+        if node_type == "Repository":
+            repository_rows.append(
+                {
+                    "repositoryId": _parse_identifier(node.get("id", ""), "repository"),
+                    "repositoryUrl": node.get("repositoryUrl", ""),
+                    "name": node.get("name", ""),
+                }
+            )
+        elif node_type == "Document":
+            document_rows.append(
+                {
+                    "documentId": node.get("documentId"),
+                    "repositoryUrl": node.get("repositoryUrl", ""),
+                    "sourcePath": node.get("sourcePath", ""),
+                    "commitSha": node.get("commitSha", ""),
+                    "docType": node.get("docType", ""),
+                }
+            )
+        elif node_type == "Concept":
             concept_rows.append(
                 {
                     "conceptId": node.get("conceptId"),
@@ -40,11 +93,27 @@ def build_neo4j_statements(snapshot: dict) -> list[dict]:
                 }
             )
 
+    repository_document_rows = []
+    document_chunk_rows = []
     mention_rows = []
     related_rows = []
     for edge in edges:
         edge_type = edge.get("type")
-        if edge_type == "MENTIONS_CONCEPT":
+        if edge_type == "CONTAINS_DOCUMENT":
+            repository_document_rows.append(
+                {
+                    "repositoryId": _parse_identifier(edge.get("from", ""), "repository"),
+                    "documentId": _parse_identifier(edge.get("to", ""), "document"),
+                }
+            )
+        elif edge_type == "HAS_CHUNK":
+            document_chunk_rows.append(
+                {
+                    "documentId": _parse_identifier(edge.get("from", ""), "document"),
+                    "chunkId": _parse_identifier(edge.get("to", ""), "chunk"),
+                }
+            )
+        elif edge_type == "MENTIONS_CONCEPT":
             mention_rows.append(
                 {
                     "chunkId": _parse_identifier(edge.get("from", ""), "chunk"),
@@ -67,6 +136,28 @@ def build_neo4j_statements(snapshot: dict) -> list[dict]:
         {
             "statement": (
                 "UNWIND $rows AS row "
+                "MERGE (r:Repository {repositoryId: row.repositoryId}) "
+                "SET r.repositoryUrl = row.repositoryUrl, "
+                "    r.name = row.name, "
+                "    r.updatedAt = datetime()"
+            ),
+            "parameters": {"rows": repository_rows},
+        },
+        {
+            "statement": (
+                "UNWIND $rows AS row "
+                "MERGE (d:Document {documentId: row.documentId}) "
+                "SET d.repositoryUrl = row.repositoryUrl, "
+                "    d.sourcePath = row.sourcePath, "
+                "    d.commitSha = row.commitSha, "
+                "    d.docType = row.docType, "
+                "    d.updatedAt = datetime()"
+            ),
+            "parameters": {"rows": document_rows},
+        },
+        {
+            "statement": (
+                "UNWIND $rows AS row "
                 "MERGE (c:Concept {conceptId: row.conceptId}) "
                 "SET c.namespace = row.namespace, c.updatedAt = datetime()"
             ),
@@ -84,6 +175,26 @@ def build_neo4j_statements(snapshot: dict) -> list[dict]:
                 "    ch.updatedAt = datetime()"
             ),
             "parameters": {"rows": chunk_rows},
+        },
+        {
+            "statement": (
+                "UNWIND $rows AS row "
+                "MATCH (r:Repository {repositoryId: row.repositoryId}) "
+                "MATCH (d:Document {documentId: row.documentId}) "
+                "MERGE (r)-[rel:CONTAINS_DOCUMENT]->(d) "
+                "SET rel.updatedAt = datetime()"
+            ),
+            "parameters": {"rows": repository_document_rows},
+        },
+        {
+            "statement": (
+                "UNWIND $rows AS row "
+                "MATCH (d:Document {documentId: row.documentId}) "
+                "MATCH (ch:Chunk {chunkId: row.chunkId}) "
+                "MERGE (d)-[rel:HAS_CHUNK]->(ch) "
+                "SET rel.updatedAt = datetime()"
+            ),
+            "parameters": {"rows": document_chunk_rows},
         },
         {
             "statement": (
