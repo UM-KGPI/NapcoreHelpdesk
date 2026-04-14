@@ -32,6 +32,9 @@ The plan keeps current PostgreSQL + pgvector retrieval as baseline and adds a gr
 - Added bootstrap export command: `python manage.py export_semantic_graph --output <file.json>`
   - Emits concept/chunk nodes and `MENTIONS_CONCEPT`/`RELATED_TO` edges from indexed chunks.
   - Supports `--repo-url` and `--min-quality` filters for staged Neo4j import preparation.
+- Added Neo4j import adapter command: `python manage.py import_semantic_graph_neo4j --input <file.json>`
+  - Dry-run by default (prints import plan and statement counts).
+  - Apply mode (`--apply`) executes upserts into Neo4j via transactional HTTP endpoint.
 
 ## Overall Implementation Plan
 1. Build semantic extraction during indexing.

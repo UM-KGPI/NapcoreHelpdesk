@@ -39,6 +39,11 @@ env = environ.Env(
     EMBEDDING_MODEL=(str, "text-embedding-3-small"),
     EMBEDDING_TIMEOUT_SECONDS=(int, 30),
     GRAPH_RAG_ENABLED=(bool, False),
+    NEO4J_ENABLED=(bool, False),
+    NEO4J_URI=(str, ""),
+    NEO4J_USER=(str, "neo4j"),
+    NEO4J_PASSWORD=(str, ""),
+    NEO4J_DATABASE=(str, "neo4j"),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -178,6 +183,11 @@ EMBEDDING_API_KEY = env("EMBEDDING_API_KEY").strip()
 EMBEDDING_MODEL = env("EMBEDDING_MODEL").strip() or "text-embedding-3-small"
 EMBEDDING_TIMEOUT_SECONDS = env("EMBEDDING_TIMEOUT_SECONDS")
 GRAPH_RAG_ENABLED = env("GRAPH_RAG_ENABLED")
+NEO4J_ENABLED = env("NEO4J_ENABLED")
+NEO4J_URI = env("NEO4J_URI", default="").strip()
+NEO4J_USER = env("NEO4J_USER", default="neo4j").strip() or "neo4j"
+NEO4J_PASSWORD = env("NEO4J_PASSWORD", default="").strip()
+NEO4J_DATABASE = env("NEO4J_DATABASE", default="neo4j").strip() or "neo4j"
 
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://localhost:6379/1")
