@@ -1,11 +1,8 @@
 from __future__ import annotations
 
+from django.conf import settings
+
 from urllib.parse import urlparse
-
-
-APPROVED_REPOSITORIES = {
-    "https://github.com/NeTEx-CEN/NeTEx",
-}
 
 
 def _normalize_repository_url(raw_url: str) -> str:
@@ -30,6 +27,8 @@ def _normalize_repository_url(raw_url: str) -> str:
 def evaluate_policy(answer_text: str, citations: list[dict]) -> dict:
     """Validate evidence grounding and repository allow-list policy."""
 
+    approved_repositories = getattr(settings, "ALLOWED_SOURCE_REPOSITORIES", set())
+
     if not answer_text.strip():
         return {
             "allowed": False,
@@ -46,7 +45,7 @@ def evaluate_policy(answer_text: str, citations: list[dict]) -> dict:
 
     for citation in citations:
         repo_url = _normalize_repository_url(citation.get("repositoryUrl", ""))
-        if repo_url not in APPROVED_REPOSITORIES:
+        if repo_url not in approved_repositories:
             return {
                 "allowed": False,
                 "reason": "POLICY_BLOCK",

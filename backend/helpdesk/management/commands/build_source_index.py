@@ -45,6 +45,7 @@ class Command(BaseCommand):
         parser.add_argument("--chunk-overlap", type=int, default=200)
         parser.add_argument("--incremental", action="store_true", help="Skip unchanged files based on hash + commit")
         parser.add_argument("--prune", action="store_true", help="Delete old chunks for this repository not seen in current run")
+        parser.add_argument("--include-issues", action="store_true", help="Include GitHub issues/comments in the index")
 
     def handle(self, *args, **options):
         # Parse command arguments and enforce basic operational safety checks.
@@ -58,6 +59,7 @@ class Command(BaseCommand):
         chunk_overlap = int(options["chunk_overlap"])
         incremental = bool(options["incremental"])
         prune = bool(options["prune"])
+        include_issues = bool(options["include_issues"])
 
         if not repo_url:
             raise CommandError("--repo-url must be non-empty")
@@ -83,6 +85,10 @@ class Command(BaseCommand):
                 chunk_overlap=chunk_overlap,
                 incremental=incremental,
                 prune=prune,
+                include_issues=include_issues,
+                github_token=settings.GITHUB_API_TOKEN or None,
+                github_verify_ssl=settings.GITHUB_API_VERIFY_SSL,
+                github_ca_bundle=settings.GITHUB_CA_BUNDLE,
             )
         except ValueError as exc:
             raise CommandError(str(exc)) from exc
@@ -93,6 +99,7 @@ class Command(BaseCommand):
         self.stdout.write(f"repo_path={repo_path}")
         self.stdout.write(f"profile={profile}")
         self.stdout.write(f"incremental={incremental}")
+        self.stdout.write(f"include_issues={include_issues}")
         self.stdout.write(f"scanned_files={stats.scanned_files}")
         self.stdout.write(f"skipped_files={stats.skipped_files}")
         self.stdout.write(f"created_chunks={stats.created_chunks}")

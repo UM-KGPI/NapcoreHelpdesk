@@ -19,14 +19,25 @@ env = environ.Env(
     INDEX_SCHEDULE_REPO_URL=(str, ""),
     INDEX_SCHEDULE_REPO_PATH=(str, ""),
     INDEX_SCHEDULE_PROFILE=(str, "netex"),
+    GITHUB_API_TOKEN=(str, ""),
+    GITHUB_API_VERIFY_SSL=(bool, True),
+    GITHUB_CA_BUNDLE=(str, ""),
     LLM_ENABLED=(bool, False),
     LLM_PROVIDER=(str, "openai-compatible"),
     LLM_API_BASE_URL=(str, "https://api.openai.com/v1"),
     LLM_API_KEY=(str, ""),
     LLM_MODEL=(str, "gpt-4o-mini"),
+    LLM_VERIFY_SSL=(bool, True),
+    LLM_CA_BUNDLE=(str, ""),
     LLM_TIMEOUT_SECONDS=(int, 20),
     LLM_MAX_TOKENS=(int, 500),
     LLM_TEMPERATURE=(float, 0.2),
+    EMBEDDING_ENABLED=(bool, False),
+    EMBEDDING_PROVIDER=(str, "openai-compatible"),
+    EMBEDDING_API_BASE_URL=(str, "https://api.openai.com/v1"),
+    EMBEDDING_API_KEY=(str, ""),
+    EMBEDDING_MODEL=(str, "text-embedding-3-small"),
+    EMBEDDING_TIMEOUT_SECONDS=(int, 30),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -92,6 +103,9 @@ else:
             "PASSWORD": env("POSTGRES_PASSWORD", default="napcore"),
             "HOST": env("POSTGRES_HOST", default="localhost"),
             "PORT": env("POSTGRES_PORT", default="5432"),
+            # Use template1 for test databases so preinstalled extensions (e.g., pgvector)
+            # are inherited without requiring superuser rights in migrations.
+            "TEST": {"TEMPLATE": "template1"},
         }
     }
 
@@ -140,15 +154,28 @@ ALLOWED_SOURCE_REPOSITORIES = {
 INDEX_SCHEDULE_REPO_URL = env("INDEX_SCHEDULE_REPO_URL").strip()
 INDEX_SCHEDULE_REPO_PATH = env("INDEX_SCHEDULE_REPO_PATH").strip()
 INDEX_SCHEDULE_PROFILE = env("INDEX_SCHEDULE_PROFILE", default="netex").strip() or "netex"
+GITHUB_API_TOKEN = env("GITHUB_API_TOKEN", default="").strip()
+GITHUB_API_VERIFY_SSL = env("GITHUB_API_VERIFY_SSL")
+GITHUB_CA_BUNDLE = env("GITHUB_CA_BUNDLE", default="").strip() or None
 
 LLM_ENABLED = env("LLM_ENABLED")
 LLM_PROVIDER = env("LLM_PROVIDER").strip() or "openai-compatible"
 LLM_API_BASE_URL = env("LLM_API_BASE_URL").strip() or "https://api.openai.com/v1"
-LLM_API_KEY = env("LLM_API_KEY").strip()
+# Allow reusing a GitHub token for GitHub Models when a dedicated LLM key is not set.
+LLM_API_KEY = env("LLM_API_KEY", default="").strip() or GITHUB_API_TOKEN
 LLM_MODEL = env("LLM_MODEL").strip() or "gpt-4o-mini"
+LLM_VERIFY_SSL = env("LLM_VERIFY_SSL")
+LLM_CA_BUNDLE = env("LLM_CA_BUNDLE", default="").strip() or GITHUB_CA_BUNDLE
 LLM_TIMEOUT_SECONDS = env("LLM_TIMEOUT_SECONDS")
 LLM_MAX_TOKENS = env("LLM_MAX_TOKENS")
 LLM_TEMPERATURE = env("LLM_TEMPERATURE")
+
+EMBEDDING_ENABLED = env("EMBEDDING_ENABLED")
+EMBEDDING_PROVIDER = env("EMBEDDING_PROVIDER").strip() or "openai-compatible"
+EMBEDDING_API_BASE_URL = env("EMBEDDING_API_BASE_URL").strip() or "https://api.openai.com/v1"
+EMBEDDING_API_KEY = env("EMBEDDING_API_KEY").strip()
+EMBEDDING_MODEL = env("EMBEDDING_MODEL").strip() or "text-embedding-3-small"
+EMBEDDING_TIMEOUT_SECONDS = env("EMBEDDING_TIMEOUT_SECONDS")
 
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://localhost:6379/1")

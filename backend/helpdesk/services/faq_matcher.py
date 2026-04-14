@@ -90,6 +90,13 @@ def _faq_score(question: str, entry: FAQEntry) -> float:
 
     lower_question = question.lower()
     hits = sum(1 for token in base_tokens if token.lower() in lower_question)
+
+    # Avoid broad false positives (for example, matching only "netex") that would
+    # incorrectly short-circuit the FAQ-first path and bypass RAG/LLM generation.
+    min_hits = 2 if len(base_tokens) >= 3 else 1
+    if hits < min_hits:
+        return 0.0
+
     return hits / len(base_tokens)
 
 

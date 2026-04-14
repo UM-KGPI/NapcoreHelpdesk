@@ -1,8 +1,6 @@
 @startuml
 !includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
-LAYOUT_LEFT_RIGHT()
-
 title C4 Level 2 - NAPCORE Helpdesk Container Diagram
 
 Person(pto, "PTO", "Public Transport Operator")
@@ -48,6 +46,23 @@ Rel(editorial, pg, "Store review decisions")
 Rel(ingest, github, "Pull primary and companion allowlisted repositories")
 Rel(ingest, vdb, "Upsert embeddings")
 Rel(ingest, pg, "Store source metadata")
+
+' Top layer: actors horizontally
+Lay_R(pto, pta)
+Lay_R(pta, dev)
+Lay_R(dev, integrator)
+Lay_R(integrator, ticketing)
+' Middle: helpdesk system below actors
+Lay_D(pto, gui)
+' Bottom layer: external systems below helpdesk boundary
+Lay_D(boundary, github)
+Lay_D(boundary, llm)
+Lay_R(github, llm)
+
+note right of llm
+Top layer: Users.
+Bottom layer: Approved source repositories and LLM.
+end note
 
 SHOW_LEGEND()
 

@@ -41,6 +41,16 @@ DEV --> GUI : Ask questions
 INTEGRATOR --> GUI : Ask questions
 TICKET --> GUI : Ask questions
 
+' Top layer: actors arranged horizontally
+PTO -[hidden]right-> PTA
+PTA -[hidden]right-> DEV
+DEV -[hidden]right-> INTEGRATOR
+INTEGRATOR -[hidden]right-> TICKET
+
+' Bottom layer: external systems below SYSTEM
+SYSTEM -[hidden]down-> GITHUB
+GITHUB -[hidden]right-> LLM
+
 GUI --> API : Submit question
 API --> FAQ : Try canonical FAQ match
 API --> RETRIEVAL : Fallback retrieval request
@@ -63,6 +73,11 @@ Decision policy:
 1) FAQ high-confidence -> return canonical answer.
 2) Else run retrieval + generation.
 3) If evidence insufficient or unsupported claim -> abstain.
+end note
+
+note right of LLM
+Top layer: Users.
+Bottom layer: Approved source repositories and LLM.
 end note
 
 @enduml

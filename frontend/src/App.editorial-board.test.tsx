@@ -4,6 +4,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import App from "./App";
 
+async function openConnectionPanel(user: ReturnType<typeof userEvent.setup>): Promise<void> {
+  await user.click(screen.getByText("Connection"));
+}
+
+async function goToEditorialTab(user: ReturnType<typeof userEvent.setup>): Promise<void> {
+  await user.click(screen.getByRole("button", { name: "Editorial" }));
+}
+
 function mockJsonResponse(payload: unknown, status = 200): Response {
   return new Response(JSON.stringify(payload), {
     status,
@@ -16,7 +24,7 @@ describe("Editorial Board flows", () => {
     vi.spyOn(globalThis, "fetch");
     localStorage.setItem("napcore.helpdesk.autoToken", "false");
     localStorage.removeItem("napcore.helpdesk.jwt");
-    window.history.pushState({}, "", "/operator");
+    window.history.pushState({}, "", "/editor");
   });
 
   afterEach(() => {
@@ -52,15 +60,17 @@ describe("Editorial Board flows", () => {
     const user = userEvent.setup();
     render(<App />);
 
+    await openConnectionPanel(user);
     await user.type(screen.getByPlaceholderText("Paste token"), "jwt-token");
+    await goToEditorialTab(user);
     await user.selectOptions(screen.getByLabelText("Status"), "review");
-    const [boardReasonSelect] = screen.getAllByLabelText("Reason");
+    const [, boardReasonSelect] = screen.getAllByLabelText("Reason");
     await user.selectOptions(boardReasonSelect, "POLICY_REVIEW");
-    const [boardPrioritySelect] = screen.getAllByLabelText("Priority");
+    const [, boardPrioritySelect] = screen.getAllByLabelText("Priority");
     await user.selectOptions(boardPrioritySelect, "high");
     await user.type(screen.getByPlaceholderText("search text"), "policy");
 
-    await user.click(screen.getByRole("button", { name: "Load Board" }));
+    await user.click(screen.getByRole("button", { name: "Load Queue" }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -134,8 +144,10 @@ describe("Editorial Board flows", () => {
     const user = userEvent.setup();
     render(<App />);
 
+    await openConnectionPanel(user);
     await user.type(screen.getByPlaceholderText("Paste token"), "jwt-token");
-    await user.click(screen.getByRole("button", { name: "Load Board" }));
+    await goToEditorialTab(user);
+    await user.click(screen.getByRole("button", { name: "Load Queue" }));
 
     expect(await screen.findByText("Queue item for approval")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "approve" })).toBeInTheDocument();
@@ -196,13 +208,15 @@ describe("Editorial Board flows", () => {
     const user = userEvent.setup();
     render(<App />);
 
+    await openConnectionPanel(user);
     await user.type(screen.getByPlaceholderText("Paste token"), "jwt-token");
+    await goToEditorialTab(user);
     await user.clear(screen.getByLabelText("metricsWindowDays"));
     await user.type(screen.getByLabelText("metricsWindowDays"), "14");
     await user.clear(screen.getByLabelText("metricsSlaHours"));
     await user.type(screen.getByLabelText("metricsSlaHours"), "48");
 
-    await user.click(screen.getByRole("button", { name: "KPIs" }));
+    await user.click(screen.getByText("Load Queue Metrics"));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -213,7 +227,6 @@ describe("Editorial Board flows", () => {
     expect(calledUrl).toContain("windowDays=14");
     expect(calledUrl).toContain("slaHours=48");
 
-    expect(await screen.findByText("Queue KPIs")).toBeInTheDocument();
     expect(screen.getByText("generated 2026-03-28T12:00:00Z")).toBeInTheDocument();
     expect(screen.getByText("Overdue")).toBeInTheDocument();
     expect(screen.getByText("gt72h")).toBeInTheDocument();
@@ -237,8 +250,10 @@ describe("Editorial Board flows", () => {
     const user = userEvent.setup();
     render(<App />);
 
+    await openConnectionPanel(user);
     await user.type(screen.getByPlaceholderText("Paste token"), "jwt-token");
-    await user.click(screen.getByRole("button", { name: "KPIs" }));
+    await goToEditorialTab(user);
+    await user.click(screen.getByText("Load Queue Metrics"));
 
     expect(await screen.findByText("HTTP_500: Metrics backend unavailable (requestId: req-metrics-fail-1)")).toBeInTheDocument();
   });

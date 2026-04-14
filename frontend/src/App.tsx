@@ -3,7 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { HelpdeskApiClient } from "./api";
 import { AuthProvider } from "./auth-context";
-import OperatorConsoleWorkspace from "./components/OperatorConsoleWorkspace";
+import EditorConsoleWorkspace from "./components/EditorConsoleWorkspace";
 import SharedAppLayout from "./components/SharedAppLayout";
 import UserChatWorkspace, { type ChatTurn } from "./components/UserChatWorkspace";
 import type {
@@ -13,6 +13,7 @@ import type {
   EditorialBoardResponse,
   EditorialQueueResponse,
   EditorialQueueTransitionResponse,
+  IndexRepositoryResponse,
   PromotionCandidatesResponse,
   StandardsScope,
 } from "./types";
@@ -36,6 +37,55 @@ type BoardStatus = (typeof BOARD_STATUSES)[number];
 type BoardReason = (typeof BOARD_REASONS)[number];
 type BoardPriority = (typeof BOARD_PRIORITIES)[number];
 
+type IndexRepoPreset = {
+  id: string;
+  label: string;
+  repoUrl: string;
+  repoPath: string;
+  profile: string;
+};
+
+const DEFAULT_INDEX_REPO_PRESETS: IndexRepoPreset[] = [
+  {
+    id: "netex",
+    label: "NeTEx",
+    repoUrl: "https://github.com/NeTEx-CEN/NeTEx",
+    repoPath: "/Users/andrejt/Research/repositories/git/NeTEx",
+    profile: "netex",
+  },
+  {
+    id: "opra",
+    label: "OpRa",
+    repoUrl: "https://github.com/OpRa-CEN/OpRa",
+    repoPath: "/Users/andrejt/Research/repositories/git/OpRa",
+    profile: "opra",
+  },
+  {
+    id: "profile_documentation",
+    label: "Profile Documentation v2",
+    repoUrl: "https://github.com/hfjelstad/Profile_Documentation_v2",
+    repoPath: "/Users/andrejt/Research/repositories/git/Profile_Documentation_v2",
+    profile: "profile_documentation",
+  },
+];
+
+const INDEX_REPO_PRESETS_CONFIG_PATH = "/index-repo-presets.json";
+
+function isIndexRepoPreset(value: unknown): value is IndexRepoPreset {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  return (
+    typeof candidate.id === "string" &&
+    typeof candidate.label === "string" &&
+    typeof candidate.repoUrl === "string" &&
+    typeof candidate.repoPath === "string" &&
+    typeof candidate.profile === "string"
+  );
+}
+
 function createRequestId(): string {
   return `req-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -51,7 +101,7 @@ export default function App() {
   const [question, setQuestion] = useState("How to use NeTEx for exchanging a timetable?");
   const [sessionId, setSessionId] = useState("sess-local");
   const [userId, setUserId] = useState("user-local");
-  const [standardsScope, setStandardsScope] = useState<StandardsScope[]>(["NeTEx"]);
+  const [standardsScope, setStandardsScope] = useState<StandardsScope[]>([]);
 
   const [answerResult, setAnswerResult] = useState<AnswerResponse | null>(null);
   const [promotionResult, setPromotionResult] = useState<PromotionCandidatesResponse | null>(null);
@@ -59,6 +109,18 @@ export default function App() {
   const [transitionResult, setTransitionResult] = useState<EditorialQueueTransitionResponse | null>(null);
   const [boardResult, setBoardResult] = useState<EditorialBoardResponse | null>(null);
   const [boardMetrics, setBoardMetrics] = useState<EditorialBoardMetricsResponse | null>(null);
+
+  const [indexRepoPresets, setIndexRepoPresets] = useState<IndexRepoPreset[]>(DEFAULT_INDEX_REPO_PRESETS);
+  const [indexPresetId, setIndexPresetId] = useState(DEFAULT_INDEX_REPO_PRESETS[0].id);
+  const [indexRepoUrl, setIndexRepoUrl] = useState(DEFAULT_INDEX_REPO_PRESETS[0].repoUrl);
+  const [indexRepoPath, setIndexRepoPath] = useState(DEFAULT_INDEX_REPO_PRESETS[0].repoPath);
+  const [indexProfile, setIndexProfile] = useState(DEFAULT_INDEX_REPO_PRESETS[0].profile);
+  const [indexIncremental, setIndexIncremental] = useState(true);
+  const [indexPrune, setIndexPrune] = useState(true);
+  const [indexIncludeIssues, setIndexIncludeIssues] = useState(true);
+  const [indexAutoAllowRepository, setIndexAutoAllowRepository] = useState(true);
+  const [indexResult, setIndexResult] = useState<IndexRepositoryResponse | null>(null);
+  const [indexBusy, setIndexBusy] = useState(false);
 
   const [windowDays, setWindowDays] = useState(14);
   const [minCount, setMinCount] = useState(3);
@@ -79,8 +141,7 @@ export default function App() {
   const [metricsSlaHours, setMetricsSlaHours] = useState(72);
   const [chatPrompt, setChatPrompt] = useState("How can I validate a NeTEx timetable profile before publishing?");
   const [chatTurns, setChatTurns] = useState<ChatTurn[]>([]);
-  const [chatProfile, setChatProfile] = useState<"deterministic-grounded" | "llm-ready">("deterministic-grounded");
-  const [chatApplyScope, setChatApplyScope] = useState(true);
+  const [chatProfile, setChatProfile] = useState<"deterministic-grounded" | "llm-ready">("llm-ready");
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -107,8 +168,57 @@ export default function App() {
   }, [autoTokenEnabled]);
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function loadIndexRepoPresets(): Promise<void> {
+      try {
+        const response = await fetch(INDEX_REPO_PRESETS_CONFIG_PATH, { cache: "no-store" });
+        if (!response.ok) {
+          return;
+        }
+
+        const payload: unknown = await response.json();
+        if (!Array.isArray(payload)) {
+          return;
+        }
+
+        const presets = payload.filter(isIndexRepoPreset);
+        if (!presets.length || cancelled) {
+          return;
+        }
+
+        setIndexRepoPresets(presets);
+        setIndexPresetId(presets[0].id);
+        setIndexRepoUrl(presets[0].repoUrl);
+        setIndexRepoPath(presets[0].repoPath);
+        setIndexProfile(presets[0].profile);
+      } catch {
+        // Keep bundled defaults when external config is unavailable.
+      }
+    }
+
+    void loadIndexRepoPresets();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    function isJwtExpired(jwt: string): boolean {
+      try {
+        const payload = JSON.parse(atob(jwt.split(".")[1])) as { exp?: number };
+        return typeof payload.exp === "number" && payload.exp * 1000 < Date.now();
+      } catch {
+        return true;
+      }
+    }
+
     async function ensureDevToken(): Promise<void> {
-      if (!autoTokenEnabled || token.trim()) {
+      if (!autoTokenEnabled) {
+        return;
+      }
+      const existing = token.trim();
+      if (existing && !isJwtExpired(existing)) {
         return;
       }
       try {
@@ -134,6 +244,18 @@ export default function App() {
 
   function createSessionId(): string {
     return `sess-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  }
+
+  function onSelectIndexPreset(presetId: string): void {
+    setIndexPresetId(presetId);
+    const preset = indexRepoPresets.find((item) => item.id === presetId);
+    if (!preset) {
+      return;
+    }
+
+    setIndexRepoUrl(preset.repoUrl);
+    setIndexRepoPath(preset.repoPath);
+    setIndexProfile(preset.profile);
   }
 
   async function onSendChat(event: FormEvent<HTMLFormElement>): Promise<void> {
@@ -163,13 +285,13 @@ export default function App() {
           question: prompt,
           sessionId,
           userId,
-          standardsScope: chatApplyScope ? standardsScope : undefined,
+          standardsScope: standardsScope.length > 0 ? standardsScope : undefined,
           language: "en",
           generationProfile: chatProfile,
           options: {
             maxCitations: 5,
             allowAbstain: true,
-            faqMinConfidence: 0.85,
+            faqMinConfidence: chatProfile === "llm-ready" ? 1.0 : 0.85,
             retrievalTopK: 6,
             retrievalMinScore: 0.62,
           },
@@ -351,6 +473,30 @@ export default function App() {
     }
   }
 
+  async function onIndexRepository(): Promise<void> {
+    setBusy(true);
+    setIndexBusy(true);
+    setError(null);
+    setIndexResult(null);
+    try {
+      const result = await client.indexRepository({
+        repoUrl: indexRepoUrl,
+        repoPath: indexRepoPath,
+        profile: indexProfile,
+        incremental: indexIncremental,
+        prune: indexPrune,
+        includeIssues: indexIncludeIssues,
+        autoAllowRepository: indexAutoAllowRepository,
+      });
+      setIndexResult(result);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setIndexBusy(false);
+      setBusy(false);
+    }
+  }
+
   return (
     <AuthProvider value={authValue}>
       <BrowserRouter>
@@ -364,7 +510,6 @@ export default function App() {
                   sessionId={sessionId}
                   userId={userId}
                   chatProfile={chatProfile}
-                  chatApplyScope={chatApplyScope}
                   standardsScope={standardsScope}
                   chatPrompt={chatPrompt}
                   chatTurns={chatTurns}
@@ -373,7 +518,7 @@ export default function App() {
                   setSessionId={setSessionId}
                   setUserId={setUserId}
                   setChatProfile={setChatProfile}
-                  setChatApplyScope={setChatApplyScope}
+                  toggleScope={toggleScope}
                   setChatPrompt={setChatPrompt}
                   onSendChat={onSendChat}
                   onResetChatSession={onResetChatSession}
@@ -381,9 +526,9 @@ export default function App() {
               }
             />
             <Route
-              path="operator"
+              path="editor"
               element={
-                <OperatorConsoleWorkspace
+                <EditorConsoleWorkspace
                   question={question}
                   sessionId={sessionId}
                   userId={userId}
@@ -439,6 +584,26 @@ export default function App() {
                   onLoadEditorialBoard={onLoadEditorialBoard}
                   onQuickTransition={onQuickTransition}
                   onLoadBoardMetrics={onLoadBoardMetrics}
+                  indexRepoUrl={indexRepoUrl}
+                  indexRepoPath={indexRepoPath}
+                  indexProfile={indexProfile}
+                  indexPresetId={indexPresetId}
+                  indexRepoPresets={indexRepoPresets}
+                  indexIncremental={indexIncremental}
+                  indexPrune={indexPrune}
+                  indexIncludeIssues={indexIncludeIssues}
+                  indexAutoAllowRepository={indexAutoAllowRepository}
+                  indexResult={indexResult}
+                  indexBusy={indexBusy}
+                  setIndexRepoUrl={setIndexRepoUrl}
+                  setIndexRepoPath={setIndexRepoPath}
+                  setIndexProfile={setIndexProfile}
+                  onSelectIndexPreset={onSelectIndexPreset}
+                  setIndexIncremental={setIndexIncremental}
+                  setIndexPrune={setIndexPrune}
+                  setIndexIncludeIssues={setIndexIncludeIssues}
+                  setIndexAutoAllowRepository={setIndexAutoAllowRepository}
+                  onIndexRepository={onIndexRepository}
                 />
               }
             />

@@ -1,4 +1,4 @@
-export type StandardsScope = "Transmodel" | "NeTEx" | "SIRI" | "OJP/OpRa" | "DATEX II";
+export type StandardsScope = "Transmodel" | "NeTEx" | "SIRI" | "OJP" | "OpRa" | "DATEX II" | "Profile Documentation";
 
 export type AnswerMode = "faq" | "rag" | "abstain";
 
@@ -102,6 +102,22 @@ export interface EditorialBoardMetricsResponse {
     h24to72: number;
     gt72h: number;
   };
+}
+
+export interface IndexRepositoryResponse {
+  status: "ok";
+  requestId: string;
+  repositoryUrl: string;
+  repositoryPath: string;
+  profile: string;
+  incremental: boolean;
+  prune: boolean;
+  autoAllowedRepository: boolean;
+  scannedFiles: number;
+  skippedFiles: number;
+  createdChunks: number;
+  updatedChunks: number;
+  deletedChunks: number;
 }
 
 export interface ApiErrorEnvelope {

@@ -5,6 +5,7 @@ import type {
   EditorialBoardResponse,
   EditorialQueueResponse,
   EditorialQueueTransitionResponse,
+  IndexRepositoryResponse,
   PromotionCandidatesResponse,
   StandardsScope,
 } from "./types";
@@ -49,6 +50,17 @@ export interface EditorialBoardQuery {
 export interface EditorialBoardMetricsQuery {
   windowDays?: number;
   slaHours?: number;
+}
+
+export interface IndexRepositoryRequest {
+  repoUrl: string;
+  repoPath: string;
+  profile?: string;
+  incremental?: boolean;
+  prune?: boolean;
+  includeIssues?: boolean;
+  // Local-ops convenience: temporarily adds unknown URL to runtime allow-list.
+  autoAllowRepository?: boolean;
 }
 
 interface ApiClientConfig {
@@ -141,6 +153,13 @@ export class HelpdeskApiClient {
     });
   }
 
+  async indexRepository(payload: IndexRepositoryRequest): Promise<IndexRepositoryResponse> {
+    return this.request<IndexRepositoryResponse>("/admin/index", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
   private async request<T>(path: string, init: RequestInit, withAuth = true): Promise<T> {
     const response = await fetch(`${this.baseUrl}${path}`, {
       ...init,
@@ -152,15 +171,39 @@ export class HelpdeskApiClient {
     });
 
     const bodyText = await response.text();
-    const parsed = bodyText ? (JSON.parse(bodyText) as unknown) : null;
+    const contentType = (response.headers.get("content-type") ?? "").toLowerCase();
+    const isJsonResponse = contentType.includes("application/json");
+    let parsed: unknown = null;
+
+    if (bodyText) {
+      if (isJsonResponse) {
+        try {
+          parsed = JSON.parse(bodyText) as unknown;
+        } catch {
+          const preview = bodyText.slice(0, 160).replace(/\s+/g, " ").trim();
+          throw new Error(
+            `INVALID_JSON_RESPONSE: Expected valid JSON but got malformed JSON from ${path} (HTTP ${response.status}). Response preview: ${preview}`
+          );
+        }
+      }
+    }
 
     if (!response.ok) {
       const errorBody = (parsed ?? {}) as ApiErrorEnvelope;
       const errorCode = errorBody.error?.code ?? `HTTP_${response.status}`;
-      const message = errorBody.error?.message ?? response.statusText;
+      const fallbackMessage = response.statusText || "Request failed";
+      const preview = bodyText.slice(0, 160).replace(/\s+/g, " ").trim();
+      const message = errorBody.error?.message ?? (isJsonResponse ? fallbackMessage : `${fallbackMessage} (non-JSON response: ${preview})`);
       const requestId = errorBody.error?.requestId;
       const requestHint = requestId ? ` (requestId: ${requestId})` : "";
       throw new Error(`${errorCode}: ${message}${requestHint}`);
+    }
+
+    if (bodyText && !isJsonResponse) {
+      const preview = bodyText.slice(0, 160).replace(/\s+/g, " ").trim();
+      throw new Error(
+        `INVALID_RESPONSE_FORMAT: Expected JSON from ${path} but received '${contentType || "unknown"}'. Response preview: ${preview}`
+      );
     }
 
     return parsed as T;

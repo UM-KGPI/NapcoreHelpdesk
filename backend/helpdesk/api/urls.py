@@ -7,6 +7,7 @@ from .views import (
     EditorialQueueTransitionView,
     HealthLiveView,
     HealthReadyView,
+    IndexRepositoryView,
     PromotionCandidatesView,
     QuestionAnswerView,
 )
@@ -20,4 +21,5 @@ urlpatterns = [
     path("editorial/queue", EditorialQueueView.as_view(), name="editorial-queue"),
     path("editorial/queue/metrics", EditorialQueueMetricsView.as_view(), name="editorial-queue-metrics"),
     path("editorial/queue/transition", EditorialQueueTransitionView.as_view(), name="editorial-queue-transition"),
+    path("admin/index", IndexRepositoryView.as_view(), name="admin-index"),
 ]

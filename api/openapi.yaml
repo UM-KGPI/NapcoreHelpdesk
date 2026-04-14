@@ -442,6 +442,63 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/admin/index:
+    post:
+      tags: [Operations]
+      summary: Trigger source repository ingestion
+      operationId: indexRepository
+      description: |
+        Runs an ingestion pass against a locally cloned repository.
+        Repository URLs are checked against the configured allow-list,
+        with optional auto-add when autoAllowRepository=true.
+        Requires admin or publisher role.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IndexRepositoryRequest'
+            examples:
+              netex_incremental:
+                value:
+                  repoUrl: https://github.com/NeTEx-CEN/NeTEx
+                  repoPath: /data/repos/NeTEx
+                  profile: netex
+                  incremental: true
+                  prune: false
+                  includeIssues: true
+                  autoAllowRepository: true
+      responses:
+        '200':
+          description: Ingestion completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexRepositoryResponse'
+        '400':
+          description: Invalid request or repo path does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Role insufficient or repository not allow-listed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   securitySchemes:
     bearerAuth:
@@ -464,7 +521,7 @@ components:
           type: array
           items:
             type: string
-            enum: [Transmodel, NeTEx, SIRI, OJP/OpRa, DATEX II]
+            enum: [Transmodel, NeTEx, SIRI, OJP, OpRa, DATEX II, Profile Documentation]
         language:
           type: string
           default: en
@@ -846,4 +903,74 @@ components:
             requestId:
               type: string
           additionalProperties: false
+      additionalProperties: false
+    IndexRepositoryRequest:
+      type: object
+      required: [repoUrl, repoPath]
+      properties:
+        repoUrl:
+          type: string
+          format: uri
+          description: Approved repository URL (must be in ALLOWED_SOURCE_REPOSITORIES)
+        repoPath:
+          type: string
+          description: Absolute local filesystem path to an already-cloned repository
+        profile:
+          type: string
+          default: default
+          description: Index profile name (corresponds to index_profiles/<profile>.yaml)
+        incremental:
+          type: boolean
+          default: true
+          description: Skip files whose per-file content hash is unchanged
+        prune:
+          type: boolean
+          default: false
+          description: Delete chunks for files no longer present in the repository
+        includeIssues:
+          type: boolean
+          default: false
+          description: Fetch and index GitHub issues/comments in addition to repository files
+        autoAllowRepository:
+          type: boolean
+          default: true
+          description: Add unknown repository URL to in-process allow-list before indexing
+      additionalProperties: false
+    IndexRepositoryResponse:
+      type: object
+      required: [status, requestId, repositoryUrl, repositoryPath, profile, incremental, prune, autoAllowedRepository, scannedFiles, skippedFiles, createdChunks, updatedChunks, deletedChunks]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        requestId:
+          type: string
+        repositoryUrl:
+          type: string
+          format: uri
+        repositoryPath:
+          type: string
+        profile:
+          type: string
+        incremental:
+          type: boolean
+        prune:
+          type: boolean
+        autoAllowedRepository:
+          type: boolean
+        scannedFiles:
+          type: integer
+          minimum: 0
+        skippedFiles:
+          type: integer
+          minimum: 0
+        createdChunks:
+          type: integer
+          minimum: 0
+        updatedChunks:
+          type: integer
+          minimum: 0
+        deletedChunks:
+          type: integer
+          minimum: 0
       additionalProperties: false

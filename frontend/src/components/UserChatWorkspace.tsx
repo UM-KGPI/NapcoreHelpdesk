@@ -4,6 +4,8 @@ import type { AnswerResponse, StandardsScope } from "../types";
 
 export type ChatProfile = "deterministic-grounded" | "llm-ready";
 
+const STANDARDS: StandardsScope[] = ["Transmodel", "NeTEx", "SIRI", "OJP", "OpRa", "DATEX II", "Profile Documentation"];
+
 export interface ChatTurn {
   id: string;
   role: "user" | "assistant";
@@ -17,7 +19,6 @@ interface UserChatWorkspaceProps {
   sessionId: string;
   userId: string;
   chatProfile: ChatProfile;
-  chatApplyScope: boolean;
   standardsScope: StandardsScope[];
   chatPrompt: string;
   chatTurns: ChatTurn[];
@@ -26,7 +27,7 @@ interface UserChatWorkspaceProps {
   setSessionId: (value: string) => void;
   setUserId: (value: string) => void;
   setChatProfile: (value: ChatProfile) => void;
-  setChatApplyScope: (value: boolean) => void;
+  toggleScope: (scope: StandardsScope) => void;
   setChatPrompt: (value: string) => void;
   onSendChat: (event: FormEvent<HTMLFormElement>) => Promise<void>;
   onResetChatSession: () => void;
@@ -37,7 +38,6 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
     sessionId,
     userId,
     chatProfile,
-    chatApplyScope,
     standardsScope,
     chatPrompt,
     chatTurns,
@@ -46,7 +46,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
     setSessionId,
     setUserId,
     setChatProfile,
-    setChatApplyScope,
+    toggleScope,
     setChatPrompt,
     onSendChat,
     onResetChatSession,
@@ -54,34 +54,27 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
 
   return (
     <section className="workspace-section user-workspace">
-      <header className="workspace-header">
-        <p className="kicker">User Workspace</p>
-        <h2>User Chat Interface</h2>
-        <p className="muted">Independent user-facing conversation area (planned standalone surface).</p>
-      </header>
-
       <section className="panel chat-panel">
-        <p className="kicker">NAPCORE HELPDESK</p>
-        <h2>Q&amp;A about NAPCORE related multimodal standardisation</h2>
-        <p className="muted">Web GUI chat for users</p>
 
-        <div className="grid-three">
-          <label>
-            Session ID
-            <input value={sessionId} onChange={(event) => setSessionId(event.target.value)} />
-          </label>
-          <label>
-            User ID
-            <input value={userId} onChange={(event) => setUserId(event.target.value)} />
-          </label>
-          <label>
-            Generation Profile
-            <select value={chatProfile} onChange={(event) => setChatProfile(event.target.value as ChatProfile)}>
-              <option value="deterministic-grounded">deterministic-grounded (active)</option>
-              <option value="llm-ready">llm-ready (wiring pending backend)</option>
-            </select>
-          </label>
-        </div>
+        <details className="getting-started-inline collapsible-panel">
+          <summary className="collapsible-summary getting-started-summary">
+            <span>Getting Started</span>
+          </summary>
+          <div className="collapsible-body welcome-grid">
+            <div>
+              <strong>1. Ask plainly</strong>
+              <p className="muted">Type the standards question in your own words. The assistant grounds the answer in indexed source material.</p>
+            </div>
+            <div>
+              <strong>2. Review citations</strong>
+              <p className="muted">Check the returned references to inspect the exact source text or repository path.</p>
+            </div>
+            <div>
+              <strong>3. Tune only if needed</strong>
+              <p className="muted">Open Advanced Settings only when you want to change session identity, scope, or generation profile.</p>
+            </div>
+          </div>
+        </details>
 
         <div className="chat-log" aria-live="polite">
           {chatTurns.length === 0 && <p className="muted">Start a conversation. The client remembers turn history in this session.</p>}
@@ -124,14 +117,53 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
           </label>
 
           <div className="chat-actions">
-            <label className="checkbox-label">
-              <input type="checkbox" checked={chatApplyScope} onChange={(event) => setChatApplyScope(event.target.checked)} />
-              apply selected standards scope ({standardsScope.join(", ") || "none"})
-            </label>
             <button type="submit" disabled={busy || !token || !chatPrompt.trim()}>Send</button>
             <button type="button" onClick={onResetChatSession} disabled={busy}>New Session</button>
           </div>
         </form>
+
+        <details className="advanced-controls collapsible-panel">
+          <summary className="collapsible-summary advanced-controls-header">
+            <div>
+              <h3>Advanced Settings</h3>
+              <p className="muted">Open this only when you want to adjust session identity, retrieval scope, or generation profile.</p>
+            </div>
+          </summary>
+
+          <div className="collapsible-body">
+            <div className="grid-three">
+              <label>
+                Session ID
+                <input value={sessionId} onChange={(event) => setSessionId(event.target.value)} />
+              </label>
+              <label>
+                User ID
+                <input value={userId} onChange={(event) => setUserId(event.target.value)} />
+              </label>
+              <label>
+                Generation Profile
+                <select value={chatProfile} onChange={(event) => setChatProfile(event.target.value as ChatProfile)}>
+                  <option value="llm-ready">llm-ready (default)</option>
+                  <option value="deterministic-grounded">deterministic-grounded</option>
+                </select>
+              </label>
+            </div>
+
+            <fieldset className="panel-subsection advanced-scope">
+              <legend>Standards Scope</legend>
+              <p className="muted">Selecting one or more standards restricts retrieval to those standards. Leave all unchecked to search across all indexed sources.</p>
+              <div className="checkbox-grid">
+                {STANDARDS.map((scope) => (
+                  <label key={scope} className="checkbox-label">
+                    <input type="checkbox" checked={standardsScope.includes(scope)} onChange={() => toggleScope(scope)} />
+                    {scope}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          </div>
+        </details>
+
       </section>
     </section>
   );

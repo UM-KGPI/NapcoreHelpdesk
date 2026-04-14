@@ -1,8 +1,6 @@
 @startuml
 !includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 
-LAYOUT_LEFT_RIGHT()
-
 title C4 Level 1 - NAPCORE Helpdesk System Context
 
 Person(pto, "PTO", "Public Transport Operator")
@@ -25,6 +23,29 @@ Rel(helpdesk, github, "Indexes approved source content and companion documentati
 Rel(helpdesk, llm, "Optionally generates answer from retrieved evidence only", "OpenAI-compatible API")
 
 UpdateRelStyle(helpdesk, llm, $textColor="black", $lineColor="#38598A")
+
+UpdateElementStyle(pto, $fontColor="#1F2F4A")
+UpdateElementStyle(pta, $fontColor="#1F2F4A")
+UpdateElementStyle(dev, $fontColor="#1F2F4A")
+UpdateElementStyle(integrator, $fontColor="#1F2F4A")
+UpdateElementStyle(ticketing, $fontColor="#1F2F4A")
+
+' Top layer: actors horizontally
+Lay_R(pto, pta)
+Lay_R(pta, dev)
+Lay_R(dev, integrator)
+Lay_R(integrator, ticketing)
+' Middle: helpdesk below actors
+Lay_D(pto, helpdesk)
+' Bottom layer: external systems below helpdesk
+Lay_D(helpdesk, github)
+Lay_D(helpdesk, llm)
+Lay_R(github, llm)
+
+note right of llm
+Top layer: Users.
+Bottom layer: Approved source repositories and LLM.
+end note
 
 SHOW_LEGEND()
 

@@ -12,7 +12,7 @@ except Exception:  # pragma: no cover - only unavailable in non-postgres-only en
 
 from helpdesk.models import SourceChunk
 from helpdesk.db_fields import HAS_NATIVE_PGVECTOR
-from helpdesk.services.embeddings import build_text_embedding, cosine_similarity
+from helpdesk.services.embeddings import build_text_embedding, cosine_similarity, normalize_text_tokens
 
 try:
     from pgvector.django import CosineDistance  # type: ignore
@@ -30,6 +30,7 @@ DEFAULT_CHUNKS = [
         "text": "NeTEx profiles define interoperable structures for timetable and stop data.",
         "standards_scope": ["NeTEx", "Transmodel"],
         "quality_score": 0.84,
+        "doc_type": "readme",
         "embedding_vector": build_text_embedding(
             "NeTEx profiles define interoperable structures for timetable and stop data."
         ),
@@ -43,6 +44,7 @@ DEFAULT_CHUNKS = [
         "text": "SIRI supports real-time information exchange in public transport systems.",
         "standards_scope": ["SIRI"],
         "quality_score": 0.79,
+        "doc_type": "readme",
         "embedding_vector": build_text_embedding(
             "SIRI supports real-time information exchange in public transport systems."
         ),
@@ -52,12 +54,27 @@ DEFAULT_CHUNKS = [
         "commit_sha": "placeholder",
         "source_path": "README.md",
         "chunk_id": "rag-c-003",
-        "label": "OJP/OpRa context",
-        "text": "OJP/OpRa complements planning and operational data exchange flows.",
-        "standards_scope": ["OJP/OpRa", "DATEX II"],
+        "label": "OJP context",
+        "text": "OJP provides profile-based operational and planning data exchange flows.",
+        "standards_scope": ["OJP"],
         "quality_score": 0.78,
+        "doc_type": "readme",
         "embedding_vector": build_text_embedding(
-            "OJP/OpRa complements planning and operational data exchange flows."
+            "OJP provides profile-based operational and planning data exchange flows."
+        ),
+    },
+    {
+        "repository_url": "https://github.com/NeTEx-CEN/NeTEx",
+        "commit_sha": "placeholder",
+        "source_path": "README.md",
+        "chunk_id": "rag-c-004",
+        "label": "OpRa context",
+        "text": "OpRa defines operational and performance metrics exchange profiles for transport networks.",
+        "standards_scope": ["OpRa"],
+        "quality_score": 0.78,
+        "doc_type": "readme",
+        "embedding_vector": build_text_embedding(
+            "OpRa defines operational and performance metrics exchange profiles for transport networks."
         ),
     },
 ]
@@ -75,10 +92,10 @@ def _ensure_seed_chunks() -> None:
 
 
 def _token_overlap_score(question: str, chunk_text: str) -> float:
-    question_tokens = {token for token in question.lower().split() if len(token) > 2}
+    question_tokens = set(normalize_text_tokens(question))
     if not question_tokens:
         return 0.0
-    chunk_tokens = {token for token in chunk_text.lower().split() if len(token) > 2}
+    chunk_tokens = set(normalize_text_tokens(chunk_text))
     overlap = question_tokens.intersection(chunk_tokens)
     return len(overlap) / len(question_tokens)
 
@@ -128,6 +145,121 @@ def _scope_matches(chunk_scope: list[str], requested_scope: list[str] | None) ->
     return bool(set(chunk_scope).intersection(set(requested_scope)))
 
 
+DOC_TYPE_BASE_ADJUSTMENTS = {
+    "frame": 0.10,
+    "object": 0.09,
+    "schema": 0.07,
+    "guide": 0.05,
+    "example": 0.02,
+    "readme": -0.10,
+}
+
+DOC_TYPE_HINTS = {
+    "frame": {"frame", "frames", "hierarchy"},
+    "object": {"object", "objects", "entity", "entities"},
+    "schema": {"schema", "xsd", "xml", "element", "elements", "attribute", "attributes"},
+    "example": {"example", "examples", "sample", "samples"},
+    "readme": {"overview", "introduction"},
+    "guide": {"guide", "guidance", "tutorial", "how", "howto"},
+}
+
+
+def _question_doc_type_hints(question: str) -> set[str]:
+    lower_question = question.lower()
+    hinted: set[str] = set()
+    for doc_type, markers in DOC_TYPE_HINTS.items():
+        if any(marker in lower_question for marker in markers):
+            hinted.add(doc_type)
+    return hinted
+
+
+def _doc_type_score_adjustment(hinted_doc_types: set[str], doc_type: str) -> float:
+    adjustment = DOC_TYPE_BASE_ADJUSTMENTS.get(doc_type, 0.0)
+    if hinted_doc_types:
+        if doc_type in hinted_doc_types:
+            adjustment += 0.08
+        elif doc_type == "readme":
+            adjustment -= 0.05
+    return adjustment
+
+
+def _build_query_embedding_input(
+    question: str,
+    hinted_standards: set[str],
+    hinted_doc_types: set[str],
+) -> str:
+    standards = ", ".join(sorted(hinted_standards)) if hinted_standards else "unspecified"
+    doc_types = ", ".join(sorted(hinted_doc_types)) if hinted_doc_types else "unspecified"
+    return (
+        f"query_scope: {standards}\n"
+        f"query_doc_types: {doc_types}\n"
+        f"question: {question}"
+    )
+
+
+def _build_chunk_embedding_input(chunk: SourceChunk) -> str:
+    standards_scope = chunk.standards_scope or []
+    scope = ", ".join(standards_scope) if standards_scope else "unspecified"
+    return (
+        f"doc_type: {getattr(chunk, 'doc_type', 'guide') or 'guide'}\n"
+        f"chunk_type: {getattr(chunk, 'chunk_type', 'prose') or 'prose'}\n"
+        f"scope: {scope}\n"
+        f"repository: {chunk.repository_url}\n"
+        f"source_path: {chunk.source_path}\n"
+        f"heading: {getattr(chunk, 'heading', '') or 'none'}\n\n"
+        f"content:\n{chunk.text}"
+    )
+
+
+STANDARD_HINTS = {
+    "NeTEx": {"netex"},
+    "SIRI": {"siri"},
+    "Transmodel": {"transmodel"},
+    "OJP": {"ojp"},
+    "OpRa": {"opra"},
+    "DATEX II": {"datex", "datexii", "datex2"},
+}
+
+
+def _question_standard_hints(question: str) -> set[str]:
+    """Extract standards explicitly referenced in the user question."""
+    lower_question = question.lower()
+    hinted: set[str] = set()
+    for standard, markers in STANDARD_HINTS.items():
+        if any(marker in lower_question for marker in markers):
+            hinted.add(standard)
+    return hinted
+
+
+def _standard_score_adjustment(
+    hinted_standards: set[str],
+    chunk_scope: list[str],
+    repository_url: str,
+    source_path: str,
+) -> float:
+    """Prefer chunks aligned with standards mentioned in the question."""
+    if not hinted_standards:
+        return 0.0
+
+    adjustment = 0.0
+    lower_blob = f"{repository_url}\n{source_path}".lower()
+    chunk_scope_set = set(chunk_scope or [])
+
+    if chunk_scope_set.intersection(hinted_standards):
+        adjustment += 0.12
+
+    for hinted_standard in hinted_standards:
+        markers = STANDARD_HINTS.get(hinted_standard, set())
+        if any(marker in lower_blob for marker in markers):
+            adjustment += 0.08
+            break
+
+    if chunk_scope_set and not chunk_scope_set.intersection(hinted_standards):
+        adjustment -= 0.06
+
+    return adjustment
+
+
 def retrieve_chunks(
     question: str,
     top_k: int,
@@ -144,7 +276,15 @@ def retrieve_chunks(
 
     _ensure_seed_chunks()
 
-    query_embedding = build_text_embedding(question)
+    hinted_standards = _question_standard_hints(question)
+    hinted_doc_types = _question_doc_type_hints(question)
+    query_embedding = build_text_embedding(
+        _build_query_embedding_input(
+            question=question,
+            hinted_standards=hinted_standards,
+            hinted_doc_types=hinted_doc_types,
+        )
+    )
 
     postgres_candidates = _postgres_hybrid_candidates(
         question=question,
@@ -169,14 +309,30 @@ def retrieve_chunks(
             lexical_score = _token_overlap_score(question=question, chunk_text=chunk.text)
         lexical_score = max(0.0, min(1.0, lexical_score))
 
-        chunk_embedding = chunk.embedding_vector or build_text_embedding(chunk.text)
+        chunk_embedding = chunk.embedding_vector
+        if chunk_embedding is None or len(chunk_embedding) == 0:
+            chunk_embedding = build_text_embedding(_build_chunk_embedding_input(chunk))
         vector_score = max(0.0, cosine_similarity(query_embedding, chunk_embedding))
         quality_score = max(0.0, min(1.0, chunk.quality_score))
+        doc_type = (getattr(chunk, "doc_type", "guide") or "guide").lower()
 
         hybrid_score = (vector_score * 0.5) + (lexical_score * 0.3) + (quality_score * 0.2)
         # Keep backward-compatible retrieval strength so known covered intents do not regress.
         legacy_score = (quality_score * 0.8) + (lexical_score * 0.2)
-        score = min(1.0, max(hybrid_score, legacy_score))
+        score = min(
+            1.0,
+            max(
+                0.0,
+                max(hybrid_score, legacy_score)
+                + _doc_type_score_adjustment(hinted_doc_types=hinted_doc_types, doc_type=doc_type)
+                + _standard_score_adjustment(
+                    hinted_standards=hinted_standards,
+                    chunk_scope=chunk.standards_scope or [],
+                    repository_url=chunk.repository_url,
+                    source_path=chunk.source_path,
+                ),
+            ),
+        )
         if score < min_score:
             continue
 

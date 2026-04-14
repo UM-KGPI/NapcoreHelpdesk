@@ -20,6 +20,7 @@ from rest_framework.test import APIRequestFactory
 from rest_framework.test import APITestCase
 
 from helpdesk.api.exceptions import custom_exception_handler
+from helpdesk.api.views import _build_file_url, _select_citations
 from helpdesk.services.llm_generator import LLMGenerationError
 from helpdesk.models import (
     AnswerEvidenceLink,
@@ -207,7 +208,7 @@ class HelpdeskApiTests(APITestCase):
             reverse("answer-question"),
             {
                 "question": "Explain OJP operational exchange setup sequence.",
-                "standardsScope": ["OJP/OpRa"],
+                "standardsScope": ["OJP"],
             },
             format="json",
             HTTP_X_REQUEST_ID="req-rag-001",
@@ -231,6 +232,79 @@ class HelpdeskApiTests(APITestCase):
             1,
         )
 
+    def test_select_citations_deduplicates_and_prefers_dominant_repo_docs(self):
+        """Ensure citation selection prefers substantive chunks from the dominant repository."""
+        citations = _select_citations(
+            chunks=[
+                {
+                    "repositoryUrl": "https://github.com/NeTEx-CEN/test-Profile-Documentation",
+                    "commitSha": "1727ab3",
+                    "sourcePath": "README.md",
+                    "chunkId": "chunk-a",
+                    "label": "README.md",
+                    "score": 0.84,
+                },
+                {
+                    "repositoryUrl": "https://github.com/OpRa-CEN/OpRa",
+                    "commitSha": "3734861",
+                    "sourcePath": "docs/ef-explicit-frame-hierarchy-model-summary.md",
+                    "chunkId": "chunk-b",
+                    "label": "docs/ef-explicit-frame-hierarchy-model-summary.md",
+                    "score": 0.82,
+                },
+                {
+                    "repositoryUrl": "https://github.com/OpRa-CEN/OpRa",
+                    "commitSha": "3734861",
+                    "sourcePath": "README.md",
+                    "chunkId": "chunk-c",
+                    "label": "README.md",
+                    "score": 0.81,
+                },
+                {
+                    "repositoryUrl": "https://github.com/OpRa-CEN/OpRa",
+                    "commitSha": "3734861",
+                    "sourcePath": "docs/ef-explicit-frame-hierarchy-model-summary.md",
+                    "chunkId": "chunk-d",
+                    "label": "docs/ef-explicit-frame-hierarchy-model-summary.md",
+                    "score": 0.79,
+                },
+            ],
+            max_citations=3,
+        )
+
+        self.assertEqual(len(citations), 3)
+        self.assertEqual(citations[0]["sourcePath"], "docs/ef-explicit-frame-hierarchy-model-summary.md")
+        self.assertEqual(citations[0]["commitSha"], "3734861")
+        self.assertEqual(sum(1 for item in citations if item["sourcePath"] == "docs/ef-explicit-frame-hierarchy-model-summary.md"), 1)
+
+    @patch("helpdesk.api.views._resolve_commit_sha", return_value="3734861abcdef0123456789abcdef012345678")
+    def test_build_file_url_expands_short_commit_sha(self, resolve_commit_sha_mock):
+        """Ensure citation URLs use an expanded commit SHA when available."""
+        url = _build_file_url(
+            repo_url="https://github.com/OpRa-CEN/OpRa",
+            commit_sha="3734861",
+            source_path="docs/ef-explicit-frame-hierarchy-model-summary.md",
+        )
+
+        self.assertEqual(
+            url,
+            "https://github.com/OpRa-CEN/OpRa/blob/3734861abcdef0123456789abcdef012345678/docs/ef-explicit-frame-hierarchy-model-summary.md",
+        )
+        resolve_commit_sha_mock.assert_called_once_with(
+            repo_url="https://github.com/OpRa-CEN/OpRa",
+            commit_sha="3734861",
+        )
+
+    def test_build_file_url_maps_issue_path_to_issue_url(self):
+        """Ensure synthetic indexed issue paths link to the actual GitHub issue page."""
+        url = _build_file_url(
+            repo_url="https://github.com/NeTEx-CEN/NeTEx",
+            commit_sha="2024-03-22T12:07:32Z",
+            source_path="issues/691.md",
+        )
+
+        self.assertEqual(url, "https://github.com/NeTEx-CEN/NeTEx/issues/691")
+
     @override_settings(LLM_ENABLED=True)
     @patch("helpdesk.api.views.generate_answer_llm")
     def test_answer_uses_llm_ready_profile_when_enabled(self, llm_mock):
@@ -248,7 +322,7 @@ class HelpdeskApiTests(APITestCase):
             reverse("answer-question"),
             {
                 "question": "Explain OJP operational exchange setup sequence.",
-                "standardsScope": ["OJP/OpRa"],
+                "standardsScope": ["OJP"],
                 "generationProfile": "llm-ready",
             },
             format="json",
@@ -279,7 +353,7 @@ class HelpdeskApiTests(APITestCase):
             reverse("answer-question"),
             {
                 "question": "Explain OJP operational exchange setup sequence.",
-                "standardsScope": ["OJP/OpRa"],
+                "standardsScope": ["OJP"],
                 "generationProfile": "llm-ready",
             },
             format="json",
@@ -317,6 +391,24 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(response.data["windowDays"], 30)
         self.assertEqual(response.data["minCount"], 1)
         self.assertGreaterEqual(len(response.data["items"]), 1)
+
+    def test_answer_does_not_use_faq_for_single_keyword_overlap(self):
+        """Ensure FAQ-first does not trigger on weak single-token overlap like only 'NeTEx'."""
+
+        response = self.client.post(
+            reverse("answer-question"),
+            {
+                "question": "How should NeTEx stop assignments be modeled for complex interchanges?",
+                "standardsScope": ["NeTEx"],
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-faq-single-token-overlap",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_matches_schema("AnswerResponse", response.data)
+        self.assertNotEqual(response.data["mode"], "faq")
 
     def test_editorial_queue_routes_policy_review_to_review_status(self):
         """Ensure policy-review reasons route queue items directly to review status."""

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 
-STANDARDS_SCOPE_CHOICES = ["Transmodel", "NeTEx", "SIRI", "OJP/OpRa", "DATEX II"]
+STANDARDS_SCOPE_CHOICES = ["Transmodel", "NeTEx", "SIRI", "OJP", "OpRa", "DATEX II"]
 
 
 class AnswerOptionsSerializer(serializers.Serializer):
@@ -37,7 +37,7 @@ class AnswerRequestSerializer(serializers.Serializer):
     generationProfile = serializers.ChoiceField(
         choices=["deterministic-grounded", "llm-ready"],
         required=False,
-        default="deterministic-grounded",
+        default="llm-ready",
     )
     options = AnswerOptionsSerializer(required=False)
 
@@ -104,6 +104,18 @@ class EditorialQueueTransitionRequestSerializer(serializers.Serializer):
         ]
     )
     comment = serializers.CharField(required=False, allow_blank=True, default="")
+
+
+class IndexRepositoryRequestSerializer(serializers.Serializer):
+    """Payload for triggering a source repository ingestion run."""
+
+    repoUrl = serializers.CharField()
+    repoPath = serializers.CharField()
+    profile = serializers.CharField(required=False, default="default")
+    incremental = serializers.BooleanField(required=False, default=True)
+    prune = serializers.BooleanField(required=False, default=False)
+    autoAllowRepository = serializers.BooleanField(required=False, default=True)
+    includeIssues = serializers.BooleanField(required=False, default=False)
 
 
 class ErrorResponseSerializer(serializers.Serializer):

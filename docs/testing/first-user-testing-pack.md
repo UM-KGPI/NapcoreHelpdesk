@@ -8,7 +8,7 @@ Run a controlled first-user pilot to validate FAQ-first accuracy, RAG fallback s
 ## Pilot scope
 - Product surfaces:
   - Routed Web GUI user chat at `/user`
-  - Routed Web GUI operator console at `/operator`
+  - Routed Web GUI editor console at `/editor`
   - API endpoints in `/api/v1/*`
 - Standards focus:
   - NeTEx primary
@@ -45,9 +45,9 @@ Run a controlled first-user pilot to validate FAQ-first accuracy, RAG fallback s
 - At least 3 low-confidence/policy-review outcomes queued for editorial board.
 
 ## Current implementation notes
-- Frontend is split into two independently addressable routes: `/user` and `/operator`.
+- Frontend is split into two independently addressable routes: `/user` and `/editor`.
 - Chat-style UX is available on `/user` and preserves turn history inside the active browser session.
-- Editorial board, orchestration, routing, and KPI flows are available on `/operator`.
+- Editorial board, orchestration, routing, and KPI flows are available on `/editor`.
 - Backend answer generation supports:
   - `deterministic-grounded` mode
   - `llm-ready` mode with safe deterministic fallback if provider config is missing or fails
@@ -114,7 +114,7 @@ Run a controlled first-user pilot to validate FAQ-first accuracy, RAG fallback s
 ### S4 Editorial queue routing
 - Role: editor
 - Action:
-  - Open `/operator` and route a question outcome to editorial queue.
+  - Open `/editor` and route a question outcome to editorial queue.
 - Expected:
   - queue item created
   - status and reason reflect routing input
@@ -124,7 +124,7 @@ Run a controlled first-user pilot to validate FAQ-first accuracy, RAG fallback s
 ### S5 Role-aware board actions
 - Role: viewer then reviewer
 - Action:
-  - Open `/operator` and load Editorial Board as viewer and reviewer.
+  - Open `/editor` and load Editorial Board as viewer and reviewer.
 - Expected:
   - viewer sees no allowed actions
   - reviewer sees only valid review actions for item status

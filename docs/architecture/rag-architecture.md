@@ -15,6 +15,9 @@ Implement the helpdesk as a retrieval-augmented generation (RAG) system that pro
 ## API Contract
 - Implementation contract: [rag-fallback-api-contract.md](docs/architecture/rag-fallback-api-contract.md)
 
+## Semantic Layer Extension
+- Graph-based semantic layer plan: [semantic-layer-plan.md](docs/architecture/semantic-layer-plan.md)
+
 ## Technology Baseline (Decision Set 1)
 
 These decisions establish the first implementation baseline so backend and frontend work can start without blocking on stack selection.

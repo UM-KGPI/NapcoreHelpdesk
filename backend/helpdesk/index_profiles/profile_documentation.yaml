@@ -1,9 +1,14 @@
 include:
-  - docs
-  - part
+  - guides
+  - frames
+  - objects
   - profile
+  - documentation
+  - docs
+  - model
   - examples
   - xsd
+  - xml
   - readme
 exclude:
   - .tmp/

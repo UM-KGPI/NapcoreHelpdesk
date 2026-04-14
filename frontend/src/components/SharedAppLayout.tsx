@@ -14,46 +14,51 @@ export default function SharedAppLayout() {
 
   return (
     <div className="page-shell">
-      <header className="hero">
-        <p className="kicker">NAPCORE HELPDESK</p>
-        <h1>Q&amp;A about NAPCORE related multimodal standardisation</h1>
-        <p className="subhead">Demonstration shell with separate user and operator surfaces sharing one backend connection.</p>
+      <header className="app-title-header">
+        <h1>NAPCORE Helpdesk</h1>
+        <p className="app-subtitle">Source-Grounded Q&A Assistant with Editorial knowledge building for Transmodel ecosystem</p>
       </header>
-
       <section className="panel route-switcher-panel">
         <div className="route-switcher-copy">
-          <h2>Experience Switcher</h2>
-          <p className="muted">Use separate routes for demo: user-facing chat and operator-facing console are now independently addressable.</p>
+          <h2>Role Switcher</h2>
         </div>
         <nav className="route-switcher-nav" aria-label="Workspace navigation">
           <NavLink to="/user" className={({ isActive }) => `route-link ${isActive ? "route-link-active" : ""}`}>
-            User Chat
+            Q&amp;A Asisstant
           </NavLink>
-          <NavLink to="/operator" className={({ isActive }) => `route-link ${isActive ? "route-link-active" : ""}`}>
-            Operator Console
+          <NavLink to="/editor" className={({ isActive }) => `route-link ${isActive ? "route-link-active" : ""}`}>
+            Editor Console
           </NavLink>
         </nav>
       </section>
 
-      <section className="panel credentials-panel">
-        <h2>Connection</h2>
-        <div className="grid-two">
-          <label>
-            API Base URL
-            <input value={apiBaseUrl} onChange={(event) => setApiBaseUrl(event.target.value)} placeholder="/api/v1" />
-          </label>
-          <label>
-            JWT Bearer Token
-            <input value={token} onChange={(event) => setToken(event.target.value)} placeholder="Paste token" />
+      <Outlet />
+
+      <details className="panel credentials-panel system-panel collapsible-panel">
+        <summary className="collapsible-summary">
+          <div className="system-panel-header">
+            <p className="kicker">System Settings</p>
+            <h2>Connection</h2>
+            <p className="muted">API and token settings live here when you need to troubleshoot or switch environments.</p>
+          </div>
+        </summary>
+        <div className="collapsible-body">
+          <div className="grid-two">
+            <label>
+              API Base URL
+              <input value={apiBaseUrl} onChange={(event) => setApiBaseUrl(event.target.value)} placeholder="/api/v1" />
+            </label>
+            <label>
+              JWT Bearer Token
+              <input value={token} onChange={(event) => setToken(event.target.value)} placeholder="Paste token" />
+            </label>
+          </div>
+          <label className="checkbox-label">
+            <input type="checkbox" checked={autoTokenEnabled} onChange={(event) => setAutoTokenEnabled(event.target.checked)} />
+            auto-create dev JWT on page reload
           </label>
         </div>
-        <label className="checkbox-label">
-          <input type="checkbox" checked={autoTokenEnabled} onChange={(event) => setAutoTokenEnabled(event.target.checked)} />
-          auto-create dev JWT on page reload
-        </label>
-      </section>
-
-      <Outlet />
+      </details>
     </div>
   );
 }

@@ -1,2 +1,12 @@
 include: []
-exclude: []
+exclude:
+  - .tmp/
+  - /tmp/
+  - all_files_
+  - missing_in_xpr
+  - images
+  - assets
+  - media
+  - tests
+  - test
+  - node_modules

@@ -3,12 +3,12 @@
 This is the single entry-point guide for running and testing NAPCORE Helpdesk locally.
 
 ## Recommended local mode
-Use SQLite first for the fastest local functional check.
+The local runtime uses PostgreSQL with pgvector. SQLite is no longer the default.
 
-Why:
-- minimal setup
-- no PostgreSQL dependency
-- enough to verify frontend, backend, auth, editorial workflow, KPIs, and first-user testing scenarios
+Prerequisites for PostgreSQL mode:
+- PostgreSQL running locally with the `vector` extension available
+- Database `napcore_helpdesk` created with user `napcore` (see `backend/.env`)
+- pgvector enabled (superuser or pre-installed extension — see `docs/architecture/postgresql-pgvector-runbook.md`)
 
 ## Prerequisites
 - Python virtual environment already available at `.venv/`
@@ -16,15 +16,19 @@ Why:
 - Repository root opened in VS Code
 
 ## 1. Backend local environment
-The local SQLite environment file is already prepared at:
+The environment file is at:
 - `backend/.env`
 
-Important active setting:
-- `DJANGO_USE_SQLITE=True`
+Active settings:
+- `DJANGO_USE_SQLITE=False` — PostgreSQL mode
+- `LLM_ENABLED=True` — grounded generation via LLM provider
+- `POSTGRES_DB=napcore_helpdesk`, `POSTGRES_USER=napcore`, `POSTGRES_HOST=localhost`, `POSTGRES_PORT=5432`
 
-Current source setup can include multiple allow-listed repositories, for example:
+Allow-listed source repositories:
 - `https://github.com/NeTEx-CEN/NeTEx`
 - `https://github.com/NeTEx-CEN/test-Profile-Documentation`
+- `https://github.com/OpRa-CEN/OpRa`
+- `https://github.com/hfjelstad/Profile_Documentation_v2`
 
 ## 2. Apply backend migrations
 From repository root:
@@ -38,6 +42,28 @@ From repository root:
 
 ```bash
 make backend-run
+```
+
+If startup fails with `Error: That port is already in use.`, clear stale local runserver processes and retry:
+
+```bash
+# show who is listening on 8000
+lsof -nP -iTCP:8000 -sTCP:LISTEN
+
+# stop any stale Django runserver chain
+pkill -f "manage.py runserver" || true
+
+# confirm port is free
+lsof -nP -iTCP:8000 -sTCP:LISTEN || true
+
+# start backend again
+make backend-run
+```
+
+If a specific PID still appears, stop it directly and retry:
+
+```bash
+kill <PID>
 ```
 
 Backend URL:
@@ -58,11 +84,11 @@ make frontend-dev
 Frontend URL:
 - `http://localhost:5173`
 - `http://localhost:5173/user`
-- `http://localhost:5173/operator`
+- `http://localhost:5173/editor`
 
 ## 5. Get a local JWT token
 Preferred local mode:
-- open `http://localhost:5173/user` or `http://localhost:5173/operator`
+- open `http://localhost:5173/user` or `http://localhost:5173/editor`
 - keep `auto-create dev JWT on page reload` enabled in the shared `Connection` panel
 - reload once if needed; frontend will call `POST /api/v1/auth/dev-token`
 
@@ -70,7 +96,7 @@ Manual fallback:
 
 ```bash
 cd backend
-DJANGO_USE_SQLITE=True ../.venv/bin/python manage.py shell -c "import jwt, datetime as dt; from django.conf import settings; now=dt.datetime.now(dt.timezone.utc); print(jwt.encode({'sub':'local-user','roles':['admin'],'iat':int(now.timestamp()),'exp':int((now+dt.timedelta(hours=8)).timestamp())}, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM))"
+../.venv/bin/python manage.py shell -c "import jwt, datetime as dt; from django.conf import settings; now=dt.datetime.now(dt.timezone.utc); print(jwt.encode({'sub':'local-user','roles':['admin'],'iat':int(now.timestamp()),'exp':int((now+dt.timedelta(hours=8)).timestamp())}, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM))"
 ```
 
 Use the printed token in the shared frontend field:
@@ -82,7 +108,7 @@ In the frontend:
 - use default API base URL: `/api/v1`
 - run these checks:
   - Open `/user`, send one message, and confirm turn history with citations
-  - Open `/operator`, ask a known FAQ question
+  - Open `/editor`, ask a known FAQ question
   - Load Editorial Board
   - Load KPI metrics
   - Route an item to editorial queue
@@ -97,7 +123,7 @@ Use this for a fast go/no-go check.
 1. Open `http://localhost:5173`.
 2. Confirm `API Base URL` is `/api/v1`.
 3. Confirm `JWT Bearer Token` is present or wait for auto-create to fill it.
-4. Open `/operator`.
+4. Open `/editor`.
 5. Click `Load Metrics` in `Editorial Board`.
 6. Click `Load Board` in `Editorial Board`.
 7. In `Ask Question`, click `Run Orchestration` with default values.
@@ -117,15 +143,18 @@ make frontend-build
 cd backend && ../.venv/bin/python manage.py test -v 1
 ```
 
-## 8. Optional LLM-ready mode
-To enable provider-backed generation in `Chat Session`:
+## 8. LLM-ready mode
+LLM-backed generation is enabled by default (`LLM_ENABLED=True` in `backend/.env`).
 
-1. Edit `backend/.env` and set:
-  - `LLM_ENABLED=True`
-  - `LLM_API_KEY=<your key>`
-  - optionally override `LLM_API_BASE_URL`, `LLM_MODEL`, `LLM_TIMEOUT_SECONDS`, `LLM_MAX_TOKENS`, `LLM_TEMPERATURE`
-2. Restart backend.
-3. In frontend `/user`, choose `llm-ready` as `Generation Profile`.
+Active configuration:
+- `LLM_PROVIDER=openai-compatible`
+- `LLM_API_BASE_URL=https://models.inference.ai.azure.com`
+- `LLM_MODEL=gpt-4o-mini`
+- `LLM_TIMEOUT_SECONDS=20`, `LLM_MAX_TOKENS=500`, `LLM_TEMPERATURE=0.2`
+
+To use a different provider, update `LLM_API_BASE_URL`, `LLM_API_KEY`, and `LLM_MODEL` in `backend/.env` and restart backend.
+
+In frontend `/user`, select `llm-ready` as `Generation Profile` to use the LLM path.
 
 If provider configuration is missing or the request fails, backend falls back to deterministic grounded generation.
 
@@ -142,14 +171,20 @@ Live worksheet:
 Feedback template:
 - `.github/ISSUE_TEMPLATE/pilot-feedback.yml`
 
-## 10. When to switch to PostgreSQL
-Switch from SQLite to PostgreSQL when:
-- local flow is already working
-- you want production-like validation
-- you want to verify pgvector path, release workflow, and deployment posture
-
-PostgreSQL runbook:
+## 10. PostgreSQL and pgvector
+The local runtime runs on PostgreSQL with pgvector. For setup, troubleshooting, and production deployment guidance:
 - `docs/architecture/postgresql-pgvector-runbook.md`
+
+Migration chain that must be present:
+- `0006_pgvector_native_alignment`
+- `0007_alter_sourcechunk_embedding_vector`
+- `0008_sourcechunk_embedding_dimension_1536`
+- `0009_create_sourcechunk_vector_index`
+
+Verify with:
+```bash
+cd backend && ../.venv/bin/python manage.py showmigrations helpdesk | grep '0006\|0007\|0008\|0009'
+```
 
 ## 11. Related docs
 - `backend/README.md`

@@ -96,3 +96,36 @@ DROP INDEX IF EXISTS sourcechunk_embedding_ivfflat_idx;
 - SQLite remains supported for local development and tests when `DJANGO_USE_SQLITE=True`.
 - PostgreSQL path is the production baseline and should be used in staging/prod CI gates.
 - If retrieval latency grows, tune IVF list count and PostgreSQL planner settings per workload.
+- Index artifact cleanup rules are enforced globally in the index builder (not only per-profile), so current and future repository profiles automatically exclude temporary/generated paths.
+
+## Next-Session Quickstart (Local Baseline)
+1. Verify backend is in PostgreSQL mode:
+```bash
+cd backend
+grep '^DJANGO_USE_SQLITE=' .env
+```
+Expected: `DJANGO_USE_SQLITE=False`
+
+2. Verify helpdesk migration chain:
+```bash
+../.venv/bin/python manage.py showmigrations helpdesk | grep '0006\|0007\|0008\|0009'
+```
+Expected: all listed migrations are marked `[X]`.
+
+3. Ensure least-privilege local test posture:
+- Role `napcore` should have `CREATEDB`.
+- Role `napcore` should **not** require `SUPERUSER`.
+- Test DB creation should inherit pgvector from template1 via `DATABASES["default"]["TEST"]["TEMPLATE"] = "template1"` in settings.
+
+4. Re-index allowlisted repositories:
+```bash
+cd ..
+make backend-index REPO_URL=https://github.com/NeTEx-CEN/NeTEx REPO_PATH=/absolute/path/to/NeTEx PROFILE=netex INCREMENTAL=1
+make backend-index REPO_URL=https://github.com/OpRa-CEN/OpRa REPO_PATH=/absolute/path/to/OpRa PROFILE=opra INCREMENTAL=1
+```
+
+5. Run focused backend verification:
+```bash
+cd backend
+../.venv/bin/python manage.py test helpdesk.tests.test_api helpdesk.tests.test_index_builder helpdesk.tests.test_policy_guard
+```

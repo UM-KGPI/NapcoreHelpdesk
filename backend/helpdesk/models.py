@@ -28,8 +28,12 @@ class SourceChunk(TimestampedModel):
     text = models.TextField()
     standards_scope = models.JSONField(default=list, blank=True)
     quality_score = models.FloatField(default=0.5)
+    # Structure-aware chunking metadata.
+    chunk_type = models.CharField(max_length=32, default="prose", blank=True)
+    doc_type = models.CharField(max_length=32, default="guide", blank=True)
+    heading = models.CharField(max_length=512, blank=True)
     # PostgreSQL uses pgvector; SQLite falls back to JSON via PortableVectorField.
-    embedding_vector = PortableVectorField(dimensions=64, default=list, blank=True)
+    embedding_vector = PortableVectorField(dimensions=1536, default=list, blank=True)
 
     class Meta:
         ordering = ["-quality_score", "source_path", "chunk_id"]

@@ -1,6 +1,8 @@
 from collections import defaultdict
 import datetime as dt
 from datetime import timedelta
+from pathlib import Path
+import subprocess
 from uuid import uuid4
 
 import jwt
@@ -14,7 +16,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from helpdesk.models import EditorialQueueItem, QuestionEvent
+from helpdesk.models import EditorialQueueItem, IndexRunMetric, QuestionEvent
 from helpdesk.services.editorial_router import route_to_editorial_queue
 from helpdesk.services.editorial_workflow import (
     WorkflowTransitionForbidden,
@@ -28,6 +30,7 @@ from helpdesk.services.faq_matcher import match_faq
 from helpdesk.services.grounded_generator import generate_answer
 from helpdesk.services.llm_generator import LLMGenerationError, generate_answer_llm
 from helpdesk.services.policy_guard import evaluate_policy
+from helpdesk.services.index_builder import index_repository
 from helpdesk.services.retrieval_gateway import retrieve_chunks
 from helpdesk.services.retrieval_event_logger import log_retrieval_events
 
@@ -37,6 +40,7 @@ from .serializers import (
     EditorialQueueMetricsQuerySerializer,
     EditorialQueueRequestSerializer,
     EditorialQueueTransitionRequestSerializer,
+    IndexRepositoryRequestSerializer,
     PromotionCandidatesQuerySerializer,
 )
 
@@ -49,10 +53,114 @@ def _request_id(request):
 def _build_file_url(repo_url: str, commit_sha: str, source_path: str) -> str:
     """Construct a direct GitHub file URL pointing to the exact blob at a commit."""
     # Remove trailing .git if present, normalize the repo URL.
-    repo_url = repo_url.rstrip("/").rstrip(".git")
-    # Build the GitHub blob URL: https://github.com/OWNER/REPO/blob/COMMIT/PATH
-    return f"{repo_url}/blob/{commit_sha}/{source_path}"
+    repo_url = repo_url.rstrip("/")
+    if repo_url.endswith(".git"):
+        repo_url = repo_url[:-4]
 
+    if source_path.startswith("issues/") and source_path.endswith(".md"):
+        issue_number = Path(source_path).stem
+        if issue_number.isdigit():
+            return f"{repo_url}/issues/{issue_number}"
+
+    resolved_commit_sha = _resolve_commit_sha(repo_url=repo_url, commit_sha=commit_sha)
+    # Build the GitHub blob URL: https://github.com/OWNER/REPO/blob/COMMIT/PATH
+    return f"{repo_url}/blob/{resolved_commit_sha}/{source_path}"
+
+
+def _resolve_commit_sha(repo_url: str, commit_sha: str) -> str:
+    """Expand short commit SHAs using the most recent indexed local repository path when available."""
+
+    normalized = (commit_sha or "").strip()
+    if len(normalized) >= 40 or not normalized or normalized == "placeholder":
+        return normalized
+
+    latest_run = IndexRunMetric.objects.filter(repository_url=repo_url).order_by("-created_at").first()
+    if not latest_run:
+        return normalized
+
+    repository_path = Path(latest_run.repository_path).expanduser()
+    if not repository_path.exists():
+        return normalized
+
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repository_path), "rev-parse", normalized],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except Exception:
+        return normalized
+
+    resolved = result.stdout.strip()
+    return resolved or normalized
+
+
+def _dominant_repository_url(chunks: list[dict]) -> str | None:
+    if not chunks:
+        return None
+
+    repository_weights: dict[str, float] = defaultdict(float)
+    for index, chunk in enumerate(chunks):
+        repository_url = chunk.get("repositoryUrl")
+        if not repository_url:
+            continue
+        repository_weights[repository_url] += float(chunk.get("score", 0.0)) * max(0.5, 1.0 - (index * 0.08))
+
+    if not repository_weights:
+        return None
+    return max(repository_weights.items(), key=lambda item: item[1])[0]
+
+
+def _select_citations(chunks: list[dict], max_citations: int) -> list[dict]:
+    dominant_repo = _dominant_repository_url(chunks)
+
+    def citation_sort_key(chunk: dict) -> tuple:
+        source_path = str(chunk.get("sourcePath", "")).lower()
+        basename = source_path.rsplit("/", 1)[-1]
+        is_same_repo = chunk.get("repositoryUrl") == dominant_repo
+        is_docs_or_model = (
+            source_path.startswith("docs/")
+            or "/docs/" in source_path
+            or "model-summary" in source_path
+            or source_path.startswith("models/")
+            or "/models/" in source_path
+        )
+        is_readme = basename.startswith("readme.")
+        return (
+            0 if is_same_repo else 1,
+            0 if is_docs_or_model else 1,
+            0 if not is_readme else 1,
+            -float(chunk.get("score", 0.0)),
+            source_path,
+        )
+
+    selected: list[dict] = []
+    seen_sources: set[tuple[str, str]] = set()
+    for chunk in sorted(chunks, key=citation_sort_key):
+        repository_url = chunk.get("repositoryUrl", "")
+        source_path = chunk.get("sourcePath", "")
+        source_key = (repository_url, source_path)
+        if source_key in seen_sources:
+            continue
+        seen_sources.add(source_key)
+        selected.append(
+            {
+                "repositoryUrl": _build_file_url(
+                    repo_url=repository_url,
+                    commit_sha=chunk["commitSha"],
+                    source_path=source_path,
+                ),
+                "commitSha": chunk["commitSha"],
+                "sourcePath": source_path,
+                "chunkId": chunk["chunkId"],
+                "label": chunk.get("label"),
+            }
+        )
+        if len(selected) >= max_citations:
+            break
+
+    return selected
 
 
 def _error_response(code, message, request_id, http_status=status.HTTP_400_BAD_REQUEST):
@@ -215,7 +323,7 @@ class QuestionAnswerView(APIView):
         options = data.get("options", {})
         question = data["question"].strip()
         scope = data.get("standardsScope", [])
-        generation_profile = data.get("generationProfile", "deterministic-grounded")
+        generation_profile = data.get("generationProfile", "llm-ready")
         allow_abstain = options.get("allowAbstain", True)
         faq_min_confidence = options.get("faqMinConfidence", 0.85)
         max_citations = options.get("maxCitations", 5)
@@ -250,6 +358,18 @@ class QuestionAnswerView(APIView):
                 min_score=retrieval_min_score,
                 scope=scope,
             )
+
+            # Retry with a relaxed threshold to avoid abstaining on terse asks that still
+            # have relevant evidence in indexed sources.
+            relaxed_min_score = min(retrieval_min_score, 0.45)
+            if not chunks and relaxed_min_score < retrieval_min_score:
+                chunks = retrieve_chunks(
+                    question=question,
+                    top_k=retrieval_top_k,
+                    min_score=relaxed_min_score,
+                    scope=scope,
+                )
+
             retrieved_chunks = chunks
             retrieval_event_ids = [chunk["retrievalEventId"] for chunk in chunks]
 
@@ -265,7 +385,7 @@ class QuestionAnswerView(APIView):
                 use_llm = generation_profile == "llm-ready" and settings.LLM_ENABLED
                 if use_llm:
                     try:
-                        generated = generate_answer_llm(question=question, chunks=chunks)
+                        generated = generate_answer_llm(question=question, chunks=chunks, scope=scope)
                     except LLMGenerationError:
                         generated = generate_answer(question=question, chunks=chunks)
                 else:
@@ -273,20 +393,7 @@ class QuestionAnswerView(APIView):
                 answer_text = generated["answer"]
                 confidence = generated["confidence"]
                 review_required = generated["review_required"]
-                citations = [
-                    {
-                        "repositoryUrl": _build_file_url(
-                            repo_url=chunk["repositoryUrl"],
-                            commit_sha=chunk["commitSha"],
-                            source_path=chunk["sourcePath"],
-                        ),
-                        "commitSha": chunk["commitSha"],
-                        "sourcePath": chunk["sourcePath"],
-                        "chunkId": chunk["chunkId"],
-                        "label": chunk.get("label"),
-                    }
-                    for chunk in chunks[:max_citations]
-                ]
+                citations = _select_citations(chunks=chunks, max_citations=max_citations)
                 policy = evaluate_policy(answer_text=answer_text, citations=citations)
                 if not policy["allowed"]:
                     if allow_abstain:
@@ -649,6 +756,90 @@ class EditorialQueueMetricsView(APIView):
                     "h24to72": age_24_72,
                     "gt72h": age_over_72,
                 },
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class IndexRepositoryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """Trigger a source repository ingestion run against an already-cloned local path."""
+        from pathlib import Path
+
+        request_id = _request_id(request)
+
+        # Restrict to admin or publisher roles to prevent accidental re-indexing.
+        actor_roles = _request_roles(request)
+        if not (actor_roles & {"admin", "publisher"}):
+            return _error_response(
+                code="FORBIDDEN",
+                message="Indexing requires admin or publisher role.",
+                request_id=request_id,
+                http_status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = IndexRepositoryRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        repo_url = data["repoUrl"].strip()
+        repo_path = Path(data["repoPath"]).expanduser().resolve()
+        auto_allow_repository = bool(data.get("autoAllowRepository", True))
+
+        if not repo_path.exists() or not repo_path.is_dir():
+            return _error_response(
+                code="INVALID_REPO_PATH",
+                message=f"repoPath does not exist or is not a directory: {repo_path}",
+                request_id=request_id,
+                http_status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Optional convenience for operators: add repository URL to in-process allow-list.
+        allowed_repositories = set(settings.ALLOWED_SOURCE_REPOSITORIES)
+        auto_allowed = False
+        if auto_allow_repository and repo_url not in allowed_repositories:
+            allowed_repositories.add(repo_url)
+            settings.ALLOWED_SOURCE_REPOSITORIES = allowed_repositories
+            auto_allowed = True
+
+        try:
+            stats = index_repository(
+                repo_url=repo_url,
+                repo_path=repo_path,
+                allowed_repositories=allowed_repositories,
+                profile=data["profile"],
+                incremental=data["incremental"],
+                prune=data["prune"],
+                include_issues=bool(data.get("includeIssues", False)),
+                github_token=settings.GITHUB_API_TOKEN or None,
+                github_verify_ssl=settings.GITHUB_API_VERIFY_SSL,
+                github_ca_bundle=settings.GITHUB_CA_BUNDLE,
+            )
+        except ValueError as exc:
+            return _error_response(
+                code="INDEX_ERROR",
+                message=str(exc),
+                request_id=request_id,
+                http_status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {
+                "status": "ok",
+                "requestId": request_id,
+                "repositoryUrl": repo_url,
+                "repositoryPath": str(repo_path),
+                "profile": data["profile"],
+                "incremental": data["incremental"],
+                "prune": data["prune"],
+                "autoAllowedRepository": auto_allowed,
+                "scannedFiles": stats.scanned_files,
+                "skippedFiles": stats.skipped_files,
+                "createdChunks": stats.created_chunks,
+                "updatedChunks": stats.updated_chunks,
+                "deletedChunks": stats.deleted_chunks,
             },
             status=status.HTTP_200_OK,
         )

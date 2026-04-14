@@ -1,9 +1,10 @@
 include:
-  - docs
-  - part
+  - opra
+  - ojp
   - profile
+  - model
+  - docs
   - examples
-  - xsd
   - readme
 exclude:
   - .tmp/

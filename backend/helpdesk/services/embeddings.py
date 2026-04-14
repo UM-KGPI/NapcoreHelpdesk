@@ -2,37 +2,90 @@ from __future__ import annotations
 
 import hashlib
 import math
+import re
 
 
-EMBEDDING_DIMENSION = 64
+EMBEDDING_DIMENSION = 1536
+
+TOKEN_SYNONYMS = {
+    "delayed": "late",
+    "delay": "late",
+    "delays": "late",
+    "journeys": "journey",
+    "services": "service",
+    "metrics": "metric",
+}
 
 
-def build_text_embedding(text: str, dimension: int = EMBEDDING_DIMENSION) -> list[float]:
-    """Build deterministic lightweight text embeddings for MVP hybrid retrieval.
+def normalize_text_tokens(text: str) -> list[str]:
+    """Normalize text into retrieval-friendly tokens.
 
-    This intentionally avoids external model calls so local/test environments can run
-    the retrieval stack without network/provider dependencies.
+    This keeps local deterministic retrieval lightweight while handling a small
+    set of domain-relevant vocabulary variations used across standards docs.
     """
 
+    raw_tokens = re.findall(r"[a-z0-9]+", text.lower())
+    normalized_tokens: list[str] = []
+    for token in raw_tokens:
+        if len(token) <= 2:
+            continue
+        normalized_tokens.append(TOKEN_SYNONYMS.get(token, token))
+    return normalized_tokens
+
+
+def _hash_embed(text: str, dimension: int = EMBEDDING_DIMENSION) -> list[float]:
+    """Deterministic hash-based fallback embedding. No external calls required."""
     vector = [0.0] * dimension
-    tokens = [token.lower() for token in text.split() if len(token) > 2]
+    tokens = normalize_text_tokens(text)
     if not tokens:
         return vector
 
     for token in tokens:
         digest = hashlib.sha256(token.encode("utf-8")).digest()
         index = int.from_bytes(digest[:2], "big") % dimension
-        # Map the next byte to [-1.0, 1.0] to encode token directionality.
         weight = (digest[2] / 127.5) - 1.0
         vector[index] += weight
 
     return _normalize(vector)
 
 
+def build_text_embedding(text: str) -> list[float]:
+    """Return a semantic embedding for the given text.
+
+    Uses the configured OpenAI-compatible provider when EMBEDDING_ENABLED=True.
+    Falls back to the deterministic hash-based embedding on provider failure or
+    when the provider is not configured.
+    """
+    try:
+        from helpdesk.services.embedding_provider import embed_texts
+        return embed_texts([text])[0]
+    except Exception:
+        pass
+    return _hash_embed(text)
+
+
+def build_text_embeddings_batch(texts: list[str]) -> list[list[float]]:
+    """Return embeddings for a list of texts, using a single provider batch call when available.
+
+    Preserves input order. Falls back to hash-based embedding per item on provider
+    failure or when the provider is not configured.
+    """
+    if not texts:
+        return []
+    try:
+        from helpdesk.services.embedding_provider import embed_texts
+        return embed_texts(texts)
+    except Exception:
+        pass
+    return [_hash_embed(t) for t in texts]
+
+
 def cosine_similarity(left: list[float], right: list[float]) -> float:
     """Return cosine similarity between two vectors, guarding zero magnitudes."""
 
-    if not left or not right or len(left) != len(right):
+    if left is None or right is None:
+        return 0.0
+    if len(left) == 0 or len(right) == 0 or len(left) != len(right):
         return 0.0
     left_norm = _norm(left)
     right_norm = _norm(right)

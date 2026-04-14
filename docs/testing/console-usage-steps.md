@@ -1,6 +1,6 @@
 # Console Usage Steps
 
-This guide describes the routed operator flow in the FAQ-first and Evidence-grounded Q&A Console.
+This guide describes the routed editor flow in the FAQ-first and Evidence-grounded Q&A Console.
 
 ## Goal
 Use the console to:
@@ -14,15 +14,33 @@ Use the console to:
 Before running these steps:
 - backend is running on `http://localhost:8000`
 - frontend is running on `http://localhost:5173`
-- operator route is `http://localhost:5173/operator`
+- editor route is `http://localhost:5173/editor`
 - user chat route is `http://localhost:5173/user`
 - API base URL in the UI is `/api/v1`
 - a valid JWT token is available in the shared `Connection` panel
 
+## Editor Tasks (Ordered UI)
+Use the numbered order shown in the editor interface.
+
+1. `1. Ask Question`
+2. `2. Editorial Routing`
+3. `3. Editorial Board`
+4. `4. Editorial Transition`
+5. `5. Queue KPIs`
+6. `6. Promotion Candidates`
+7. `7. Index Repository` (optional operations)
+
+Recommended editorial flow for routine triage:
+1. Ask Question
+2. Editorial Routing
+3. Editorial Board
+4. Editorial Transition
+5. Queue KPIs
+
 ## 2-minute smoke test
 Use this for a fast go/no-go check.
 
-1. Open `http://localhost:5173/operator`.
+1. Open `http://localhost:5173/editor`.
 2. Confirm `API Base URL` is `/api/v1`.
 3. Confirm a valid JWT token is present.
 4. Click `Load Metrics` in `Editorial Board`.
@@ -59,8 +77,8 @@ Expected result:
 Note:
 - If `llm-ready` is selected but backend LLM configuration is unavailable or fails, the backend falls back to deterministic grounded generation.
 
-## Step 3. Run question orchestration on the operator route
-In `http://localhost:5173/operator`, in the `Ask Question` panel:
+## Step 3. Run question orchestration on the editor route
+In `http://localhost:5173/editor`, in the `Ask Question` panel:
 - keep or edit the sample question
 - set `Session ID` and `User ID`
 - choose one or more `Standards Scope` values
@@ -127,16 +145,16 @@ In `Promotion Candidates`:
 Expected result:
 - candidates list appears for FAQ curation decisions
 
-## Recommended operator sequence
+## Recommended editor sequence
 For first-user testing, use this order:
 1. Connect with token
-2. Open `/user` and run chat prompt
-3. Open `/operator` and run orchestration
-4. Queue for Editorial
-5. Load Board
-6. Apply transition
-7. Load Metrics
-8. Load Candidates
+2. Open `/editor`
+3. Use `1. Ask Question`
+4. Use `2. Editorial Routing`
+5. Use `3. Editorial Board`
+6. Use `4. Editorial Transition`
+7. Use `5. Queue KPIs`
+8. Use `6. Promotion Candidates`
 
 ## Troubleshooting
 If you see `Load failed`:
