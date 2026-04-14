@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from uuid import uuid4
 from django.db import connection, models
 
@@ -100,23 +101,102 @@ def _token_overlap_score(question: str, chunk_text: str) -> float:
     return len(overlap) / len(question_tokens)
 
 
-def _postgres_fts_candidates(question: str, top_k: int):
+def _scope_query_filter(scope: list[str] | None):
+    """Build JSON scope filter compatible with PostgreSQL JSON array fields."""
+
+    if not scope:
+        return models.Q()
+
+    scoped_filter = models.Q()
+    for standard in scope:
+        scoped_filter |= models.Q(standards_scope__contains=[standard])
+    return scoped_filter
+
+
+def _search_vector():
+    """Search across text and source metadata to support filename/path lookups."""
+
+    return (
+        SearchVector("text", config="english", weight="A")
+        + SearchVector("source_path", config="english", weight="A")
+        + SearchVector("label", config="english", weight="B")
+        + SearchVector("heading", config="english", weight="B")
+    )
+
+
+PATH_HINT_PATTERN = re.compile(r"[A-Za-z][A-Za-z0-9_.-]{7,}")
+
+
+def _question_path_hints(question: str) -> set[str]:
+    """Extract likely filename/path identifiers from user text."""
+
+    hints: set[str] = set()
+    for token in PATH_HINT_PATTERN.findall(question):
+        normalized = token.strip().strip(".,:;!?()[]{}\"'").lower()
+        if not normalized:
+            continue
+        if (
+            normalized.endswith((".xml", ".xsd", ".md"))
+            or "_" in normalized
+            or "-" in normalized
+            or any(ch.isupper() for ch in token[1:])
+        ):
+            hints.add(normalized)
+    return hints
+
+
+def _path_hint_candidates(question: str, top_k: int, scope: list[str] | None = None):
+    """Return path-matching candidates for explicit filename/example-name queries."""
+
+    hints = _question_path_hints(question)
+    if not hints:
+        return SourceChunk.objects.none()
+
+    path_filter = models.Q()
+    for hint in hints:
+        path_filter |= models.Q(source_path__icontains=hint)
+
+    return SourceChunk.objects.filter(_scope_query_filter(scope)).filter(path_filter)[: max(15, top_k * 3)]
+
+
+def _path_score_adjustment(question: str, source_path: str) -> float:
+    """Boost chunks when query includes explicit filename/path-like hints."""
+
+    lower_path = (source_path or "").lower()
+    bonus = 0.0
+    for hint in _question_path_hints(question):
+        if hint in lower_path:
+            bonus = max(bonus, 0.20 if len(hint) >= 16 else 0.12)
+
+    if "example" in question.lower() and "/examples/" in f"/{lower_path}":
+        bonus += 0.04
+
+    return min(0.24, bonus)
+
+
+def _postgres_fts_candidates(question: str, top_k: int, scope: list[str] | None = None):
     """Return FTS-ranked candidate queryset when PostgreSQL search is available."""
 
     if connection.vendor != "postgresql" or not all([SearchQuery, SearchRank, SearchVector]):
         return None
 
     search_query = SearchQuery(question)
+    filtered = SourceChunk.objects.filter(_scope_query_filter(scope))
     return (
-        SourceChunk.objects.annotate(
-            lexical_rank=SearchRank(SearchVector("text", config="english"), search_query)
+        filtered.annotate(
+            lexical_rank=SearchRank(_search_vector(), search_query)
         )
         .filter(lexical_rank__gt=0.0)
         .order_by("-lexical_rank")[: max(20, top_k * 4)]
     )
 
 
-def _postgres_hybrid_candidates(question: str, query_embedding: list[float], top_k: int):
+def _postgres_hybrid_candidates(
+    question: str,
+    query_embedding: list[float],
+    top_k: int,
+    scope: list[str] | None = None,
+):
     """Return combined vector+lexical ranked candidates on PostgreSQL with pgvector."""
 
     if not (
@@ -128,10 +208,11 @@ def _postgres_hybrid_candidates(question: str, query_embedding: list[float], top
         return None
 
     search_query = SearchQuery(question)
+    filtered = SourceChunk.objects.filter(_scope_query_filter(scope))
     # Cosine distance is lower-is-better; convert to similarity with (1 - distance).
     return (
-        SourceChunk.objects.annotate(
-            lexical_rank=SearchRank(SearchVector("text", config="english"), search_query),
+        filtered.annotate(
+            lexical_rank=SearchRank(_search_vector(), search_query),
             vector_distance=CosineDistance("embedding_vector", query_embedding),
         )
         .annotate(vector_similarity=1.0 - models.F("vector_distance"))
@@ -290,12 +371,17 @@ def retrieve_chunks(
         question=question,
         query_embedding=query_embedding,
         top_k=top_k,
+        scope=scope,
     )
     if postgres_candidates is None:
-        postgres_candidates = _postgres_fts_candidates(question=question, top_k=top_k)
+        postgres_candidates = _postgres_fts_candidates(question=question, top_k=top_k, scope=scope)
 
     if postgres_candidates is not None:
-        chunk_iterable = postgres_candidates
+        chunk_iterable = list(postgres_candidates)
+        existing_ids = {chunk.id for chunk in chunk_iterable}
+        for hinted_chunk in _path_hint_candidates(question=question, top_k=top_k, scope=scope):
+            if hinted_chunk.id not in existing_ids:
+                chunk_iterable.append(hinted_chunk)
     else:
         chunk_iterable = SourceChunk.objects.all().iterator()
 
@@ -306,7 +392,15 @@ def retrieve_chunks(
 
         lexical_score = float(getattr(chunk, "lexical_rank", 0.0))
         if lexical_score <= 0.0:
-            lexical_score = _token_overlap_score(question=question, chunk_text=chunk.text)
+            lexical_score = _token_overlap_score(
+                question=question,
+                chunk_text=(
+                    f"{chunk.text}\n"
+                    f"{chunk.source_path}\n"
+                    f"{chunk.label}\n"
+                    f"{getattr(chunk, 'heading', '')}"
+                ),
+            )
         lexical_score = max(0.0, min(1.0, lexical_score))
 
         chunk_embedding = chunk.embedding_vector
@@ -325,6 +419,7 @@ def retrieve_chunks(
                 0.0,
                 max(hybrid_score, legacy_score)
                 + _doc_type_score_adjustment(hinted_doc_types=hinted_doc_types, doc_type=doc_type)
+                + _path_score_adjustment(question=question, source_path=chunk.source_path)
                 + _standard_score_adjustment(
                     hinted_standards=hinted_standards,
                     chunk_scope=chunk.standards_scope or [],
