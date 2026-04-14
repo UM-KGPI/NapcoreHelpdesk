@@ -18,33 +18,39 @@ The plan keeps current PostgreSQL + pgvector retrieval as baseline and adds a gr
 - All answers must stay source-grounded to approved repositories and include citations.
 
 ## Implementation Status (2026-04-15)
-- Added `options.graphRagEnabled` to `POST /api/v1/questions/answer` (defaults to `false`).
-- Added backend feature flag `GRAPH_RAG_ENABLED` for safe rollout gating.
-- Implemented a first graph-aware retrieval slice:
-  - concept extraction from query/chunk text,
-  - 1-hop concept expansion,
-  - graph contribution scoring integrated into ranking when enabled.
-- Added response trace fields:
-  - `graphExpansionHops`
-  - `graphConceptIds`
-  - `graphEvidenceCount`
-  - `graphScoreContribution`
-- Added bootstrap export command: `python manage.py export_semantic_graph --output <file.json>`
-  - Emits repository/document/concept/chunk nodes and `CONTAINS_DOCUMENT`/`HAS_CHUNK`/`MENTIONS_CONCEPT`/`RELATED_TO` edges from indexed chunks.
-  - Supports `--repo-url` and `--min-quality` filters for staged Neo4j import preparation.
-- Added Neo4j import adapter command: `python manage.py import_semantic_graph_neo4j --input <file.json>`
-  - Dry-run by default (prints import plan and statement counts).
-  - Apply mode (`--apply`) executes idempotent schema bootstrap (constraints/indexes) plus data upserts via transactional HTTP endpoint.
-  - Optional `--no-ensure-schema` skips schema bootstrap when the target database is already prepared.
+- ✅ **Step 1: Graph snapshot bootstrap** (commit f653185)
+  - `python manage.py export_semantic_graph` exports Repository/Document/Concept/Chunk nodes + topology edges
+  - Filters: `--repo-url`, `--min-quality`; reports node/edge counts
+- ✅ **Step 2: Neo4j import adapter** (commit 9aea073)
+  - `python manage.py import_semantic_graph_neo4j --input <file.json>` with dry-run by default
+  - Idempotent schema bootstrap: 6 constraints + 2 indexes (CREATE ... IF NOT EXISTS)
+  - Optional `--no-ensure-schema` to skip bootstrap on pre-prepared databases
+- ✅ **Step 3: Live concept expansion from Neo4j** (commit c490188)
+  - `query_neo4j_concept_expansion()` executes variable-length `RELATED_TO` traversal
+  - Falls back instantly to in-memory expansion on any Neo4j error
+  - Trace includes `graphExpansionSource`: "neo4j" | "memory" | "memory_fallback" | "none"
+- ✅ **Step 4: Graph concept alias candidate injection** (commit 8fd8fc8)
+  - `_graph_concept_candidates()` retrieves chunks whose text matches expanded concept aliases
+  - Injected into retrieval pool after path-hint candidates
+  - Trace tracks `graphCandidatesAdded` count
+- ✅ **Step 5: Graph-aware reranking with provenance** (commit ac39aab)
+  - Enhanced scoring: direct concept overlap 0.22 (was 0.18), expanded overlap 0.15 (was 0.10)
+  - Each chunk includes `graphProvenanceConceptIds`: which expanded concepts led to selection
+  - Trace includes `graphProvenanceChainCount`: total unique concept IDs in top-k
+- ✅ **Step 6: Feature flag rollout with variant tracking** (commit 1359140)
+  - Added `GRAPH_RAG_VARIANT` setting (default "baseline"; can be "graph-rag", "control", "baseline")
+  - Trace includes `graphRagVariant`: "control" (graph disabled) | "graph-rag" (graph enabled)
+  - Latency measurement: `retrievalLatencyMs` added to trace
+  - Ready for A/B testing: requests can opt in via `graphRagEnabled=true` in options
 
 ## Overall Implementation Plan
-1. Build semantic extraction during indexing.
-2. Materialize concept graph in a graph database.
-3. Link chunks to graph concepts for graph-aware retrieval.
-4. Add hybrid retrieval path (vector + lexical + graph expansion).
-5. Add graph-aware reranking and evidence bundling.
-6. Roll out via feature flag and compare against baseline.
-7. Promote to default only if quality and latency targets are met.
+1. ✅ Build semantic extraction during indexing.
+2. ✅ Materialize concept graph in a graph database.
+3. ✅ Link chunks to graph concepts for graph-aware retrieval.
+4. ✅ Add hybrid retrieval path (vector + lexical + graph expansion).
+5. ✅ Add graph-aware reranking and evidence bundling.
+6. ✅ Roll out via feature flag and compare against baseline.
+7. ⏳ Promote to default only if quality and latency targets are met.
 
 ## Target Technology Choice
 Recommended primary option: Neo4j (property graph) for initial delivery speed and traversal performance.
