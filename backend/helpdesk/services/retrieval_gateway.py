@@ -174,6 +174,26 @@ def _path_score_adjustment(question: str, source_path: str) -> float:
     return min(0.24, bonus)
 
 
+def _source_path_intent_adjustment(hinted_doc_types: set[str], source_path: str) -> float:
+    """Apply intent-aware path nudges for stable ranking on tied candidates."""
+
+    if not hinted_doc_types:
+        return 0.0
+
+    lower_path = (source_path or "").lower().lstrip("/")
+    adjustment = 0.0
+
+    if "example" in hinted_doc_types:
+        if lower_path.startswith("examples/"):
+            adjustment += 0.12
+        if lower_path.startswith("issues/"):
+            adjustment -= 0.25
+        if lower_path.endswith(".xsd"):
+            adjustment -= 0.08
+
+    return adjustment
+
+
 def _postgres_fts_candidates(question: str, top_k: int, scope: list[str] | None = None):
     """Return FTS-ranked candidate queryset when PostgreSQL search is available."""
 
@@ -261,6 +281,11 @@ def _doc_type_score_adjustment(hinted_doc_types: set[str], doc_type: str) -> flo
             adjustment += 0.08
         elif doc_type == "readme":
             adjustment -= 0.05
+        elif "example" in hinted_doc_types and doc_type in {"schema", "frame", "object"}:
+            # When users explicitly ask for examples, avoid schema-heavy dominance.
+            adjustment -= 0.10
+        elif doc_type not in hinted_doc_types:
+            adjustment -= 0.03
     return adjustment
 
 
@@ -413,28 +438,33 @@ def retrieve_chunks(
         hybrid_score = (vector_score * 0.5) + (lexical_score * 0.3) + (quality_score * 0.2)
         # Keep backward-compatible retrieval strength so known covered intents do not regress.
         legacy_score = (quality_score * 0.8) + (lexical_score * 0.2)
-        score = min(
-            1.0,
-            max(
-                0.0,
-                max(hybrid_score, legacy_score)
-                + _doc_type_score_adjustment(hinted_doc_types=hinted_doc_types, doc_type=doc_type)
-                + _path_score_adjustment(question=question, source_path=chunk.source_path)
-                + _standard_score_adjustment(
-                    hinted_standards=hinted_standards,
-                    chunk_scope=chunk.standards_scope or [],
-                    repository_url=chunk.repository_url,
-                    source_path=chunk.source_path,
-                ),
-            ),
+        raw_score = (
+            max(hybrid_score, legacy_score)
+            + _doc_type_score_adjustment(hinted_doc_types=hinted_doc_types, doc_type=doc_type)
+            + _path_score_adjustment(question=question, source_path=chunk.source_path)
+            + _source_path_intent_adjustment(
+                hinted_doc_types=hinted_doc_types,
+                source_path=chunk.source_path,
+            )
+            + _standard_score_adjustment(
+                hinted_standards=hinted_standards,
+                chunk_scope=chunk.standards_scope or [],
+                repository_url=chunk.repository_url,
+                source_path=chunk.source_path,
+            )
         )
+        score = min(1.0, max(0.0, raw_score))
         if score < min_score:
             continue
+
+        # Break ties deterministically when many scores saturate to 1.0.
+        rank_score = raw_score + (lexical_score * 0.01) + (vector_score * 0.005)
 
         candidates.append(
             {
                 "text": chunk.text,
                 "score": score,
+                "_rankScore": rank_score,
                 "repositoryUrl": chunk.repository_url,
                 "commitSha": chunk.commit_sha,
                 "sourcePath": chunk.source_path,
@@ -444,5 +474,8 @@ def retrieve_chunks(
             }
         )
 
-    candidates.sort(key=lambda value: value["score"], reverse=True)
-    return candidates[:top_k]
+    candidates.sort(key=lambda value: (value["_rankScore"], value["score"]), reverse=True)
+    trimmed = candidates[:top_k]
+    for candidate in trimmed:
+        candidate.pop("_rankScore", None)
+    return trimmed

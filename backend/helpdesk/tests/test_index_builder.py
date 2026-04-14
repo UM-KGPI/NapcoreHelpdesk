@@ -411,6 +411,73 @@ class SourceIndexBuilderTests(TestCase):
             any(chunk["sourcePath"] == "examples/DelayedAndCancelledJourneysWithEvents.xml" for chunk in chunks)
         )
 
+    @override_settings(
+        ALLOWED_SOURCE_REPOSITORIES={
+            "https://github.com/OpRa-CEN/OpRa",
+            "https://github.com/NeTEx-CEN/NeTEx",
+        }
+    )
+    def test_retrieve_chunks_finds_opra_example_by_semantic_content(self):
+        """Ensure delayed journey statistics queries match XML example semantics, not only filename hints."""
+        with TemporaryDirectory() as opra_tmp_dir, TemporaryDirectory() as netex_tmp_dir:
+            opra_path = Path(opra_tmp_dir)
+            opra_examples = opra_path / "examples"
+            opra_examples.mkdir(parents=True, exist_ok=True)
+            (opra_examples / "DelayedAndCancelledJourneysWithEvents.xml").write_text(
+                """<Opra>
+  <ServiceDelivery>
+    <OpraPayloadDelivery>
+      <!-- Delayed Journey 1: Minor delay caused by previous late arrival -->
+      <LateDatedVehicleJourneyEntry>
+        <DelayDuration>PT5M</DelayDuration>
+      </LateDatedVehicleJourneyEntry>
+      <!-- Delayed Journey Statistics by route -->
+      <DelayStatistics>
+        <DelayedJourneyCount>4</DelayedJourneyCount>
+      </DelayStatistics>
+    </OpraPayloadDelivery>
+  </ServiceDelivery>
+</Opra>
+""",
+                encoding="utf-8",
+            )
+
+            netex_path = Path(netex_tmp_dir)
+            netex_examples = netex_path / "examples"
+            netex_examples.mkdir(parents=True, exist_ok=True)
+            for idx in range(0, 80):
+                (netex_examples / f"generic-{idx}.xml").write_text(
+                    "Timetable example payload with stop points and service journey references.",
+                    encoding="utf-8",
+                )
+
+            call_command(
+                "build_source_index",
+                repo_url="https://github.com/NeTEx-CEN/NeTEx",
+                repo_path=str(netex_path),
+                profile="default",
+                prune=True,
+            )
+            call_command(
+                "build_source_index",
+                repo_url="https://github.com/OpRa-CEN/OpRa",
+                repo_path=str(opra_path),
+                profile="opra",
+                prune=True,
+            )
+
+        chunks = retrieve_chunks(
+            question="How are delayed journey statistics represented in OpRa examples?",
+            top_k=6,
+            min_score=0.30,
+            scope=["OpRa"],
+        )
+
+        self.assertTrue(chunks)
+        self.assertTrue(
+            any(chunk["sourcePath"] == "examples/DelayedAndCancelledJourneysWithEvents.xml" for chunk in chunks)
+        )
+
     @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/OpRa-CEN/OpRa"})
     def test_index_builder_assigns_doc_type_from_paths(self):
         """Ensure chunk doc_type is assigned for README, examples, and schema sources."""

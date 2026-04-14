@@ -304,6 +304,47 @@ def split_xml(text: str, max_chars: int = 1200) -> list[tuple[str, str, str]]:
     return final
 
 
+def _humanize_identifier(value: str) -> str:
+    """Convert XML-ish identifiers to readable phrase tokens."""
+    normalized = value.replace(":", " ").replace("_", " ").replace("-", " ")
+    normalized = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", normalized)
+    normalized = re.sub(r"\s+", " ", normalized).strip().lower()
+    return normalized
+
+
+def _extract_xml_semantic_signals(chunk_text: str) -> list[str]:
+    """Extract high-value XML concepts from element names and comments."""
+    signals: list[str] = []
+
+    # Capture tag names for semantic scaffolding.
+    for tag in re.findall(r"</?([A-Za-z_][\w:.-]*)", chunk_text):
+        phrase = _humanize_identifier(tag)
+        if phrase and phrase not in signals:
+            signals.append(phrase)
+
+    # Capture human comments, often carrying scenario meaning in example XML files.
+    for comment in re.findall(r"<!--\s*(.*?)\s*-->", chunk_text, flags=re.DOTALL):
+        cleaned = " ".join(comment.split()).strip().lower()
+        if cleaned and cleaned not in signals:
+            signals.append(cleaned)
+
+    return signals[:18]
+
+
+def enrich_xml_example_text(*, chunk_text: str, source_path: str) -> str:
+    """Append concise semantic summary for XML examples to improve content-based retrieval."""
+    signals = _extract_xml_semantic_signals(chunk_text)
+    if not signals:
+        return chunk_text
+
+    summary = (
+        "XML semantic summary:\n"
+        f"- source: {source_path}\n"
+        f"- concepts: {', '.join(signals)}"
+    )
+    return f"{chunk_text}\n\n{summary}"
+
+
 def _first_nonempty_text(values: list[str]) -> str:
     for value in values:
         cleaned = " ".join(value.split())
@@ -878,17 +919,23 @@ def index_repository(
                     heading=heading,
                     chunk_text=chunk_text,
                 )
+                enriched_chunk_text = chunk_text
+                if relative_path.lower().endswith(".xml") and doc_type == "example":
+                    enriched_chunk_text = enrich_xml_example_text(
+                        chunk_text=chunk_text,
+                        source_path=relative_path,
+                    )
                 chunk_records.append(
                     {
                         "chunk_id": chunk_id,
-                        "chunk_text": chunk_text,
+                        "chunk_text": enriched_chunk_text,
                         "chunk_type": chunk_type,
                         "heading": heading,
                         "standards_scope": standards_scope,
                         "doc_type": doc_type,
                         "quality_score": compute_chunk_quality(
                             source_path=relative_path,
-                            chunk_text=chunk_text,
+                            chunk_text=enriched_chunk_text,
                             chunk_type=chunk_type,
                             heading=heading,
                             doc_type=doc_type,
@@ -898,7 +945,7 @@ def index_repository(
                 )
                 embedding_inputs.append(
                     build_chunk_embedding_text(
-                        chunk_text=chunk_text,
+                        chunk_text=enriched_chunk_text,
                         doc_type=doc_type,
                         chunk_type=chunk_type,
                         heading=heading,
