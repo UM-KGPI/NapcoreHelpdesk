@@ -269,6 +269,37 @@ class SourceIndexBuilderTests(TestCase):
         self.assertIn("DATED VEHICLE JOURNEY", result["answer"])
         self.assertIn("TYPE OF DELAY", result["answer"])
 
+    def test_generate_answer_combines_cross_repository_delay_exchange_evidence(self):
+        """Ensure delayed journey exchange answers synthesize signals across repositories."""
+        result = generate_answer(
+            question="How can I exchange delayed vehicle journeys?",
+            chunks=[
+                {
+                    "text": "Example payload for delayed and cancelled journeys with events.",
+                    "score": 0.86,
+                    "repositoryUrl": "https://github.com/OpRa-CEN/OpRa",
+                    "commitSha": "abc123",
+                    "sourcePath": "examples/DelayedAndCancelledJourneysWithEvents.xml",
+                    "chunkId": "chunk-opra-example",
+                    "label": "DelayedAndCancelledJourneysWithEvents.xml",
+                },
+                {
+                    "text": "SIRI supports real-time exchange in public transport systems.",
+                    "score": 0.81,
+                    "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+                    "commitSha": "def456",
+                    "sourcePath": "README.md",
+                    "chunkId": "chunk-generic",
+                    "label": "README.md",
+                },
+            ],
+        )
+
+        self.assertIn("across repository chunks", result["answer"])
+        self.assertIn("SIRI", result["answer"])
+        self.assertIn("NeTEx", result["answer"])
+        self.assertIn("OpRa", result["answer"])
+
     @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/OpRa-CEN/OpRa"})
     def test_retrieve_chunks_prefers_docs_model_content_over_readme(self):
         """Ensure generic README chunks rank below substantive docs/model content."""
@@ -477,6 +508,64 @@ class SourceIndexBuilderTests(TestCase):
         self.assertTrue(
             any(chunk["sourcePath"] == "examples/DelayedAndCancelledJourneysWithEvents.xml" for chunk in chunks)
         )
+
+    @override_settings(
+        ALLOWED_SOURCE_REPOSITORIES={
+            "https://github.com/OpRa-CEN/OpRa",
+            "https://github.com/NeTEx-CEN/NeTEx",
+        }
+    )
+    def test_retrieve_chunks_balances_delay_exchange_evidence_across_repositories(self):
+        """Ensure retrieval keeps relevant evidence from multiple repositories for delay exchange intent."""
+        with TemporaryDirectory() as opra_tmp_dir, TemporaryDirectory() as netex_tmp_dir:
+            opra_path = Path(opra_tmp_dir)
+            opra_examples = opra_path / "examples"
+            opra_examples.mkdir(parents=True, exist_ok=True)
+            (opra_examples / "DelayedAndCancelledJourneysWithEvents.xml").write_text(
+                """<Opra>
+  <LateDatedVehicleJourneyEntry />
+  <DelayStatistics>
+    <DelayedJourneyCount>4</DelayedJourneyCount>
+  </DelayStatistics>
+</Opra>
+""",
+                encoding="utf-8",
+            )
+
+            netex_path = Path(netex_tmp_dir)
+            netex_docs = netex_path / "docs"
+            netex_docs.mkdir(parents=True, exist_ok=True)
+            (netex_docs / "siri-realtime-exchange.md").write_text(
+                "SIRI real-time exchange updates delayed or cancelled vehicle journeys against planned timetable baselines.",
+                encoding="utf-8",
+            )
+
+            call_command(
+                "build_source_index",
+                repo_url="https://github.com/OpRa-CEN/OpRa",
+                repo_path=str(opra_path),
+                profile="opra",
+                prune=True,
+            )
+            call_command(
+                "build_source_index",
+                repo_url="https://github.com/NeTEx-CEN/NeTEx",
+                repo_path=str(netex_path),
+                profile="default",
+                prune=True,
+            )
+
+        chunks = retrieve_chunks(
+            question="How can I exchange delayed vehicle journeys?",
+            top_k=6,
+            min_score=0.30,
+            scope=None,
+        )
+
+        self.assertTrue(chunks)
+        repository_urls = {chunk["repositoryUrl"] for chunk in chunks}
+        self.assertIn("https://github.com/OpRa-CEN/OpRa", repository_urls)
+        self.assertIn("https://github.com/NeTEx-CEN/NeTEx", repository_urls)
 
     @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/OpRa-CEN/OpRa"})
     def test_index_builder_assigns_doc_type_from_paths(self):

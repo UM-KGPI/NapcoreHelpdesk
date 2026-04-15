@@ -202,6 +202,21 @@ def _request_roles(request):
     return roles
 
 
+def _graph_rag_default_enabled() -> bool:
+    variant = str(getattr(settings, "GRAPH_RAG_VARIANT", "baseline") or "baseline").strip().lower()
+    return variant in {"graph-rag", "treatment", "enabled"}
+
+
+def _resolve_graph_rag_enabled(options: dict) -> bool:
+    """Resolve graph retrieval enablement with explicit request override."""
+
+    if "graphRagEnabled" in options:
+        requested = bool(options.get("graphRagEnabled"))
+    else:
+        requested = _graph_rag_default_enabled()
+    return bool(requested and settings.GRAPH_RAG_ENABLED)
+
+
 def _request_actor_id(request):
     """Resolve actor identifier used in transition audit entries."""
 
@@ -341,10 +356,15 @@ class QuestionAnswerView(APIView):
         citations = []
         retrieved_chunks = []
         graph_trace = {
+            "graphRagVariant": "control",
             "graphExpansionHops": 0,
+            "graphExpansionSource": "none",
             "graphConceptIds": [],
+            "graphCandidatesAdded": 0,
             "graphEvidenceCount": 0,
             "graphScoreContribution": 0.0,
+            "graphProvenanceChainCount": 0,
+            "retrievalLatencyMs": 0.0,
         }
 
         # 1) FAQ-first: fast, deterministic, and usually high confidence.
@@ -358,7 +378,7 @@ class QuestionAnswerView(APIView):
             citations = faq_match["citations"][:max_citations]
         else:
             # 2) RAG fallback: retrieve evidence, generate, then run policy gate.
-            graph_rag_enabled = bool(options.get("graphRagEnabled", False) and settings.GRAPH_RAG_ENABLED)
+            graph_rag_enabled = _resolve_graph_rag_enabled(options)
             chunks, graph_trace = retrieve_chunks_with_trace(
                 question=question,
                 top_k=retrieval_top_k,

@@ -129,6 +129,7 @@ def _search_vector():
 
 
 PATH_HINT_PATTERN = re.compile(r"[A-Za-z][A-Za-z0-9_.-]{7,}")
+TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
 
 
 def _question_path_hints(question: str) -> set[str]:
@@ -248,6 +249,105 @@ def _scope_matches(chunk_scope: list[str], requested_scope: list[str] | None) ->
     if not requested_scope:
         return True
     return bool(set(chunk_scope).intersection(set(requested_scope)))
+
+
+def _normalize_tokens(text: str) -> list[str]:
+    return TOKEN_PATTERN.findall((text or "").lower())
+
+
+def _is_delay_exchange_intent(question: str) -> bool:
+    question_lower = question.lower()
+    has_delay = any(marker in question_lower for marker in ["delay", "delayed", "late", "cancel"])
+    has_journey = "journey" in question_lower
+    has_exchange = any(marker in question_lower for marker in ["exchange", "exchanging", "share"])
+    return has_delay and has_journey and has_exchange
+
+
+def _intent_score_adjustment(
+    question: str,
+    repository_url: str,
+    source_path: str,
+    label: str,
+    chunk_text: str,
+) -> float:
+    """Apply repository-neutral semantic boosts for known high-value intent patterns."""
+
+    if not _is_delay_exchange_intent(question):
+        return 0.0
+
+    del repository_url  # Explicitly keep intent scoring source-neutral.
+    lower_path = (source_path or "").lower()
+    lower_label = (label or "").lower()
+    lower_text = (chunk_text or "").lower()
+    semantic_blob = "\n".join([lower_path, lower_label, lower_text])
+    bonus = 0.0
+
+    if any(term in semantic_blob for term in ["delayed", "late", "cancelled", "canceled"]):
+        bonus += 0.05
+    if any(term in semantic_blob for term in ["journey", "vehicle journey", "dated vehicle journey"]):
+        bonus += 0.05
+    if any(term in semantic_blob for term in ["exchange", "service delivery", "monitoring", "estimated timetable", "situation"]):
+        bonus += 0.05
+    if "example" in lower_path or lower_path.startswith("examples/"):
+        bonus += 0.02
+
+    return min(0.15, bonus)
+
+
+def _jaccard_similarity(left: set[str], right: set[str]) -> float:
+    if not left or not right:
+        return 0.0
+    intersection = left.intersection(right)
+    union = left.union(right)
+    if not union:
+        return 0.0
+    return len(intersection) / len(union)
+
+
+def _diversified_top_k(candidates: list[dict], top_k: int) -> list[dict]:
+    """Greedy MMR-like selection to reduce near-duplicate evidence concentration."""
+
+    if len(candidates) <= top_k:
+        return candidates
+
+    for candidate in candidates:
+        candidate["_diversityTokens"] = set(
+            _normalize_tokens(
+                "\n".join(
+                    [
+                        candidate.get("sourcePath", ""),
+                        candidate.get("label", ""),
+                        candidate.get("repositoryUrl", ""),
+                    ]
+                )
+            )
+        )
+
+    selected: list[dict] = []
+    remaining = list(candidates)
+    mmr_lambda = 0.92
+
+    while remaining and len(selected) < top_k:
+        best_idx = 0
+        best_score = float("-inf")
+        for idx, candidate in enumerate(remaining):
+            novelty_penalty = 0.0
+            if selected:
+                novelty_penalty = max(
+                    _jaccard_similarity(candidate["_diversityTokens"], chosen["_diversityTokens"])
+                    for chosen in selected
+                )
+            mmr_score = (mmr_lambda * candidate["_rankScore"]) - ((1.0 - mmr_lambda) * novelty_penalty)
+            if mmr_score > best_score:
+                best_score = mmr_score
+                best_idx = idx
+
+        selected.append(remaining.pop(best_idx))
+
+    for candidate in selected:
+        candidate.pop("_diversityTokens", None)
+
+    return selected
 
 
 DOC_TYPE_BASE_ADJUSTMENTS = {
@@ -576,6 +676,13 @@ def retrieve_chunks_with_trace(
                 repository_url=chunk.repository_url,
                 source_path=chunk.source_path,
             )
+            + _intent_score_adjustment(
+                question=question,
+                repository_url=chunk.repository_url,
+                source_path=chunk.source_path,
+                label=chunk.label,
+                chunk_text=chunk.text,
+            )
         )
         graph_adjustment, graph_hit, matching_concepts = _graph_score_adjustment(
             graph_enabled=graph_rag_enabled,
@@ -612,7 +719,7 @@ def retrieve_chunks_with_trace(
         )
 
     candidates.sort(key=lambda value: (value["_rankScore"], value["score"]), reverse=True)
-    trimmed = candidates[:top_k]
+    trimmed = _diversified_top_k(candidates=candidates, top_k=top_k)
     graph_hits = 0
     graph_total = 0.0
     provenance_chains: set[str] = set()

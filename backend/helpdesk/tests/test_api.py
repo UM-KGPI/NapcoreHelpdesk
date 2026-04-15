@@ -260,6 +260,107 @@ class HelpdeskApiTests(APITestCase):
         self.assertGreaterEqual(response.data["trace"]["graphExpansionHops"], 0)
         self.assertGreaterEqual(response.data["trace"]["graphEvidenceCount"], 0)
 
+    @override_settings(GRAPH_RAG_ENABLED=True, GRAPH_RAG_VARIANT="graph-rag")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_answer_uses_graph_variant_default_when_option_omitted(self, retrieve_mock):
+        """Ensure graph variant enables graph retrieval by default when request omits graphRagEnabled."""
+        retrieve_mock.return_value = (
+            [
+                {
+                    "text": "Delayed journey statistics are represented in OpRa examples.",
+                    "score": 0.82,
+                    "repositoryUrl": "https://github.com/OpRa-CEN/OpRa",
+                    "commitSha": "abc123",
+                    "sourcePath": "examples/DelayedAndCancelledJourneysWithEvents.xml",
+                    "chunkId": "chunk-opra-1",
+                    "label": "DelayedAndCancelledJourneysWithEvents.xml",
+                    "retrievalEventId": "re-test-001",
+                }
+            ],
+            {
+                "graphRagVariant": "graph-rag",
+                "graphExpansionHops": 1,
+                "graphExpansionSource": "memory",
+                "graphConceptIds": ["opra:delayed-journey"],
+                "graphCandidatesAdded": 1,
+                "graphEvidenceCount": 1,
+                "graphScoreContribution": 0.2,
+                "graphProvenanceChainCount": 1,
+                "retrievalLatencyMs": 12.0,
+            },
+        )
+
+        response = self.client.post(
+            reverse("answer-question"),
+            {
+                "question": "How are delayed journey statistics represented in OpRa examples?",
+                "standardsScope": ["OpRa"],
+                "options": {
+                    "retrievalTopK": 6,
+                    "retrievalMinScore": 0.30,
+                },
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-rag-graph-variant-default-001",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_matches_schema("AnswerResponse", response.data)
+        self.assertTrue(retrieve_mock.called)
+        self.assertTrue(retrieve_mock.call_args.kwargs.get("graph_rag_enabled"))
+
+    @override_settings(GRAPH_RAG_ENABLED=True, GRAPH_RAG_VARIANT="graph-rag")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_answer_allows_explicit_graph_variant_opt_out(self, retrieve_mock):
+        """Ensure explicit graphRagEnabled=false overrides graph-rag variant default."""
+        retrieve_mock.return_value = (
+            [
+                {
+                    "text": "Delayed journey statistics are represented in OpRa examples.",
+                    "score": 0.82,
+                    "repositoryUrl": "https://github.com/OpRa-CEN/OpRa",
+                    "commitSha": "abc123",
+                    "sourcePath": "examples/DelayedAndCancelledJourneysWithEvents.xml",
+                    "chunkId": "chunk-opra-2",
+                    "label": "DelayedAndCancelledJourneysWithEvents.xml",
+                    "retrievalEventId": "re-test-002",
+                }
+            ],
+            {
+                "graphRagVariant": "control",
+                "graphExpansionHops": 0,
+                "graphExpansionSource": "none",
+                "graphConceptIds": [],
+                "graphCandidatesAdded": 0,
+                "graphEvidenceCount": 0,
+                "graphScoreContribution": 0.0,
+                "graphProvenanceChainCount": 0,
+                "retrievalLatencyMs": 8.0,
+            },
+        )
+
+        response = self.client.post(
+            reverse("answer-question"),
+            {
+                "question": "How are delayed journey statistics represented in OpRa examples?",
+                "standardsScope": ["OpRa"],
+                "options": {
+                    "graphRagEnabled": False,
+                    "retrievalTopK": 6,
+                    "retrievalMinScore": 0.30,
+                },
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-rag-graph-variant-optout-001",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_matches_schema("AnswerResponse", response.data)
+        self.assertTrue(retrieve_mock.called)
+        self.assertFalse(retrieve_mock.call_args.kwargs.get("graph_rag_enabled"))
+
     def test_select_citations_deduplicates_and_prefers_dominant_repo_docs(self):
         """Ensure citation selection prefers substantive chunks from the dominant repository."""
         citations = _select_citations(

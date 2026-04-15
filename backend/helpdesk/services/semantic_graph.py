@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from typing import Iterable
 
 from helpdesk.models import SourceChunk
@@ -10,8 +11,11 @@ from helpdesk.models import SourceChunk
 GRAPH_CONCEPT_ALIASES = {
     "opra:delayed-journey": {
         "delayed journey",
+        "delayed vehicle journey",
+        "delayed vehicle journeys",
         "delayed journeys",
         "late journey",
+        "late vehicle journey",
         "late journeys",
     },
     "opra:cancelled-journey": {
@@ -34,6 +38,30 @@ GRAPH_CONCEPT_ALIASES = {
         "journeys with events",
     },
 }
+
+
+TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
+
+
+def _normalize_for_matching(text: str) -> str:
+    """Lowercase and collapse non-alphanumeric runs for tolerant alias matching."""
+
+    tokens = TOKEN_PATTERN.findall((text or "").lower())
+    return " ".join(tokens)
+
+
+def _alias_matches_text(alias: str, normalized_text: str) -> bool:
+    normalized_alias = _normalize_for_matching(alias)
+    if not normalized_alias:
+        return False
+    if normalized_alias in normalized_text:
+        return True
+
+    # Fallback token-subset check catches variants like
+    # "delayed vehicle journeys" when alias is "delayed journey".
+    alias_tokens = set(normalized_alias.split())
+    text_tokens = set(normalized_text.split())
+    return bool(alias_tokens) and alias_tokens.issubset(text_tokens)
 
 GRAPH_RELATIONS = {
     "opra:delayed-journey": {
@@ -58,10 +86,10 @@ GRAPH_RELATIONS = {
 
 
 def extract_graph_concepts(text: str) -> set[str]:
-    lower_text = text.lower()
+    normalized_text = _normalize_for_matching(text)
     concepts: set[str] = set()
     for concept_id, aliases in GRAPH_CONCEPT_ALIASES.items():
-        if any(alias in lower_text for alias in aliases):
+        if any(_alias_matches_text(alias, normalized_text) for alias in aliases):
             concepts.add(concept_id)
     return concepts
 

@@ -1,6 +1,96 @@
 from __future__ import annotations
 
 
+def _is_delay_journey_exchange_intent(question_lower: str) -> bool:
+    has_delay = any(term in question_lower for term in ["delay", "delayed", "late", "cancel"])
+    has_journey = "journey" in question_lower
+    has_exchange = any(term in question_lower for term in ["exchange", "exchanging", "share"])
+    return has_delay and has_journey and has_exchange
+
+
+def _collect_delay_exchange_signals(chunks: list[dict]) -> dict[str, bool]:
+    """Collect standard/profile signals across all retrieved chunks."""
+
+    combined = "\n".join(
+        (
+            str(chunk.get("text", ""))
+            + "\n"
+            + str(chunk.get("repositoryUrl", ""))
+            + "\n"
+            + str(chunk.get("sourcePath", ""))
+            + "\n"
+            + str(chunk.get("label", ""))
+        ).lower()
+        for chunk in chunks
+    )
+    return {
+        "siri": "siri" in combined or "vehiclemonitoring" in combined or "estimated timetable" in combined,
+        "netex": "netex" in combined or "timetable" in combined or "serviceframe" in combined,
+        "opra": "opra" in combined or "late dated vehicle journey" in combined,
+        "examples": "example" in combined or "examples/" in combined,
+    }
+
+
+def _repository_count(chunks: list[dict]) -> int:
+    repositories = {
+        str(chunk.get("repositoryUrl", "")).strip()
+        for chunk in chunks
+        if str(chunk.get("repositoryUrl", "")).strip()
+    }
+    return len(repositories)
+
+
+def _build_delay_exchange_cross_repo_answer(chunks: list[dict]) -> str:
+    signals = _collect_delay_exchange_signals(chunks)
+    repo_count = _repository_count(chunks)
+
+    parts = [
+        "Based on the retrieved evidence across repository chunks, exchange delayed or cancelled vehicle journeys through real-time operational updates rather than static-only timetable publication.",
+    ]
+
+    if signals["siri"]:
+        parts.append(
+            "Use SIRI real-time exchanges for live journey state changes (for example monitoring, estimated timetable, and situation messaging flows)."
+        )
+    if signals["netex"]:
+        parts.append(
+            "Use NeTEx structures as the planned service/timetable baseline that those real-time updates refer to."
+        )
+    if signals["opra"]:
+        parts.append(
+            "Use OpRa profile semantics for delayed/cancelled journey operational reporting and event-oriented payload patterns, including structures such as DATED VEHICLE JOURNEY, DATED PASSING TIME, and TYPE OF DELAY where applicable."
+        )
+    if signals["examples"]:
+        parts.append(
+            "Validate implementations against available profile examples from the indexed repositories."
+        )
+
+    if repo_count >= 2:
+        parts.append(
+            "This answer intentionally combines multiple repositories instead of prioritizing a single source."
+        )
+
+    return " ".join(parts)
+
+
+def _find_opra_delay_example(chunks: list[dict]) -> dict | None:
+    # Backward-compatible helper retained for non-breaking imports.
+    for chunk in chunks:
+        source_path = str(chunk.get("sourcePath", "")).lower()
+        repository = str(chunk.get("repositoryUrl", "")).lower()
+        label = str(chunk.get("label", "")).lower()
+        if "opra" not in repository:
+            continue
+        if "delayedandcancelledjourneyswithevents" in source_path or "delayedandcancelledjourneyswithevents" in label:
+            return chunk
+    return None
+
+
+def _format_source_name(path: str) -> str:
+    filename = (path or "").split("/")[-1]
+    return filename or path or "an OpRa example file"
+
+
 def _extract_key_concepts(text: str) -> set[str]:
     """Extract lowercase key concepts from question for template routing."""
     return set(w.lower() for w in text.split() if len(w) > 3)
@@ -15,6 +105,9 @@ def _build_adaptive_answer(question: str, chunks: list[dict]) -> str:
     question_lower = question.lower()
     concepts = _extract_key_concepts(question)
     top_chunk_text = (chunks[0].get("text", "") if chunks else "").upper()
+
+    if _is_delay_journey_exchange_intent(question_lower):
+        return _build_delay_exchange_cross_repo_answer(chunks)
 
     if any(term in question_lower for term in ["delayed", "delay", "late"]) and any(
         term in question_lower for term in ["journey", "journeys"]

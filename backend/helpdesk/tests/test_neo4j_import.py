@@ -14,6 +14,7 @@ from helpdesk.services.neo4j_importer import (
     build_neo4j_statements,
     query_neo4j_concept_expansion,
 )
+from helpdesk.services.semantic_graph import extract_graph_concepts
 
 
 def _snapshot_payload() -> dict:
@@ -91,6 +92,11 @@ def _snapshot_payload() -> dict:
 
 
 class Neo4jImportTests(TestCase):
+    def test_extract_graph_concepts_matches_delayed_vehicle_journeys(self):
+        """Concept extraction should match wording variants used by users."""
+        concepts = extract_graph_concepts("How can I exchange delayed vehicle journeys?")
+        self.assertIn("opra:delayed-journey", concepts)
+
     def test_build_neo4j_schema_statements_returns_idempotent_set(self):
         statements = build_neo4j_schema_statements()
 

@@ -21,7 +21,7 @@ class AnswerOptionsSerializer(serializers.Serializer):
     retrievalMinScore = serializers.FloatField(required=False, min_value=0.0, max_value=1.0, default=0.62)
 
     # Feature-flagged graph-aware retrieval expansion for semantic PoC.
-    graphRagEnabled = serializers.BooleanField(required=False, default=False)
+    graphRagEnabled = serializers.BooleanField(required=False)
 
 
 class AnswerRequestSerializer(serializers.Serializer):
