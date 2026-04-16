@@ -759,19 +759,22 @@ netex:DataObjectCapabilitiesRequest a skos:Concept ;
     skos:prefLabel "data object capabilities request"@en ;
     skos:altLabel "dataobjectcapabilitiesrequest"@en ;
     skos:altLabel "request for information about data"@en ;
-    rdfs:comment "Request for information about DATA OBJECT Service Capabilities. Answered with DataObjectCapabilitiesResponse."@en .
+    rdfs:comment "Request for information about DATA OBJECT Service Capabilities. Answered with DataObjectCapabilitiesResponse."@en ;
+    skos:related siri:AbstractFunctionalServiceCapabilitiesRequest .
 
 netex:DataObjectCapabilitiesResponse a skos:Concept ;
     skos:prefLabel "capabilities for data object service"@en ;
     skos:altLabel "data object capabilities response"@en ;
     skos:altLabel "dataobjectcapabilitiesresponse"@en ;
-    rdfs:comment "Capabilities for DATA OBJECT Service. Answers a DataObjectCapabilitiesRequest."@en .
+    rdfs:comment "Capabilities for DATA OBJECT Service. Answers a DataObjectCapabilitiesRequest."@en ;
+    skos:related siri:AbstractFunctionalServiceCapabilitiesResponse .
 
 netex:DataObjectDelivery a skos:Concept ;
     skos:prefLabel "data object delivery"@en ;
     skos:altLabel "dataobjectdelivery"@en ;
     skos:altLabel "delivery for netex service containing"@en ;
-    rdfs:comment "Delivery for NeTEx Service containing one or more NeTEx Data Objects,."@en .
+    rdfs:comment "Delivery for NeTEx Service containing one or more NeTEx Data Objects,."@en ;
+    skos:related siri:AbstractFunctionalServiceDelivery .
 
 netex:DataObjectPermissions a skos:Concept ;
     skos:prefLabel "data object permissions"@en ;
@@ -783,7 +786,8 @@ netex:DataObjectRequest a skos:Concept ;
     skos:prefLabel "data object request"@en ;
     skos:altLabel "dataobjectrequest"@en ;
     skos:altLabel "service request for one or"@en ;
-    rdfs:comment "Service Request for one or more NeTEx Data Objects,."@en .
+    rdfs:comment "Service Request for one or more NeTEx Data Objects,."@en ;
+    skos:related siri:AbstractFunctionalServiceRequest .
 
 netex:DataObjectServiceCapabilities a skos:Concept ;
     skos:prefLabel "capabilities of dataobject service"@en ;
@@ -795,7 +799,8 @@ netex:DataObjectSubscriptionRequest a skos:Concept ;
     skos:prefLabel "data object subscription request"@en ;
     skos:altLabel "dataobjectsubscriptionrequest"@en ;
     skos:altLabel "request for a subscription to"@en ;
-    rdfs:comment "Request for a subscription to NeTEx Data Object Service."@en .
+    rdfs:comment "Request for a subscription to NeTEx Data Object Service."@en ;
+    skos:related siri:AbstractFunctionalServiceSubscriptionRequest .
 
 netex:DataSource a skos:Concept ;
     skos:prefLabel "data source"@en ;

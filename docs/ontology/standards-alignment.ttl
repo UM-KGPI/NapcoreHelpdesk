@@ -46,6 +46,11 @@ datex:TrafficEvent skos:relatedMatch opra:TypeOfDelay .
 datex:TrafficEvent skos:relatedMatch opra:VehicleTypeCapacity .
 datex:TrafficEvent skos:relatedMatch siri:VehicleMonitoring .
 netex:AllowedLineDirection skos:relatedMatch opra:LateDatedVehicleJourneyEntry .
+netex:DataObjectCapabilitiesRequest skos:relatedMatch siri:AbstractFunctionalServiceCapabilitiesRequest .
+netex:DataObjectCapabilitiesResponse skos:relatedMatch siri:AbstractFunctionalServiceCapabilitiesResponse .
+netex:DataObjectDelivery skos:relatedMatch siri:AbstractFunctionalServiceDelivery .
+netex:DataObjectRequest skos:relatedMatch siri:AbstractFunctionalServiceRequest .
+netex:DataObjectSubscriptionRequest skos:relatedMatch siri:AbstractFunctionalServiceSubscriptionRequest .
 netex:DestinationDisplay skos:relatedMatch opra:CancelledJourney .
 netex:DestinationDisplay skos:relatedMatch opra:DelayStatistics .
 netex:DestinationDisplay skos:relatedMatch opra:DelayedJourney .
@@ -186,5 +191,10 @@ netex:VehicleJourney skos:relatedMatch opra:TransportPerformancePerVehicle .
 netex:VehicleJourney skos:relatedMatch opra:TypeOfDelay .
 netex:VehicleJourney skos:relatedMatch opra:VehicleLoadEntry .
 netex:VehicleJourney skos:relatedMatch opra:VehicleTypeCapacity .
+opra:Opra skos:relatedMatch siri:Extensions .
+opra:OpraDiscoveryRequest skos:relatedMatch siri:AbstractDiscoveryRequest .
+opra:OpraError skos:relatedMatch siri:OtherError .
+opra:OpraFunctionalDelivery skos:relatedMatch siri:AbstractFunctionalServiceDelivery .
+opra:OpraFunctionalRequest skos:relatedMatch siri:AbstractFunctionalServiceRequest .
 opra:TypeOfDelay skos:relatedMatch siri:VehicleMonitoring .
 opra:VehicleTypeCapacity skos:relatedMatch siri:VehicleMonitoring .

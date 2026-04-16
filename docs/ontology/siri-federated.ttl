@@ -19,6 +19,603 @@
     owl:imports <https://napcore.eu/ontology/napcore-its> ;
     dcterms:license <https://creativecommons.org/licenses/by/4.0/> .
 
+siri:AbstractDiscoveryDelivery a skos:Concept ;
+    skos:prefLabel "abstract discovery delivery"@en ;
+    skos:altLabel "abstract type for a discovery"@en ;
+    skos:altLabel "abstractdiscoverydelivery"@en ;
+    rdfs:comment "Abstract type for a discovery delivery."@en ;
+    skos:related siri:AbstractResponse .
+
+siri:AbstractDiscoveryRequest a skos:Concept ;
+    skos:prefLabel "abstract discovery request"@en ;
+    skos:altLabel "abstractdiscoveryrequest"@en ;
+    rdfs:comment "Abstract Discovery request."@en ;
+    skos:related siri:AuthenticatedRequest .
+
+siri:AbstractFunctionalServiceCapabilitiesRequest a skos:Concept ;
+    skos:prefLabel "abstract functional service capabilities request"@en ;
+    skos:altLabel "abstractfunctionalservicecapabilitiesrequest"@en ;
+    rdfs:comment "Subsititutable type for a SIRI Functional Service Capabiloitiesequest."@en ;
+    skos:related siri:AbstractServiceRequest .
+
+siri:AbstractFunctionalServiceCapabilitiesResponse a skos:Concept ;
+    skos:prefLabel "abstract functional service capabilities response"@en ;
+    skos:altLabel "abstractfunctionalservicecapabilitiesresponse"@en ;
+    rdfs:comment "Subsititutable type for a SIRI Functional Service Capabiloitiesequest."@en ;
+    skos:related siri:AbstractResponse .
+
+siri:AbstractFunctionalServiceDelivery a skos:Concept ;
+    skos:prefLabel "abstract functional service delivery"@en ;
+    skos:altLabel "abstractfunctionalservicedelivery"@en ;
+    rdfs:comment "Subsititutable type for a SIRI Functional Service request."@en ;
+    skos:related siri:AbstractResponse .
+
+siri:AbstractFunctionalServiceRequest a skos:Concept ;
+    skos:prefLabel "abstract functional service request"@en ;
+    skos:altLabel "abstractfunctionalservicerequest"@en ;
+    rdfs:comment "Subsititutable type for a SIRI Functional Service request."@en ;
+    skos:related siri:AbstractServiceRequest .
+
+siri:AbstractFunctionalServiceSubscriptionRequest a skos:Concept ;
+    skos:prefLabel "abstract functional service subscription request"@en ;
+    skos:altLabel "abstractfunctionalservicesubscriptionrequest"@en ;
+    rdfs:comment "Subsititutable type for a SIRI Functional Service subscription request."@en .
+
+siri:AbstractRequest a skos:Concept ;
+    skos:prefLabel "abstract request"@en ;
+    skos:altLabel "abstractrequest"@en ;
+    rdfs:comment "Subsititutable type for a timestamped SIRI request."@en .
+
+siri:AbstractResponse a skos:Concept ;
+    skos:prefLabel "abstract response"@en ;
+    skos:altLabel "abstractresponse"@en ;
+    rdfs:comment "Subsititutable type for a SIRI response."@en .
+
+siri:AbstractServiceRequest a skos:Concept ;
+    skos:prefLabel "abstract service request"@en ;
+    skos:altLabel "abstractservicerequest"@en ;
+    rdfs:comment "Substitutable type for a SIRI Functional Service request."@en ;
+    skos:related siri:AbstractRequest .
+
+siri:AbstractTrackedRequest a skos:Concept ;
+    skos:prefLabel "abstract tracked request"@en ;
+    skos:altLabel "abstracttrackedrequest"@en ;
+    rdfs:comment "Subsititutable type for a SIRI request with requestor dteials tracked."@en .
+
+siri:AccessFacility a skos:Concept ;
+    skos:prefLabel "access facility"@en ;
+    skos:altLabel "accessfacility"@en ;
+    skos:altLabel "classification of access facility"@en ;
+    rdfs:comment "Classification of Access Facility."@en .
+
+siri:AccessNotAllowedError a skos:Concept ;
+    skos:prefLabel "access not allowed error"@en ;
+    skos:altLabel "accessnotallowederror"@en ;
+    skos:altLabel "error requestor is not authorised"@en ;
+    rdfs:comment "Error: Requestor is not authorised to the service or data requested."@en .
+
+siri:AccommodationFacility a skos:Concept ;
+    skos:prefLabel "accommodation facility"@en ;
+    skos:altLabel "accommodationfacility"@en ;
+    skos:altLabel "classification of accomodation facility type"@en ;
+    rdfs:comment "Classification of Accomodation Facility type - Tpeg pti23."@en .
+
+siri:ActualArrivalTime a skos:Concept ;
+    skos:prefLabel "actual arrival time"@en ;
+    skos:altLabel "actualarrivaltime"@en ;
+    skos:altLabel "observed time of arrival of"@en ;
+    rdfs:comment "Observed time of arrival of VEHICLE at stop."@en .
+
+siri:ActualDepartureTime a skos:Concept ;
+    skos:prefLabel "actual departure time"@en ;
+    skos:altLabel "actualdeparturetime"@en ;
+    skos:altLabel "observed time of departure of"@en ;
+    rdfs:comment "Observed time of departure of VEHICLE from stop."@en .
+
+siri:ActualHeadwayInterval a skos:Concept ;
+    skos:prefLabel "actual headway interval"@en ;
+    skos:altLabel "actualheadwayinterval"@en ;
+    rdfs:comment "For frequency based services, observed interval between vehicles at stop."@en .
+
+siri:AimedArrivalTime a skos:Concept ;
+    skos:prefLabel "aimed arrival time"@en ;
+    skos:altLabel "aimedarrivaltime"@en ;
+    skos:altLabel "target arrival time of vehicle"@en ;
+    rdfs:comment "Target arrival time of VEHICLE at stop according to latest working timetable."@en .
+
+siri:AimedArrivalTimeOfFeeder a skos:Concept ;
+    skos:prefLabel "aimed arrival time of feeder"@en ;
+    skos:altLabel "aimedarrivaltimeoffeeder"@en ;
+    skos:altLabel "planned time at which feeder"@en ;
+    rdfs:comment "Planned time at which feeder VEHICLE is scheduled to arrive. (since SIRI 2.1)"@en .
+
+siri:AimedDepartureTime a skos:Concept ;
+    skos:prefLabel "aimed departure time"@en ;
+    skos:altLabel "aimeddeparturetime"@en ;
+    skos:altLabel "target departure time of vehicle"@en ;
+    rdfs:comment "Target departure time of VEHICLE from stop according to latest working timetable."@en .
+
+siri:AimedDepartureTimeOfDistributor a skos:Concept ;
+    skos:prefLabel "aimed departure time of distributor"@en ;
+    skos:altLabel "aimeddeparturetimeofdistributor"@en ;
+    skos:altLabel "planned time at which distributor"@en ;
+    rdfs:comment "Planned time at which distributor VEHICLE is scheduled to depart. (since SIRI 2.1)"@en .
+
+siri:AimedFlexibleArea a skos:Concept ;
+    skos:prefLabel "aimed flexible area"@en ;
+    skos:altLabel "aimedflexiblearea"@en ;
+    skos:altLabel "area that encompasses the scheduled"@en ;
+    rdfs:comment "Area that encompasses the scheduled flexible stop locations according to the planned timetable. (since SIRI 2.1)"@en .
+
+siri:AimedHeadwayInterval a skos:Concept ;
+    skos:prefLabel "aimed headway interval"@en ;
+    skos:altLabel "aimedheadwayinterval"@en ;
+    rdfs:comment "For frequency based services, target interval between vehicles at stop."@en .
+
+siri:AimedLatestPassengerAccessTime a skos:Concept ;
+    skos:prefLabel "aimed latest passenger access time"@en ;
+    skos:altLabel "aimedlatestpassengeraccesstime"@en ;
+    rdfs:comment "Latest target time at which a PASSENGER should aim to arrive at the STOP PLACE containing the stop. This time may be earlier than the VEHICLE departure times and may include time for processes such as checkin, security, etc.(As specified by CHECK CONSTRAINT DELAYs in the underlying data). If absent assume to be the same as Earliest expected departure time. (since SIRI 2.0)"@en .
+
+siri:AimedLocationName a skos:Concept ;
+    skos:prefLabel "aimed location name"@en ;
+    skos:altLabel "aimedlocationname"@en ;
+    skos:altLabel "name or description eg address"@en ;
+    rdfs:comment "Name or description (e.g. address) of the scheduled location or flexible area. (since SIRI 2.1)"@en .
+
+siri:AirSubmode a skos:Concept ;
+    skos:prefLabel "air submode"@en ;
+    skos:altLabel "airsubmode"@en ;
+    rdfs:comment "TPEG Pti08 and Pts108 \"AirService\" submodes."@en .
+
+siri:AllowAll a skos:Concept ;
+    skos:prefLabel "allow access to all topics"@en ;
+    skos:altLabel "allow all"@en ;
+    skos:altLabel "allowall"@en ;
+    rdfs:comment "Allow access to all topics known to the service."@en .
+
+siri:AllowedResourceUsageExceededError a skos:Concept ;
+    skos:prefLabel "allowed resource usage exceeded error"@en ;
+    skos:altLabel "allowedresourceusageexceedederror"@en ;
+    skos:altLabel "error valid request was made"@en ;
+    rdfs:comment "Error: Valid request was made but request would exceed the permitted resource usage of the client."@en .
+
+siri:ArrivalBoardingActivity a skos:Concept ;
+    skos:prefLabel "arrival boarding activity"@en ;
+    skos:altLabel "arrivalboardingactivity"@en ;
+    rdfs:comment "Type of alighting allowed at stop. Default is 'Alighting'."@en .
+
+siri:ArrivalCancellationReason a skos:Concept ;
+    skos:prefLabel "arrival cancellation reason"@en ;
+    skos:altLabel "arrivalcancellationreason"@en ;
+    rdfs:comment "Text annotation to be used in cases where ArrivalStatus is set to 'cancelled'. (since SIRI 2.1)"@en .
+
+siri:ArrivalFormationAssignment a skos:Concept ;
+    skos:prefLabel "arrival formation assignment"@en ;
+    skos:altLabel "arrivalformationassignment"@en ;
+    skos:altLabel "assignment of a train formation"@en ;
+    rdfs:comment "Assignment of a TRAIN formation to a physical QUAY (platform or sectors thereof). If not given, assume same as for departure. (since SIRI 2.1)"@en .
+
+siri:ArrivalOrientationRelativeToQuay a skos:Concept ;
+    skos:prefLabel "arrival orientation relative to quay"@en ;
+    skos:altLabel "arrivalorientationrelativetoquay"@en ;
+    rdfs:comment "Indication of the direction of travel of the vehicle (e.g. TRAIN formation) with respect to the platform, or more precisely the QUAY. Unbounded to allow multiple languages. (since SIRI 2.1) Examples: - \"towards A\" or \"towards sector A\" if the QUAY is separated into sub-QUAYs or so called sectors. This would be equivalent to the vehicle arriving at sector A first when approaching the QUAY with sectors A-B-C-D. If the arriving vehicle is represented as an arrow, \"towards A\" would be abstracted as \"=> A-B-C-D\". - \"towards 0\" or \"towards reference point 0\" if sectors are not available or the QUAY has a reference point, e.g. for measuring the length of the QUAY, identified by \"0\". This would be equivalent to the vehicle arriving at this reference point first when approaching the QUAY. If the arriving vehicle is represented as an arrow, \"towards 0\" would be abstracted as \"=> 0...100\". \"100\" (as in percent) could denote the opposite side of the QUAY (measured at the full length of the QUAY with respect to the reference point). It is advised to specify a reference point that is meaningful for passengers on location."@en .
+
+siri:ArrivalPlatformName a skos:Concept ;
+    skos:prefLabel "arrival platform name"@en ;
+    skos:altLabel "arrivalplatformname"@en ;
+    skos:altLabel "bay or platform quay name"@en ;
+    rdfs:comment "Bay or platform (QUAY) name to show passenger i.e. expected platform for vehicle to arrive at. Inheritable property. Can be omitted if the same as the DeparturePlatformName If there no arrival platform name separate from the departure platform name, the precedence is: (i) any arrival platform on any related dated timetable element, (ii) any departure platform name on this estimated element; (iii) any departure platform name on any related dated timetable CALL."@en .
+
+siri:ArrivalProximityText a skos:Concept ;
+    skos:prefLabel "arbitrary text string to show"@en ;
+    skos:altLabel "arrival proximity text"@en ;
+    skos:altLabel "arrivalproximitytext"@en ;
+    rdfs:comment "Arbitrary text string to show to indicate the status of the departure of the VEHICLE for example, “Enroute”, “5 Km”, “Approaching”. May depend on the policy of the OPERATOR, for example show “Approaching” if less than 200metres away from stop. (since SIRI 2.0)"@en .
+
+siri:ArrivalStatus a skos:Concept ;
+    skos:prefLabel "arrival status"@en ;
+    skos:altLabel "arrivalstatus"@en ;
+    rdfs:comment "Classification of the timeliness of the visit according to a fixed list of values. If not specified, same as DepartureStatus."@en .
+
+siri:AssistanceFacility a skos:Concept ;
+    skos:prefLabel "assistance facility"@en ;
+    skos:altLabel "assistancefacility"@en ;
+    skos:altLabel "classification of assistance facility"@en ;
+    rdfs:comment "Classification of Assistance Facility."@en .
+
+siri:AuthenticatedRequest a skos:Concept ;
+    skos:prefLabel "authenticated request"@en ;
+    skos:altLabel "authenticatedrequest"@en ;
+    skos:altLabel "subsititutable type for an authenticated"@en ;
+    rdfs:comment "Subsititutable type for an authenticated request Authenticated."@en .
+
+siri:BeyondDataHorizon a skos:Concept ;
+    skos:prefLabel "beyond data horizon"@en ;
+    skos:altLabel "beyonddatahorizon"@en ;
+    skos:altLabel "error data period or subscription"@en ;
+    rdfs:comment "Error: Data period or subscription period is outside of period covered by service."@en .
+
+siri:BusSubmode a skos:Concept ;
+    skos:prefLabel "bus submode"@en ;
+    skos:altLabel "bussubmode"@en ;
+    rdfs:comment "TPEG Pti05 and Pts105 \"BusService\" submodes."@en .
+
+siri:CapabilitiesRequest a skos:Concept ;
+    skos:prefLabel "capabilities request"@en ;
+    skos:altLabel "capabilitiesrequest"@en ;
+    skos:altLabel "requests a the current capabilities"@en ;
+    rdfs:comment "Requests a the current capabilities of the server. Answred with a CpabailitiesResponse."@en .
+
+siri:CapabilitiesResponse a skos:Concept ;
+    skos:prefLabel "capabilities response"@en ;
+    skos:altLabel "capabilitiesresponse"@en ;
+    skos:altLabel "responses with the capabilities of"@en ;
+    rdfs:comment "Responses with the capabilities of an implementation."@en .
+
+siri:CapabilityNotSupportedError a skos:Concept ;
+    skos:prefLabel "capability not supported error"@en ;
+    skos:altLabel "capabilitynotsupportederror"@en ;
+    skos:altLabel "error service does not support"@en ;
+    rdfs:comment "Error: Service does not support the requested capability."@en .
+
+siri:CheckStatusRequest a skos:Concept ;
+    skos:prefLabel "check status request"@en ;
+    skos:altLabel "checkstatusrequest"@en ;
+    skos:altLabel "request from consumer to producer"@en ;
+    rdfs:comment "Request from Consumer to Producer to check whether services is working. Answers a CheckStatusRequest."@en ;
+    skos:related siri:AbstractTrackedRequest .
+
+siri:CheckStatusResponse a skos:Concept ;
+    skos:prefLabel "check status response"@en ;
+    skos:altLabel "checkstatusresponse"@en ;
+    skos:altLabel "response from producer to consumer"@en ;
+    rdfs:comment "Response from Producer to Consumer to inform whether services is working. Answers a CheckStatusRequest."@en ;
+    skos:related siri:AbstractResponse .
+
+siri:CoachSubmode a skos:Concept ;
+    skos:prefLabel "coach submode"@en ;
+    skos:altLabel "coachsubmode"@en ;
+    rdfs:comment "TPEG Pti03 and Pts103 \"CoachService\" submodes."@en .
+
+siri:CompoundTrain a skos:Concept ;
+    skos:prefLabel "compound train"@en ;
+    skos:altLabel "compoundtrain"@en ;
+    rdfs:comment "Groups of carriages may be managed as sections by composing TRAINs into a COMPOUND TRAIN, for example if a TRAIN joins (or splits from) another TRAIN. (since SIRI 2.1) TRAINs within a COMPOUND TRAIN may have different origins and destinations due to joining/splitting. A COMPOUND TRAIN may be stable for one or multiple JOURNEY PARTs and change at a certain STOP POINT due to planned joining/splitting, despatching alterations or a situation."@en .
+
+siri:Condition a skos:Concept ;
+    skos:prefLabel "condition"@en ;
+    rdfs:comment "Classification of effect on service. TPEG PTS043 ServiceStatus"@en .
+
+siri:ConnectionLinkPermissions a skos:Concept ;
+    skos:prefLabel "connection link permissions"@en ;
+    skos:altLabel "connection links that the"@en ;
+    skos:altLabel "connectionlinkpermissions"@en ;
+    rdfs:comment "The CONNECTION links that the participant may access."@en ;
+    skos:related siri:AllowAll .
+
+siri:ConnectionLinksDelivery a skos:Concept ;
+    skos:prefLabel "connection links delivery"@en ;
+    skos:altLabel "connectionlinksdelivery"@en ;
+    skos:altLabel "returns the connection links covered"@en ;
+    rdfs:comment "Returns the CONNECTION LINKs covered by a web service. Answers a LINEsRequest. (since SIRI 2.0)"@en ;
+    skos:related siri:AbstractDiscoveryDelivery .
+
+siri:ConnectionLinksRequest a skos:Concept ;
+    skos:prefLabel "connection links request"@en ;
+    skos:altLabel "connectionlinksrequest"@en ;
+    rdfs:comment "Requests a list of the CONNECTION LINKs covered by a Producer. (since SIRI 2.0)"@en ;
+    skos:related siri:AbstractDiscoveryRequest .
+
+siri:ConnectionMonitoringCapabilitiesRequest a skos:Concept ;
+    skos:prefLabel "connection monitoring capabilities request"@en ;
+    skos:altLabel "connectionmonitoringcapabilitiesrequest"@en ;
+    skos:altLabel "request for information about connection"@en ;
+    rdfs:comment "Request for information about Connection Monitoring Service Capabilities. Answered with a ConnectionMontoringCapabilitiesResponse."@en ;
+    skos:related siri:AbstractFunctionalServiceCapabilitiesRequest .
+
+siri:ConnectionMonitoringCapabilitiesResponse a skos:Concept ;
+    skos:prefLabel "capabilities for connection monitoring service"@en ;
+    skos:altLabel "connection monitoring capabilities response"@en ;
+    skos:altLabel "connectionmonitoringcapabilitiesresponse"@en ;
+    rdfs:comment "Capabilities for Connection Monitoring Service. Answers a ConnectionMontoringCapabilitiesRequest."@en ;
+    skos:related siri:AbstractFunctionalServiceCapabilitiesResponse .
+
+siri:ConnectionMonitoringDistributorDelivery a skos:Concept ;
+    skos:prefLabel "connection monitoring distributor delivery"@en ;
+    skos:altLabel "connectionmonitoringdistributordelivery"@en ;
+    skos:altLabel "distributor delivery for connection monitoring"@en ;
+    rdfs:comment "Distributor Delivery for Connection Monitoring Service."@en ;
+    skos:related siri:AbstractFunctionalServiceDelivery .
+
+siri:ConnectionMonitoringFeederDelivery a skos:Concept ;
+    skos:prefLabel "connection monitoring feeder delivery"@en ;
+    skos:altLabel "connectionmonitoringfeederdelivery"@en ;
+    skos:altLabel "feeder delivery for connection monitoring"@en ;
+    rdfs:comment "Feeder Delivery for Connection Monitoring Service."@en ;
+    skos:related siri:AbstractFunctionalServiceDelivery .
+
+siri:ConnectionMonitoringPermissions a skos:Concept ;
+    skos:prefLabel "connection monitoring permissions"@en ;
+    skos:altLabel "connectionmonitoringpermissions"@en ;
+    skos:altLabel "participants permissions to use the"@en ;
+    rdfs:comment "Participants permissions to use the service."@en .
+
+siri:ConnectionMonitoringRequest a skos:Concept ;
+    skos:prefLabel "connection monitoring request"@en ;
+    skos:altLabel "connectionmonitoringrequest"@en ;
+    skos:altLabel "request for information about changes"@en ;
+    rdfs:comment "Request for information about changes to connections at a stop for Connection Monitoring service."@en ;
+    skos:related siri:AbstractFunctionalServiceRequest .
+
+siri:ConnectionMonitoringServiceCapabilities a skos:Concept ;
+    skos:prefLabel "capabilities of connection monitoring service"@en ;
+    skos:altLabel "connection monitoring service capabilities"@en ;
+    skos:altLabel "connectionmonitoringservicecapabilities"@en ;
+    rdfs:comment "Capabilities of Connection Monitoring Service."@en .
+
+siri:ConnectionMonitoringSubscriptionRequest a skos:Concept ;
+    skos:prefLabel "connection monitoring subscription request"@en ;
+    skos:altLabel "connectionmonitoringsubscriptionrequest"@en ;
+    skos:altLabel "request for a subscription to"@en ;
+    rdfs:comment "Request for a subscription to Connection Monitoring Service."@en ;
+    skos:related siri:AbstractFunctionalServiceSubscriptionRequest .
+
+siri:ConnectionTimetableCapabilitiesRequest a skos:Concept ;
+    skos:prefLabel "connection timetable capabilities request"@en ;
+    skos:altLabel "connectiontimetablecapabilitiesrequest"@en ;
+    skos:altLabel "request for information about connection"@en ;
+    rdfs:comment "Request for information about Connection Timetable Service Capabilities. Answered with a ConnectionTimetableCapabilitiesResponse."@en ;
+    skos:related siri:AbstractFunctionalServiceCapabilitiesRequest .
+
+siri:ConnectionTimetableCapabilitiesResponse a skos:Concept ;
+    skos:prefLabel "capabilities for connection timetable service"@en ;
+    skos:altLabel "connection timetable capabilities response"@en ;
+    skos:altLabel "connectiontimetablecapabilitiesresponse"@en ;
+    rdfs:comment "Capabilities for Connection Timetable Service. Answers a ConnectionTimetableCapabilitiesRequest."@en ;
+    skos:related siri:AbstractFunctionalServiceCapabilitiesResponse .
+
+siri:ConnectionTimetableDelivery a skos:Concept ;
+    skos:prefLabel "connection timetable delivery"@en ;
+    skos:altLabel "connectiontimetabledelivery"@en ;
+    skos:altLabel "delivery for connection timetable service"@en ;
+    rdfs:comment "Delivery for Connection Timetable Service."@en ;
+    skos:related siri:AbstractFunctionalServiceDelivery .
+
+siri:ConnectionTimetableRequest a skos:Concept ;
+    skos:prefLabel "connection timetable request"@en ;
+    skos:altLabel "connectiontimetablerequest"@en ;
+    skos:altLabel "request for information about timetabled"@en ;
+    rdfs:comment "Request for information about timetabled connections at a stop."@en ;
+    skos:related siri:AbstractFunctionalServiceRequest .
+
+siri:ConnectionTimetableServiceCapabilities a skos:Concept ;
+    skos:prefLabel "capabilities of connection timetable service"@en ;
+    skos:altLabel "connection timetable service capabilities"@en ;
+    skos:altLabel "connectiontimetableservicecapabilities"@en ;
+    rdfs:comment "Capabilities of Connection Timetable Service."@en .
+
+siri:ConnectionTimetableSubscriptionRequest a skos:Concept ;
+    skos:prefLabel "connection timetable subscription request"@en ;
+    skos:altLabel "connectiontimetablesubscriptionrequest"@en ;
+    skos:altLabel "subscription request for information about"@en ;
+    rdfs:comment "Subscription Request for information about Timetabled connections at a stop."@en ;
+    skos:related siri:AbstractFunctionalServiceSubscriptionRequest .
+
+siri:ControlActionCapabilitiesRequest a skos:Concept ;
+    skos:prefLabel "control action capabilities request"@en ;
+    skos:altLabel "controlactioncapabilitiesrequest"@en ;
+    skos:altLabel "request for information about control"@en ;
+    rdfs:comment "Request for information about Control Action Service Capabilities. Answered with ControlActionCapabilitiesResponse."@en ;
+    skos:related siri:AbstractFunctionalServiceCapabilitiesRequest .
+
+siri:ControlActionCapabilitiesResponse a skos:Concept ;
+    skos:prefLabel "capabilities for control action service"@en ;
+    skos:altLabel "control action capabilities response"@en ;
+    skos:altLabel "controlactioncapabilitiesresponse"@en ;
+    rdfs:comment "Capabilities for Control Action Service. Answers a ControlActionCapabilitiesRequest."@en ;
+    skos:related siri:AbstractFunctionalServiceCapabilitiesResponse .
+
+siri:ControlActionDelivery a skos:Concept ;
+    skos:prefLabel "control action delivery"@en ;
+    skos:altLabel "controlactiondelivery"@en ;
+    skos:altLabel "delivery for control action service"@en ;
+    rdfs:comment "Delivery for Control Action Service."@en ;
+    skos:related siri:AbstractFunctionalServiceDelivery .
+
+siri:ControlActionMultipleRequest a skos:Concept ;
+    skos:prefLabel "control action multiple request"@en ;
+    skos:altLabel "controlactionmultiplerequest"@en ;
+    skos:altLabel "request for information about stop"@en ;
+    rdfs:comment "Request for information about Stop Visits, i.e. arrivals and departures at multiple stops stop. SIRI 1.3"@en ;
+    skos:related siri:AbstractFunctionalServiceRequest .
+
+siri:ControlActionPermissions a skos:Concept ;
+    skos:prefLabel "control action permissions"@en ;
+    skos:altLabel "controlactionpermissions"@en ;
+    skos:altLabel "participants permissions to use the"@en ;
+    rdfs:comment "Participants permissions to use the service, Only returned if requested."@en .
+
+siri:ControlActionRequest a skos:Concept ;
+    skos:prefLabel "control action request"@en ;
+    skos:altLabel "controlactionrequest"@en ;
+    skos:altLabel "request for information about control"@en ;
+    rdfs:comment "Request for information about Control Actions."@en ;
+    skos:related siri:AbstractFunctionalServiceRequest .
+
+siri:ControlActionServiceCapabilities a skos:Concept ;
+    skos:prefLabel "capabilities of controlaction service"@en ;
+    skos:altLabel "control action service capabilities"@en ;
+    skos:altLabel "controlactionservicecapabilities"@en ;
+    rdfs:comment "Capabilities of controlAction Service."@en .
+
+siri:ControlActionSubscriptionRequest a skos:Concept ;
+    skos:prefLabel "control action subscription request"@en ;
+    skos:altLabel "controlactionsubscriptionrequest"@en ;
+    skos:altLabel "request for a subscription to"@en ;
+    rdfs:comment "Request for a subscription to Control Action Service."@en ;
+    skos:related siri:AbstractFunctionalServiceSubscriptionRequest .
+
+siri:DataReadyAcknowledgement a skos:Concept ;
+    skos:prefLabel "data ready acknowledgement"@en ;
+    skos:altLabel "datareadyacknowledgement"@en ;
+    rdfs:comment "Response from Consumer to Producer to acknowledge to Producer that a DataReadyRequest has been received."@en ;
+    skos:related siri:AbstractResponse .
+
+siri:DataReadyNotification a skos:Concept ;
+    skos:prefLabel "data ready notification"@en ;
+    skos:altLabel "datareadynotification"@en ;
+    rdfs:comment "Request from Producer to Consumer to notify that data update is ready to fetch. Answered with a DataReadyResponse."@en .
+
+siri:DataReceivedAcknowledgement a skos:Concept ;
+    skos:prefLabel "data received acknowledgement"@en ;
+    skos:altLabel "datareceivedacknowledgement"@en ;
+    rdfs:comment "Response from Consumer to Producer to acknowledge that data hase been received. Used as optioanl extra step if reliable delivery is needed. Answers a ServiceDelivery."@en ;
+    skos:related siri:AbstractResponse .
+
+siri:DataSupplyRequest a skos:Concept ;
+    skos:prefLabel "data supply request"@en ;
+    skos:altLabel "datasupplyrequest"@en ;
+    skos:altLabel "request from consumer to producer"@en ;
+    rdfs:comment "Request from Consumer to Producer to fetch update previously notified by a Data ready message. Answered with a Service Delivery."@en ;
+    skos:related siri:AbstractRequest .
+
+siri:DatedCall a skos:Concept ;
+    skos:prefLabel "dated call"@en ;
+    skos:altLabel "datedcall"@en ;
+    rdfs:comment "Complete sequence of stops along the route path, in calling order."@en .
+
+siri:DatedTimetableVersionFrame a skos:Concept ;
+    skos:prefLabel "dated timetable version frame"@en ;
+    skos:altLabel "datedtimetableversionframe"@en ;
+    skos:altLabel "timetable frame to run"@en ;
+    rdfs:comment "A TIMETABLE FRAME to run on a specified date."@en .
+
+siri:DatedVehicleJourney a skos:Concept ;
+    skos:prefLabel "dated vehicle journey"@en ;
+    skos:altLabel "datedvehiclejourney"@en ;
+    skos:altLabel "planned vehicle journey taking"@en ;
+    rdfs:comment "A planned VEHICLE JOURNEY taking place on a particular date."@en .
+
+siri:DepartureBoardingActivity a skos:Concept ;
+    skos:prefLabel "departure boarding activity"@en ;
+    skos:altLabel "departureboardingactivity"@en ;
+    skos:altLabel "nature of boarding allowed at"@en ;
+    rdfs:comment "Nature of boarding allowed at stop. Default is 'Boarding'."@en .
+
+siri:DepartureCancellationReason a skos:Concept ;
+    skos:prefLabel "departure cancellation reason"@en ;
+    skos:altLabel "departurecancellationreason"@en ;
+    rdfs:comment "Text annotation to be used in cases where DepartureStatus is set to 'cancelled'. (since SIRI 2.1)"@en .
+
+siri:DepartureFormationAssignment a skos:Concept ;
+    skos:prefLabel "assignment of a train formation"@en ;
+    skos:altLabel "departure formation assignment"@en ;
+    skos:altLabel "departureformationassignment"@en ;
+    rdfs:comment "Assignment of a TRAIN formation to a physical QUAY (platform or sectors thereof). (since SIRI 2.1)"@en .
+
+siri:DepartureOrientationRelativeToQuay a skos:Concept ;
+    skos:prefLabel "departure orientation relative to quay"@en ;
+    skos:altLabel "departureorientationrelativetoquay"@en ;
+    rdfs:comment "Indication of the direction of travel of the vehicle (e.g. TRAIN formation) with respect to the platform, or more precisely the QUAY. Unbounded to allow multiple languages. (since SIRI 2.1) Examples: - \"towards A\" or \"towards sector A\" if the QUAY is separated into sub-QUAYs or so called sectors. This would be equivalent to the vehicle departing in the direction of sector A on a QUAY with sectors A-B-C-D. If the departing vehicle is represented as an arrow, \"towards A\" would be abstracted as \"<= A-B-C-D\". - \"towards 0\" or \"towards reference point 0\" if sectors are not available or the QUAY has a reference point, e.g. for measuring the length of the QUAY, identified by \"0\". This would be equivalent to the vehicle departing in the direction of this reference point. If the departing vehicle is represented as an arrow, \"towards 0\" would be abstracted as \"<= 0...100\". \"100\" (as in percent) could denote the opposite side of the QUAY (measured at the full length of the QUAY with respect to the reference point). It is advised to specify a reference point that is meaningful for passengers on location."@en .
+
+siri:DeparturePlatformName a skos:Concept ;
+    skos:prefLabel "departure platform name"@en ;
+    skos:altLabel "departure quay bay or platform"@en ;
+    skos:altLabel "departureplatformname"@en ;
+    rdfs:comment "Departure QUAY (bay or platform) name. Default taken from planned timetable."@en .
+
+siri:DepartureProximityText a skos:Concept ;
+    skos:prefLabel "arbitrary text string to show"@en ;
+    skos:altLabel "departure proximity text"@en ;
+    skos:altLabel "departureproximitytext"@en ;
+    rdfs:comment "Arbitrary text string to show to indicate the status of the departure of the vehicle, for example, “Boarding”, “GatesClosed”. (since SIRI 2.0)"@en .
+
+siri:DepartureStatus a skos:Concept ;
+    skos:prefLabel "departure status"@en ;
+    skos:altLabel "departurestatus"@en ;
+    rdfs:comment "Classification of the timeliness of the departure part of the CALL, according to a fixed list of values. This may reflect a presentation policy, for example CALLs less than one minute behind target time are still classified as on-time. Applications may use this to guide their own presentation of times."@en .
+
+siri:Destination a skos:Concept ;
+    skos:prefLabel "description of a destination"@en ;
+    skos:altLabel "destination"@en ;
+    rdfs:comment "Description of a DESTINATION."@en .
+
+siri:DestinationName a skos:Concept ;
+    skos:prefLabel "destination name"@en ;
+    skos:altLabel "destinationname"@en ;
+    skos:altLabel "name of the destination"@en ;
+    rdfs:comment "The name of the DESTINATION of the journey; used to help identify the VEHICLE to the public. Note when used in a CALL, this is the Dynamic Destination Display: since vehicles can change their destination during a journey, the destination included here should be what the VEHICLE will display when it reaches the stop."@en .
+
+siri:Direction a skos:Concept ;
+    skos:prefLabel "description of a direction"@en ;
+    skos:altLabel "direction"@en ;
+    rdfs:comment "Description of a DIRECTION."@en .
+
+siri:DistributorStopOrder a skos:Concept ;
+    skos:prefLabel "distributor stop order"@en ;
+    skos:altLabel "distributorstoporder"@en ;
+    rdfs:comment "For implementations in which the overall order is not defined by VISIT NUMBER, i.e. in case VisitNumberIsOrder is set to false, ORDER can be used to associate the stop order instead. ORDER is also used together with VISIT NUMBER in scenarios where an extra CALL is inserted as a result of despatching alterations. Because such an extra CALL may have the same VisitNumber as another (cancelled) CALL, the STOP ORDER is needed. (since SIRI 2.1)"@en .
+
+siri:DistributorVisitNumber a skos:Concept ;
+    skos:prefLabel "distributor visit number"@en ;
+    skos:altLabel "distributorvisitnumber"@en ;
+    skos:altLabel "sequence of visit to distributor"@en ;
+    rdfs:comment "Sequence of visit to Distributor stop within Distributor JOURNEY PATTERN."@en .
+
+siri:EndpointDeniedAccessError a skos:Concept ;
+    skos:prefLabel "endpoint denied access error"@en ;
+    skos:altLabel "endpointdeniedaccesserror"@en ;
+    rdfs:comment "Error:Endpoint to which a message is to be distributed did not allow access by the client. (since SIRI 2.0)"@en .
+
+siri:EndpointNotAvailableAccessError a skos:Concept ;
+    skos:prefLabel "endpoint not available access error"@en ;
+    skos:altLabel "endpointnotavailableaccesserror"@en ;
+    rdfs:comment "Error:Recipient of a message to be distributed is not available. (since SIRI 2.0)"@en .
+
+siri:EnvironmentReason a skos:Concept ;
+    skos:prefLabel "environment reason"@en ;
+    skos:altLabel "environmentreason"@en ;
+    rdfs:comment "DEPRECATED and changed to nmtoken since SIRI 2.1 (TPEG Pti22 - Environment Event Reason)"@en .
+
+siri:EnvironmentSubReason a skos:Concept ;
+    skos:prefLabel "environment sub reason"@en ;
+    skos:altLabel "environmentsubreason"@en ;
+    rdfs:comment "DEPRECATED and changed to nmtoken since SIRI 2.1 (TPEG Pti22 - Environment Event Reason)"@en .
+
+siri:EquipmentReason a skos:Concept ;
+    skos:prefLabel "equipment reason"@en ;
+    skos:altLabel "equipmentreason"@en ;
+    rdfs:comment "DEPRECATED and changed to nmtoken since SIRI 2.1 (TPEG Pti21 - Equipment Event Reason)"@en .
+
+siri:EquipmentSubReason a skos:Concept ;
+    skos:prefLabel "equipment sub reason"@en ;
+    skos:altLabel "equipmentsubreason"@en ;
+    rdfs:comment "DEPRECATED and changed to nmtoken since SIRI 2.1 (TPEG Pti21 - Equipment Event Reason)"@en .
+
+siri:ErrorCondition a skos:Concept ;
+    skos:prefLabel "description of error or warning"@en ;
+    skos:altLabel "error condition"@en ;
+    skos:altLabel "errorcondition"@en ;
+    rdfs:comment "Description of error or warning condition associated with response."@en .
+
+siri:ErrorConditionElement a skos:Concept ;
+    skos:prefLabel "element fror an error condition"@en ;
+    skos:altLabel "error condition element"@en ;
+    skos:altLabel "errorconditionelement"@en ;
+    rdfs:comment "Element fror an error condition (for use in WSDL.)"@en .
+
+siri:EstimatedCall a skos:Concept ;
+    skos:prefLabel "estimated call"@en ;
+    skos:altLabel "estimatedcall"@en ;
+    rdfs:comment "Ordered sequence of SCHEDULED STOP POINTs called at by the VEHICLE JOURNEY. If IsCompleteStopSequence is false, may be just those stops that are altered."@en .
+
+siri:EstimatedServiceJourneyInterchange a skos:Concept ;
+    skos:prefLabel "estimated service journey interchange"@en ;
+    skos:altLabel "estimatedservicejourneyinterchange"@en ;
+    skos:altLabel "realtime service journey interchange"@en ;
+    rdfs:comment "A real-time SERVICE JOURNEY INTERCHANGE that may be made between the stops of two monitored journeys. It includes the current real-time predicted transfer and wait times. (since SIRI 2.0)"@en .
+
 siri:EstimatedTimetable a skos:Concept ;
     skos:prefLabel "estimated timetable"@en ;
     skos:altLabel "estimatedtimetable"@en ;
@@ -26,6 +623,872 @@ siri:EstimatedTimetable a skos:Concept ;
     skos:altLabel "real-time schedule"@en ;
     skos:altLabel "estimated times"@en ;
     rdfs:comment "Real-time estimated arrival and departure times for a vehicle journey"@en .
+
+siri:EstimatedTimetableCapabilitiesRequest a skos:Concept ;
+    skos:prefLabel "estimated timetable capabilities request"@en ;
+    skos:altLabel "estimatedtimetablecapabilitiesrequest"@en ;
+    skos:altLabel "request for information about estimated"@en ;
+    rdfs:comment "Request for information about Estimated Timetable Service Capabilities. Answered with a EstimatedTimetableCapabilitiesResponse."@en ;
+    skos:related siri:AbstractFunctionalServiceCapabilitiesRequest .
+
+siri:EstimatedTimetableCapabilitiesResponse a skos:Concept ;
+    skos:prefLabel "capabilities for estimated timetable service"@en ;
+    skos:altLabel "estimated timetable capabilities response"@en ;
+    skos:altLabel "estimatedtimetablecapabilitiesresponse"@en ;
+    rdfs:comment "Capabilities for Estimated Timetable Service. Answers a EstimatedTimetableCapabilitiesRequest."@en ;
+    skos:related siri:AbstractFunctionalServiceCapabilitiesResponse .
+
+siri:EstimatedTimetableDelivery a skos:Concept ;
+    skos:prefLabel "delivery for estimated timetable service"@en ;
+    skos:altLabel "estimated timetable delivery"@en ;
+    skos:altLabel "estimatedtimetabledelivery"@en ;
+    rdfs:comment "Delivery for Estimated Timetable Service."@en ;
+    skos:related siri:AbstractFunctionalServiceDelivery .
+
+siri:EstimatedTimetablePermissions a skos:Concept ;
+    skos:prefLabel "estimated timetable permissions"@en ;
+    skos:altLabel "estimatedtimetablepermissions"@en ;
+    skos:altLabel "participants permissions to use the"@en ;
+    rdfs:comment "Participant's permissions to use the service."@en .
+
+siri:EstimatedTimetableRequest a skos:Concept ;
+    skos:prefLabel "estimated timetable request"@en ;
+    skos:altLabel "estimatedtimetablerequest"@en ;
+    skos:altLabel "request for information about the"@en ;
+    rdfs:comment "Request for information about the estimated timetable."@en ;
+    skos:related siri:AbstractFunctionalServiceRequest .
+
+siri:EstimatedTimetableServiceCapabilities a skos:Concept ;
+    skos:prefLabel "capabilities of estimated timetableservice"@en ;
+    skos:altLabel "estimated timetable service capabilities"@en ;
+    skos:altLabel "estimatedtimetableservicecapabilities"@en ;
+    rdfs:comment "Capabilities of Estimated TimetableService."@en .
+
+siri:EstimatedTimetableSubscriptionRequest a skos:Concept ;
+    skos:prefLabel "estimated timetable subscription request"@en ;
+    skos:altLabel "estimatedtimetablesubscriptionrequest"@en ;
+    skos:altLabel "request for a subscription to"@en ;
+    rdfs:comment "Request for a subscription to the Estimated Timetable Service."@en ;
+    skos:related siri:AbstractFunctionalServiceSubscriptionRequest .
+
+siri:EstimatedVehicleJourney a skos:Concept ;
+    skos:prefLabel "estimated vehicle journey"@en ;
+    skos:altLabel "estimatedvehiclejourney"@en ;
+    skos:altLabel "vehicle journey taking place"@en ;
+    rdfs:comment "A VEHICLE JOURNEY taking place on a particular date that will be managed by an AVMs."@en .
+
+siri:ExpectedArrivalTime a skos:Concept ;
+    skos:prefLabel "estimated time of arriival of"@en ;
+    skos:altLabel "expected arrival time"@en ;
+    skos:altLabel "expectedarrivaltime"@en ;
+    rdfs:comment "Estimated time of arriival of VEHICLE at stop ."@en .
+
+siri:ExpectedDepartureCapacities a skos:Concept ;
+    skos:prefLabel "expected departure capacities"@en ;
+    skos:altLabel "expecteddeparturecapacities"@en ;
+    skos:altLabel "expectedpredicted realtime capacities number of"@en ;
+    rdfs:comment "Expected/Predicted real-time capacities (number of available seats) of a VEHICLE after departing from a given stop. Alternative way to communicate occupancy measurements. (since SIRI 2.1)"@en .
+
+siri:ExpectedDepartureOccupancy a skos:Concept ;
+    skos:prefLabel "expected departure occupancy"@en ;
+    skos:altLabel "expecteddepartureoccupancy"@en ;
+    rdfs:comment "Expected/Predicted real-time occupancies of a VEHICLE and reservations after departing from a given stop. (since SIRI 2.1)"@en .
+
+siri:ExpectedDepartureTime a skos:Concept ;
+    skos:prefLabel "estimated time of departure of"@en ;
+    skos:altLabel "expected departure time"@en ;
+    skos:altLabel "expecteddeparturetime"@en ;
+    rdfs:comment "Estimated time of departure of VEHICLE from stop, most likely taking into account all control actions such as waiting."@en .
+
+siri:ExpectedHeadwayInterval a skos:Concept ;
+    skos:prefLabel "expected headway interval"@en ;
+    skos:altLabel "expectedheadwayinterval"@en ;
+    skos:altLabel "for frequency based services expected"@en ;
+    rdfs:comment "For frequency based services, expected interval between vehicles at stop."@en .
+
+siri:ExpectedLatestPassengerAccessTime a skos:Concept ;
+    skos:prefLabel "expected latest passenger access time"@en ;
+    skos:altLabel "expectedlatestpassengeraccesstime"@en ;
+    rdfs:comment "Latest expected time at which a PASSENGER should aim to arrive at the STOP PLACE containing the stop. This time may be earlier than the VEHICLE departure times and may include time for processes such as checkin, security, etc.(As specified by CHECK CONSTRAINT DELAYs in the underlying data). If absent assume to be the same as Earliest expected departure time. (since SIRI 2.0)"@en .
+
+siri:Extensions a skos:Concept ;
+    skos:prefLabel "extensions"@en ;
+    skos:altLabel "extensions to schema wrapper tag"@en ;
+    rdfs:comment "Extensions to schema. (Wrapper tag used to avoid problems with handling of optional 'any' by some validators)."@en .
+
+siri:ExtraCall a skos:Concept ;
+    skos:prefLabel "extra call"@en ;
+    skos:altLabel "extracall"@en ;
+    skos:altLabel "this call is an addition"@en ;
+    rdfs:comment "This CALL is an addition to the respective journey in the production timetable or to the previously sent prediction. If omitted: CALL is planned."@en .
+
+siri:ExtraInterchange a skos:Concept ;
+    skos:prefLabel "extra interchange"@en ;
+    skos:altLabel "extrainterchange"@en ;
+    skos:altLabel "whether this interchange is an"@en ;
+    rdfs:comment "Whether this interchange is an addition to the plan. Can only be used when both participants recognise the same schedule version. If omitted, defaults to 'false': the interchange is not an addition. (since SIRI 2.1)"@en .
+
+siri:FacilityChangeElement a skos:Concept ;
+    skos:prefLabel "change to the availaibility"@en ;
+    skos:altLabel "facility change element"@en ;
+    skos:altLabel "facilitychangeelement"@en ;
+    rdfs:comment "A change to the availaibility of EQUIPMENT. Basic structure defined in the first 1.0 SIRI XSd."@en .
+
+siri:FacilityCondition a skos:Concept ;
+    skos:prefLabel "facility condition"@en ;
+    skos:altLabel "facilitycondition"@en ;
+    rdfs:comment "Condition of a Facility that is being monitored."@en .
+
+siri:FacilityConditionElement a skos:Concept ;
+    skos:prefLabel "facility condition element"@en ;
+    skos:altLabel "facilityconditionelement"@en ;
+    rdfs:comment "Description of any change concerning a MONITORED FACILITY New structure defined in SIRI XSD 1.1 for Facilities Management."@en .
+
+siri:FacilityDelivery a skos:Concept ;
+    skos:prefLabel "facility delivery"@en ;
+    skos:altLabel "facilitydelivery"@en ;
+    rdfs:comment "Returns the Facilities covered by a service. Answers a StopPointsRequest."@en ;
+    skos:related siri:AbstractDiscoveryDelivery .
+
+siri:FacilityMonitoringCapabilitiesRequest a skos:Concept ;
+    skos:prefLabel "facility monitoring capabilities request"@en ;
+    skos:altLabel "facilitymonitoringcapabilitiesrequest"@en ;
+    skos:altLabel "request for information about vehicle"@en ;
+    rdfs:comment "Request for information about Vehicle Monitoring Service Capabilities. Answered with a VehicleMontoringCapabilitiesResponse."@en ;
+    skos:related siri:AbstractFunctionalServiceCapabilitiesRequest .
+
+siri:FacilityMonitoringCapabilitiesResponse a skos:Concept ;
+    skos:prefLabel "capabilities for vehicle monitoring service"@en ;
+    skos:altLabel "facility monitoring capabilities response"@en ;
+    skos:altLabel "facilitymonitoringcapabilitiesresponse"@en ;
+    rdfs:comment "Capabilities for Vehicle Monitoring Service. Answers a VehicleMontoringCapabilitiesRequest."@en ;
+    skos:related siri:AbstractFunctionalServiceCapabilitiesResponse .
+
+siri:FacilityMonitoringDelivery a skos:Concept ;
+    skos:prefLabel "delivery for vehicle monitoring service"@en ;
+    skos:altLabel "facility monitoring delivery"@en ;
+    skos:altLabel "facilitymonitoringdelivery"@en ;
+    rdfs:comment "Delivery for Vehicle Monitoring Service."@en ;
+    skos:related siri:AbstractFunctionalServiceDelivery .
+
+siri:FacilityMonitoringPermissions a skos:Concept ;
+    skos:prefLabel "facility monitoring permissions"@en ;
+    skos:altLabel "facilitymonitoringpermissions"@en ;
+    skos:altLabel "participants permissions to use the"@en ;
+    rdfs:comment "Participant's permissions to use the service."@en .
+
+siri:FacilityMonitoringRequest a skos:Concept ;
+    skos:prefLabel "facility monitoring request"@en ;
+    skos:altLabel "facilitymonitoringrequest"@en ;
+    skos:altLabel "request for information about facilities"@en ;
+    rdfs:comment "Request for information about Facilities status."@en ;
+    skos:related siri:AbstractFunctionalServiceRequest .
+
+siri:FacilityMonitoringServiceCapabilities a skos:Concept ;
+    skos:prefLabel "capabilities of vehicle monitoring service"@en ;
+    skos:altLabel "facility monitoring service capabilities"@en ;
+    skos:altLabel "facilitymonitoringservicecapabilities"@en ;
+    rdfs:comment "Capabilities of Vehicle Monitoring Service."@en .
+
+siri:FacilityMonitoringSubscriptionRequest a skos:Concept ;
+    skos:prefLabel "facility monitoring subscription request"@en ;
+    skos:altLabel "facilitymonitoringsubscriptionrequest"@en ;
+    skos:altLabel "request for a subscription to"@en ;
+    rdfs:comment "Request for a subscription to the Vehicle Monitoring Service."@en ;
+    skos:related siri:AbstractFunctionalServiceSubscriptionRequest .
+
+siri:FacilityRequest a skos:Concept ;
+    skos:prefLabel "facility request"@en ;
+    skos:altLabel "facilityrequest"@en ;
+    rdfs:comment "Requests a list of the Facilities covered by a Producer."@en ;
+    skos:related siri:AbstractDiscoveryRequest .
+
+siri:FareClass a skos:Concept ;
+    skos:prefLabel "classification of fare classes since"@en ;
+    skos:altLabel "fare class"@en ;
+    skos:altLabel "fareclass"@en ;
+    rdfs:comment "Classification of FARE CLASSes. (since SIRI 2.1)"@en .
+
+siri:FareClassFacility a skos:Concept ;
+    skos:prefLabel "classification of fareclass facility type"@en ;
+    skos:altLabel "fare class facility"@en ;
+    skos:altLabel "fareclassfacility"@en ;
+    rdfs:comment "Classification of FareClass Facility type - Tpeg pti23."@en .
+
+siri:FareClasses a skos:Concept ;
+    skos:prefLabel "fare classes"@en ;
+    skos:altLabel "fareclasses"@en ;
+    skos:altLabel "list of fare classes since"@en ;
+    rdfs:comment "List of FARE CLASSes. (since SIRI 2.1)"@en .
+
+siri:FeederItem a skos:Concept ;
+    skos:prefLabel "feeder item"@en ;
+    skos:altLabel "feederitem"@en ;
+    rdfs:comment "Fedder/Fetcher SERVICE JOURNEY INTERCHANGE Activity."@en .
+
+siri:FeederStopOrder a skos:Concept ;
+    skos:prefLabel "feeder stop order"@en ;
+    skos:altLabel "feederstoporder"@en ;
+    rdfs:comment "For implementations in which the overall order is not defined by VISIT NUMBER, i.e. in case VisitNumberIsOrder is set to false, ORDER can be used to associate the stop order instead. ORDER is also used together with VISIT NUMBER in scenarios where an extra CALL is inserted as a result of despatching alterations. Because such an extra CALL may have the same VisitNumber as another (cancelled) CALL, the STOP ORDER is needed. (since SIRI 2.1)"@en .
+
+siri:FeederVisitNumber a skos:Concept ;
+    skos:prefLabel "feeder visit number"@en ;
+    skos:altLabel "feedervisitnumber"@en ;
+    skos:altLabel "sequence of visit to feeder"@en ;
+    rdfs:comment "Sequence of visit to Feeder stop within Feeder JOURNEY PATTERN."@en .
+
+siri:FilterByDestination a skos:Concept ;
+    skos:prefLabel "filter by destination"@en ;
+    skos:altLabel "filterbydestination"@en ;
+    rdfs:comment "Whether results can be filtered by DESTINATION. Default is 'false'."@en .
+
+siri:FilterByVehicleMode a skos:Concept ;
+    skos:prefLabel "filter by vehicle mode"@en ;
+    skos:altLabel "filterbyvehiclemode"@en ;
+    rdfs:comment "Whether results can be filtered by VEHICLE MODE. Default is 'true'. (since SIRI 2.1)"@en .
+
+siri:FirstOrLastJourney a skos:Concept ;
+    skos:prefLabel "first or last journey"@en ;
+    skos:altLabel "firstorlastjourney"@en ;
+    skos:altLabel "whether journey is first or"@en ;
+    rdfs:comment "Whether journey is first or last journey of day. (since SIRI 2.0)"@en .
+
+siri:FormationCondition a skos:Concept ;
+    skos:prefLabel "formation condition"@en ;
+    skos:altLabel "formationcondition"@en ;
+    rdfs:comment "Information about a change of the formation (e.g. TRAIN composition) or changes of vehicles within the formation. (since SIRI 2.1)"@en .
+
+siri:FunicularSubmode a skos:Concept ;
+    skos:prefLabel "funicular submode"@en ;
+    skos:altLabel "funicularsubmode"@en ;
+    skos:altLabel "tpeg pti10 funicular submodes"@en ;
+    rdfs:comment "TPEG pti10 Funicular submodes."@en .
+
+siri:GeneralMessageCancellation a skos:Concept ;
+    skos:prefLabel "general message cancellation"@en ;
+    skos:altLabel "generalmessagecancellation"@en ;
+    rdfs:comment "A revocation of a previous message."@en .
+
+siri:GeneralMessageCapabilitiesRequest a skos:Concept ;
+    skos:prefLabel "general message capabilities request"@en ;
+    skos:altLabel "generalmessagecapabilitiesrequest"@en ;
+    skos:altLabel "request for information about general"@en ;
+    rdfs:comment "Request for information about General Message Service Capabilities. Answered with a GeneralMessageCapabilitiesResponse."@en ;
+    skos:related siri:AbstractFunctionalServiceCapabilitiesRequest .
+
+siri:GeneralMessageCapabilitiesResponse a skos:Concept ;
+    skos:prefLabel "capabilities for general message service"@en ;
+    skos:altLabel "general message capabilities response"@en ;
+    skos:altLabel "generalmessagecapabilitiesresponse"@en ;
+    rdfs:comment "Capabilities for General Message Service. Answers a GeneralMessageCapabilitiesResponse."@en ;
+    skos:related siri:AbstractFunctionalServiceCapabilitiesResponse .
+
+siri:GeneralMessageDelivery a skos:Concept ;
+    skos:prefLabel "delivery for general message service"@en ;
+    skos:altLabel "general message delivery"@en ;
+    skos:altLabel "generalmessagedelivery"@en ;
+    rdfs:comment "Delivery for General Message Service."@en ;
+    skos:related siri:AbstractFunctionalServiceDelivery .
+
+siri:GeneralMessagePermissions a skos:Concept ;
+    skos:prefLabel "general message permissions"@en ;
+    skos:altLabel "generalmessagepermissions"@en ;
+    skos:altLabel "participants permissions to use the"@en ;
+    rdfs:comment "Participant's permissions to use the service."@en .
+
+siri:GeneralMessageRequest a skos:Concept ;
+    skos:prefLabel "general message request"@en ;
+    skos:altLabel "generalmessagerequest"@en ;
+    skos:altLabel "request for information about general"@en ;
+    rdfs:comment "Request for information about general information messages affecting stops, vehicles or services."@en ;
+    skos:related siri:AbstractFunctionalServiceRequest .
+
+siri:GeneralMessageServiceCapabilities a skos:Concept ;
+    skos:prefLabel "capabilities of general message service"@en ;
+    skos:altLabel "general message service capabilities"@en ;
+    skos:altLabel "generalmessageservicecapabilities"@en ;
+    rdfs:comment "Capabilities of General Message Service."@en .
+
+siri:GeneralMessageSubscriptionRequest a skos:Concept ;
+    skos:prefLabel "general message subscription request"@en ;
+    skos:altLabel "generalmessagesubscriptionrequest"@en ;
+    skos:altLabel "request for a subscription to"@en ;
+    rdfs:comment "Request for a subscription to General Message Service."@en ;
+    skos:related siri:AbstractFunctionalServiceSubscriptionRequest .
+
+siri:HeartbeatNotification a skos:Concept ;
+    skos:prefLabel "heartbeat notification"@en ;
+    skos:altLabel "heartbeatnotification"@en ;
+    skos:altLabel "notification from producer to consumer"@en ;
+    rdfs:comment "Notification from Producer to Consumer to indicate that the service is running normally."@en .
+
+siri:HireFacility a skos:Concept ;
+    skos:prefLabel "classification of hire facility"@en ;
+    skos:altLabel "hire facility"@en ;
+    skos:altLabel "hirefacility"@en ;
+    rdfs:comment "Classification of Hire Facility."@en .
+
+siri:IncludeInterchanges a skos:Concept ;
+    skos:prefLabel "include interchanges"@en ;
+    skos:altLabel "includeinterchanges"@en ;
+    rdfs:comment "Whether SERVICE JOURNEY INTERCHANGE data is to be transmitted or not. Default is 'true'. (since SIRI 2.1)"@en .
+
+siri:IncludeJourneyRelations a skos:Concept ;
+    skos:prefLabel "include journey relations"@en ;
+    skos:altLabel "includejourneyrelations"@en ;
+    skos:altLabel "whether journey relation data is"@en ;
+    rdfs:comment "Whether JOURNEY RELATION data is to be transmitted or not. Default is 'true'. (since SIRI 2.1)"@en .
+
+siri:IncludeTrainFormations a skos:Concept ;
+    skos:prefLabel "include train formations"@en ;
+    skos:altLabel "includetrainformations"@en ;
+    skos:altLabel "whether train element compound train"@en ;
+    rdfs:comment "Whether TRAIN (ELEMENT), COMPOUND TRAIN and TRAIN STOP ASSIGNMENT data is to be transmitted or not. Default is 'true'. (since SIRI 2.1)"@en .
+
+siri:IncludeTranslations a skos:Concept ;
+    skos:prefLabel "include translations"@en ;
+    skos:altLabel "includetranslations"@en ;
+    skos:altLabel "whether additional translations of text"@en ;
+    rdfs:comment "Whether additional translations of text names are to be included in elements. If 'false', then only one element should be returned. Default is 'false'. Where multiple values are returned The first element returned will be used as the default value."@en .
+
+siri:IncludedSituationExchangeDelivery a skos:Concept ;
+    skos:prefLabel "delivery of situation exchange service"@en ;
+    skos:altLabel "included situation exchange delivery"@en ;
+    skos:altLabel "includedsituationexchangedelivery"@en ;
+    rdfs:comment "Delivery of Situation Exchange Service included as supplement to main functional service delivery."@en ;
+    skos:related siri:AbstractFunctionalServiceDelivery .
+
+siri:InfoChannel a skos:Concept ;
+    skos:prefLabel "info channel"@en ;
+    skos:altLabel "info channel supported by producer"@en ;
+    skos:altLabel "infochannel"@en ;
+    rdfs:comment "Info Channel supported by Producer service."@en .
+
+siri:InfoChannelDelivery a skos:Concept ;
+    skos:prefLabel "info channel delivery"@en ;
+    skos:altLabel "infochanneldelivery"@en ;
+    skos:altLabel "returns the info channels covered"@en ;
+    rdfs:comment "Returns the Info Channels covered by a service. Answers a InfoChannelRequest."@en ;
+    skos:related siri:AbstractDiscoveryDelivery .
+
+siri:InfoChannelRequest a skos:Concept ;
+    skos:prefLabel "info channel request"@en ;
+    skos:altLabel "infochannelrequest"@en ;
+    rdfs:comment "Requests a list of the Info Channels covered by a Producer."@en ;
+    skos:related siri:AbstractDiscoveryRequest .
+
+siri:JourneyNote a skos:Concept ;
+    skos:prefLabel "journey note"@en ;
+    skos:altLabel "journeynote"@en ;
+    rdfs:comment "Additional descriptive text associated with journey. Inherited property."@en .
+
+siri:KeyList a skos:Concept ;
+    skos:prefLabel "key list"@en ;
+    skos:altLabel "keylist"@en ;
+    skos:altLabel "list of alternative key"@en ;
+    rdfs:comment "A list of alternative Key values for an element. (since SIRI 2.1)"@en .
+
+siri:LinePermissions a skos:Concept ;
+    skos:prefLabel "line permissions"@en ;
+    skos:altLabel "linepermissions"@en ;
+    rdfs:comment "The LINEs that the participant may access."@en ;
+    skos:related siri:AllowAll .
+
+siri:LinesDelivery a skos:Concept ;
+    skos:prefLabel "lines delivery"@en ;
+    skos:altLabel "linesdelivery"@en ;
+    skos:altLabel "returns the lines covered by"@en ;
+    rdfs:comment "Returns the LINEs covered by a web service. Answers a LINEsRequest."@en ;
+    skos:related siri:AbstractDiscoveryDelivery .
+
+siri:LinesRequest a skos:Concept ;
+    skos:prefLabel "lines request"@en ;
+    skos:altLabel "linesrequest"@en ;
+    rdfs:comment "Requests a list of the LINEs covered by a Producer."@en ;
+    skos:related siri:AbstractDiscoveryRequest .
+
+siri:LuggageFacility a skos:Concept ;
+    skos:prefLabel "classification of luggage facility type"@en ;
+    skos:altLabel "luggage facility"@en ;
+    skos:altLabel "luggagefacility"@en ;
+    rdfs:comment "Classification of Luggage Facility type - Tpeg pti23."@en .
+
+siri:ManualAction a skos:Concept ;
+    skos:prefLabel "action publish situation to manual"@en ;
+    skos:altLabel "manual action"@en ;
+    skos:altLabel "manualaction"@en ;
+    rdfs:comment "Action: Publish SITUATION to Manual publication channel."@en .
+
+siri:MetroSubmode a skos:Concept ;
+    skos:prefLabel "metro submode"@en ;
+    skos:altLabel "metrosubmode"@en ;
+    skos:altLabel "tpeg pti04 metro and pts104"@en ;
+    rdfs:comment "TPEG Pti04 metro and Pts104 \"UrbanRailwayService\" submodes."@en .
+
+siri:MiscellaneousReason a skos:Concept ;
+    skos:prefLabel "miscellaneous reason"@en ;
+    skos:altLabel "miscellaneousreason"@en ;
+    rdfs:comment "DEPRECATED and changed to nmtoken since SIRI 2.1 (TPEG Pti19 - Miscellaneous Event Reason)"@en .
+
+siri:MiscellaneousSubReason a skos:Concept ;
+    skos:prefLabel "miscellaneous sub reason"@en ;
+    skos:altLabel "miscellaneoussubreason"@en ;
+    rdfs:comment "DEPRECATED and changed to nmtoken since SIRI 2.1 (TPEG Pti19 - Miscellaneous Event Reason)"@en .
+
+siri:MobilityFacility a skos:Concept ;
+    skos:prefLabel "classification of mobility facility type"@en ;
+    skos:altLabel "mobility facility"@en ;
+    skos:altLabel "mobilityfacility"@en ;
+    rdfs:comment "Classification of Mobility Facility type - Tpeg pti23."@en .
+
+siri:MonitoredFeederArrival a skos:Concept ;
+    skos:prefLabel "feeder arrival at the"@en ;
+    skos:altLabel "monitored feeder arrival"@en ;
+    skos:altLabel "monitoredfeederarrival"@en ;
+    rdfs:comment "A feeder arrival at the connection point."@en ;
+    skos:related siri:FeederItem .
+
+siri:MonitoredFeederArrivalCancellation a skos:Concept ;
+    skos:prefLabel "cancellation of a feeder arrival"@en ;
+    skos:altLabel "monitored feeder arrival cancellation"@en ;
+    skos:altLabel "monitoredfeederarrivalcancellation"@en ;
+    rdfs:comment "Cancellation of a feeder arrival at a connection point."@en ;
+    skos:related siri:FeederItem .
+
+siri:MonitoredStopVisit a skos:Concept ;
+    skos:prefLabel "monitored stop visit"@en ;
+    skos:altLabel "monitoredstopvisit"@en ;
+    skos:altLabel "visit to a stop"@en ;
+    rdfs:comment "A visit to a stop by a VEHICLE as an arrival and /or departure."@en .
+
+siri:MonitoredStopVisitCancellation a skos:Concept ;
+    skos:prefLabel "monitored stop visit cancellation"@en ;
+    skos:altLabel "monitoredstopvisitcancellation"@en ;
+    rdfs:comment "Reference to an previously communicated Stop Visit which should now be removed from the arrival/departure board for the stop."@en .
+
+siri:NoInfoForTopicError a skos:Concept ;
+    skos:prefLabel "error valid request was made"@en ;
+    skos:altLabel "no info for topic error"@en ;
+    skos:altLabel "noinfofortopicerror"@en ;
+    rdfs:comment "Error: Valid request was made but service does not hold any data for the requested topic. expression."@en .
+
+siri:NotifyByEmailAction a skos:Concept ;
+    skos:prefLabel "action publish situation to a"@en ;
+    skos:altLabel "notify by email action"@en ;
+    skos:altLabel "notifybyemailaction"@en ;
+    rdfs:comment "Action: Publish SITUATION to a named workgroup or individual user by email."@en .
+
+siri:NotifyByPagerAction a skos:Concept ;
+    skos:prefLabel "action publish situation to pager"@en ;
+    skos:altLabel "notify by pager action"@en ;
+    skos:altLabel "notifybypageraction"@en ;
+    rdfs:comment "Action: Publish SITUATION To pager."@en .
+
+siri:NotifyBySmsAction a skos:Concept ;
+    skos:prefLabel "action publish situation to an"@en ;
+    skos:altLabel "notify by sms action"@en ;
+    skos:altLabel "notifybysmsaction"@en ;
+    rdfs:comment "Action: Publish SITUATION to an individual user by SMS."@en .
+
+siri:NotifyUserAction a skos:Concept ;
+    skos:prefLabel "action publish situation to user"@en ;
+    skos:altLabel "notify user action"@en ;
+    skos:altLabel "notifyuseraction"@en ;
+    rdfs:comment "Action: Publish SITUATION To User by other means."@en .
+
+siri:NuisanceFacility a skos:Concept ;
+    skos:prefLabel "classification of nuisance facility type"@en ;
+    skos:altLabel "nuisance facility"@en ;
+    skos:altLabel "nuisancefacility"@en ;
+    rdfs:comment "Classification of Nuisance Facility type - Tpeg pti23."@en .
+
+siri:Occupancy a skos:Concept ;
+    skos:prefLabel "occupancy"@en ;
+    rdfs:comment "An approximate figure of how occupied the journey is after departing from a given stop, e.g. 'manySeatsAvailable' or 'standingRoomOnly'. If omitted: Passenger load is unknown. Occupancies and capacities for individual VEHICLEs, e.g. parts of a COMPOUND TRAIN, can also be specified in more detail for the departure on CALL level."@en .
+
+siri:OperatorPermissions a skos:Concept ;
+    skos:prefLabel "operator data that the"@en ;
+    skos:altLabel "operator permissions"@en ;
+    skos:altLabel "operatorpermissions"@en ;
+    rdfs:comment "The OPERATOR data that the participant may access."@en ;
+    skos:related siri:AllowAll .
+
+siri:Order a skos:Concept ;
+    skos:prefLabel "order"@en ;
+    rdfs:comment "For implementations for which the overall Order is not used for VisitNumber, (i.e. if VisitNumberIsOrder is false) then can be used to associate the stop Order as well if useful."@en .
+
+siri:OriginName a skos:Concept ;
+    skos:prefLabel "name of the origin"@en ;
+    skos:altLabel "origin name"@en ;
+    skos:altLabel "originname"@en ;
+    rdfs:comment "The name of the origin of the journey; used to help identify the VEHICLE JOURNEY on arrival boards."@en .
+
+siri:OtherError a skos:Concept ;
+    skos:prefLabel "error error type other than"@en ;
+    skos:altLabel "other error"@en ;
+    skos:altLabel "othererror"@en ;
+    rdfs:comment "Error: Error type other than the well defined codes."@en .
+
+siri:ParametersIgnoredError a skos:Concept ;
+    skos:prefLabel "parameters ignored error"@en ;
+    skos:altLabel "parametersignorederror"@en ;
+    rdfs:comment "Error: Request contained parameters that were not supported by the producer. A response has been provided but some parameters have been ignored. (since SIRI 2.0)."@en .
+
+siri:ParkingFacility a skos:Concept ;
+    skos:prefLabel "classification of access facility"@en ;
+    skos:altLabel "parking facility"@en ;
+    skos:altLabel "parkingfacility"@en ;
+    rdfs:comment "Classification of Access Facility."@en .
+
+siri:PassengerCommsFacility a skos:Concept ;
+    skos:prefLabel "classification of passengercomms facility type"@en ;
+    skos:altLabel "passenger comms facility"@en ;
+    skos:altLabel "passengercommsfacility"@en ;
+    rdfs:comment "Classification of PassengerComms Facility type - Tpeg pti23."@en .
+
+siri:PassengerInformationFacility a skos:Concept ;
+    skos:prefLabel "classification of passengerinfo facility type"@en ;
+    skos:altLabel "passenger information facility"@en ;
+    skos:altLabel "passengerinformationfacility"@en ;
+    rdfs:comment "Classification of PassengerInfo Facility type - Tpeg pti23."@en .
+
+siri:PersonnelReason a skos:Concept ;
+    skos:prefLabel "personnel reason"@en ;
+    skos:altLabel "personnelreason"@en ;
+    rdfs:comment "DEPRECATED and changed to nmtoken since SIRI 2.1 (TPEG Pti20 - Personnel Event Reason)"@en .
+
+siri:PersonnelSubReason a skos:Concept ;
+    skos:prefLabel "personnel sub reason"@en ;
+    skos:altLabel "personnelsubreason"@en ;
+    rdfs:comment "DEPRECATED and changed to nmtoken since SIRI 2.1 (TPEG Pti20 - Personnel Event Reason)"@en .
+
+siri:Predictability a skos:Concept ;
+    skos:prefLabel "classification of predictability status"@en ;
+    skos:altLabel "predictability"@en ;
+    rdfs:comment "Classification of Predictability status."@en .
+
+siri:PredictionInaccurate a skos:Concept ;
+    skos:prefLabel "prediction inaccurate"@en ;
+    skos:altLabel "predictioninaccurate"@en ;
+    skos:altLabel "whether the prediction for a"@en ;
+    rdfs:comment "Whether the prediction for a specific stop or the whole journey is considered to be of a useful accuracy or not. Default is 'false', i.e. prediction is considered to be accurate. If prediction is degraded, e.g. because of a situation, PredictionInaccurate is used to indicate a lowered quality of data. Inherited property. PredictionInaccurate can be used in combination with InCongestion, but is more general."@en .
+
+siri:PredictionInaccurateReason a skos:Concept ;
+    skos:prefLabel "prediction inaccurate reason"@en ;
+    skos:altLabel "predictioninaccuratereason"@en ;
+    rdfs:comment "Can be used to inform the passenger about the reason for a change of the prediction (in)accuracy in case PredictionInaccurate is set to 'true'. (since SIRI 2.1)"@en .
+
+siri:ProductCategoriesDelivery a skos:Concept ;
+    skos:prefLabel "product categories delivery"@en ;
+    skos:altLabel "productcategoriesdelivery"@en ;
+    skos:altLabel "returns the product categories covered"@en ;
+    rdfs:comment "Returns the Product Categories covered by a service. Answers a ProductCategoriesRequest."@en ;
+    skos:related siri:AbstractDiscoveryDelivery .
+
+siri:ProductCategoriesRequest a skos:Concept ;
+    skos:prefLabel "product categories request"@en ;
+    skos:altLabel "productcategoriesrequest"@en ;
+    rdfs:comment "Requests a list of the Product Categories covered by a Producer."@en ;
+    skos:related siri:AbstractDiscoveryRequest .
+
+siri:ProductCategory a skos:Concept ;
+    skos:prefLabel "product category"@en ;
+    skos:altLabel "productcategory"@en ;
+    rdfs:comment "Category for classification of a journey as a Product"@en .
+
+siri:ProductionTimetableCapabilitiesRequest a skos:Concept ;
+    skos:prefLabel "production timetable capabilities request"@en ;
+    skos:altLabel "productiontimetablecapabilitiesrequest"@en ;
+    skos:altLabel "request for information about productiontimetable"@en ;
+    rdfs:comment "Request for information about ProductionTimetable Service Capabilities. Answered with a ProductionTimetableCapabilitiesResponse."@en ;
+    skos:related siri:AbstractFunctionalServiceCapabilitiesRequest .
+
+siri:ProductionTimetableCapabilitiesResponse a skos:Concept ;
+    skos:prefLabel "capabilities for productiontimetable service answers"@en ;
+    skos:altLabel "production timetable capabilities response"@en ;
+    skos:altLabel "productiontimetablecapabilitiesresponse"@en ;
+    rdfs:comment "Capabilities for ProductionTimetable Service. Answers a Answered with a ProductionTimetableCapabilitiesRequest."@en ;
+    skos:related siri:AbstractFunctionalServiceCapabilitiesResponse .
+
+siri:ProductionTimetableDelivery a skos:Concept ;
+    skos:prefLabel "delivery for production timetable service"@en ;
+    skos:altLabel "production timetable delivery"@en ;
+    skos:altLabel "productiontimetabledelivery"@en ;
+    rdfs:comment "Delivery for Production Timetable Service."@en ;
+    skos:related siri:AbstractFunctionalServiceDelivery .
+
+siri:ProductionTimetablePermission a skos:Concept ;
+    skos:prefLabel "permission for a single participant"@en ;
+    skos:altLabel "production timetable permission"@en ;
+    skos:altLabel "productiontimetablepermission"@en ;
+    rdfs:comment "Permission for a single participant or all participants to use an aspect of the service."@en .
+
+siri:ProductionTimetablePermissions a skos:Concept ;
+    skos:prefLabel "participants permissions to use the"@en ;
+    skos:altLabel "production timetable permissions"@en ;
+    skos:altLabel "productiontimetablepermissions"@en ;
+    rdfs:comment "Participant's permissions to use the service."@en ;
+    skos:related siri:ProductionTimetablePermission .
+
+siri:ProductionTimetableRequest a skos:Concept ;
+    skos:prefLabel "production timetable request"@en ;
+    skos:altLabel "productiontimetablerequest"@en ;
+    skos:altLabel "request for daily production timetables"@en ;
+    rdfs:comment "Request for daily production timetables."@en ;
+    skos:related siri:AbstractFunctionalServiceRequest .
+
+siri:ProductionTimetableServiceCapabilities a skos:Concept ;
+    skos:prefLabel "capabilities of productiontimetableservice"@en ;
+    skos:altLabel "production timetable service capabilities"@en ;
+    skos:altLabel "productiontimetableservicecapabilities"@en ;
+    rdfs:comment "Capabilities of ProductionTimetableService."@en .
+
+siri:ProductionTimetableSubscriptionRequest a skos:Concept ;
+    skos:prefLabel "production timetable subscription request"@en ;
+    skos:altLabel "productiontimetablesubscriptionrequest"@en ;
+    skos:altLabel "request for a subscription to"@en ;
+    rdfs:comment "Request for a subscription to the Production Timetable Service."@en ;
+    skos:related siri:AbstractFunctionalServiceSubscriptionRequest .
+
+siri:PtSituationElement a skos:Concept ;
+    skos:prefLabel "pt situation element"@en ;
+    skos:altLabel "ptsituationelement"@en ;
+    rdfs:comment "Type for individual PT Incident."@en .
+
+siri:PublishToAlertsAction a skos:Concept ;
+    skos:prefLabel "action publish situation to alert"@en ;
+    skos:altLabel "publish to alerts action"@en ;
+    skos:altLabel "publishtoalertsaction"@en ;
+    rdfs:comment "Action: Publish SITUATION To Alert channel."@en .
+
+siri:PublishToDisplayAction a skos:Concept ;
+    skos:prefLabel "action publish situation to display"@en ;
+    skos:altLabel "publish to display action"@en ;
+    skos:altLabel "publishtodisplayaction"@en ;
+    rdfs:comment "Action: Publish SITUATION To Display channel."@en .
+
+siri:PublishToMobileAction a skos:Concept ;
+    skos:prefLabel "action publish situation to mobile"@en ;
+    skos:altLabel "publish to mobile action"@en ;
+    skos:altLabel "publishtomobileaction"@en ;
+    rdfs:comment "Action: Publish SITUATION To Mobile Applications."@en .
+
+siri:PublishToTvAction a skos:Concept ;
+    skos:prefLabel "action publish situation to tv"@en ;
+    skos:altLabel "publish to tv action"@en ;
+    skos:altLabel "publishtotvaction"@en ;
+    rdfs:comment "Action: Publish SITUATION To TV channel."@en .
+
+siri:PublishToWebAction a skos:Concept ;
+    skos:prefLabel "action publish situation to web"@en ;
+    skos:altLabel "publish to web action"@en ;
+    skos:altLabel "publishtowebaction"@en ;
+    rdfs:comment "Action: Publish SITUATION To Web channel."@en .
+
+siri:PublishedLineName a skos:Concept ;
+    skos:prefLabel "published line name"@en ;
+    skos:altLabel "publishedlinename"@en ;
+    rdfs:comment "Name or Number by which the LINEis known to the public."@en .
+
+siri:RailSubmode a skos:Concept ;
+    skos:prefLabel "rail submode"@en ;
+    skos:altLabel "railsubmode"@en ;
+    rdfs:comment "TPEG Pti02, Pts102 \"RailwayService\" and train link loc13 submodes."@en .
+
+siri:ReasonForRemoval a skos:Concept ;
+    skos:prefLabel "reason for removal"@en ;
+    skos:altLabel "reasonforremoval"@en ;
+    rdfs:comment "The data producer must provide a reason, e.g. type of error and description, in case he wants to silently remove (instead of cancel) a journey or an interchange from the plan. (since SIRI 2.1)"@en .
+
+siri:RecordedCall a skos:Concept ;
+    skos:prefLabel "recorded call"@en ;
+    skos:altLabel "recordedcall"@en ;
+    rdfs:comment "Ordered sequence of SCHEDULED STOP POINTs called at by the VEHICLE JOURNEY. Only used if observed stop data is being recorded. (SIRI 2.0)"@en .
+
+siri:RecordedDepartureCapacities a skos:Concept ;
+    skos:prefLabel "recorded departure capacities"@en ;
+    skos:altLabel "recordeddeparturecapacities"@en ;
+    rdfs:comment "Actually recorded/counted capacities of a VEHICLE after departing from a given stop. Alternative way to communicate occupancy measurements. (since SIRI 2.1)"@en .
+
+siri:RecordedDepartureOccupancy a skos:Concept ;
+    skos:prefLabel "recorded departure occupancy"@en ;
+    skos:altLabel "recordeddepartureoccupancy"@en ;
+    rdfs:comment "Actually recorded/counted occupancies of a VEHICLE and reserved seats after departing from a given stop. (since SIRI 2.1)"@en .
+
+siri:RelatedJourney a skos:Concept ;
+    skos:prefLabel "refers to the journey to"@en ;
+    skos:altLabel "related journey"@en ;
+    skos:altLabel "relatedjourney"@en ;
+    rdfs:comment "Refers to the JOURNEY to which the current JOURNEY is related. (since SIRI 2.1)"@en .
+
+siri:ReservedSpaceFacility a skos:Concept ;
+    skos:prefLabel "classification of reserved space facility"@en ;
+    skos:altLabel "reserved space facility"@en ;
+    skos:altLabel "reservedspacefacility"@en ;
+    rdfs:comment "Classification of Reserved Space Facility."@en .
+
+siri:ResponseStatus a skos:Concept ;
+    skos:prefLabel "response status"@en ;
+    skos:altLabel "responsestatus"@en ;
+    rdfs:comment "Contains infromation about the processing of a an individual service subscription - either success info or an error condition. (VDV Acknowledgement)."@en .
+
+siri:ResponseTimestamp a skos:Concept ;
+    skos:prefLabel "response timestamp"@en ;
+    skos:altLabel "responsetimestamp"@en ;
+    skos:altLabel "time individual response element was"@en ;
+    rdfs:comment "Time individual response element was created."@en .
+
+siri:RetailFacility a skos:Concept ;
+    skos:prefLabel "classification of retail facility"@en ;
+    skos:altLabel "retail facility"@en ;
+    skos:altLabel "retailfacility"@en ;
+    rdfs:comment "Classification of Retail Facility."@en .
+
+siri:RoadSituationElement a skos:Concept ;
+    skos:prefLabel "road situation element"@en ;
+    skos:altLabel "roadsituationelement"@en ;
+    rdfs:comment "Type for individual PT incident."@en .
+
+siri:RouteName a skos:Concept ;
+    skos:prefLabel "route name"@en ;
+    skos:altLabel "routename"@en ;
+    rdfs:comment "Description of route by which it can be recogniozed."@en .
+
+siri:SanitaryFacility a skos:Concept ;
+    skos:prefLabel "classification of sanitary facility type"@en ;
+    skos:altLabel "sanitary facility"@en ;
+    skos:altLabel "sanitaryfacility"@en ;
+    rdfs:comment "Classification of Sanitary Facility type - Tpeg pti23."@en .
+
+siri:SelfDriveSubmode a skos:Concept ;
+    skos:prefLabel "self drive submode"@en ;
+    skos:altLabel "selfdrivesubmode"@en ;
+    rdfs:comment "TPEG pti12 SelfDrive submodes."@en .
+
+siri:ServiceDelivery a skos:Concept ;
+    skos:prefLabel "service delivery"@en ;
+    skos:altLabel "servicedelivery"@en ;
+    rdfs:comment "Response from Producer to Consumer to deliver payload data. Either answers a direct ServiceRequest, or asynchronously satisfies a subscription. May be sent directly in one step, or fetched in response to a DataSupply Request."@en .
+
+siri:ServiceDeliveryErrorConditionElement a skos:Concept ;
+    skos:prefLabel "element from an error condition"@en ;
+    skos:altLabel "service delivery error condition element"@en ;
+    skos:altLabel "servicedeliveryerrorconditionelement"@en ;
+    rdfs:comment "Element from an error condition for use in WSDL."@en .
+
+siri:ServiceException a skos:Concept ;
+    skos:prefLabel "exceptions to service availability for"@en ;
+    skos:altLabel "service exception"@en ;
+    skos:altLabel "serviceexception"@en ;
+    rdfs:comment "Exceptions to service availability for all or some services SIRI 2.0"@en .
+
+siri:ServiceFeature a skos:Concept ;
+    skos:prefLabel "service feature"@en ;
+    skos:altLabel "service feature description"@en ;
+    skos:altLabel "servicefeature"@en ;
+    rdfs:comment "Service Feature description."@en .
+
+siri:ServiceFeaturesDelivery a skos:Concept ;
+    skos:prefLabel "returns the service features covered"@en ;
+    skos:altLabel "service features delivery"@en ;
+    skos:altLabel "servicefeaturesdelivery"@en ;
+    rdfs:comment "Returns the SERVICE FEATUREs covered by a service. Answers a ServiceFeaturesRequest."@en ;
+    skos:related siri:AbstractDiscoveryDelivery .
+
+siri:ServiceFeaturesRequest a skos:Concept ;
+    skos:prefLabel "service features request"@en ;
+    skos:altLabel "servicefeaturesrequest"@en ;
+    rdfs:comment "Requests a list of the Service Features covered by a Producer."@en ;
+    skos:related siri:AbstractDiscoveryRequest .
+
+siri:ServiceNotAvailableError a skos:Concept ;
+    skos:prefLabel "error functional service is not"@en ;
+    skos:altLabel "service not available error"@en ;
+    skos:altLabel "servicenotavailableerror"@en ;
+    rdfs:comment "Error: Functional service is not available to use (but it is still capable of giving this response)."@en .
+
+siri:ServiceRequest a skos:Concept ;
+    skos:prefLabel "request from consumer to producer"@en ;
+    skos:altLabel "service request"@en ;
+    skos:altLabel "servicerequest"@en ;
+    rdfs:comment "Request from Consumer to Producer for immediate delivery of data. Answered with a ServiceDelivery (or a DataReadyRequest)"@en .
+
+siri:Severity a skos:Concept ;
+    skos:prefLabel "severity"@en ;
+    skos:altLabel "severity of incident tpeg"@en ;
+    rdfs:comment "Severity of Incident - TPEG Pti26. Default is 'normal'."@en .
+
+siri:Siri a skos:Concept ;
+    skos:prefLabel "siri"@en ;
+    rdfs:comment "Service Interface for Real-time Operation."@en ;
+    skos:related siri:Extensions .
+
+siri:SituationExchangeCapabilitiesRequest a skos:Concept ;
+    skos:prefLabel "request for information about situation"@en ;
+    skos:altLabel "situation exchange capabilities request"@en ;
+    skos:altLabel "situationexchangecapabilitiesrequest"@en ;
+    rdfs:comment "Request for information about Situation Exchange Service Capabilities. Answered with a VehicleMontoringCapabilitiesResponse."@en ;
+    skos:related siri:AbstractFunctionalServiceCapabilitiesRequest .
+
+siri:SituationExchangeCapabilitiesResponse a skos:Concept ;
+    skos:prefLabel "capabilities for situation exchange service"@en ;
+    skos:altLabel "situation exchange capabilities response"@en ;
+    skos:altLabel "situationexchangecapabilitiesresponse"@en ;
+    rdfs:comment "Capabilities for Situation Exchange Service. Answers a VehicleMontoringCapabilitiesRequest."@en ;
+    skos:related siri:AbstractFunctionalServiceCapabilitiesResponse .
+
+siri:SituationExchangeDelivery a skos:Concept ;
+    skos:prefLabel "delivery for situation exchange service"@en ;
+    skos:altLabel "situation exchange delivery"@en ;
+    skos:altLabel "situationexchangedelivery"@en ;
+    rdfs:comment "Delivery for Situation Exchange Service."@en ;
+    skos:related siri:AbstractFunctionalServiceDelivery .
+
+siri:SituationExchangePermissions a skos:Concept ;
+    skos:prefLabel "participants permissions to use the"@en ;
+    skos:altLabel "situation exchange permissions"@en ;
+    skos:altLabel "situationexchangepermissions"@en ;
+    rdfs:comment "Participant's permissions to use the service."@en .
+
+siri:SituationExchangeRequest a skos:Concept ;
+    skos:prefLabel "request for information about facilities"@en ;
+    skos:altLabel "situation exchange request"@en ;
+    skos:altLabel "situationexchangerequest"@en ;
+    rdfs:comment "Request for information about Facilities status."@en ;
+    skos:related siri:AbstractFunctionalServiceRequest .
+
+siri:SituationExchangeServiceCapabilities a skos:Concept ;
+    skos:prefLabel "capabilities of situation exchange service"@en ;
+    skos:altLabel "situation exchange service capabilities"@en ;
+    skos:altLabel "situationexchangeservicecapabilities"@en ;
+    rdfs:comment "Capabilities of Situation Exchange Service. Answers a SituationExchangeCapabilitiesRequest."@en .
+
+siri:SituationExchangeSubscriptionRequest a skos:Concept ;
+    skos:prefLabel "request for a subscription to"@en ;
+    skos:altLabel "situation exchange subscription request"@en ;
+    skos:altLabel "situationexchangesubscriptionrequest"@en ;
+    rdfs:comment "Request for a subscription to the Situation Exchange Service."@en ;
+    skos:related siri:AbstractFunctionalServiceSubscriptionRequest .
+
+siri:SituationNumber a skos:Concept ;
+    skos:prefLabel "identifier of situation within a"@en ;
+    skos:altLabel "situation number"@en ;
+    skos:altLabel "situationnumber"@en ;
+    rdfs:comment "Identifier of SITUATION within a Participant. Exclude versionr."@en .
+
+siri:SrsName a skos:Concept ;
+    skos:prefLabel "srs name"@en ;
+    skos:altLabel "srsname"@en ;
+    rdfs:comment "GML Spatial coordinate reference system."@en .
+
+siri:Status a skos:Concept ;
+    skos:prefLabel "status"@en ;
+    rdfs:comment "Whether the request was processed successfully or not. Default is 'true'."@en .
+
+siri:StopLineNoticeCancellation a skos:Concept ;
+    skos:prefLabel "stop line notice cancellation"@en ;
+    skos:altLabel "stoplinenoticecancellation"@en ;
+    rdfs:comment "Reference to an previously communicated LINE notice which should now be removed from the arrival/departure board for the stop."@en .
 
 siri:StopMonitoring a skos:Concept ;
     skos:prefLabel "stop monitoring"@en ;
@@ -35,6 +1498,325 @@ siri:StopMonitoring a skos:Concept ;
     skos:altLabel "stop arrivals"@en ;
     rdfs:comment "Real-time information about arriving and departing vehicles at a stop"@en .
 
+siri:StopMonitoringCapabilitiesRequest a skos:Concept ;
+    skos:prefLabel "request for information about stop"@en ;
+    skos:altLabel "stop monitoring capabilities request"@en ;
+    skos:altLabel "stopmonitoringcapabilitiesrequest"@en ;
+    rdfs:comment "Request for information about Stop Monitoring Service Capabilities. Answered with StopMonitoringCapabilitiesResponse."@en ;
+    skos:related siri:AbstractFunctionalServiceCapabilitiesRequest .
+
+siri:StopMonitoringCapabilitiesResponse a skos:Concept ;
+    skos:prefLabel "capabilities for stop monitoring service"@en ;
+    skos:altLabel "stop monitoring capabilities response"@en ;
+    skos:altLabel "stopmonitoringcapabilitiesresponse"@en ;
+    rdfs:comment "Capabilities for Stop Monitoring Service. Answers a StopMonitoringCapabilitiesRequest."@en ;
+    skos:related siri:AbstractFunctionalServiceCapabilitiesResponse .
+
+siri:StopMonitoringDelivery a skos:Concept ;
+    skos:prefLabel "delivery for stop monitoring service"@en ;
+    skos:altLabel "stop monitoring delivery"@en ;
+    skos:altLabel "stopmonitoringdelivery"@en ;
+    rdfs:comment "Delivery for Stop Monitoring Service."@en ;
+    skos:related siri:AbstractFunctionalServiceDelivery .
+
+siri:StopMonitoringMultipleRequest a skos:Concept ;
+    skos:prefLabel "request for information about stop"@en ;
+    skos:altLabel "stop monitoring multiple request"@en ;
+    skos:altLabel "stopmonitoringmultiplerequest"@en ;
+    rdfs:comment "Request for information about Stop Visits, i.e. arrivals and departures at multiple stops stop. SIRI 1.3"@en ;
+    skos:related siri:AbstractFunctionalServiceRequest .
+
+siri:StopMonitoringPermissions a skos:Concept ;
+    skos:prefLabel "participants permissions to use the"@en ;
+    skos:altLabel "stop monitoring permissions"@en ;
+    skos:altLabel "stopmonitoringpermissions"@en ;
+    rdfs:comment "Participants permissions to use the service, Only returned if requested."@en .
+
+siri:StopMonitoringRequest a skos:Concept ;
+    skos:prefLabel "request for information about stop"@en ;
+    skos:altLabel "stop monitoring request"@en ;
+    skos:altLabel "stopmonitoringrequest"@en ;
+    rdfs:comment "Request for information about Stop Visits, i.e. arrivals and departures at a stop."@en ;
+    skos:related siri:AbstractFunctionalServiceRequest .
+
+siri:StopMonitoringServiceCapabilities a skos:Concept ;
+    skos:prefLabel "capabilities of stopmonitoring service"@en ;
+    skos:altLabel "stop monitoring service capabilities"@en ;
+    skos:altLabel "stopmonitoringservicecapabilities"@en ;
+    rdfs:comment "Capabilities of StopMonitoring Service."@en .
+
+siri:StopMonitoringSubscriptionRequest a skos:Concept ;
+    skos:prefLabel "request for a subscription to"@en ;
+    skos:altLabel "stop monitoring subscription request"@en ;
+    skos:altLabel "stopmonitoringsubscriptionrequest"@en ;
+    rdfs:comment "Request for a subscription to Stop Monitoring Service."@en ;
+    skos:related siri:AbstractFunctionalServiceSubscriptionRequest .
+
+siri:StopNoticeCancellation a skos:Concept ;
+    skos:prefLabel "stop notice cancellation"@en ;
+    skos:altLabel "stopnoticecancellation"@en ;
+    rdfs:comment "Reference to an previously communicated Notice which should now be removed from the arrival/departure board for the stop."@en .
+
+siri:StopPointName a skos:Concept ;
+    skos:prefLabel "name of scheduled stop point"@en ;
+    skos:altLabel "stop point name"@en ;
+    skos:altLabel "stoppointname"@en ;
+    rdfs:comment "Name of SCHEDULED STOP POINT."@en .
+
+siri:StopPointsDelivery a skos:Concept ;
+    skos:prefLabel "stop points delivery"@en ;
+    skos:altLabel "stoppointsdelivery"@en ;
+    rdfs:comment "Returns basic details about the STOP POINTs/places covered by a service. Answers a StopPointsRequest."@en ;
+    skos:related siri:AbstractDiscoveryDelivery .
+
+siri:StopPointsRequest a skos:Concept ;
+    skos:prefLabel "stop points request"@en ;
+    skos:altLabel "stoppointsrequest"@en ;
+    rdfs:comment "Requests a list of the STOP POINTs and places covered by a Producer."@en ;
+    skos:related siri:AbstractDiscoveryRequest .
+
+siri:StopTimetableCapabilitiesRequest a skos:Concept ;
+    skos:prefLabel "request for information about stop"@en ;
+    skos:altLabel "stop timetable capabilities request"@en ;
+    skos:altLabel "stoptimetablecapabilitiesrequest"@en ;
+    rdfs:comment "Request for information about Stop Timetable Service Capabilities Answered with a StopTimetableCapabilitiesResponse."@en ;
+    skos:related siri:AbstractFunctionalServiceCapabilitiesRequest .
+
+siri:StopTimetableCapabilitiesResponse a skos:Concept ;
+    skos:prefLabel "delivery for stop timetable service"@en ;
+    skos:altLabel "stop timetable capabilities response"@en ;
+    skos:altLabel "stoptimetablecapabilitiesresponse"@en ;
+    rdfs:comment "Delivery for Stop Timetable Service. Answers a StopTimetableCapabilitiesRequest."@en ;
+    skos:related siri:AbstractFunctionalServiceCapabilitiesResponse .
+
+siri:StopTimetableDelivery a skos:Concept ;
+    skos:prefLabel "delivery for stop timetable service"@en ;
+    skos:altLabel "stop timetable delivery"@en ;
+    skos:altLabel "stoptimetabledelivery"@en ;
+    rdfs:comment "Delivery for Stop Timetable Service."@en ;
+    skos:related siri:AbstractFunctionalServiceDelivery .
+
+siri:StopTimetablePermissions a skos:Concept ;
+    skos:prefLabel "participants permissions to use the"@en ;
+    skos:altLabel "stop timetable permissions"@en ;
+    skos:altLabel "stoptimetablepermissions"@en ;
+    rdfs:comment "Participant's permissions to use the service."@en .
+
+siri:StopTimetableRequest a skos:Concept ;
+    skos:prefLabel "request for information about stop"@en ;
+    skos:altLabel "stop timetable request"@en ;
+    skos:altLabel "stoptimetablerequest"@en ;
+    rdfs:comment "Request for information about Stop Visits, i.e. arrival and departure at a stop."@en ;
+    skos:related siri:AbstractFunctionalServiceRequest .
+
+siri:StopTimetableServiceCapabilities a skos:Concept ;
+    skos:prefLabel "capabilities of stop timetable service"@en ;
+    skos:altLabel "stop timetable service capabilities"@en ;
+    skos:altLabel "stoptimetableservicecapabilities"@en ;
+    rdfs:comment "Capabilities of Stop Timetable Service."@en .
+
+siri:StopTimetableSubscriptionRequest a skos:Concept ;
+    skos:prefLabel "request for a subscription to"@en ;
+    skos:altLabel "stop timetable subscription request"@en ;
+    skos:altLabel "stoptimetablesubscriptionrequest"@en ;
+    rdfs:comment "Request for a subscription to Stop TimetablesService."@en ;
+    skos:related siri:AbstractFunctionalServiceSubscriptionRequest .
+
+siri:SubscriptionRequest a skos:Concept ;
+    skos:prefLabel "request from subscriber to producer"@en ;
+    skos:altLabel "subscription request"@en ;
+    skos:altLabel "subscriptionrequest"@en ;
+    rdfs:comment "Request from Subscriber to Producer for a subscription. Answered with a SubscriptionResponse."@en .
+
+siri:SubscriptionResponse a skos:Concept ;
+    skos:prefLabel "response from producer to consumer"@en ;
+    skos:altLabel "subscription response"@en ;
+    skos:altLabel "subscriptionresponse"@en ;
+    rdfs:comment "Response from Producer to Consumer to inform whether subscriptions have been created. Answers a previous SubscriptionRequest."@en ;
+    skos:related siri:AbstractResponse .
+
+siri:SubscriptionTerminatedNotification a skos:Concept ;
+    skos:prefLabel "notification from subscriber to subscription"@en ;
+    skos:altLabel "subscription terminated notification"@en ;
+    skos:altLabel "subscriptionterminatednotification"@en ;
+    rdfs:comment "Notification from Subscriber to Subscription Manager to terminate a subscription."@en ;
+    skos:related siri:AbstractResponse .
+
+siri:TargetedCall a skos:Concept ;
+    skos:prefLabel "information about the call at"@en ;
+    skos:altLabel "targeted call"@en ;
+    skos:altLabel "targetedcall"@en ;
+    rdfs:comment "Information about the call at the stop."@en .
+
+siri:TargetedVehicleJourney a skos:Concept ;
+    skos:prefLabel "targeted vehicle journey"@en ;
+    skos:altLabel "targetedvehiclejourney"@en ;
+    skos:altLabel "timetabled vehicle journey"@en ;
+    rdfs:comment "Timetabled VEHICLE JOURNEY."@en .
+
+siri:TelecabinSubmode a skos:Concept ;
+    skos:prefLabel "telecabin submode"@en ;
+    skos:altLabel "telecabinsubmode"@en ;
+    skos:altLabel "tpeg pti09 telecabin and pts109"@en ;
+    rdfs:comment "TPEG Pti09 telecabin and Pts109 \"GondolaCableCarService\" submodes."@en .
+
+siri:TerminateSubscriptionRequest a skos:Concept ;
+    skos:prefLabel "request from subscriber to subscription"@en ;
+    skos:altLabel "terminate subscription request"@en ;
+    skos:altLabel "terminatesubscriptionrequest"@en ;
+    rdfs:comment "Request from Subscriber to Subscription Manager to terminate a subscription. Answered with a TerminateSubscriptionResponse."@en ;
+    skos:related siri:AuthenticatedRequest .
+
+siri:TerminateSubscriptionResponse a skos:Concept ;
+    skos:prefLabel "request from subscriber to subscription"@en ;
+    skos:altLabel "terminate subscription response"@en ;
+    skos:altLabel "terminatesubscriptionresponse"@en ;
+    rdfs:comment "Request from Subscriber to Subscription Manager to terminate a subscription. Answered with a TerminateSubscriptionResponse."@en ;
+    skos:related siri:AbstractResponse .
+
+siri:TicketingFacility a skos:Concept ;
+    skos:prefLabel "classification of ticketing facility type"@en ;
+    skos:altLabel "ticketing facility"@en ;
+    skos:altLabel "ticketingfacility"@en ;
+    rdfs:comment "Classification of Ticketing Facility type - Tpeg pti23."@en .
+
+siri:TimetabledFeederArrival a skos:Concept ;
+    skos:prefLabel "feeder arrival at the"@en ;
+    skos:altLabel "timetabled feeder arrival"@en ;
+    skos:altLabel "timetabledfeederarrival"@en ;
+    rdfs:comment "A feeder arrival at the arrival SCHEDUELD STOP POINT of the CONNECTION link ."@en ;
+    skos:related siri:FeederItem .
+
+siri:TimetabledFeederArrivalCancellation a skos:Concept ;
+    skos:prefLabel "cancellation of a previously issued"@en ;
+    skos:altLabel "timetabled feeder arrival cancellation"@en ;
+    skos:altLabel "timetabledfeederarrivalcancellation"@en ;
+    rdfs:comment "Cancellation of a previously issued Feeder Arrival."@en .
+
+siri:TimingPoint a skos:Concept ;
+    skos:prefLabel "timing point"@en ;
+    skos:altLabel "timingpoint"@en ;
+    rdfs:comment "Whether the stop is a TIMING POINT. Times for stops that are not timing points are sometimes interpolated crudely from the timing points, and may represent a lower level of accuracy. Default is 'true'."@en .
+
+siri:Train a skos:Concept ;
+    skos:prefLabel "train"@en ;
+    skos:altLabel "vehicle composed of train"@en ;
+    rdfs:comment "A vehicle composed of TRAIN ELEMENTs assembled in a certain order (so called TRAIN COMPONENTs), i.e. wagons assembled together and propelled by a locomotive or one of the wagons. (since SIRI 2.1)"@en .
+
+siri:TrainComponent a skos:Concept ;
+    skos:prefLabel "train component"@en ;
+    skos:altLabel "traincomponent"@en ;
+    rdfs:comment "Specifies the order of a certain TRAIN ELEMENT within a TRAIN and how the TRAIN ELEMENT is labeled in that context. (since SIRI 2.1)"@en .
+
+siri:TrainElement a skos:Concept ;
+    skos:prefLabel "train element"@en ;
+    skos:altLabel "trainelement"@en ;
+    rdfs:comment "An elementary component of a TRAIN, e.g. wagon or locomotive. (since SIRI 2.1)"@en .
+
+siri:TrainInCompoundTrain a skos:Concept ;
+    skos:prefLabel "train in compound train"@en ;
+    skos:altLabel "trainincompoundtrain"@en ;
+    rdfs:comment "Specifies the order of a certain TRAIN within a COMPOUND TRAIN and how the TRAIN is labeled in that context. (since SIRI 2.1)"@en .
+
+siri:TramSubmode a skos:Concept ;
+    skos:prefLabel "tpeg pti06 tram and pts104"@en ;
+    skos:altLabel "tram submode"@en ;
+    skos:altLabel "tramsubmode"@en ;
+    rdfs:comment "TPEG Pti06 tram and Pts104 \"UrbanRailwayService\" submodes."@en .
+
+siri:TypeOfValue a skos:Concept ;
+    skos:prefLabel "code value from an"@en ;
+    skos:altLabel "type of value"@en ;
+    skos:altLabel "typeofvalue"@en ;
+    rdfs:comment "A code value from an extensible set which may be added to by user applications, and is used to classify other SIRI entities. (since SIRI 2.1)"@en .
+
+siri:TypesOfValue a skos:Concept ;
+    skos:prefLabel "types of value"@en ;
+    skos:altLabel "typesofvalue"@en ;
+    skos:altLabel "value sets and type of"@en ;
+    rdfs:comment "VALUE SETs and TYPE OF VALUEs as part of the SIRI extension model. TYPES OF VALUE can be used to exchange metadata for validation or collection of data, such as the description and allowed values for codes. (since SIRI 2.1)"@en .
+
+siri:UnapprovedKeyAccessError a skos:Concept ;
+    skos:prefLabel "unapproved key access error"@en ;
+    skos:altLabel "unapprovedkeyaccesserror"@en ;
+    rdfs:comment "Error:Recipient of a message to be distributed is not available. (since SIRI 2.0)"@en .
+
+siri:UndefinedReason a skos:Concept ;
+    skos:prefLabel "undefined reason"@en ;
+    skos:altLabel "undefinedreason"@en ;
+    rdfs:comment "DEPRECATED since SIRI 2.1 (TPEG Pti18_255 - undefined event reason)."@en .
+
+siri:UnknownEndpointError a skos:Concept ;
+    skos:prefLabel "error recipient for a message"@en ;
+    skos:altLabel "unknown endpoint error"@en ;
+    skos:altLabel "unknownendpointerror"@en ;
+    rdfs:comment "Error: Recipient for a message to be distributed is unknown. (since SIRI 2.0)"@en .
+
+siri:UnknownExtensionsError a skos:Concept ;
+    skos:prefLabel "unknown extensions error"@en ;
+    skos:altLabel "unknownextensionserror"@en ;
+    rdfs:comment "Error: Request contained extensions that were not supported by the producer. A response has been provided but some or all extensions have been ignored. (since SIRI 2.0)."@en .
+
+siri:UnknownParticipantError a skos:Concept ;
+    skos:prefLabel "error recipient for a message"@en ;
+    skos:altLabel "unknown participant error"@en ;
+    skos:altLabel "unknownparticipanterror"@en ;
+    rdfs:comment "Error: Recipient for a message to be distributed is unknown. (since SIRI 2.0)"@en .
+
+siri:UnknownReason a skos:Concept ;
+    skos:prefLabel "unknown reason"@en ;
+    skos:altLabel "unknownreason"@en ;
+    rdfs:comment "DEPRECATED since SIRI 2.1 (TPEG Pti18_0 - unknown event reason)."@en .
+
+siri:UnknownSubscriberError a skos:Concept ;
+    skos:prefLabel "error subscriber not found"@en ;
+    skos:altLabel "unknown subscriber error"@en ;
+    skos:altLabel "unknownsubscribererror"@en ;
+    rdfs:comment "Error: Subscriber not found."@en .
+
+siri:UnknownSubscriptionError a skos:Concept ;
+    skos:prefLabel "error subscription not found"@en ;
+    skos:altLabel "unknown subscription error"@en ;
+    skos:altLabel "unknownsubscriptionerror"@en ;
+    rdfs:comment "Error: Subscription not found."@en .
+
+siri:ValueSet a skos:Concept ;
+    skos:prefLabel "extensible set of code"@en ;
+    skos:altLabel "value set"@en ;
+    skos:altLabel "valueset"@en ;
+    rdfs:comment "An extensible set of code values which may be added to by user applications and is used to validate the properties of entities. Contains TYPE OF VALUEs that are an instance of the same class. (since SIRI 2.1)"@en .
+
+siri:VehicleAtStop a skos:Concept ;
+    skos:prefLabel "vehicle at stop"@en ;
+    skos:altLabel "vehicleatstop"@en ;
+    skos:altLabel "whether vehicle is currently at"@en ;
+    rdfs:comment "Whether VEHICLE is currently at stop. Default is false (xml default added from SIRI 2.0)"@en .
+
+siri:VehicleFeature a skos:Concept ;
+    skos:prefLabel "vehicle feature"@en ;
+    skos:altLabel "vehicle feature description"@en ;
+    skos:altLabel "vehiclefeature"@en ;
+    rdfs:comment "Vehicle Feature description."@en .
+
+siri:VehicleFeaturesDelivery a skos:Concept ;
+    skos:prefLabel "returns the vehicle features covered"@en ;
+    skos:altLabel "vehicle features delivery"@en ;
+    skos:altLabel "vehiclefeaturesdelivery"@en ;
+    rdfs:comment "Returns the Vehicle Features covered by a service. Answers a VehicleFeaturesRequest."@en ;
+    skos:related siri:AbstractDiscoveryDelivery .
+
+siri:VehicleFeaturesRequest a skos:Concept ;
+    skos:prefLabel "vehicle features request"@en ;
+    skos:altLabel "vehiclefeaturesrequest"@en ;
+    rdfs:comment "Requests a list of the Vehicle Features covered by a Producer."@en ;
+    skos:related siri:AbstractDiscoveryRequest .
+
+siri:VehicleMode a skos:Concept ;
+    skos:prefLabel "vehicle mode"@en ;
+    skos:altLabel "vehicle mode or mode of"@en ;
+    skos:altLabel "vehiclemode"@en ;
+    rdfs:comment "Vehicle mode or mode of transport."@en .
+
 siri:VehicleMonitoring a skos:Concept ;
     skos:prefLabel "vehicle monitoring"@en ;
     skos:altLabel "vehiclemonitoring"@en ;
@@ -43,3 +1825,73 @@ siri:VehicleMonitoring a skos:Concept ;
     skos:altLabel "vehicle tracking"@en ;
     rdfs:comment "Real-time monitoring of vehicle position and status"@en ;
     skos:related datex:TrafficEvent, netex:Line, opra:TypeOfDelay, opra:VehicleTypeCapacity .
+
+siri:VehicleMonitoringCapabilitiesRequest a skos:Concept ;
+    skos:prefLabel "request for information about vehicle"@en ;
+    skos:altLabel "vehicle monitoring capabilities request"@en ;
+    skos:altLabel "vehiclemonitoringcapabilitiesrequest"@en ;
+    rdfs:comment "Request for information about Vehicle Monitoring Service Capabilities. Answered with a VehicleMontoringCapabilitiesResponse."@en ;
+    skos:related siri:AbstractFunctionalServiceCapabilitiesRequest .
+
+siri:VehicleMonitoringCapabilitiesResponse a skos:Concept ;
+    skos:prefLabel "capabilities for vehicle monitoring service"@en ;
+    skos:altLabel "vehicle monitoring capabilities response"@en ;
+    skos:altLabel "vehiclemonitoringcapabilitiesresponse"@en ;
+    rdfs:comment "Capabilities for Vehicle Monitoring Service. Answers a VehicleMontoringCapabilitiesRequest."@en ;
+    skos:related siri:AbstractFunctionalServiceCapabilitiesResponse .
+
+siri:VehicleMonitoringDelivery a skos:Concept ;
+    skos:prefLabel "delivery for vehicle monitoring service"@en ;
+    skos:altLabel "vehicle monitoring delivery"@en ;
+    skos:altLabel "vehiclemonitoringdelivery"@en ;
+    rdfs:comment "Delivery for Vehicle Monitoring Service."@en ;
+    skos:related siri:AbstractFunctionalServiceDelivery .
+
+siri:VehicleMonitoringPermissions a skos:Concept ;
+    skos:prefLabel "participants permissions to use the"@en ;
+    skos:altLabel "vehicle monitoring permissions"@en ;
+    skos:altLabel "vehiclemonitoringpermissions"@en ;
+    rdfs:comment "Participant's permissions to use the service."@en .
+
+siri:VehicleMonitoringRequest a skos:Concept ;
+    skos:prefLabel "request for information about vehicle"@en ;
+    skos:altLabel "vehicle monitoring request"@en ;
+    skos:altLabel "vehiclemonitoringrequest"@en ;
+    rdfs:comment "Request for information about Vehicle Movements."@en ;
+    skos:related siri:AbstractFunctionalServiceRequest .
+
+siri:VehicleMonitoringServiceCapabilities a skos:Concept ;
+    skos:prefLabel "capabilities of vehicle monitoring service"@en ;
+    skos:altLabel "vehicle monitoring service capabilities"@en ;
+    skos:altLabel "vehiclemonitoringservicecapabilities"@en ;
+    rdfs:comment "Capabilities of Vehicle Monitoring Service."@en .
+
+siri:VehicleMonitoringSubscriptionRequest a skos:Concept ;
+    skos:prefLabel "request for a subscription to"@en ;
+    skos:altLabel "vehicle monitoring subscription request"@en ;
+    skos:altLabel "vehiclemonitoringsubscriptionrequest"@en ;
+    rdfs:comment "Request for a subscription to the Vehicle Monitoring Service."@en ;
+    skos:related siri:AbstractFunctionalServiceSubscriptionRequest .
+
+siri:VerificationStatus a skos:Concept ;
+    skos:prefLabel "classification of verification status"@en ;
+    skos:altLabel "verification status"@en ;
+    skos:altLabel "verificationstatus"@en ;
+    rdfs:comment "Classification of verification status - TPEG Pti032"@en .
+
+siri:ViaName a skos:Concept ;
+    skos:prefLabel "names of via points used"@en ;
+    skos:altLabel "via name"@en ;
+    skos:altLabel "vianame"@en ;
+    rdfs:comment "Names of VIA points, used to help identify the LINEfor example, Luton to Luton via Sutton. Currently 3 in VDV. Should only be included if the detail level was requested."@en .
+
+siri:VisitNumber a skos:Concept ;
+    skos:prefLabel "sequence of visit to scheduled"@en ;
+    skos:altLabel "visit number"@en ;
+    skos:altLabel "visitnumber"@en ;
+    rdfs:comment "Sequence of visit to SCHEDULED STOP POINT.within VEHICLE JOURNEY. Increases monotonically, but not necessarily sequentially."@en .
+
+siri:WaterSubmode a skos:Concept ;
+    skos:prefLabel "water submode"@en ;
+    skos:altLabel "watersubmode"@en ;
+    rdfs:comment "TPEG Pti07 and Pts107 \"WaterTransportService\" submodes."@en .

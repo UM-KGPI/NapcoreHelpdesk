@@ -445,7 +445,8 @@ opra:OnboardDeviceBasedPassengerCountRequest a skos:Concept ;
 
 opra:Opra a skos:Concept ;
     skos:prefLabel "opra"@en ;
-    rdfs:comment "Operational Raw Data Root Element."@en .
+    rdfs:comment "Operational Raw Data Root Element."@en ;
+    skos:related siri:Extensions .
 
 opra:OpraDiscoveryDelivery a skos:Concept ;
     skos:prefLabel "abstract element to return discovery"@en ;
@@ -457,24 +458,28 @@ opra:OpraDiscoveryRequest a skos:Concept ;
     skos:prefLabel "abstract opra discovery request element"@en ;
     skos:altLabel "opra discovery request"@en ;
     skos:altLabel "opradiscoveryrequest"@en ;
-    rdfs:comment "Abstract OpRa Discovery Request element."@en .
+    rdfs:comment "Abstract OpRa Discovery Request element."@en ;
+    skos:related siri:AbstractDiscoveryRequest .
 
 opra:OpraError a skos:Concept ;
     skos:prefLabel "opra error"@en ;
     skos:altLabel "opraerror"@en ;
-    rdfs:comment "Element for Opra related errors."@en .
+    rdfs:comment "Element for Opra related errors."@en ;
+    skos:related siri:OtherError .
 
 opra:OpraFunctionalDelivery a skos:Concept ;
     skos:prefLabel "abstract delivery element responding for"@en ;
     skos:altLabel "opra functional delivery"@en ;
     skos:altLabel "oprafunctionaldelivery"@en ;
-    rdfs:comment "Abstract delivery element, responding for OpraRequest elements."@en .
+    rdfs:comment "Abstract delivery element, responding for OpraRequest elements."@en ;
+    skos:related siri:AbstractFunctionalServiceDelivery .
 
 opra:OpraFunctionalRequest a skos:Concept ;
     skos:prefLabel "generic abstract opra request element"@en ;
     skos:altLabel "opra functional request"@en ;
     skos:altLabel "oprafunctionalrequest"@en ;
-    rdfs:comment "Generic abstract OpRa request element. Substitute this element with topic-specific request elements."@en .
+    rdfs:comment "Generic abstract OpRa request element. Substitute this element with topic-specific request elements."@en ;
+    skos:related siri:AbstractFunctionalServiceRequest .
 
 opra:OpraPayloadDelivery a skos:Concept ;
     skos:prefLabel "common delivery element responding to"@en ;

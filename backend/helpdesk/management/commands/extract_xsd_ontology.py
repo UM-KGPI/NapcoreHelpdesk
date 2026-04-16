@@ -1,8 +1,8 @@
 """
-Management command to extract concept glossary from NeTEx and OpRa XSD schemas.
+Management command to extract concept glossary from NeTEx, OpRa, and SIRI XSD schemas.
 
 Usage:
-    python manage.py extract_xsd_ontology --netex-path /path/to/NeTEx --opra-path /path/to/OpRa --output ontologies/standards.yaml
+    python manage.py extract_xsd_ontology --netex-path /path/to/NeTEx --opra-path /path/to/OpRa --siri-path /path/to/SIRI --output ontologies/standards.yaml
 """
 
 import logging
@@ -119,6 +119,21 @@ DEFAULT_ALLOWLIST_EXACT = {
         "PreparednessLevel",
         "IndicatorFrame",
     },
+    "siri": {
+        "VehicleMonitoring",
+        "StopMonitoring",
+        "EstimatedTimetable",
+        "GeneralMessage",
+        "SituationExchange",
+        "FacilityMonitoring",
+        "ConnectionMonitoring",
+        "ConnectionTimetable",
+        "ProductionTimetable",
+        "StopTimetable",
+        "MonitoredVehicleJourney",
+        "EstimatedVehicleJourney",
+        "DatedVehicleJourney",
+    },
 }
 
 DEFAULT_ALLOWLIST_TOKEN = {
@@ -138,6 +153,18 @@ DEFAULT_ALLOWLIST_TOKEN = {
         "journey",
         "vehicle",
         "indicator",
+    },
+    "siri": {
+        "vehicle",
+        "journey",
+        "stop",
+        "monitor",
+        "timetable",
+        "estimated",
+        "facility",
+        "connection",
+        "message",
+        "situation",
     },
 }
 
@@ -164,6 +191,24 @@ def _iter_xsd_files(repo_root: Path, *, standard: str, key_files_only: bool = Fa
         if key_files_only:
             return [xsd_root / relative_path for relative_path in KEY_OPRA_FILES]
         return sorted(path for path in xsd_root.rglob("*.xsd") if path.is_file())
+    if standard == "siri":
+        # Keep SIRI extraction focused on SIRI model/service schemas and avoid
+        # broad imported utility trees (gml, ifopt, acsb, xml, datex2).
+        include_prefixes = (
+            "siri",
+            "siri_",
+            "siri_model",
+            "siri_model_discovery",
+            "siri_utility",
+            "wsdl_model",
+        )
+        return sorted(
+            path
+            for path in xsd_root.rglob("*.xsd")
+            if path.is_file()
+            and path.relative_to(xsd_root).parts
+            and path.relative_to(xsd_root).parts[0].startswith(include_prefixes)
+        )
     raise ValueError(f"Unsupported standard: {standard}")
 
 
@@ -543,7 +588,7 @@ def extract_concept_links_from_examples(
 
 
 class Command(BaseCommand):
-    help = "Extract concept glossary from NeTEx and OpRa XSD schemas"
+    help = "Extract concept glossary from NeTEx, OpRa, and SIRI XSD schemas"
     
     def add_arguments(self, parser):
         parser.add_argument(
@@ -555,6 +600,11 @@ class Command(BaseCommand):
             "--opra-path",
             type=Path,
             help="Path to OpRa repository root",
+        )
+        parser.add_argument(
+            "--siri-path",
+            type=Path,
+            help="Path to SIRI repository root",
         )
         parser.add_argument(
             "--output",
@@ -598,6 +648,7 @@ class Command(BaseCommand):
 
         netex_path = options.get("netex_path")
         opra_path = options.get("opra_path")
+        siri_path = options.get("siri_path")
         output_path = Path(options["output"])
         merge = options.get("merge", False)
         refresh_auto = options.get("refresh_auto", False)
@@ -624,6 +675,12 @@ class Command(BaseCommand):
         opra_path = Path(opra_path)
         if not opra_path.exists():
             raise CommandError(f"OpRa path does not exist: {opra_path}")
+
+        if not siri_path:
+            siri_path = Path("/Users/andrejt/Research/repositories/git/SIRI")
+        siri_path = Path(siri_path)
+        if not siri_path.exists():
+            raise CommandError(f"SIRI path does not exist: {siri_path}")
         
         self.stdout.write(f"Extracting concepts from NeTEx at {netex_path}")
         
@@ -699,17 +756,42 @@ class Command(BaseCommand):
             f"from {len(opra_files)} XSD files ({opra_with_concepts} yielded concepts)"
         )
 
+        self.stdout.write(f"\nExtracting concepts from SIRI at {siri_path}")
+        siri_concepts = {}
+        siri_files = _iter_xsd_files(siri_path, standard="siri", key_files_only=False)
+        siri_with_concepts = 0
+        for xsd_file in siri_files:
+            concepts = extract_concepts_from_xsd(
+                xsd_file,
+                "siri",
+                disable_allowlist=(disable_allowlist or True),
+                source_root=siri_path / "xsd",
+            )
+            if concepts:
+                siri_with_concepts += 1
+            siri_concepts.update(concepts)
+
+        self.stdout.write(
+            f"\nTotal SIRI concepts extracted: {len(siri_concepts)} "
+            f"from {len(siri_files)} XSD files ({siri_with_concepts} yielded concepts)"
+        )
+
         # Keep only relationships that point to known concept ids.
         known_concepts = (
             set(ontology["concepts"].keys())
             | set(netex_concepts.keys())
             | set(opra_concepts.keys())
+            | set(siri_concepts.keys())
         )
         for concept_data in netex_concepts.values():
             concept_data["related_to"] = [
                 cid for cid in concept_data.get("related_to", []) if cid in known_concepts
             ]
         for concept_data in opra_concepts.values():
+            concept_data["related_to"] = [
+                cid for cid in concept_data.get("related_to", []) if cid in known_concepts
+            ]
+        for concept_data in siri_concepts.values():
             concept_data["related_to"] = [
                 cid for cid in concept_data.get("related_to", []) if cid in known_concepts
             ]
@@ -742,6 +824,19 @@ class Command(BaseCommand):
                     "extracted_at": extracted_at,
                 }
 
+        for concept_id, concept_data in siri_concepts.items():
+            if concept_id not in ontology["concepts"]:
+                ontology["concepts"][concept_id] = {
+                    "labels": concept_data["labels"],
+                    "description": concept_data["description"],
+                    "related_to": concept_data["related_to"],
+                    "source_standards": ["siri"],
+                    "indexed_standards": ["siri"],
+                    "extracted_from": "xsd",
+                    "extracted_source": concept_data["source"],
+                    "extracted_at": extracted_at,
+                }
+
         if not skip_example_xml:
             netex_example_sources, netex_example_relations, netex_scanned = extract_concept_links_from_examples(
                 repo_root=netex_path,
@@ -751,17 +846,25 @@ class Command(BaseCommand):
                 repo_root=opra_path,
                 concepts=ontology["concepts"],
             )
+            siri_example_sources, siri_example_relations, siri_scanned = extract_concept_links_from_examples(
+                repo_root=siri_path,
+                concepts=ontology["concepts"],
+            )
 
             merged_sources: dict[str, set[str]] = {}
             for concept_id, sources in netex_example_sources.items():
                 merged_sources.setdefault(concept_id, set()).update(sources)
             for concept_id, sources in opra_example_sources.items():
                 merged_sources.setdefault(concept_id, set()).update(sources)
+            for concept_id, sources in siri_example_sources.items():
+                merged_sources.setdefault(concept_id, set()).update(sources)
 
             merged_relations: dict[str, set[str]] = {}
             for concept_id, related in netex_example_relations.items():
                 merged_relations.setdefault(concept_id, set()).update(related)
             for concept_id, related in opra_example_relations.items():
+                merged_relations.setdefault(concept_id, set()).update(related)
+            for concept_id, related in siri_example_relations.items():
                 merged_relations.setdefault(concept_id, set()).update(related)
 
             for concept_id, sources in merged_sources.items():
@@ -786,7 +889,7 @@ class Command(BaseCommand):
                 concept_data["related_to"] = sorted(existing_related)[:40]
 
             self.stdout.write(
-                f"Linked XML examples: scanned {netex_scanned + opra_scanned} files, "
+                f"Linked XML examples: scanned {netex_scanned + opra_scanned + siri_scanned} files, "
                 f"concepts with example links: {len(merged_sources)}"
             )
         
