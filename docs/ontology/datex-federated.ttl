@@ -1,0 +1,28 @@
+@prefix nits: <https://napcore.eu/ontology/nits#> .
+@prefix netex: <https://napcore.eu/ontology/netex#> .
+@prefix opra: <https://napcore.eu/ontology/opra#> .
+@prefix siri: <https://napcore.eu/ontology/siri#> .
+@prefix datex: <https://napcore.eu/ontology/datex#> .
+@prefix transmodel: <https://napcore.eu/ontology/transmodel#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+<https://napcore.eu/ontology/datex-federated>
+    a owl:Ontology ;
+    dcterms:title "DATEX II Federated Ontology"@en ;
+    dcterms:description "DATEX II-focused federated ontology module generated from the local glossary and linked to NAPCORE ITS core concepts."@en ;
+    dcterms:created "2026-04-16"^^xsd:date ;
+    owl:versionInfo "0.3.0" ;
+    owl:imports <https://napcore.eu/ontology/napcore-its> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> .
+
+datex:TrafficEvent a skos:Concept ;
+    skos:prefLabel "traffic event"@en ;
+    skos:altLabel "traffic incident"@en ;
+    skos:altLabel "congestion"@en ;
+    skos:altLabel "accident"@en ;
+    rdfs:comment "An incident affecting traffic flow"@en ;
+    skos:related netex:DestinationDisplay, netex:Line, netex:Network, netex:Operator, netex:ScheduledStopPoint, netex:TimetabledPassingTime, opra:ExternalPassengerCount, opra:TypeOfDelay, opra:VehicleTypeCapacity, siri:VehicleMonitoring .

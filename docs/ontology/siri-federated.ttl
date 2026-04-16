@@ -1,0 +1,45 @@
+@prefix nits: <https://napcore.eu/ontology/nits#> .
+@prefix netex: <https://napcore.eu/ontology/netex#> .
+@prefix opra: <https://napcore.eu/ontology/opra#> .
+@prefix siri: <https://napcore.eu/ontology/siri#> .
+@prefix datex: <https://napcore.eu/ontology/datex#> .
+@prefix transmodel: <https://napcore.eu/ontology/transmodel#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+<https://napcore.eu/ontology/siri-federated>
+    a owl:Ontology ;
+    dcterms:title "SIRI Federated Ontology"@en ;
+    dcterms:description "SIRI-focused federated ontology module generated from the local glossary and linked to NAPCORE ITS core concepts."@en ;
+    dcterms:created "2026-04-16"^^xsd:date ;
+    owl:versionInfo "0.3.0" ;
+    owl:imports <https://napcore.eu/ontology/napcore-its> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> .
+
+siri:EstimatedTimetable a skos:Concept ;
+    skos:prefLabel "estimated timetable"@en ;
+    skos:altLabel "estimatedtimetable"@en ;
+    skos:altLabel "realtime timetable"@en ;
+    skos:altLabel "real-time schedule"@en ;
+    skos:altLabel "estimated times"@en ;
+    rdfs:comment "Real-time estimated arrival and departure times for a vehicle journey"@en .
+
+siri:StopMonitoring a skos:Concept ;
+    skos:prefLabel "stop monitoring"@en ;
+    skos:altLabel "stopmonitoring"@en ;
+    skos:altLabel "real-time arrivals"@en ;
+    skos:altLabel "next bus"@en ;
+    skos:altLabel "stop arrivals"@en ;
+    rdfs:comment "Real-time information about arriving and departing vehicles at a stop"@en .
+
+siri:VehicleMonitoring a skos:Concept ;
+    skos:prefLabel "vehicle monitoring"@en ;
+    skos:altLabel "vehiclemonitoring"@en ;
+    skos:altLabel "real-time position"@en ;
+    skos:altLabel "live tracking"@en ;
+    skos:altLabel "vehicle tracking"@en ;
+    rdfs:comment "Real-time monitoring of vehicle position and status"@en ;
+    skos:related datex:TrafficEvent, netex:Line, opra:TypeOfDelay, opra:VehicleTypeCapacity .
