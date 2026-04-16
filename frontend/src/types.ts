@@ -16,6 +16,43 @@ export interface AnswerTrace {
   matchedFaqEntryId: string | null;
   retrievalEventIds: string[];
   evidenceLinkIds?: string[];
+  semanticQuery?: {
+    intent: string;
+    normativity: "mandatory" | "recommended" | "optional" | "unspecified";
+    coreConcept: string;
+    coreConcepts: string[];
+    ambiguousCoreConcept: boolean;
+    candidateStandards: string[];
+    originalTerms: string[];
+    confidence: {
+      intent: number;
+      concept: number;
+    };
+  };
+  semanticDisambiguationRequired?: boolean;
+  semanticDisambiguationPrompt?: string | null;
+  semanticFallback?: "NO_CONCEPT_MATCH" | "AMBIGUOUS_CORE_CONCEPT" | "PARTIAL_EVIDENCE" | null;
+  semanticProvisional?: boolean;
+  semanticProvisionalReason?:
+    | "LOW_RETRIEVAL_CONFIDENCE"
+    | "LIMITED_EVIDENCE_COVERAGE"
+    | "CROSS_STANDARD_GAP"
+    | null;
+  evidenceCoverageLevel?: "low" | "medium" | "high";
+  crossStandardConflict?: boolean;
+  crossStandardConflictType?:
+    | "NORMATIVE_STRENGTH_MISMATCH"
+    | "EVIDENCE_COVERAGE_ASYMMETRY"
+    | null;
+  crossStandardEvidencePartitions?: CrossStandardEvidencePartition[];
+}
+
+export interface CrossStandardEvidencePartition {
+  standard: string;
+  evidenceCount: number;
+  avgScore: number;
+  topSourcePaths: string[];
+  normativitySignals: Array<"mandatory" | "optional">;
 }
 
 export interface AnswerResponse {

@@ -486,9 +486,9 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                 <article className="result-card">
                   <h3>Queue Rows</h3>
                   <p className="muted">page {boardResult.page} · size {boardResult.pageSize} · total {boardResult.total}</p>
-                  <p className="muted">roles: {boardResult.actorRoles.join(", ") || "none"}</p>
-                  {boardResult.items.length === 0 && <p className="muted">No queue items found.</p>}
-                  {boardResult.items.length > 0 && (
+                  <p className="muted">roles: {(boardResult.actorRoles ?? []).join(", ") || "none"}</p>
+                  {(boardResult.items ?? []).length === 0 && <p className="muted">No queue items found.</p>}
+                  {(boardResult.items ?? []).length > 0 && (
                     <div className="table-wrap">
                       <table className="board-table">
                         <thead>
@@ -501,7 +501,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                           </tr>
                         </thead>
                         <tbody>
-                          {boardResult.items.map((item) => (
+                          {(boardResult.items ?? []).map((item) => (
                             <tr key={item.queueItemId}>
                               <td>{item.status}</td>
                               <td>{item.priority}</td>

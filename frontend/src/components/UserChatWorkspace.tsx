@@ -87,6 +87,67 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                   <p className="muted tiny">
                     mode: {turn.answer.mode} · confidence: {turn.answer.confidence.toFixed(2)} · reviewRequired: {String(turn.answer.reviewRequired)}
                   </p>
+                  {(turn.answer.trace.semanticProvisional || turn.answer.trace.crossStandardConflict) && (
+                    <div className="semantic-trace-chip-row">
+                      {turn.answer.trace.semanticProvisional && (
+                        <span className="semantic-chip semantic-chip-provisional">
+                          provisional evidence
+                          {turn.answer.trace.semanticProvisionalReason
+                            ? `: ${turn.answer.trace.semanticProvisionalReason}`
+                            : ""}
+                        </span>
+                      )}
+                      {turn.answer.trace.evidenceCoverageLevel && (
+                        <span className="semantic-chip semantic-chip-coverage">
+                          coverage: {turn.answer.trace.evidenceCoverageLevel}
+                        </span>
+                      )}
+                      {turn.answer.trace.crossStandardConflict && (
+                        <span className="semantic-chip semantic-chip-conflict">
+                          cross-standard conflict
+                          {turn.answer.trace.crossStandardConflictType
+                            ? `: ${turn.answer.trace.crossStandardConflictType}`
+                            : ""}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {(turn.answer.trace.semanticDisambiguationRequired || turn.answer.trace.semanticFallback) && (
+                    <div className="semantic-trace-note tiny muted">
+                      {turn.answer.trace.semanticDisambiguationRequired && turn.answer.trace.semanticDisambiguationPrompt
+                        ? turn.answer.trace.semanticDisambiguationPrompt
+                        : null}
+                      {turn.answer.trace.semanticFallback
+                        ? `${turn.answer.trace.semanticDisambiguationRequired ? " · " : ""}fallback: ${turn.answer.trace.semanticFallback}`
+                        : null}
+                    </div>
+                  )}
+                  {turn.answer.trace.crossStandardEvidencePartitions &&
+                    turn.answer.trace.crossStandardEvidencePartitions.length > 0 && (
+                      <details className="semantic-partitions">
+                        <summary className="tiny">Cross-standard evidence partitions</summary>
+                        <ul className="semantic-partitions-list">
+                          {turn.answer.trace.crossStandardEvidencePartitions.map((partition) => (
+                            <li key={`${turn.id}-${partition.standard}`}>
+                              <strong>{partition.standard}</strong>
+                              <span className="muted tiny">
+                                {` · evidence: ${partition.evidenceCount} · avg score: ${partition.avgScore.toFixed(2)}`}
+                              </span>
+                              {partition.normativitySignals.length > 0 && (
+                                <div className="tiny muted">
+                                  normativity: {partition.normativitySignals.join(", ")}
+                                </div>
+                              )}
+                              {partition.topSourcePaths.length > 0 && (
+                                <div className="tiny muted">
+                                  top sources: {partition.topSourcePaths.join(" | ")}
+                                </div>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    )}
                   {turn.answer.citations.length > 0 && (
                     <ul>
                       {turn.answer.citations.map((citation) => (

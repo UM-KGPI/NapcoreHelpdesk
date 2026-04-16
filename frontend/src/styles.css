@@ -523,6 +523,61 @@ button:disabled {
   font-size: 0.78rem;
 }
 
+.semantic-trace-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.4rem 0 0.35rem;
+}
+
+.semantic-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.72rem;
+  border: 1px solid transparent;
+}
+
+.semantic-chip-provisional {
+  background: #fff4db;
+  color: #7c3e00;
+  border-color: #f0c77f;
+}
+
+.semantic-chip-coverage {
+  background: #e8f6f1;
+  color: #0f5f57;
+  border-color: #9dd3c6;
+}
+
+.semantic-chip-conflict {
+  background: #ffeceb;
+  color: #9a3412;
+  border-color: #efb4ad;
+}
+
+.semantic-trace-note {
+  margin: 0.15rem 0 0.35rem;
+}
+
+.semantic-partitions {
+  margin: 0.35rem 0 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fffef9;
+  padding: 0.3rem 0.45rem;
+}
+
+.semantic-partitions summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.semantic-partitions-list {
+  margin-top: 0.35rem;
+}
+
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));

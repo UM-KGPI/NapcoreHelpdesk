@@ -9,7 +9,7 @@ async function openConnectionPanel(user: ReturnType<typeof userEvent.setup>): Pr
 }
 
 async function goToEditorialTab(user: ReturnType<typeof userEvent.setup>): Promise<void> {
-  await user.click(screen.getByRole("button", { name: "Editorial" }));
+  await user.click(screen.getByRole("button", { name: "Editor Review" }));
 }
 
 function mockJsonResponse(payload: unknown, status = 200): Response {
@@ -34,6 +34,9 @@ describe("Editorial Board flows", () => {
 
   it("loads board using selected filters", async () => {
     const fetchMock = vi.mocked(globalThis.fetch);
+    fetchMock.mockResolvedValueOnce(
+      mockJsonResponse([])
+    );
     fetchMock.mockResolvedValueOnce(
       mockJsonResponse({
         page: 1,
@@ -73,10 +76,10 @@ describe("Editorial Board flows", () => {
     await user.click(screen.getByRole("button", { name: "Load Queue" }));
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
     });
 
-    const calledUrl = fetchMock.mock.calls[0][0] as string;
+    const calledUrl = fetchMock.mock.calls[1][0] as string;
     expect(calledUrl).toContain("/editorial/queue?");
     expect(calledUrl).toContain("status=review");
     expect(calledUrl).toContain("reason=POLICY_REVIEW");
@@ -114,6 +117,7 @@ describe("Editorial Board flows", () => {
     };
 
     fetchMock
+      .mockResolvedValueOnce(mockJsonResponse([]))
       .mockResolvedValueOnce(mockJsonResponse(boardPayload))
       .mockResolvedValueOnce(
         mockJsonResponse({
@@ -157,11 +161,11 @@ describe("Editorial Board flows", () => {
     await user.click(screen.getByRole("button", { name: "approve" }));
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledTimes(3);
+      expect(fetchMock).toHaveBeenCalledTimes(4);
     });
 
-    const transitionUrl = fetchMock.mock.calls[1][0] as string;
-    const refreshedBoardUrl = fetchMock.mock.calls[2][0] as string;
+    const transitionUrl = fetchMock.mock.calls[2][0] as string;
+    const refreshedBoardUrl = fetchMock.mock.calls[3][0] as string;
     expect(transitionUrl).toContain("/editorial/queue/transition");
     expect(refreshedBoardUrl).toContain("/editorial/queue?");
 
@@ -171,6 +175,9 @@ describe("Editorial Board flows", () => {
 
   it("loads KPI metrics and renders key tiles", async () => {
     const fetchMock = vi.mocked(globalThis.fetch);
+    fetchMock.mockResolvedValueOnce(
+      mockJsonResponse([])
+    );
     fetchMock.mockResolvedValueOnce(
       mockJsonResponse({
         windowDays: 14,
@@ -219,10 +226,10 @@ describe("Editorial Board flows", () => {
     await user.click(screen.getByText("Load Queue Metrics"));
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
     });
 
-    const calledUrl = fetchMock.mock.calls[0][0] as string;
+    const calledUrl = fetchMock.mock.calls[1][0] as string;
     expect(calledUrl).toContain("/editorial/queue/metrics?");
     expect(calledUrl).toContain("windowDays=14");
     expect(calledUrl).toContain("slaHours=48");
@@ -234,6 +241,9 @@ describe("Editorial Board flows", () => {
 
   it("shows error banner when KPI metrics request fails", async () => {
     const fetchMock = vi.mocked(globalThis.fetch);
+    fetchMock.mockResolvedValueOnce(
+      mockJsonResponse([])
+    );
     fetchMock.mockResolvedValueOnce(
       mockJsonResponse(
         {

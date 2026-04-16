@@ -9,6 +9,7 @@ This folder contains the C4 Web GUI container for NAPCORE Helpdesk.
 - `Generation Profile` selector for deterministic grounded mode and LLM-ready backend mode.
 - Ask questions via `POST /api/v1/questions/answer`.
 - Inspect answer mode, confidence, citations, and trace IDs.
+- Inspect semantic trace signals in answers (provisional evidence, conflict flags, and cross-standard evidence partitions).
 - Route current answer to editorial queue via `POST /api/v1/editorial/queue`.
 - Apply editorial workflow transitions via `POST /api/v1/editorial/queue/transition`.
 - List/filter editorial queue board items via `GET /api/v1/editorial/queue`.
