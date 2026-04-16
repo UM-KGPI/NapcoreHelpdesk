@@ -30,6 +30,7 @@ from helpdesk.services.faq_matcher import match_faq
 from helpdesk.services.grounded_generator import generate_answer
 from helpdesk.services.llm_generator import LLMGenerationError, generate_answer_llm
 from helpdesk.services.policy_guard import evaluate_policy
+from helpdesk.services.question_parsing import parse_question_to_semantic_query
 from helpdesk.services.index_builder import index_repository
 from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 from helpdesk.services.retrieval_event_logger import log_retrieval_events
@@ -113,12 +114,9 @@ def _dominant_repository_url(chunks: list[dict]) -> str | None:
 
 
 def _select_citations(chunks: list[dict], max_citations: int) -> list[dict]:
-    dominant_repo = _dominant_repository_url(chunks)
-
     def citation_sort_key(chunk: dict) -> tuple:
         source_path = str(chunk.get("sourcePath", "")).lower()
         basename = source_path.rsplit("/", 1)[-1]
-        is_same_repo = chunk.get("repositoryUrl") == dominant_repo
         is_docs_or_model = (
             source_path.startswith("docs/")
             or "/docs/" in source_path
@@ -128,7 +126,6 @@ def _select_citations(chunks: list[dict], max_citations: int) -> list[dict]:
         )
         is_readme = basename.startswith("readme.")
         return (
-            0 if is_same_repo else 1,
             0 if is_docs_or_model else 1,
             0 if not is_readme else 1,
             -float(chunk.get("score", 0.0)),
@@ -136,8 +133,40 @@ def _select_citations(chunks: list[dict], max_citations: int) -> list[dict]:
         )
 
     selected: list[dict] = []
+    selected_repositories: set[str] = set()
     seen_sources: set[tuple[str, str]] = set()
-    for chunk in sorted(chunks, key=citation_sort_key):
+    sorted_chunks = sorted(chunks, key=citation_sort_key)
+
+    # Pass 1: maximize repository coverage while keeping best-ranked sources per repo.
+    for chunk in sorted_chunks:
+        repository_url = chunk.get("repositoryUrl", "")
+        source_path = chunk.get("sourcePath", "")
+        source_key = (repository_url, source_path)
+        if source_key in seen_sources:
+            continue
+        if repository_url in selected_repositories:
+            continue
+
+        seen_sources.add(source_key)
+        selected_repositories.add(repository_url)
+        selected.append(
+            {
+                "repositoryUrl": _build_file_url(
+                    repo_url=repository_url,
+                    commit_sha=chunk["commitSha"],
+                    source_path=source_path,
+                ),
+                "commitSha": chunk["commitSha"],
+                "sourcePath": source_path,
+                "chunkId": chunk["chunkId"],
+                "label": chunk.get("label"),
+            }
+        )
+        if len(selected) >= max_citations:
+            return selected
+
+    # Pass 2: fill remaining slots by global ranking regardless of repository.
+    for chunk in sorted_chunks:
         repository_url = chunk.get("repositoryUrl", "")
         source_path = chunk.get("sourcePath", "")
         source_key = (repository_url, source_path)
@@ -202,19 +231,13 @@ def _request_roles(request):
     return roles
 
 
-def _graph_rag_default_enabled() -> bool:
-    variant = str(getattr(settings, "GRAPH_RAG_VARIANT", "baseline") or "baseline").strip().lower()
-    return variant in {"graph-rag", "treatment", "enabled"}
+def _resolve_graph_rag_enabled(_options: dict) -> bool:
+    """Graph retrieval runs unconditionally whenever GRAPH_RAG_ENABLED is true.
 
-
-def _resolve_graph_rag_enabled(options: dict) -> bool:
-    """Resolve graph retrieval enablement with explicit request override."""
-
-    if "graphRagEnabled" in options:
-        requested = bool(options.get("graphRagEnabled"))
-    else:
-        requested = _graph_rag_default_enabled()
-    return bool(requested and settings.GRAPH_RAG_ENABLED)
+    Variant flags and per-request opt-out are not honoured: knowledge graph
+    expansion should always apply so that reasoning is repo-independent.
+    """
+    return bool(settings.GRAPH_RAG_ENABLED)
 
 
 def _request_actor_id(request):
@@ -227,6 +250,166 @@ def _request_actor_id(request):
     user = getattr(request, "user", None)
     username = getattr(user, "username", "") if user else ""
     return username or "unknown"
+
+
+def _evidence_coverage_level(chunks: list[dict], avg_score: float) -> str:
+    """Classify evidence coverage for traceability and provisional-answer signaling."""
+
+    if len(chunks) >= 4 and avg_score >= 0.75:
+        return "high"
+    if len(chunks) >= 2 and avg_score >= 0.62:
+        return "medium"
+    return "low"
+
+
+def _classify_partial_evidence(
+    *,
+    mode: str,
+    abstained: bool,
+    confidence: float,
+    chunks: list[dict],
+    graph_trace: dict,
+    effective_scope: list[str],
+) -> dict:
+    """Return provisional-answer metadata for partial-evidence fallback behavior."""
+
+    if mode != QuestionEvent.MODE_RAG or abstained:
+        return {
+            "semanticProvisional": False,
+            "semanticProvisionalReason": None,
+            "evidenceCoverageLevel": "high",
+        }
+
+    if not chunks:
+        return {
+            "semanticProvisional": True,
+            "semanticProvisionalReason": "LIMITED_EVIDENCE_COVERAGE",
+            "evidenceCoverageLevel": "low",
+        }
+
+    avg_score = sum(float(chunk.get("score", 0.0)) for chunk in chunks) / max(1, len(chunks))
+    coverage_level = _evidence_coverage_level(chunks, avg_score)
+    semantic_alignment = float(graph_trace.get("semanticAlignmentScore", 0.0))
+    repository_coverage = int(graph_trace.get("repositoryCoverageCount", 0))
+
+    reason = None
+    if confidence < 0.72 or semantic_alignment < 0.40:
+        reason = "LOW_RETRIEVAL_CONFIDENCE"
+    elif len(chunks) < 2 or coverage_level == "low":
+        reason = "LIMITED_EVIDENCE_COVERAGE"
+    elif len(effective_scope) > 1 and repository_coverage < min(2, len(effective_scope)):
+        reason = "CROSS_STANDARD_GAP"
+
+    return {
+        "semanticProvisional": reason is not None,
+        "semanticProvisionalReason": reason,
+        "evidenceCoverageLevel": coverage_level,
+    }
+
+
+def _infer_standard_from_chunk(chunk: dict, effective_scope: list[str]) -> str | None:
+    chunk_scope = chunk.get("standardsScope") or chunk.get("standards_scope") or []
+    if isinstance(chunk_scope, list):
+        for standard in effective_scope:
+            if standard in chunk_scope:
+                return standard
+
+    blob = "\n".join(
+        [
+            str(chunk.get("repositoryUrl", "")),
+            str(chunk.get("sourcePath", "")),
+            str(chunk.get("label", "")),
+            str(chunk.get("text", "")),
+        ]
+    ).lower()
+    aliases = {
+        "NeTEx": ["netex"],
+        "OpRa": ["opra"],
+        "SIRI": ["siri"],
+        "OJP": ["ojp"],
+        "DATEX II": ["datex"],
+        "Transmodel": ["transmodel"],
+    }
+    for standard in effective_scope:
+        for alias in aliases.get(standard, []):
+            if alias in blob:
+                return standard
+    return None
+
+
+def _build_cross_standard_analysis(
+    *,
+    mode: str,
+    effective_scope: list[str],
+    chunks: list[dict],
+) -> dict:
+    """Build per-standard evidence partitions and detect contradiction signals."""
+
+    if mode != QuestionEvent.MODE_RAG or len(effective_scope) < 2:
+        return {
+            "crossStandardConflict": False,
+            "crossStandardConflictType": None,
+            "crossStandardEvidencePartitions": [],
+        }
+
+    partitions: dict[str, list[dict]] = {standard: [] for standard in effective_scope}
+    for chunk in chunks:
+        standard = _infer_standard_from_chunk(chunk, effective_scope)
+        if standard:
+            partitions.setdefault(standard, []).append(chunk)
+
+    partition_payload: list[dict] = []
+    mandatory_standards: set[str] = set()
+    optional_standards: set[str] = set()
+    conflict_subject_detected = False
+
+    for standard in effective_scope:
+        standard_chunks = partitions.get(standard, [])
+        if not standard_chunks:
+            continue
+
+        merged_text = "\n".join(str(chunk.get("text", "")).lower() for chunk in standard_chunks)
+        signals = []
+        if any(token in merged_text for token in ["shall", "must", "required"]):
+            signals.append("mandatory")
+            mandatory_standards.add(standard)
+        if any(token in merged_text for token in ["may", "optional"]):
+            signals.append("optional")
+            optional_standards.add(standard)
+        if any(token in merged_text for token in ["journey", "delay", "pattern", "timetable", "exchange"]):
+            conflict_subject_detected = True
+
+        top_paths = []
+        for chunk in sorted(standard_chunks, key=lambda item: float(item.get("score", 0.0)), reverse=True)[:3]:
+            source_path = str(chunk.get("sourcePath", "")).strip()
+            if source_path and source_path not in top_paths:
+                top_paths.append(source_path)
+
+        avg_score = sum(float(chunk.get("score", 0.0)) for chunk in standard_chunks) / len(standard_chunks)
+        partition_payload.append(
+            {
+                "standard": standard,
+                "evidenceCount": len(standard_chunks),
+                "avgScore": round(avg_score, 4),
+                "topSourcePaths": top_paths,
+                "normativitySignals": signals,
+            }
+        )
+
+    conflict_type = None
+    conflict_detected = False
+    if mandatory_standards and optional_standards and conflict_subject_detected:
+        conflict_detected = True
+        conflict_type = "NORMATIVE_STRENGTH_MISMATCH"
+    elif len(partition_payload) >= 2 and any(partition["evidenceCount"] == 0 for partition in partition_payload):
+        conflict_detected = True
+        conflict_type = "EVIDENCE_COVERAGE_ASYMMETRY"
+
+    return {
+        "crossStandardConflict": conflict_detected,
+        "crossStandardConflictType": conflict_type,
+        "crossStandardEvidencePartitions": partition_payload,
+    }
 
 
 class HealthLiveView(APIView):
@@ -338,6 +521,11 @@ class QuestionAnswerView(APIView):
         options = data.get("options", {})
         question = data["question"].strip()
         scope = data.get("standardsScope", [])
+        semantic_query = parse_question_to_semantic_query(text=question, requested_scope=scope)
+        effective_scope = scope or semantic_query.candidate_standards
+        semantic_disambiguation_required = False
+        semantic_disambiguation_prompt = None
+        semantic_fallback = None
         generation_profile = data.get("generationProfile", "llm-ready")
         allow_abstain = options.get("allowAbstain", True)
         faq_min_confidence = options.get("faqMinConfidence", 0.85)
@@ -364,11 +552,25 @@ class QuestionAnswerView(APIView):
             "graphEvidenceCount": 0,
             "graphScoreContribution": 0.0,
             "graphProvenanceChainCount": 0,
+            "repositoryCoverageCount": 0,
+            "conceptCoverageCount": 0,
+            "semanticAlignmentScore": 0.0,
             "retrievalLatencyMs": 0.0,
         }
+        faq_match = None
 
         # 1) FAQ-first: fast, deterministic, and usually high confidence.
-        faq_match = match_faq(question=question, scope=scope)
+        if not scope and semantic_query.ambiguous_core_concept and len(effective_scope) > 1:
+            # Ambiguity fallback: reduce reasoning scope and ask for clarification.
+            effective_scope = [effective_scope[0]]
+            semantic_disambiguation_required = True
+            semantic_disambiguation_prompt = (
+                "Your question maps to multiple core concepts. "
+                "Please clarify the intended standard or artifact type for a more precise answer."
+            )
+            semantic_fallback = "AMBIGUOUS_CORE_CONCEPT"
+
+        faq_match = match_faq(question=question, scope=effective_scope)
         if faq_match and faq_match["confidence"] >= faq_min_confidence and faq_match.get("scope_match", True):
             mode = QuestionEvent.MODE_FAQ
             confidence = faq_match["confidence"]
@@ -376,6 +578,18 @@ class QuestionAnswerView(APIView):
             matched_faq_entry_id = faq_match["faq_entry_id"]
             answer_text = faq_match["answer"]
             citations = faq_match["citations"][:max_citations]
+        elif semantic_query.core_concept == "nits:unknown-concept" and allow_abstain and not effective_scope:
+            mode = QuestionEvent.MODE_ABSTAIN
+            confidence = 0.0
+            abstained = True
+            abstention_reason = QuestionEvent.REASON_INSUFFICIENT_EVIDENCE
+            review_required = True
+            semantic_fallback = "NO_CONCEPT_MATCH"
+            answer_text = (
+                "I could not map your question to a known standards concept yet. "
+                "Please clarify by naming a concrete concept, artifact, or standard scope."
+            )
+            citations = []
         else:
             # 2) RAG fallback: retrieve evidence, generate, then run policy gate.
             graph_rag_enabled = _resolve_graph_rag_enabled(options)
@@ -383,7 +597,7 @@ class QuestionAnswerView(APIView):
                 question=question,
                 top_k=retrieval_top_k,
                 min_score=retrieval_min_score,
-                scope=scope,
+                scope=effective_scope,
                 graph_rag_enabled=graph_rag_enabled,
             )
 
@@ -395,9 +609,25 @@ class QuestionAnswerView(APIView):
                     question=question,
                     top_k=retrieval_top_k,
                     min_score=relaxed_min_score,
-                    scope=scope,
+                    scope=effective_scope,
                     graph_rag_enabled=graph_rag_enabled,
                 )
+
+            # Retry with a wider candidate pool when the retrieved evidence is semantically
+            # misaligned with the query (low mean cosine similarity).  This is a general
+            # signal that keyword-trap chunks dominated the first pass.  We do not inspect
+            # question content here; the alignment score alone drives the decision.
+            _SEMANTIC_ALIGNMENT_RETRY_THRESHOLD = 0.35
+            if chunks and graph_trace.get("semanticAlignmentScore", 1.0) < _SEMANTIC_ALIGNMENT_RETRY_THRESHOLD:
+                wider_chunks, wider_trace = retrieve_chunks_with_trace(
+                    question=question,
+                    top_k=retrieval_top_k * 2,
+                    min_score=relaxed_min_score,
+                    scope=effective_scope,
+                    graph_rag_enabled=graph_rag_enabled,
+                )
+                if wider_trace.get("semanticAlignmentScore", 0.0) > graph_trace.get("semanticAlignmentScore", 0.0):
+                    chunks, graph_trace = wider_chunks, wider_trace
 
             retrieved_chunks = chunks
             retrieval_event_ids = [chunk["retrievalEventId"] for chunk in chunks]
@@ -414,7 +644,7 @@ class QuestionAnswerView(APIView):
                 use_llm = generation_profile == "llm-ready" and settings.LLM_ENABLED
                 if use_llm:
                     try:
-                        generated = generate_answer_llm(question=question, chunks=chunks, scope=scope)
+                        generated = generate_answer_llm(question=question, chunks=chunks, scope=effective_scope)
                     except LLMGenerationError:
                         generated = generate_answer(question=question, chunks=chunks)
                 else:
@@ -454,7 +684,7 @@ class QuestionAnswerView(APIView):
                 "question": question,
                 "session_id": data.get("sessionId", ""),
                 "user_id": data.get("userId", ""),
-                "standards_scope": scope,
+                "standards_scope": effective_scope,
                 "language": data.get("language", "en"),
                 "mode": mode,
                 "confidence": confidence,
@@ -474,6 +704,22 @@ class QuestionAnswerView(APIView):
         event.retrieval_event_ids = persisted_retrieval_ids
         event.evidence_link_ids = evidence_link_ids
         event.save(update_fields=["retrieval_event_ids", "evidence_link_ids", "updated_at"])
+
+        partial_evidence = _classify_partial_evidence(
+            mode=mode,
+            abstained=abstained,
+            confidence=confidence,
+            chunks=retrieved_chunks,
+            graph_trace=graph_trace,
+            effective_scope=effective_scope,
+        )
+        cross_standard_analysis = _build_cross_standard_analysis(
+            mode=mode,
+            effective_scope=effective_scope,
+            chunks=retrieved_chunks,
+        )
+        if partial_evidence["semanticProvisional"] and semantic_fallback is None:
+            semantic_fallback = "PARTIAL_EVIDENCE"
 
         return Response(
             {
@@ -495,6 +741,21 @@ class QuestionAnswerView(APIView):
                     "graphConceptIds": graph_trace["graphConceptIds"],
                     "graphEvidenceCount": graph_trace["graphEvidenceCount"],
                     "graphScoreContribution": graph_trace["graphScoreContribution"],
+                    "repositoryCoverageCount": graph_trace.get("repositoryCoverageCount", 0),
+                    "conceptCoverageCount": graph_trace.get("conceptCoverageCount", 0),
+                    "semanticAlignmentScore": graph_trace.get("semanticAlignmentScore", 0.0),
+                    "semanticQuery": semantic_query.as_dict(),
+                    "semanticDisambiguationRequired": semantic_disambiguation_required,
+                    "semanticDisambiguationPrompt": semantic_disambiguation_prompt,
+                    "semanticFallback": semantic_fallback,
+                    "semanticProvisional": partial_evidence["semanticProvisional"],
+                    "semanticProvisionalReason": partial_evidence["semanticProvisionalReason"],
+                    "evidenceCoverageLevel": partial_evidence["evidenceCoverageLevel"],
+                    "crossStandardConflict": cross_standard_analysis["crossStandardConflict"],
+                    "crossStandardConflictType": cross_standard_analysis["crossStandardConflictType"],
+                    "crossStandardEvidencePartitions": cross_standard_analysis[
+                        "crossStandardEvidencePartitions"
+                    ],
                 }
             },
             status=status.HTTP_200_OK,

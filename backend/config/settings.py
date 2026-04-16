@@ -39,8 +39,15 @@ env = environ.Env(
     EMBEDDING_MODEL=(str, "text-embedding-3-small"),
     EMBEDDING_TIMEOUT_SECONDS=(int, 30),
     GRAPH_RAG_ENABLED=(bool, False),
+    GRAPHDB_ENABLED=(bool, False),
+    GRAPHDB_SPARQL_ENDPOINT=(str, ""),
+    GRAPHDB_REPOSITORY=(str, ""),
+    GRAPHDB_USER=(str, ""),
+    GRAPHDB_PASSWORD=(str, ""),
+    GRAPHDB_TIMEOUT_SECONDS=(int, 5),
     GRAPH_RAG_VARIANT=(str, "baseline"),
     NEO4J_ENABLED=(bool, False),
+    NEO4J_EXPERIMENTAL_ENABLED=(bool, False),
     NEO4J_URI=(str, ""),
     NEO4J_USER=(str, "neo4j"),
     NEO4J_PASSWORD=(str, ""),
@@ -184,7 +191,14 @@ EMBEDDING_API_KEY = env("EMBEDDING_API_KEY").strip()
 EMBEDDING_MODEL = env("EMBEDDING_MODEL").strip() or "text-embedding-3-small"
 EMBEDDING_TIMEOUT_SECONDS = env("EMBEDDING_TIMEOUT_SECONDS")
 GRAPH_RAG_ENABLED = env("GRAPH_RAG_ENABLED")
+GRAPHDB_ENABLED = env("GRAPHDB_ENABLED")
+GRAPHDB_SPARQL_ENDPOINT = env("GRAPHDB_SPARQL_ENDPOINT", default="").strip()
+GRAPHDB_REPOSITORY = env("GRAPHDB_REPOSITORY", default="").strip()
+GRAPHDB_USER = env("GRAPHDB_USER", default="").strip()
+GRAPHDB_PASSWORD = env("GRAPHDB_PASSWORD", default="").strip()
+GRAPHDB_TIMEOUT_SECONDS = env("GRAPHDB_TIMEOUT_SECONDS")
 NEO4J_ENABLED = env("NEO4J_ENABLED")
+NEO4J_EXPERIMENTAL_ENABLED = env("NEO4J_EXPERIMENTAL_ENABLED")
 NEO4J_URI = env("NEO4J_URI", default="").strip()
 NEO4J_USER = env("NEO4J_USER", default="neo4j").strip() or "neo4j"
 NEO4J_PASSWORD = env("NEO4J_PASSWORD", default="").strip()

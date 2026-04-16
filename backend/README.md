@@ -84,6 +84,37 @@ Note for local SQLite:
 - `--prune` may hit SQLite parameter limits on very large repositories.
 - If that happens, run without `--prune` or use PostgreSQL for production-scale indexing.
 
+## Semantic reasoning model (implemented)
+- The backend retrieval path uses an explicit two-layer semantic setup:
+  - Glossary: `helpdesk/ontologies/standards.yaml`
+  - NITS ontology: `helpdesk/ontologies/nits.yaml`
+- Runtime uses `nits:` as the canonical core namespace and still supports legacy `maps_to_nch` fields for backward compatibility.
+- Canonical RDF/Turtle artifact for the same core graph: `../docs/ontology/napcore-its.ttl`.
+- Runtime implementation is in `helpdesk/services/semantic_graph.py`.
+- Query reasoning flow:
+  1. Lexical concept extraction from glossary labels and aliases.
+  2. Mapping from glossary concepts to `nits:` concepts (`maps_to_nits`, legacy `maps_to_nch`, or synonym-derived mapping).
+  3. NITS relation expansion (`related_to`) for cross-standard semantic neighbors.
+  4. Projection back to glossary concepts for candidate retrieval and ranking adjustments.
+- This keeps term normalization and user-language matching in the glossary while semantic interoperability is handled by the ontology graph.
+
+### Ontology validation controls
+- Ontology payloads are schema-validated at load time in `helpdesk/services/semantic_graph.py`.
+- Default behavior (safe mode): malformed ontology fields are sanitized where possible and invalid payloads fall back to empty in-memory structures.
+- Optional strict mode: set `NAPCORE_ONTOLOGY_STRICT_VALIDATION=true` to fail fast on schema validation errors (recommended for CI and controlled deployments).
+
+## GraphDB anchoring interface (implemented)
+- Semantic parsing now supports optional GraphDB SPARQL anchoring/discovery through a connector abstraction in `helpdesk/services/graphdb_connector.py`.
+- Configuration flags:
+  - `GRAPHDB_ENABLED`
+  - `GRAPHDB_SPARQL_ENDPOINT`
+  - `GRAPHDB_REPOSITORY`
+  - `GRAPHDB_TIMEOUT_SECONDS`
+- When GraphDB is enabled and reachable, parsing can:
+  - anchor terms to core concepts via SPARQL;
+  - discover relevant standards from aligned concepts.
+- If GraphDB is disabled/unreachable or returns no anchors, parsing automatically falls back to in-memory ontology mappings so orchestration remains available.
+
 ## Scheduled incremental indexing
 Celery Beat runs `helpdesk.reindex_default_repository` daily. Configure:
 - `INDEX_SCHEDULE_REPO_URL`

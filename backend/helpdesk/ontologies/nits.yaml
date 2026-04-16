@@ -1,0 +1,96 @@
+ontology:
+  id: napcore-its
+  iri: https://napcore.eu/ontology/napcore-its
+  version: 0.1.0
+  canonical_prefix: nits
+
+namespaces:
+  nits: https://napcore.eu/ontology/nits#
+
+concepts:
+  nits:journey:
+    labels:
+      - journey
+      - transport journey
+    related_to:
+      - nits:vehicle-journey
+      - nits:journey-pattern
+
+  nits:vehicle-journey:
+    labels:
+      - vehicle journey
+      - service journey
+      - delayed journey
+      - cancelled journey
+    related_to:
+      - nits:journey
+      - nits:delay
+      - nits:capacity
+      - nits:service-intensity
+
+  nits:journey-pattern:
+    labels:
+      - journey pattern
+      - route pattern
+    related_to:
+      - nits:journey
+      - nits:line
+
+  nits:line:
+    labels:
+      - line
+      - service line
+    related_to:
+      - nits:journey-pattern
+      - nits:network
+
+  nits:network:
+    labels:
+      - network
+      - transport network
+    related_to:
+      - nits:line
+      - nits:service-intensity
+
+  nits:delay:
+    labels:
+      - delay
+      - journey delay
+      - delay statistics
+      - type of delay
+    related_to:
+      - nits:vehicle-journey
+      - nits:service-intensity
+
+  nits:capacity:
+    labels:
+      - capacity
+      - planned capacity
+      - actual capacity
+      - vehicle capacity
+      - passenger capacity
+    related_to:
+      - nits:vehicle-journey
+      - nits:service-intensity
+      - nits:passenger-load
+
+  nits:service-intensity:
+    labels:
+      - service intensity
+      - planned service intensity
+      - actual service intensity
+      - expected service intensity
+      - transport performance
+    related_to:
+      - nits:capacity
+      - nits:network
+      - nits:delay
+
+  nits:passenger-load:
+    labels:
+      - passenger count
+      - vehicle load
+      - occupancy
+    related_to:
+      - nits:capacity
+      - nits:service-intensity

@@ -4,6 +4,7 @@ import datetime as dt
 import json
 import copy
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import jwt
@@ -257,13 +258,338 @@ class HelpdeskApiTests(APITestCase):
         self.assertIn("graphConceptIds", response.data["trace"])
         self.assertIn("graphEvidenceCount", response.data["trace"])
         self.assertIn("graphScoreContribution", response.data["trace"])
+        self.assertIn("repositoryCoverageCount", response.data["trace"])
+        self.assertIn("conceptCoverageCount", response.data["trace"])
+        self.assertIn("semanticAlignmentScore", response.data["trace"])
         self.assertGreaterEqual(response.data["trace"]["graphExpansionHops"], 0)
         self.assertGreaterEqual(response.data["trace"]["graphEvidenceCount"], 0)
+        self.assertGreaterEqual(response.data["trace"]["repositoryCoverageCount"], 0)
+        self.assertGreaterEqual(response.data["trace"]["conceptCoverageCount"], 0)
+        self.assertGreaterEqual(response.data["trace"]["semanticAlignmentScore"], 0.0)
 
-    @override_settings(GRAPH_RAG_ENABLED=True, GRAPH_RAG_VARIANT="graph-rag")
+    @patch("helpdesk.api.views.parse_question_to_semantic_query")
     @patch("helpdesk.api.views.retrieve_chunks_with_trace")
-    def test_answer_uses_graph_variant_default_when_option_omitted(self, retrieve_mock):
-        """Ensure graph variant enables graph retrieval by default when request omits graphRagEnabled."""
+    def test_answer_uses_discovered_scope_and_exposes_semantic_query_trace(self, retrieve_mock, parse_mock):
+        """When request scope is missing, semantic parsing provides candidate standards for retrieval."""
+
+        parse_mock.return_value = SimpleNamespace(
+            core_concept="nits:journey-pattern",
+            ambiguous_core_concept=False,
+            candidate_standards=["NeTEx", "OpRa"],
+            as_dict=lambda: {
+                "intent": "cross_standard_relation",
+                "normativity": "unspecified",
+                "coreConcept": "nits:journey-pattern",
+                "coreConcepts": ["nits:journey-pattern"],
+                "ambiguousCoreConcept": False,
+                "candidateStandards": ["NeTEx", "OpRa"],
+                "originalTerms": ["ServiceJourneyPattern"],
+                "confidence": {"intent": 0.9, "concept": 0.95},
+            },
+        )
+        retrieve_mock.return_value = (
+            [
+                {
+                    "text": "ServiceJourneyPattern is aligned with OpRa journey concepts.",
+                    "score": 0.84,
+                    "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+                    "commitSha": "abc123",
+                    "sourcePath": "docs/journey-pattern.md",
+                    "chunkId": "chunk-1",
+                    "label": "Journey Pattern",
+                    "retrievalEventId": "re-test-semantic-001",
+                }
+            ],
+            {
+                "graphRagVariant": "control",
+                "graphExpansionHops": 0,
+                "graphExpansionSource": "none",
+                "graphConceptIds": [],
+                "graphCandidatesAdded": 0,
+                "graphEvidenceCount": 0,
+                "graphScoreContribution": 0.0,
+                "graphProvenanceChainCount": 0,
+                "semanticAlignmentScore": 0.73,
+                "retrievalLatencyMs": 8.0,
+            },
+        )
+
+        response = self.client.post(
+            reverse("answer-question"),
+            {
+                "question": "How does ServiceJourneyPattern relate across standards?",
+                "generationProfile": "deterministic-grounded",
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-semantic-scope-001",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_matches_schema("AnswerResponse", response.data)
+        self.assertEqual(retrieve_mock.call_args.kwargs.get("scope"), ["NeTEx", "OpRa"])
+        self.assertEqual(response.data["trace"]["semanticQuery"]["coreConcept"], "nits:journey-pattern")
+        self.assertEqual(
+            response.data["trace"]["semanticQuery"]["candidateStandards"],
+            ["NeTEx", "OpRa"],
+        )
+
+    @patch("helpdesk.api.views.parse_question_to_semantic_query")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_answer_returns_clarification_abstain_when_no_concept_match(self, retrieve_mock, parse_mock):
+        """No concept match should trigger clarification abstain without retrieval."""
+
+        parse_mock.return_value = SimpleNamespace(
+            core_concept="nits:unknown-concept",
+            ambiguous_core_concept=False,
+            candidate_standards=[],
+            as_dict=lambda: {
+                "intent": "unknown",
+                "normativity": "unspecified",
+                "coreConcept": "nits:unknown-concept",
+                "coreConcepts": [],
+                "ambiguousCoreConcept": False,
+                "candidateStandards": [],
+                "originalTerms": ["unmapped"],
+                "confidence": {"intent": 0.6, "concept": 0.45},
+            },
+        )
+
+        response = self.client.post(
+            reverse("answer-question"),
+            {"question": "What is the xyz nonstandard token?"},
+            format="json",
+            HTTP_X_REQUEST_ID="req-semantic-no-concept-001",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_matches_schema("AnswerResponse", response.data)
+        self.assertEqual(response.data["mode"], "abstain")
+        self.assertTrue(response.data["abstained"])
+        self.assertEqual(response.data["trace"]["semanticFallback"], "NO_CONCEPT_MATCH")
+        self.assertFalse(retrieve_mock.called)
+
+    @patch("helpdesk.api.views.parse_question_to_semantic_query")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_answer_reduces_scope_when_core_concept_is_ambiguous(self, retrieve_mock, parse_mock):
+        """Ambiguous core concept should reduce automatic scope to first candidate standard."""
+
+        parse_mock.return_value = SimpleNamespace(
+            core_concept="nits:journey-pattern",
+            ambiguous_core_concept=True,
+            candidate_standards=["NeTEx", "OpRa"],
+            as_dict=lambda: {
+                "intent": "cross_standard_relation",
+                "normativity": "unspecified",
+                "coreConcept": "nits:journey-pattern",
+                "coreConcepts": ["nits:journey-pattern", "nits:journey-ref"],
+                "ambiguousCoreConcept": True,
+                "candidateStandards": ["NeTEx", "OpRa"],
+                "originalTerms": ["JourneyPattern"],
+                "confidence": {"intent": 0.9, "concept": 0.75},
+            },
+        )
+        retrieve_mock.return_value = (
+            [
+                {
+                    "text": "Journey pattern mapping details.",
+                    "score": 0.82,
+                    "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+                    "commitSha": "abc123",
+                    "sourcePath": "docs/journey-pattern.md",
+                    "chunkId": "chunk-ambiguity-1",
+                    "label": "Journey Pattern",
+                    "retrievalEventId": "re-test-ambiguity-001",
+                }
+            ],
+            {
+                "graphRagVariant": "control",
+                "graphExpansionHops": 0,
+                "graphExpansionSource": "none",
+                "graphConceptIds": [],
+                "graphCandidatesAdded": 0,
+                "graphEvidenceCount": 0,
+                "graphScoreContribution": 0.0,
+                "graphProvenanceChainCount": 0,
+                "semanticAlignmentScore": 0.7,
+                "retrievalLatencyMs": 6.0,
+            },
+        )
+
+        response = self.client.post(
+            reverse("answer-question"),
+            {
+                "question": "How does journey pattern align across standards?",
+                "generationProfile": "deterministic-grounded",
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-semantic-ambiguity-001",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_matches_schema("AnswerResponse", response.data)
+        self.assertEqual(retrieve_mock.call_args.kwargs.get("scope"), ["NeTEx"])
+        self.assertTrue(response.data["trace"]["semanticDisambiguationRequired"])
+        self.assertEqual(response.data["trace"]["semanticFallback"], "AMBIGUOUS_CORE_CONCEPT")
+
+    @patch("helpdesk.api.views.parse_question_to_semantic_query")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_answer_marks_provisional_trace_for_partial_evidence(self, retrieve_mock, parse_mock):
+        """Low-confidence sparse retrieval should be marked as provisional partial evidence."""
+
+        parse_mock.return_value = SimpleNamespace(
+            core_concept="nits:journey-pattern",
+            ambiguous_core_concept=False,
+            candidate_standards=["NeTEx", "OpRa"],
+            as_dict=lambda: {
+                "intent": "cross_standard_relation",
+                "normativity": "unspecified",
+                "coreConcept": "nits:journey-pattern",
+                "coreConcepts": ["nits:journey-pattern"],
+                "ambiguousCoreConcept": False,
+                "candidateStandards": ["NeTEx", "OpRa"],
+                "originalTerms": ["JourneyPattern"],
+                "confidence": {"intent": 0.9, "concept": 0.85},
+            },
+        )
+        retrieve_mock.return_value = (
+            [
+                {
+                    "text": "Sparse chunk mentioning journey pattern once.",
+                    "score": 0.58,
+                    "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+                    "commitSha": "abc123",
+                    "sourcePath": "docs/sparse.md",
+                    "chunkId": "chunk-partial-1",
+                    "label": "Sparse",
+                    "retrievalEventId": "re-test-partial-001",
+                }
+            ],
+            {
+                "graphRagVariant": "control",
+                "graphExpansionHops": 0,
+                "graphExpansionSource": "none",
+                "graphConceptIds": [],
+                "graphCandidatesAdded": 0,
+                "graphEvidenceCount": 1,
+                "graphScoreContribution": 0.0,
+                "graphProvenanceChainCount": 0,
+                "repositoryCoverageCount": 1,
+                "conceptCoverageCount": 1,
+                "semanticAlignmentScore": 0.33,
+                "retrievalLatencyMs": 5.0,
+            },
+        )
+
+        response = self.client.post(
+            reverse("answer-question"),
+            {
+                "question": "How does journey pattern relate across NeTEx and OpRa?",
+                "generationProfile": "deterministic-grounded",
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-semantic-partial-001",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_matches_schema("AnswerResponse", response.data)
+        self.assertEqual(response.data["mode"], "rag")
+        self.assertTrue(response.data["trace"]["semanticProvisional"])
+        self.assertEqual(response.data["trace"]["semanticFallback"], "PARTIAL_EVIDENCE")
+        self.assertIn(
+            response.data["trace"]["semanticProvisionalReason"],
+            ["LOW_RETRIEVAL_CONFIDENCE", "LIMITED_EVIDENCE_COVERAGE", "CROSS_STANDARD_GAP"],
+        )
+        self.assertEqual(response.data["trace"]["evidenceCoverageLevel"], "low")
+
+    @patch("helpdesk.api.views.parse_question_to_semantic_query")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_answer_reports_cross_standard_conflict_partitions(self, retrieve_mock, parse_mock):
+        """Cross-standard normative mismatch should be surfaced in trace partitions."""
+
+        parse_mock.return_value = SimpleNamespace(
+            core_concept="nits:journey-pattern",
+            ambiguous_core_concept=False,
+            candidate_standards=["NeTEx", "OpRa"],
+            as_dict=lambda: {
+                "intent": "cross_standard_relation",
+                "normativity": "unspecified",
+                "coreConcept": "nits:journey-pattern",
+                "coreConcepts": ["nits:journey-pattern"],
+                "ambiguousCoreConcept": False,
+                "candidateStandards": ["NeTEx", "OpRa"],
+                "originalTerms": ["JourneyPattern"],
+                "confidence": {"intent": 0.9, "concept": 0.9},
+            },
+        )
+        retrieve_mock.return_value = (
+            [
+                {
+                    "text": "NeTEx SHALL provide journey pattern exchange details.",
+                    "score": 0.84,
+                    "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+                    "commitSha": "abc123",
+                    "sourcePath": "docs/netex-journey.md",
+                    "chunkId": "chunk-conflict-1",
+                    "label": "NeTEx Journey",
+                    "retrievalEventId": "re-test-conflict-001",
+                    "standardsScope": ["NeTEx"],
+                },
+                {
+                    "text": "OpRa MAY exchange delayed journey reporting as optional extensions.",
+                    "score": 0.81,
+                    "repositoryUrl": "https://github.com/OpRa-CEN/OpRa",
+                    "commitSha": "def456",
+                    "sourcePath": "docs/opra-delay.md",
+                    "chunkId": "chunk-conflict-2",
+                    "label": "OpRa Delay",
+                    "retrievalEventId": "re-test-conflict-002",
+                    "standardsScope": ["OpRa"],
+                },
+            ],
+            {
+                "graphRagVariant": "control",
+                "graphExpansionHops": 0,
+                "graphExpansionSource": "none",
+                "graphConceptIds": [],
+                "graphCandidatesAdded": 0,
+                "graphEvidenceCount": 2,
+                "graphScoreContribution": 0.0,
+                "graphProvenanceChainCount": 0,
+                "repositoryCoverageCount": 2,
+                "conceptCoverageCount": 1,
+                "semanticAlignmentScore": 0.72,
+                "retrievalLatencyMs": 6.0,
+            },
+        )
+
+        response = self.client.post(
+            reverse("answer-question"),
+            {
+                "question": "How do NeTEx and OpRa differ for journey pattern exchange?",
+                "generationProfile": "deterministic-grounded",
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-cross-conflict-001",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_matches_schema("AnswerResponse", response.data)
+        self.assertTrue(response.data["trace"]["crossStandardConflict"])
+        self.assertEqual(
+            response.data["trace"]["crossStandardConflictType"],
+            "NORMATIVE_STRENGTH_MISMATCH",
+        )
+        self.assertEqual(len(response.data["trace"]["crossStandardEvidencePartitions"]), 2)
+
+    @override_settings(GRAPH_RAG_ENABLED=True)
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_answer_uses_graph_when_enabled_and_option_omitted(self, retrieve_mock):
+        """Graph retrieval runs whenever GRAPH_RAG_ENABLED=True, regardless of request options."""
         retrieve_mock.return_value = (
             [
                 {
@@ -286,6 +612,7 @@ class HelpdeskApiTests(APITestCase):
                 "graphEvidenceCount": 1,
                 "graphScoreContribution": 0.2,
                 "graphProvenanceChainCount": 1,
+                "semanticAlignmentScore": 0.72,
                 "retrievalLatencyMs": 12.0,
             },
         )
@@ -310,10 +637,10 @@ class HelpdeskApiTests(APITestCase):
         self.assertTrue(retrieve_mock.called)
         self.assertTrue(retrieve_mock.call_args.kwargs.get("graph_rag_enabled"))
 
-    @override_settings(GRAPH_RAG_ENABLED=True, GRAPH_RAG_VARIANT="graph-rag")
+    @override_settings(GRAPH_RAG_ENABLED=True)
     @patch("helpdesk.api.views.retrieve_chunks_with_trace")
-    def test_answer_allows_explicit_graph_variant_opt_out(self, retrieve_mock):
-        """Ensure explicit graphRagEnabled=false overrides graph-rag variant default."""
+    def test_answer_ignores_explicit_graph_opt_out_when_enabled(self, retrieve_mock):
+        """graphRagEnabled=false in request options is ignored — graph runs unconditionally when GRAPH_RAG_ENABLED=True."""
         retrieve_mock.return_value = (
             [
                 {
@@ -336,6 +663,7 @@ class HelpdeskApiTests(APITestCase):
                 "graphEvidenceCount": 0,
                 "graphScoreContribution": 0.0,
                 "graphProvenanceChainCount": 0,
+                "semanticAlignmentScore": 0.65,
                 "retrievalLatencyMs": 8.0,
             },
         )
@@ -359,10 +687,11 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assert_matches_schema("AnswerResponse", response.data)
         self.assertTrue(retrieve_mock.called)
-        self.assertFalse(retrieve_mock.call_args.kwargs.get("graph_rag_enabled"))
+        # graphRagEnabled:false must be ignored; graph is always active with GRAPH_RAG_ENABLED=True
+        self.assertTrue(retrieve_mock.call_args.kwargs.get("graph_rag_enabled"))
 
-    def test_select_citations_deduplicates_and_prefers_dominant_repo_docs(self):
-        """Ensure citation selection prefers substantive chunks from the dominant repository."""
+    def test_select_citations_deduplicates_and_prefers_cross_repository_coverage(self):
+        """Ensure citation selection mixes top evidence across repositories before filling extras."""
         citations = _select_citations(
             chunks=[
                 {
@@ -405,6 +734,12 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(citations[0]["sourcePath"], "docs/ef-explicit-frame-hierarchy-model-summary.md")
         self.assertEqual(citations[0]["commitSha"], "3734861")
         self.assertEqual(sum(1 for item in citations if item["sourcePath"] == "docs/ef-explicit-frame-hierarchy-model-summary.md"), 1)
+        citation_repositories = {
+            item["repositoryUrl"].split("/blob/")[0] if "/blob/" in item["repositoryUrl"] else item["repositoryUrl"]
+            for item in citations
+        }
+        self.assertIn("https://github.com/OpRa-CEN/OpRa", citation_repositories)
+        self.assertIn("https://github.com/NeTEx-CEN/test-Profile-Documentation", citation_repositories)
 
     @patch("helpdesk.api.views._resolve_commit_sha", return_value="3734861abcdef0123456789abcdef012345678")
     def test_build_file_url_expands_short_commit_sha(self, resolve_commit_sha_mock):

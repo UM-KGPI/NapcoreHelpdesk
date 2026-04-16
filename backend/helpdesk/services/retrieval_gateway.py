@@ -16,8 +16,15 @@ except Exception:  # pragma: no cover - only unavailable in non-postgres-only en
 from helpdesk.models import SourceChunk
 from helpdesk.db_fields import HAS_NATIVE_PGVECTOR
 from helpdesk.services.embeddings import build_text_embedding, cosine_similarity, normalize_text_tokens
+from helpdesk.services.graphdb_client import query_graphdb_concept_expansion
 from helpdesk.services.neo4j_importer import query_neo4j_concept_expansion
-from helpdesk.services.semantic_graph import GRAPH_CONCEPT_ALIASES, expand_graph_concepts, extract_graph_concepts
+from helpdesk.services.semantic_graph import (
+    GRAPH_CONCEPT_ALIASES,
+    expand_graph_concepts,
+    extract_graph_concepts,
+    get_concept_canonical_terms,
+    get_concept_example_paths,
+)
 
 try:
     from pgvector.django import CosineDistance  # type: ignore
@@ -397,12 +404,19 @@ def _build_query_embedding_input(
     question: str,
     hinted_standards: set[str],
     hinted_doc_types: set[str],
+    expanded_concept_terms: list[str] | None = None,
 ) -> str:
     standards = ", ".join(sorted(hinted_standards)) if hinted_standards else "unspecified"
     doc_types = ", ".join(sorted(hinted_doc_types)) if hinted_doc_types else "unspecified"
+    concept_line = (
+        f"query_concepts: {', '.join(expanded_concept_terms)}\n"
+        if expanded_concept_terms
+        else ""
+    )
     return (
         f"query_scope: {standards}\n"
         f"query_doc_types: {doc_types}\n"
+        f"{concept_line}"
         f"question: {question}"
     )
 
@@ -435,6 +449,7 @@ def _graph_score_adjustment(
     graph_enabled: bool,
     question_concepts: set[str],
     expanded_concepts: set[str],
+    concept_example_paths: set[str],
     chunk_text: str,
     source_path: str,
     label: str,
@@ -454,13 +469,25 @@ def _graph_score_adjustment(
     if not chunk_concepts:
         return 0.0, False, set()
 
+    lowered_path = (source_path or "").lower().strip()
+    has_example_path_match = bool(
+        lowered_path
+        and any(lowered_path.endswith(path.lower()) for path in concept_example_paths)
+    )
+
     direct_overlap = chunk_concepts.intersection(question_concepts)
     if direct_overlap:
-        return 0.22, True, direct_overlap
+        return 0.20, True, direct_overlap
 
     expanded_overlap = chunk_concepts.intersection(expanded_concepts)
     if expanded_overlap:
-        return 0.15, True, expanded_overlap
+        bonus = 0.0
+        if lowered_path.startswith("examples/"):
+            # Generic preference for concept-relevant example artifacts.
+            bonus += 0.08
+        if has_example_path_match:
+            bonus += 0.05
+        return 0.10 + bonus, True, expanded_overlap
 
     return 0.0, False, set()
 
@@ -473,7 +500,9 @@ def _graph_concept_candidates(
     """Return DB chunks whose text mentions any alias of the expanded concept set.
 
     Builds an OR filter across all aliases for each concept ID present in
-    *expanded_concepts*, capped at ``max(20, top_k * 4)`` results.
+    *expanded_concepts*, capped at ``max(10, top_k * 2)`` results.
+    Restricts candidates to schema/example chunks to avoid broad markdown
+    keyword hits dominating graph-mode reranking.
     Returns an empty queryset when *expanded_concepts* is empty.
     """
 
@@ -484,13 +513,18 @@ def _graph_concept_candidates(
     for concept_id in expanded_concepts:
         for alias in GRAPH_CONCEPT_ALIASES.get(concept_id, set()):
             alias_filter |= models.Q(text__icontains=alias)
+            alias_filter |= models.Q(source_path__icontains=alias)
+            alias_filter |= models.Q(label__icontains=alias)
+            alias_filter |= models.Q(heading__icontains=alias)
 
     if not alias_filter:
         return SourceChunk.objects.none()
 
-    return SourceChunk.objects.filter(_scope_query_filter(scope)).filter(alias_filter)[
-        : max(20, top_k * 4)
-    ]
+    return (
+        SourceChunk.objects.filter(_scope_query_filter(scope))
+        .filter(doc_type__in=["schema", "example"])
+        .filter(alias_filter)[: max(10, top_k * 2)]
+    )
 
 
 def _question_standard_hints(question: str) -> set[str]:
@@ -568,19 +602,31 @@ def retrieve_chunks_with_trace(
 
     hinted_standards = _question_standard_hints(question)
     hinted_doc_types = _question_doc_type_hints(question)
-    query_embedding = build_text_embedding(
-        _build_query_embedding_input(
-            question=question,
-            hinted_standards=hinted_standards,
-            hinted_doc_types=hinted_doc_types,
-        )
-    )
 
+    # Concept extraction happens BEFORE embedding so canonical domain terms
+    # are present in the query vector and align with indexed document vocabulary.
     question_concepts = extract_graph_concepts(question) if graph_rag_enabled else set()
     graph_expansion_source = "none"
     if graph_rag_enabled and question_concepts:
-        neo4j_enabled = getattr(settings, "NEO4J_ENABLED", False)
-        if neo4j_enabled:
+        graphdb_enabled = getattr(settings, "GRAPHDB_ENABLED", False)
+        neo4j_experimental_enabled = getattr(settings, "NEO4J_EXPERIMENTAL_ENABLED", False)
+
+        if graphdb_enabled:
+            try:
+                expanded_concepts = query_graphdb_concept_expansion(
+                    concept_ids=question_concepts,
+                    hops=1,
+                    endpoint=settings.GRAPHDB_SPARQL_ENDPOINT,
+                    repository=settings.GRAPHDB_REPOSITORY,
+                    username=getattr(settings, "GRAPHDB_USER", ""),
+                    password=getattr(settings, "GRAPHDB_PASSWORD", ""),
+                    timeout_seconds=settings.GRAPHDB_TIMEOUT_SECONDS,
+                )
+                graph_expansion_source = "graphdb"
+            except Exception:
+                expanded_concepts = expand_graph_concepts(question_concepts, hops=1)
+                graph_expansion_source = "memory_fallback"
+        elif neo4j_experimental_enabled and getattr(settings, "NEO4J_ENABLED", False):
             try:
                 expanded_concepts = query_neo4j_concept_expansion(
                     concept_ids=question_concepts,
@@ -590,7 +636,7 @@ def retrieve_chunks_with_trace(
                     password=settings.NEO4J_PASSWORD,
                     database=settings.NEO4J_DATABASE,
                 )
-                graph_expansion_source = "neo4j"
+                graph_expansion_source = "neo4j_experimental"
             except Exception:
                 expanded_concepts = expand_graph_concepts(question_concepts, hops=1)
                 graph_expansion_source = "memory_fallback"
@@ -601,6 +647,18 @@ def retrieve_chunks_with_trace(
     else:
         expanded_concepts = set()
         graph_expansion_hops = 0
+
+    concept_example_paths = get_concept_example_paths(expanded_concepts) if expanded_concepts else set()
+
+    canonical_concept_terms = get_concept_canonical_terms(expanded_concepts) if expanded_concepts else []
+    query_embedding = build_text_embedding(
+        _build_query_embedding_input(
+            question=question,
+            hinted_standards=hinted_standards,
+            hinted_doc_types=hinted_doc_types,
+            expanded_concept_terms=canonical_concept_terms if canonical_concept_terms else None,
+        )
+    )
 
     postgres_candidates = _postgres_hybrid_candidates(
         question=question,
@@ -641,8 +699,15 @@ def retrieve_chunks_with_trace(
 
         lexical_score = float(getattr(chunk, "lexical_rank", 0.0))
         if lexical_score <= 0.0:
+            # Augment the question with canonical concept terms so the lexical
+            # path benefits from the same expanded vocabulary as the embedding.
+            expanded_question = (
+                question + " " + " ".join(canonical_concept_terms)
+                if canonical_concept_terms
+                else question
+            )
             lexical_score = _token_overlap_score(
-                question=question,
+                question=expanded_question,
                 chunk_text=(
                     f"{chunk.text}\n"
                     f"{chunk.source_path}\n"
@@ -688,24 +753,36 @@ def retrieve_chunks_with_trace(
             graph_enabled=graph_rag_enabled,
             question_concepts=question_concepts,
             expanded_concepts=expanded_concepts,
+            concept_example_paths=concept_example_paths,
             chunk_text=chunk.text,
             source_path=chunk.source_path,
             label=chunk.label,
             heading=getattr(chunk, "heading", "") or "",
         )
         raw_score += graph_adjustment
+
+        # Keyword-trap penalty: high lexical match but semantically divergent from query.
+        # When a chunk matches surface terms well (lexical > 0.5) but the query embedding
+        # cosine similarity is low (vector < 0.35), we treat it as a false positive and
+        # discount its rank.  The published `score` is unchanged (for audit), only the
+        # internal rank_score used for selection is reduced.
+        keyword_trap = lexical_score > 0.5 and vector_score < 0.35
+
         score = min(1.0, max(0.0, raw_score))
         if score < min_score:
             continue
 
-        # Break ties deterministically when many scores saturate to 1.0.
+        # Break ties deterministically; keyword-trap chunks rank below genuine matches.
         rank_score = raw_score + (lexical_score * 0.01) + (vector_score * 0.005)
+        if keyword_trap:
+            rank_score *= 0.6
 
         candidates.append(
             {
                 "text": chunk.text,
                 "score": score,
                 "_rankScore": rank_score,
+                "_vectorScore": vector_score,
                 "repositoryUrl": chunk.repository_url,
                 "commitSha": chunk.commit_sha,
                 "sourcePath": chunk.source_path,
@@ -723,11 +800,14 @@ def retrieve_chunks_with_trace(
     graph_hits = 0
     graph_total = 0.0
     provenance_chains: set[str] = set()
+    vector_scores_trimmed: list[float] = []
     for candidate in trimmed:
         graph_hits += 1 if candidate.get("_graphHit") else 0
         graph_total += float(candidate.get("_graphContribution") or 0.0)
         for concept_id in candidate.get("_graphProvenanceConceptIds", []):
             provenance_chains.add(concept_id)
+        if "_vectorScore" in candidate:
+            vector_scores_trimmed.append(float(candidate.pop("_vectorScore")))
         candidate.pop("_rankScore", None)
         candidate.pop("_graphContribution", None)
         candidate.pop("_graphHit", None)
@@ -736,6 +816,26 @@ def retrieve_chunks_with_trace(
             candidate["graphProvenanceConceptIds"] = candidate.pop("_graphProvenanceConceptIds")
         else:
             candidate.pop("_graphProvenanceConceptIds", None)
+
+    repository_coverage_count = len(
+        {
+            str(candidate.get("repositoryUrl", "")).strip()
+            for candidate in trimmed
+            if str(candidate.get("repositoryUrl", "")).strip()
+        }
+    )
+    graph_concepts_in_trimmed: set[str] = set()
+    for candidate in trimmed:
+        chunk_concepts = extract_graph_concepts(
+            "\n".join(
+                [
+                    str(candidate.get("text", "")),
+                    str(candidate.get("sourcePath", "")),
+                    str(candidate.get("label", "")),
+                ]
+            )
+        )
+        graph_concepts_in_trimmed.update(chunk_concepts)
 
     trace = {
         "graphRagVariant": "control" if not graph_rag_enabled else "graph-rag",
@@ -746,6 +846,9 @@ def retrieve_chunks_with_trace(
         "graphEvidenceCount": graph_hits if graph_rag_enabled else 0,
         "graphScoreContribution": round(graph_total / len(trimmed), 4) if graph_rag_enabled and trimmed else 0.0,
         "graphProvenanceChainCount": len(provenance_chains) if graph_rag_enabled else 0,
+        "repositoryCoverageCount": repository_coverage_count,
+        "conceptCoverageCount": len(graph_concepts_in_trimmed),
+        "semanticAlignmentScore": round(sum(vector_scores_trimmed) / len(vector_scores_trimmed), 4) if vector_scores_trimmed else 0.0,
         "retrievalLatencyMs": round((time.time() - retrieval_start_time) * 1000, 1),
     }
     return trimmed, trace

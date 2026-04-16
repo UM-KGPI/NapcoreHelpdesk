@@ -145,6 +145,9 @@ paths:
                       graphConceptIds: []
                       graphEvidenceCount: 0
                       graphScoreContribution: 0.0
+                      repositoryCoverageCount: 1
+                      conceptCoverageCount: 0
+                      semanticAlignmentScore: 0.0
                 rag:
                   value:
                     answerId: ans-002
@@ -170,6 +173,9 @@ paths:
                       graphConceptIds: [opra:delay-statistics, opra:delayed-journey]
                       graphEvidenceCount: 1
                       graphScoreContribution: 0.09
+                      repositoryCoverageCount: 2
+                      conceptCoverageCount: 2
+                      semanticAlignmentScore: 0.61
                 abstain:
                   value:
                     answerId: ans-003
@@ -189,6 +195,9 @@ paths:
                       graphConceptIds: []
                       graphEvidenceCount: 0
                       graphScoreContribution: 0.0
+                      repositoryCoverageCount: 0
+                      conceptCoverageCount: 0
+                      semanticAlignmentScore: 0.0
         '400':
           description: Invalid request payload
           content:
@@ -636,7 +645,7 @@ components:
     AnswerTrace:
       type: object
       required:
-        [requestId, questionEventId, retrievalEventIds, graphExpansionHops, graphConceptIds, graphEvidenceCount, graphScoreContribution]
+        [requestId, questionEventId, retrievalEventIds, graphExpansionHops, graphConceptIds, graphEvidenceCount, graphScoreContribution, repositoryCoverageCount, conceptCoverageCount, semanticAlignmentScore]
       properties:
         requestId:
           type: string
@@ -665,6 +674,107 @@ components:
         graphScoreContribution:
           type: number
           minimum: 0
+        repositoryCoverageCount:
+          type: integer
+          minimum: 0
+        conceptCoverageCount:
+          type: integer
+          minimum: 0
+        semanticAlignmentScore:
+          type: number
+          minimum: 0
+          maximum: 1
+        semanticQuery:
+          $ref: '#/components/schemas/SemanticQuery'
+        semanticDisambiguationRequired:
+          type: boolean
+        semanticDisambiguationPrompt:
+          type: [string, "null"]
+        semanticFallback:
+          type: [string, "null"]
+          enum: [NO_CONCEPT_MATCH, AMBIGUOUS_CORE_CONCEPT, PARTIAL_EVIDENCE, null]
+        semanticProvisional:
+          type: boolean
+        semanticProvisionalReason:
+          type: [string, "null"]
+          enum: [LOW_RETRIEVAL_CONFIDENCE, LIMITED_EVIDENCE_COVERAGE, CROSS_STANDARD_GAP, null]
+        evidenceCoverageLevel:
+          type: string
+          enum: [low, medium, high]
+        crossStandardConflict:
+          type: boolean
+        crossStandardConflictType:
+          type: [string, "null"]
+          enum: [NORMATIVE_STRENGTH_MISMATCH, EVIDENCE_COVERAGE_ASYMMETRY, null]
+        crossStandardEvidencePartitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CrossStandardEvidencePartition'
+      additionalProperties: false
+    SemanticQuery:
+      type: object
+      required:
+        [intent, normativity, coreConcept, coreConcepts, ambiguousCoreConcept, candidateStandards, originalTerms, confidence]
+      properties:
+        intent:
+          type: string
+        normativity:
+          type: string
+          enum: [mandatory, recommended, optional, unspecified]
+        coreConcept:
+          type: string
+        coreConcepts:
+          type: array
+          items:
+            type: string
+        ambiguousCoreConcept:
+          type: boolean
+        candidateStandards:
+          type: array
+          items:
+            type: string
+        originalTerms:
+          type: array
+          items:
+            type: string
+        confidence:
+          $ref: '#/components/schemas/SemanticQueryConfidence'
+      additionalProperties: false
+    SemanticQueryConfidence:
+      type: object
+      required: [intent, concept]
+      properties:
+        intent:
+          type: number
+          minimum: 0
+          maximum: 1
+        concept:
+          type: number
+          minimum: 0
+          maximum: 1
+      additionalProperties: false
+    CrossStandardEvidencePartition:
+      type: object
+      required: [standard, evidenceCount, avgScore, topSourcePaths, normativitySignals]
+      properties:
+        standard:
+          type: string
+        evidenceCount:
+          type: integer
+          minimum: 0
+        avgScore:
+          type: number
+          minimum: 0
+          maximum: 1
+        topSourcePaths:
+          type: array
+          items:
+            type: string
+        normativitySignals:
+          type: array
+          items:
+            type: string
+            enum: [mandatory, optional]
       additionalProperties: false
     PromotionCandidatesResponse:
       type: object

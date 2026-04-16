@@ -95,7 +95,7 @@ class Neo4jImportTests(TestCase):
     def test_extract_graph_concepts_matches_delayed_vehicle_journeys(self):
         """Concept extraction should match wording variants used by users."""
         concepts = extract_graph_concepts("How can I exchange delayed vehicle journeys?")
-        self.assertIn("opra:delayed-journey", concepts)
+        self.assertIn("opra:DelayedJourney", concepts)
 
     def test_build_neo4j_schema_statements_returns_idempotent_set(self):
         statements = build_neo4j_schema_statements()
@@ -137,7 +137,9 @@ class Neo4jImportTests(TestCase):
                 call_command("import_semantic_graph_neo4j", input=str(input_path), apply=True)
 
     @override_settings(
+        GRAPHDB_ENABLED=False,
         NEO4J_ENABLED=True,
+        NEO4J_EXPERIMENTAL_ENABLED=True,
         NEO4J_URI="http://localhost:7474",
         NEO4J_USER="neo4j",
         NEO4J_PASSWORD="secret",
@@ -163,7 +165,9 @@ class Neo4jImportTests(TestCase):
         self.assertEqual(len(call_kwargs["statements"]), schema_count + data_count)
 
     @override_settings(
+        GRAPHDB_ENABLED=False,
         NEO4J_ENABLED=True,
+        NEO4J_EXPERIMENTAL_ENABLED=True,
         NEO4J_URI="http://localhost:7474",
         NEO4J_USER="neo4j",
         NEO4J_PASSWORD="secret",
@@ -226,18 +230,20 @@ class Neo4jImportTests(TestCase):
         self.assertEqual(len(result), 3)
 
     @override_settings(
+        GRAPHDB_ENABLED=False,
         NEO4J_ENABLED=True,
+        NEO4J_EXPERIMENTAL_ENABLED=True,
         NEO4J_URI="http://localhost:7474",
         NEO4J_USER="neo4j",
         NEO4J_PASSWORD="secret",
         NEO4J_DATABASE="neo4j",
     )
     @patch("helpdesk.services.retrieval_gateway.query_neo4j_concept_expansion")
-    def test_retrieval_gateway_uses_neo4j_expansion_when_enabled(self, expand_mock):
-        """retrieve_chunks_with_trace calls Neo4j expansion and reflects source in trace."""
+    def test_retrieval_gateway_uses_neo4j_expansion_when_experimental_enabled(self, expand_mock):
+        """retrieve_chunks_with_trace uses Neo4j only when experimental Neo4j mode is enabled."""
         from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 
-        expand_mock.return_value = {"opra:delayed-journey", "opra:delay-statistics"}
+        expand_mock.return_value = {"opra:DelayedJourney", "opra:DelayStatistics"}
 
         _chunks, trace = retrieve_chunks_with_trace(
             question="delayed journey statistics",
@@ -247,8 +253,8 @@ class Neo4jImportTests(TestCase):
         )
 
         expand_mock.assert_called_once()
-        self.assertEqual(trace["graphExpansionSource"], "neo4j")
-        self.assertIn("opra:delayed-journey", trace["graphConceptIds"])
+        self.assertEqual(trace["graphExpansionSource"], "neo4j_experimental")
+        self.assertIn("opra:DelayedJourney", trace["graphConceptIds"])
 
     @override_settings(
         NEO4J_ENABLED=False,
@@ -270,12 +276,13 @@ class Neo4jImportTests(TestCase):
                 "text": chunk_text,
                 "standards_scope": ["OpRa"],
                 "quality_score": 0.80,
+                "doc_type": "example",
                 "embedding_vector": build_text_embedding(chunk_text),
             },
         )
 
         qs = _graph_concept_candidates(
-            expanded_concepts={"opra:delayed-journey"},
+            expanded_concepts={"opra:DelayedJourney"},
             top_k=5,
         )
         chunk_ids = [c.chunk_id for c in qs]
@@ -290,8 +297,9 @@ class Neo4jImportTests(TestCase):
 
         adjustment, hit, concepts = _graph_score_adjustment(
             graph_enabled=True,
-            question_concepts={"opra:delayed-journey"},
-            expanded_concepts={"opra:delayed-journey", "opra:delay-statistics"},
+            question_concepts={"opra:DelayedJourney"},
+            expanded_concepts={"opra:DelayedJourney", "opra:DelayStatistics"},
+            concept_example_paths=set(),
             chunk_text="This chunk mentions delayed journeys.",
             source_path="delay.md",
             label="Delay test",
@@ -300,7 +308,7 @@ class Neo4jImportTests(TestCase):
 
         self.assertGreater(adjustment, 0.0)
         self.assertTrue(hit)
-        self.assertIn("opra:delayed-journey", concepts)
+        self.assertIn("opra:DelayedJourney", concepts)
 
     @override_settings(
         NEO4J_ENABLED=False,

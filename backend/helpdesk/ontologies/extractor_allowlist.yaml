@@ -1,0 +1,58 @@
+# Ontology extraction configuration for XSD importer.
+# Domain experts can tune this file without touching Python code.
+
+allowlist_exact:
+  netex:
+    - GroupOfLines
+    - Network
+    - DestinationDisplay
+    - DestinationDisplayVariant
+    - AllowedLineDirection
+    - TypeOfLine
+  opra:
+    - LateDatedVehicleJourneyCount
+    - CancelledDatedVehicleJourneyCount
+    - PlannedCapacity
+    - ActualCapacity
+    - CapacitySpecification
+    - VehicleTypeCapacity
+    - PlannedServiceIntensity
+    - ActualServiceIntensity
+    - ExpectedServiceIntensity
+    - MeanCapacityOverNetworkDistance
+    - MeanCapacityOverRouteDistance
+    - MeanCapacityOverJourneyDistance
+    - LoadOverJourneyDistance
+    - TransportPerformance
+    - TransportPerformancePerVehicle
+    - AverageCommercialSpeed
+    - ExpectedPassengerCount
+    - ExternalPassengerCount
+    - TypeOfDelay
+    - VehicleLoadEntry
+    - PreparednessLevel
+    - IndicatorFrame
+
+allowlist_token:
+  netex:
+    - journey
+    - line
+    - network
+    - destination
+    - stop
+    - operator
+  opra:
+    - delay
+    - capacity
+    - service
+    - passenger
+    - journey
+    - vehicle
+    - indicator
+
+denylist_concept_ids:
+  - netex:Line_Dummy
+  - netex:Via_VersionedChildStructure
+  - netex:NetworkView
+  - netex:LineView
+  - netex:DestinationDisplayView
