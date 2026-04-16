@@ -1,0 +1,4873 @@
+{
+  "benchmark_input": "/Users/andrejt/Research/repositories/git/NapcoreHelpdesk/docs/testing/benchmark-questions.yaml",
+  "top_k": 20,
+  "scope": null,
+  "total_questions": 100,
+  "aggregate": {
+    "baseline": {
+      "hit_at_5": 0.67,
+      "hit_at_10": 0.71,
+      "hit_at_20": 0.77,
+      "mrr_at_10": 0.4657,
+      "mrr_at_20": 0.4699,
+      "mean_latency_ms": 3022.4
+    },
+    "graph": {
+      "hit_at_5": 0.5,
+      "hit_at_10": 0.67,
+      "hit_at_20": 0.73,
+      "mrr_at_10": 0.2965,
+      "mrr_at_20": 0.3012,
+      "mean_latency_ms": 4186.0
+    },
+    "delta": {
+      "hit_at_10_delta": -0.04,
+      "mrr_at_10_delta": -0.1692,
+      "latency_overhead_ms": 1163.6,
+      "questions_improved_by_graph": 9,
+      "questions_regressed_by_graph": 13
+    }
+  },
+  "questions": [
+    {
+      "id": "q001",
+      "question": "What is a delayed journey in OpRa and how is it modelled?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "delay"
+      ],
+      "expected_source_patterns": [
+        "opra_framework"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.3333333333333333,
+        "mrr_at_20": 0.3333333333333333,
+        "latency_ms": 4000.3,
+        "top_5_paths": [
+          "docs/opra_qm_query_model_section.md",
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "issues/14.md",
+          "docs/opra_qm_query_model_section.md"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.09090909090909091,
+        "latency_ms": 3069.4,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/opra_indicators/opra_lateDatedVehicleJourney_version.xsd",
+          "issues/14.md"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q002",
+      "question": "How are delayed journeys represented in OpRa XML exchanged data?",
+      "intent": "example",
+      "tags": [
+        "opra",
+        "delay",
+        "example"
+      ],
+      "expected_source_patterns": [
+        "DelayedAndCancelled"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 1561.6,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
+          "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd",
+          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
+          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 2445.3,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/opra_indicators/opra_lateDatedVehicleJourney_version.xsd",
+          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
+          "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q003",
+      "question": "Show me an OpRa XML example for cancelled and delayed journeys with events.",
+      "intent": "example",
+      "tags": [
+        "opra",
+        "delay",
+        "cancellation",
+        "example"
+      ],
+      "expected_source_patterns": [
+        "DelayedAndCancelled",
+        "CancelledAndLate"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 1642.6,
+        "top_5_paths": [
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
+          "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.2,
+        "mrr_at_20": 0.2,
+        "latency_ms": 2678.6,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q004",
+      "question": "How does OpRa represent a cancelled vehicle journey in exchange data?",
+      "intent": "example",
+      "tags": [
+        "opra",
+        "cancellation",
+        "example"
+      ],
+      "expected_source_patterns": [
+        "CancelledAndLate",
+        "DelayedAndCancelled"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 1584.6,
+        "top_5_paths": [
+          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
+          "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd",
+          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
+          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
+          "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 2505.5,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "Guides/VehicleScheduling/VehicleScheduling_Guide.md",
+          "docs/opra_px_measured_passengers_text.md"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q005",
+      "question": "What is LateDatedVehicleJourneyEntry in OpRa?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "delay"
+      ],
+      "expected_source_patterns": [
+        "opra_framework",
+        "DelayedAndCancelled",
+        "RequestLateDated",
+        "ResponseLateDated"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 1564.6,
+        "top_5_paths": [
+          "issues/14.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_genericFramework/opra_GeneralLogEntry_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.125,
+        "mrr_at_20": 0.125,
+        "latency_ms": 3179.0,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
+          "issues/14.md",
+          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q006",
+      "question": "How does OpRa classify types of delay in journey statistics?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "delay",
+        "classification"
+      ],
+      "expected_source_patterns": [
+        "delayClassification",
+        "opra_framework"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 2088.0,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_reusableComponents/opra_delayClassification_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_durationDistribution_support.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3175.9,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
+          "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd",
+          "xsd/opra_indicators/opra_lateDatedVehicleJourney_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q007",
+      "question": "What is DelayStatistics in OpRa and what data does it aggregate?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "delay"
+      ],
+      "expected_source_patterns": [
+        "opra_framework",
+        "delayClassification"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 2136.0,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "docs/opra_qm_query_model_section.md",
+          "issues/14.md",
+          "xsd/opra.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 2231.1,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "docs/opra_qm_query_model_section.md",
+          "issues/14.md",
+          "xsd/opra.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      }
+    },
+    {
+      "id": "q008",
+      "question": "How do I exchange delay event data between systems using OpRa?",
+      "intent": "example",
+      "tags": [
+        "opra",
+        "delay",
+        "exchange",
+        "example"
+      ],
+      "expected_source_patterns": [
+        "DelayedAndCancelled"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 1977.8,
+        "top_5_paths": [
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "issues/14.md",
+          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
+          "xsd/opra_framework/opra_genericFramework/opra_GeneralLogEntry_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 2124.7,
+        "top_5_paths": [
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "issues/14.md",
+          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
+          "xsd/opra_framework/opra_genericFramework/opra_GeneralLogEntry_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      }
+    },
+    {
+      "id": "q009",
+      "question": "What does CancelledDatedVehicleJourneyCount mean in OpRa?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "cancellation"
+      ],
+      "expected_source_patterns": [
+        "opra_framework"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 1893.8,
+        "top_5_paths": [
+          "issues/14.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_genericFramework/opra_GeneralLogEntry_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.125,
+        "mrr_at_20": 0.125,
+        "latency_ms": 2832.9,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
+          "issues/14.md",
+          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q010",
+      "question": "How does OpRa map cancelled journeys to NeTEx vehicle journey concepts?",
+      "intent": "mapping",
+      "tags": [
+        "opra",
+        "netex",
+        "cancellation",
+        "cross-standard"
+      ],
+      "expected_source_patterns": [
+        "CancelledAndLate",
+        "DelayedAndCancelled",
+        "netex_part_2"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 1834.8,
+        "top_5_paths": [
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
+          "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd",
+          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
+          "docs/opra_qm_query_model_section.md"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.16666666666666666,
+        "mrr_at_20": 0.16666666666666666,
+        "latency_ms": 2988.5,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q011",
+      "question": "What is the difference between a delayed journey and a cancelled journey in OpRa?",
+      "intent": "disambiguation",
+      "tags": [
+        "opra",
+        "delay",
+        "cancellation"
+      ],
+      "expected_source_patterns": [
+        "opra_framework",
+        "DelayedAndCancelled"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.2,
+        "mrr_at_20": 0.2,
+        "latency_ms": 2257.3,
+        "top_5_paths": [
+          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
+          "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd",
+          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
+          "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.1111111111111111,
+        "mrr_at_20": 0.1111111111111111,
+        "latency_ms": 3713.0,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/opra_indicators/opra_lateDatedVehicleJourney_version.xsd",
+          "issues/14.md"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q012",
+      "question": "How are delay events linked to journey records in OpRa XML?",
+      "intent": "example",
+      "tags": [
+        "opra",
+        "delay",
+        "example"
+      ],
+      "expected_source_patterns": [
+        "DelayedAndCancelled"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3090.9,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_genericFramework/opra_GeneralLogEntry_version.xsd",
+          "xsd/opra_framework/opra_genericFramework/opra_GeneralLogEntry_version.xsd",
+          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_durationDistribution_support.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_delayClassification_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 4505.0,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
+          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q013",
+      "question": "What OpRa indicators are used to measure journey reliability?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "delay",
+        "reliability"
+      ],
+      "expected_source_patterns": [
+        "opra_framework"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 2823.4,
+        "top_5_paths": [
+          "issues/14.md",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.1111111111111111,
+        "mrr_at_20": 0.1111111111111111,
+        "latency_ms": 4115.1,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/opra_indicators/opra_lateDatedVehicleJourney_version.xsd",
+          "docs/opra_px_measured_passengers_text.md",
+          "issues/14.md"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q014",
+      "question": "What does PreparednessLevel indicate in OpRa reporting?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "delay"
+      ],
+      "expected_source_patterns": [
+        "opra_framework"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 2869.2,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.2,
+        "mrr_at_20": 0.2,
+        "latency_ms": 3987.3,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "docs/opra_px_measured_passengers_text.md",
+          "issues/14.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q015",
+      "question": "How does the OpRa RequestLateDatedVehicleJourneys message work?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "delay",
+        "request-response"
+      ],
+      "expected_source_patterns": [
+        "RequestLateDated"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 2766.5,
+        "top_5_paths": [
+          "examples/RequestLateDatedVehicleJourneys.xml",
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "issues/14.md",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 4319.9,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "examples/RequestLateDatedVehicleJourneys.xml",
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q016",
+      "question": "What does a ResponseLateDatedVehicleJourneys OpRa message look like?",
+      "intent": "example",
+      "tags": [
+        "opra",
+        "delay",
+        "request-response",
+        "example"
+      ],
+      "expected_source_patterns": [
+        "ResponseLateDated"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 2942.7,
+        "top_5_paths": [
+          "examples/ResponseLateDatedVehicleJourneys.xml",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "issues/14.md",
+          "examples/ResponseLateDatedVehicleJourneys.xml",
+          "examples/ResponseLateDatedVehicleJourneys.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 4387.8,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "examples/ResponseLateDatedVehicleJourneys.xml",
+          "docs/opra_px_measured_passengers_text.md",
+          "examples/ResponseLateDatedVehicleJourneys.xml",
+          "examples/ResponseLateDatedVehicleJourneys.xml"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q017",
+      "question": "How are delay statistics aggregated over a route in OpRa?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "delay",
+        "aggregation"
+      ],
+      "expected_source_patterns": [
+        "opra_framework"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 2741.9,
+        "top_5_paths": [
+          "issues/14.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_delayClassification_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.1,
+        "mrr_at_20": 0.1,
+        "latency_ms": 4029.1,
+        "top_5_paths": [
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "docs/opra_px_measured_passengers_text.md",
+          "issues/10.md",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "docs/opra_px_measured_passengers_text.md"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q018",
+      "question": "What is LateDatedVehicleJourneyCount in OpRa schema?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "delay"
+      ],
+      "expected_source_patterns": [
+        "opra_framework"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 2775.2,
+        "top_5_paths": [
+          "xsd/opra_indicators/opra_lateDatedVehicleJourney_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_plannedFrame_version.xsd",
+          "xsd/opra.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_durationDistribution_support.xsd",
+          "xsd/opra_framework/opra_genericFramework/opra_GeneralLogEntry_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.16666666666666666,
+        "mrr_at_20": 0.16666666666666666,
+        "latency_ms": 4085.9,
+        "top_5_paths": [
+          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
+          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q019",
+      "question": "What data fields are required in OpRa to compute a delay indicator?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "delay"
+      ],
+      "expected_source_patterns": [
+        "opra_framework",
+        "delayClassification"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 2818.1,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3160.5,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      }
+    },
+    {
+      "id": "q020",
+      "question": "How is journey events data structured in the OpRa DelayedAndCancelledJourneysWithEvents example?",
+      "intent": "example",
+      "tags": [
+        "opra",
+        "delay",
+        "cancellation",
+        "example"
+      ],
+      "expected_source_patterns": [
+        "DelayedAndCancelled"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 2988.6,
+        "top_5_paths": [
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "docs/opra_qm_query_model_section.md"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 4577.8,
+        "top_5_paths": [
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "docs/opra_px_measured_passengers_text.md",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q021",
+      "question": "What is PlannedCapacity in OpRa and what does it measure?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "capacity"
+      ],
+      "expected_source_patterns": [
+        "PlannedCapacity",
+        "opra_framework"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3330.5,
+        "top_5_paths": [
+          "examples/PlannedCapacity.xml",
+          "issues/14.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.2,
+        "mrr_at_20": 0.2,
+        "latency_ms": 4760.3,
+        "top_5_paths": [
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "docs/opra_px_measured_passengers_text.md",
+          "issues/14.md",
+          "xsd/opra_indicators/opra_capacity_version.xsd",
+          "examples/PlannedCapacity.xml"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q022",
+      "question": "How is actual vehicle capacity measured and exchanged in OpRa?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "capacity"
+      ],
+      "expected_source_patterns": [
+        "ActualServiceDimensions",
+        "opra_framework"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.07142857142857142,
+        "latency_ms": 2563.1,
+        "top_5_paths": [
+          "docs/opra_qm_query_model_section.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/opra_service/opra_service_capacity.xsd",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "xsd/opra_indicators/opra_capacity_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.1111111111111111,
+        "mrr_at_20": 0.1111111111111111,
+        "latency_ms": 3483.6,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "docs/opra_px_measured_passengers_text.md",
+          "issues/14.md"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q023",
+      "question": "What is VehicleTypeCapacity in OpRa schema?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "capacity"
+      ],
+      "expected_source_patterns": [
+        "opra_framework"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 2603.4,
+        "top_5_paths": [
+          "xsd/opra_indicators/opra_capacity_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_plannedFrame_version.xsd",
+          "xsd/opra.xsd",
+          "xsd/opra_indicators/opra_capacity_version.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_durationDistribution_support.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.3333333333333333,
+        "mrr_at_20": 0.3333333333333333,
+        "latency_ms": 4625.4,
+        "top_5_paths": [
+          "xsd/opra_indicators/opra_capacity_version.xsd",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_delayClassification_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q024",
+      "question": "Show me an OpRa XML example for planned fleet dimensions.",
+      "intent": "example",
+      "tags": [
+        "opra",
+        "capacity",
+        "example"
+      ],
+      "expected_source_patterns": [
+        "PlannedFleetDimensions"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3006.7,
+        "top_5_paths": [
+          "xsd/opra_service/opra_service_fleetDimensions.xsd",
+          "xsd/opra_indicators/opra_fleetDimensions_version.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_service/opra_service_serviceDimensions.xsd",
+          "xsd/opra_service/opra_service_fleetDimensions.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3412.7,
+        "top_5_paths": [
+          "xsd/opra_service/opra_service_fleetDimensions.xsd",
+          "xsd/opra_indicators/opra_fleetDimensions_version.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_service/opra_service_serviceDimensions.xsd",
+          "xsd/opra_service/opra_service_fleetDimensions.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      }
+    },
+    {
+      "id": "q025",
+      "question": "How does OpRa represent vehicle passenger load in exchange data?",
+      "intent": "example",
+      "tags": [
+        "opra",
+        "capacity",
+        "passenger"
+      ],
+      "expected_source_patterns": [
+        "VehicleLoadEntry"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 2791.3,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_indicators/opra_capacity_version.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_vehicleOccupancy_version.xsd",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "issues/14.md"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3131.3,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_indicators/opra_capacity_version.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_vehicleOccupancy_version.xsd",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "issues/14.md"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      }
+    },
+    {
+      "id": "q026",
+      "question": "What is AverageCommercialSpeed in OpRa and how is it calculated?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "performance"
+      ],
+      "expected_source_patterns": [
+        "opra_framework"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 3194.4,
+        "top_5_paths": [
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "issues/14.md",
+          "docs/opra_qm_query_model_section.md",
+          "docs/opra_qm_query_model_section.md"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.2,
+        "mrr_at_20": 0.2,
+        "latency_ms": 4705.5,
+        "top_5_paths": [
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "examples/ExpectedServiceIntensity.xml",
+          "docs/opra_px_measured_passengers_text.md",
+          "issues/14.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q027",
+      "question": "How is IndicatorFrame used in OpRa capacity and performance reporting?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "capacity",
+        "indicator"
+      ],
+      "expected_source_patterns": [
+        "ContextualIndicatorFrame",
+        "opra_frame"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.3333333333333333,
+        "mrr_at_20": 0.3333333333333333,
+        "latency_ms": 3443.8,
+        "top_5_paths": [
+          "issues/14.md",
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 5293.5,
+        "top_5_paths": [
+          "issues/14.md",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q028",
+      "question": "What fields are included in OpRa PlannedServiceDimensions?",
+      "intent": "example",
+      "tags": [
+        "opra",
+        "capacity",
+        "example"
+      ],
+      "expected_source_patterns": [
+        "PlannedServiceDimensions"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 2951.4,
+        "top_5_paths": [
+          "examples/PlannedServiceDimensions.xml",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "issues/14.md",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3573.1,
+        "top_5_paths": [
+          "examples/PlannedServiceDimensions.xml",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "issues/14.md",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      }
+    },
+    {
+      "id": "q029",
+      "question": "How does OpRa compare expected versus actual service capacity?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "capacity"
+      ],
+      "expected_source_patterns": [
+        "ActualServiceDimensions",
+        "opra_framework"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.08333333333333333,
+        "latency_ms": 3553.8,
+        "top_5_paths": [
+          "xsd/opra_service/opra_service_capacity.xsd",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "xsd/opra_service/opra_service_serviceDimensions.xsd",
+          "xsd/opra_service/opra_service_serviceIntensity.xsd",
+          "xsd/opra_indicators/opra_serviceDimensions_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.2,
+        "mrr_at_20": 0.2,
+        "latency_ms": 4746.0,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "issues/14.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q030",
+      "question": "What is MeanCapacityOverJourneyDistance in OpRa?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "capacity",
+        "distance"
+      ],
+      "expected_source_patterns": [
+        "opra_framework"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 3227.0,
+        "top_5_paths": [
+          "issues/14.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_genericFramework/opra_GeneralLogEntry_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.1111111111111111,
+        "mrr_at_20": 0.1111111111111111,
+        "latency_ms": 3831.8,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "issues/14.md",
+          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q031",
+      "question": "How are passenger counts exchanged in OpRa for operator reporting?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "passenger",
+        "capacity"
+      ],
+      "expected_source_patterns": [
+        "ExpectedPassengerCount",
+        "RequestAllPassengerCounts"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.16666666666666666,
+        "mrr_at_20": 0.16666666666666666,
+        "latency_ms": 2793.8,
+        "top_5_paths": [
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_service/opra_service_ticketingBasedPassengerCounts.xsd",
+          "xsd/opra_service/opra_service_externalPassengerCounts.xsd",
+          "xsd/opra_service/opra_service_onboardDeviceBasedPassengerCounts.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3810.5,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "docs/opra_px_measured_passengers_text.md"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q032",
+      "question": "Show me the OpRa XML structure for a vehicle load entry.",
+      "intent": "example",
+      "tags": [
+        "opra",
+        "capacity",
+        "example"
+      ],
+      "expected_source_patterns": [
+        "VehicleLoadEntry"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 2947.6,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_reusableComponents/opra_vehicleOccupancy_version.xsd",
+          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_indicators/opra_lateDatedVehicleJourney_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 4197.5,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_reusableComponents/opra_vehicleOccupancy_version.xsd",
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q033",
+      "question": "What does ExpectedServiceIntensity mean in OpRa?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "service-intensity"
+      ],
+      "expected_source_patterns": [
+        "ExpectedServiceIntensity",
+        "opra_framework"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3004.1,
+        "top_5_paths": [
+          "examples/ExpectedServiceIntensity.xml",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "issues/14.md",
+          "examples/ExpectedServiceIntensity.xml",
+          "examples/ExpectedServiceIntensity.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 3694.2,
+        "top_5_paths": [
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "examples/ExpectedServiceIntensity.xml",
+          "examples/ExpectedServiceIntensity.xml",
+          "docs/opra_px_measured_passengers_text.md",
+          "examples/ExpectedServiceIntensity.xml"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q034",
+      "question": "How does CapacitySpecification work in OpRa schema?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "capacity"
+      ],
+      "expected_source_patterns": [
+        "opra_framework"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 2859.6,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_frames/opra_plannedFrame_version.xsd",
+          "xsd/opra.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_durationDistribution_support.xsd",
+          "xsd/opra_framework/opra_genericFramework/opra_GeneralLogEntry_version.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_vehicleOccupancy_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 4002.0,
+        "top_5_paths": [
+          "xsd/opra_indicators/opra_capacity_version.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
+          "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q035",
+      "question": "What OpRa data is required to report planned fleet dimensions per operator?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "capacity",
+        "fleet"
+      ],
+      "expected_source_patterns": [
+        "PlannedFleetDimensions",
+        "PlannedServiceDimensions"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3018.0,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_indicators/opra_fleetDimensions_version.xsd",
+          "xsd/opra_service/opra_service_serviceDimensions.xsd",
+          "xsd/opra_service/opra_service_fleetDimensions.xsd",
+          "xsd/opra_service/opra_service_fleetDimensions.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 4532.4,
+        "top_5_paths": [
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "docs/opra_px_measured_passengers_text.md",
+          "issues/14.md",
+          "issues/10.md"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q036",
+      "question": "What is PlannedServiceIntensity in OpRa?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "service-intensity"
+      ],
+      "expected_source_patterns": [
+        "PlannedServiceIntensity",
+        "opra_framework"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 2809.6,
+        "top_5_paths": [
+          "examples/PlannedServiceIntensity.xml",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "issues/14.md",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 7664.0,
+        "top_5_paths": [
+          "examples/PlannedServiceIntensity.xml",
+          "docs/opra_px_measured_passengers_text.md",
+          "issues/14.md",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "xsd/opra_service/opra_service_serviceIntensity.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 80
+      }
+    },
+    {
+      "id": "q037",
+      "question": "How are planned and expected service intensity compared in OpRa?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "service-intensity"
+      ],
+      "expected_source_patterns": [
+        "PlannedServiceIntensity",
+        "ExpectedServiceIntensity"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3748.8,
+        "top_5_paths": [
+          "xsd/opra_service/opra_service_serviceIntensity.xsd",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "xsd/opra_service/opra_service_serviceDimensions.xsd",
+          "xsd/opra_service/opra_service_serviceIntensity.xsd",
+          "xsd/opra_service/opra_service_serviceIntensity.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 4926.8,
+        "top_5_paths": [
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "docs/opra_px_measured_passengers_text.md",
+          "issues/14.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "issues/10.md"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q038",
+      "question": "What does TransportPerformance measure in OpRa?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "performance"
+      ],
+      "expected_source_patterns": [
+        "opra_framework"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.3333333333333333,
+        "mrr_at_20": 0.3333333333333333,
+        "latency_ms": 3763.5,
+        "top_5_paths": [
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "issues/14.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_genericFramework/opra_GeneralLogEntry_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.16666666666666666,
+        "mrr_at_20": 0.16666666666666666,
+        "latency_ms": 4929.8,
+        "top_5_paths": [
+          "examples/ExpectedServiceIntensity.xml",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "docs/opra_px_measured_passengers_text.md",
+          "issues/14.md"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q039",
+      "question": "How is TransportPerformancePerVehicle calculated in OpRa?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "performance"
+      ],
+      "expected_source_patterns": [
+        "opra_framework"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 3192.0,
+        "top_5_paths": [
+          "issues/14.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_genericFramework/opra_GeneralLogEntry_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.16666666666666666,
+        "mrr_at_20": 0.16666666666666666,
+        "latency_ms": 4491.0,
+        "top_5_paths": [
+          "examples/ExpectedServiceIntensity.xml",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "issues/14.md"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q040",
+      "question": "What does ActualServiceIntensity represent in OpRa exchange data?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "service-intensity"
+      ],
+      "expected_source_patterns": [
+        "ActualServiceDimensions",
+        "opra_framework"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3361.9,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "docs/opra_qm_query_model_section.md",
+          "issues/14.md",
+          "xsd/opra.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 4055.4,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_service/opra_service_serviceIntensity.xsd",
+          "xsd/opra_service/opra_service_serviceIntensity.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 2
+      }
+    },
+    {
+      "id": "q041",
+      "question": "How does OpRa represent load over journey distance?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "performance",
+        "distance"
+      ],
+      "expected_source_patterns": [
+        "opra_framework"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 3437.0,
+        "top_5_paths": [
+          "issues/14.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_genericFramework/opra_GeneralLogEntry_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.1,
+        "mrr_at_20": 0.1,
+        "latency_ms": 5105.4,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
+          "issues/14.md"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q042",
+      "question": "What is MeanCapacityOverNetworkDistance in OpRa?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "capacity",
+        "distance"
+      ],
+      "expected_source_patterns": [
+        "opra_framework"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 3165.7,
+        "top_5_paths": [
+          "issues/14.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_genericFramework/opra_GeneralLogEntry_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.25,
+        "mrr_at_20": 0.25,
+        "latency_ms": 4218.7,
+        "top_5_paths": [
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "docs/opra_px_measured_passengers_text.md",
+          "issues/14.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "issues/10.md"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q043",
+      "question": "How does OpRa combine service intensity data with capacity indicators?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "service-intensity",
+        "capacity"
+      ],
+      "expected_source_patterns": [
+        "opra_framework",
+        "ExpectedServiceIntensity"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 2812.4,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 2869.1,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      }
+    },
+    {
+      "id": "q044",
+      "question": "Which OpRa indicators support passenger demand analysis?",
+      "intent": "explanation",
+      "tags": [
+        "opra",
+        "passenger",
+        "demand"
+      ],
+      "expected_source_patterns": [
+        "ExpectedPassengerCount",
+        "opra_framework"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 2722.5,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "docs/opra_qm_query_model_section.md"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 2923.3,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "docs/opra_qm_query_model_section.md"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      }
+    },
+    {
+      "id": "q045",
+      "question": "How is the ActualServiceDimensions example structured in OpRa?",
+      "intent": "example",
+      "tags": [
+        "opra",
+        "service-intensity",
+        "example"
+      ],
+      "expected_source_patterns": [
+        "ActualServiceDimensions"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3351.0,
+        "top_5_paths": [
+          "examples/ActualServiceDimensions.xml",
+          "docs/opra_qm_query_model_section.md",
+          "examples/ActualServiceDimensions.xml",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "examples/ResponseLateDatedVehicleJourneys.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3189.7,
+        "top_5_paths": [
+          "examples/ActualServiceDimensions.xml",
+          "docs/opra_qm_query_model_section.md",
+          "examples/ActualServiceDimensions.xml",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "examples/ResponseLateDatedVehicleJourneys.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      }
+    },
+    {
+      "id": "q046",
+      "question": "What is a VehicleJourney in NeTEx and where is it defined?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "journey"
+      ],
+      "expected_source_patterns": [
+        "netex_part_2",
+        "netex_datedVehicleJourney"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3299.8,
+        "top_5_paths": [
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyTimes_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourney_support.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourney_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyFrequency_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourney_support.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 4539.5,
+        "top_5_paths": [
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyTimes_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyTimes_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourney_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyStopAssignment_support.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyFrequency_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q047",
+      "question": "How is TimetabledPassingTime used in NeTEx for scheduled calls?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "timetable"
+      ],
+      "expected_source_patterns": [
+        "netex_part_2",
+        "netex_call",
+        "netex_datedPassingTimes"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.07142857142857142,
+        "latency_ms": 2978.7,
+        "top_5_paths": [
+          "examples/functions/stopPlace/Netex_04_Stops_SimpleStation_1.xml",
+          "xsd/netex_framework/netex_genericFramework/netex_accessibility/netex_acsb_passengerMobility.xsd",
+          "xsd/gml/basicTypes.xsd",
+          "xsd/siri_utility/siri_types-v2.0.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_nm_fleetEquipment_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.16666666666666666,
+        "mrr_at_20": 0.16666666666666666,
+        "latency_ms": 4613.3,
+        "top_5_paths": [
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "examples/functions/site/Netex_14_Olympic Venues 1.1.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
+          "examples/functions/site/Netex_14_Olympic Venues 1.1.xml",
+          "xsd/netex_framework/netex_reusableComponents/netex_access_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q048",
+      "question": "What is a NeTEx DatedVehicleJourney?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "journey",
+        "timetable"
+      ],
+      "expected_source_patterns": [
+        "netex_datedVehicleJourney"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3225.5,
+        "top_5_paths": [
+          "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_support.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_support.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 4852.9,
+        "top_5_paths": [
+          "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_support.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q049",
+      "question": "How does NeTEx represent journey patterns?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "journey-pattern"
+      ],
+      "expected_source_patterns": [
+        "netex_journeyPattern"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 2907.5,
+        "top_5_paths": [
+          "examples/functions/pointOfInterest/Netex_Sites_PoiClassification_1.xml",
+          "examples/standards/tap_tsi/TAP-SKDUPD-example2.xml",
+          "examples/functions/site/Netex_14_Olympic Venues 1.1.xml",
+          "examples/functions/fares/Netex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct.xml",
+          "examples/functions/simpleNetwork/Netex_uk_underground_1.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.16666666666666666,
+        "mrr_at_20": 0.16666666666666666,
+        "latency_ms": 5114.7,
+        "top_5_paths": [
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
+          "xsd/netex_part_2/part2_vehicleService/netex_duty_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q050",
+      "question": "What is the NeTEx TimetableFrame and what does it contain?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "timetable",
+        "frame"
+      ],
+      "expected_source_patterns": [
+        "netex_timetableFrame"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3251.9,
+        "top_5_paths": [
+          "xsd/netex_part_2/part2_frames/netex_timetableFrame_support.xsd",
+          "xsd/netex_part_2/part2_frames/netex_timetableFrame_version.xsd",
+          "xsd/netex_part_2/part2_frames/netex_timetableFrame_support.xsd",
+          "xsd/netex_part_2/part2_frames/netex_timetableFrame_support.xsd",
+          "xsd/netex_part_2/part2_frames/netex_timetableFrame_support.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3519.0,
+        "top_5_paths": [
+          "xsd/netex_part_2/part2_frames/netex_timetableFrame_support.xsd",
+          "xsd/netex_part_2/part2_frames/netex_timetableFrame_version.xsd",
+          "xsd/netex_part_2/part2_frames/netex_timetableFrame_support.xsd",
+          "xsd/netex_part_2/part2_frames/netex_timetableFrame_support.xsd",
+          "xsd/netex_part_2/part2_frames/netex_timetableFrame_support.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      }
+    },
+    {
+      "id": "q051",
+      "question": "Show me a NeTEx XML example for a simple bus timetable.",
+      "intent": "example",
+      "tags": [
+        "netex",
+        "timetable",
+        "example"
+      ],
+      "expected_source_patterns": [
+        "functions/timetable",
+        "Netex_01.1"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0625,
+        "latency_ms": 3560.7,
+        "top_5_paths": [
+          "examples/functions/deckPlans/DeckPlans-Example_bus.xml",
+          "xsd/netex_framework/netex_genericFramework/netex_organisation_version.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_transportOrganisation_version.xsd",
+          "examples/standards/fxc/FX-PI-01_UK_HCTY_LINE_FARE_Line-016-trip_2020-03-11T22_19_20.696Z.xml",
+          "examples/standards/nta/NTA-PI-01_EI_NTA_Operators_COMMON_20200601.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0625,
+        "latency_ms": 3512.4,
+        "top_5_paths": [
+          "examples/functions/deckPlans/DeckPlans-Example_bus.xml",
+          "xsd/netex_framework/netex_genericFramework/netex_organisation_version.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_transportOrganisation_version.xsd",
+          "examples/standards/fxc/FX-PI-01_UK_HCTY_LINE_FARE_Line-016-trip_2020-03-11T22_19_20.696Z.xml",
+          "examples/standards/nta/NTA-PI-01_EI_NTA_Operators_COMMON_20200601.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      }
+    },
+    {
+      "id": "q052",
+      "question": "How does NeTEx define scheduled stop points for timetabled journeys?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "stop",
+        "timetable"
+      ],
+      "expected_source_patterns": [
+        "netex_part_1",
+        "netex_route",
+        "netex_journeyPattern"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.3333333333333333,
+        "mrr_at_20": 0.3333333333333333,
+        "latency_ms": 2740.3,
+        "top_5_paths": [
+          "examples/functions/timetable/Netex_01.5_Bus_SimpleTimetable_StopAssignment.xml",
+          "Guides/Glossary/Glossary.md",
+          "xsd/netex_part_1/part1_networkDescription/netex_vehicleAndCrewPoint_version.xsd",
+          "Guides/Glossary/Glossary.md",
+          "examples/standards/fxc/FX-PI-01_UK_FBRI_LINE-FARE_WOE-Bristol-Line-48-trip-(stage)_2017-01-01.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 4669.0,
+        "top_5_paths": [
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_access_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
+          "xsd/wsdl/siri_all_functionalServices.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q053",
+      "question": "How is a journey departure time represented in NeTEx XML?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "timetable",
+        "time"
+      ],
+      "expected_source_patterns": [
+        "netex_call",
+        "netex_datedPassingTimes",
+        "netex_part_2"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3268.5,
+        "top_5_paths": [
+          "examples/standards/tap_tsi/TAP-SKDUPD-example2.3-Leo_Express.xml",
+          "Guides/JourneyLifecycle/JourneyLifecycle_Guide.md",
+          "examples/functions/timetable/Netex_05.1_Bus_TemplateTimetable_HeadwayFrequency.xml",
+          "examples/standards/nta/NTA-PI-01_EI_LUAS_LINE_OFFER_LUAS_Line93Calls_20200701.xml",
+          "examples/standards/tap_tsi/TAP-SKDUPD-example2.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 4816.7,
+        "top_5_paths": [
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "xsd/netex_part_2/part2_vehicleService/netex_duty_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q054",
+      "question": "What is a NeTEx frequency journey and how does it differ from a fixed timetable?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "timetable",
+        "frequency"
+      ],
+      "expected_source_patterns": [
+        "functions/timetable",
+        "Netex_06"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3275.3,
+        "top_5_paths": [
+          "examples/functions/timetable/Netex_08.1_BusTram_Timetable_AmbiguousLinks.xml",
+          "Guides/NetworkTimetable/NetworkTimetable_Guide.md",
+          "Guides/RegulatoryCompliance/RegulatoryCompliance_Guide.md",
+          "Guides/NetworkTimetable/NetworkTimetable_Guide.md",
+          "Guides/DecisionMakers/DecisionMakers_Guide.md"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 4932.7,
+        "top_5_paths": [
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyTimes_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
+          "xsd/netex_part_2/part2_vehicleService/netex_duty_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q055",
+      "question": "What is the role of JourneyPattern in NeTEx timetable modelling?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "journey-pattern"
+      ],
+      "expected_source_patterns": [
+        "netex_journeyPattern"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3169.8,
+        "top_5_paths": [
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPattern_support.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPattern_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPattern_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPattern_support.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 4748.3,
+        "top_5_paths": [
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPattern_version.xsd",
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPattern_support.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q056",
+      "question": "How does NeTEx handle journey timing and passing time information?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "timetable",
+        "timing"
+      ],
+      "expected_source_patterns": [
+        "netex_journeyTiming",
+        "netex_call"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3321.3,
+        "top_5_paths": [
+          "xsd/wsdl/siri_all_functionalServices.xsd",
+          "examples/standards/tap_tsi/TAP-SKDUPD-example1.xml",
+          "Guides/PassengerInformation/PassengerInformation_Guide.md",
+          "examples/functions/timetable/Netex_32_Multimodal_PassengerInformationEquipment.xml",
+          "Guides/NetworkTimetable/NetworkTimetable_Guide.md"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 5094.6,
+        "top_5_paths": [
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyTimes_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "xsd/netex_part_2/part2_vehicleService/netex_duty_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q057",
+      "question": "What is a NeTEx CoupledJourney?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "journey"
+      ],
+      "expected_source_patterns": [
+        "netex_coupledJourney"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3439.9,
+        "top_5_paths": [
+          "xsd/netex_part_2/part2_journeyTimes/netex_coupledJourney_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_coupledJourney_version.xsd",
+          "examples/standards/tap_tsi/TAP-SKDUPD-example2.xml",
+          "xsd/netex_framework/netex_reusableComponents/netex_vehicleType_version.xsd",
+          "examples/functions/fares/Netex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 5153.7,
+        "top_5_paths": [
+          "xsd/netex_part_2/part2_journeyTimes/netex_coupledJourney_version.xsd",
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "xsd/netex_part_2/part2_journeyTimes/netex_coupledJourney_support.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_coupledJourney_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_coupledJourney_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q058",
+      "question": "How are vehicle types represented in NeTEx schema?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "vehicle"
+      ],
+      "expected_source_patterns": [
+        "netex_vehicleType"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.07692307692307693,
+        "latency_ms": 3179.5,
+        "top_5_paths": [
+          "xsd/netex_part_1/part1_networkDescription/netex_networkRestriction_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyStopAssignment_version.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_vehicle_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_timeDemandType_version.xsd",
+          "xsd/netex_part_2/part2_vehicleService/netex_vehicleService_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.07692307692307693,
+        "latency_ms": 3495.5,
+        "top_5_paths": [
+          "xsd/netex_part_1/part1_networkDescription/netex_networkRestriction_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyStopAssignment_version.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_vehicle_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_timeDemandType_version.xsd",
+          "xsd/netex_part_2/part2_vehicleService/netex_vehicleService_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      }
+    },
+    {
+      "id": "q059",
+      "question": "Show me a NeTEx example for a grouped journey with frequency intervals.",
+      "intent": "example",
+      "tags": [
+        "netex",
+        "timetable",
+        "frequency",
+        "example"
+      ],
+      "expected_source_patterns": [
+        "functions/timetable"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.1111111111111111,
+        "mrr_at_20": 0.1111111111111111,
+        "latency_ms": 3805.3,
+        "top_5_paths": [
+          "examples/standards/fxc/FX-PI-01_UK_AMSY_NETWORK_FARE_Arriva-pass_20200417.xml",
+          "examples/standards/efp/NO_RailExample.xml",
+          "examples/standards/fxc/FX-PI-01_UK_FBRI_LINE-FARE_WOE-Bristol-Line-48-trip-(stage)_2017-01-01.xml",
+          "examples/functions/fares/rail/Netex_era_toc_uk.xml",
+          "examples/standards/fxc/FX-PI-01_UK_MB_NETWORK_FARE_Metrorider-pass+others_20170101.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.06666666666666667,
+        "latency_ms": 4457.0,
+        "top_5_paths": [
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "examples/standards/fxc/FX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-(mixed)_2017-01-01 (5).xml",
+          "examples/standards/tap_tsi/B1_NRT/Netex_tap_tsi_B1-1080-full.xml",
+          "examples/standards/fxc/FX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-(mixed)_2017-01-01 (5).xml",
+          "examples/standards/fxc/FX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-(mixed)_2017-01-01 (5).xml"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q060",
+      "question": "How are stops linked to journey patterns in NeTEx?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "journey-pattern",
+        "stop"
+      ],
+      "expected_source_patterns": [
+        "netex_journeyPattern",
+        "netex_call"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3421.1,
+        "top_5_paths": [
+          "examples/standards/tap_tsi/TAP-SKDUPD-example2.xml",
+          "examples/standards/fxc/FX-PI-01_UK_FSYO_NETWORK_FARE_FirstSheffield-pass-simple_20200310.xml",
+          "examples/functions/fares/Netex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct.xml",
+          "examples/functions/simpleNetwork/Netex_uk_underground_1.xml",
+          "examples/functions/simpleNetwork/Netex_uk_underground_1.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.08333333333333333,
+        "latency_ms": 4912.7,
+        "top_5_paths": [
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_access_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
+          "xsd/wsdl/siri_all_functionalServices.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q061",
+      "question": "What NeTEx structures describe a simple bus timetable with stop times?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "timetable",
+        "bus"
+      ],
+      "expected_source_patterns": [
+        "Netex_01.1",
+        "functions/timetable"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3188.1,
+        "top_5_paths": [
+          "examples/functions/timetable/Netex_08.1_BusTram_Timetable_AmbiguousLinks.xml",
+          "examples/standards/fxc/FX-PI-01_UK_HCTY_LINE_FARE_Line-016-trip_2020-03-11T22_19_20.696Z.xml",
+          "examples/standards/nta/NTA-PI-01_EI_NTA_Operators_COMMON_20200601.xml",
+          "examples/functions/stopPlace/FX-PI-01_UK_TBD_STOP-OFFER_910GWIMBLDN-accessibility_20140601.xml",
+          "examples/standards/efp/VVS_Fares_V1-ZoneSeries-nk3.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 5221.3,
+        "top_5_paths": [
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "examples/functions/site/Netex_14_Olympic Venues 1.1.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_access_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q062",
+      "question": "What is the NeTEx JourneyPatternTimings schema element?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "journey-pattern",
+        "timing"
+      ],
+      "expected_source_patterns": [
+        "netex_journeyPatternTimings"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3466.0,
+        "top_5_paths": [
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_support.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_support.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 5091.4,
+        "top_5_paths": [
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_support.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q063",
+      "question": "How does NeTEx represent multi-line frequency timetables?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "timetable",
+        "frequency"
+      ],
+      "expected_source_patterns": [
+        "functions/timetable"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.2,
+        "mrr_at_20": 0.2,
+        "latency_ms": 3637.5,
+        "top_5_paths": [
+          "xsd/netex_part_1/part1_networkDescription/netex_line_version.xsd",
+          "Guides/NetworkTimetable/netex-guide-split.md",
+          "examples/standards/fxc/FX-PI-01_UK_HCTY_LINE_FARE_Line-016-trip_2020-03-11T22_19_20.696Z.xml",
+          "Guides/NetworkTimetable/netex-guide-split.md",
+          "examples/functions/timetable/Netex_21_Rail_NetworkTimetable_eurostar.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 5108.8,
+        "top_5_paths": [
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "xsd/netex_framework/netex_genericFramework/netex_path_version.xsd",
+          "xsd/gml/gmlBase-extract-v3_2_1.xsd",
+          "xsd/gml/basicTypes.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q064",
+      "question": "What NeTEx XSD file defines vehicle journey times and calls?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "timetable",
+        "xsd"
+      ],
+      "expected_source_patterns": [
+        "netex_part_2/part2_journeyTimes",
+        "netex_call"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3347.4,
+        "top_5_paths": [
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyTimes_version.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_noticeAssignment_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
+          "xsd/netex_part_3/part3_fares/netex_usageParameterTravel_version.xsd",
+          "xsd/netex_part_2/part2_vehicleService/netex_vehicleRechargingPlan_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 4840.9,
+        "top_5_paths": [
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyTimes_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
+          "xsd/netex_part_2/part2_vehicleService/netex_duty_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q065",
+      "question": "What is the NeTEx CommonFrame and what does it provide?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "frame"
+      ],
+      "expected_source_patterns": [
+        "netex_commonFrame",
+        "netex_frames"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3313.2,
+        "top_5_paths": [
+          "xsd/netex_framework/netex_frames/netex_commonFrame_version.xsd",
+          "xsd/netex_framework/netex_frames/netex_commonFrame_version.xsd",
+          "examples/standards/fxc/FX-PI-01_UK_FBRI_LINE-FARE_WOE-Bristol-Line-48-trip-(stage)_2017-01-01.xml",
+          "README.md",
+          "examples/functions/fares/Netex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3238.7,
+        "top_5_paths": [
+          "xsd/netex_framework/netex_frames/netex_commonFrame_version.xsd",
+          "xsd/netex_framework/netex_frames/netex_commonFrame_version.xsd",
+          "examples/standards/fxc/FX-PI-01_UK_FBRI_LINE-FARE_WOE-Bristol-Line-48-trip-(stage)_2017-01-01.xml",
+          "README.md",
+          "examples/functions/fares/Netex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      }
+    },
+    {
+      "id": "q066",
+      "question": "What is a NeTEx Line and how is it defined in the schema?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "line",
+        "network"
+      ],
+      "expected_source_patterns": [
+        "netex_line"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.1,
+        "mrr_at_20": 0.1,
+        "latency_ms": 3075.7,
+        "top_5_paths": [
+          "xsd/gml/gmlBase-extract-v3_2_1.xsd",
+          "xsd/netex_framework/netex_genericFramework/netex_accessibility/netex_acsb_limitations.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyTimes_version.xsd",
+          "xsd/gml/basicTypes.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 4725.5,
+        "top_5_paths": [
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "xsd/gml/basicTypes.xsd",
+          "xsd/netex_framework/netex_genericFramework/netex_path_version.xsd",
+          "xsd/gml/gmlBase-extract-v3_2_1.xsd",
+          "xsd/gml/geometryBasic0d1d-extract-v3_2_1.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q067",
+      "question": "How is GroupOfLines used in NeTEx network description?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "line",
+        "network"
+      ],
+      "expected_source_patterns": [
+        "netex_grouping",
+        "netex_lineNetwork",
+        "netex_line"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.3333333333333333,
+        "mrr_at_20": 0.3333333333333333,
+        "latency_ms": 3053.5,
+        "top_5_paths": [
+          "Objects/GroupOfLines/Example_GroupOfLines.xml",
+          "xsd/gml/basicTypes.xsd",
+          "xsd/netex_part_1/part1_networkDescription/netex_line_version.xsd",
+          "xsd/siri_utility/siri_types-v2.0.xsd",
+          "xsd/netex_part_3/part3_salesTransactions/netex_retailConsortium_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 4990.2,
+        "top_5_paths": [
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "xsd/netex_framework/netex_genericFramework/netex_path_version.xsd",
+          "xsd/gml/gmlBase-extract-v3_2_1.xsd",
+          "xsd/gml/basicTypes.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q068",
+      "question": "What is a NeTEx Route and how is it different from a Line?",
+      "intent": "disambiguation",
+      "tags": [
+        "netex",
+        "route",
+        "line"
+      ],
+      "expected_source_patterns": [
+        "netex_route",
+        "netex_line"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 2842.5,
+        "top_5_paths": [
+          "Guides/NetworkTimetable/netex-guide-split.md",
+          "examples/functions/timetable/Netex_01.4_Bus_SimpleTimetable_WithConnection.xml",
+          "Guides/NetworkTimetable/netex-guide-split.md",
+          "Guides/NetworkTimetable/netex-guide-split.md",
+          "examples/standards/gtfs/Netex_gtfs_fares_Example_4_flatFare_byLineGroup.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 4431.6,
+        "top_5_paths": [
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "xsd/gml/basicTypes.xsd",
+          "xsd/netex_framework/netex_genericFramework/netex_path_version.xsd",
+          "xsd/gml/gmlBase-extract-v3_2_1.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q069",
+      "question": "How does NeTEx model a transport network?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "network"
+      ],
+      "expected_source_patterns": [
+        "netex_lineNetwork",
+        "netex_part_1_networkDescription"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 2344.1,
+        "top_5_paths": [
+          "Objects/StopPlace/Description_StopPlace.md",
+          "examples/functions/stopPlace/Netex_04_Stops_SimpleStation_1.xml",
+          "examples/standards/fxc/FX-PI-01_UK_AMSY_NETWORK_FARE_Arriva-pass_20200417.xml",
+          "examples/standards/tap_tsi/TAP-SKDUPD-example2.3-Leo_Express.xml",
+          "examples/functions/stopPlace/FX-PI-01_UK_TBD_STOP-OFFER_910GWIMBLDN-accessibility_20140601.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3739.4,
+        "top_5_paths": [
+          "examples/functions/stopPlace/Netex_10_StopPlace_withParking_1.xml",
+          "examples/functions/stopPlace/FX-PI-01_UK_TBD_STOP-OFFER_910GWIMBLDN-accessibility_20140601.xml",
+          "examples/functions/vehicleSchedule/Netex_simpleVehicleSchedule_01.xml",
+          "examples/functions/stopPlace/Netex_10_StopPlace_uk_ComplexStation_Wimbledon_1.xml",
+          "examples/functions/stopPlace/Netex_10_StopPlace_withParking_1.xml"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q070",
+      "question": "Show me a NeTEx XML example for a simple line with stop points.",
+      "intent": "example",
+      "tags": [
+        "netex",
+        "line",
+        "example"
+      ],
+      "expected_source_patterns": [
+        "functions/line",
+        "NeTEx_01_simple_line"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3103.6,
+        "top_5_paths": [
+          "examples/functions/timetable/Netex_01.5_Bus_SimpleTimetable_StopAssignment.xml",
+          "examples/standards/fxc/FX-PI-01_UK_HCTY_LINE_FARE_Line-016-trip_2020-03-11T22_19_20.696Z.xml",
+          "examples/functions/timetable/Netex_21_Rail_NetworkTimetable_eurostar.xml",
+          "examples/functions/timetable/Netex_01.4_Bus_SimpleTimetable_WithConnection.xml",
+          "examples/functions/timetable/Netex_01.6_Bus_SimpleTimetable_RouteProjection.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 4644.1,
+        "top_5_paths": [
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "examples/standards/fxc/FX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-(mixed)_2017-01-01 (5).xml",
+          "examples/standards/tap_tsi/B1_NRT/Netex_tap_tsi_B1-1080-full.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_access_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q071",
+      "question": "What is AllowedLineDirection in NeTEx?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "line",
+        "route"
+      ],
+      "expected_source_patterns": [
+        "netex_line",
+        "netex_route"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3064.0,
+        "top_5_paths": [
+          "xsd/netex_part_1/part1_networkDescription/netex_line_version.xsd",
+          "examples/standards/fxc/FX-PI-01_UK_FBRI_LINE-FARE_WOE-Bristol-Line-48-trip-(stage)_2017-01-01.xml",
+          "examples/standards/tap_tsi/TAP-SKDUPD-example2.xml",
+          "examples/functions/simpleNetwork/Netex_uk_underground_1.xml",
+          "examples/standards/nta/NTA-PI-01_EI_NTA_Luas_20200715.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 4823.5,
+        "top_5_paths": [
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "xsd/netex_framework/netex_genericFramework/netex_path_version.xsd",
+          "xsd/gml/gmlBase-extract-v3_2_1.xsd",
+          "xsd/gml/basicTypes.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q072",
+      "question": "How are transport operators linked to lines in NeTEx schema?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "line",
+        "operator"
+      ],
+      "expected_source_patterns": [
+        "netex_organisation",
+        "netex_line"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.05555555555555555,
+        "latency_ms": 3244.5,
+        "top_5_paths": [
+          "xsd/netex_framework/netex_reusableComponents/netex_transportOrganisation_version.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_mode_version.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_mode_version.xsd",
+          "xsd/NX.xsd",
+          "xsd/netex_part_3/part3_salesTransactions/netex_customerEligibility_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 4900.4,
+        "top_5_paths": [
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "xsd/netex_framework/netex_responsibility/netex_validityCondition_support.xsd",
+          "xsd/gml/gmlBase-extract-v3_2_1.xsd",
+          "xsd/netex_framework/netex_genericFramework/netex_path_version.xsd",
+          "xsd/gml/basicTypes.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q073",
+      "question": "What is TypeOfLine in NeTEx and when is it used?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "line"
+      ],
+      "expected_source_patterns": [
+        "netex_line_support",
+        "netex_line"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 2888.9,
+        "top_5_paths": [
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "Guides/InterchangeOnly/Interchange_Guide.md",
+          "Guides/Glossary/Glossary.md",
+          "Frames/ResourceFrame/Description_ResourceFrame.md",
+          "examples/standards/fxc/FX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-(mixed)_2017-01-01 (5).xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 4693.1,
+        "top_5_paths": [
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "xsd/gml/basicTypes.xsd",
+          "xsd/netex_framework/netex_genericFramework/netex_path_version.xsd",
+          "xsd/gml/gmlBase-extract-v3_2_1.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q074",
+      "question": "How is the NeTEx part 1 network description structure organised?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "network",
+        "schema"
+      ],
+      "expected_source_patterns": [
+        "part1_networkDescription"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 2498.7,
+        "top_5_paths": [
+          "xsd/netex_part_1/part1_networkDescription/netex_line_version.xsd",
+          "Guides/NetworkTimetable/netex-guide-split.md",
+          "xsd/netex_part_1/part1_networkDescription/netex_line_version.xsd",
+          "xsd/netex_part_1/part1_networkDescription/netex_line_version.xsd",
+          "xsd/netex_part_1/part1_networkDescription/netex_line_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3778.0,
+        "top_5_paths": [
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "xsd/netex_framework/netex_responsibility/netex_version_version.xsd",
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q075",
+      "question": "How is RouteInstruction used in NeTEx route modelling?",
+      "intent": "explanation",
+      "tags": [
+        "netex",
+        "route"
+      ],
+      "expected_source_patterns": [
+        "netex_routeInstruction",
+        "netex_route"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 2960.7,
+        "top_5_paths": [
+          "xsd/netex_part_1/part1_networkDescription/netex_routeInstruction_version.xsd",
+          "xsd/netex_part_1/part1_networkDescription/netex_routeInstruction_version.xsd",
+          "xsd/netex_part_1/part1_networkDescription/netex_routeInstruction_support.xsd",
+          "xsd/netex_part_1/part1_networkDescription/netex_routeInstruction_support.xsd",
+          "xsd/netex_part_1/part1_networkDescription/netex_routeInstruction_support.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 4203.9,
+        "top_5_paths": [
+          "xsd/netex_part_1/part1_networkDescription/netex_routeInstruction_version.xsd",
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "xsd/netex_part_1/part1_networkDescription/netex_routeInstruction_support.xsd",
+          "xsd/netex_part_1/part1_networkDescription/netex_routeInstruction_version.xsd",
+          "xsd/netex_part_1/part1_networkDescription/netex_routeInstruction_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q076",
+      "question": "How does an OpRa delayed journey relate to a NeTEx vehicle journey concept?",
+      "intent": "mapping",
+      "tags": [
+        "opra",
+        "netex",
+        "delay",
+        "cross-standard"
+      ],
+      "expected_source_patterns": [
+        "DelayedAndCancelled",
+        "netex_part_2"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 2944.7,
+        "top_5_paths": [
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
+          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
+          "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd",
+          "xsd/opra_indicators/opra_lateDatedVehicleJourney_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.16666666666666666,
+        "mrr_at_20": 0.16666666666666666,
+        "latency_ms": 4253.7,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q077",
+      "question": "Which NeTEx structures correspond to OpRa capacity indicators?",
+      "intent": "mapping",
+      "tags": [
+        "opra",
+        "netex",
+        "capacity",
+        "cross-standard"
+      ],
+      "expected_source_patterns": [
+        "opra_framework",
+        "netex_vehicleType"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3087.8,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_genericFramework/opra_GenericContextualIndicator_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3158.5,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_genericFramework/opra_GenericContextualIndicator_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      }
+    },
+    {
+      "id": "q078",
+      "question": "Map OpRa delay statistics to NeTEx operational journey concepts.",
+      "intent": "mapping",
+      "tags": [
+        "opra",
+        "netex",
+        "delay",
+        "cross-standard"
+      ],
+      "expected_source_patterns": [
+        "opra_framework",
+        "netex_journeyPattern"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 2553.5,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "issues/14.md",
+          "docs/opra_qm_query_model_section.md"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.1111111111111111,
+        "mrr_at_20": 0.1111111111111111,
+        "latency_ms": 3797.5,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q079",
+      "question": "How does OpRa CancelledJourney map to a NeTEx concept?",
+      "intent": "mapping",
+      "tags": [
+        "opra",
+        "netex",
+        "cancellation",
+        "cross-standard"
+      ],
+      "expected_source_patterns": [
+        "CancelledAndLate",
+        "netex_datedVehicleJourney"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 2749.8,
+        "top_5_paths": [
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "issues/14.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3952.8,
+        "top_5_paths": [
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q080",
+      "question": "How does OpRa service intensity relate to NeTEx line and network concepts?",
+      "intent": "mapping",
+      "tags": [
+        "opra",
+        "netex",
+        "service-intensity",
+        "cross-standard"
+      ],
+      "expected_source_patterns": [
+        "opra_framework",
+        "netex_line",
+        "netex_lineNetwork"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.125,
+        "mrr_at_20": 0.125,
+        "latency_ms": 2939.1,
+        "top_5_paths": [
+          "docs/opra_qm_query_model_section.md",
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_service/opra_service_serviceIntensity.xsd",
+          "docs/opra_qm_query_model_section.md",
+          "docs/opra_qm_query_model_section.md"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 4700.4,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q081",
+      "question": "What is the relationship between OpRa IndicatorFrame and NeTEx frames?",
+      "intent": "mapping",
+      "tags": [
+        "opra",
+        "netex",
+        "frame",
+        "cross-standard"
+      ],
+      "expected_source_patterns": [
+        "opra_frame",
+        "netex_frames"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3132.1,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "docs/opra_qm_query_model_section.md"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.3333333333333333,
+        "mrr_at_20": 0.3333333333333333,
+        "latency_ms": 4770.3,
+        "top_5_paths": [
+          "issues/14.md",
+          "examples/functions/vehicleSchedule/Netex_simpleVehicleSchedule_01.xml",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q082",
+      "question": "Which OpRa indicators are relevant for analysing NeTEx journey timing patterns?",
+      "intent": "mapping",
+      "tags": [
+        "opra",
+        "netex",
+        "timing",
+        "cross-standard"
+      ],
+      "expected_source_patterns": [
+        "opra_framework",
+        "netex_journeyTiming",
+        "netex_part_2"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3360.7,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_genericFramework/opra_GenericContextualIndicator_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.25,
+        "mrr_at_20": 0.25,
+        "latency_ms": 5144.7,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q083",
+      "question": "How are passenger counts in OpRa linked to NeTEx stop point concepts?",
+      "intent": "mapping",
+      "tags": [
+        "opra",
+        "netex",
+        "passenger",
+        "cross-standard"
+      ],
+      "expected_source_patterns": [
+        "ExpectedPassengerCount",
+        "netex_part_1"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3357.7,
+        "top_5_paths": [
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_service/opra_service_ticketingBasedPassengerCounts.xsd",
+          "xsd/opra_service/opra_service_onboardDeviceBasedPassengerCounts.xsd",
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_service/opra_service_ticketingBasedPassengerCounts.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.2,
+        "mrr_at_20": 0.2,
+        "latency_ms": 4508.5,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q084",
+      "question": "What is the NeTEx equivalent of an OpRa VehicleJourney operational indicator?",
+      "intent": "mapping",
+      "tags": [
+        "opra",
+        "netex",
+        "journey",
+        "cross-standard"
+      ],
+      "expected_source_patterns": [
+        "opra_framework",
+        "netex_datedVehicleJourney"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3560.6,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyTimes_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.09090909090909091,
+        "latency_ms": 5016.6,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyTimes_version.xsd",
+          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyTimes_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourney_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q085",
+      "question": "How should OpRa performance data be interpreted in a NeTEx timetable context?",
+      "intent": "mapping",
+      "tags": [
+        "opra",
+        "netex",
+        "performance",
+        "cross-standard"
+      ],
+      "expected_source_patterns": [
+        "opra_framework",
+        "netex_timetableFrame"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3605.3,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "issues/14.md",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3729.9,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "issues/14.md",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      }
+    },
+    {
+      "id": "q086",
+      "question": "What is the semantic relationship between NeTEx JourneyPattern and OpRa capacity data?",
+      "intent": "mapping",
+      "tags": [
+        "opra",
+        "netex",
+        "journey-pattern",
+        "capacity",
+        "cross-standard"
+      ],
+      "expected_source_patterns": [
+        "netex_journeyPattern",
+        "opra_framework"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3695.5,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd",
+          "docs/opra_qm_query_model_section.md",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPattern_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 5547.5,
+        "top_5_paths": [
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPattern_version.xsd",
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPattern_support.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q087",
+      "question": "How does OpRa LateDatedVehicleJourneyEntry relate to NeTEx DatedVehicleJourney?",
+      "intent": "mapping",
+      "tags": [
+        "opra",
+        "netex",
+        "delay",
+        "cross-standard"
+      ],
+      "expected_source_patterns": [
+        "ResponseLateDated",
+        "RequestLateDated",
+        "netex_datedVehicleJourney"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 3188.4,
+        "top_5_paths": [
+          "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_version.xsd",
+          "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_support.xsd",
+          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 5108.8,
+        "top_5_paths": [
+          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_support.xsd",
+          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q088",
+      "question": "How does OpRa vehicle load entry map to NeTEx vehicle or capacity concepts?",
+      "intent": "mapping",
+      "tags": [
+        "opra",
+        "netex",
+        "capacity",
+        "cross-standard"
+      ],
+      "expected_source_patterns": [
+        "VehicleLoadEntry",
+        "netex_vehicleType"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3136.1,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_vehicleOccupancy_version.xsd",
+          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 4655.6,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q089",
+      "question": "How can NeTEx line information be combined with OpRa service intensity indicators?",
+      "intent": "mapping",
+      "tags": [
+        "opra",
+        "netex",
+        "line",
+        "service-intensity",
+        "cross-standard"
+      ],
+      "expected_source_patterns": [
+        "netex_line",
+        "ExpectedServiceIntensity",
+        "PlannedServiceIntensity"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3496.9,
+        "top_5_paths": [
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_service/opra_service_serviceIntensity.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 4775.9,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "issues/10.md"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q090",
+      "question": "Which NeTEx concept best corresponds to OpRa TransportPerformance?",
+      "intent": "mapping",
+      "tags": [
+        "opra",
+        "netex",
+        "performance",
+        "cross-standard"
+      ],
+      "expected_source_patterns": [
+        "opra_framework",
+        "netex_part_2"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 3140.1,
+        "top_5_paths": [
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "docs/opra_qm_query_model_section.md",
+          "issues/14.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.1111111111111111,
+        "mrr_at_20": 0.1111111111111111,
+        "latency_ms": 4110.6,
+        "top_5_paths": [
+          "examples/functions/stopPlace/Netex_10_StopPlace_withParking_1.xml",
+          "examples/ExpectedServiceIntensity.xml",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "docs/opra_px_measured_passengers_text.md"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q091",
+      "question": "Is SIRI compatible with OpRa for exchanging real-time journey updates?",
+      "intent": "abstention",
+      "tags": [
+        "siri",
+        "opra",
+        "cross-standard"
+      ],
+      "expected_source_patterns": [],
+      "min_hits": 0,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3282.6,
+        "top_5_paths": [
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_request.xsd",
+          "xsd/opra.xsd",
+          "xsd/opra_request.xsd",
+          "xsd/opra.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 5165.1,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/wsdl/siri_all_functionalServices.xsd",
+          "xsd/opra_indicators/opra_lateDatedVehicleJourney_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q092",
+      "question": "What are the EU legal obligations for NeTEx adoption by transport authorities?",
+      "intent": "abstention",
+      "tags": [
+        "netex",
+        "regulatory"
+      ],
+      "expected_source_patterns": [],
+      "min_hits": 0,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3420.4,
+        "top_5_paths": [
+          "xsd/netex_part_1/part1_ifopt/netex_ifopt_stopPlace_support.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_facility_version.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_mode_support.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_mode_support.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_mode_support.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3706.1,
+        "top_5_paths": [
+          "xsd/netex_part_1/part1_ifopt/netex_ifopt_stopPlace_support.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_facility_version.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_mode_support.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_mode_support.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_mode_support.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      }
+    },
+    {
+      "id": "q093",
+      "question": "How does NeTEx compare to GTFS in terms of real-time data quality?",
+      "intent": "abstention",
+      "tags": [
+        "netex",
+        "gtfs",
+        "comparison"
+      ],
+      "expected_source_patterns": [],
+      "min_hits": 0,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 2911.5,
+        "top_5_paths": [
+          "examples/standards/gtfs/Netex_gtfs_exm1_zz_Composite.xml",
+          "examples/standards/gtfs/Netex_gtfs_exm1_Transfers_1.xml",
+          "examples/standards/gtfs/Netex_gtfs_exm1_zz_Composite.xml",
+          "examples/functions/fares/rail/Netex_era_crossborder_de.xml",
+          "examples/standards/nta/NTA-PI-01_EI_NTA_Luas_20200715.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3499.6,
+        "top_5_paths": [
+          "examples/standards/gtfs/Netex_gtfs_exm1_zz_Composite.xml",
+          "examples/standards/gtfs/Netex_gtfs_exm1_Transfers_1.xml",
+          "examples/standards/gtfs/Netex_gtfs_exm1_zz_Composite.xml",
+          "examples/functions/fares/rail/Netex_era_crossborder_de.xml",
+          "examples/standards/nta/NTA-PI-01_EI_NTA_Luas_20200715.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      }
+    },
+    {
+      "id": "q094",
+      "question": "What is the estimated cost of implementing OpRa for a national transport authority?",
+      "intent": "abstention",
+      "tags": [
+        "opra",
+        "cost",
+        "operational"
+      ],
+      "expected_source_patterns": [],
+      "min_hits": 0,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3512.4,
+        "top_5_paths": [
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "issues/14.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3350.5,
+        "top_5_paths": [
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "issues/14.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      }
+    },
+    {
+      "id": "q095",
+      "question": "Does NeTEx support autonomous vehicle journey data modelling?",
+      "intent": "abstention",
+      "tags": [
+        "netex",
+        "autonomous",
+        "extension"
+      ],
+      "expected_source_patterns": [],
+      "min_hits": 0,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3714.8,
+        "top_5_paths": [
+          "xsd/netex_framework/netex_reusableComponents/netex_vehicle_support.xsd",
+          "xsd/netex_part_5/part5_nd/netex_nm_vehicleMeetingPlace_support.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_facility_support.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_seatingPlan_support.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_vehicleType_support.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 4827.2,
+        "top_5_paths": [
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q096",
+      "question": "What is the formal W3C or OGC ontology for NeTEx concepts?",
+      "intent": "abstention",
+      "tags": [
+        "netex",
+        "ontology",
+        "w3c"
+      ],
+      "expected_source_patterns": [],
+      "min_hits": 0,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3526.9,
+        "top_5_paths": [
+          "examples/standards/fxc/FX-PI-01_UK_MB_NETWORK_FARE_Metrorider-pass_basic_20170101.xml",
+          "examples/functions/fares/Netex_71.2_Bus_ZonalFares_MultipleSalesPackages.xml",
+          "examples/standards/gtfs/Netex_gtfs_exm1_FareRules_1.xml",
+          "examples/functions/site/Netex_14_Olympic Venues 1.1.xml",
+          "examples/standards/fxc/FX-PI-01_UK_FBRI_LINE-FARE_WOE-Bristol-Line-48-trip-(stage)_2017-01-01.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3395.3,
+        "top_5_paths": [
+          "examples/standards/fxc/FX-PI-01_UK_MB_NETWORK_FARE_Metrorider-pass_basic_20170101.xml",
+          "examples/functions/fares/Netex_71.2_Bus_ZonalFares_MultipleSalesPackages.xml",
+          "examples/standards/gtfs/Netex_gtfs_exm1_FareRules_1.xml",
+          "examples/functions/site/Netex_14_Olympic Venues 1.1.xml",
+          "examples/standards/fxc/FX-PI-01_UK_FBRI_LINE-FARE_WOE-Bristol-Line-48-trip-(stage)_2017-01-01.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      }
+    },
+    {
+      "id": "q097",
+      "question": "How does OJP integrate with OpRa for open journey planning data?",
+      "intent": "abstention",
+      "tags": [
+        "ojp",
+        "opra",
+        "cross-standard"
+      ],
+      "expected_source_patterns": [],
+      "min_hits": 0,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3121.7,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_service/opra_all_services.xsd",
+          "xsd/opra_framework/opra_payload_framework.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 4932.5,
+        "top_5_paths": [
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/opra_indicators/opra_lateDatedVehicleJourney_version.xsd",
+          "issues/14.md"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 77
+      }
+    },
+    {
+      "id": "q098",
+      "question": "What is the DATEX II equivalent of an OpRa capacity indicator?",
+      "intent": "abstention",
+      "tags": [
+        "datex",
+        "opra",
+        "cross-standard"
+      ],
+      "expected_source_patterns": [],
+      "min_hits": 0,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3438.3,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 2955.9,
+        "top_5_paths": [
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      }
+    },
+    {
+      "id": "q099",
+      "question": "How does the Norwegian national NeTEx profile handle delayed journey representation?",
+      "intent": "abstention",
+      "tags": [
+        "netex",
+        "profile",
+        "norway"
+      ],
+      "expected_source_patterns": [
+        "nta"
+      ],
+      "min_hits": 0,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3061.0,
+        "top_5_paths": [
+          "LLM/AgentGuides/NeTEx_Validation_Guide.md",
+          "xsd/netex_part_3/part3_monitoring/netex_monitoredCall_version.xsd",
+          "examples/standards/fxc/FX-PI-01_UK_FSYO_NETWORK_FARE_FirstSheffield-pass-by-period_20200310.xml",
+          "xsd/wsdl_model/siri_wsProducer-DiscoveryCapability.xsd",
+          "examples/functions/fares/Netex_91.1_Rail_RailCard_MultipleProduct.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 4957.9,
+        "top_5_paths": [
+          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "xsd/netex_part_2/part2_vehicleService/netex_duty_version.xsd"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 78
+      }
+    },
+    {
+      "id": "q100",
+      "question": "What is the relationship between Transmodel and OpRa in the EU regulatory framework?",
+      "intent": "abstention",
+      "tags": [
+        "transmodel",
+        "opra",
+        "regulatory"
+      ],
+      "expected_source_patterns": [],
+      "min_hits": 0,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3414.9,
+        "top_5_paths": [
+          "docs/opra_qm_query_model_section.md",
+          "issues/14.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 3434.5,
+        "top_5_paths": [
+          "docs/opra_qm_query_model_section.md",
+          "issues/14.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      }
+    }
+  ]
+}

@@ -33,7 +33,10 @@ Reuse common core vocabularies and gradually build a project ontology for NAPCOR
 
 Initial ontology draft artifacts:
 - `docs/ontology/README.md`
-- `docs/ontology/napcore-core.ttl`
+- `docs/ontology/napcore-its.ttl`
+- `docs/ontology/netex-federated.ttl`
+- `docs/ontology/opra-federated.ttl`
+- `docs/ontology/standards-alignment.ttl`
 
 ### Core Reuse Set
 - SKOS for concept schemes, preferred labels, alternative labels, and broader/narrower relations.
@@ -42,17 +45,16 @@ Initial ontology draft artifacts:
 
 ### Project Extension
 - Introduce a project namespace for transport-specific relations not covered by the reused cores.
-- Working namespace placeholder: `https://napcore.eu/ontology/helpdesk#`
-- Candidate prefix: `nch:`
-- Current positioning: experimental helpdesk application ontology; may evolve into broader NAPCORE domain ontology with wider consensus.
+- Core namespace: `https://napcore.eu/ontology/nits#`
+- Core prefix: `nits:`
+- Current positioning: minimal canonical anchor layer with per-standard federated modules and explicit alignment assertions.
 
 ## Minimum Modeling Profile (Phase 1)
-- `skos:Concept` as the concept backbone, with `nch:` extensions only where needed.
-- `nch:StandardArtifact` for source files and normative assets.
-- `nch:ExampleArtifact` for executable/illustrative examples.
-- `nch:conceptInStandard` linking concepts to standard families.
-- `nch:evidencedByArtifact` linking concepts to citable sources.
-- `nch:artifactHasChunk` linking assets to retrievable chunks.
+- `skos:Concept` as the concept backbone across core and standard-local modules.
+- `nits:` concepts as canonical cross-standard anchors.
+- Standard-local concept IRIs in module ontologies such as `netex:` and `opra:`.
+- `skos:exactMatch`, `skos:closeMatch`, and approved related mappings in the alignment ontology.
+- PROV-O and DCTERMS metadata for source-grounded artifacts and ontology generation lineage.
 
 ## Governance And Change Control
 - Keep ontology changes under editorial workflow: draft -> review -> approved.

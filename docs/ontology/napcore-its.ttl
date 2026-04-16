@@ -1,0 +1,71 @@
+@prefix nits: <https://napcore.eu/ontology/nits#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+<https://napcore.eu/ontology/napcore-its>
+    a owl:Ontology ;
+    dcterms:title "NAPCORE ITS Core Ontology"@en ;
+    dcterms:description "Minimal federated NAPCORE ITS core ontology used for cross-standard semantic anchoring in the Helpdesk runtime."@en ;
+    dcterms:created "2026-04-16"^^xsd:date ;
+    owl:versionInfo "0.1.0" ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> .
+
+nits:journey a skos:Concept ;
+    skos:prefLabel "journey"@en ;
+    skos:altLabel "transport journey"@en ;
+    skos:related nits:vehicle-journey, nits:journey-pattern .
+
+nits:vehicle-journey a skos:Concept ;
+    skos:prefLabel "vehicle journey"@en ;
+    skos:altLabel "service journey"@en ;
+    skos:altLabel "delayed journey"@en ;
+    skos:altLabel "cancelled journey"@en ;
+    skos:related nits:journey, nits:delay, nits:capacity, nits:service-intensity .
+
+nits:journey-pattern a skos:Concept ;
+    skos:prefLabel "journey pattern"@en ;
+    skos:altLabel "route pattern"@en ;
+    skos:related nits:journey, nits:line .
+
+nits:line a skos:Concept ;
+    skos:prefLabel "line"@en ;
+    skos:altLabel "service line"@en ;
+    skos:related nits:journey-pattern, nits:network .
+
+nits:network a skos:Concept ;
+    skos:prefLabel "network"@en ;
+    skos:altLabel "transport network"@en ;
+    skos:related nits:line, nits:service-intensity .
+
+nits:delay a skos:Concept ;
+    skos:prefLabel "delay"@en ;
+    skos:altLabel "journey delay"@en ;
+    skos:altLabel "delay statistics"@en ;
+    skos:altLabel "type of delay"@en ;
+    skos:related nits:vehicle-journey, nits:service-intensity .
+
+nits:capacity a skos:Concept ;
+    skos:prefLabel "capacity"@en ;
+    skos:altLabel "planned capacity"@en ;
+    skos:altLabel "actual capacity"@en ;
+    skos:altLabel "vehicle capacity"@en ;
+    skos:altLabel "passenger capacity"@en ;
+    skos:related nits:vehicle-journey, nits:service-intensity, nits:passenger-load .
+
+nits:service-intensity a skos:Concept ;
+    skos:prefLabel "service intensity"@en ;
+    skos:altLabel "planned service intensity"@en ;
+    skos:altLabel "actual service intensity"@en ;
+    skos:altLabel "expected service intensity"@en ;
+    skos:altLabel "transport performance"@en ;
+    skos:related nits:capacity, nits:network, nits:delay .
+
+nits:passenger-load a skos:Concept ;
+    skos:prefLabel "passenger load"@en ;
+    skos:altLabel "passenger count"@en ;
+    skos:altLabel "vehicle load"@en ;
+    skos:altLabel "occupancy"@en ;
+    skos:related nits:capacity, nits:service-intensity .

@@ -16,7 +16,7 @@ It helps align architecture decisions across product, engineering, and governanc
 7. Ingestion Worker: imports and indexes allowlisted GitHub content, including companion documentation repositories.
 8. Application Database: stores FAQs, events, review records, and evidence links.
 9. Vector Index: stores embeddings for retrieval.
-10. Semantic Graph Database (planned): stores concept graph relations for graph-aware retrieval expansion.
+10. Semantic Graph Database: stores ontology and concept graph relations for graph-aware retrieval expansion.
 
 ## Container to technology mapping (v1 baseline)
 1. Web GUI -> React + TypeScript + Vite.
@@ -28,12 +28,12 @@ It helps align architecture decisions across product, engineering, and governanc
 7. Ingestion Worker -> Celery workers + Redis queue + GitHub API clients.
 8. PostgreSQL -> PostgreSQL 15 + Django migrations + pgvector extension.
 9. Vector Index -> pgvector tables in PostgreSQL for MVP.
-10. Semantic Graph Database (planned) -> Neo4j for concept graph traversal in graph-aware retrieval mode.
+10. Semantic Graph Database -> GraphDB (RDF/OWL-native + SPARQL) for ontology-aware traversal and expansion in graph-aware retrieval mode.
 
 ## Current implementation status
 - Current runtime uses PostgreSQL + pgvector as the production baseline.
-- A feature-flagged graph-aware scoring path exists in Retrieval Service logic (`GRAPH_RAG_ENABLED`) without a persisted graph database dependency yet.
-- Neo4j remains a planned container for the next rollout phase (persistent concept graph materialization and traversal).
+- Graph-aware scoring path is implemented behind feature flags (`GRAPH_RAG_ENABLED`, `GRAPHDB_ENABLED`) with GraphDB as the primary semantic graph backend.
+- Neo4j is retained only as an experimental branch (`NEO4J_EXPERIMENTAL_ENABLED`) and is not the production semantic backend.
 
 ## Key messages
 1. FAQ-first lowers latency and improves consistency for known questions.

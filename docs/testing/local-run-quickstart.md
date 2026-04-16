@@ -186,7 +186,33 @@ Verify with:
 cd backend && ../.venv/bin/python manage.py showmigrations helpdesk | grep '0006\|0007\|0008\|0009'
 ```
 
-## 11. Related docs
+## 11. GraphDB semantic layer (optional, required for GraphDB-backed graph expansion)
+Graph-aware retrieval can run with in-memory fallback, but GraphDB-backed ontology expansion requires explicit configuration.
+
+Set in `backend/.env`:
+- `GRAPHDB_ENABLED=True`
+- `GRAPHDB_SPARQL_ENDPOINT=http://localhost:7200`
+- `GRAPHDB_REPOSITORY=napcore-helpdesk`
+- `GRAPHDB_USER=` and `GRAPHDB_PASSWORD=` if your GraphDB requires auth
+- Keep `GRAPH_RAG_ENABLED=True` for graph-aware retrieval mode
+- Keep `NEO4J_EXPERIMENTAL_ENABLED=False` unless you are intentionally testing the experimental Neo4j branch
+
+Load ontology files (dry-run first, then apply):
+
+```bash
+cd backend
+../.venv/bin/python manage.py load_graphdb_ontologies
+../.venv/bin/python manage.py load_graphdb_ontologies --apply
+```
+
+If you need to replace named graphs during reload:
+
+```bash
+cd backend
+../.venv/bin/python manage.py load_graphdb_ontologies --apply --replace
+```
+
+## 12. Related docs
 - `backend/README.md`
 - `frontend/README.md`
 - `docs/architecture/deployment-operations-checklist.md`

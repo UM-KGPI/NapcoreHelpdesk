@@ -18,7 +18,26 @@ Implement the helpdesk as a retrieval-augmented generation (RAG) system that pro
 ## Semantic Layer Extension
 - Graph-based semantic layer plan: [semantic-layer-plan.md](docs/architecture/semantic-layer-plan.md)
 - Semantic layer findings and ontology baseline: [semantic-layer-findings.md](docs/architecture/semantic-layer-findings.md)
-- Initial ontology draft: [../ontology/napcore-core.ttl](docs/ontology/napcore-core.ttl)
+- Canonical ontology assets: [../ontology/README.md](docs/ontology/README.md)
+- Runtime reasoning is anchored on the federated ontology set loaded into GraphDB: core `nits:` concepts plus standard modules and explicit alignments.
+
+### Federated Ontology Lifecycle
+1. Ingest approved repository documents.
+2. Extract concepts, relations, and evidence links from repository artifacts.
+3. Materialize repository-specific concept inventories aligned to the federated core/module/alignment model.
+4. Index chunks with ontology-linked metadata.
+5. Apply GraphDB-backed concept expansion and alignment traversal during retrieval-time reasoning and ranking.
+
+### Implemented Runtime Pattern: Glossary + Federated Ontologies
+- Runtime now uses a two-layer semantic model for query reasoning:
+  - Glossary layer: `backend/helpdesk/ontologies/standards.yaml`
+  - Federated ontology layer: `docs/ontology/napcore-its.ttl`, `docs/ontology/netex-federated.ttl`, `docs/ontology/opra-federated.ttl`, `docs/ontology/standards-alignment.ttl`
+- Intended behavior:
+  1. Lexically detect glossary concepts from user query terms and aliases.
+  2. Map glossary concept IDs to canonical or standard-local ontology IRIs.
+  3. Expand semantically over GraphDB-backed SKOS alignment relations.
+  4. Project expanded concepts back to glossary terms and retrieval candidates for scoring.
+- This separation improves cross-standard reasoning while keeping lexical tuning independent from ontology curation.
 
 ## Ontology Namespace Policy
 - Baseline policy: reuse common core vocabularies before adding project-specific terms.
@@ -31,10 +50,10 @@ Implement the helpdesk as a retrieval-augmented generation (RAG) system that pro
   - PROV-O for provenance of extracted concepts, links, and retrieval evidence lineage.
   - DCTERMS for document and artifact metadata fields.
 - Project extension namespace:
-  - Working namespace: `https://napcore.eu/ontology/helpdesk#`
-  - Working prefix: `nch`
-  - Scope: experimental helpdesk application ontology (not yet a full NAPCORE domain ontology).
-  - Usage: only for transport relations not already covered by SKOS, PROV-O, or DCTERMS.
+  - Core namespace: `https://napcore.eu/ontology/nits#`
+  - Core prefix: `nits`
+  - Standard-local namespaces: `netex`, `opra`, and future module prefixes.
+  - Usage: keep project-specific terms minimal and prefer explicit alignment assertions across standard modules.
 - Governance rules:
   - All new project terms must include definition, scope note, and source provenance.
   - Ontology term additions follow editorial lifecycle: draft -> review -> approved.
