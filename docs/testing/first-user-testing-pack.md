@@ -441,3 +441,49 @@ This prefill uses currently available evidence from q080 end-to-end artifacts an
 - Pilot lead: `pending` / `pending`
 - Reviewer lead: `pending` / `pending`
 - Ops lead: `pending` / `pending`
+
+## One-page pilot status brief (shareable)
+
+### Objective
+Validate readiness of the NAPCORE FAQ-first, RAG-fallback helpdesk with citation-grounded answers and editorial governance before broader pilot release.
+
+### Current status (2026-04-18)
+- Overall state: `conditional-go` for continued pilot execution.
+- Evidence basis: q080 end-to-end walkthrough with scoped OpRa + NeTEx run.
+- Quality signal: improved citation/provenance depth versus prior scoped rerun.
+- Governance signal: cross-standard review guardrail triggered (`CROSS_STANDARD_REVIEW_RECOMMENDED`) with no hard conflict reported.
+
+### What improved
+- Citations count increased from `1` to `5` in scoped comparison run.
+- Evidence links persisted increased from `1` to `5`.
+- Provenance records persisted increased from `1` to `5`.
+- Repository coverage increased from `1` to `2`.
+- Concept coverage increased from `2` to `16`.
+
+### Known gaps
+- Direct OpRa-to-NeTEx line/network relation remains partially evidenced.
+- Semantic alignment score decreased (`0.5091` to `0.2651`), requiring monitoring.
+- Runtime still appears broader than chapter-19 selective-loading expectation.
+- Full S0-S8 scenario matrix and pilot-wide KPI baseline are not complete yet.
+
+### Risk summary
+| Risk | Severity | Owner | Target date |
+|---|---|---|---|
+| Weak grounding for direct OpRa->NeTEx mapping | High | Retrieval/indexing lead | 2026-04-25 |
+| Semantic alignment regression | Medium | Semantic quality lead | 2026-04-25 |
+| Rule-loading breadth vs selective-loading target | Medium | Ontology/runtime lead | 2026-04-30 |
+
+### Next 7-day actions
+1. Execute full scenario matrix S0-S8 and compute pilot-wide pass rate.
+2. Complete at least 10 rubric-scored FAQ editorial reviews.
+3. Improve cross-standard retrieval grounding for service-intensity relation questions.
+4. Add alignment-score regression check in rerun workflow.
+
+### Decision checkpoint
+- Current recommendation: `conditional-go`
+- Next checkpoint date: `2026-04-25`
+- Go criteria at checkpoint:
+  - Scenario pass rate >= 90%
+  - 0 critical defects open
+  - Citation attachment rate >= 98% for non-abstained answers
+  - No uncited legal/compliance assertions
