@@ -383,3 +383,61 @@ Use this template to produce the final pilot decision artifact.
 - Pilot lead: `name` / `date`
 - Reviewer lead: `name` / `date`
 - Ops lead: `name` / `date`
+
+## Pilot release summary draft (current snapshot: 2026-04-18)
+This prefill uses currently available evidence from q080 end-to-end artifacts and walkthrough notes.
+
+### 1) Objective
+- Pilot window: `2026-04-18` to `2026-04-18` (single-question validation snapshot; full 2-week pilot still pending)
+- Scope: `OpRa / NeTEx` (q080 cross-standard path)
+- Decision request: `conditional-go` for continued pilot execution
+
+### 2) Execution snapshot
+- Scenarios executed: `1` (q080 deep walkthrough)
+- Scenario pass rate: `N/A` (full scenario matrix not yet executed)
+- Critical defects open: `0` (from currently reviewed q080 artifacts)
+- High defects open: `0` (from currently reviewed q080 artifacts)
+- Reviewed FAQ candidates: `0` (editorial rubric run not yet recorded in this snapshot)
+- Approved FAQ candidates: `0`
+
+### 3) KPI outcomes (baseline vs final)
+| KPI | Week-1 baseline | Final value | Target | Status |
+|---|---:|---:|---:|---|
+| Overall scenario pass rate | N/A | N/A | >= 90% | pending full pilot |
+| FAQ median response time (s) | N/A | N/A | project-defined | pending |
+| RAG median response time (s) | N/A | N/A | project-defined | pending |
+| Citation attachment rate (non-abstained) | N/A | 100% (q080 scoped run) | >= 98% | provisional pass |
+| Abstention correctness rate | N/A | N/A | project-defined | pending |
+| Critical defects open | N/A | 0 | 0 | provisional pass |
+
+### 4) Quality and governance summary
+- Hard-gate compliance (from rubric): `provisional pass` for q080 scoped run (citations present, evidence-bound limitation language included).
+- Source-policy boundary compliance: `pass` based on retrieved OpRa/NeTEx source paths in q080 trace.
+- Cross-standard contradiction checks: `pass with review recommendation` (`crossStandardConflict=false`; `CROSS_STANDARD_REVIEW_RECOMMENDED` present).
+- Uncited legal/compliance assertions: `none observed` in q080 response text.
+
+### 5) Release candidate set
+- Number of publish-ready FAQs: `0` (single technical walkthrough; no editorially approved FAQ entries finalized yet).
+- Standards coverage of release set: `N/A`
+- Items withheld from release and reasons:
+  - `q080-draft`: direct OpRa-to-NeTEx line/network mapping remains partially evidenced; keep as reviewed draft until stronger grounding is indexed.
+
+### 6) Risks and mitigations
+| Risk | Severity | Owner | Mitigation | Due date |
+|---|---|---|---|---|
+| Direct OpRa->NeTEx line/network relation remains weakly grounded | High | Retrieval/indexing lead | Improve intent-specific prompt + retrieval constraints; expand targeted indexed evidence | 2026-04-25 |
+| Semantic alignment score regressed in latest rerun (`0.5091 -> 0.2651`) | Medium | Semantic quality lead | Add regression monitor and threshold alert for alignment score drift | 2026-04-25 |
+| Rule-loading breadth exceeds chapter-19 selective-loading expectation | Medium | Ontology/runtime lead | Optimize selective activation path and validate with focused rerun | 2026-04-30 |
+
+### 7) Current recommendation
+- Recommendation: `conditional-go`
+- Conditions:
+  - Execute full scenario matrix S0-S8 and compute pilot-wide KPIs.
+  - Complete at least 10 rubric-scored FAQ reviews before publication decisions.
+  - Close or mitigate high-severity grounding risk for cross-standard relation questions.
+- Next review checkpoint date: `2026-04-25`
+
+### 8) Interim sign-off state
+- Pilot lead: `pending` / `pending`
+- Reviewer lead: `pending` / `pending`
+- Ops lead: `pending` / `pending`
