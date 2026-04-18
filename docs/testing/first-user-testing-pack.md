@@ -12,7 +12,7 @@ Run a controlled first-user pilot to validate FAQ-first accuracy, RAG fallback s
   - API endpoints in `/api/v1/*`
 - Standards focus:
   - NeTEx primary
-  - SIRI and OJP/OpRa secondary
+  - SIRI and OpRa secondary
 - User roles to test:
   - viewer
   - editor
@@ -81,7 +81,7 @@ Run a controlled first-user pilot to validate FAQ-first accuracy, RAG fallback s
 ### S2 RAG fallback path
 - Role: viewer
 - Action:
-  - Submit an unknown OJP/OpRa question.
+  - Submit an unknown OpRa question.
 - Expected:
   - `mode=rag`
   - citations present
@@ -173,6 +173,59 @@ Run a controlled first-user pilot to validate FAQ-first accuracy, RAG fallback s
 - Medium: degraded UX or intermittent failures with workaround.
 - Low: cosmetic, copy, non-blocking usability issue.
 
+## FAQ curation rubric (editorial review sheet)
+Use this rubric for draft -> review -> approved/published decisions.
+
+### Hard gates (must all pass)
+- Answer is grounded in approved GitHub sources only.
+- At least one usable citation is attached, and citations support the claim text.
+- No uncited legal/compliance claims.
+- No contradiction between standards in cross-standard answers.
+- If evidence is insufficient, answer must abstain or explicitly state limitation.
+
+If any hard gate fails, mark the item `rejected` or return it to `draft`.
+
+### Weighted scoring (0-100)
+Score each dimension from 0 to 5, then multiply by weight.
+
+| Dimension | Weight | 0 score | 3 score | 5 score |
+|---|---:|---|---|---|
+| Grounding and citation quality | 30 | No citation or unusable citation | Citations partly support answer | All key claims are directly supported and traceable |
+| Technical correctness | 25 | Materially wrong | Mostly correct with minor inaccuracies | Correct, precise, and terminology-consistent |
+| Scope and source-policy compliance | 15 | Out-of-scope or non-allowlisted source use | Minor scope leakage | Fully within approved standards and source boundary |
+| Safety and uncertainty handling | 15 | Hallucinated certainty | Some caveats but incomplete | Clear uncertainty/abstention when evidence is weak |
+| Clarity and usefulness | 10 | Hard to understand | Understandable but verbose/ambiguous | Clear, concise, directly answers user intent |
+| Editorial readiness | 5 | Needs major rewrite | Needs minor edits | Ready to publish with no substantive edits |
+
+Total score formula:
+- `total = sum((dimension_score / 5) * weight)`
+
+### Decision thresholds
+- `approved/publish-ready`: total >= 85 and all hard gates pass.
+- `review-needed`: total 70-84 and all hard gates pass.
+- `rework`: total < 70, or any hard gate fails.
+
+### Reviewer worksheet template
+Use this per FAQ candidate:
+
+| Field | Value |
+|---|---|
+| Candidate ID | |
+| Canonical question | |
+| Proposed answer version | |
+| Reviewer | |
+| Review date | |
+| Grounding and citation quality (0-5) | |
+| Technical correctness (0-5) | |
+| Scope and source-policy compliance (0-5) | |
+| Safety and uncertainty handling (0-5) | |
+| Clarity and usefulness (0-5) | |
+| Editorial readiness (0-5) | |
+| Hard gates pass (yes/no) | |
+| Weighted total (0-100) | |
+| Decision (`approved` / `review` / `rework`) | |
+| Reviewer notes | |
+
 ## Reporting format
 For every scenario execution, capture:
 - Scenario ID
@@ -186,3 +239,90 @@ For every scenario execution, capture:
 - Run S0-S4 in first 60 minutes.
 - Run S5-S7 and S2b in second 60 minutes.
 - Use final 30 minutes for triage and go/no-go recommendation.
+
+## Two-week pilot execution checklist
+This checklist operationalizes first-user testing into a 10-business-day pilot window.
+
+### Roles and ownership
+- Pilot lead: schedules sessions, tracks blockers, issues go/no-go recommendation.
+- Editor lead: owns curation queue throughput and rubric consistency.
+- Reviewer lead: owns quality gates, cross-standard checks, and rejection reasons.
+- Publisher lead: owns publication controls and release candidate list.
+- Ops lead: owns environment health, indexing stability, and incident response.
+
+### Week 1 (stabilization and baseline)
+#### Day 1: Environment and baseline smoke
+- Confirm entry criteria and test account access.
+- Run scenarios S0-S4 and capture results in reporting format.
+- Record baseline metrics:
+  - median response time (FAQ mode)
+  - median response time (RAG mode)
+  - citation attachment rate
+  - abstention rate for out-of-scope prompts
+
+#### Day 2: Editorial workflow validation
+- Run scenarios S5-S7 with all relevant roles.
+- Execute at least 5 rubric-based reviews using the reviewer worksheet.
+- Verify all transition audits are present and role-accurate.
+
+#### Day 3: Source-grounding stress pass
+- Run 15 mixed questions across NeTEx, OpRa, and SIRI.
+- Ensure each non-abstained answer includes citations to approved repositories.
+- Create defects for any uncited claim, source-policy leak, or contradiction.
+
+#### Day 4: Safety and abstention tuning
+- Run at least 10 intentionally unsupported or ambiguous prompts.
+- Confirm safe abstention behavior and clear limitation language.
+- Re-test any previously failing safety scenarios.
+
+#### Day 5: Week-1 review gate
+- Hold 45-minute triage with pilot leads.
+- Required week-1 thresholds:
+  - >= 85% scenario pass rate on re-run set
+  - 0 critical defects open
+  - 100% published candidates pass hard gates in rubric
+- Decide: proceed to week 2, or hold for remediation.
+
+### Week 2 (scale and readiness)
+#### Day 6: Retrieval coverage expansion
+- Run 20 benchmark-style prompts with cross-standard focus.
+- Confirm evidence breadth across repositories and concept families.
+- Flag recurring retrieval misses for ingestion/indexing backlog.
+
+#### Day 7: Curation throughput day
+- Process at least 10 draft FAQ candidates end-to-end.
+- Target state distribution:
+  - >= 4 approved/publish-ready
+  - <= 3 rework due to preventable citation defects
+- Verify reviewer notes are specific and actionable.
+
+#### Day 8: Regression and traceability audit
+- Re-run all failed scenarios from week 1.
+- Sample at least 8 approved answers and verify:
+  - citation traceability
+  - provenance completeness
+  - consistency with source-policy boundary
+
+#### Day 9: Dry-run release candidate
+- Build a pilot release set of approved FAQs.
+- Validate publication workflow and role permissions.
+- Produce release notes summary:
+  - number approved
+  - key known limitations
+  - deferred items with owners
+
+#### Day 10: Final go/no-go review
+- Recompute pilot KPIs and compare to week-1 baseline.
+- Required final thresholds:
+  - >= 90% scenario pass rate (overall)
+  - 0 critical defects and <= 3 high defects with approved mitigations
+  - citation attachment rate >= 98% for non-abstained answers
+  - no uncited legal/compliance assertions
+- Deliver recommendation: go, conditional-go, or no-go.
+
+### Pilot deliverables by end of week 2
+- Completed scenario execution log with request IDs and outcomes.
+- Completed rubric worksheets for reviewed FAQ candidates.
+- Defect register with severity, owner, target fix date, and status.
+- Release candidate FAQ list (approved items only).
+- Final pilot summary with KPI trend and recommendation.
