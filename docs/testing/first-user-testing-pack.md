@@ -326,3 +326,60 @@ This checklist operationalizes first-user testing into a 10-business-day pilot w
 - Defect register with severity, owner, target fix date, and status.
 - Release candidate FAQ list (approved items only).
 - Final pilot summary with KPI trend and recommendation.
+
+## Pilot release summary template (day 10)
+Use this template to produce the final pilot decision artifact.
+
+### 1) Objective
+- Pilot window: `YYYY-MM-DD` to `YYYY-MM-DD`
+- Scope: `NeTEx / OpRa / SIRI` (adjust if needed)
+- Decision request: `go` / `conditional-go` / `no-go`
+
+### 2) Execution snapshot
+- Scenarios executed: `N`
+- Scenario pass rate: `N%`
+- Critical defects open: `N`
+- High defects open: `N`
+- Reviewed FAQ candidates: `N`
+- Approved FAQ candidates: `N`
+
+### 3) KPI outcomes (baseline vs final)
+| KPI | Week-1 baseline | Final value | Target | Status |
+|---|---:|---:|---:|---|
+| Overall scenario pass rate | | | >= 90% | |
+| FAQ median response time (s) | | | project-defined | |
+| RAG median response time (s) | | | project-defined | |
+| Citation attachment rate (non-abstained) | | | >= 98% | |
+| Abstention correctness rate | | | project-defined | |
+| Critical defects open | | | 0 | |
+
+### 4) Quality and governance summary
+- Hard-gate compliance (from rubric): `pass/fail` with notes.
+- Source-policy boundary compliance: `pass/fail` with notes.
+- Cross-standard contradiction checks: `pass/fail` with notes.
+- Uncited legal/compliance assertions: `none` or list incidents.
+
+### 5) Release candidate set
+- Number of publish-ready FAQs: `N`
+- Standards coverage of release set: `list`
+- Items withheld from release and reasons:
+  - `item-id`: `reason`
+  - `item-id`: `reason`
+
+### 6) Risks and mitigations
+| Risk | Severity | Owner | Mitigation | Due date |
+|---|---|---|---|---|
+| | | | | |
+| | | | | |
+
+### 7) Final recommendation
+- Recommendation: `go` / `conditional-go` / `no-go`
+- Conditions (if conditional-go):
+  - `condition 1`
+  - `condition 2`
+- Next review checkpoint date: `YYYY-MM-DD`
+
+### 8) Sign-off
+- Pilot lead: `name` / `date`
+- Reviewer lead: `name` / `date`
+- Ops lead: `name` / `date`
