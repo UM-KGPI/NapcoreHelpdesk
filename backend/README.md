@@ -86,8 +86,8 @@ Note for local SQLite:
 
 ## Semantic reasoning model (implemented)
 - The backend retrieval path uses an explicit two-layer semantic setup:
-  - Glossary: `helpdesk/ontologies/standards.yaml`
-  - NITS ontology: `helpdesk/ontologies/nits.yaml`
+  - GraphDB-backed standards glossary concepts loaded from ontology modules and alignments.
+  - GraphDB-backed NITS core concept graph for cross-standard expansion.
 - Runtime uses `nits:` as the canonical core namespace and still supports legacy `maps_to_nch` fields for backward compatibility.
 - Canonical RDF/Turtle artifact for the same core graph: `../docs/ontology/napcore-its.ttl`.
 - Runtime implementation is in `helpdesk/services/semantic_graph.py`.
@@ -100,7 +100,8 @@ Note for local SQLite:
 
 ### Ontology validation controls
 - Ontology payloads are schema-validated at load time in `helpdesk/services/semantic_graph.py`.
-- Default behavior (safe mode): malformed ontology fields are sanitized where possible and invalid payloads fall back to empty in-memory structures.
+- Malformed ontology fields are sanitized where possible.
+- GraphDB is the only runtime ontology knowledge base. If required ontology payloads cannot be loaded from GraphDB, initialization fails.
 - Optional strict mode: set `NAPCORE_ONTOLOGY_STRICT_VALIDATION=true` to fail fast on schema validation errors (recommended for CI and controlled deployments).
 
 ## GraphDB anchoring interface (implemented)
@@ -113,7 +114,30 @@ Note for local SQLite:
 - When GraphDB is enabled and reachable, parsing can:
   - anchor terms to core concepts via SPARQL;
   - discover relevant standards from aligned concepts.
-- If GraphDB is disabled/unreachable or returns no anchors, parsing automatically falls back to in-memory ontology mappings so orchestration remains available.
+- If GraphDB anchoring/discovery returns no anchors for a query, parsing uses already-loaded in-memory indexes derived from GraphDB ontology payloads.
+
+## Staging rollout controls
+Use feature flags in `backend/.env` for progressive rollout:
+
+- Wave 1 evidence and policy controls:
+  - `SEMANTIC_LOW_CONFIDENCE_THRESHOLD`
+  - `EVIDENCE_GATE_ENABLED`
+  - `EVIDENCE_GATE_MIN_ALIGNMENT`
+  - `EVIDENCE_GATE_MIN_CHUNKS`
+  - `EVIDENCE_GATE_MIN_REPOSITORIES_MULTI_SCOPE`
+  - `POLICY_STRICT_CLAIM_GUARD`
+- Wave 2 retrieval governance controls:
+  - `GRAPH_EXPANSION_MAX_CONCEPTS`
+  - `GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS`
+  - `RETRIEVAL_DIVERSITY_ENABLED`
+  - `RETRIEVAL_MAX_SAME_SOURCE_PATH`
+  - `RETRIEVAL_MMR_LAMBDA`
+  - `RETRIEVAL_KEYWORD_TRAP_PENALTY`
+
+Recommended staging start (conservative):
+- Keep `POLICY_STRICT_CLAIM_GUARD=False` initially.
+- Set `EVIDENCE_GATE_ENABLED=True` with defaults from `.env.example`.
+- Keep retrieval governance defaults, then tune only by aggregate telemetry deltas.
 
 ## Scheduled incremental indexing
 Celery Beat runs `helpdesk.reindex_default_repository` daily. Configure:

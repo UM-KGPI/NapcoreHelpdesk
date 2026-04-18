@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from unittest.mock import patch
+
 from django.test import SimpleTestCase
 
+import helpdesk.services.semantic_graph as semantic_graph
 from helpdesk.services.semantic_graph import (
     _build_concept_nits_mapping,
     _build_nits_relations,
@@ -13,18 +16,85 @@ from helpdesk.services.semantic_graph import (
 
 class SemanticGraphMappingTests(SimpleTestCase):
     def test_opra_delayed_journey_aligns_to_vehicle_journey_cross_standard(self):
-        expanded = expand_graph_concepts({"opra:DelayedJourney"}, hops=1)
+        with (
+            patch.object(
+                semantic_graph,
+                "CONCEPT_TO_NITS",
+                {
+                    "opra:DelayedJourney": "nits:vehicle-journey",
+                    "netex:VehicleJourney": "nits:vehicle-journey",
+                },
+            ),
+            patch.object(
+                semantic_graph,
+                "NITS_TO_CONCEPTS",
+                {
+                    "nits:vehicle-journey": {
+                        "opra:DelayedJourney",
+                        "netex:VehicleJourney",
+                    }
+                },
+            ),
+            patch.object(semantic_graph, "NITS_RELATIONS", {}),
+            patch.object(semantic_graph, "GRAPH_RELATIONS", {}),
+        ):
+            expanded = expand_graph_concepts({"opra:DelayedJourney"}, hops=1)
 
         self.assertIn("opra:DelayedJourney", expanded)
         self.assertIn("netex:VehicleJourney", expanded)
 
     def test_synonym_mapped_concepts_share_same_nits_identifier(self):
-        nits_ids = get_concept_nits_ids({"opra:DelayedJourney", "netex:VehicleJourney"})
+        with patch.object(
+            semantic_graph,
+            "CONCEPT_TO_NITS",
+            {
+                "opra:DelayedJourney": "nits:vehicle-journey",
+                "netex:VehicleJourney": "nits:vehicle-journey",
+            },
+        ):
+            nits_ids = get_concept_nits_ids({"opra:DelayedJourney", "netex:VehicleJourney"})
 
         self.assertEqual(len(nits_ids), 1)
 
     def test_nits_relation_expansion_links_delay_to_service_intensity_family(self):
-        expanded = expand_graph_concepts({"opra:DelayStatistics"}, hops=1)
+        with (
+            patch.object(
+                semantic_graph,
+                "CONCEPT_TO_NITS",
+                {
+                    "opra:DelayStatistics": "nits:delay",
+                    "opra:TypeOfDelay": "nits:delay",
+                    "opra:PlannedServiceIntensity": "nits:service-intensity",
+                    "opra:ActualServiceIntensity": "nits:service-intensity",
+                    "opra:ExpectedServiceIntensity": "nits:service-intensity",
+                },
+            ),
+            patch.object(
+                semantic_graph,
+                "NITS_TO_CONCEPTS",
+                {
+                    "nits:delay": {
+                        "opra:DelayStatistics",
+                        "opra:TypeOfDelay",
+                    },
+                    "nits:service-intensity": {
+                        "opra:PlannedServiceIntensity",
+                        "opra:ActualServiceIntensity",
+                        "opra:ExpectedServiceIntensity",
+                    },
+                },
+            ),
+            patch.object(
+                semantic_graph,
+                "NITS_RELATIONS",
+                {
+                    "nits:delay": {"nits:service-intensity"},
+                    "nits:service-intensity": {"nits:delay"},
+                },
+            ),
+            patch.object(semantic_graph, "GRAPH_RELATIONS", {}),
+        ):
+            expanded = expand_graph_concepts({"opra:DelayStatistics"}, hops=1)
 
         self.assertIn("opra:DelayStatistics", expanded)
         self.assertIn("opra:TypeOfDelay", expanded)

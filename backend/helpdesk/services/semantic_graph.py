@@ -4,10 +4,7 @@ import hashlib
 import logging
 import os
 import re
-from pathlib import Path
 from typing import Iterable
-
-import yaml
 
 from helpdesk.models import SourceChunk
 
@@ -125,67 +122,258 @@ def _validate_ontology_payload(
     return sanitized_ontology
 
 
-def _load_ontology() -> dict:
-    """Load the standards ontology from YAML file.
-    
-    Returns dict with keys: namespaces, concepts, relationships.
-    Falls back to minimal dict if file not found.
+def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
+    """Load concept aliases and NITS mappings from a live GraphDB SPARQL endpoint.
+
+    Returns an ontology dict compatible with _validate_ontology_payload(), or
+    None if GraphDB is unreachable or returns no concept data.
     """
-    ontology_path = Path(__file__).parent.parent / "ontologies" / "standards.yaml"
-    if not ontology_path.exists():
-        logger.warning(f"Ontology file not found at {ontology_path}. Using fallback.")
-        return {"concepts": {}, "relationships": {}}
-    
-    try:
-        with open(ontology_path) as f:
-            payload = yaml.safe_load(f) or {}
-            return _validate_ontology_payload(payload, ontology_name="standards")
-    except ValueError as e:
-        if STRICT_ONTOLOGY_VALIDATION:
-            raise
-        logger.error(
-            "Standards ontology schema validation failed at %s: %s. Using fallback.",
-            ontology_path,
-            e,
+    import json as _json
+    from urllib.parse import quote_plus
+    from urllib.request import Request, urlopen
+
+    _IRI_PREFIX_MAP: dict[str, str] = {
+        "https://netex.org.uk/ontology/netex#": "netex",
+        "http://netex.org.uk/ontology/netex#": "netex",
+        "http://napcore.example.org/ontology/netex#": "netex",
+        "https://opra.org.uk/ontology/opra#": "opra",
+        "http://opra.org.uk/ontology/opra#": "opra",
+        "http://napcore.example.org/ontology/opra#": "opra",
+        "https://siri.org.uk/ontology/siri#": "siri",
+        "http://siri.org.uk/ontology/siri#": "siri",
+        "http://napcore.example.org/ontology/siri#": "siri",
+        "https://datex.org/ontology/datex#": "datex",
+        "http://datex.org/ontology/datex#": "datex",
+        "http://napcore.example.org/ontology/datex#": "datex",
+        "https://napcore.eu/ontology/nits#": "nits",
+        "http://napcore.eu/ontology/nits#": "nits",
+        "http://napcore.example.org/ontology/nits#": "nits",
+    }
+
+    def _iri_to_concept_id(iri: str) -> str | None:
+        for prefix_iri, ns in _IRI_PREFIX_MAP.items():
+            if iri.startswith(prefix_iri):
+                return f"{ns}:{iri[len(prefix_iri):]}"
+        return None
+
+    def _sparql_get(sparql: str) -> list[dict]:
+        url = f"{endpoint_url.rstrip('/')}?query={quote_plus(sparql)}"
+        req = Request(url, headers={"Accept": "application/sparql-results+json"})
+        try:
+            with urlopen(req, timeout=10) as resp:
+                data = _json.loads(resp.read())
+                return [
+                    {k: v.get("value", "") for k, v in b.items()}
+                    for b in data.get("results", {}).get("bindings", [])
+                ]
+        except Exception as exc:
+            logger.warning("GraphDB ontology load failed: %s", exc)
+            return []
+
+    # Labels for standard-specific concepts (netex, opra, siri, datex)
+    labels_rows = _sparql_get(
+        "SELECT ?concept ?label WHERE {"
+        " ?concept <http://www.w3.org/2004/02/skos/core#prefLabel>|"
+        "<http://www.w3.org/2004/02/skos/core#altLabel>|"
+        "<http://www.w3.org/2000/01/rdf-schema#label> ?label ."
+        " FILTER(!CONTAINS(STR(?concept), 'napcore.eu/ontology/nits'))"
+        " FILTER(!CONTAINS(STR(?concept), 'www.w3.org'))"
+        " FILTER(!CONTAINS(STR(?concept), 'purl.org'))"
+        " }"
+    )
+    if not labels_rows:
+        return None
+
+    # NITS mappings: standard concept → NITS core concept via subClassOf/equivalentClass
+    nits_rows = _sparql_get(
+        "SELECT DISTINCT ?concept ?nits WHERE {"
+        " ?concept <http://www.w3.org/2002/07/owl#equivalentClass>|"
+        "<http://www.w3.org/2000/01/rdf-schema#subClassOf>|"
+        "^<http://www.w3.org/2002/07/owl#equivalentClass>|"
+        "^<http://www.w3.org/2000/01/rdf-schema#subClassOf> ?nits ."
+        " FILTER(CONTAINS(STR(?nits), '/ontology/nits'))"
+        " FILTER(!CONTAINS(STR(?concept), 'napcore.eu/ontology/nits'))"
+        " FILTER(!CONTAINS(STR(?concept), 'www.w3.org'))"
+        " }"
+    )
+
+    concepts: dict[str, dict] = {}
+    for row in labels_rows:
+        concept_id = _iri_to_concept_id(row.get("concept", ""))
+        label = row.get("label", "").strip()
+        if not concept_id or not label:
+            continue
+        entry = concepts.setdefault(concept_id, {"labels": [], "related_to": []})
+        if label not in entry["labels"]:
+            entry["labels"].append(label)
+
+    # Collect all NITS mappings per concept, then pick the most specific one.
+    # Root metaclasses (DomainConcept etc.) are used only when no specific mapping exists.
+    _ABSTRACT_NITS_IDS = {
+        "nits:DomainConcept",
+        "nits:DataArtifact",
+        "nits:Process",
+        "nits:System",
+        "nits:Actor",
+    }
+    nits_by_concept: dict[str, list[str]] = {}
+    for row in nits_rows:
+        concept_id = _iri_to_concept_id(row.get("concept", ""))
+        nits_id = _iri_to_concept_id(row.get("nits", ""))
+        if not concept_id or not nits_id or concept_id not in concepts:
+            continue
+        nits_by_concept.setdefault(concept_id, []).append(nits_id)
+
+    for concept_id, nits_ids in nits_by_concept.items():
+        specific = [n for n in nits_ids if n not in _ABSTRACT_NITS_IDS]
+        concepts[concept_id]["maps_to_nits"] = specific[0] if specific else nits_ids[0]
+
+    namespaces = {
+        "netex": "https://netex.org.uk/ontology/netex",
+        "opra": "https://opra.org.uk/ontology/opra",
+        "siri": "https://siri.org.uk/ontology/siri",
+        "datex": "https://datex.org/ontology/datex",
+        "nits": "https://napcore.eu/ontology/nits",
+    }
+    return {"namespaces": namespaces, "concepts": concepts}
+
+
+def _load_nits_ontology_from_graphdb(endpoint_url: str) -> dict | None:
+    """Load NITS concepts and relations from a live GraphDB SPARQL endpoint."""
+
+    import json as _json
+    from urllib.parse import quote_plus
+    from urllib.request import Request, urlopen
+
+    def _iri_to_nits_concept_id(iri: str) -> str | None:
+        if "/ontology/nits" not in iri:
+            return None
+        if "#" in iri:
+            local = iri.rsplit("#", 1)[1]
+        else:
+            local = iri.rstrip("/").rsplit("/", 1)[-1]
+        if not local:
+            return None
+        return f"nits:{local}"
+
+    def _sparql_get(sparql: str) -> list[dict]:
+        url = f"{endpoint_url.rstrip('/')}?query={quote_plus(sparql)}"
+        req = Request(url, headers={"Accept": "application/sparql-results+json"})
+        try:
+            with urlopen(req, timeout=10) as resp:
+                data = _json.loads(resp.read())
+                return [
+                    {k: v.get("value", "") for k, v in b.items()}
+                    for b in data.get("results", {}).get("bindings", [])
+                ]
+        except Exception as exc:
+            logger.warning("GraphDB NITS ontology load failed: %s", exc)
+            return []
+
+    labels_rows = _sparql_get(
+        "SELECT ?concept ?label WHERE {"
+        " ?concept <http://www.w3.org/2004/02/skos/core#prefLabel>|"
+        "<http://www.w3.org/2004/02/skos/core#altLabel>|"
+        "<http://www.w3.org/2000/01/rdf-schema#label> ?label ."
+        " FILTER(CONTAINS(STR(?concept), '/ontology/nits'))"
+        " }"
+    )
+    related_rows = _sparql_get(
+        "SELECT DISTINCT ?concept ?related WHERE {"
+        " ?concept <http://www.w3.org/2004/02/skos/core#related>|"
+        "<http://www.w3.org/2000/01/rdf-schema#subClassOf>|"
+        "<http://www.w3.org/2002/07/owl#equivalentClass> ?related ."
+        " FILTER(CONTAINS(STR(?concept), '/ontology/nits'))"
+        " FILTER(CONTAINS(STR(?related), '/ontology/nits'))"
+        " }"
+    )
+
+    concepts: dict[str, dict] = {}
+
+    for row in labels_rows:
+        concept_id = _iri_to_nits_concept_id(row.get("concept", ""))
+        label = row.get("label", "").strip()
+        if not concept_id:
+            continue
+        entry = concepts.setdefault(concept_id, {"labels": [], "related_to": []})
+        if label and label not in entry["labels"]:
+            entry["labels"].append(label)
+
+    for row in related_rows:
+        concept_id = _iri_to_nits_concept_id(row.get("concept", ""))
+        related_id = _iri_to_nits_concept_id(row.get("related", ""))
+        if not concept_id or not related_id:
+            continue
+        entry = concepts.setdefault(concept_id, {"labels": [], "related_to": []})
+        if related_id != concept_id and related_id not in entry["related_to"]:
+            entry["related_to"].append(related_id)
+        concepts.setdefault(related_id, {"labels": [], "related_to": []})
+
+    if not concepts:
+        return None
+
+    return {
+        "namespaces": {
+            "nits": "https://napcore.eu/ontology/nits",
+        },
+        "concepts": concepts,
+    }
+
+
+def _load_ontology() -> dict:
+    """Load standards ontology exclusively from GraphDB.
+
+    Returns dict with keys: namespaces, concepts, relationships.
+    Raises RuntimeError when GraphDB is not configured or contains no concept
+    data. This service intentionally avoids any YAML fallback.
+    """
+    endpoint = os.getenv("GRAPHDB_SPARQL_ENDPOINT", "").strip()
+    if not endpoint:
+        raise RuntimeError(
+            "GRAPHDB_SPARQL_ENDPOINT is required. Local glossary-file fallback is disabled."
         )
-        return {"concepts": {}, "relationships": {}}
-    except Exception as e:
-        logger.error(f"Failed to load ontology from {ontology_path}: {e}. Using fallback.")
-        return {"concepts": {}, "relationships": {}}
+
+    graphdb_result = _load_ontology_from_graphdb(endpoint)
+    if graphdb_result and graphdb_result.get("concepts"):
+        logger.info(
+            "Loaded standards ontology from GraphDB: %d concepts",
+            len(graphdb_result["concepts"]),
+        )
+        return graphdb_result
+
+    raise RuntimeError(
+        f"Failed to load standards ontology concepts from GraphDB endpoint: {endpoint}"
+    )
 
 
 def _load_nits_ontology() -> dict:
-    """Load the dedicated NITS ontology used for cross-standard reasoning.
+    """Load the dedicated NITS ontology used for cross-standard reasoning from GraphDB."""
 
-    Falls back to legacy `nch.yaml` when `nits.yaml` is not present.
-    """
+    endpoint = os.getenv("GRAPHDB_SPARQL_ENDPOINT", "").strip()
+    if not endpoint:
+        raise RuntimeError(
+            "GRAPHDB_SPARQL_ENDPOINT is required. Local NITS-file fallback is disabled."
+        )
 
-    ontology_dir = Path(__file__).parent.parent / "ontologies"
-    primary_path = ontology_dir / "nits.yaml"
-    fallback_path = ontology_dir / "nch.yaml"
-
-    ontology_path = primary_path if primary_path.exists() else fallback_path
-    if not ontology_path.exists():
-        logger.warning("NITS ontology file not found at %s. Using fallback.", primary_path)
-        return {"concepts": {}, "relationships": {}}
-
-    try:
-        with open(ontology_path) as f:
-            payload = yaml.safe_load(f) or {}
-            required_namespace = "nits" if ontology_path == primary_path else "nch"
-            return _validate_ontology_payload(
-                payload,
+    graphdb_result = _load_nits_ontology_from_graphdb(endpoint)
+    if graphdb_result and graphdb_result.get("concepts"):
+        try:
+            validated = _validate_ontology_payload(
+                graphdb_result,
                 ontology_name="nits",
-                required_namespace=required_namespace,
+                required_namespace="nits",
             )
-    except ValueError as e:
-        if STRICT_ONTOLOGY_VALIDATION:
+            logger.info(
+                "Loaded NITS ontology from GraphDB: %d concepts",
+                len(validated.get("concepts", {})),
+            )
+            return validated
+        except ValueError:
             raise
-        logger.error("NITS ontology schema validation failed at %s: %s. Using fallback.", ontology_path, e)
-        return {"concepts": {}, "relationships": {}}
-    except Exception as e:
-        logger.error("Failed to load NITS ontology from %s: %s. Using fallback.", ontology_path, e)
-        return {"concepts": {}, "relationships": {}}
+
+    raise RuntimeError(
+        f"Failed to load NITS ontology concepts from GraphDB endpoint: {endpoint}"
+    )
 
 
 def _build_concept_aliases_from_ontology(ontology: dict) -> dict[str, set[str]]:
@@ -278,7 +466,56 @@ def _normalize_nits_target(raw_target: str, *, concept_id: str, field_name: str)
     return f"nits:{'-'.join(local_tokens[:8])}"
 
 
-def _build_concept_nits_mapping(ontology: dict) -> tuple[dict[str, str], dict[str, set[str]]]:
+def _build_nits_label_index(nits_ontology: dict) -> dict[tuple[str, ...], str]:
+    """Build normalized label token -> nits concept index for exact label alignment."""
+
+    index: dict[tuple[str, ...], str] = {}
+    concepts = nits_ontology.get("concepts", {}) if isinstance(nits_ontology, dict) else {}
+    if not isinstance(concepts, dict):
+        return index
+
+    for nits_id, concept_data in concepts.items():
+        if not isinstance(nits_id, str) or _concept_namespace(nits_id) not in {"nits", "nch"}:
+            continue
+        if not isinstance(concept_data, dict):
+            continue
+
+        local = _concept_local_name(nits_id)
+        local_tokens = tuple(TOKEN_PATTERN.findall(local.lower()))
+        if local_tokens:
+            index.setdefault(local_tokens, f"nits:{'-'.join(local_tokens[:8])}")
+
+        for label in concept_data.get("labels") or []:
+            if not isinstance(label, str):
+                continue
+            tokens = tuple(TOKEN_PATTERN.findall(label.lower()))
+            if tokens:
+                index.setdefault(tokens, f"nits:{'-'.join(local_tokens[:8])}" if local_tokens else nits_id)
+
+    return index
+
+
+def _infer_nits_mapping_from_labels(concept_id: str, concept_data: dict, nits_label_index: dict[tuple[str, ...], str]) -> str | None:
+    """Infer NITS mapping from exact normalized label matches to NITS labels."""
+
+    if not nits_label_index:
+        return None
+
+    candidates: list[str] = []
+    candidates.extend(label for label in (concept_data.get("labels") or []) if isinstance(label, str))
+    candidates.append(_concept_local_name(concept_id))
+
+    for candidate in candidates:
+        tokens = tuple(TOKEN_PATTERN.findall(candidate.lower()))
+        if not tokens:
+            continue
+        mapped = nits_label_index.get(tokens)
+        if mapped:
+            return mapped
+    return None
+
+
+def _build_concept_nits_mapping(ontology: dict, nits_ontology: dict | None = None) -> tuple[dict[str, str], dict[str, set[str]]]:
     """Build concept -> NITS mapping and reverse NITS -> concepts index.
 
     Resolution order:
@@ -290,6 +527,7 @@ def _build_concept_nits_mapping(ontology: dict) -> tuple[dict[str, str], dict[st
 
     concepts = ontology.get("concepts", {})
     resolved: dict[str, str] = {}
+    nits_label_index = _build_nits_label_index(nits_ontology or {})
 
     def _resolve(concept_id: str, visiting: set[str]) -> str:
         if concept_id in resolved:
@@ -331,6 +569,11 @@ def _build_concept_nits_mapping(ontology: dict) -> tuple[dict[str, str], dict[st
                 concept_id,
                 synonym_of,
             )
+
+        inferred = _infer_nits_mapping_from_labels(concept_id, concept_data, nits_label_index)
+        if inferred:
+            resolved[concept_id] = inferred
+            return inferred
 
         fallback = _default_nits_concept_id(concept_id, concept_data)
         resolved[concept_id] = fallback
@@ -421,14 +664,21 @@ def _alias_matches_text(alias: str, normalized_text: str) -> bool:
     normalized_alias = _normalize_for_matching(alias)
     if not normalized_alias:
         return False
+
+    alias_tokens = normalized_alias.split()
+
+    # Short single-token aliases (abbreviations like "ET", "VM") must appear as
+    # complete words to avoid false substring matches (e.g. "ET" in "netex").
+    if len(alias_tokens) == 1 and len(normalized_alias) < 4:
+        return normalized_alias in set(normalized_text.split())
+
     if normalized_alias in normalized_text:
         return True
 
-    # Fallback token-subset check catches variants like
-    # "delayed vehicle journeys" when alias is "delayed journey".
-    alias_tokens = set(normalized_alias.split())
+    # Token-subset fallback catches phrase variants like "delayed vehicle journeys"
+    # matching alias "delayed journey".
     text_tokens = set(normalized_text.split())
-    return bool(alias_tokens) and alias_tokens.issubset(text_tokens)
+    return bool(alias_tokens) and set(alias_tokens).issubset(text_tokens)
 
 
 def _build_graph_relations_from_ontology(ontology: dict) -> dict[str, set[str]]:
@@ -469,7 +719,7 @@ def _build_graph_relations_from_ontology(ontology: dict) -> dict[str, set[str]]:
 
 
 # Build NITS bridge indexes from glossary ontology
-CONCEPT_TO_NITS, NITS_TO_CONCEPTS = _build_concept_nits_mapping(_ONTOLOGY)
+CONCEPT_TO_NITS, NITS_TO_CONCEPTS = _build_concept_nits_mapping(_ONTOLOGY, _NITS_ONTOLOGY)
 
 # Backward-compatible aliases to avoid breaking external imports/tests.
 CONCEPT_TO_NCH = CONCEPT_TO_NITS
