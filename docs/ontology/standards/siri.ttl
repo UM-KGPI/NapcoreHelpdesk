@@ -1,0 +1,251 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+
+@prefix siri: <https://siri.org.uk/ontology/siri#> .
+
+#################################################################
+# Ontology Header
+#################################################################
+
+<https://siri.org.uk/ontology/siri>
+    a owl:Ontology ;
+    dct:title "SIRI Conceptual Ontology"@en ;
+    dct:description "Conceptual OWL ontology representing core SIRI-ET and SIRI-VM (realtime and vehicle monitoring) concepts for semantic reasoning. Focuses on real-time information and situation exchange."@en ;
+    dct:creator "SIRI / NAPCORE Community" ;
+    dct:created "2026-04-17"^^xsd:date ;
+    owl:versionIRI <https://siri.org.uk/ontology/siri/0.1> ;
+    owl:versionInfo "0.1-draft" ;
+    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+
+#################################################################
+# Core Realtime Information
+#################################################################
+
+siri:RealtimeInformation
+    a owl:Class ;
+    rdfs:label "Realtime Information"@en ;
+    skos:prefLabel "realtime information"@en ;
+    skos:altLabel "real-time data"@en ;
+    rdfs:comment "Live information about transport operations and services."@en .
+
+siri:EstimatedTimetable
+    a owl:Class ;
+    rdfs:label "Estimated Timetable"@en ;
+    skos:prefLabel "estimated timetable"@en ;
+    skos:altLabel "ET"@en ;
+    rdfs:comment "Real-time or near-real-time predictions of arrival and departure times."@en ;
+    rdfs:subClassOf siri:RealtimeInformation .
+
+siri:VehicleMonitoring
+    a owl:Class ;
+    rdfs:label "Vehicle Monitoring"@en ;
+    skos:prefLabel "vehicle monitoring"@en ;
+    skos:altLabel "VM"@en ;
+    rdfs:comment "Real-time location and movement information for vehicles."@en ;
+    rdfs:subClassOf siri:RealtimeInformation .
+
+siri:StopMonitoring
+    a owl:Class ;
+    rdfs:label "Stop Monitoring"@en ;
+    skos:prefLabel "stop monitoring"@en ;
+    rdfs:comment "Real-time arrival information at stops."@en ;
+    rdfs:subClassOf siri:RealtimeInformation .
+
+#################################################################
+# Situations & Events
+#################################################################
+
+siri:Situation
+    a owl:Class ;
+    rdfs:label "Situation"@en ;
+    skos:prefLabel "situation"@en ;
+    skos:altLabel "event, incident"@en ;
+    rdfs:comment "A discrete incident or condition affecting transport operations."@en .
+
+siri:Disruption
+    a owl:Class ;
+    rdfs:label "Disruption"@en ;
+    skos:prefLabel "disruption"@en ;
+    skos:altLabel "service disruption"@en ;
+    rdfs:comment "An unplanned event causing deviation from normal operations."@en ;
+    rdfs:subClassOf siri:Situation .
+
+siri:PlannedDisruption
+    a owl:Class ;
+    rdfs:label "Planned Disruption"@en ;
+    skos:prefLabel "planned disruption"@en ;
+    skos:altLabel "planned maintenance"@en ;
+    rdfs:comment "A scheduled, non-emergency condition affecting services."@en ;
+    rdfs:subClassOf siri:Situation .
+
+siri:UnplannedDisruption
+    a owl:Class ;
+    rdfs:label "Unplanned Disruption"@en ;
+    skos:prefLabel "unplanned disruption"@en ;
+    skos:altLabel "incident"@en ;
+    rdfs:comment "An unexpected condition affecting services."@en ;
+    rdfs:subClassOf siri:Disruption .
+
+#################################################################
+# Journey & Stop Information
+#################################################################
+
+siri:Journey
+    a owl:Class ;
+    rdfs:label "Journey"@en ;
+    skos:prefLabel "journey"@en ;
+    rdfs:comment "A service journey with real-time status."@en .
+
+siri:Call
+    a owl:Class ;
+    rdfs:label "Call"@en ;
+    skos:prefLabel "call"@en ;
+    skos:altLabel "stop call"@en ;
+    rdfs:comment "A scheduled or estimated stop along a journey."@en .
+
+siri:Stop
+    a owl:Class ;
+    rdfs:label "Stop"@en ;
+    skos:prefLabel "stop"@en ;
+    rdfs:comment "A location where a vehicle stops."@en .
+
+siri:EstimatedCall
+    a owl:Class ;
+    rdfs:label "Estimated Call"@en ;
+    skos:prefLabel "estimated call"@en ;
+    rdfs:comment "A stop with real-time estimated times."@en ;
+    rdfs:subClassOf siri:Call .
+
+siri:RecordedCall
+    a owl:Class ;
+    rdfs:label "Recorded Call"@en ;
+    skos:prefLabel "recorded call"@en ;
+    rdfs:comment "A stop with recorded actual times."@en ;
+    rdfs:subClassOf siri:Call .
+
+#################################################################
+# Vehicle & Position Information
+#################################################################
+
+siri:VehicleActivity
+    a owl:Class ;
+    rdfs:label "Vehicle Activity"@en ;
+    skos:prefLabel "vehicle activity"@en ;
+    rdfs:comment "Snapshot of a vehicle's current activity and position."@en .
+
+siri:VehicleLocation
+    a owl:Class ;
+    rdfs:label "Vehicle Location"@en ;
+    skos:prefLabel "vehicle location"@en ;
+    skos:altLabel "position"@en ;
+    rdfs:comment "Geographic location of a vehicle."@en .
+
+siri:VehicleRef
+    a owl:Class ;
+    rdfs:label "Vehicle Reference"@en ;
+    skos:prefLabel "vehicle reference"@en ;
+    rdfs:comment "Identifier and metadata for a vehicle."@en .
+
+siri:Bearing
+    a owl:Class ;
+    rdfs:label "Bearing"@en ;
+    skos:prefLabel "bearing"@en ;
+    rdfs:comment "Direction of vehicle travel."@en .
+
+#################################################################
+# Status & Properties
+#################################################################
+
+siri:ServiceStatus
+    a owl:Class ;
+    rdfs:label "Service Status"@en ;
+    skos:prefLabel "service status"@en ;
+    rdfs:comment "Operational status of a service (on-time, delayed, cancelled)."@en .
+
+siri:Delay
+    a owl:Class ;
+    rdfs:label "Delay"@en ;
+    skos:prefLabel "delay"@en ;
+    rdfs:comment "Time deviation from scheduled times."@en .
+
+siri:Cancellation
+    a owl:Class ;
+    rdfs:label "Cancellation"@en ;
+    skos:prefLabel "cancellation"@en ;
+    rdfs:comment "Cancellation of a planned service or call."@en .
+
+siri:Note
+    a owl:Class ;
+    rdfs:label "Note"@en ;
+    skos:prefLabel "note"@en ;
+    skos:altLabel "message"@en ;
+    rdfs:comment "Textual information about a journey or service."@en .
+
+#################################################################
+# SIRI Relationships
+#################################################################
+
+siri:affectsJourney
+    a owl:ObjectProperty ;
+    rdfs:label "affects journey"@en ;
+    skos:prefLabel "affects journey"@en ;
+    rdfs:comment "Relates a situation or disruption to affected journeys."@en ;
+    rdfs:domain siri:Situation ;
+    rdfs:range siri:Journey .
+
+siri:affectsStop
+    a owl:ObjectProperty ;
+    rdfs:label "affects stop"@en ;
+    skos:prefLabel "affects stop"@en ;
+    rdfs:comment "Relates a situation to an affected stop."@en ;
+    rdfs:domain siri:Situation ;
+    rdfs:range siri:Stop .
+
+siri:hasEstimatedCall
+    a owl:ObjectProperty ;
+    rdfs:label "has estimated call"@en ;
+    skos:prefLabel "has estimated call"@en ;
+    rdfs:comment "Relates a journey to its estimated stops."@en ;
+    rdfs:domain siri:Journey ;
+    rdfs:range siri:EstimatedCall .
+
+siri:hasRecordedCall
+    a owl:ObjectProperty ;
+    rdfs:label "has recorded call"@en ;
+    skos:prefLabel "has recorded call"@en ;
+    rdfs:comment "Relates a journey to its completed stops."@en ;
+    rdfs:domain siri:Journey ;
+    rdfs:range siri:RecordedCall .
+
+siri:hasVehicleActivity
+    a owl:ObjectProperty ;
+    rdfs:label "has vehicle activity"@en ;
+    skos:prefLabel "has vehicle activity"@en ;
+    rdfs:comment "Relates a journey to its vehicle activity."@en ;
+    rdfs:domain siri:Journey ;
+    rdfs:range siri:VehicleActivity .
+
+siri:currentDelay
+    a owl:ObjectProperty ;
+    rdfs:label "current delay"@en ;
+    skos:prefLabel "current delay"@en ;
+    rdfs:comment "Relates a journey or call to its delay information."@en ;
+    rdfs:range siri:Delay .
+
+siri:isCancelled
+    a owl:ObjectProperty ;
+    rdfs:label "is cancelled"@en ;
+    skos:prefLabel "is cancelled"@en ;
+    rdfs:comment "Relates a journey or call to its cancellation status."@en ;
+    rdfs:range siri:Cancellation .
+
+siri:hasNote
+    a owl:ObjectProperty ;
+    rdfs:label "has note"@en ;
+    skos:prefLabel "has note"@en ;
+    rdfs:comment "Relates an entity to explanatory notes."@en ;
+    rdfs:range siri:Note .

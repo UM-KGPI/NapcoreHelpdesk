@@ -1,71 +1,339 @@
-@prefix nits: <https://napcore.eu/ontology/nits#> .
-@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix nits: <https://napcore.eu/ontology/nits#> .
 
-<https://napcore.eu/ontology/napcore-its>
+#################################################################
+# Ontology Header
+#################################################################
+
+<https://napcore.eu/ontology/nits/core>
     a owl:Ontology ;
-    dcterms:title "NAPCORE ITS Core Ontology"@en ;
-    dcterms:description "Minimal federated NAPCORE ITS core ontology used for cross-standard semantic anchoring in the Helpdesk runtime."@en ;
-    dcterms:created "2026-04-16"^^xsd:date ;
-    owl:versionInfo "0.1.0" ;
-    dcterms:license <https://creativecommons.org/licenses/by/4.0/> .
+    dct:title "NAPCORE ITS Ontology (nits)"@en ;
+    dct:description "Minimal cross-standard core ontology for semantic coordination across ITS standards such as NeTEx, OpRa, SIRI, and DATEX II. The ontology contains only abstract, non-normative concepts and uses SKOS purely for lexical annotation."@en ;
+    dct:creator "NAPCORE Working Group" ;
+    dct:created "2026-04-17"^^xsd:date ;
+    owl:versionIRI <https://napcore.eu/ontology/nits/core/0.2> ;
+    owl:versionInfo "0.2-hybrid-owl-skos" .
 
-nits:journey a skos:Concept ;
+#################################################################
+# Top-Level Abstract Classes
+#################################################################
+
+nits:DomainConcept
+    a owl:Class ;
+    rdfs:label "Domain Concept"@en ;
+    skos:prefLabel "domain concept"@en ;
+    rdfs:comment "Abstract superclass for all core ITS domain concepts."@en .
+
+nits:DataArtifact
+    a owl:Class ;
+    rdfs:label "Data Artifact"@en ;
+    skos:prefLabel "data artifact"@en ;
+    rdfs:comment "Abstract informational artifact without specifying format or schema."@en ;
+    rdfs:subClassOf nits:DomainConcept .
+
+nits:Process
+    a owl:Class ;
+    rdfs:label "Process"@en ;
+    skos:prefLabel "process"@en ;
+    rdfs:comment "Abstract representation of a process independent of standard or implementation."@en ;
+    rdfs:subClassOf nits:DomainConcept .
+
+nits:Actor
+    a owl:Class ;
+    rdfs:label "Actor"@en ;
+    skos:prefLabel "actor"@en ;
+    rdfs:comment "Abstract agent or organisation involved in ITS contexts."@en ;
+    rdfs:subClassOf nits:DomainConcept .
+
+nits:System
+    a owl:Class ;
+    rdfs:label "System"@en ;
+    skos:prefLabel "system"@en ;
+    rdfs:comment "Abstract system participating in transport operations or data exchange."@en ;
+    rdfs:subClassOf nits:DomainConcept .
+
+#################################################################
+# Transport & Service Concepts
+#################################################################
+
+nits:Service
+    a owl:Class ;
+    rdfs:label "Service"@en ;
+    skos:prefLabel "service"@en ;
+    rdfs:comment "Abstract transport or mobility service."@en ;
+    rdfs:subClassOf nits:DomainConcept .
+
+nits:Line
+    a owl:Class ;
+    rdfs:label "Line"@en ;
+    skos:prefLabel "line"@en ;
+    skos:altLabel "transport line"@en ;
+    skos:altLabel "public transport line"@en ;
+    skos:altLabel "route line"@en ;
+    rdfs:comment "Abstract named service line grouping journeys and stopping patterns."@en ;
+    rdfs:subClassOf nits:Service .
+
+nits:Journey
+    a owl:Class ;
+    rdfs:label "Journey"@en ;
     skos:prefLabel "journey"@en ;
     skos:altLabel "transport journey"@en ;
-    skos:related nits:vehicle-journey, nits:journey-pattern .
+    rdfs:comment "Abstract representation of movement through space and time."@en ;
+    rdfs:subClassOf nits:DomainConcept .
 
-nits:vehicle-journey a skos:Concept ;
-    skos:prefLabel "vehicle journey"@en ;
-    skos:altLabel "service journey"@en ;
-    skos:altLabel "delayed journey"@en ;
-    skos:altLabel "cancelled journey"@en ;
-    skos:related nits:journey, nits:delay, nits:capacity, nits:service-intensity .
+nits:JourneyComponent
+    a owl:Class ;
+    rdfs:label "Journey Component"@en ;
+    skos:prefLabel "journey component"@en ;
+    rdfs:comment "Abstract component contributing to a journey."@en ;
+    rdfs:subClassOf nits:DomainConcept .
 
-nits:journey-pattern a skos:Concept ;
+nits:JourneyPattern
+    a owl:Class ;
+    rdfs:label "Journey Pattern"@en ;
     skos:prefLabel "journey pattern"@en ;
-    skos:altLabel "route pattern"@en ;
-    skos:related nits:journey, nits:line .
+    skos:altLabel "transport journey pattern"@en ;
+    skos:related nits:Journey ;
+    rdfs:comment "Abstract reusable journey pattern across transport standards."@en ;
+    rdfs:subClassOf nits:JourneyComponent .
 
-nits:line a skos:Concept ;
-    skos:prefLabel "line"@en ;
-    skos:altLabel "service line"@en ;
-    skos:related nits:journey-pattern, nits:network .
+nits:Timetable
+    a owl:Class ;
+    rdfs:label "Timetable"@en ;
+    skos:prefLabel "timetable"@en ;
+    skos:altLabel "schedule"@en ;
+    rdfs:comment "Abstract representation of planned temporal information."@en ;
+    rdfs:subClassOf nits:DataArtifact .
 
-nits:network a skos:Concept ;
+nits:SpatialEntity
+    a owl:Class ;
+    rdfs:label "Spatial Entity"@en ;
+    skos:prefLabel "spatial entity"@en ;
+    rdfs:comment "Abstract entity with spatial characteristics."@en ;
+    rdfs:subClassOf nits:DomainConcept .
+
+nits:Network
+    a owl:Class ;
+    rdfs:label "Network"@en ;
     skos:prefLabel "network"@en ;
     skos:altLabel "transport network"@en ;
-    skos:related nits:line, nits:service-intensity .
+    rdfs:comment "Abstract transport network grouping related lines and services."@en ;
+    rdfs:subClassOf nits:SpatialEntity .
 
-nits:delay a skos:Concept ;
-    skos:prefLabel "delay"@en ;
-    skos:altLabel "journey delay"@en ;
-    skos:altLabel "delay statistics"@en ;
-    skos:altLabel "type of delay"@en ;
-    skos:related nits:vehicle-journey, nits:service-intensity .
+nits:Location
+    a owl:Class ;
+    rdfs:label "Location"@en ;
+    skos:prefLabel "location"@en ;
+    rdfs:comment "Abstract spatial reference."@en ;
+    rdfs:subClassOf nits:SpatialEntity .
 
-nits:capacity a skos:Concept ;
-    skos:prefLabel "capacity"@en ;
-    skos:altLabel "planned capacity"@en ;
-    skos:altLabel "actual capacity"@en ;
-    skos:altLabel "vehicle capacity"@en ;
-    skos:altLabel "passenger capacity"@en ;
-    skos:related nits:vehicle-journey, nits:service-intensity, nits:passenger-load .
+nits:Stop
+    a owl:Class ;
+    rdfs:label "Stop"@en ;
+    skos:prefLabel "stop"@en ;
+    skos:altLabel "stopping place"@en ;
+    skos:altLabel "stop point"@en ;
+    skos:altLabel "scheduled stop point"@en ;
+    skos:related nits:Location ;
+    rdfs:comment "Abstract stopping location without prescribing structural detail."@en ;
+    rdfs:subClassOf nits:SpatialEntity .
 
-nits:service-intensity a skos:Concept ;
+#################################################################
+# Operational & Governance Concepts
+#################################################################
+
+nits:OperationalProcess
+    a owl:Class ;
+    rdfs:label "Operational Process"@en ;
+    skos:prefLabel "operational process"@en ;
+    rdfs:comment "Abstract operational activity in transport systems."@en ;
+    rdfs:subClassOf nits:Process .
+
+nits:Responsibility
+    a owl:Class ;
+    rdfs:label "Responsibility"@en ;
+    skos:prefLabel "responsibility"@en ;
+    rdfs:comment "Abstract responsibility independent of allocation mechanics."@en ;
+    rdfs:subClassOf nits:DomainConcept .
+
+nits:Role
+    a owl:Class ;
+    rdfs:label "Role"@en ;
+    skos:prefLabel "role"@en ;
+    rdfs:comment "Abstract role an actor may assume."@en ;
+    rdfs:subClassOf nits:DomainConcept .
+
+nits:Authority
+    a owl:Class ;
+    rdfs:label "Authority"@en ;
+    skos:prefLabel "authority"@en ;
+    rdfs:comment "Abstract competent or governing authority."@en ;
+    rdfs:subClassOf nits:Actor .
+
+nits:Organisation
+    a owl:Class ;
+    rdfs:label "Organisation"@en ;
+    skos:prefLabel "organisation"@en ;
+    skos:altLabel "organization"@en ;
+    rdfs:comment "Abstract organisation participating in ITS contexts."@en ;
+    rdfs:subClassOf nits:Actor .
+
+#################################################################
+# Real-Time, Event & Status Concepts
+#################################################################
+
+nits:TemporalEntity
+    a owl:Class ;
+    rdfs:label "Temporal Entity"@en ;
+    skos:prefLabel "temporal entity"@en ;
+    rdfs:comment "Abstract entity with temporal characteristics."@en ;
+    rdfs:subClassOf nits:DomainConcept .
+
+nits:Event
+    a owl:Class ;
+    rdfs:label "Event"@en ;
+    skos:prefLabel "event"@en ;
+    rdfs:comment "Abstract event occurrence."@en ;
+    rdfs:subClassOf nits:TemporalEntity .
+
+nits:Situation
+    a owl:Class ;
+    rdfs:label "Situation"@en ;
+    skos:prefLabel "situation"@en ;
+    rdfs:comment "Abstract situation affecting operations or services."@en ;
+    rdfs:subClassOf nits:Event .
+
+nits:Disruption
+    a owl:Class ;
+    rdfs:label "Disruption"@en ;
+    skos:prefLabel "disruption"@en ;
+    skos:altLabel "disturbance"@en ;
+    rdfs:comment "Abstract disruption without prescribing category or severity."@en ;
+    rdfs:subClassOf nits:Situation .
+
+nits:RealTimeInformation
+    a owl:Class ;
+    rdfs:label "Real-Time Information"@en ;
+    skos:prefLabel "real-time information"@en ;
+    rdfs:comment "Abstract real-time information independent of message format."@en ;
+    rdfs:subClassOf nits:DataArtifact .
+
+nits:ServiceMetric
+    a owl:Class ;
+    rdfs:label "Service Metric"@en ;
+    skos:prefLabel "service metric"@en ;
+    rdfs:comment "Abstract metric describing service-level operational characteristics."@en ;
+    rdfs:subClassOf nits:DataArtifact .
+
+nits:ServiceIntensity
+    a owl:Class ;
+    rdfs:label "Service Intensity"@en ;
     skos:prefLabel "service intensity"@en ;
-    skos:altLabel "planned service intensity"@en ;
-    skos:altLabel "actual service intensity"@en ;
-    skos:altLabel "expected service intensity"@en ;
-    skos:altLabel "transport performance"@en ;
-    skos:related nits:capacity, nits:network, nits:delay .
+    skos:altLabel "operational intensity"@en ;
+    rdfs:comment "Abstract metric for service frequency and operational intensity."@en ;
+    rdfs:subClassOf nits:ServiceMetric .
 
-nits:passenger-load a skos:Concept ;
-    skos:prefLabel "passenger load"@en ;
-    skos:altLabel "passenger count"@en ;
-    skos:altLabel "vehicle load"@en ;
-    skos:altLabel "occupancy"@en ;
-    skos:related nits:capacity, nits:service-intensity .
+#################################################################
+# Data & Exchange Concepts
+#################################################################
+
+nits:DataSet
+    a owl:Class ;
+    rdfs:label "Data Set"@en ;
+    skos:prefLabel "data set"@en ;
+    rdfs:comment "Abstract collection of data."@en ;
+    rdfs:subClassOf nits:DataArtifact .
+
+nits:DataExchange
+    a owl:Class ;
+    rdfs:label "Data Exchange"@en ;
+    skos:prefLabel "data exchange"@en ;
+    rdfs:comment "Abstract data exchange process."@en ;
+    rdfs:subClassOf nits:Process .
+
+nits:DataPublisher
+    a owl:Class ;
+    rdfs:label "Data Publisher"@en ;
+    skos:prefLabel "data publisher"@en ;
+    rdfs:comment "Abstract role of publishing data."@en ;
+    rdfs:subClassOf nits:Role .
+
+nits:DataConsumer
+    a owl:Class ;
+    rdfs:label "Data Consumer"@en ;
+    skos:prefLabel "data consumer"@en ;
+    rdfs:comment "Abstract role of consuming data."@en ;
+    rdfs:subClassOf nits:Role .
+
+nits:Profile
+    a owl:Class ;
+    rdfs:label "Profile"@en ;
+    skos:prefLabel "profile"@en ;
+    rdfs:comment "Conceptual profile abstraction without specifying rules or constraints."@en ;
+    rdfs:subClassOf nits:DomainConcept .
+
+#################################################################
+# Minimal Relationship Vocabulary (OWL)
+#################################################################
+
+nits:involves
+    a owl:ObjectProperty ;
+    rdfs:label "involves"@en ;
+    skos:prefLabel "involves"@en ;
+    rdfs:comment "Relates a concept to another involved concept at an abstract level."@en .
+
+nits:produces
+    a owl:ObjectProperty ;
+    rdfs:label "produces"@en ;
+    skos:prefLabel "produces"@en ;
+    rdfs:comment "Indicates production of an abstract artifact."@en .
+
+nits:uses
+    a owl:ObjectProperty ;
+    rdfs:label "uses"@en ;
+    skos:prefLabel "uses"@en ;
+    rdfs:comment "Indicates usage of an abstract concept."@en .
+
+nits:provides
+    a owl:ObjectProperty ;
+    rdfs:label "provides"@en ;
+    skos:prefLabel "provides"@en ;
+    rdfs:comment "Indicates provision of an abstract concept."@en .
+
+nits:consistsOf
+    a owl:ObjectProperty ;
+    rdfs:label "consists of"@en ;
+    skos:prefLabel "consists of"@en ;
+    rdfs:comment "Describes abstract compositional structure."@en .
+
+nits:governs
+    a owl:ObjectProperty ;
+    rdfs:label "governs"@en ;
+    skos:prefLabel "governs"@en ;
+    rdfs:comment "Relates an authority or organisation to governed concepts."@en .
+
+nits:exchangedBetween
+    a owl:ObjectProperty ;
+    rdfs:label "exchanged between"@en ;
+    skos:prefLabel "exchanged between"@en ;
+    rdfs:comment "Indicates data exchange between abstract systems or actors."@en .
+
+nits:characterisesService
+    a owl:ObjectProperty ;
+    rdfs:label "characterises service"@en ;
+    skos:prefLabel "characterises service"@en ;
+    rdfs:comment "Relates a service metric to the service it describes."@en ;
+    rdfs:domain nits:ServiceMetric ;
+    rdfs:range nits:Service .
+
+nits:appliesToNetwork
+    a owl:ObjectProperty ;
+    rdfs:label "applies to network"@en ;
+    skos:prefLabel "applies to network"@en ;
+    rdfs:comment "Relates a concept to the network context where it applies."@en ;
+    rdfs:range nits:Network .

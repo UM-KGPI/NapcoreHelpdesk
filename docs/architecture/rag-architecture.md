@@ -19,19 +19,19 @@ Implement the helpdesk as a retrieval-augmented generation (RAG) system that pro
 - Graph-based semantic layer plan: [semantic-layer-plan.md](docs/architecture/semantic-layer-plan.md)
 - Semantic layer findings and ontology baseline: [semantic-layer-findings.md](docs/architecture/semantic-layer-findings.md)
 - Canonical ontology assets: [../ontology/README.md](docs/ontology/README.md)
-- Runtime reasoning is anchored on the federated ontology set loaded into GraphDB: core `nits:` concepts plus standard modules and explicit alignments.
+- Runtime reasoning is anchored on the ontology set loaded into GraphDB: core `nits:` concepts plus standard modules and explicit alignments.
 
-### Federated Ontology Lifecycle
+### Ontology Lifecycle
 1. Ingest approved repository documents.
 2. Extract concepts, relations, and evidence links from repository artifacts.
-3. Materialize repository-specific concept inventories aligned to the federated core/module/alignment model.
+3. Materialize repository-specific concept inventories aligned to the core/standards/alignments model.
 4. Index chunks with ontology-linked metadata.
 5. Apply GraphDB-backed concept expansion and alignment traversal during retrieval-time reasoning and ranking.
 
-### Implemented Runtime Pattern: Glossary + Federated Ontologies
+### Implemented Runtime Pattern: Glossary + Ontologies
 - Runtime now uses a two-layer semantic model for query reasoning:
-  - Glossary layer: `backend/helpdesk/ontologies/standards.yaml`
-  - Federated ontology layer: `docs/ontology/napcore-its.ttl`, `docs/ontology/netex-federated.ttl`, `docs/ontology/opra-federated.ttl`, `docs/ontology/standards-alignment.ttl`
+  - GraphDB glossary layer built from standard modules and alignment graphs.
+  - Ontology layer: `docs/ontology/napcore-its.ttl`, `docs/ontology/standards/netex.ttl`, `docs/ontology/standards/opra.ttl`, `docs/ontology/standards/siri.ttl`, `docs/ontology/standards/datex.ttl`, and `docs/ontology/alignments/*.ttl`
 - Intended behavior:
   1. Lexically detect glossary concepts from user query terms and aliases.
   2. Map glossary concept IDs to canonical or standard-local ontology IRIs.

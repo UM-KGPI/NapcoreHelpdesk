@@ -11,7 +11,8 @@ Person(ticketing, "Ticketing Agent", "Implements and operates ticketing workflow
 
 System(helpdesk, "NAPCORE Helpdesk", "Chat-style FAQ-first + RAG helpdesk for multimodal standards")
 System_Ext(github, "Approved GitHub Repositories", "NeTEx-CEN/NeTEx plus allowlisted companion repositories")
-System_Ext(llm, "LLM Provider API", "Optional provider-backed generation with grounded-only prompt contract")
+System_Ext(graphdb, "GraphDB Semantic Store", "Ontology and alignment graph queried for semantic expansion and provenance")
+System_Ext(llm, "LLM Provider API", "Default provider-backed generation with grounded-only prompt contract")
 
 Rel(pto, helpdesk, "Asks standards implementation questions", "Chat Session / Web GUI")
 Rel(pta, helpdesk, "Asks governance and policy implementation questions", "Chat Session / Web GUI")
@@ -20,7 +21,8 @@ Rel(integrator, helpdesk, "Asks interoperability and deployment questions", "Cha
 Rel(ticketing, helpdesk, "Asks ticketing integration questions", "Chat Session / Web GUI")
 
 Rel(helpdesk, github, "Indexes approved source content and companion documentation", "Git clone/fetch + indexing")
-Rel(helpdesk, llm, "Optionally generates answer from retrieved evidence only", "OpenAI-compatible API")
+Rel(helpdesk, graphdb, "Queries ontology/alignments for graph-aware retrieval and traceability", "SPARQL/HTTP")
+Rel(helpdesk, llm, "Generates answer from retrieved evidence only", "OpenAI-compatible API")
 
 UpdateRelStyle(helpdesk, llm, $textColor="black", $lineColor="#38598A")
 
@@ -39,8 +41,10 @@ Lay_R(integrator, ticketing)
 Lay_D(pto, helpdesk)
 ' Bottom layer: external systems below helpdesk
 Lay_D(helpdesk, github)
+Lay_D(helpdesk, graphdb)
 Lay_D(helpdesk, llm)
-Lay_R(github, llm)
+Lay_R(github, graphdb)
+Lay_R(graphdb, llm)
 
 note right of llm
 Top layer: Users.

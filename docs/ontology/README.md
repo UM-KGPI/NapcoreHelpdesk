@@ -28,7 +28,7 @@ The draft is intentionally small:
 ## Current Scope
 - Final target scope: NAPCORE-wide ontology coverage.
 - Current implemented scope: core `nits:` concepts plus standard modules for NeTEx, OpRa, SIRI, and DATEX II.
-- Current implemented scope also includes explicit cross-standard alignment modules and optional artifact-derived rule modules for standard-specific normative reasoning.
+- Current implemented scope also includes explicit cross-standard alignment modules, example-artifact modules for retrieval-oriented artifact linking, and optional artifact-derived rule modules for standard-specific normative reasoning.
 
 ## Files
 - `napcore-its.ttl`: canonical NAPCORE ITS core ontology in Turtle (`nits:` namespace).
@@ -36,6 +36,7 @@ The draft is intentionally small:
 - `standards/opra.ttl`: OpRa standard ontology module.
 - `standards/siri.ttl`: SIRI standard ontology module.
 - `standards/datex.ttl`: DATEX II standard ontology module.
+- `examples/netex-examples.ttl`: NeTEx example-artifact ontology module linking repository examples to canonical standard concepts.
 - `alignments/nits-netex-align.ttl`: NITS-NeTEx alignment axioms.
 - `alignments/nits-opra-align.ttl`: NITS-OpRa alignment axioms.
 - `alignments/nits-siri-align.ttl`: NITS-SIRI alignment axioms.
@@ -64,11 +65,12 @@ Rebuild alignment ontologies using the per-standard alignment artifacts in `docs
 Most recent refresh used local repositories for NeTEx and OpRa and linked concepts to available XML example artifacts.
 
 ## Ontology Topology
-The ontology topology is core + standards + alignments (+ optional artifact-derived rules):
+The ontology topology is core + standards + examples + alignments (+ optional artifact-derived rules):
 1. Core ontology (`napcore-its.ttl`) provides canonical `nits:` concepts.
 2. Standard modules (`standards/netex.ttl`, `standards/opra.ttl`, `standards/siri.ttl`, `standards/datex.ttl`) provide standard-local concepts.
-3. Alignment modules (`alignments/nits-netex-align.ttl`, `alignments/nits-opra-align.ttl`, `alignments/nits-siri-align.ttl`, `alignments/nits-datex-align.ttl`) declare explicit cross-standard mappings and equivalences.
-4. Artifact-derived rules (`artifact-rules/*-artifact-rules-v*.ttl`) capture XSD-derived normativity (mandatory/optional/cardinality/required attributes), one standard per file and one version per file.
+3. Example modules (`examples/*.ttl`) describe repository artifacts and map them to canonical standard concepts without polluting the conceptual standard ontologies.
+4. Alignment modules (`alignments/nits-netex-align.ttl`, `alignments/nits-opra-align.ttl`, `alignments/nits-siri-align.ttl`, `alignments/nits-datex-align.ttl`) declare explicit cross-standard mappings and equivalences.
+5. Artifact-derived rules (`artifact-rules/*-artifact-rules-v*.ttl`) capture XSD-derived normativity (mandatory/optional/cardinality/required attributes), one standard per file and one version per file.
 
 This structure keeps runtime anchoring stable while allowing each standard ontology to evolve independently.
 
@@ -91,6 +93,7 @@ This structure keeps runtime anchoring stable while allowing each standard ontol
 
 ## Initial Design Choices
 - Standard modules model transport entities as OWL classes with source-grounded annotations and hierarchy axioms.
+- Example modules model repository artifacts separately and attach retrieval-relevant example labels and source paths to canonical concepts through explicit illustration links.
 - Cross-standard anchoring is handled through canonical `nits:` concepts and explicit alignment assertions.
 - Artifact-derived rules remain in separate standard-scoped modules so normative constraints can be loaded only when a query requires them.
 - Source artifacts and retrieval chunks stay source-grounded through PROV-O and DCTERMS metadata rather than a separate application ontology.

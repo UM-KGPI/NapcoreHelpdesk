@@ -1,0 +1,260 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+
+@prefix datex: <https://datex.org/ontology/datex#> .
+
+#################################################################
+# Ontology Header
+#################################################################
+
+<https://datex.org/ontology/datex>
+    a owl:Ontology ;
+    dct:title "DATEX II Conceptual Ontology"@en ;
+    dct:description "Conceptual OWL ontology representing core DATEX II concepts for traffic and travel information exchange. Focuses on incidents, events, and road network information."@en ;
+    dct:creator "DATEX / NAPCORE Community" ;
+    dct:created "2026-04-17"^^xsd:date ;
+    owl:versionIRI <https://datex.org/ontology/datex/0.1> ;
+    owl:versionInfo "0.1-draft" ;
+    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+
+#################################################################
+# Traffic & Travel Information
+#################################################################
+
+datex:TrafficInformation
+    a owl:Class ;
+    rdfs:label "Traffic Information"@en ;
+    skos:prefLabel "traffic information"@en ;
+    rdfs:comment "Information about traffic conditions, incidents, or events."@en .
+
+datex:TrafficEvent
+    a owl:Class ;
+    rdfs:label "Traffic Event"@en ;
+    skos:prefLabel "traffic event"@en ;
+    rdfs:comment "Any event affecting traffic flow."@en ;
+    rdfs:subClassOf datex:TrafficInformation .
+
+datex:Incident
+    a owl:Class ;
+    rdfs:label "Incident"@en ;
+    skos:prefLabel "incident"@en ;
+    skos:altLabel "accident"@en ;
+    rdfs:comment "An unplanned occurrence affecting traffic."@en ;
+    rdfs:subClassOf datex:TrafficEvent .
+
+datex:Accident
+    a owl:Class ;
+    rdfs:label "Accident"@en ;
+    skos:prefLabel "accident"@en ;
+    rdfs:comment "A traffic collision or impact event."@en ;
+    rdfs:subClassOf datex:Incident .
+
+datex:Congestion
+    a owl:Class ;
+    rdfs:label "Congestion"@en ;
+    skos:prefLabel "congestion"@en ;
+    skos:altLabel "traffic jam"@en ;
+    rdfs:comment "Reduced traffic flow due to volume or capacity constraints."@en ;
+    rdfs:subClassOf datex:TrafficEvent .
+
+datex:RoadWork
+    a owl:Class ;
+    rdfs:label "Road Work"@en ;
+    skos:prefLabel "road work"@en ;
+    skos:altLabel "construction"@en ;
+    rdfs:comment "Planned roadwork or maintenance affecting traffic."@en ;
+    rdfs:subClassOf datex:TrafficEvent .
+
+#################################################################
+# Road Network & Location
+#################################################################
+
+datex:RoadNetwork
+    a owl:Class ;
+    rdfs:label "Road Network"@en ;
+    skos:prefLabel "road network"@en ;
+    rdfs:comment "The network of roads and highways."@en .
+
+datex:Road
+    a owl:Class ;
+    rdfs:label "Road"@en ;
+    skos:prefLabel "road"@en ;
+    rdfs:comment "A single road or highway."@en ;
+    rdfs:subClassOf datex:RoadNetwork .
+
+datex:RoadSegment
+    a owl:Class ;
+    rdfs:label "Road Segment"@en ;
+    skos:prefLabel "road segment"@en ;
+    rdfs:comment "A discrete section of a road."@en .
+
+datex:Lane
+    a owl:Class ;
+    rdfs:label "Lane"@en ;
+    skos:prefLabel "lane"@en ;
+    rdfs:comment "A marked lane within a road."@en .
+
+datex:Junction
+    a owl:Class ;
+    rdfs:label "Junction"@en ;
+    skos:prefLabel "junction"@en ;
+    skos:altLabel "intersection"@en ;
+    rdfs:comment "A point where roads meet."@en ;
+    rdfs:subClassOf datex:RoadNetwork .
+
+datex:Location
+    a owl:Class ;
+    rdfs:label "Location"@en ;
+    skos:prefLabel "location"@en ;
+    rdfs:comment "A geographic location relevant to traffic."@en .
+
+datex:PointLocation
+    a owl:Class ;
+    rdfs:label "Point Location"@en ;
+    skos:prefLabel "point location"@en ;
+    rdfs:comment "A single point location."@en ;
+    rdfs:subClassOf datex:Location .
+
+datex:LinearLocation
+    a owl:Class ;
+    rdfs:label "Linear Location"@en ;
+    skos:prefLabel "linear location"@en ;
+    rdfs:comment "A location defined by a start and end point along a road."@en ;
+    rdfs:subClassOf datex:Location .
+
+#################################################################
+# Measures & Conditions
+#################################################################
+
+datex:TrafficCondition
+    a owl:Class ;
+    rdfs:label "Traffic Condition"@en ;
+    skos:prefLabel "traffic condition"@en ;
+    rdfs:comment "Current or forecast traffic conditions."@en .
+
+datex:SpeedInformation
+    a owl:Class ;
+    rdfs:label "Speed Information"@en ;
+    skos:prefLabel "speed information"@en ;
+    rdfs:comment "Information about traffic speeds."@en ;
+    rdfs:subClassOf datex:TrafficCondition .
+
+datex:TrafficFlow
+    a owl:Class ;
+    rdfs:label "Traffic Flow"@en ;
+    skos:prefLabel "traffic flow"@en ;
+    rdfs:comment "Information about traffic volume and capacity."@en ;
+    rdfs:subClassOf datex:TrafficCondition .
+
+datex:WeatherRelatedInformation
+    a owl:Class ;
+    rdfs:label "Weather Related Information"@en ;
+    skos:prefLabel "weather related information"@en ;
+    rdfs:comment "Weather conditions affecting traffic."@en ;
+    rdfs:subClassOf datex:TrafficInformation .
+
+datex:EnvironmentalCondition
+    a owl:Class ;
+    rdfs:label "Environmental Condition"@en ;
+    skos:prefLabel "environmental condition"@en ;
+    rdfs:comment "Environmental factors affecting traffic."@en .
+
+#################################################################
+# Management & Response
+#################################################################
+
+datex:ManagementAction
+    a owl:Class ;
+    rdfs:label "Management Action"@en ;
+    skos:prefLabel "management action"@en ;
+    rdfs:comment "An action taken to manage traffic conditions."@en .
+
+datex:TrafficControl
+    a owl:Class ;
+    rdfs:label "Traffic Control"@en ;
+    skos:prefLabel "traffic control"@en ;
+    rdfs:comment "Measures to control or regulate traffic."@en ;
+    rdfs:subClassOf datex:ManagementAction .
+
+datex:LaneManagement
+    a owl:Class ;
+    rdfs:label "Lane Management"@en ;
+    skos:prefLabel "lane management"@en ;
+    rdfs:comment "Management actions affecting lanes."@en ;
+    rdfs:subClassOf datex:ManagementAction .
+
+datex:SpeedManagement
+    a owl:Class ;
+    rdfs:label "Speed Management"@en ;
+    skos:prefLabel "speed management"@en ;
+    rdfs:comment "Management of traffic speeds."@en ;
+    rdfs:subClassOf datex:ManagementAction .
+
+#################################################################
+# Operators & Organizations
+#################################################################
+
+datex:Operator
+    a owl:Class ;
+    rdfs:label "Operator"@en ;
+    skos:prefLabel "operator"@en ;
+    rdfs:comment "Organisation managing road infrastructure or traffic."@en .
+
+datex:Authority
+    a owl:Class ;
+    rdfs:label "Authority"@en ;
+    skos:prefLabel "authority"@en ;
+    rdfs:comment "Public authority responsible for traffic management."@en .
+
+#################################################################
+# DATEX II Relationships
+#################################################################
+
+datex:affectsLocation
+    a owl:ObjectProperty ;
+    rdfs:label "affects location"@en ;
+    skos:prefLabel "affects location"@en ;
+    rdfs:comment "Relates an event or condition to affected locations."@en ;
+    rdfs:domain datex:TrafficEvent ;
+    rdfs:range datex:Location .
+
+datex:affectsRoad
+    a owl:ObjectProperty ;
+    rdfs:label "affects road"@en ;
+    skos:prefLabel "affects road"@en ;
+    rdfs:comment "Relates an event to affected roads."@en ;
+    rdfs:domain datex:TrafficEvent ;
+    rdfs:range datex:Road .
+
+datex:reportedBy
+    a owl:ObjectProperty ;
+    rdfs:label "reported by"@en ;
+    skos:prefLabel "reported by"@en ;
+    rdfs:comment "Relates traffic information to the operator reporting it."@en ;
+    rdfs:domain datex:TrafficInformation ;
+    rdfs:range datex:Operator .
+
+datex:managedBy
+    a owl:ObjectProperty ;
+    rdfs:label "managed by"@en ;
+    skos:prefLabel "managed by"@en ;
+    rdfs:comment "Relates a traffic situation to management actions."@en ;
+    rdfs:range datex:ManagementAction .
+
+datex:hasCondition
+    a owl:ObjectProperty ;
+    rdfs:label "has condition"@en ;
+    skos:prefLabel "has condition"@en ;
+    rdfs:comment "Relates a road or location to traffic conditions."@en ;
+    rdfs:range datex:TrafficCondition .
+
+datex:hasWeatherImpact
+    a owl:ObjectProperty ;
+    rdfs:label "has weather impact"@en ;
+    skos:prefLabel "has weather impact"@en ;
+    rdfs:comment "Relates traffic information to weather factors."@en ;
+    rdfs:range datex:WeatherRelatedInformation .

@@ -3,9 +3,14 @@
 Related document:
 - `docs/architecture/semantic-layer-findings.md`
 - `docs/ontology/napcore-its.ttl`
-- `docs/ontology/netex-federated.ttl`
-- `docs/ontology/opra-federated.ttl`
-- `docs/ontology/standards-alignment.ttl`
+- `docs/ontology/standards/netex.ttl`
+- `docs/ontology/standards/opra.ttl`
+- `docs/ontology/standards/siri.ttl`
+- `docs/ontology/standards/datex.ttl`
+- `docs/ontology/alignments/nits-netex-align.ttl`
+- `docs/ontology/alignments/nits-opra-align.ttl`
+- `docs/ontology/alignments/nits-siri-align.ttl`
+- `docs/ontology/alignments/nits-datex-align.ttl`
 
 ## Purpose
 Define a practical semantic layer that improves:
@@ -60,10 +65,10 @@ The plan keeps current PostgreSQL + pgvector retrieval as baseline and adds a gr
 6. ✅ Roll out via feature flag and compare against baseline.
 7. ⏳ Promote to default only if quality and latency targets are met.
 
-## Federated Ontology Topology (Planned)
+## Ontology Topology (Planned)
 - Core ontology: `napcore-its.ttl` (`nits:` namespace) is the canonical semantic anchor layer.
-- Standard modules: one ontology per standards family/domain module (for example `netex-federated.ttl`, `opra-federated.ttl`, later SIRI/OJP/DATEX II modules).
-- Alignment ontology: `standards-alignment.ttl` provides explicit cross-standard mapping assertions (`skos:exactMatch`, `skos:closeMatch`, and other approved relations).
+- Standard modules: one ontology per standards family/domain module (for example `standards/netex.ttl`, `standards/opra.ttl`, `standards/siri.ttl`, `standards/datex.ttl`).
+- Alignment modules: `alignments/nits-netex-align.ttl`, `alignments/nits-opra-align.ttl`, `alignments/nits-siri-align.ttl`, `alignments/nits-datex-align.ttl` provide explicit cross-standard mapping assertions.
 - Runtime contract: retrieval/anchoring resolves first to core `nits:` IDs, while standard-local IDs and mappings remain traceable for provenance and editorial review.
 
 ## Target Technology Choice
@@ -130,8 +135,8 @@ Non-primary / optional components:
 ### Minimal GraphDB Repository Setup
 - Separate named graphs for each ontology/module:
   - core: `napcore-its.ttl`
-  - standards: `netex-federated.ttl`, `opra-federated.ttl`, later modules
-  - alignments: `standards-alignment.ttl`
+  - standards: `standards/netex.ttl`, `standards/opra.ttl`, `standards/siri.ttl`, `standards/datex.ttl`
+  - alignments: `alignments/nits-netex-align.ttl`, `alignments/nits-opra-align.ttl`, `alignments/nits-siri-align.ttl`, `alignments/nits-datex-align.ttl`
 - Enable OWL/RDFS reasoning profile in repository config.
 - Preserve provenance triples (`sourceUrl`, `sourcePath`, `commitSha`, `extractorVersion`) for traceability.
 - Keep SHACL validation available for ontology quality gates during ingestion.
@@ -190,8 +195,8 @@ Deliverables:
 - Migration/index script for nodes/edges from existing indexed content.
 - Federated ontology load order defined and reproducible:
   1. `napcore-its.ttl`
-  2. standards modules (NeTEx, OpRa, ...)
-  3. `standards-alignment.ttl`
+  2. standards modules (`standards/netex.ttl`, `standards/opra.ttl`, `standards/siri.ttl`, `standards/datex.ttl`)
+  3. alignment modules (`alignments/nits-netex-align.ttl`, `alignments/nits-opra-align.ttl`, `alignments/nits-siri-align.ttl`, `alignments/nits-datex-align.ttl`)
 - Initial graph populated for:
   - `NeTEx-CEN/NeTEx`
   - `OpRa-CEN/OpRa`

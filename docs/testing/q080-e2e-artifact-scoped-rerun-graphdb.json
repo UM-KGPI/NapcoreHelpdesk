@@ -1,0 +1,196 @@
+{
+  "requestId": "q080-e2e-scoped-rerun-34738960",
+  "question": "How does OpRa service intensity relate to NeTEx line and network concepts?",
+  "scoped": true,
+  "generatedAt": "2026-04-18T09:26:34.661864+00:00",
+  "httpStatus": 200,
+  "response": {
+    "answerId": "ans-42cac6962370",
+    "mode": "rag",
+    "confidence": 0.9,
+    "answer": "For timetable exchange, refer to the approved profile specification, design your ServiceFrame and TimetableFrame according to the standard, and validate against published test cases before deployment.",
+    "citations": [
+      {
+        "repositoryUrl": "https://github.com/OpRa-CEN/OpRa/blob/86eaeba401ddc853d34796a383a5c92ae3ccd1c8/xsd/opra_service/opra_service_serviceIntensity.xsd",
+        "commitSha": "86eaeba401ddc853d34796a383a5c92ae3ccd1c8",
+        "sourcePath": "xsd/opra_service/opra_service_serviceIntensity.xsd",
+        "chunkId": "src-309b33127420aef8bfe0bc04",
+        "label": "xsd/opra_service/opra_service_serviceIntensity.xsd"
+      }
+    ],
+    "abstained": false,
+    "abstentionReason": null,
+    "reviewRequired": true,
+    "trace": {
+      "requestId": "q080-e2e-scoped-rerun-34738960",
+      "questionEventId": "60",
+      "matchedFaqEntryId": null,
+      "retrievalEventIds": [
+        "re-d0c03469",
+        "re-95453307",
+        "re-3d35ce06",
+        "re-da84d50b",
+        "re-8944b6de",
+        "re-3df939db"
+      ],
+      "evidenceLinkIds": [
+        "el-ans-42cac6962370-1"
+      ],
+      "graphExpansionHops": 1,
+      "graphConceptIds": [
+        "netex:Line",
+        "netex:Service",
+        "opra:PublicTransportService"
+      ],
+      "graphEvidenceCount": 6,
+      "graphScoreContribution": 0.2,
+      "repositoryCoverageCount": 1,
+      "conceptCoverageCount": 2,
+      "semanticAlignmentScore": 0.5091,
+      "provenanceIds": [
+        "prov-ans-42cac6962370-1"
+      ],
+      "ruleHitsCount": 3,
+      "ruleConclusions": [
+        {
+          "type": "SCHEMA_EVIDENCE_PRESENT",
+          "message": "Retrieved evidence includes schema fragments that can support structural grounding."
+        },
+        {
+          "type": "COMPETENCY_QUESTION_MATCH",
+          "message": "Matched competency-question checks for this query context.",
+          "competencyQuestionIds": [
+            "CQ-OPRA-ROLE-01",
+            "CQ-OPRA-ROLE-02"
+          ],
+          "requiresRuleCount": 0
+        },
+        {
+          "type": "ONTOLOGY_ANCHOR_PRESENT",
+          "message": "At least one retrieved chunk is connected to an ontology anchor used during retrieval."
+        }
+      ],
+      "ontologyVersions": [
+        {
+          "ontologyKey": "datex",
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/datex",
+          "contentHash": "1b3ee1f9d2884f108e0fcda7a350436237b258ae02d3fa219ea89f79c9c3c735"
+        },
+        {
+          "ontologyKey": "datex-artifact-rules-v1.0",
+          "version": "datex-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/datex/v1.0",
+          "contentHash": "f641099321fdce91e1ccf88929aca68c81d2bde08dfc4730f4d5d1325fc953cd"
+        },
+        {
+          "ontologyKey": "napcore-its",
+          "version": "0.2-hybrid-owl-skos",
+          "graphUri": "https://napcore.eu/graph/core/napcore-its",
+          "contentHash": "aa5dab35e2a51cbf5965a3edc8cc5f320169be89b96b947657686407b9b3558f"
+        },
+        {
+          "ontologyKey": "netex",
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/netex",
+          "contentHash": "f43154ee7c7924cebb8d5daf24eeea1cd3f41d847f4de39e38faa1daa0af9868"
+        },
+        {
+          "ontologyKey": "netex-artifact-rules-v1.0",
+          "version": "netex-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/netex/v1.0",
+          "contentHash": "d9483833aa505be1473d9bc00940bfb435f7c8c5cf34bfc7c0fd42f4df8d4bf1"
+        },
+        {
+          "ontologyKey": "nits-datex-align",
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/datex",
+          "contentHash": "2052cfb9306e88986ff51e99282b33eabee2855d499a09eb3f72e067bc865df4"
+        },
+        {
+          "ontologyKey": "nits-netex-align",
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/netex",
+          "contentHash": "c9cfbaabc354305e1ed27600941616a91ff8c0bc24b9a90af169fd688e80d381"
+        },
+        {
+          "ontologyKey": "nits-opra-align",
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/opra",
+          "contentHash": "7ccbdf18189118cfe705d1143d5f2b02fd4604c2fd637870a9e81098017c0c62"
+        },
+        {
+          "ontologyKey": "nits-siri-align",
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/siri",
+          "contentHash": "8ea3e303a3c50581e85b5a5ced8fec8a65fdaff4e86066b92f6760d6069cc8ed"
+        },
+        {
+          "ontologyKey": "opra",
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/opra",
+          "contentHash": "319f5955e888248b703b2b2d9d329ce9ac62ef912f74d12db7d2991909f05b0a"
+        },
+        {
+          "ontologyKey": "opra-artifact-rules-v1.0",
+          "version": "opra-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/opra/v1.0",
+          "contentHash": "9a8f9a03f8fa07b9658af2ebbfc683de377c81240c35c471382f2f38c8ce1dee"
+        },
+        {
+          "ontologyKey": "siri",
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/siri",
+          "contentHash": "b46cfc85f79cb869c31e50fcca3b45a71a62ffdb03c8906a6bf96bc90bc092f6"
+        },
+        {
+          "ontologyKey": "siri-artifact-rules-v1.0",
+          "version": "siri-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/siri/v1.0",
+          "contentHash": "fa149197d3c333f462f7d076c7df9c9f20d519bd3cad2c5e4f1e0e465dd15832"
+        }
+      ],
+      "semanticQuery": {
+        "intent": "cross_standard_relation",
+        "normativity": "unspecified",
+        "coreConcept": "nits:service",
+        "coreConcepts": [
+          "nits:service"
+        ],
+        "ambiguousCoreConcept": false,
+        "candidateStandards": [
+          "OpRa",
+          "NeTEx"
+        ],
+        "originalTerms": [
+          "How",
+          "NeTEx",
+          "OpRa"
+        ],
+        "confidence": {
+          "intent": 0.9,
+          "concept": 0.95
+        }
+      },
+      "semanticDisambiguationRequired": false,
+      "semanticDisambiguationPrompt": null,
+      "semanticFallback": "PARTIAL_EVIDENCE",
+      "semanticProvisional": true,
+      "semanticProvisionalReason": "CROSS_STANDARD_GAP",
+      "evidenceCoverageLevel": "high",
+      "crossStandardConflict": false,
+      "crossStandardConflictType": null,
+      "crossStandardEvidencePartitions": [
+        {
+          "standard": "OpRa",
+          "evidenceCount": 6,
+          "avgScore": 1.0,
+          "topSourcePaths": [
+            "xsd/opra_service/opra_service_serviceIntensity.xsd"
+          ],
+          "normativitySignals": []
+        }
+      ]
+    }
+  }
+}

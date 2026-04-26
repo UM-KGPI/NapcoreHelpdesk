@@ -1,1 +1,216 @@
-{"answerId":"ans-24a9cdd53311","mode":"rag","confidence":0.94,"answer":"Here is a simple NeTEx XML example for a line with stop points, based on the provided evidence:\n\n```xml\n<Network>\n    <StopPlace id=\"stop_place_1\">\n        <Name>Stop Place 1</Name>\n        <Location>\n            <Latitude>36.905697</Latitude>\n            <Longitude>-116.76218</Longitude>\n        </Location>\n    </StopPlace>\n    <ScheduledStopPoint id=\"scheduled_stop_point_1\">\n        <PublicCode>SSP_001</PublicCode>\n        <Name>Scheduled Stop Point 1</Name>\n        <Location>\n            <Latitude>36.905697</Latitude>\n            <Longitude>-116.76218</Longitude>\n        </Location>\n    </ScheduledStopPoint>\n    <StopAssignment>\n        <StopPlaceRef ref=\"stop_place_1\"/>\n        <ScheduledStopPointRef ref=\"scheduled_stop_point_1\"/>\n    </StopAssignment>\n</Network>\n```\n\nThis example illustrates the relationship between a `StopPlace` and a `ScheduledStopPoint`, as well as their association through a `StopAssignment`, which is consistent with the NeTEx structure described in the evidence [E1], [E6]. However, the evidence does not provide a complete XML structure for a full line with multiple stop points, so I cannot provide a more extensive example safely.","citations":[{"repositoryUrl":"https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/examples/functions/timetable/Netex_07.2_Bus_FlexibleTimetable_WithPattern.xml","commitSha":"de021e83a02522cff4ed936408bf927f798aae0d","sourcePath":"examples/functions/timetable/Netex_07.2_Bus_FlexibleTimetable_WithPattern.xml","chunkId":"src-13aed64e9579795bede68871","label":"examples/functions/timetable/Netex_07.2_Bus_FlexibleTimetable_WithPattern.xml"},{"repositoryUrl":"https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/examples/functions/timetable/Netex_08.1_BusTram_Timetable_AmbiguousLinks.xml","commitSha":"de021e83a02522cff4ed936408bf927f798aae0d","sourcePath":"examples/functions/timetable/Netex_08.1_BusTram_Timetable_AmbiguousLinks.xml","chunkId":"src-e7072f0c7babc0f8b79c2179","label":"examples/functions/timetable/Netex_08.1_BusTram_Timetable_AmbiguousLinks.xml"},{"repositoryUrl":"https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/examples/standards/gtfs/Netex_gtfs_exm1_Stops_1.xml","commitSha":"de021e83a02522cff4ed936408bf927f798aae0d","sourcePath":"examples/standards/gtfs/Netex_gtfs_exm1_Stops_1.xml","chunkId":"src-9ed9430dcadbbdb41be927b1","label":"examples/standards/gtfs/Netex_gtfs_exm1_Stops_1.xml"},{"repositoryUrl":"https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/examples/standards/nta/NTA-PI-01_EI_NTA_STOP_NaPTAN-XX_2020801.xml","commitSha":"de021e83a02522cff4ed936408bf927f798aae0d","sourcePath":"examples/standards/nta/NTA-PI-01_EI_NTA_STOP_NaPTAN-XX_2020801.xml","chunkId":"src-53ab16d9a8de3be3ac5c2408","label":"examples/standards/nta/NTA-PI-01_EI_NTA_STOP_NaPTAN-XX_2020801.xml"},{"repositoryUrl":"https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/examples/standards/txc/FX-PI-01_UK_DFT_STOP_NaPTAN-060+086+110_20171217.xml","commitSha":"de021e83a02522cff4ed936408bf927f798aae0d","sourcePath":"examples/standards/txc/FX-PI-01_UK_DFT_STOP_NaPTAN-060+086+110_20171217.xml","chunkId":"src-50514c4c736e1381d34a7675","label":"examples/standards/txc/FX-PI-01_UK_DFT_STOP_NaPTAN-060+086+110_20171217.xml"}],"abstained":false,"abstentionReason":null,"reviewRequired":true,"trace":{"requestId":"q070-e2e-rerun-scoped-20260419","questionEventId":"66","matchedFaqEntryId":null,"retrievalEventIds":["re-9bb070b0","re-b5ca0164","re-a6ad3646","re-0d1f040f","re-efbe38d5","re-e8114458"],"evidenceLinkIds":["el-ans-24a9cdd53311-1","el-ans-24a9cdd53311-2","el-ans-24a9cdd53311-3","el-ans-24a9cdd53311-4","el-ans-24a9cdd53311-5"],"graphExpansionHops":1,"graphConceptIds":["netex:Line","netex:ScheduledStopPoint","opra:StopPoint","siri:Stop"],"graphEvidenceCount":6,"graphScoreContribution":0.2,"repositoryCoverageCount":1,"conceptCoverageCount":23,"semanticAlignmentScore":0.6438,"provenanceIds":["prov-ans-24a9cdd53311-1","prov-ans-24a9cdd53311-2","prov-ans-24a9cdd53311-3","prov-ans-24a9cdd53311-4","prov-ans-24a9cdd53311-5"],"ruleHitsCount":1,"ruleConclusions":[{"type":"ONTOLOGY_ANCHOR_PRESENT","message":"At least one retrieved chunk is connected to an ontology anchor used during retrieval."}],"ontologyVersions":[{"ontologyKey":"datex","version":"0.1-draft","graphUri":"https://napcore.eu/graph/standards/datex","contentHash":"1b3ee1f9d2884f108e0fcda7a350436237b258ae02d3fa219ea89f79c9c3c735"},{"ontologyKey":"datex-artifact-rules-v1.0","version":"datex-artifact-rules-v1.0","graphUri":"https://napcore.eu/graph/artifact-rules/datex/v1.0","contentHash":"f641099321fdce91e1ccf88929aca68c81d2bde08dfc4730f4d5d1325fc953cd"},{"ontologyKey":"napcore-its","version":"0.2-hybrid-owl-skos","graphUri":"https://napcore.eu/graph/core/napcore-its","contentHash":"9e96a968051e4e7a581c61cf8ba7042d91474a1d849dff88a1a46babd4dc13fd"},{"ontologyKey":"netex","version":"0.1-draft","graphUri":"https://napcore.eu/graph/standards/netex","contentHash":"f43154ee7c7924cebb8d5daf24eeea1cd3f41d847f4de39e38faa1daa0af9868"},{"ontologyKey":"netex-artifact-rules-v1.0","version":"netex-artifact-rules-v1.0","graphUri":"https://napcore.eu/graph/artifact-rules/netex/v1.0","contentHash":"d9483833aa505be1473d9bc00940bfb435f7c8c5cf34bfc7c0fd42f4df8d4bf1"},{"ontologyKey":"nits-datex-align","version":"0.1-draft","graphUri":"https://napcore.eu/graph/alignments/datex","contentHash":"2052cfb9306e88986ff51e99282b33eabee2855d499a09eb3f72e067bc865df4"},{"ontologyKey":"nits-netex-align","version":"0.1-draft","graphUri":"https://napcore.eu/graph/alignments/netex","contentHash":"2bc7200cf2e20db3f638c174231c69d5c8950478640348d09400a9d04875434c"},{"ontologyKey":"nits-opra-align","version":"0.1-draft","graphUri":"https://napcore.eu/graph/alignments/opra","contentHash":"7ccbdf18189118cfe705d1143d5f2b02fd4604c2fd637870a9e81098017c0c62"},{"ontologyKey":"nits-siri-align","version":"0.1-draft","graphUri":"https://napcore.eu/graph/alignments/siri","contentHash":"8ea3e303a3c50581e85b5a5ced8fec8a65fdaff4e86066b92f6760d6069cc8ed"},{"ontologyKey":"opra","version":"0.1-draft","graphUri":"https://napcore.eu/graph/standards/opra","contentHash":"319f5955e888248b703b2b2d9d329ce9ac62ef912f74d12db7d2991909f05b0a"},{"ontologyKey":"opra-artifact-rules-v1.0","version":"opra-artifact-rules-v1.0","graphUri":"https://napcore.eu/graph/artifact-rules/opra/v1.0","contentHash":"9a8f9a03f8fa07b9658af2ebbfc683de377c81240c35c471382f2f38c8ce1dee"},{"ontologyKey":"siri","version":"0.1-draft","graphUri":"https://napcore.eu/graph/standards/siri","contentHash":"b46cfc85f79cb869c31e50fcca3b45a71a62ffdb03c8906a6bf96bc90bc092f6"},{"ontologyKey":"siri-artifact-rules-v1.0","version":"siri-artifact-rules-v1.0","graphUri":"https://napcore.eu/graph/artifact-rules/siri/v1.0","contentHash":"fa149197d3c333f462f7d076c7df9c9f20d519bd3cad2c5e4f1e0e465dd15832"}],"semanticQuery":{"intent":"unknown","normativity":"unspecified","coreConcept":"nits:stop","coreConcepts":["nits:stop","nits:service","nits:spatialentity"],"ambiguousCoreConcept":true,"candidateStandards":["NeTEx"],"originalTerms":["NeTEx","Show","XML"],"confidence":{"intent":0.6,"concept":0.78}},"semanticDisambiguationRequired":false,"semanticDisambiguationPrompt":null,"semanticFallback":null,"semanticProvisional":false,"semanticProvisionalReason":null,"evidenceCoverageLevel":"high","crossStandardConflict":false,"crossStandardConflictType":null,"crossStandardEvidencePartitions":[]}}
+{
+  "answerId": "ans-40ef7f9be5cb",
+  "mode": "rag",
+  "confidence": 0.94,
+  "answer": "Here is a simple NeTEx XML example for a line with stop points, based on the provided evidence:\n\n```xml\n<Network>\n    <StopPlace id=\"stopPlace_001\">\n        <Name>Stop Place A</Name>\n        <Quay>\n            <Name>Quay A</Name>\n        </Quay>\n    </StopPlace>\n    <StopPlace id=\"stopPlace_002\">\n        <Name>Stop Place B</Name>\n        <Quay>\n            <Name>Quay B</Name>\n        </Quay>\n    </StopPlace>\n    <ScheduledStopPoint id=\"SSP_001\">\n        <Name>Scheduled Stop Point A</Name>\n        <Location>\n            <Latitude>36.905697</Latitude>\n            <Longitude>-116.76218</Longitude>\n        </Location>\n    </ScheduledStopPoint>\n    <ScheduledStopPoint id=\"SSP_002\">\n        <Name>Scheduled Stop Point B</Name>\n        <Location>\n            <Latitude>36.641496</Latitude>\n            <Longitude>-116.40094</Longitude>\n        </Location>\n    </ScheduledStopPoint>\n    <StopAssignment>\n        <StopPlaceRef ref=\"stopPlace_001\"/>\n        <ScheduledStopPointRef ref=\"SSP_001\"/>\n    </StopAssignment>\n    <StopAssignment>\n        <StopPlaceRef ref=\"stopPlace_002\"/>\n        <ScheduledStopPointRef ref=\"SSP_002\"/>\n    </StopAssignment>\n</Network>\n```\n\nThis example illustrates the relationship between stop places and scheduled stop points, as well as the use of stop assignments to link them, which is consistent with the NeTEx structure described in the evidence [E1], [E6]. However, specific details such as service patterns or journey patterns are not included in the evidence provided, so they cannot be safely added to this example.",
+  "citations": [
+    {
+      "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/examples/functions/timetable/Netex_07.2_Bus_FlexibleTimetable_WithPattern.xml",
+      "commitSha": "de021e83a02522cff4ed936408bf927f798aae0d",
+      "sourcePath": "examples/functions/timetable/Netex_07.2_Bus_FlexibleTimetable_WithPattern.xml",
+      "chunkId": "src-13aed64e9579795bede68871",
+      "label": "examples/functions/timetable/Netex_07.2_Bus_FlexibleTimetable_WithPattern.xml"
+    },
+    {
+      "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/examples/functions/timetable/Netex_08.1_BusTram_Timetable_AmbiguousLinks.xml",
+      "commitSha": "de021e83a02522cff4ed936408bf927f798aae0d",
+      "sourcePath": "examples/functions/timetable/Netex_08.1_BusTram_Timetable_AmbiguousLinks.xml",
+      "chunkId": "src-e7072f0c7babc0f8b79c2179",
+      "label": "examples/functions/timetable/Netex_08.1_BusTram_Timetable_AmbiguousLinks.xml"
+    },
+    {
+      "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/examples/standards/gtfs/Netex_gtfs_exm1_Stops_1.xml",
+      "commitSha": "de021e83a02522cff4ed936408bf927f798aae0d",
+      "sourcePath": "examples/standards/gtfs/Netex_gtfs_exm1_Stops_1.xml",
+      "chunkId": "src-9ed9430dcadbbdb41be927b1",
+      "label": "examples/standards/gtfs/Netex_gtfs_exm1_Stops_1.xml"
+    },
+    {
+      "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/examples/standards/nta/NTA-PI-01_EI_NTA_STOP_NaPTAN-XX_2020801.xml",
+      "commitSha": "de021e83a02522cff4ed936408bf927f798aae0d",
+      "sourcePath": "examples/standards/nta/NTA-PI-01_EI_NTA_STOP_NaPTAN-XX_2020801.xml",
+      "chunkId": "src-53ab16d9a8de3be3ac5c2408",
+      "label": "examples/standards/nta/NTA-PI-01_EI_NTA_STOP_NaPTAN-XX_2020801.xml"
+    },
+    {
+      "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/examples/standards/txc/FX-PI-01_UK_DFT_STOP_NaPTAN-060+086+110_20171217.xml",
+      "commitSha": "de021e83a02522cff4ed936408bf927f798aae0d",
+      "sourcePath": "examples/standards/txc/FX-PI-01_UK_DFT_STOP_NaPTAN-060+086+110_20171217.xml",
+      "chunkId": "src-50514c4c736e1381d34a7675",
+      "label": "examples/standards/txc/FX-PI-01_UK_DFT_STOP_NaPTAN-060+086+110_20171217.xml"
+    }
+  ],
+  "abstained": false,
+  "abstentionReason": null,
+  "reviewRequired": true,
+  "trace": {
+    "requestId": "q070-walkthrough-scoped-20260419-b",
+    "questionEventId": "78",
+    "matchedFaqEntryId": null,
+    "retrievalEventIds": [
+      "re-82ddc3bf",
+      "re-cda2bedc",
+      "re-2ac08ea5",
+      "re-ca523eb1",
+      "re-80116def",
+      "re-fd4454c3"
+    ],
+    "evidenceLinkIds": [
+      "el-ans-40ef7f9be5cb-1",
+      "el-ans-40ef7f9be5cb-2",
+      "el-ans-40ef7f9be5cb-3",
+      "el-ans-40ef7f9be5cb-4",
+      "el-ans-40ef7f9be5cb-5"
+    ],
+    "graphExpansionHops": 1,
+    "graphConceptIds": [
+      "netex:Line",
+      "netex:ScheduledStopPoint",
+      "opra:StopPoint",
+      "siri:Stop"
+    ],
+    "graphEvidenceCount": 6,
+    "graphScoreContribution": 0.2,
+    "repositoryCoverageCount": 1,
+    "conceptCoverageCount": 23,
+    "semanticAlignmentScore": 0.6437,
+    "provenanceIds": [
+      "prov-ans-40ef7f9be5cb-1",
+      "prov-ans-40ef7f9be5cb-2",
+      "prov-ans-40ef7f9be5cb-3",
+      "prov-ans-40ef7f9be5cb-4",
+      "prov-ans-40ef7f9be5cb-5"
+    ],
+    "ruleHitsCount": 2,
+    "ruleConclusions": [
+      {
+        "type": "COMPETENCY_QUESTION_MATCH",
+        "message": "Matched competency-question checks for this query context.",
+        "competencyQuestionIds": [
+          "CQ-NETEX-STOP-01",
+          "CQ-NETEX-STOP-02"
+        ],
+        "requiresRuleCount": 0
+      },
+      {
+        "type": "ONTOLOGY_ANCHOR_PRESENT",
+        "message": "At least one retrieved chunk is connected to an ontology anchor used during retrieval."
+      }
+    ],
+    "ontologyVersions": [
+      {
+        "ontologyKey": "datex",
+        "version": "0.1-draft",
+        "graphUri": "https://napcore.eu/graph/standards/datex",
+        "contentHash": "1b3ee1f9d2884f108e0fcda7a350436237b258ae02d3fa219ea89f79c9c3c735"
+      },
+      {
+        "ontologyKey": "datex-artifact-rules-v1.0",
+        "version": "datex-artifact-rules-v1.0",
+        "graphUri": "https://napcore.eu/graph/artifact-rules/datex/v1.0",
+        "contentHash": "f641099321fdce91e1ccf88929aca68c81d2bde08dfc4730f4d5d1325fc953cd"
+      },
+      {
+        "ontologyKey": "napcore-its",
+        "version": "0.2-hybrid-owl-skos",
+        "graphUri": "https://napcore.eu/graph/core/napcore-its",
+        "contentHash": "5657ace74cec31f085fb4bb505771e7350bc7213849c28fabeb5701da39dcc90"
+      },
+      {
+        "ontologyKey": "netex",
+        "version": "0.1-draft",
+        "graphUri": "https://napcore.eu/graph/standards/netex",
+        "contentHash": "d861476853a7cd6075c02ad80065d9be241c07e9b4131154f41eb71bfb4a6ae1"
+      },
+      {
+        "ontologyKey": "netex-artifact-rules-v1.0",
+        "version": "netex-artifact-rules-v1.0",
+        "graphUri": "https://napcore.eu/graph/artifact-rules/netex/v1.0",
+        "contentHash": "d9483833aa505be1473d9bc00940bfb435f7c8c5cf34bfc7c0fd42f4df8d4bf1"
+      },
+      {
+        "ontologyKey": "nits-datex-align",
+        "version": "0.1-draft",
+        "graphUri": "https://napcore.eu/graph/alignments/datex",
+        "contentHash": "2052cfb9306e88986ff51e99282b33eabee2855d499a09eb3f72e067bc865df4"
+      },
+      {
+        "ontologyKey": "nits-netex-align",
+        "version": "0.1-draft",
+        "graphUri": "https://napcore.eu/graph/alignments/netex",
+        "contentHash": "7b0a425cabf16bf51367c8eec93d39418862161496c9dc0e4e790e8f55436a08"
+      },
+      {
+        "ontologyKey": "nits-opra-align",
+        "version": "0.1-draft",
+        "graphUri": "https://napcore.eu/graph/alignments/opra",
+        "contentHash": "6307c0f66597d975fb6e07173ba66b6dff63ee086e40106ed52f85b896cf6086"
+      },
+      {
+        "ontologyKey": "nits-siri-align",
+        "version": "0.1-draft",
+        "graphUri": "https://napcore.eu/graph/alignments/siri",
+        "contentHash": "8ea3e303a3c50581e85b5a5ced8fec8a65fdaff4e86066b92f6760d6069cc8ed"
+      },
+      {
+        "ontologyKey": "opra",
+        "version": "0.1-draft",
+        "graphUri": "https://napcore.eu/graph/standards/opra",
+        "contentHash": "83eca2f615cf1a73d06e9261a26a2014b4a65cc79be876e9d51f954596620628"
+      },
+      {
+        "ontologyKey": "opra-artifact-rules-v1.0",
+        "version": "opra-artifact-rules-v1.0",
+        "graphUri": "https://napcore.eu/graph/artifact-rules/opra/v1.0",
+        "contentHash": "9a8f9a03f8fa07b9658af2ebbfc683de377c81240c35c471382f2f38c8ce1dee"
+      },
+      {
+        "ontologyKey": "siri",
+        "version": "0.1-draft",
+        "graphUri": "https://napcore.eu/graph/standards/siri",
+        "contentHash": "b46cfc85f79cb869c31e50fcca3b45a71a62ffdb03c8906a6bf96bc90bc092f6"
+      },
+      {
+        "ontologyKey": "siri-artifact-rules-v1.0",
+        "version": "siri-artifact-rules-v1.0",
+        "graphUri": "https://napcore.eu/graph/artifact-rules/siri/v1.0",
+        "contentHash": "fa149197d3c333f462f7d076c7df9c9f20d519bd3cad2c5e4f1e0e465dd15832"
+      }
+    ],
+    "semanticQuery": {
+      "intent": "unknown",
+      "normativity": "unspecified",
+      "coreConcept": "nits:stop",
+      "coreConcepts": [
+        "nits:stop",
+        "nits:line"
+      ],
+      "ambiguousCoreConcept": true,
+      "candidateStandards": [
+        "NeTEx"
+      ],
+      "originalTerms": [
+        "NeTEx",
+        "XML",
+        "example",
+        "simple",
+        "line",
+        "stop",
+        "points"
+      ],
+      "confidence": {
+        "intent": 0.6,
+        "concept": 0.78
+      }
+    },
+    "semanticDisambiguationRequired": false,
+    "semanticDisambiguationPrompt": null,
+    "semanticFallback": null,
+    "semanticProvisional": false,
+    "semanticProvisionalReason": null,
+    "evidenceCoverageLevel": "high",
+    "crossStandardConflict": false,
+    "crossStandardConflictType": null,
+    "crossStandardEvidencePartitions": []
+  }
+}

@@ -22,7 +22,7 @@ System_Boundary(boundary, "NAPCORE Helpdesk") {
   Container(ingest, "Ingestion Worker", "Worker", "Pull, parse, chunk, embed, and index allowlisted repositories")
   ContainerDb(pg, "Application Database", "PostgreSQL or SQLite local fallback", "FAQ, events, reviews, evidence links, source metadata")
   ContainerDb(vdb, "Vector Index", "pgvector or JSON fallback", "Chunk embeddings and retrieval metadata")
-  ContainerDb(sdb, "Semantic Graph Database (Planned)", "Neo4j (feature-flagged rollout)", "Concept graph, aliases, relation traversal, and provenance-backed semantic expansion")
+  ContainerDb(sdb, "Semantic Graph Store", "GraphDB (RDF/OWL + SPARQL)", "Ontology modules, alignments, and provenance-backed concept expansion")
 }
 
 Rel(pto, gui, "Runs chat and standards queries")
@@ -40,14 +40,14 @@ Rel(api, pg, "Store question events and outcomes")
 
 Rel(faq, pg, "Read/write FAQ entries and versions")
 Rel(retrieval, vdb, "Top-k semantic retrieval")
-Rel(retrieval, sdb, "Graph concept expansion and reranking when GRAPH_RAG_ENABLED", "Bolt/HTTP")
+Rel(retrieval, sdb, "Graph concept expansion and reranking when GRAPH_RAG_ENABLED and GRAPHDB_ENABLED", "SPARQL/HTTP")
 Rel(retrieval, pg, "Store retrieval events")
 Rel(guardrails, llm, "Generate from retrieved context only when llm-ready mode is enabled")
 Rel(guardrails, pg, "Store evidence links and policy results")
 Rel(editorial, pg, "Store review decisions")
 Rel(ingest, github, "Pull primary and companion allowlisted repositories")
 Rel(ingest, vdb, "Upsert embeddings")
-Rel(ingest, sdb, "Planned: upsert concept nodes/edges with provenance")
+Rel(ingest, sdb, "Load ontology, alignments, and extraction outputs for semantic retrieval")
 Rel(ingest, pg, "Store source metadata")
 
 ' Top layer: actors horizontally
@@ -68,9 +68,8 @@ Bottom layer: Approved source repositories and LLM.
 end note
 
 note right of sdb
-Planned container.
-Current implementation uses in-service semantic expansion.
-Persistent graph DB integration is staged for a later phase.
+Graph-backed semantic expansion is active only when graph flags are enabled.
+Non-graph retrieval remains available as deterministic fallback.
 end note
 
 SHOW_LEGEND()

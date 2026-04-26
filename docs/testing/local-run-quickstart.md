@@ -189,6 +189,10 @@ cd backend && ../.venv/bin/python manage.py showmigrations helpdesk | grep '0006
 ## 11. GraphDB semantic layer (optional, required for GraphDB-backed graph expansion)
 Graph-aware retrieval can run with in-memory fallback, but GraphDB-backed ontology expansion requires explicit configuration.
 
+Prerequisites for the reproducible local path:
+- Docker Engine and `docker-compose` available on your PATH
+- Port `7200` free on localhost
+
 Set in `backend/.env`:
 - `GRAPHDB_ENABLED=True`
 - `GRAPHDB_SPARQL_ENDPOINT=http://localhost:7200`
@@ -197,7 +201,18 @@ Set in `backend/.env`:
 - Keep `GRAPH_RAG_ENABLED=True` for graph-aware retrieval mode
 - Keep `NEO4J_EXPERIMENTAL_ENABLED=False` unless you are intentionally testing the experimental Neo4j branch
 
-Load ontology files (dry-run first, then apply):
+Start local GraphDB from repository root:
+
+```bash
+make graphdb-up
+make graphdb-init
+```
+
+This uses:
+- `docker-compose.graphdb.yml` to run GraphDB Workbench on `http://localhost:7200`
+- `scripts/init-graphdb-repo.sh` to create repository `napcore-helpdesk` through the GraphDB REST API using the checked-in repository template
+
+Once the repository exists, load ontology files (dry-run first, then apply):
 
 ```bash
 cd backend
@@ -212,7 +227,26 @@ cd backend
 ../.venv/bin/python manage.py load_graphdb_ontologies --apply --replace
 ```
 
+One-command bootstrap from repository root:
+
+```bash
+make graphdb-bootstrap
+```
+
+That target starts GraphDB, creates the `napcore-helpdesk` repository if missing, and then reloads all ontology modules including artifact rules with `--replace`.
+
+To verify the live repository matches the current modular ontology registry:
+
+```bash
+make graphdb-verify
+```
+
+That check asserts the exact expected 13 named graphs are present and will fail if stale legacy graphs remain in the repository.
+
+If Docker is not installed, Graph-aware retrieval still falls back to in-memory ontology mappings, but `load_graphdb_ontologies --apply` will continue to fail until a GraphDB server is reachable at the configured endpoint.
+
 ## 12. Related docs
 - `backend/README.md`
 - `frontend/README.md`
 - `docs/architecture/deployment-operations-checklist.md`
+- `docs/testing/docker-dev-quickstart.md`

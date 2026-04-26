@@ -16,8 +16,9 @@ It shows who uses the helpdesk and which external systems it depends on.
 ## Key messages
 1. All stakeholder groups use one shared chat-style helpdesk interface.
 2. The helpdesk uses approved GitHub repositories, including allowlisted companion repositories, as knowledge sources.
-3. LLM generation is optional and constrained by retrieved evidence, not open-ended model memory.
-4. If evidence is insufficient, the system abstains rather than speculating.
+3. The helpdesk can use GraphDB as a semantic graph backend for ontology-aligned retrieval expansion.
+4. LLM generation is the default generation path, constrained by retrieved evidence, not open-ended model memory.
+5. If evidence is insufficient, the system abstains rather than speculating.
 
 ## Discussion prompts for non-IT stakeholders
 1. Are the included user groups complete?

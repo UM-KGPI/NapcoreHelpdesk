@@ -15,7 +15,7 @@ This summary is intended as the base narrative for a future PPTX or PDF presenta
 - Knowledge constraint: all answers are sourced from approved repositories only.
 
 ## Slide 3 - Scope
-- Domain scope: Transmodel, NeTEx, SIRI, OJP/OpRa, DATEX II.
+- Domain scope: Transmodel, NeTEx, SIRI, OpRa, DATEX II.
 - Priority source: NeTEx-CEN/NeTEx and selected companion repositories.
 - Routed demo surfaces: `/user` for chat and `/operator` for governance/orchestration.
 

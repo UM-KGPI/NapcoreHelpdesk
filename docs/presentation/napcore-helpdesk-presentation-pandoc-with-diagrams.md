@@ -32,7 +32,7 @@ colorlinks: true
 
 # Documentation Scope
 
-- Standards: Transmodel, NeTEx, SIRI, OJP/OpRa, DATEX II.
+- Standards: Transmodel, NeTEx, SIRI, OpRa, DATEX II.
 - Priority source: NeTEx-CEN/NeTEx and approved companion repositories.
 - Surfaces: separate user route (`/user`) and operator route (`/operator`) over one shared backend shell.
 

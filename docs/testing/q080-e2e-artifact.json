@@ -1,0 +1,1028 @@
+{
+  "requestId": "q080-e2e-1776507064",
+  "question": "How does OpRa service intensity relate to NeTEx line and network concepts?",
+  "scoped": false,
+  "generatedAt": "2026-04-18T10:11:21.158219+00:00",
+  "httpStatus": 200,
+  "response": {
+    "answerId": "ans-f35010829604",
+    "mode": "rag",
+    "confidence": 0.94,
+    "answer": "The OpRa service intensity is defined through elements such as ActualServiceIntensityRequest and PlannedServiceIntensityRequest, which are structured to request actual and planned service intensities respectively [E1], [E2]. These requests are based on the ServiceIntensityRequestStructure, indicating a standardized approach to managing service intensity data within the OpRa framework.\n\nIn relation to NeTEx, the concepts of service intensity can be linked to the CommonSection element, which describes parts of a public transport network where multiple routes may operate in parallel and require synchronization [E3]. However, the evidence does not provide a direct relationship between OpRa service intensity and specific NeTEx line or network concepts beyond the general framework of public transport data exchange. Further details on how OpRa service intensity specifically integrates with NeTEx line definitions or network structures are not available in the provided evidence.",
+    "citations": [
+      {
+        "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/xsd/netex_framework/netex_reusableComponents/netex_mode_support.xsd",
+        "commitSha": "de021e83a02522cff4ed936408bf927f798aae0d",
+        "sourcePath": "xsd/netex_framework/netex_reusableComponents/netex_mode_support.xsd",
+        "chunkId": "src-aa5b131384ab42e5d52a47a8",
+        "label": "xsd/netex_framework/netex_reusableComponents/netex_mode_support.xsd"
+      },
+      {
+        "repositoryUrl": "https://github.com/OpRa-CEN/OpRa/blob/86eaeba401ddc853d34796a383a5c92ae3ccd1c8/xsd/opra_service/opra_service_serviceIntensity.xsd",
+        "commitSha": "86eaeba401ddc853d34796a383a5c92ae3ccd1c8",
+        "sourcePath": "xsd/opra_service/opra_service_serviceIntensity.xsd",
+        "chunkId": "src-309b33127420aef8bfe0bc04",
+        "label": "xsd/opra_service/opra_service_serviceIntensity.xsd"
+      },
+      {
+        "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+        "commitSha": "de021e83a02522cff4ed936408bf927f798aae0d",
+        "sourcePath": "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+        "chunkId": "src-36266bcf5ac6891346ec79c5",
+        "label": "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd"
+      },
+      {
+        "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/xsd/netex_part_2/netex_all_objects_part2.xsd",
+        "commitSha": "de021e83a02522cff4ed936408bf927f798aae0d",
+        "sourcePath": "xsd/netex_part_2/netex_all_objects_part2.xsd",
+        "chunkId": "src-d3969c651081d169610c4c57",
+        "label": "xsd/netex_part_2/netex_all_objects_part2.xsd"
+      },
+      {
+        "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
+        "commitSha": "de021e83a02522cff4ed936408bf927f798aae0d",
+        "sourcePath": "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
+        "chunkId": "src-251aeca0dfdbc521256a299c",
+        "label": "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd"
+      }
+    ],
+    "abstained": false,
+    "abstentionReason": null,
+    "reviewRequired": true,
+    "trace": {
+      "requestId": "q080-e2e-1776507064",
+      "questionEventId": "61",
+      "matchedFaqEntryId": null,
+      "retrievalEventIds": [
+        "re-972f0a33",
+        "re-1ea3ac1f",
+        "re-66fb4994",
+        "re-96ccb992",
+        "re-79f1a26e",
+        "re-c22a42ae"
+      ],
+      "evidenceLinkIds": [
+        "el-ans-f35010829604-1",
+        "el-ans-f35010829604-2",
+        "el-ans-f35010829604-3",
+        "el-ans-f35010829604-4",
+        "el-ans-f35010829604-5"
+      ],
+      "graphExpansionHops": 1,
+      "graphConceptIds": [
+        "netex:Line",
+        "netex:Service",
+        "opra:PublicTransportService"
+      ],
+      "graphEvidenceCount": 6,
+      "graphScoreContribution": 0.2,
+      "repositoryCoverageCount": 2,
+      "conceptCoverageCount": 16,
+      "semanticAlignmentScore": 0.2651,
+      "provenanceIds": [
+        "prov-ans-f35010829604-1",
+        "prov-ans-f35010829604-2",
+        "prov-ans-f35010829604-3",
+        "prov-ans-f35010829604-4",
+        "prov-ans-f35010829604-5"
+      ],
+      "ruleHitsCount": 4,
+      "ruleConclusions": [
+        {
+          "type": "SCHEMA_EVIDENCE_PRESENT",
+          "message": "Retrieved evidence includes schema fragments that can support structural grounding."
+        },
+        {
+          "type": "COMPETENCY_QUESTION_MATCH",
+          "message": "Matched competency-question checks for this query context.",
+          "competencyQuestionIds": [
+            "CQ-OPRA-ROLE-01",
+            "CQ-OPRA-ROLE-02"
+          ],
+          "requiresRuleCount": 0
+        },
+        {
+          "type": "CROSS_STANDARD_REVIEW_RECOMMENDED",
+          "message": "Cross-standard evidence is present; comparative review is justified before treating claims as interchangeable.",
+          "standards": [
+            "NeTEx",
+            "OpRa",
+            "Transmodel"
+          ]
+        },
+        {
+          "type": "ONTOLOGY_ANCHOR_PRESENT",
+          "message": "At least one retrieved chunk is connected to an ontology anchor used during retrieval."
+        }
+      ],
+      "ontologyVersions": [
+        {
+          "ontologyKey": "datex",
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/datex",
+          "contentHash": "1b3ee1f9d2884f108e0fcda7a350436237b258ae02d3fa219ea89f79c9c3c735"
+        },
+        {
+          "ontologyKey": "datex-artifact-rules-v1.0",
+          "version": "datex-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/datex/v1.0",
+          "contentHash": "f641099321fdce91e1ccf88929aca68c81d2bde08dfc4730f4d5d1325fc953cd"
+        },
+        {
+          "ontologyKey": "napcore-its",
+          "version": "0.2-hybrid-owl-skos",
+          "graphUri": "https://napcore.eu/graph/core/napcore-its",
+          "contentHash": "aa5dab35e2a51cbf5965a3edc8cc5f320169be89b96b947657686407b9b3558f"
+        },
+        {
+          "ontologyKey": "netex",
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/netex",
+          "contentHash": "f43154ee7c7924cebb8d5daf24eeea1cd3f41d847f4de39e38faa1daa0af9868"
+        },
+        {
+          "ontologyKey": "netex-artifact-rules-v1.0",
+          "version": "netex-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/netex/v1.0",
+          "contentHash": "d9483833aa505be1473d9bc00940bfb435f7c8c5cf34bfc7c0fd42f4df8d4bf1"
+        },
+        {
+          "ontologyKey": "nits-datex-align",
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/datex",
+          "contentHash": "2052cfb9306e88986ff51e99282b33eabee2855d499a09eb3f72e067bc865df4"
+        },
+        {
+          "ontologyKey": "nits-netex-align",
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/netex",
+          "contentHash": "c9cfbaabc354305e1ed27600941616a91ff8c0bc24b9a90af169fd688e80d381"
+        },
+        {
+          "ontologyKey": "nits-opra-align",
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/opra",
+          "contentHash": "7ccbdf18189118cfe705d1143d5f2b02fd4604c2fd637870a9e81098017c0c62"
+        },
+        {
+          "ontologyKey": "nits-siri-align",
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/siri",
+          "contentHash": "8ea3e303a3c50581e85b5a5ced8fec8a65fdaff4e86066b92f6760d6069cc8ed"
+        },
+        {
+          "ontologyKey": "opra",
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/opra",
+          "contentHash": "319f5955e888248b703b2b2d9d329ce9ac62ef912f74d12db7d2991909f05b0a"
+        },
+        {
+          "ontologyKey": "opra-artifact-rules-v1.0",
+          "version": "opra-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/opra/v1.0",
+          "contentHash": "9a8f9a03f8fa07b9658af2ebbfc683de377c81240c35c471382f2f38c8ce1dee"
+        },
+        {
+          "ontologyKey": "siri",
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/siri",
+          "contentHash": "b46cfc85f79cb869c31e50fcca3b45a71a62ffdb03c8906a6bf96bc90bc092f6"
+        },
+        {
+          "ontologyKey": "siri-artifact-rules-v1.0",
+          "version": "siri-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/siri/v1.0",
+          "contentHash": "fa149197d3c333f462f7d076c7df9c9f20d519bd3cad2c5e4f1e0e465dd15832"
+        }
+      ],
+      "semanticQuery": {
+        "intent": "cross_standard_relation",
+        "normativity": "unspecified",
+        "coreConcept": "nits:service",
+        "coreConcepts": [
+          "nits:service"
+        ],
+        "ambiguousCoreConcept": false,
+        "candidateStandards": [
+          "NeTEx",
+          "OpRa"
+        ],
+        "originalTerms": [
+          "How",
+          "NeTEx",
+          "OpRa"
+        ],
+        "confidence": {
+          "intent": 0.85,
+          "concept": 0.95
+        }
+      },
+      "semanticDisambiguationRequired": false,
+      "semanticDisambiguationPrompt": null,
+      "semanticFallback": "PARTIAL_EVIDENCE",
+      "semanticProvisional": true,
+      "semanticProvisionalReason": "LOW_RETRIEVAL_CONFIDENCE",
+      "evidenceCoverageLevel": "high",
+      "crossStandardConflict": false,
+      "crossStandardConflictType": null,
+      "crossStandardEvidencePartitions": [
+        {
+          "standard": "NeTEx",
+          "evidenceCount": 4,
+          "avgScore": 1.0,
+          "topSourcePaths": [
+            "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+            "xsd/netex_part_2/netex_all_objects_part2.xsd",
+            "xsd/netex_framework/netex_reusableComponents/netex_mode_support.xsd"
+          ],
+          "normativitySignals": [
+            "optional"
+          ]
+        },
+        {
+          "standard": "OpRa",
+          "evidenceCount": 2,
+          "avgScore": 1.0,
+          "topSourcePaths": [
+            "xsd/opra_service/opra_service_serviceIntensity.xsd"
+          ],
+          "normativitySignals": []
+        }
+      ]
+    }
+  },
+  "questionEvent": {
+    "id": 61,
+    "mode": "rag",
+    "confidence": 0.94,
+    "abstained": false,
+    "abstentionReason": null,
+    "reviewRequired": true,
+    "standardsScope": [
+      "NeTEx",
+      "OpRa"
+    ],
+    "retrievalEventIds": [
+      "re-972f0a33",
+      "re-1ea3ac1f",
+      "re-66fb4994",
+      "re-96ccb992",
+      "re-79f1a26e",
+      "re-c22a42ae"
+    ],
+    "evidenceLinkIds": [
+      "el-ans-f35010829604-1",
+      "el-ans-f35010829604-2",
+      "el-ans-f35010829604-3",
+      "el-ans-f35010829604-4",
+      "el-ans-f35010829604-5"
+    ],
+    "createdAt": "2026-04-18T10:11:21.046565+00:00"
+  },
+  "retrievalEventsTop20": [
+    {
+      "retrieval_event_id": "re-79f1a26e",
+      "source_path": "xsd/netex_framework/netex_reusableComponents/netex_mode_support.xsd",
+      "score": 1.0
+    },
+    {
+      "retrieval_event_id": "re-66fb4994",
+      "source_path": "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+      "score": 1.0
+    },
+    {
+      "retrieval_event_id": "re-96ccb992",
+      "source_path": "xsd/netex_part_2/netex_all_objects_part2.xsd",
+      "score": 1.0
+    },
+    {
+      "retrieval_event_id": "re-c22a42ae",
+      "source_path": "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
+      "score": 1.0
+    },
+    {
+      "retrieval_event_id": "re-972f0a33",
+      "source_path": "xsd/opra_service/opra_service_serviceIntensity.xsd",
+      "score": 1.0
+    },
+    {
+      "retrieval_event_id": "re-1ea3ac1f",
+      "source_path": "xsd/opra_service/opra_service_serviceIntensity.xsd",
+      "score": 1.0
+    }
+  ],
+  "evidenceLinks": [
+    {
+      "evidence_link_id": "el-ans-f35010829604-5",
+      "source_path": "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
+      "chunk_id": "src-251aeca0dfdbc521256a299c"
+    },
+    {
+      "evidence_link_id": "el-ans-f35010829604-4",
+      "source_path": "xsd/netex_part_2/netex_all_objects_part2.xsd",
+      "chunk_id": "src-d3969c651081d169610c4c57"
+    },
+    {
+      "evidence_link_id": "el-ans-f35010829604-3",
+      "source_path": "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+      "chunk_id": "src-36266bcf5ac6891346ec79c5"
+    },
+    {
+      "evidence_link_id": "el-ans-f35010829604-2",
+      "source_path": "xsd/opra_service/opra_service_serviceIntensity.xsd",
+      "chunk_id": "src-309b33127420aef8bfe0bc04"
+    },
+    {
+      "evidence_link_id": "el-ans-f35010829604-1",
+      "source_path": "xsd/netex_framework/netex_reusableComponents/netex_mode_support.xsd",
+      "chunk_id": "src-aa5b131384ab42e5d52a47a8"
+    }
+  ],
+  "provenanceRecords": [
+    {
+      "provenance_id": "prov-ans-f35010829604-5",
+      "core_concepts": [
+        "nits:service"
+      ],
+      "ontology_versions": [
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/datex",
+          "contentHash": "1b3ee1f9d2884f108e0fcda7a350436237b258ae02d3fa219ea89f79c9c3c735",
+          "ontologyKey": "datex"
+        },
+        {
+          "version": "datex-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/datex/v1.0",
+          "contentHash": "f641099321fdce91e1ccf88929aca68c81d2bde08dfc4730f4d5d1325fc953cd",
+          "ontologyKey": "datex-artifact-rules-v1.0"
+        },
+        {
+          "version": "0.2-hybrid-owl-skos",
+          "graphUri": "https://napcore.eu/graph/core/napcore-its",
+          "contentHash": "aa5dab35e2a51cbf5965a3edc8cc5f320169be89b96b947657686407b9b3558f",
+          "ontologyKey": "napcore-its"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/netex",
+          "contentHash": "f43154ee7c7924cebb8d5daf24eeea1cd3f41d847f4de39e38faa1daa0af9868",
+          "ontologyKey": "netex"
+        },
+        {
+          "version": "netex-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/netex/v1.0",
+          "contentHash": "d9483833aa505be1473d9bc00940bfb435f7c8c5cf34bfc7c0fd42f4df8d4bf1",
+          "ontologyKey": "netex-artifact-rules-v1.0"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/datex",
+          "contentHash": "2052cfb9306e88986ff51e99282b33eabee2855d499a09eb3f72e067bc865df4",
+          "ontologyKey": "nits-datex-align"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/netex",
+          "contentHash": "c9cfbaabc354305e1ed27600941616a91ff8c0bc24b9a90af169fd688e80d381",
+          "ontologyKey": "nits-netex-align"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/opra",
+          "contentHash": "7ccbdf18189118cfe705d1143d5f2b02fd4604c2fd637870a9e81098017c0c62",
+          "ontologyKey": "nits-opra-align"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/siri",
+          "contentHash": "8ea3e303a3c50581e85b5a5ced8fec8a65fdaff4e86066b92f6760d6069cc8ed",
+          "ontologyKey": "nits-siri-align"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/opra",
+          "contentHash": "319f5955e888248b703b2b2d9d329ce9ac62ef912f74d12db7d2991909f05b0a",
+          "ontologyKey": "opra"
+        },
+        {
+          "version": "opra-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/opra/v1.0",
+          "contentHash": "9a8f9a03f8fa07b9658af2ebbfc683de377c81240c35c471382f2f38c8ce1dee",
+          "ontologyKey": "opra-artifact-rules-v1.0"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/siri",
+          "contentHash": "b46cfc85f79cb869c31e50fcca3b45a71a62ffdb03c8906a6bf96bc90bc092f6",
+          "ontologyKey": "siri"
+        },
+        {
+          "version": "siri-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/siri/v1.0",
+          "contentHash": "fa149197d3c333f462f7d076c7df9c9f20d519bd3cad2c5e4f1e0e465dd15832",
+          "ontologyKey": "siri-artifact-rules-v1.0"
+        }
+      ],
+      "rule_conclusions": [
+        {
+          "type": "SCHEMA_EVIDENCE_PRESENT",
+          "message": "Retrieved evidence includes schema fragments that can support structural grounding."
+        },
+        {
+          "type": "COMPETENCY_QUESTION_MATCH",
+          "message": "Matched competency-question checks for this query context.",
+          "requiresRuleCount": 0,
+          "competencyQuestionIds": [
+            "CQ-OPRA-ROLE-01",
+            "CQ-OPRA-ROLE-02"
+          ]
+        },
+        {
+          "type": "CROSS_STANDARD_REVIEW_RECOMMENDED",
+          "message": "Cross-standard evidence is present; comparative review is justified before treating claims as interchangeable.",
+          "standards": [
+            "NeTEx",
+            "OpRa",
+            "Transmodel"
+          ]
+        },
+        {
+          "type": "ONTOLOGY_ANCHOR_PRESENT",
+          "message": "At least one retrieved chunk is connected to an ontology anchor used during retrieval."
+        }
+      ],
+      "provenance_payload": {
+        "chunkId": "src-251aeca0dfdbc521256a299c",
+        "graphTrace": {
+          "graphConceptIds": [
+            "netex:Line",
+            "netex:Service",
+            "opra:PublicTransportService"
+          ],
+          "graphExpansionHops": 1,
+          "graphExpansionSource": "graphdb"
+        },
+        "sourcePath": "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
+        "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+        "structuredMetadata": {},
+        "competencyQuestionIds": [
+          "CQ-OPRA-ROLE-01",
+          "CQ-OPRA-ROLE-02"
+        ],
+        "graphProvenanceConceptIds": [
+          "netex:Service",
+          "opra:PublicTransportService"
+        ]
+      }
+    },
+    {
+      "provenance_id": "prov-ans-f35010829604-4",
+      "core_concepts": [
+        "nits:service"
+      ],
+      "ontology_versions": [
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/datex",
+          "contentHash": "1b3ee1f9d2884f108e0fcda7a350436237b258ae02d3fa219ea89f79c9c3c735",
+          "ontologyKey": "datex"
+        },
+        {
+          "version": "datex-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/datex/v1.0",
+          "contentHash": "f641099321fdce91e1ccf88929aca68c81d2bde08dfc4730f4d5d1325fc953cd",
+          "ontologyKey": "datex-artifact-rules-v1.0"
+        },
+        {
+          "version": "0.2-hybrid-owl-skos",
+          "graphUri": "https://napcore.eu/graph/core/napcore-its",
+          "contentHash": "aa5dab35e2a51cbf5965a3edc8cc5f320169be89b96b947657686407b9b3558f",
+          "ontologyKey": "napcore-its"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/netex",
+          "contentHash": "f43154ee7c7924cebb8d5daf24eeea1cd3f41d847f4de39e38faa1daa0af9868",
+          "ontologyKey": "netex"
+        },
+        {
+          "version": "netex-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/netex/v1.0",
+          "contentHash": "d9483833aa505be1473d9bc00940bfb435f7c8c5cf34bfc7c0fd42f4df8d4bf1",
+          "ontologyKey": "netex-artifact-rules-v1.0"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/datex",
+          "contentHash": "2052cfb9306e88986ff51e99282b33eabee2855d499a09eb3f72e067bc865df4",
+          "ontologyKey": "nits-datex-align"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/netex",
+          "contentHash": "c9cfbaabc354305e1ed27600941616a91ff8c0bc24b9a90af169fd688e80d381",
+          "ontologyKey": "nits-netex-align"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/opra",
+          "contentHash": "7ccbdf18189118cfe705d1143d5f2b02fd4604c2fd637870a9e81098017c0c62",
+          "ontologyKey": "nits-opra-align"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/siri",
+          "contentHash": "8ea3e303a3c50581e85b5a5ced8fec8a65fdaff4e86066b92f6760d6069cc8ed",
+          "ontologyKey": "nits-siri-align"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/opra",
+          "contentHash": "319f5955e888248b703b2b2d9d329ce9ac62ef912f74d12db7d2991909f05b0a",
+          "ontologyKey": "opra"
+        },
+        {
+          "version": "opra-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/opra/v1.0",
+          "contentHash": "9a8f9a03f8fa07b9658af2ebbfc683de377c81240c35c471382f2f38c8ce1dee",
+          "ontologyKey": "opra-artifact-rules-v1.0"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/siri",
+          "contentHash": "b46cfc85f79cb869c31e50fcca3b45a71a62ffdb03c8906a6bf96bc90bc092f6",
+          "ontologyKey": "siri"
+        },
+        {
+          "version": "siri-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/siri/v1.0",
+          "contentHash": "fa149197d3c333f462f7d076c7df9c9f20d519bd3cad2c5e4f1e0e465dd15832",
+          "ontologyKey": "siri-artifact-rules-v1.0"
+        }
+      ],
+      "rule_conclusions": [
+        {
+          "type": "SCHEMA_EVIDENCE_PRESENT",
+          "message": "Retrieved evidence includes schema fragments that can support structural grounding."
+        },
+        {
+          "type": "COMPETENCY_QUESTION_MATCH",
+          "message": "Matched competency-question checks for this query context.",
+          "requiresRuleCount": 0,
+          "competencyQuestionIds": [
+            "CQ-OPRA-ROLE-01",
+            "CQ-OPRA-ROLE-02"
+          ]
+        },
+        {
+          "type": "CROSS_STANDARD_REVIEW_RECOMMENDED",
+          "message": "Cross-standard evidence is present; comparative review is justified before treating claims as interchangeable.",
+          "standards": [
+            "NeTEx",
+            "OpRa",
+            "Transmodel"
+          ]
+        },
+        {
+          "type": "ONTOLOGY_ANCHOR_PRESENT",
+          "message": "At least one retrieved chunk is connected to an ontology anchor used during retrieval."
+        }
+      ],
+      "provenance_payload": {
+        "chunkId": "src-d3969c651081d169610c4c57",
+        "graphTrace": {
+          "graphConceptIds": [
+            "netex:Line",
+            "netex:Service",
+            "opra:PublicTransportService"
+          ],
+          "graphExpansionHops": 1,
+          "graphExpansionSource": "graphdb"
+        },
+        "sourcePath": "xsd/netex_part_2/netex_all_objects_part2.xsd",
+        "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+        "structuredMetadata": {},
+        "competencyQuestionIds": [
+          "CQ-OPRA-ROLE-01",
+          "CQ-OPRA-ROLE-02"
+        ],
+        "graphProvenanceConceptIds": [
+          "netex:Service",
+          "opra:PublicTransportService"
+        ]
+      }
+    },
+    {
+      "provenance_id": "prov-ans-f35010829604-3",
+      "core_concepts": [
+        "nits:service"
+      ],
+      "ontology_versions": [
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/datex",
+          "contentHash": "1b3ee1f9d2884f108e0fcda7a350436237b258ae02d3fa219ea89f79c9c3c735",
+          "ontologyKey": "datex"
+        },
+        {
+          "version": "datex-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/datex/v1.0",
+          "contentHash": "f641099321fdce91e1ccf88929aca68c81d2bde08dfc4730f4d5d1325fc953cd",
+          "ontologyKey": "datex-artifact-rules-v1.0"
+        },
+        {
+          "version": "0.2-hybrid-owl-skos",
+          "graphUri": "https://napcore.eu/graph/core/napcore-its",
+          "contentHash": "aa5dab35e2a51cbf5965a3edc8cc5f320169be89b96b947657686407b9b3558f",
+          "ontologyKey": "napcore-its"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/netex",
+          "contentHash": "f43154ee7c7924cebb8d5daf24eeea1cd3f41d847f4de39e38faa1daa0af9868",
+          "ontologyKey": "netex"
+        },
+        {
+          "version": "netex-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/netex/v1.0",
+          "contentHash": "d9483833aa505be1473d9bc00940bfb435f7c8c5cf34bfc7c0fd42f4df8d4bf1",
+          "ontologyKey": "netex-artifact-rules-v1.0"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/datex",
+          "contentHash": "2052cfb9306e88986ff51e99282b33eabee2855d499a09eb3f72e067bc865df4",
+          "ontologyKey": "nits-datex-align"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/netex",
+          "contentHash": "c9cfbaabc354305e1ed27600941616a91ff8c0bc24b9a90af169fd688e80d381",
+          "ontologyKey": "nits-netex-align"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/opra",
+          "contentHash": "7ccbdf18189118cfe705d1143d5f2b02fd4604c2fd637870a9e81098017c0c62",
+          "ontologyKey": "nits-opra-align"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/siri",
+          "contentHash": "8ea3e303a3c50581e85b5a5ced8fec8a65fdaff4e86066b92f6760d6069cc8ed",
+          "ontologyKey": "nits-siri-align"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/opra",
+          "contentHash": "319f5955e888248b703b2b2d9d329ce9ac62ef912f74d12db7d2991909f05b0a",
+          "ontologyKey": "opra"
+        },
+        {
+          "version": "opra-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/opra/v1.0",
+          "contentHash": "9a8f9a03f8fa07b9658af2ebbfc683de377c81240c35c471382f2f38c8ce1dee",
+          "ontologyKey": "opra-artifact-rules-v1.0"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/siri",
+          "contentHash": "b46cfc85f79cb869c31e50fcca3b45a71a62ffdb03c8906a6bf96bc90bc092f6",
+          "ontologyKey": "siri"
+        },
+        {
+          "version": "siri-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/siri/v1.0",
+          "contentHash": "fa149197d3c333f462f7d076c7df9c9f20d519bd3cad2c5e4f1e0e465dd15832",
+          "ontologyKey": "siri-artifact-rules-v1.0"
+        }
+      ],
+      "rule_conclusions": [
+        {
+          "type": "SCHEMA_EVIDENCE_PRESENT",
+          "message": "Retrieved evidence includes schema fragments that can support structural grounding."
+        },
+        {
+          "type": "COMPETENCY_QUESTION_MATCH",
+          "message": "Matched competency-question checks for this query context.",
+          "requiresRuleCount": 0,
+          "competencyQuestionIds": [
+            "CQ-OPRA-ROLE-01",
+            "CQ-OPRA-ROLE-02"
+          ]
+        },
+        {
+          "type": "CROSS_STANDARD_REVIEW_RECOMMENDED",
+          "message": "Cross-standard evidence is present; comparative review is justified before treating claims as interchangeable.",
+          "standards": [
+            "NeTEx",
+            "OpRa",
+            "Transmodel"
+          ]
+        },
+        {
+          "type": "ONTOLOGY_ANCHOR_PRESENT",
+          "message": "At least one retrieved chunk is connected to an ontology anchor used during retrieval."
+        }
+      ],
+      "provenance_payload": {
+        "chunkId": "src-36266bcf5ac6891346ec79c5",
+        "graphTrace": {
+          "graphConceptIds": [
+            "netex:Line",
+            "netex:Service",
+            "opra:PublicTransportService"
+          ],
+          "graphExpansionHops": 1,
+          "graphExpansionSource": "graphdb"
+        },
+        "sourcePath": "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+        "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+        "structuredMetadata": {},
+        "competencyQuestionIds": [
+          "CQ-OPRA-ROLE-01",
+          "CQ-OPRA-ROLE-02"
+        ],
+        "graphProvenanceConceptIds": [
+          "netex:Service",
+          "opra:PublicTransportService"
+        ]
+      }
+    },
+    {
+      "provenance_id": "prov-ans-f35010829604-2",
+      "core_concepts": [
+        "nits:service"
+      ],
+      "ontology_versions": [
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/datex",
+          "contentHash": "1b3ee1f9d2884f108e0fcda7a350436237b258ae02d3fa219ea89f79c9c3c735",
+          "ontologyKey": "datex"
+        },
+        {
+          "version": "datex-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/datex/v1.0",
+          "contentHash": "f641099321fdce91e1ccf88929aca68c81d2bde08dfc4730f4d5d1325fc953cd",
+          "ontologyKey": "datex-artifact-rules-v1.0"
+        },
+        {
+          "version": "0.2-hybrid-owl-skos",
+          "graphUri": "https://napcore.eu/graph/core/napcore-its",
+          "contentHash": "aa5dab35e2a51cbf5965a3edc8cc5f320169be89b96b947657686407b9b3558f",
+          "ontologyKey": "napcore-its"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/netex",
+          "contentHash": "f43154ee7c7924cebb8d5daf24eeea1cd3f41d847f4de39e38faa1daa0af9868",
+          "ontologyKey": "netex"
+        },
+        {
+          "version": "netex-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/netex/v1.0",
+          "contentHash": "d9483833aa505be1473d9bc00940bfb435f7c8c5cf34bfc7c0fd42f4df8d4bf1",
+          "ontologyKey": "netex-artifact-rules-v1.0"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/datex",
+          "contentHash": "2052cfb9306e88986ff51e99282b33eabee2855d499a09eb3f72e067bc865df4",
+          "ontologyKey": "nits-datex-align"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/netex",
+          "contentHash": "c9cfbaabc354305e1ed27600941616a91ff8c0bc24b9a90af169fd688e80d381",
+          "ontologyKey": "nits-netex-align"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/opra",
+          "contentHash": "7ccbdf18189118cfe705d1143d5f2b02fd4604c2fd637870a9e81098017c0c62",
+          "ontologyKey": "nits-opra-align"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/siri",
+          "contentHash": "8ea3e303a3c50581e85b5a5ced8fec8a65fdaff4e86066b92f6760d6069cc8ed",
+          "ontologyKey": "nits-siri-align"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/opra",
+          "contentHash": "319f5955e888248b703b2b2d9d329ce9ac62ef912f74d12db7d2991909f05b0a",
+          "ontologyKey": "opra"
+        },
+        {
+          "version": "opra-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/opra/v1.0",
+          "contentHash": "9a8f9a03f8fa07b9658af2ebbfc683de377c81240c35c471382f2f38c8ce1dee",
+          "ontologyKey": "opra-artifact-rules-v1.0"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/siri",
+          "contentHash": "b46cfc85f79cb869c31e50fcca3b45a71a62ffdb03c8906a6bf96bc90bc092f6",
+          "ontologyKey": "siri"
+        },
+        {
+          "version": "siri-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/siri/v1.0",
+          "contentHash": "fa149197d3c333f462f7d076c7df9c9f20d519bd3cad2c5e4f1e0e465dd15832",
+          "ontologyKey": "siri-artifact-rules-v1.0"
+        }
+      ],
+      "rule_conclusions": [
+        {
+          "type": "SCHEMA_EVIDENCE_PRESENT",
+          "message": "Retrieved evidence includes schema fragments that can support structural grounding."
+        },
+        {
+          "type": "COMPETENCY_QUESTION_MATCH",
+          "message": "Matched competency-question checks for this query context.",
+          "requiresRuleCount": 0,
+          "competencyQuestionIds": [
+            "CQ-OPRA-ROLE-01",
+            "CQ-OPRA-ROLE-02"
+          ]
+        },
+        {
+          "type": "CROSS_STANDARD_REVIEW_RECOMMENDED",
+          "message": "Cross-standard evidence is present; comparative review is justified before treating claims as interchangeable.",
+          "standards": [
+            "NeTEx",
+            "OpRa",
+            "Transmodel"
+          ]
+        },
+        {
+          "type": "ONTOLOGY_ANCHOR_PRESENT",
+          "message": "At least one retrieved chunk is connected to an ontology anchor used during retrieval."
+        }
+      ],
+      "provenance_payload": {
+        "chunkId": "src-309b33127420aef8bfe0bc04",
+        "graphTrace": {
+          "graphConceptIds": [
+            "netex:Line",
+            "netex:Service",
+            "opra:PublicTransportService"
+          ],
+          "graphExpansionHops": 1,
+          "graphExpansionSource": "graphdb"
+        },
+        "sourcePath": "xsd/opra_service/opra_service_serviceIntensity.xsd",
+        "repositoryUrl": "https://github.com/OpRa-CEN/OpRa",
+        "structuredMetadata": {},
+        "competencyQuestionIds": [
+          "CQ-OPRA-ROLE-01",
+          "CQ-OPRA-ROLE-02"
+        ],
+        "graphProvenanceConceptIds": [
+          "netex:Service",
+          "opra:PublicTransportService"
+        ]
+      }
+    },
+    {
+      "provenance_id": "prov-ans-f35010829604-1",
+      "core_concepts": [
+        "nits:service"
+      ],
+      "ontology_versions": [
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/datex",
+          "contentHash": "1b3ee1f9d2884f108e0fcda7a350436237b258ae02d3fa219ea89f79c9c3c735",
+          "ontologyKey": "datex"
+        },
+        {
+          "version": "datex-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/datex/v1.0",
+          "contentHash": "f641099321fdce91e1ccf88929aca68c81d2bde08dfc4730f4d5d1325fc953cd",
+          "ontologyKey": "datex-artifact-rules-v1.0"
+        },
+        {
+          "version": "0.2-hybrid-owl-skos",
+          "graphUri": "https://napcore.eu/graph/core/napcore-its",
+          "contentHash": "aa5dab35e2a51cbf5965a3edc8cc5f320169be89b96b947657686407b9b3558f",
+          "ontologyKey": "napcore-its"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/netex",
+          "contentHash": "f43154ee7c7924cebb8d5daf24eeea1cd3f41d847f4de39e38faa1daa0af9868",
+          "ontologyKey": "netex"
+        },
+        {
+          "version": "netex-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/netex/v1.0",
+          "contentHash": "d9483833aa505be1473d9bc00940bfb435f7c8c5cf34bfc7c0fd42f4df8d4bf1",
+          "ontologyKey": "netex-artifact-rules-v1.0"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/datex",
+          "contentHash": "2052cfb9306e88986ff51e99282b33eabee2855d499a09eb3f72e067bc865df4",
+          "ontologyKey": "nits-datex-align"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/netex",
+          "contentHash": "c9cfbaabc354305e1ed27600941616a91ff8c0bc24b9a90af169fd688e80d381",
+          "ontologyKey": "nits-netex-align"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/opra",
+          "contentHash": "7ccbdf18189118cfe705d1143d5f2b02fd4604c2fd637870a9e81098017c0c62",
+          "ontologyKey": "nits-opra-align"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/alignments/siri",
+          "contentHash": "8ea3e303a3c50581e85b5a5ced8fec8a65fdaff4e86066b92f6760d6069cc8ed",
+          "ontologyKey": "nits-siri-align"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/opra",
+          "contentHash": "319f5955e888248b703b2b2d9d329ce9ac62ef912f74d12db7d2991909f05b0a",
+          "ontologyKey": "opra"
+        },
+        {
+          "version": "opra-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/opra/v1.0",
+          "contentHash": "9a8f9a03f8fa07b9658af2ebbfc683de377c81240c35c471382f2f38c8ce1dee",
+          "ontologyKey": "opra-artifact-rules-v1.0"
+        },
+        {
+          "version": "0.1-draft",
+          "graphUri": "https://napcore.eu/graph/standards/siri",
+          "contentHash": "b46cfc85f79cb869c31e50fcca3b45a71a62ffdb03c8906a6bf96bc90bc092f6",
+          "ontologyKey": "siri"
+        },
+        {
+          "version": "siri-artifact-rules-v1.0",
+          "graphUri": "https://napcore.eu/graph/artifact-rules/siri/v1.0",
+          "contentHash": "fa149197d3c333f462f7d076c7df9c9f20d519bd3cad2c5e4f1e0e465dd15832",
+          "ontologyKey": "siri-artifact-rules-v1.0"
+        }
+      ],
+      "rule_conclusions": [
+        {
+          "type": "SCHEMA_EVIDENCE_PRESENT",
+          "message": "Retrieved evidence includes schema fragments that can support structural grounding."
+        },
+        {
+          "type": "COMPETENCY_QUESTION_MATCH",
+          "message": "Matched competency-question checks for this query context.",
+          "requiresRuleCount": 0,
+          "competencyQuestionIds": [
+            "CQ-OPRA-ROLE-01",
+            "CQ-OPRA-ROLE-02"
+          ]
+        },
+        {
+          "type": "CROSS_STANDARD_REVIEW_RECOMMENDED",
+          "message": "Cross-standard evidence is present; comparative review is justified before treating claims as interchangeable.",
+          "standards": [
+            "NeTEx",
+            "OpRa",
+            "Transmodel"
+          ]
+        },
+        {
+          "type": "ONTOLOGY_ANCHOR_PRESENT",
+          "message": "At least one retrieved chunk is connected to an ontology anchor used during retrieval."
+        }
+      ],
+      "provenance_payload": {
+        "chunkId": "src-aa5b131384ab42e5d52a47a8",
+        "graphTrace": {
+          "graphConceptIds": [
+            "netex:Line",
+            "netex:Service",
+            "opra:PublicTransportService"
+          ],
+          "graphExpansionHops": 1,
+          "graphExpansionSource": "graphdb"
+        },
+        "sourcePath": "xsd/netex_framework/netex_reusableComponents/netex_mode_support.xsd",
+        "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+        "structuredMetadata": {},
+        "competencyQuestionIds": [
+          "CQ-OPRA-ROLE-01",
+          "CQ-OPRA-ROLE-02"
+        ],
+        "graphProvenanceConceptIds": [
+          "netex:Service",
+          "opra:PublicTransportService"
+        ]
+      }
+    }
+  ]
+}

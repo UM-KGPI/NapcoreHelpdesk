@@ -1,0 +1,59 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+
+@prefix netex:    <https://netex.org.uk/ontology/netex#> .
+@prefix example:  <https://napcore.eu/ontology/examples#> .
+@prefix nexample: <https://napcore.eu/ontology/examples/netex#> .
+
+#################################################################
+# Ontology Header
+#################################################################
+
+<https://napcore.eu/ontology/examples/netex>
+    a owl:Ontology ;
+    dct:title "NeTEx Example Artifact Ontology"@en ;
+    dct:description "Example artifacts and repository-grounded illustration links for NeTEx concepts. This module is retrieval-oriented metadata and is intentionally separate from the conceptual standard ontology."@en ;
+    dct:creator "NAPCORE Working Group" ;
+    dct:created "2026-04-19"^^xsd:date ;
+    owl:versionIRI <https://napcore.eu/ontology/examples/netex/0.1> ;
+    owl:versionInfo "0.1-draft" ;
+    owl:imports <https://netex.org.uk/ontology/netex> ;
+    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+
+#################################################################
+# Example Artifact Vocabulary
+#################################################################
+
+example:ExampleArtifact
+    a owl:Class ;
+    rdfs:label "Example Artifact"@en ;
+    rdfs:comment "A repository artifact used as an illustrative example for one or more standard concepts."@en .
+
+example:illustratesConcept
+    a owl:ObjectProperty ;
+    rdfs:label "illustrates concept"@en ;
+    rdfs:comment "Links an example artifact to a standard concept that the artifact illustrates."@en .
+
+#################################################################
+# NeTEx Example Artifacts
+#################################################################
+
+nexample:NeTEx01SimpleLineXml
+    a example:ExampleArtifact ;
+    rdfs:label "simple line"@en ;
+    skos:altLabel "simple line example"@en ;
+    skos:altLabel "simple line xml"@en ;
+    skos:altLabel "simple_line"@en ;
+    skos:altLabel "NeTEx_01_simple_line.xml"@en ;
+    skos:altLabel "functions/line"@en ;
+    skos:altLabel "examples/functions/line/NeTEx_01_simple_line.xml"@en ;
+    example:illustratesConcept netex:Line ;
+    example:illustratesConcept netex:StopPlace ;
+    example:illustratesConcept netex:ScheduledStopPoint ;
+    dct:source "examples/functions/line/NeTEx_01_simple_line.xml" ;
+    dct:source "examples/functions/line" ;
+    rdfs:comment "Repository example artifact showing a simple NeTEx line with associated stop structure."@en .

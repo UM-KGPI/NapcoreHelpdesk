@@ -34,7 +34,7 @@ Implement a grounded helpdesk that can evolve from search to chat while preservi
 - Abstention: if evidence is insufficient, return transparent insufficiency response instead of speculation.
 
 ## Scope
-- Standards: Transmodel, NeTEx, SIRI, OJP/OpRa, DATEX II.
+- Standards: Transmodel, NeTEx, SIRI, OpRa, DATEX II.
 - Priority source: NeTEx-CEN/NeTEx plus approved companion repositories.
 - Users: developers and implementers asking technical integration questions.
 

@@ -1,0 +1,148 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+
+@prefix nits: <https://napcore.eu/ontology/nits#> .
+@prefix siri: <https://siri.org.uk/ontology/siri#> .
+
+#################################################################
+# Ontology Header
+#################################################################
+
+<https://napcore.eu/ontology/nits/align/siri>
+    a owl:Ontology ;
+    dct:title "NITS–SIRI Alignment Ontology"@en ;
+    dct:description "Alignment ontology connecting SIRI real-time and vehicle monitoring concepts to abstract core concepts defined in the NAPCORE ITS Core Ontology. Enables cross-standard reasoning and real-time information discovery."@en ;
+    dct:creator "NAPCORE Working Group" ;
+    dct:created "2026-04-17"^^xsd:date ;
+    owl:versionIRI <https://napcore.eu/ontology/nits/align/siri/0.1> ;
+    owl:versionInfo "0.1-draft" ;
+    owl:imports <https://napcore.eu/ontology/nits/core> ;
+    owl:imports <https://siri.org.uk/ontology/siri> ;
+    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+
+#################################################################
+# Real-Time Information Alignments
+#################################################################
+
+siri:RealtimeInformation
+    owl:equivalentClass nits:RealTimeInformation .
+
+siri:EstimatedTimetable
+    rdfs:subClassOf nits:RealTimeInformation ;
+    rdfs:subClassOf nits:Timetable .
+
+siri:VehicleMonitoring
+    rdfs:subClassOf nits:RealTimeInformation .
+
+siri:StopMonitoring
+    rdfs:subClassOf nits:RealTimeInformation .
+
+#################################################################
+# Situation & Event Alignments
+#################################################################
+
+siri:Situation
+    owl:equivalentClass nits:Situation .
+
+siri:Disruption
+    owl:equivalentClass nits:Disruption .
+
+siri:PlannedDisruption
+    rdfs:subClassOf nits:Situation .
+
+siri:UnplannedDisruption
+    rdfs:subClassOf nits:Disruption .
+
+#################################################################
+# Journey & Stop Alignments
+#################################################################
+
+siri:Journey
+    owl:equivalentClass nits:Journey .
+
+siri:Call
+    rdfs:subClassOf nits:JourneyComponent .
+
+siri:Stop
+    owl:equivalentClass nits:Stop .
+
+siri:EstimatedCall
+    rdfs:subClassOf siri:Call ;
+    rdfs:subClassOf nits:JourneyComponent .
+
+siri:RecordedCall
+    rdfs:subClassOf siri:Call ;
+    rdfs:subClassOf nits:JourneyComponent .
+
+#################################################################
+# Vehicle & Position Alignments
+#################################################################
+
+siri:VehicleActivity
+    rdfs:subClassOf nits:RealTimeInformation .
+
+siri:VehicleLocation
+    owl:equivalentClass nits:Location .
+
+siri:VehicleRef
+    rdfs:subClassOf nits:System .
+
+siri:Bearing
+    rdfs:subClassOf nits:TemporalEntity .
+
+#################################################################
+# Status & Operational Alignments
+#################################################################
+
+siri:ServiceStatus
+    rdfs:subClassOf nits:DataArtifact .
+
+siri:Delay
+    rdfs:subClassOf nits:TemporalEntity .
+
+siri:Cancellation
+    rdfs:subClassOf nits:Event .
+
+siri:Note
+    rdfs:subClassOf nits:DataArtifact .
+
+#################################################################
+# Event Hierarchy Alignment
+#################################################################
+
+siri:Situation
+    rdfs:subClassOf nits:Event .
+
+siri:Disruption
+    rdfs:subClassOf nits:Event .
+
+#################################################################
+# Property Alignments
+#################################################################
+
+siri:affectsJourney
+    rdfs:subPropertyOf nits:involves .
+
+siri:affectsStop
+    rdfs:subPropertyOf nits:involves .
+
+siri:hasEstimatedCall
+    rdfs:subPropertyOf nits:involves .
+
+siri:hasRecordedCall
+    rdfs:subPropertyOf nits:involves .
+
+siri:hasVehicleActivity
+    rdfs:subPropertyOf nits:involves .
+
+siri:currentDelay
+    rdfs:subPropertyOf nits:involves .
+
+siri:isCancelled
+    rdfs:subPropertyOf nits:involves .
+
+siri:hasNote
+    rdfs:subPropertyOf nits:involves .

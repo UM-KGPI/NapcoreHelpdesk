@@ -29,6 +29,7 @@ rectangle "NAPCORE Helpdesk" as SYSTEM {
   rectangle "Editorial Workflow Service\n(Container)\nDraft/Review/Approve/Publish" as EDITORIAL #F0F6FF
   database "PostgreSQL\n(Data Store)\nFAQ, events, evidence links" as PG #EEF5FF
   database "Vector Index\n(Data Store)\nSource chunk embeddings" as VDB #EEF5FF
+  database "Semantic Graph Store\n(Data Store)\nGraphDB ontology + alignments" as SDB #EEF5FF
   rectangle "Ingestion Worker\n(Container)\nSync + chunk + index" as INGEST #F0F6FF
 }
 
@@ -60,12 +61,14 @@ API --> PG : Store question events\nand outcomes
 
 FAQ --> PG : Read/write FAQ entries\nand versions
 RETRIEVAL --> VDB : Query top-k chunks
+RETRIEVAL --> SDB : Graph-aware concept expansion\n(SPARQL) when enabled
 RETRIEVAL --> PG : Log retrieval events
 GUARDRAILS --> LLM : Generate answer from\nretrieved context only
 GUARDRAILS --> PG : Write evidence links\nand policy outcomes
 EDITORIAL --> PG : Store review decisions
 INGEST --> GITHUB : Pull allowlisted sources
 INGEST --> VDB : Upsert embeddings
+INGEST --> SDB : Load ontology and\nalignment artifacts
 INGEST --> PG : Store source metadata
 
 note bottom of API

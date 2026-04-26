@@ -1,0 +1,149 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+
+@prefix nits:  <https://napcore.eu/ontology/nits#> .
+@prefix datex: <https://datex.org/ontology/datex#> .
+
+#################################################################
+# Ontology Header
+#################################################################
+
+<https://napcore.eu/ontology/nits/align/datex>
+    a owl:Ontology ;
+    dct:title "NITS–DATEX II Alignment Ontology"@en ;
+    dct:description "Alignment ontology connecting DATEX II traffic and incident concepts to abstract core concepts defined in the NAPCORE ITS Core Ontology. Enables cross-standard reasoning and incident discovery."@en ;
+    dct:creator "NAPCORE Working Group" ;
+    dct:created "2026-04-17"^^xsd:date ;
+    owl:versionIRI <https://napcore.eu/ontology/nits/align/datex/0.1> ;
+    owl:versionInfo "0.1-draft" ;
+    owl:imports <https://napcore.eu/ontology/nits/core> ;
+    owl:imports <https://datex.org/ontology/datex> ;
+    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+
+#################################################################
+# Traffic & Travel Information Alignments
+#################################################################
+
+datex:TrafficInformation
+    owl:equivalentClass nits:RealTimeInformation .
+
+datex:TrafficEvent
+    owl:equivalentClass nits:Event .
+
+datex:Incident
+    owl:equivalentClass nits:Disruption .
+
+datex:Accident
+    rdfs:subClassOf nits:Disruption .
+
+datex:Congestion
+    rdfs:subClassOf nits:Situation .
+
+datex:RoadWork
+    rdfs:subClassOf nits:Situation .
+
+#################################################################
+# Road Network & Location Alignments
+#################################################################
+
+datex:RoadNetwork
+    rdfs:subClassOf nits:SpatialEntity .
+
+datex:Road
+    owl:equivalentClass nits:SpatialEntity .
+
+datex:RoadSegment
+    rdfs:subClassOf nits:Location .
+
+datex:Lane
+    rdfs:subClassOf nits:Location .
+
+datex:Junction
+    rdfs:subClassOf nits:Location .
+
+datex:Location
+    owl:equivalentClass nits:Location .
+
+datex:PointLocation
+    rdfs:subClassOf nits:Location .
+
+datex:LinearLocation
+    rdfs:subClassOf nits:Location .
+
+#################################################################
+# Traffic Condition Alignments
+#################################################################
+
+datex:TrafficCondition
+    rdfs:subClassOf nits:RealTimeInformation .
+
+datex:SpeedInformation
+    rdfs:subClassOf nits:RealTimeInformation .
+
+datex:TrafficFlow
+    rdfs:subClassOf nits:RealTimeInformation .
+
+datex:WeatherRelatedInformation
+    rdfs:subClassOf nits:RealTimeInformation .
+
+datex:EnvironmentalCondition
+    rdfs:subClassOf nits:DataArtifact .
+
+#################################################################
+# Management & Response Alignments
+#################################################################
+
+datex:ManagementAction
+    owl:equivalentClass nits:OperationalProcess .
+
+datex:TrafficControl
+    rdfs:subClassOf nits:OperationalProcess .
+
+datex:LaneManagement
+    rdfs:subClassOf nits:OperationalProcess .
+
+datex:SpeedManagement
+    rdfs:subClassOf nits:OperationalProcess .
+
+#################################################################
+# Actor & Organization Alignments
+#################################################################
+
+datex:Operator
+    owl:equivalentClass nits:Actor ;
+    rdfs:subClassOf nits:Organisation .
+
+datex:Authority
+    owl:equivalentClass nits:Authority .
+
+#################################################################
+# Temporal Alignments
+#################################################################
+
+datex:TrafficEvent
+    rdfs:subClassOf nits:TemporalEntity .
+
+#################################################################
+# Property Alignments
+#################################################################
+
+datex:affectsLocation
+    rdfs:subPropertyOf nits:involves .
+
+datex:affectsRoad
+    rdfs:subPropertyOf nits:involves .
+
+datex:reportedBy
+    rdfs:subPropertyOf nits:involves .
+
+datex:managedBy
+    rdfs:subPropertyOf nits:involves .
+
+datex:hasCondition
+    rdfs:subPropertyOf nits:involves .
+
+datex:hasWeatherImpact
+    rdfs:subPropertyOf nits:involves .

@@ -797,13 +797,13 @@ questions:
     note: "External ontology sources not indexed; abstention expected."
 
   - id: q097
-    question: "How does OJP integrate with OpRa for open journey planning data?"
+    question: "How does OpRa integrate with GTFS-RT for open journey planning data?"
     intent: abstention
-    tags: [ojp, opra, cross-standard]
+    tags: [opra, gtfs-rt, cross-standard]
     expected_source_patterns: []
     min_hits: 0
     top_k_threshold: 10
-    note: "OJP sources not indexed; low retrieval confidence expected."
+    note: "GTFS-RT sources are not indexed; low retrieval confidence expected."
 
   - id: q098
     question: "What is the DATEX II equivalent of an OpRa capacity indicator?"

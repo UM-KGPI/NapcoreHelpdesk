@@ -10,22 +10,22 @@
       "hit_at_20": 0.77,
       "mrr_at_10": 0.4657,
       "mrr_at_20": 0.4699,
-      "mean_latency_ms": 3042.1
+      "mean_latency_ms": 3794.0
     },
     "graph": {
-      "hit_at_5": 0.58,
-      "hit_at_10": 0.61,
-      "hit_at_20": 0.73,
-      "mrr_at_10": 0.3444,
-      "mrr_at_20": 0.352,
-      "mean_latency_ms": 4185.9
+      "hit_at_5": 0.7,
+      "hit_at_10": 0.74,
+      "hit_at_20": 0.78,
+      "mrr_at_10": 0.4697,
+      "mrr_at_20": 0.4725,
+      "mean_latency_ms": 7499.7
     },
     "delta": {
-      "hit_at_10_delta": -0.1,
-      "mrr_at_10_delta": -0.1213,
-      "latency_overhead_ms": 1143.8,
-      "questions_improved_by_graph": 9,
-      "questions_regressed_by_graph": 19
+      "hit_at_10_delta": 0.03,
+      "mrr_at_10_delta": 0.004,
+      "latency_overhead_ms": 3705.7,
+      "questions_improved_by_graph": 6,
+      "questions_regressed_by_graph": 3
     }
   },
   "questions": [
@@ -47,7 +47,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.3333333333333333,
         "mrr_at_20": 0.3333333333333333,
-        "latency_ms": 3865.5,
+        "latency_ms": 5112.2,
         "top_5_paths": [
           "docs/opra_qm_query_model_section.md",
           "docs/opra_qm_query_model_section.md",
@@ -59,21 +59,21 @@
         "graph_candidates_added": 0
       },
       "graph": {
-        "hit_at_5": false,
-        "hit_at_10": false,
+        "hit_at_5": true,
+        "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.0,
-        "mrr_at_20": 0.05263157894736842,
-        "latency_ms": 4933.3,
+        "mrr_at_10": 0.25,
+        "mrr_at_20": 0.25,
+        "latency_ms": 6356.2,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_indicators/opra_lateDatedVehicleJourney_version.xsd",
-          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd"
+          "docs/opra_qm_query_model_section.md",
+          "docs/opra_qm_query_model_section.md",
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "issues/14.md"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 37
       }
     },
     {
@@ -95,7 +95,7 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3771.1,
+        "latency_ms": 3926.1,
         "top_5_paths": [
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
           "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
@@ -112,16 +112,16 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 5117.0,
+        "latency_ms": 6768.8,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
           "xsd/opra_indicators/opra_lateDatedVehicleJourney_version.xsd",
-          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
-          "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd"
+          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 38
       }
     },
     {
@@ -145,7 +145,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3017.8,
+        "latency_ms": 3151.7,
         "top_5_paths": [
           "examples/DelayedAndCancelledJourneysWithEvents.xml",
           "docs/opra_qm_query_model_section.md",
@@ -160,18 +160,18 @@
         "hit_at_5": true,
         "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.25,
-        "mrr_at_20": 0.25,
-        "latency_ms": 5177.1,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 5895.2,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
           "examples/DelayedAndCancelledJourneysWithEvents.xml",
-          "xsd/opra_indicators/opra_lateDatedVehicleJourney_version.xsd"
+          "docs/opra_px_measured_passengers_text.md",
+          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
+          "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 38
       }
     },
     {
@@ -194,7 +194,7 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3389.3,
+        "latency_ms": 2598.4,
         "top_5_paths": [
           "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
           "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd",
@@ -211,16 +211,16 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 5335.8,
+        "latency_ms": 6401.5,
         "top_5_paths": [
           "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_qm_query_model_section.md",
           "docs/opra_px_measured_passengers_text.md",
           "docs/opra_px_measured_passengers_text.md",
-          "Guides/VehicleScheduling/VehicleScheduling_Guide.md",
-          "Objects/VehicleType/Description_VehicleType.md"
+          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 37
       }
     },
     {
@@ -244,7 +244,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.5,
         "mrr_at_20": 0.5,
-        "latency_ms": 3535.1,
+        "latency_ms": 2762.9,
         "top_5_paths": [
           "issues/14.md",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
@@ -256,21 +256,21 @@
         "graph_candidates_added": 0
       },
       "graph": {
-        "hit_at_5": false,
-        "hit_at_10": false,
+        "hit_at_5": true,
+        "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.0,
-        "mrr_at_20": 0.05555555555555555,
-        "latency_ms": 5076.5,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 6273.7,
         "top_5_paths": [
           "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
-          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
-          "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd"
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "issues/14.md",
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "docs/opra_px_measured_passengers_text.md"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 37
       }
     },
     {
@@ -293,7 +293,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3599.6,
+        "latency_ms": 3113.2,
         "top_5_paths": [
           "xsd/opra_framework/opra_reusableComponents/opra_delayClassification_version.xsd",
           "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
@@ -305,21 +305,21 @@
         "graph_candidates_added": 0
       },
       "graph": {
-        "hit_at_5": false,
-        "hit_at_10": false,
-        "hit_at_20": false,
-        "mrr_at_10": 0.0,
-        "mrr_at_20": 0.0,
-        "latency_ms": 5363.2,
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 6207.4,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
-          "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd",
-          "xsd/opra_indicators/opra_lateDatedVehicleJourney_version.xsd"
+          "xsd/opra_framework/opra_reusableComponents/opra_delayClassification_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_durationDistribution_support.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 38
       }
     },
     {
@@ -341,7 +341,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3870.8,
+        "latency_ms": 4033.7,
         "top_5_paths": [
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
           "xsd/opra_imports/opra_siri_imports.xsd",
@@ -358,16 +358,16 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3977.6,
+        "latency_ms": 6303.4,
         "top_5_paths": [
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
           "xsd/opra_imports/opra_siri_imports.xsd",
           "docs/opra_qm_query_model_section.md",
-          "issues/14.md",
-          "xsd/opra.xsd"
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_indicators/opra_capacity_version.xsd"
         ],
-        "graph_expansion_source": "none",
-        "graph_candidates_added": 0
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 24
       }
     },
     {
@@ -390,7 +390,7 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3649.0,
+        "latency_ms": 3702.4,
         "top_5_paths": [
           "docs/opra_qm_query_model_section.md",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
@@ -407,16 +407,16 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3768.4,
+        "latency_ms": 6138.1,
         "top_5_paths": [
           "docs/opra_qm_query_model_section.md",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
           "issues/14.md",
-          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
-          "xsd/opra_framework/opra_genericFramework/opra_GeneralLogEntry_version.xsd"
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd"
         ],
-        "graph_expansion_source": "none",
-        "graph_candidates_added": 0
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 25
       }
     },
     {
@@ -437,7 +437,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.5,
         "mrr_at_20": 0.5,
-        "latency_ms": 3731.5,
+        "latency_ms": 3853.3,
         "top_5_paths": [
           "issues/14.md",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
@@ -449,21 +449,21 @@
         "graph_candidates_added": 0
       },
       "graph": {
-        "hit_at_5": false,
-        "hit_at_10": false,
+        "hit_at_5": true,
+        "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.0,
-        "mrr_at_20": 0.05555555555555555,
-        "latency_ms": 5243.4,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 7562.4,
         "top_5_paths": [
           "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
-          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
-          "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd"
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "issues/14.md",
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "docs/opra_px_measured_passengers_text.md"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 37
       }
     },
     {
@@ -488,7 +488,7 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3055.9,
+        "latency_ms": 3714.3,
         "top_5_paths": [
           "docs/opra_qm_query_model_section.md",
           "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
@@ -500,21 +500,21 @@
         "graph_candidates_added": 0
       },
       "graph": {
-        "hit_at_5": true,
-        "hit_at_10": true,
-        "hit_at_20": true,
-        "mrr_at_10": 0.2,
-        "mrr_at_20": 0.2,
-        "latency_ms": 5133.3,
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 7414.2,
         "top_5_paths": [
           "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_qm_query_model_section.md",
           "docs/opra_px_measured_passengers_text.md",
           "docs/opra_px_measured_passengers_text.md",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
-          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd"
+          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 37
       }
     },
     {
@@ -537,7 +537,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.2,
         "mrr_at_20": 0.2,
-        "latency_ms": 3717.1,
+        "latency_ms": 3757.9,
         "top_5_paths": [
           "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
           "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd",
@@ -550,20 +550,20 @@
       },
       "graph": {
         "hit_at_5": false,
-        "hit_at_10": false,
+        "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.0,
-        "mrr_at_20": 0.08333333333333333,
-        "latency_ms": 5150.0,
+        "mrr_at_10": 0.1,
+        "mrr_at_20": 0.1,
+        "latency_ms": 6810.1,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_indicators/opra_lateDatedVehicleJourney_version.xsd",
-          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd"
+          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
+          "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd",
+          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
+          "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd",
+          "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 37
       }
     },
     {
@@ -585,7 +585,7 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3486.2,
+        "latency_ms": 3318.2,
         "top_5_paths": [
           "xsd/opra_framework/opra_genericFramework/opra_GeneralLogEntry_version.xsd",
           "xsd/opra_framework/opra_genericFramework/opra_GeneralLogEntry_version.xsd",
@@ -602,15 +602,15 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 5178.4,
+        "latency_ms": 6392.6,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
-          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd"
+          "xsd/opra_framework/opra_genericFramework/opra_GeneralLogEntry_version.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "xsd/opra_framework/opra_genericFramework/opra_GeneralLogEntry_version.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd"
         ],
-        "graph_expansion_source": "memory",
+        "graph_expansion_source": "graphdb",
         "graph_candidates_added": 39
       }
     },
@@ -633,7 +633,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.5,
         "mrr_at_20": 0.5,
-        "latency_ms": 3290.8,
+        "latency_ms": 3502.6,
         "top_5_paths": [
           "issues/14.md",
           "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
@@ -645,21 +645,21 @@
         "graph_candidates_added": 0
       },
       "graph": {
-        "hit_at_5": false,
-        "hit_at_10": false,
+        "hit_at_5": true,
+        "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.0,
-        "mrr_at_20": 0.05263157894736842,
-        "latency_ms": 5098.5,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 6446.3,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_indicators/opra_lateDatedVehicleJourney_version.xsd",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd"
+          "issues/14.md",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 38
       }
     },
     {
@@ -680,7 +680,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3730.4,
+        "latency_ms": 3583.0,
         "top_5_paths": [
           "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
           "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
@@ -695,18 +695,18 @@
         "hit_at_5": true,
         "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.3333333333333333,
-        "mrr_at_20": 0.3333333333333333,
-        "latency_ms": 5108.8,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 5715.5,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_indicators/opra_serviceIntensity_version.xsd"
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 25
       }
     },
     {
@@ -728,7 +728,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3719.5,
+        "latency_ms": 4115.4,
         "top_5_paths": [
           "examples/RequestLateDatedVehicleJourneys.xml",
           "docs/opra_qm_query_model_section.md",
@@ -743,18 +743,18 @@
         "hit_at_5": true,
         "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.5,
-        "mrr_at_20": 0.5,
-        "latency_ms": 5214.0,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 7680.2,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
           "examples/RequestLateDatedVehicleJourneys.xml",
+          "docs/opra_qm_query_model_section.md",
           "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md"
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "issues/14.md"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 37
       }
     },
     {
@@ -777,7 +777,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3462.9,
+        "latency_ms": 3008.5,
         "top_5_paths": [
           "examples/ResponseLateDatedVehicleJourneys.xml",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
@@ -794,16 +794,16 @@
         "hit_at_20": true,
         "mrr_at_10": 0.5,
         "mrr_at_20": 0.5,
-        "latency_ms": 5181.4,
+        "latency_ms": 6234.4,
         "top_5_paths": [
           "docs/opra_px_measured_passengers_text.md",
           "examples/ResponseLateDatedVehicleJourneys.xml",
-          "docs/opra_px_measured_passengers_text.md",
-          "examples/ResponseLateDatedVehicleJourneys.xml",
-          "examples/ResponseLateDatedVehicleJourneys.xml"
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "issues/14.md",
+          "xsd/opra_imports/opra_siri_imports.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 37
       }
     },
     {
@@ -825,7 +825,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.5,
         "mrr_at_20": 0.5,
-        "latency_ms": 2709.1,
+        "latency_ms": 3537.5,
         "top_5_paths": [
           "issues/14.md",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
@@ -840,17 +840,17 @@
         "hit_at_5": true,
         "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.2,
-        "mrr_at_20": 0.2,
-        "latency_ms": 5259.5,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 5945.9,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_framework/opra_reusableComponents/opra_delayClassification_version.xsd"
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "issues/14.md",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd"
         ],
-        "graph_expansion_source": "memory",
+        "graph_expansion_source": "graphdb",
         "graph_candidates_added": 39
       }
     },
@@ -872,7 +872,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.5,
         "mrr_at_20": 0.5,
-        "latency_ms": 3639.9,
+        "latency_ms": 3783.5,
         "top_5_paths": [
           "xsd/opra_indicators/opra_lateDatedVehicleJourney_version.xsd",
           "xsd/opra_framework/opra_frames/opra_plannedFrame_version.xsd",
@@ -884,21 +884,21 @@
         "graph_candidates_added": 0
       },
       "graph": {
-        "hit_at_5": false,
-        "hit_at_10": false,
+        "hit_at_5": true,
+        "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.0,
-        "mrr_at_20": 0.05555555555555555,
-        "latency_ms": 4820.7,
+        "mrr_at_10": 0.3333333333333333,
+        "mrr_at_20": 0.3333333333333333,
+        "latency_ms": 6162.2,
         "top_5_paths": [
-          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
-          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd",
-          "xsd/opra_indicators/opra_serviceIntensity_version.xsd"
+          "xsd/opra_indicators/opra_lateDatedVehicleJourney_version.xsd",
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "xsd/opra_framework/opra_frames/opra_plannedFrame_version.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_indicators/opra_lateDatedVehicleJourney_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 38
       }
     },
     {
@@ -920,7 +920,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3579.5,
+        "latency_ms": 4091.1,
         "top_5_paths": [
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
           "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
@@ -937,7 +937,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3625.0,
+        "latency_ms": 6616.2,
         "top_5_paths": [
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
           "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
@@ -945,8 +945,8 @@
           "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
           "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd"
         ],
-        "graph_expansion_source": "none",
-        "graph_candidates_added": 0
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 25
       }
     },
     {
@@ -969,7 +969,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3870.0,
+        "latency_ms": 4301.4,
         "top_5_paths": [
           "examples/DelayedAndCancelledJourneysWithEvents.xml",
           "examples/DelayedAndCancelledJourneysWithEvents.xml",
@@ -986,16 +986,16 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 5345.5,
+        "latency_ms": 6956.6,
         "top_5_paths": [
           "examples/DelayedAndCancelledJourneysWithEvents.xml",
-          "docs/opra_px_measured_passengers_text.md",
           "examples/DelayedAndCancelledJourneysWithEvents.xml",
           "examples/DelayedAndCancelledJourneysWithEvents.xml",
-          "examples/DelayedAndCancelledJourneysWithEvents.xml"
+          "examples/DelayedAndCancelledJourneysWithEvents.xml",
+          "docs/opra_qm_query_model_section.md"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 38
       }
     },
     {
@@ -1017,7 +1017,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3667.4,
+        "latency_ms": 4244.5,
         "top_5_paths": [
           "examples/PlannedCapacity.xml",
           "issues/14.md",
@@ -1032,18 +1032,18 @@
         "hit_at_5": true,
         "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 1.0,
-        "mrr_at_20": 1.0,
-        "latency_ms": 4671.5,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 7109.6,
         "top_5_paths": [
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
           "examples/PlannedCapacity.xml",
           "xsd/opra_indicators/opra_capacity_version.xsd",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_service/opra_service_capacity.xsd",
-          "xsd/opra_service/opra_service_capacity.xsd"
+          "issues/14.md"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 25
       }
     },
     {
@@ -1065,7 +1065,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.07142857142857142,
-        "latency_ms": 3634.2,
+        "latency_ms": 2927.5,
         "top_5_paths": [
           "docs/opra_qm_query_model_section.md",
           "docs/opra_px_measured_passengers_text.md",
@@ -1077,21 +1077,21 @@
         "graph_candidates_added": 0
       },
       "graph": {
-        "hit_at_5": false,
+        "hit_at_5": true,
         "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.16666666666666666,
-        "mrr_at_20": 0.16666666666666666,
-        "latency_ms": 4679.1,
+        "mrr_at_10": 0.3333333333333333,
+        "mrr_at_20": 0.3333333333333333,
+        "latency_ms": 6719.8,
         "top_5_paths": [
+          "docs/opra_qm_query_model_section.md",
           "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "Guides/VehicleScheduling/VehicleScheduling_Guide.md",
-          "docs/opra_px_measured_passengers_text.md"
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_service/opra_service_capacity.xsd",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 37
       }
     },
     {
@@ -1112,7 +1112,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.5,
         "mrr_at_20": 0.5,
-        "latency_ms": 3660.2,
+        "latency_ms": 3865.4,
         "top_5_paths": [
           "xsd/opra_indicators/opra_capacity_version.xsd",
           "xsd/opra_framework/opra_frames/opra_plannedFrame_version.xsd",
@@ -1127,18 +1127,18 @@
         "hit_at_5": true,
         "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.5,
-        "mrr_at_20": 0.5,
-        "latency_ms": 5222.9,
+        "mrr_at_10": 0.3333333333333333,
+        "mrr_at_20": 0.3333333333333333,
+        "latency_ms": 6846.2,
         "top_5_paths": [
           "xsd/opra_indicators/opra_capacity_version.xsd",
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "xsd/opra_framework/opra_frames/opra_plannedFrame_version.xsd",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
-          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
-          "xsd/opra_framework/opra_reusableComponents/opra_delayClassification_version.xsd",
-          "docs/opra_px_measured_passengers_text.md"
+          "xsd/opra.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 40
       }
     },
     {
@@ -1160,7 +1160,7 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3055.7,
+        "latency_ms": 3609.4,
         "top_5_paths": [
           "xsd/opra_service/opra_service_fleetDimensions.xsd",
           "xsd/opra_indicators/opra_fleetDimensions_version.xsd",
@@ -1177,7 +1177,7 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3305.6,
+        "latency_ms": 6330.6,
         "top_5_paths": [
           "xsd/opra_service/opra_service_fleetDimensions.xsd",
           "xsd/opra_indicators/opra_fleetDimensions_version.xsd",
@@ -1185,8 +1185,8 @@
           "xsd/opra_service/opra_service_serviceDimensions.xsd",
           "xsd/opra_service/opra_service_fleetDimensions.xsd"
         ],
-        "graph_expansion_source": "none",
-        "graph_candidates_added": 0
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 29
       }
     },
     {
@@ -1208,7 +1208,7 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3736.0,
+        "latency_ms": 3996.5,
         "top_5_paths": [
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
           "xsd/opra_indicators/opra_capacity_version.xsd",
@@ -1225,16 +1225,16 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3791.7,
+        "latency_ms": 6772.9,
         "top_5_paths": [
+          "docs/opra_qm_query_model_section.md",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
-          "xsd/opra_indicators/opra_capacity_version.xsd",
+          "xsd/opra_imports/opra_siri_imports.xsd",
           "xsd/opra_framework/opra_reusableComponents/opra_vehicleOccupancy_version.xsd",
-          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
-          "issues/14.md"
+          "xsd/opra_indicators/opra_capacity_version.xsd"
         ],
-        "graph_expansion_source": "none",
-        "graph_candidates_added": 0
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 38
       }
     },
     {
@@ -1255,7 +1255,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.5,
         "mrr_at_20": 0.5,
-        "latency_ms": 3851.1,
+        "latency_ms": 3450.8,
         "top_5_paths": [
           "docs/opra_qm_query_model_section.md",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
@@ -1272,16 +1272,16 @@
         "hit_at_20": true,
         "mrr_at_10": 0.5,
         "mrr_at_20": 0.5,
-        "latency_ms": 5052.5,
+        "latency_ms": 6722.5,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_qm_query_model_section.md",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md"
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "issues/14.md",
+          "docs/opra_qm_query_model_section.md"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 25
       }
     },
     {
@@ -1304,7 +1304,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.3333333333333333,
         "mrr_at_20": 0.3333333333333333,
-        "latency_ms": 3538.5,
+        "latency_ms": 4024.6,
         "top_5_paths": [
           "issues/14.md",
           "docs/opra_qm_query_model_section.md",
@@ -1319,18 +1319,18 @@
         "hit_at_5": true,
         "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 1.0,
-        "mrr_at_20": 1.0,
-        "latency_ms": 4503.0,
+        "mrr_at_10": 0.3333333333333333,
+        "mrr_at_20": 0.3333333333333333,
+        "latency_ms": 6995.5,
         "top_5_paths": [
+          "issues/14.md",
+          "docs/opra_qm_query_model_section.md",
           "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
-          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
-          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
-          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "docs/opra_qm_query_model_section.md",
           "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 24
       }
     },
     {
@@ -1352,7 +1352,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3555.5,
+        "latency_ms": 4176.0,
         "top_5_paths": [
           "examples/PlannedServiceDimensions.xml",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
@@ -1369,16 +1369,16 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3176.7,
+        "latency_ms": 7157.1,
         "top_5_paths": [
           "examples/PlannedServiceDimensions.xml",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
-          "issues/14.md",
-          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
-          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd"
+          "xsd/opra_indicators/opra_fleetDimensions_version.xsd",
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "issues/14.md"
         ],
-        "graph_expansion_source": "none",
-        "graph_candidates_added": 0
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 27
       }
     },
     {
@@ -1400,7 +1400,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.08333333333333333,
-        "latency_ms": 3446.6,
+        "latency_ms": 4021.1,
         "top_5_paths": [
           "xsd/opra_service/opra_service_capacity.xsd",
           "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
@@ -1412,21 +1412,21 @@
         "graph_candidates_added": 0
       },
       "graph": {
-        "hit_at_5": true,
-        "hit_at_10": true,
+        "hit_at_5": false,
+        "hit_at_10": false,
         "hit_at_20": true,
-        "mrr_at_10": 0.5,
-        "mrr_at_20": 0.5,
-        "latency_ms": 4385.2,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.08333333333333333,
+        "latency_ms": 6174.2,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md"
+          "xsd/opra_service/opra_service_capacity.xsd",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "xsd/opra_service/opra_service_serviceDimensions.xsd",
+          "xsd/opra_service/opra_service_serviceIntensity.xsd",
+          "xsd/opra_indicators/opra_serviceDimensions_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 30
       }
     },
     {
@@ -1448,7 +1448,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.5,
         "mrr_at_20": 0.5,
-        "latency_ms": 3345.4,
+        "latency_ms": 3741.5,
         "top_5_paths": [
           "issues/14.md",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
@@ -1460,21 +1460,21 @@
         "graph_candidates_added": 0
       },
       "graph": {
-        "hit_at_5": false,
-        "hit_at_10": false,
+        "hit_at_5": true,
+        "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.0,
-        "mrr_at_20": 0.05263157894736842,
-        "latency_ms": 4329.8,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 6343.8,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
-          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
-          "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd"
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "issues/14.md",
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 38
       }
     },
     {
@@ -1497,7 +1497,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.16666666666666666,
         "mrr_at_20": 0.16666666666666666,
-        "latency_ms": 2533.7,
+        "latency_ms": 2907.2,
         "top_5_paths": [
           "docs/opra_qm_query_model_section.md",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
@@ -1514,16 +1514,16 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3662.8,
+        "latency_ms": 5539.8,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_framework/opra_reusableComponents/opra_delayClassification_version.xsd"
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "xsd/opra_service/opra_service_ticketingBasedPassengerCounts.xsd",
+          "xsd/opra_service/opra_service_externalPassengerCounts.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 25
       }
     },
     {
@@ -1545,7 +1545,7 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 2963.2,
+        "latency_ms": 3401.2,
         "top_5_paths": [
           "xsd/opra_framework/opra_reusableComponents/opra_vehicleOccupancy_version.xsd",
           "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
@@ -1562,15 +1562,15 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 4436.6,
+        "latency_ms": 7172.3,
         "top_5_paths": [
           "xsd/opra_framework/opra_reusableComponents/opra_vehicleOccupancy_version.xsd",
+          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
           "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd"
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_imports/opra_siri_imports.xsd"
         ],
-        "graph_expansion_source": "memory",
+        "graph_expansion_source": "graphdb",
         "graph_candidates_added": 39
       }
     },
@@ -1593,7 +1593,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 2828.6,
+        "latency_ms": 3698.0,
         "top_5_paths": [
           "examples/ExpectedServiceIntensity.xml",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
@@ -1610,16 +1610,16 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3705.2,
+        "latency_ms": 6970.5,
         "top_5_paths": [
           "examples/ExpectedServiceIntensity.xml",
           "examples/ExpectedServiceIntensity.xml",
-          "examples/ExpectedServiceIntensity.xml",
-          "examples/ExpectedServiceIntensity.xml",
-          "examples/ExpectedServiceIntensity.xml"
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "issues/14.md"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 26
       }
     },
     {
@@ -1640,7 +1640,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 1926.6,
+        "latency_ms": 3202.6,
         "top_5_paths": [
           "xsd/opra_framework/opra_frames/opra_plannedFrame_version.xsd",
           "xsd/opra.xsd",
@@ -1655,18 +1655,18 @@
         "hit_at_5": true,
         "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.5,
-        "mrr_at_20": 0.5,
-        "latency_ms": 2574.4,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 6704.7,
         "top_5_paths": [
+          "xsd/opra_framework/opra_frames/opra_plannedFrame_version.xsd",
           "xsd/opra_indicators/opra_capacity_version.xsd",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
-          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd"
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "xsd/opra.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 30
       }
     },
     {
@@ -1689,7 +1689,7 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 2041.3,
+        "latency_ms": 3252.1,
         "top_5_paths": [
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
           "xsd/opra_indicators/opra_fleetDimensions_version.xsd",
@@ -1706,16 +1706,16 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3202.8,
+        "latency_ms": 6127.5,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_framework/opra_reusableComponents/opra_delayClassification_version.xsd",
-          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
-          "xsd/opra_indicators/opra_serviceIntensity_version.xsd"
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "xsd/opra_indicators/opra_fleetDimensions_version.xsd",
+          "xsd/opra_service/opra_service_serviceDimensions.xsd",
+          "xsd/opra_service/opra_service_fleetDimensions.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 34
       }
     },
     {
@@ -1737,7 +1737,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 1797.3,
+        "latency_ms": 3086.1,
         "top_5_paths": [
           "examples/PlannedServiceIntensity.xml",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
@@ -1754,16 +1754,16 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 5870.4,
+        "latency_ms": 6340.2,
         "top_5_paths": [
           "examples/PlannedServiceIntensity.xml",
-          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
-          "xsd/opra_service/opra_service_serviceIntensity.xsd",
-          "xsd/opra_service/opra_service_serviceIntensity.xsd",
-          "xsd/opra_service/opra_service_serviceIntensity.xsd"
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "xsd/opra_indicators/opra_fleetDimensions_version.xsd",
+          "issues/14.md"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 40
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 27
       }
     },
     {
@@ -1785,7 +1785,7 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3099.4,
+        "latency_ms": 3570.3,
         "top_5_paths": [
           "xsd/opra_service/opra_service_serviceIntensity.xsd",
           "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
@@ -1802,16 +1802,16 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 4035.1,
+        "latency_ms": 7452.1,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md"
+          "xsd/opra_service/opra_service_serviceIntensity.xsd",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "xsd/opra_service/opra_service_serviceDimensions.xsd",
+          "xsd/opra_service/opra_service_serviceIntensity.xsd",
+          "xsd/opra_service/opra_service_serviceIntensity.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 38
       }
     },
     {
@@ -1832,7 +1832,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.3333333333333333,
         "mrr_at_20": 0.3333333333333333,
-        "latency_ms": 2520.8,
+        "latency_ms": 3326.7,
         "top_5_paths": [
           "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
           "issues/14.md",
@@ -1847,18 +1847,18 @@
         "hit_at_5": true,
         "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.25,
-        "mrr_at_20": 0.25,
-        "latency_ms": 3529.4,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 6894.3,
         "top_5_paths": [
-          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
-          "docs/opra_px_measured_passengers_text.md"
+          "issues/14.md",
+          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_delayClassification_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 24
       }
     },
     {
@@ -1879,7 +1879,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.5,
         "mrr_at_20": 0.5,
-        "latency_ms": 2370.7,
+        "latency_ms": 3870.6,
         "top_5_paths": [
           "issues/14.md",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
@@ -1894,18 +1894,18 @@
         "hit_at_5": true,
         "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.25,
-        "mrr_at_20": 0.25,
-        "latency_ms": 3074.4,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 7193.9,
         "top_5_paths": [
-          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
+          "docs/opra_qm_query_model_section.md",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
-          "docs/opra_px_measured_passengers_text.md"
+          "issues/14.md",
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 37
       }
     },
     {
@@ -1927,7 +1927,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 2406.6,
+        "latency_ms": 3947.7,
         "top_5_paths": [
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
           "docs/opra_qm_query_model_section.md",
@@ -1944,16 +1944,16 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3052.1,
+        "latency_ms": 7258.8,
         "top_5_paths": [
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
-          "docs/opra_qm_query_model_section.md",
-          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
-          "xsd/opra_service/opra_service_serviceIntensity.xsd",
-          "xsd/opra_service/opra_service_serviceIntensity.xsd"
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "issues/14.md",
+          "xsd/opra_indicators/opra_fleetDimensions_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 2
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 27
       }
     },
     {
@@ -1975,7 +1975,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.5,
         "mrr_at_20": 0.5,
-        "latency_ms": 2474.5,
+        "latency_ms": 4319.6,
         "top_5_paths": [
           "issues/14.md",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
@@ -1987,21 +1987,21 @@
         "graph_candidates_added": 0
       },
       "graph": {
-        "hit_at_5": false,
-        "hit_at_10": false,
+        "hit_at_5": true,
+        "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.0,
-        "mrr_at_20": 0.05263157894736842,
-        "latency_ms": 3548.2,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 9072.8,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
-          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd"
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "issues/14.md",
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 38
       }
     },
     {
@@ -2023,7 +2023,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.5,
         "mrr_at_20": 0.5,
-        "latency_ms": 2443.0,
+        "latency_ms": 4703.3,
         "top_5_paths": [
           "issues/14.md",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
@@ -2040,15 +2040,15 @@
         "hit_at_20": true,
         "mrr_at_10": 0.5,
         "mrr_at_20": 0.5,
-        "latency_ms": 3482.9,
+        "latency_ms": 7973.8,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
+          "xsd/opra_imports/opra_siri_imports.xsd",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md"
+          "issues/14.md",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd"
         ],
-        "graph_expansion_source": "memory",
+        "graph_expansion_source": "graphdb",
         "graph_candidates_added": 39
       }
     },
@@ -2072,7 +2072,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 2746.0,
+        "latency_ms": 5012.6,
         "top_5_paths": [
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
           "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
@@ -2089,16 +2089,16 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 2750.0,
+        "latency_ms": 8068.5,
         "top_5_paths": [
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "docs/opra_qm_query_model_section.md",
           "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
           "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
-          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
-          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd"
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd"
         ],
-        "graph_expansion_source": "none",
-        "graph_candidates_added": 0
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 26
       }
     },
     {
@@ -2121,7 +2121,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 2281.5,
+        "latency_ms": 4562.4,
         "top_5_paths": [
           "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
           "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
@@ -2138,7 +2138,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 2438.6,
+        "latency_ms": 6876.5,
         "top_5_paths": [
           "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
           "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
@@ -2146,8 +2146,8 @@
           "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
           "docs/opra_qm_query_model_section.md"
         ],
-        "graph_expansion_source": "none",
-        "graph_candidates_added": 0
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 25
       }
     },
     {
@@ -2169,7 +2169,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 2351.2,
+        "latency_ms": 4123.8,
         "top_5_paths": [
           "examples/ActualServiceDimensions.xml",
           "docs/opra_qm_query_model_section.md",
@@ -2186,7 +2186,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 2525.6,
+        "latency_ms": 6899.8,
         "top_5_paths": [
           "examples/ActualServiceDimensions.xml",
           "docs/opra_qm_query_model_section.md",
@@ -2194,8 +2194,8 @@
           "examples/DelayedAndCancelledJourneysWithEvents.xml",
           "examples/ResponseLateDatedVehicleJourneys.xml"
         ],
-        "graph_expansion_source": "none",
-        "graph_candidates_added": 0
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 28
       }
     },
     {
@@ -2217,7 +2217,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 2628.3,
+        "latency_ms": 4153.0,
         "top_5_paths": [
           "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyTimes_version.xsd",
           "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourney_support.xsd",
@@ -2234,16 +2234,16 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3912.8,
+        "latency_ms": 9691.1,
         "top_5_paths": [
           "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyTimes_version.xsd",
           "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyTimes_version.xsd",
           "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourney_version.xsd",
-          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyStopAssignment_support.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourney_support.xsd",
           "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyFrequency_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 40
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 36
       }
     },
     {
@@ -2266,7 +2266,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.07142857142857142,
-        "latency_ms": 2390.1,
+        "latency_ms": 4385.2,
         "top_5_paths": [
           "examples/functions/stopPlace/Netex_04_Stops_SimpleStation_1.xml",
           "xsd/netex_framework/netex_genericFramework/netex_accessibility/netex_acsb_passengerMobility.xsd",
@@ -2281,17 +2281,17 @@
         "hit_at_5": true,
         "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.3333333333333333,
-        "mrr_at_20": 0.3333333333333333,
-        "latency_ms": 3302.5,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 11033.2,
         "top_5_paths": [
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
-          "xsd/netex_framework/netex_reusableComponents/netex_access_version.xsd",
-          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
-          "xsd/wsdl/siri_all_functionalServices.xsd",
-          "xsd/netex_framework/netex_responsibility/netex_validityCondition_support.xsd"
+          "xsd/netex_framework/netex_genericFramework/netex_accessibility/netex_acsb_passengerMobility.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_passingTimes_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_noticeAssignment_version.xsd",
+          "xsd/netex_part_3/part3_monitoring/netex_monitoredPassingTimes_version.xsd"
         ],
-        "graph_expansion_source": "memory",
+        "graph_expansion_source": "graphdb",
         "graph_candidates_added": 40
       }
     },
@@ -2314,7 +2314,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 2576.9,
+        "latency_ms": 3487.0,
         "top_5_paths": [
           "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_version.xsd",
           "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_support.xsd",
@@ -2331,7 +2331,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 4225.4,
+        "latency_ms": 9196.0,
         "top_5_paths": [
           "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_version.xsd",
           "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_support.xsd",
@@ -2339,8 +2339,8 @@
           "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_version.xsd",
           "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 40
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 38
       }
     },
     {
@@ -2361,7 +2361,7 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3460.0,
+        "latency_ms": 3411.4,
         "top_5_paths": [
           "examples/functions/pointOfInterest/Netex_Sites_PoiClassification_1.xml",
           "examples/standards/tap_tsi/TAP-SKDUPD-example2.xml",
@@ -2376,18 +2376,18 @@
         "hit_at_5": true,
         "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.2,
-        "mrr_at_20": 0.2,
-        "latency_ms": 5092.5,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 8370.6,
         "top_5_paths": [
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
           "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
-          "xsd/netex_part_2/part2_vehicleService/netex_duty_version.xsd",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd"
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPattern_version.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_noticeAssignment_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 40
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 39
       }
     },
     {
@@ -2409,7 +2409,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3624.4,
+        "latency_ms": 4298.9,
         "top_5_paths": [
           "xsd/netex_part_2/part2_frames/netex_timetableFrame_support.xsd",
           "xsd/netex_part_2/part2_frames/netex_timetableFrame_version.xsd",
@@ -2424,18 +2424,18 @@
         "hit_at_5": true,
         "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 1.0,
-        "mrr_at_20": 1.0,
-        "latency_ms": 3970.5,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 11766.4,
         "top_5_paths": [
-          "xsd/netex_part_2/part2_frames/netex_timetableFrame_support.xsd",
+          "xsd/netex_part_2/netex_all_frames_part2.xsd",
           "xsd/netex_part_2/part2_frames/netex_timetableFrame_version.xsd",
           "xsd/netex_part_2/part2_frames/netex_timetableFrame_support.xsd",
           "xsd/netex_part_2/part2_frames/netex_timetableFrame_support.xsd",
-          "xsd/netex_part_2/part2_frames/netex_timetableFrame_support.xsd"
+          "xsd/netex_part_2/part2_frames/netex_timetableFrame_version.xsd"
         ],
-        "graph_expansion_source": "none",
-        "graph_candidates_added": 0
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 39
       }
     },
     {
@@ -2458,7 +2458,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0625,
-        "latency_ms": 3185.4,
+        "latency_ms": 4465.4,
         "top_5_paths": [
           "examples/functions/deckPlans/DeckPlans-Example_bus.xml",
           "xsd/netex_framework/netex_genericFramework/netex_organisation_version.xsd",
@@ -2475,7 +2475,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0625,
-        "latency_ms": 3266.8,
+        "latency_ms": 7809.9,
         "top_5_paths": [
           "examples/functions/deckPlans/DeckPlans-Example_bus.xml",
           "xsd/netex_framework/netex_genericFramework/netex_organisation_version.xsd",
@@ -2508,7 +2508,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.3333333333333333,
         "mrr_at_20": 0.3333333333333333,
-        "latency_ms": 3259.8,
+        "latency_ms": 4063.8,
         "top_5_paths": [
           "examples/functions/timetable/Netex_01.5_Bus_SimpleTimetable_StopAssignment.xml",
           "Guides/Glossary/Glossary.md",
@@ -2525,16 +2525,16 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 4981.2,
+        "latency_ms": 10524.5,
         "top_5_paths": [
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
-          "xsd/netex_framework/netex_reusableComponents/netex_access_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPattern_version.xsd",
           "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
-          "xsd/wsdl/siri_all_functionalServices.xsd",
-          "xsd/gml/basicTypes.xsd"
+          "examples/standards/txc/FX-PI-01_UK_DFT_STOP_NaPTAN-060+086+110_20171217.xml",
+          "examples/functions/timetable/Netex_32_Multimodal_PassengerInformationEquipment.xml",
+          "Guides/Glossary/Glossary.md"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 40
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 39
       }
     },
     {
@@ -2558,7 +2558,7 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3207.5,
+        "latency_ms": 3790.6,
         "top_5_paths": [
           "examples/standards/tap_tsi/TAP-SKDUPD-example2.3-Leo_Express.xml",
           "Guides/JourneyLifecycle/JourneyLifecycle_Guide.md",
@@ -2575,15 +2575,15 @@
         "hit_at_20": true,
         "mrr_at_10": 0.5,
         "mrr_at_20": 0.5,
-        "latency_ms": 4808.5,
+        "latency_ms": 8490.0,
         "top_5_paths": [
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
-          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
           "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
-          "xsd/netex_part_2/part2_vehicleService/netex_duty_version.xsd",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd"
+          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyTimes_version.xsd",
+          "xsd/netex_part_2/part2_vehicleService/netex_duty_version.xsd"
         ],
-        "graph_expansion_source": "memory",
+        "graph_expansion_source": "graphdb",
         "graph_candidates_added": 40
       }
     },
@@ -2607,7 +2607,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3596.3,
+        "latency_ms": 4245.1,
         "top_5_paths": [
           "examples/functions/timetable/Netex_08.1_BusTram_Timetable_AmbiguousLinks.xml",
           "Guides/NetworkTimetable/NetworkTimetable_Guide.md",
@@ -2624,16 +2624,16 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 4993.3,
+        "latency_ms": 8777.1,
         "top_5_paths": [
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
-          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyTimes_version.xsd",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
-          "xsd/netex_part_2/part2_vehicleService/netex_duty_version.xsd",
-          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd"
+          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
+          "Guides/GetStarted/GetStarted_Guide.md",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPattern_version.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_noticeAssignment_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyTimes_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 40
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 39
       }
     },
     {
@@ -2654,7 +2654,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3640.9,
+        "latency_ms": 3531.2,
         "top_5_paths": [
           "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd",
           "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPattern_support.xsd",
@@ -2671,16 +2671,16 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 5574.0,
+        "latency_ms": 9378.0,
         "top_5_paths": [
           "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd",
           "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPattern_version.xsd",
           "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPattern_support.xsd",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_support.xsd"
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPattern_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPattern_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 40
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 39
       }
     },
     {
@@ -2703,7 +2703,7 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3642.3,
+        "latency_ms": 3899.7,
         "top_5_paths": [
           "xsd/wsdl/siri_all_functionalServices.xsd",
           "examples/standards/tap_tsi/TAP-SKDUPD-example1.xml",
@@ -2718,18 +2718,18 @@
         "hit_at_5": true,
         "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 1.0,
-        "mrr_at_20": 1.0,
-        "latency_ms": 5227.5,
+        "mrr_at_10": 0.3333333333333333,
+        "mrr_at_20": 0.3333333333333333,
+        "latency_ms": 8707.4,
         "top_5_paths": [
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
           "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyTimes_version.xsd",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
-          "xsd/netex_part_2/part2_vehicleService/netex_duty_version.xsd",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd"
+          "Guides/GetStarted/GetStarted_Guide.md",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPattern_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 40
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 39
       }
     },
     {
@@ -2750,7 +2750,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3310.4,
+        "latency_ms": 3723.0,
         "top_5_paths": [
           "xsd/netex_part_2/part2_journeyTimes/netex_coupledJourney_version.xsd",
           "xsd/netex_part_2/part2_journeyTimes/netex_coupledJourney_version.xsd",
@@ -2767,15 +2767,15 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 4432.9,
+        "latency_ms": 8699.2,
         "top_5_paths": [
           "xsd/netex_part_2/part2_journeyTimes/netex_coupledJourney_version.xsd",
           "xsd/netex_part_2/part2_journeyTimes/netex_coupledJourney_support.xsd",
-          "xsd/netex_part_2/part2_journeyTimes/netex_coupledJourney_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
           "xsd/netex_part_2/part2_journeyTimes/netex_coupledJourney_version.xsd",
           "xsd/netex_part_2/part2_journeyTimes/netex_coupledJourney_version.xsd"
         ],
-        "graph_expansion_source": "memory",
+        "graph_expansion_source": "graphdb",
         "graph_candidates_added": 40
       }
     },
@@ -2797,7 +2797,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.07692307692307693,
-        "latency_ms": 3289.8,
+        "latency_ms": 3172.5,
         "top_5_paths": [
           "xsd/netex_part_1/part1_networkDescription/netex_networkRestriction_version.xsd",
           "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyStopAssignment_version.xsd",
@@ -2811,19 +2811,19 @@
       "graph": {
         "hit_at_5": false,
         "hit_at_10": false,
-        "hit_at_20": true,
+        "hit_at_20": false,
         "mrr_at_10": 0.0,
-        "mrr_at_20": 0.07692307692307693,
-        "latency_ms": 3452.8,
+        "mrr_at_20": 0.0,
+        "latency_ms": 7807.6,
         "top_5_paths": [
           "xsd/netex_part_1/part1_networkDescription/netex_networkRestriction_version.xsd",
-          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyStopAssignment_version.xsd",
+          "xsd/netex_part_2/part2_vehicleService/netex_vehicleService_version.xsd",
           "xsd/netex_framework/netex_reusableComponents/netex_vehicle_version.xsd",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_timeDemandType_version.xsd",
-          "xsd/netex_part_2/part2_vehicleService/netex_vehicleService_version.xsd"
+          "xsd/netex_framework/netex_reusableComponents/netex_mode_support.xsd",
+          "xsd/netex_framework/netex_genericFramework/netex_accessibility/netex_acsb_limitations.xsd"
         ],
-        "graph_expansion_source": "none",
-        "graph_candidates_added": 0
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 36
       }
     },
     {
@@ -2846,7 +2846,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.1111111111111111,
         "mrr_at_20": 0.1111111111111111,
-        "latency_ms": 2899.7,
+        "latency_ms": 3631.2,
         "top_5_paths": [
           "examples/standards/fxc/FX-PI-01_UK_AMSY_NETWORK_FARE_Arriva-pass_20200417.xml",
           "examples/standards/efp/NO_RailExample.xml",
@@ -2858,20 +2858,20 @@
         "graph_candidates_added": 0
       },
       "graph": {
-        "hit_at_5": false,
-        "hit_at_10": false,
+        "hit_at_5": true,
+        "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.0,
-        "mrr_at_20": 0.07142857142857142,
-        "latency_ms": 4834.4,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 9123.5,
         "top_5_paths": [
-          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
-          "examples/standards/fxc/FX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-(mixed)_2017-01-01 (5).xml",
-          "examples/standards/tap_tsi/B1_NRT/Netex_tap_tsi_B1-1080-full.xml",
-          "examples/standards/fxc/FX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-(mixed)_2017-01-01 (5).xml",
-          "examples/standards/fxc/FX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-(mixed)_2017-01-01 (5).xml"
+          "examples/functions/timetable/Netex_01.2_Bus_SimpleTimetable_WithTimings.xml",
+          "examples/functions/fares/rail/Netex_era_toc_uk.xml",
+          "examples/standards/txc/FX-PI-01_UK_SCWW_LINE_SCWW-86-simplified_20190101.xml",
+          "examples/standards/era_uic/Netex_era_uic_joiningsplitting.xml",
+          "examples/standards/txc/uk_txc_extract1.xml"
         ],
-        "graph_expansion_source": "memory",
+        "graph_expansion_source": "graphdb",
         "graph_candidates_added": 40
       }
     },
@@ -2895,7 +2895,7 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3022.1,
+        "latency_ms": 3536.1,
         "top_5_paths": [
           "examples/standards/tap_tsi/TAP-SKDUPD-example2.xml",
           "examples/standards/fxc/FX-PI-01_UK_FSYO_NETWORK_FARE_FirstSheffield-pass-simple_20200310.xml",
@@ -2911,17 +2911,17 @@
         "hit_at_10": false,
         "hit_at_20": true,
         "mrr_at_10": 0.0,
-        "mrr_at_20": 0.09090909090909091,
-        "latency_ms": 4836.2,
+        "mrr_at_20": 0.05,
+        "latency_ms": 9949.4,
         "top_5_paths": [
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
           "xsd/netex_framework/netex_reusableComponents/netex_access_version.xsd",
-          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
-          "xsd/wsdl/siri_all_functionalServices.xsd",
-          "xsd/gml/basicTypes.xsd"
+          "examples/functions/timetable/Netex_01.3_Bus_SimpleTimetable_WithMultiplePatterns.xml",
+          "Guides/Glossary/Glossary.md",
+          "xsd/netex_part_1/part1_ifopt/netex_ifopt_stopPlace_version.xsd",
+          "examples/functions/timetable/Netex_08.1_BusTram_Timetable_AmbiguousLinks.xml"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 40
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 38
       }
     },
     {
@@ -2944,7 +2944,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3285.5,
+        "latency_ms": 5024.2,
         "top_5_paths": [
           "examples/functions/timetable/Netex_08.1_BusTram_Timetable_AmbiguousLinks.xml",
           "examples/standards/fxc/FX-PI-01_UK_HCTY_LINE_FARE_Line-016-trip_2020-03-11T22_19_20.696Z.xml",
@@ -2956,21 +2956,21 @@
         "graph_candidates_added": 0
       },
       "graph": {
-        "hit_at_5": false,
-        "hit_at_10": false,
-        "hit_at_20": false,
-        "mrr_at_10": 0.0,
-        "mrr_at_20": 0.0,
-        "latency_ms": 4829.8,
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.3333333333333333,
+        "mrr_at_20": 0.3333333333333333,
+        "latency_ms": 11976.1,
         "top_5_paths": [
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
-          "xsd/netex_framework/netex_reusableComponents/netex_access_version.xsd",
-          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
-          "xsd/wsdl/siri_all_functionalServices.xsd",
-          "xsd/gml/basicTypes.xsd"
+          "examples/standards/txc/uk_nap_extract1_minimal.xml",
+          "xsd/netex_part_1/part1_ifopt/netex_ifopt_stopPlace_version.xsd",
+          "examples/functions/timetable/Netex_01.5_Bus_SimpleTimetable_StopAssignment.xml",
+          "examples/standards/nta/NTA-PI-01_EI_NTA_STOP_NaPTAN-XX_2020801.xml",
+          "xsd/wsdl/siri_all_functionalServices.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 40
       }
     },
     {
@@ -2992,7 +2992,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3127.0,
+        "latency_ms": 3103.3,
         "top_5_paths": [
           "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_support.xsd",
           "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd",
@@ -3009,16 +3009,16 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 4852.1,
+        "latency_ms": 6431.6,
         "top_5_paths": [
           "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd",
           "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_support.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd",
           "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd",
           "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 40
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 30
       }
     },
     {
@@ -3040,7 +3040,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.2,
         "mrr_at_20": 0.2,
-        "latency_ms": 3562.6,
+        "latency_ms": 3630.2,
         "top_5_paths": [
           "xsd/netex_part_1/part1_networkDescription/netex_line_version.xsd",
           "Guides/NetworkTimetable/netex-guide-split.md",
@@ -3052,20 +3052,20 @@
         "graph_candidates_added": 0
       },
       "graph": {
-        "hit_at_5": false,
-        "hit_at_10": false,
-        "hit_at_20": false,
-        "mrr_at_10": 0.0,
-        "mrr_at_20": 0.0,
-        "latency_ms": 5265.0,
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 8538.6,
         "top_5_paths": [
           "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "examples/functions/timetable/Netex_01.4_Bus_SimpleTimetable_WithConnection.xml",
+          "xsd/netex_framework/netex_reusableComponents/netex_serviceRestrictions_version.xsd",
           "xsd/netex_framework/netex_genericFramework/netex_path_version.xsd",
-          "xsd/gml/gmlBase-extract-v3_2_1.xsd",
-          "xsd/gml/basicTypes.xsd",
           "xsd/gml/geometryBasic0d1d-extract-v3_2_1.xsd"
         ],
-        "graph_expansion_source": "memory",
+        "graph_expansion_source": "graphdb",
         "graph_candidates_added": 40
       }
     },
@@ -3089,7 +3089,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3311.3,
+        "latency_ms": 3273.4,
         "top_5_paths": [
           "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyTimes_version.xsd",
           "xsd/netex_framework/netex_reusableComponents/netex_noticeAssignment_version.xsd",
@@ -3104,18 +3104,18 @@
         "hit_at_5": true,
         "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.5,
-        "mrr_at_20": 0.5,
-        "latency_ms": 4911.2,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 7637.5,
         "top_5_paths": [
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
-          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyTimes_version.xsd",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
-          "xsd/netex_part_2/part2_vehicleService/netex_duty_version.xsd",
-          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd"
+          "xsd/netex_part_2/part2_journeyTimes/netex_deckPlanAssignment_version.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_modeOfOperation_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_servicePattern_version.xsd",
+          "xsd/netex_part_1/part1_ifopt/netex_ifopt_stopPlace_version.xsd",
+          "xsd/netex_part_2/part2_vehicleService/netex_all_objects_part2_vehicleService.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 40
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 35
       }
     },
     {
@@ -3137,7 +3137,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3428.4,
+        "latency_ms": 4039.3,
         "top_5_paths": [
           "xsd/netex_framework/netex_frames/netex_commonFrame_version.xsd",
           "xsd/netex_framework/netex_frames/netex_commonFrame_version.xsd",
@@ -3154,16 +3154,16 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3749.0,
+        "latency_ms": 9735.7,
         "top_5_paths": [
           "xsd/netex_framework/netex_frames/netex_commonFrame_version.xsd",
           "xsd/netex_framework/netex_frames/netex_commonFrame_version.xsd",
-          "examples/standards/fxc/FX-PI-01_UK_FBRI_LINE-FARE_WOE-Bristol-Line-48-trip-(stage)_2017-01-01.xml",
-          "README.md",
-          "examples/functions/fares/Netex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct.xml"
+          "xsd/netex_framework/netex_frames/netex_commonFrame_version.xsd",
+          "xsd/netex_framework/netex_frames/netex_commonFrame_version.xsd",
+          "xsd/netex_framework/netex_frames/netex_all_frames_framework.xsd"
         ],
-        "graph_expansion_source": "none",
-        "graph_candidates_added": 0
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 4
       }
     },
     {
@@ -3185,7 +3185,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.1,
         "mrr_at_20": 0.1,
-        "latency_ms": 3296.6,
+        "latency_ms": 2960.9,
         "top_5_paths": [
           "xsd/gml/gmlBase-extract-v3_2_1.xsd",
           "xsd/netex_framework/netex_genericFramework/netex_accessibility/netex_acsb_limitations.xsd",
@@ -3197,21 +3197,21 @@
         "graph_candidates_added": 0
       },
       "graph": {
-        "hit_at_5": false,
-        "hit_at_10": false,
-        "hit_at_20": false,
-        "mrr_at_10": 0.0,
-        "mrr_at_20": 0.0,
-        "latency_ms": 4374.1,
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 6781.2,
         "top_5_paths": [
           "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
-          "xsd/gml/basicTypes.xsd",
-          "xsd/netex_framework/netex_genericFramework/netex_path_version.xsd",
-          "xsd/gml/gmlBase-extract-v3_2_1.xsd",
-          "xsd/gml/geometryBasic0d1d-extract-v3_2_1.xsd"
+          "xsd/netex_part_1/part1_networkDescription/netex_line_version.xsd",
+          "xsd/netex_part_1/part1_networkDescription/netex_lineNetwork_version.xsd",
+          "xsd/netex_part_1/part1_networkDescription/netex_flexibleNetwork_version.xsd",
+          "xsd/netex_part_1/part1_networkDescription/netex_line_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 40
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 30
       }
     },
     {
@@ -3235,7 +3235,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.3333333333333333,
         "mrr_at_20": 0.3333333333333333,
-        "latency_ms": 3372.8,
+        "latency_ms": 4192.2,
         "top_5_paths": [
           "Objects/GroupOfLines/Example_GroupOfLines.xml",
           "xsd/gml/basicTypes.xsd",
@@ -3252,15 +3252,15 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 4714.8,
+        "latency_ms": 9154.1,
         "top_5_paths": [
           "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
-          "xsd/netex_framework/netex_genericFramework/netex_path_version.xsd",
+          "xsd/netex_framework/netex_genericFramework/netex_pointAndLink_version.xsd",
+          "xsd/netex_framework/netex_responsibility/netex_version_version.xsd",
           "xsd/gml/gmlBase-extract-v3_2_1.xsd",
-          "xsd/gml/basicTypes.xsd",
-          "Objects/GroupOfLines/Example_GroupOfLines.xml"
+          "xsd/netex_part_1/part1_frames/netex_infrastructureFrame_version.xsd"
         ],
-        "graph_expansion_source": "memory",
+        "graph_expansion_source": "graphdb",
         "graph_candidates_added": 40
       }
     },
@@ -3284,7 +3284,7 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3169.0,
+        "latency_ms": 4012.8,
         "top_5_paths": [
           "Guides/NetworkTimetable/netex-guide-split.md",
           "examples/functions/timetable/Netex_01.4_Bus_SimpleTimetable_WithConnection.xml",
@@ -3301,16 +3301,16 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 4986.6,
+        "latency_ms": 7940.5,
         "top_5_paths": [
+          "Guides/NetworkTimetable/netex-guide-split.md",
           "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
-          "xsd/gml/basicTypes.xsd",
-          "xsd/netex_framework/netex_genericFramework/netex_path_version.xsd",
-          "xsd/gml/gmlBase-extract-v3_2_1.xsd",
-          "xsd/gml/geometryBasic0d1d-extract-v3_2_1.xsd"
+          "Guides/NetworkTimetable/netex-guide-split.md",
+          "Guides/NetworkTimetable/netex-guide-split.md",
+          "Guides/NetworkTimetable/netex-guide-split.md"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 40
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 37
       }
     },
     {
@@ -3332,7 +3332,7 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3302.9,
+        "latency_ms": 3902.5,
         "top_5_paths": [
           "Objects/StopPlace/Description_StopPlace.md",
           "examples/functions/stopPlace/Netex_04_Stops_SimpleStation_1.xml",
@@ -3349,16 +3349,16 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 4801.0,
+        "latency_ms": 9557.7,
         "top_5_paths": [
           "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "Guides/DecisionMakers/DecisionMakers_Guide.md",
+          "xsd/netex_framework/netex_reusableComponents/netex_modeOfOperation_version.xsd",
           "xsd/netex_framework/netex_genericFramework/netex_pointAndLink_version.xsd",
-          "xsd/netex_framework/netex_genericFramework/netex_spatialFeature_version.xsd",
-          "xsd/netex_framework/netex_genericFramework/netex_pointAndLink_version.xsd",
-          "xsd/wsdl/siri_all_functionalServices.xsd"
+          "xsd/netex_part_1/part1_frames/netex_infrastructureFrame_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 40
       }
     },
     {
@@ -3381,7 +3381,7 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3463.3,
+        "latency_ms": 4351.3,
         "top_5_paths": [
           "examples/functions/timetable/Netex_01.5_Bus_SimpleTimetable_StopAssignment.xml",
           "examples/standards/fxc/FX-PI-01_UK_HCTY_LINE_FARE_Line-016-trip_2020-03-11T22_19_20.696Z.xml",
@@ -3398,15 +3398,15 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 5376.9,
+        "latency_ms": 10705.2,
         "top_5_paths": [
-          "examples/functions/vehicle/Netex_simpleVehicle_01.xml",
-          "examples/standards/fxc/FX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-(mixed)_2017-01-01 (5).xml",
-          "examples/standards/tap_tsi/B1_NRT/Netex_tap_tsi_B1-1080-full.xml",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
-          "xsd/netex_framework/netex_reusableComponents/netex_access_version.xsd"
+          "examples/functions/timetable/Netex_08.1_BusTram_Timetable_AmbiguousLinks.xml",
+          "examples/standards/txc/FX-PI-01_UK_DFT_STOP_NaPTAN-060+086+110_20171217.xml",
+          "examples/standards/tap_tsi/TAP-TSDUPD-example1.xml",
+          "examples/functions/fares/Netex_51.2_Bus_SimpleFares_PointToPoint_MultipleOffers.xml",
+          "examples/standards/txc/uk_nap_extract1_minimal.xml"
         ],
-        "graph_expansion_source": "memory",
+        "graph_expansion_source": "graphdb",
         "graph_candidates_added": 40
       }
     },
@@ -3430,7 +3430,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3483.0,
+        "latency_ms": 4030.9,
         "top_5_paths": [
           "xsd/netex_part_1/part1_networkDescription/netex_line_version.xsd",
           "examples/standards/fxc/FX-PI-01_UK_FBRI_LINE-FARE_WOE-Bristol-Line-48-trip-(stage)_2017-01-01.xml",
@@ -3443,20 +3443,20 @@
       },
       "graph": {
         "hit_at_5": false,
-        "hit_at_10": false,
-        "hit_at_20": false,
-        "mrr_at_10": 0.0,
-        "mrr_at_20": 0.0,
-        "latency_ms": 5197.4,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.14285714285714285,
+        "mrr_at_20": 0.14285714285714285,
+        "latency_ms": 7964.8,
         "top_5_paths": [
           "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
-          "xsd/netex_framework/netex_genericFramework/netex_path_version.xsd",
-          "xsd/gml/gmlBase-extract-v3_2_1.xsd",
           "xsd/gml/basicTypes.xsd",
-          "xsd/gml/geometryBasic0d1d-extract-v3_2_1.xsd"
+          "xsd/netex_framework/netex_reusableComponents/netex_serviceRestrictions_version.xsd",
+          "xsd/netex_part_1/part1_networkDescription/netex_flexibleNetwork_support.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 40
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 39
       }
     },
     {
@@ -3479,7 +3479,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.05555555555555555,
-        "latency_ms": 3517.6,
+        "latency_ms": 3958.1,
         "top_5_paths": [
           "xsd/netex_framework/netex_reusableComponents/netex_transportOrganisation_version.xsd",
           "xsd/netex_framework/netex_reusableComponents/netex_mode_version.xsd",
@@ -3496,16 +3496,16 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 5049.5,
+        "latency_ms": 7545.0,
         "top_5_paths": [
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
-          "xsd/netex_framework/netex_responsibility/netex_validityCondition_support.xsd",
-          "xsd/gml/gmlBase-extract-v3_2_1.xsd",
+          "xsd/netex_framework/netex_genericFramework/netex_pointAndLink_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyTimes_version.xsd",
           "xsd/netex_framework/netex_genericFramework/netex_path_version.xsd",
-          "xsd/gml/basicTypes.xsd"
+          "xsd/gml/basicTypes.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_access_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 40
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 39
       }
     },
     {
@@ -3527,7 +3527,7 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3440.4,
+        "latency_ms": 4604.8,
         "top_5_paths": [
           "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
           "Guides/InterchangeOnly/Interchange_Guide.md",
@@ -3541,18 +3541,18 @@
       "graph": {
         "hit_at_5": false,
         "hit_at_10": false,
-        "hit_at_20": false,
+        "hit_at_20": true,
         "mrr_at_10": 0.0,
-        "mrr_at_20": 0.0,
-        "latency_ms": 4616.9,
+        "mrr_at_20": 0.08333333333333333,
+        "latency_ms": 8514.0,
         "top_5_paths": [
           "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "xsd/netex_framework/netex_genericFramework/netex_projection_version.xsd",
           "xsd/gml/basicTypes.xsd",
-          "xsd/netex_framework/netex_genericFramework/netex_path_version.xsd",
-          "xsd/gml/gmlBase-extract-v3_2_1.xsd",
-          "xsd/gml/geometryBasic0d1d-extract-v3_2_1.xsd"
+          "xsd/netex_framework/netex_reusableComponents/netex_serviceRestrictions_version.xsd",
+          "xsd/netex_part_1/part1_networkDescription/netex_flexibleNetwork_version.xsd"
         ],
-        "graph_expansion_source": "memory",
+        "graph_expansion_source": "graphdb",
         "graph_candidates_added": 40
       }
     },
@@ -3575,7 +3575,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3080.4,
+        "latency_ms": 4035.2,
         "top_5_paths": [
           "xsd/netex_part_1/part1_networkDescription/netex_line_version.xsd",
           "Guides/NetworkTimetable/netex-guide-split.md",
@@ -3587,20 +3587,20 @@
         "graph_candidates_added": 0
       },
       "graph": {
-        "hit_at_5": false,
-        "hit_at_10": false,
-        "hit_at_20": false,
-        "mrr_at_10": 0.0,
-        "mrr_at_20": 0.0,
-        "latency_ms": 5054.3,
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.2,
+        "mrr_at_20": 0.2,
+        "latency_ms": 9569.0,
         "top_5_paths": [
           "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
           "xsd/netex_framework/netex_genericFramework/netex_pointAndLink_version.xsd",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/netex_framework/netex_genericFramework/netex_spatialFeature_version.xsd",
-          "xsd/netex_framework/netex_genericFramework/netex_pointAndLink_version.xsd"
+          "xsd/netex_framework/netex_reusableComponents/netex_modeOfOperation_version.xsd",
+          "xsd/netex_framework/netex_genericFramework/netex_pointAndLink_version.xsd",
+          "xsd/netex_part_1/part1_networkDescription/netex_flexibleNetwork_version.xsd"
         ],
-        "graph_expansion_source": "memory",
+        "graph_expansion_source": "graphdb",
         "graph_candidates_added": 40
       }
     },
@@ -3623,7 +3623,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3358.7,
+        "latency_ms": 3510.2,
         "top_5_paths": [
           "xsd/netex_part_1/part1_networkDescription/netex_routeInstruction_version.xsd",
           "xsd/netex_part_1/part1_networkDescription/netex_routeInstruction_version.xsd",
@@ -3640,16 +3640,16 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 4957.4,
+        "latency_ms": 6717.4,
         "top_5_paths": [
           "xsd/netex_part_1/part1_networkDescription/netex_routeInstruction_version.xsd",
+          "xsd/netex_part_1/part1_networkDescription/netex_routeInstruction_version.xsd",
+          "xsd/netex_part_1/part1_networkDescription/netex_route_version.xsd",
           "xsd/netex_part_1/part1_networkDescription/netex_routeInstruction_support.xsd",
-          "xsd/netex_part_1/part1_networkDescription/netex_routeInstruction_version.xsd",
-          "xsd/netex_part_1/part1_networkDescription/netex_routeInstruction_version.xsd",
           "xsd/netex_part_1/part1_networkDescription/netex_routeInstruction_support.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 40
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 38
       }
     },
     {
@@ -3673,7 +3673,7 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3556.4,
+        "latency_ms": 3013.8,
         "top_5_paths": [
           "docs/opra_qm_query_model_section.md",
           "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
@@ -3685,21 +3685,21 @@
         "graph_candidates_added": 0
       },
       "graph": {
-        "hit_at_5": true,
-        "hit_at_10": true,
-        "hit_at_20": true,
-        "mrr_at_10": 0.2,
-        "mrr_at_20": 0.2,
-        "latency_ms": 5130.5,
+        "hit_at_5": false,
+        "hit_at_10": false,
+        "hit_at_20": false,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 6873.1,
         "top_5_paths": [
           "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_qm_query_model_section.md",
           "docs/opra_px_measured_passengers_text.md",
           "docs/opra_px_measured_passengers_text.md",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
-          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd"
+          "xsd/opra_indicators/opra_lateDatedVehicleJourney_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 37
       }
     },
     {
@@ -3723,7 +3723,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3377.7,
+        "latency_ms": 3812.2,
         "top_5_paths": [
           "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
           "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
@@ -3740,7 +3740,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3443.9,
+        "latency_ms": 6605.6,
         "top_5_paths": [
           "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
           "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
@@ -3748,8 +3748,8 @@
           "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
           "xsd/opra_framework/opra_genericFramework/opra_GenericContextualIndicator_version.xsd"
         ],
-        "graph_expansion_source": "none",
-        "graph_candidates_added": 0
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 25
       }
     },
     {
@@ -3773,7 +3773,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3070.7,
+        "latency_ms": 3890.0,
         "top_5_paths": [
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
           "docs/opra_qm_query_model_section.md",
@@ -3785,21 +3785,21 @@
         "graph_candidates_added": 0
       },
       "graph": {
-        "hit_at_5": false,
+        "hit_at_5": true,
         "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.125,
-        "mrr_at_20": 0.125,
-        "latency_ms": 4861.3,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 7089.4,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
-          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd"
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "issues/14.md"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 38
       }
     },
     {
@@ -3823,7 +3823,7 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3364.4,
+        "latency_ms": 4145.3,
         "top_5_paths": [
           "docs/opra_qm_query_model_section.md",
           "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
@@ -3840,16 +3840,16 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 4938.9,
+        "latency_ms": 7083.2,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
           "examples/DelayedAndCancelledJourneysWithEvents.xml",
-          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd"
+          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 38
       }
     },
     {
@@ -3874,7 +3874,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.125,
         "mrr_at_20": 0.125,
-        "latency_ms": 3524.4,
+        "latency_ms": 4199.2,
         "top_5_paths": [
           "docs/opra_qm_query_model_section.md",
           "docs/opra_qm_query_model_section.md",
@@ -3887,19 +3887,19 @@
       },
       "graph": {
         "hit_at_5": false,
-        "hit_at_10": false,
-        "hit_at_20": false,
-        "mrr_at_10": 0.0,
-        "mrr_at_20": 0.0,
-        "latency_ms": 5167.1,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.1111111111111111,
+        "mrr_at_20": 0.1111111111111111,
+        "latency_ms": 6840.6,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/gml/basicTypes.xsd"
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_service/opra_service_serviceIntensity.xsd",
+          "docs/opra_qm_query_model_section.md",
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_service/opra_service_serviceIntensity.xsd"
         ],
-        "graph_expansion_source": "memory",
+        "graph_expansion_source": "graphdb",
         "graph_candidates_added": 39
       }
     },
@@ -3924,7 +3924,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3134.8,
+        "latency_ms": 3855.4,
         "top_5_paths": [
           "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
           "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
@@ -3941,16 +3941,16 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 4736.2,
+        "latency_ms": 6794.1,
         "top_5_paths": [
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
           "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
           "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
           "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
-          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
-          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd"
+          "docs/opra_qm_query_model_section.md"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 24
       }
     },
     {
@@ -3975,7 +3975,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3528.4,
+        "latency_ms": 3942.0,
         "top_5_paths": [
           "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
           "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
@@ -3990,18 +3990,18 @@
         "hit_at_5": true,
         "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.3333333333333333,
-        "mrr_at_20": 0.3333333333333333,
-        "latency_ms": 4824.4,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 7087.9,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
-          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd"
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 38
       }
     },
     {
@@ -4025,7 +4025,7 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3211.4,
+        "latency_ms": 4020.4,
         "top_5_paths": [
           "docs/opra_qm_query_model_section.md",
           "xsd/opra_service/opra_service_ticketingBasedPassengerCounts.xsd",
@@ -4037,20 +4037,20 @@
         "graph_candidates_added": 0
       },
       "graph": {
-        "hit_at_5": true,
+        "hit_at_5": false,
         "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.25,
-        "mrr_at_20": 0.25,
-        "latency_ms": 3975.5,
+        "mrr_at_10": 0.16666666666666666,
+        "mrr_at_20": 0.16666666666666666,
+        "latency_ms": 5850.1,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "docs/opra_qm_query_model_section.md",
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "examples/functions/timetable/Netex_08.1_BusTram_Timetable_AmbiguousLinks.xml",
           "xsd/netex_framework/netex_reusableComponents/netex_access_version.xsd"
         ],
-        "graph_expansion_source": "memory",
+        "graph_expansion_source": "graphdb",
         "graph_candidates_added": 39
       }
     },
@@ -4075,7 +4075,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 2594.3,
+        "latency_ms": 3240.6,
         "top_5_paths": [
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
           "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyTimes_version.xsd",
@@ -4087,21 +4087,21 @@
         "graph_candidates_added": 0
       },
       "graph": {
-        "hit_at_5": false,
+        "hit_at_5": true,
         "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.1,
-        "mrr_at_20": 0.1,
-        "latency_ms": 3532.1,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 8358.6,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyTimes_version.xsd",
-          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
-          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourneyTimes_version.xsd",
-          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourney_version.xsd"
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourney_version.xsd",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 37
       }
     },
     {
@@ -4125,7 +4125,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 2387.6,
+        "latency_ms": 3798.2,
         "top_5_paths": [
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
           "docs/opra_qm_query_model_section.md",
@@ -4142,16 +4142,16 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 2439.8,
+        "latency_ms": 6554.7,
         "top_5_paths": [
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
           "docs/opra_qm_query_model_section.md",
           "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
           "issues/14.md",
-          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd"
+          "xsd/opra_imports/opra_siri_imports.xsd"
         ],
-        "graph_expansion_source": "none",
-        "graph_candidates_added": 0
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 25
       }
     },
     {
@@ -4176,7 +4176,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 2521.6,
+        "latency_ms": 4064.8,
         "top_5_paths": [
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
           "xsd/opra_imports/opra_siri_imports.xsd",
@@ -4193,16 +4193,16 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 3379.7,
+        "latency_ms": 8267.2,
         "top_5_paths": [
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_imports/opra_siri_imports.xsd",
           "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPattern_version.xsd",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPattern_support.xsd",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_support.xsd"
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "docs/opra_qm_query_model_section.md"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 37
       }
     },
     {
@@ -4227,7 +4227,7 @@
         "hit_at_20": true,
         "mrr_at_10": 1.0,
         "mrr_at_20": 1.0,
-        "latency_ms": 1686.2,
+        "latency_ms": 4121.0,
         "top_5_paths": [
           "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_version.xsd",
           "xsd/opra_service/opra_service_cancelledDatedVehicleJourneys.xsd",
@@ -4242,18 +4242,18 @@
         "hit_at_5": true,
         "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.5,
-        "mrr_at_20": 0.5,
-        "latency_ms": 2525.1,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 8179.8,
         "top_5_paths": [
-          "xsd/opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_version.xsd",
           "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_support.xsd",
           "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd",
           "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_version.xsd",
           "xsd/netex_part_2/part2_journeyTimes/netex_datedVehicleJourney_version.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 37
       }
     },
     {
@@ -4277,7 +4277,7 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 1621.1,
+        "latency_ms": 4202.9,
         "top_5_paths": [
           "docs/opra_px_measured_passengers_text.md",
           "docs/opra_px_measured_passengers_text.md",
@@ -4294,16 +4294,16 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 2203.7,
+        "latency_ms": 7283.7,
         "top_5_paths": [
           "docs/opra_px_measured_passengers_text.md",
+          "docs/opra_qm_query_model_section.md",
           "docs/opra_px_measured_passengers_text.md",
           "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd"
+          "docs/opra_px_measured_passengers_text.md"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 40
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 39
       }
     },
     {
@@ -4329,7 +4329,7 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 1613.8,
+        "latency_ms": 3743.7,
         "top_5_paths": [
           "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
           "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
@@ -4346,15 +4346,15 @@
         "hit_at_20": false,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 2494.9,
+        "latency_ms": 6211.3,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
-          "xsd/gml/basicTypes.xsd",
-          "xsd/netex_framework/netex_genericFramework/netex_path_version.xsd"
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_service/opra_service_serviceIntensity.xsd",
+          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
+          "xsd/opra_service/opra_service_serviceIntensity.xsd",
+          "xsd/opra_service/opra_service_serviceIntensity.xsd"
         ],
-        "graph_expansion_source": "memory",
+        "graph_expansion_source": "graphdb",
         "graph_candidates_added": 39
       }
     },
@@ -4379,7 +4379,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.5,
         "mrr_at_20": 0.5,
-        "latency_ms": 1604.2,
+        "latency_ms": 3804.4,
         "top_5_paths": [
           "docs/opra_qm_query_model_section.md",
           "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
@@ -4394,18 +4394,18 @@
         "hit_at_5": true,
         "hit_at_10": true,
         "hit_at_20": true,
-        "mrr_at_10": 0.25,
-        "mrr_at_20": 0.25,
-        "latency_ms": 2208.6,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 6665.7,
         "top_5_paths": [
-          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
-          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
-          "xsd/netex_framework/netex_reusableComponents/netex_access_version.xsd"
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "docs/opra_qm_query_model_section.md",
+          "issues/14.md"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 24
       }
     },
     {
@@ -4425,7 +4425,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 1681.7,
+        "latency_ms": 2942.6,
         "top_5_paths": [
           "docs/opra_qm_query_model_section.md",
           "xsd/opra_request.xsd",
@@ -4442,16 +4442,16 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 2488.9,
+        "latency_ms": 7048.1,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_indicators/opra_lateDatedVehicleJourney_version.xsd",
-          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd"
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_request.xsd",
+          "xsd/wsdl/siri_all_functionalServices.xsd",
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 38
       }
     },
     {
@@ -4470,7 +4470,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 1717.4,
+        "latency_ms": 3283.8,
         "top_5_paths": [
           "xsd/netex_part_1/part1_ifopt/netex_ifopt_stopPlace_support.xsd",
           "xsd/netex_framework/netex_reusableComponents/netex_facility_version.xsd",
@@ -4487,7 +4487,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 1870.4,
+        "latency_ms": 7282.1,
         "top_5_paths": [
           "xsd/netex_part_1/part1_ifopt/netex_ifopt_stopPlace_support.xsd",
           "xsd/netex_framework/netex_reusableComponents/netex_facility_version.xsd",
@@ -4516,7 +4516,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 1791.5,
+        "latency_ms": 3591.7,
         "top_5_paths": [
           "examples/standards/gtfs/Netex_gtfs_exm1_zz_Composite.xml",
           "examples/standards/gtfs/Netex_gtfs_exm1_Transfers_1.xml",
@@ -4533,7 +4533,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 1904.3,
+        "latency_ms": 7967.4,
         "top_5_paths": [
           "examples/standards/gtfs/Netex_gtfs_exm1_zz_Composite.xml",
           "examples/standards/gtfs/Netex_gtfs_exm1_Transfers_1.xml",
@@ -4562,7 +4562,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 1634.3,
+        "latency_ms": 3986.7,
         "top_5_paths": [
           "xsd/opra_imports/opra_siri_imports.xsd",
           "issues/14.md",
@@ -4579,16 +4579,16 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 1880.8,
+        "latency_ms": 6023.4,
         "top_5_paths": [
           "xsd/opra_imports/opra_siri_imports.xsd",
-          "issues/14.md",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
-          "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
-          "xsd/opra_indicators/opra_serviceIntensity_version.xsd"
+          "issues/14.md",
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_indicators/opra_capacity_version.xsd"
         ],
-        "graph_expansion_source": "none",
-        "graph_candidates_added": 0
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 23
       }
     },
     {
@@ -4608,7 +4608,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 1755.8,
+        "latency_ms": 3863.9,
         "top_5_paths": [
           "xsd/netex_framework/netex_reusableComponents/netex_vehicle_support.xsd",
           "xsd/netex_part_5/part5_nd/netex_nm_vehicleMeetingPlace_support.xsd",
@@ -4625,16 +4625,16 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3073.3,
+        "latency_ms": 7204.9,
         "top_5_paths": [
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
-          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
-          "docs/opra_px_measured_passengers_text.md",
           "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
-          "xsd/netex_part_2/part2_vehicleService/netex_duty_version.xsd"
+          "xsd/netex_part_2/part2_vehicleService/netex_all_objects_part2_vehicleService.xsd",
+          "xsd/netex_part_1/part1_ifopt/netex_ifopt_stopPlace_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
+          "xsd/wsdl/siri_all_functionalServices.xsd"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 40
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 36
       }
     },
     {
@@ -4654,7 +4654,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 2283.9,
+        "latency_ms": 4397.1,
         "top_5_paths": [
           "examples/standards/fxc/FX-PI-01_UK_MB_NETWORK_FARE_Metrorider-pass_basic_20170101.xml",
           "examples/functions/fares/Netex_71.2_Bus_ZonalFares_MultipleSalesPackages.xml",
@@ -4671,25 +4671,25 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 2584.0,
+        "latency_ms": 9216.1,
         "top_5_paths": [
-          "examples/standards/fxc/FX-PI-01_UK_MB_NETWORK_FARE_Metrorider-pass_basic_20170101.xml",
-          "examples/functions/fares/Netex_71.2_Bus_ZonalFares_MultipleSalesPackages.xml",
-          "examples/standards/gtfs/Netex_gtfs_exm1_FareRules_1.xml",
-          "examples/functions/site/Netex_14_Olympic Venues 1.1.xml",
-          "examples/standards/fxc/FX-PI-01_UK_FBRI_LINE-FARE_WOE-Bristol-Line-48-trip-(stage)_2017-01-01.xml"
+          "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "xsd/netex_framework/netex_genericFramework/netex_loggable_version.xsd",
+          "xsd/netex_part_3/part3_salesTransactions/netex_salesContract_version.xsd",
+          "xsd/netex_part_5/part5_nd/netex_nm_vehicleParkingAreaInformation_version.xsd",
+          "xsd/netex_part_1/part1_networkDescription/netex_lineNetwork_version.xsd"
         ],
-        "graph_expansion_source": "none",
-        "graph_candidates_added": 0
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 39
       }
     },
     {
       "id": "q097",
-      "question": "How does OJP integrate with OpRa for open journey planning data?",
+      "question": "How does OpRa integrate with GTFS-RT for open journey planning data?",
       "intent": "abstention",
       "tags": [
-        "ojp",
         "opra",
+        "gtfs-rt",
         "cross-standard"
       ],
       "expected_source_patterns": [],
@@ -4700,7 +4700,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 2280.6,
+        "latency_ms": 3986.7,
         "top_5_paths": [
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
           "xsd/opra_imports/opra_siri_imports.xsd",
@@ -4717,16 +4717,16 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3519.1,
+        "latency_ms": 6978.6,
         "top_5_paths": [
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "docs/opra_px_measured_passengers_text.md",
-          "xsd/opra_indicators/opra_lateDatedVehicleJourney_version.xsd",
-          "xsd/opra_service/opra_service_lateDatedVehicleJourneys.xsd"
+          "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "docs/opra_qm_query_model_section.md",
+          "xsd/opra_framework/opra_payload_framework.xsd",
+          "issues/14.md"
         ],
-        "graph_expansion_source": "memory",
-        "graph_candidates_added": 39
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 38
       }
     },
     {
@@ -4746,7 +4746,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 2617.0,
+        "latency_ms": 3500.9,
         "top_5_paths": [
           "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
           "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
@@ -4763,16 +4763,16 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 2955.6,
+        "latency_ms": 5818.9,
         "top_5_paths": [
           "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
           "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
           "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd",
           "xsd/opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd",
-          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd"
+          "xsd/opra_indicators/opra_capacity_version.xsd"
         ],
-        "graph_expansion_source": "none",
-        "graph_candidates_added": 0
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 25
       }
     },
     {
@@ -4794,7 +4794,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3318.7,
+        "latency_ms": 4301.8,
         "top_5_paths": [
           "LLM/AgentGuides/NeTEx_Validation_Guide.md",
           "xsd/netex_part_3/part3_monitoring/netex_monitoredCall_version.xsd",
@@ -4811,15 +4811,15 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 5073.9,
+        "latency_ms": 8581.4,
         "top_5_paths": [
-          "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyTiming_version.xsd",
-          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
           "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+          "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
           "xsd/netex_part_2/part2_vehicleService/netex_duty_version.xsd",
+          "xsd/netex_framework/netex_reusableComponents/netex_noticeAssignment_version.xsd",
           "xsd/netex_part_1/part1_tacticalPlanning/netex_journeyPatternTimings_version.xsd"
         ],
-        "graph_expansion_source": "memory",
+        "graph_expansion_source": "graphdb",
         "graph_candidates_added": 40
       }
     },
@@ -4840,7 +4840,7 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3436.4,
+        "latency_ms": 3262.2,
         "top_5_paths": [
           "docs/opra_qm_query_model_section.md",
           "issues/14.md",
@@ -4857,16 +4857,16 @@
         "hit_at_20": true,
         "mrr_at_10": 0.0,
         "mrr_at_20": 0.0,
-        "latency_ms": 3618.6,
+        "latency_ms": 6009.7,
         "top_5_paths": [
           "docs/opra_qm_query_model_section.md",
           "issues/14.md",
           "xsd/opra_framework/opra_reusableComponents/opra_statistics_support.xsd",
-          "xsd/opra_indicators/opra_serviceIntensity_version.xsd",
-          "xsd/opra_framework/opra_frames/opra_indicatorFrame_version.xsd"
+          "xsd/opra_imports/opra_siri_imports.xsd",
+          "xsd/opra_imports/opra_netex_imports.xsd"
         ],
-        "graph_expansion_source": "none",
-        "graph_candidates_added": 0
+        "graph_expansion_source": "graphdb",
+        "graph_candidates_added": 24
       }
     }
   ]

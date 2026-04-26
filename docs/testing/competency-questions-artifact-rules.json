@@ -1,0 +1,76 @@
+{
+  "version": "2026-04-17",
+  "source": "docs/Rules.pdf chapters 14-20",
+  "competencyQuestions": [
+    {
+      "id": "CQ-NETEX-SVC-01",
+      "standard": "NeTEx",
+      "question": "Can the system determine whether a NeTEx Service requires a Timetable?",
+      "requiresRule": true,
+      "ruleId": "Service_requires_Timetable"
+    },
+    {
+      "id": "CQ-NETEX-SVC-02",
+      "standard": "NeTEx",
+      "question": "Can the system explain why a Timetable is required for a Service, citing a concrete NeTEx artifact?",
+      "requiresRule": true,
+      "ruleId": "Service_requires_Timetable"
+    },
+    {
+      "id": "CQ-NETEX-JRP-01",
+      "standard": "NeTEx",
+      "question": "Can the system determine whether a ServiceJourneyPattern is optional or mandatory in core NeTEx?",
+      "requiresRule": true,
+      "ruleId": "ServiceJourneyPattern_Optional"
+    },
+    {
+      "id": "CQ-NETEX-ID-01",
+      "standard": "NeTEx",
+      "question": "Can the system determine whether a Service instance must have an identifier?",
+      "requiresRule": true,
+      "ruleId": "Service_requires_ID"
+    },
+    {
+      "id": "CQ-NETEX-STOP-01",
+      "standard": "NeTEx",
+      "question": "Can the system correctly report that no universally mandatory sub-structure exists for StopPlace in base NeTEx?",
+      "requiresRule": false
+    },
+    {
+      "id": "CQ-NETEX-STOP-02",
+      "standard": "NeTEx",
+      "question": "Can the system avoid falsely asserting mandatory accessibility, facilities, or sub-stop requirements for StopPlace?",
+      "requiresRule": false
+    },
+    {
+      "id": "CQ-OPRA-ROLE-01",
+      "standard": "OpRa",
+      "question": "Can the system determine which organisation or actor holds responsibility for a given operational process?",
+      "requiresRule": false
+    },
+    {
+      "id": "CQ-OPRA-ROLE-02",
+      "standard": "OpRa",
+      "question": "Can the system avoid asserting mandatory OpRa role ownership when no explicit artifact-derived rule is present?",
+      "requiresRule": false
+    },
+    {
+      "id": "CQ-SIRI-RT-01",
+      "standard": "SIRI",
+      "question": "Can the system recognize SIRI realtime monitoring questions without claiming unsupported mandatory constraints?",
+      "requiresRule": false
+    },
+    {
+      "id": "CQ-SIRI-SIT-01",
+      "standard": "SIRI",
+      "question": "Can the system identify situation or disruption semantics while preserving source-grounded uncertainty?",
+      "requiresRule": false
+    },
+    {
+      "id": "CQ-DATEX-EVT-01",
+      "standard": "DATEX II",
+      "question": "Can the system classify DATEX event-oriented questions without inventing non-existent mandatory artifact rules?",
+      "requiresRule": false
+    }
+  ]
+}

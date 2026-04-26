@@ -1,0 +1,282 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+
+@prefix netex: <https://netex.org.uk/ontology/netex#> .
+
+#################################################################
+# Ontology Header
+#################################################################
+
+<https://netex.org.uk/ontology/netex>
+    a owl:Ontology ;
+    dct:title "NeTEx Conceptual Ontology"@en ;
+    dct:description "Conceptual OWL ontology representing core NeTEx concepts for semantic reasoning and alignment. This ontology abstracts from XML schemas and does not encode cardinalities or normative statements."@en ;
+    dct:creator "NeTEx / NAPCORE Community" ;
+    dct:created "2026-04-17"^^xsd:date ;
+    owl:versionIRI <https://netex.org.uk/ontology/netex/0.1> ;
+    owl:versionInfo "0.1-draft" ;
+    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+
+#################################################################
+# Core NeTEx Concepts (Conceptual, Not Structural)
+#################################################################
+
+netex:Service
+    a owl:Class ;
+    rdfs:label "Service"@en ;
+    skos:prefLabel "service"@en ;
+    rdfs:comment "NeTEx concept representing a public transport service."@en .
+
+netex:Journey
+    a owl:Class ;
+    rdfs:label "Journey"@en ;
+    skos:prefLabel "journey"@en ;
+    rdfs:comment "NeTEx conceptual representation of a transport journey."@en .
+
+netex:ServiceJourney
+    a owl:Class ;
+    rdfs:label "Service Journey"@en ;
+    skos:prefLabel "service journey"@en ;
+    rdfs:comment "A single operational journey forming part of a service."@en ;
+    rdfs:subClassOf netex:Journey .
+
+netex:ServiceJourneyPattern
+    a owl:Class ;
+    rdfs:label "Service Journey Pattern"@en ;
+    skos:prefLabel "service journey pattern"@en ;
+    skos:altLabel "journey pattern"@en ;
+    rdfs:comment "Reusable NeTEx pattern describing the sequence of stops of a journey."@en .
+
+netex:JourneyPattern
+    a owl:Class ;
+    rdfs:label "Journey Pattern"@en ;
+    skos:prefLabel "journey pattern"@en ;
+    rdfs:comment "Abstract pattern of stops and timings that can be reused across multiple journeys."@en .
+
+netex:Timetable
+    a owl:Class ;
+    rdfs:label "Timetable"@en ;
+    skos:prefLabel "timetable"@en ;
+    skos:altLabel "schedule"@en ;
+    rdfs:comment "Planned temporal description of journeys in NeTEx."@en .
+
+netex:StopPlace
+    a owl:Class ;
+    rdfs:label "Stop Place"@en ;
+    skos:prefLabel "stop place"@en ;
+    skos:altLabel "station"@en ;
+    skos:altLabel "bus stop"@en ;
+    rdfs:comment "NeTEx concept representing a place where vehicles may stop."@en .
+
+netex:Quay
+    a owl:Class ;
+    rdfs:label "Quay"@en ;
+    skos:prefLabel "quay"@en ;
+    skos:altLabel "platform"@en ;
+    rdfs:comment "A physical structure where vehicles load or unload passengers."@en ;
+    rdfs:subClassOf netex:StopPlace .
+
+netex:ScheduledStopPoint
+    a owl:Class ;
+    rdfs:label "Scheduled Stop Point"@en ;
+    skos:prefLabel "scheduled stop point"@en ;
+    skos:altLabel "stop point"@en ;
+    rdfs:comment "A point where a vehicle regularly stops."@en .
+
+netex:PassengerStop
+    a owl:Class ;
+    rdfs:label "Passenger Stop"@en ;
+    skos:prefLabel "passenger stop"@en ;
+    rdfs:comment "A place where passengers board or alight from vehicles."@en .
+
+netex:Route
+    a owl:Class ;
+    rdfs:label "Route"@en ;
+    skos:prefLabel "route"@en ;
+    rdfs:comment "NeTEx concept representing a geographic path traversed by a service."@en .
+
+netex:Line
+    a owl:Class ;
+    rdfs:label "Line"@en ;
+    skos:prefLabel "line"@en ;
+    skos:altLabel "service line"@en ;
+    rdfs:comment "A grouping of routes serving similar geographic areas or stopping patterns."@en ;
+    rdfs:subClassOf netex:Service .
+
+netex:Network
+    a owl:Class ;
+    rdfs:label "Network"@en ;
+    skos:prefLabel "network"@en ;
+    skos:altLabel "transport network"@en ;
+    rdfs:comment "A NeTEx transport network grouping services and lines in a coherent operational area."@en .
+
+#################################################################
+# Actors & Governance
+#################################################################
+
+netex:Organisation
+    a owl:Class ;
+    rdfs:label "Organisation"@en ;
+    skos:prefLabel "organisation"@en ;
+    skos:altLabel "organization"@en ;
+    rdfs:comment "Organisation involved in NeTEx transport contexts."@en .
+
+netex:Authority
+    a owl:Class ;
+    rdfs:label "Authority"@en ;
+    skos:prefLabel "authority"@en ;
+    rdfs:comment "Public authority responsible for transport governance in NeTEx."@en ;
+    rdfs:subClassOf netex:Organisation .
+
+netex:Operator
+    a owl:Class ;
+    rdfs:label "Operator"@en ;
+    skos:prefLabel "operator"@en ;
+    rdfs:comment "Organisation operating transport services."@en ;
+    rdfs:subClassOf netex:Organisation .
+
+netex:AffiliatedProvider
+    a owl:Class ;
+    rdfs:label "Affiliated Provider"@en ;
+    skos:prefLabel "affiliated provider"@en ;
+    rdfs:comment "Organisation providing services related to public transport."@en ;
+    rdfs:subClassOf netex:Organisation .
+
+#################################################################
+# Access & Facilities
+#################################################################
+
+netex:AccessibilityAssessment
+    a owl:Class ;
+    rdfs:label "Accessibility Assessment"@en ;
+    skos:prefLabel "accessibility assessment"@en ;
+    rdfs:comment "The accessibility characteristics of a stop or vehicle."@en .
+
+netex:AccessEquipment
+    a owl:Class ;
+    rdfs:label "Access Equipment"@en ;
+    skos:prefLabel "access equipment"@en ;
+    skos:altLabel "lift, ramp, stair"@en ;
+    rdfs:comment "Physical equipment facilitating passenger access."@en .
+
+netex:PassengerEquipment
+    a owl:Class ;
+    rdfs:label "Passenger Equipment"@en ;
+    skos:prefLabel "passenger equipment"@en ;
+    rdfs:comment "Equipment provided for passenger use."@en .
+
+#################################################################
+# Temporal & Scheduling
+#################################################################
+
+netex:DayType
+    a owl:Class ;
+    rdfs:label "Day Type"@en ;
+    skos:prefLabel "day type"@en ;
+    rdfs:comment "Classification of days (e.g., weekday, weekend) for scheduling purposes."@en .
+
+netex:OperatingPeriod
+    a owl:Class ;
+    rdfs:label "Operating Period"@en ;
+    skos:prefLabel "operating period"@en ;
+    rdfs:comment "A period of time during which a service operates."@en .
+
+netex:ServiceCalendar
+    a owl:Class ;
+    rdfs:label "Service Calendar"@en ;
+    skos:prefLabel "service calendar"@en ;
+    skos:altLabel "calendar"@en ;
+    rdfs:comment "A calendar defining the operational days of a service."@en .
+
+#################################################################
+# Fares & Products
+#################################################################
+
+netex:FareProduct
+    a owl:Class ;
+    rdfs:label "Fare Product"@en ;
+    skos:prefLabel "fare product"@en ;
+    rdfs:comment "A purchasable product conferring access rights to services."@en .
+
+netex:FareZone
+    a owl:Class ;
+    rdfs:label "Fare Zone"@en ;
+    skos:prefLabel "fare zone"@en ;
+    rdfs:comment "A geographic area used for fare calculation."@en .
+
+#################################################################
+# NeTEx Relationships (Conceptual)
+#################################################################
+
+netex:operatedBy
+    a owl:ObjectProperty ;
+    rdfs:label "operated by"@en ;
+    skos:prefLabel "operated by"@en ;
+    rdfs:comment "Relates a service or journey to its operator."@en ;
+    rdfs:domain netex:Service ;
+    rdfs:range netex:Operator .
+
+netex:hasTimetable
+    a owl:ObjectProperty ;
+    rdfs:label "has timetable"@en ;
+    skos:prefLabel "has timetable"@en ;
+    rdfs:comment "Relates a service or journey to its timetable."@en ;
+    rdfs:domain netex:Service ;
+    rdfs:range netex:Timetable .
+
+netex:followsRoute
+    a owl:ObjectProperty ;
+    rdfs:label "follows route"@en ;
+    skos:prefLabel "follows route"@en ;
+    rdfs:comment "Relates a journey to the route it follows."@en ;
+    rdfs:domain netex:Journey ;
+    rdfs:range netex:Route .
+
+netex:visitsStop
+    a owl:ObjectProperty ;
+    rdfs:label "visits stop"@en ;
+    skos:prefLabel "visits stop"@en ;
+    rdfs:comment "Relates a journey to a stop it visits."@en ;
+    rdfs:domain netex:Journey ;
+    rdfs:range netex:StopPlace .
+
+netex:isPartOfService
+    a owl:ObjectProperty ;
+    rdfs:label "is part of service"@en ;
+    skos:prefLabel "is part of service"@en ;
+    rdfs:comment "Relates a journey to the service it belongs to."@en ;
+    rdfs:domain netex:Journey ;
+    rdfs:range netex:Service .
+
+netex:usesJourneyPattern
+    a owl:ObjectProperty ;
+    rdfs:label "uses journey pattern"@en ;
+    skos:prefLabel "uses journey pattern"@en ;
+    rdfs:comment "Relates a service or journey to its journey pattern."@en ;
+    rdfs:domain netex:Journey ;
+    rdfs:range netex:JourneyPattern .
+
+netex:hasAccessibility
+    a owl:ObjectProperty ;
+    rdfs:label "has accessibility"@en ;
+    skos:prefLabel "has accessibility"@en ;
+    rdfs:comment "Relates a stop or vehicle to its accessibility assessment."@en ;
+    rdfs:range netex:AccessibilityAssessment .
+
+netex:offersProduct
+    a owl:ObjectProperty ;
+    rdfs:label "offers product"@en ;
+    skos:prefLabel "offers product"@en ;
+    rdfs:comment "Relates an operator or service to fare products it offers."@en ;
+    rdfs:range netex:FareProduct .
+
+netex:inNetwork
+    a owl:ObjectProperty ;
+    rdfs:label "in network"@en ;
+    skos:prefLabel "in network"@en ;
+    rdfs:comment "Relates a line or route to the network it belongs to."@en ;
+    rdfs:range netex:Network .

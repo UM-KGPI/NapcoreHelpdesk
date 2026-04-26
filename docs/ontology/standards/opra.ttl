@@ -1,0 +1,248 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+
+@prefix opra: <https://opra.org.uk/ontology/opra#> .
+
+#################################################################
+# Ontology Header
+#################################################################
+
+<https://opra.org.uk/ontology/opra>
+    a owl:Ontology ;
+    dct:title "OpRa Conceptual Ontology"@en ;
+    dct:description "Conceptual OWL ontology representing core OpRa journey planning and planning services concepts for semantic reasoning and alignment. Abstracts from XML schemas."@en ;
+    dct:creator "OpRa / NAPCORE Community" ;
+    dct:created "2026-04-17"^^xsd:date ;
+    owl:versionIRI <https://opra.org.uk/ontology/opra/0.1> ;
+    owl:versionInfo "0.1-draft" ;
+    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+
+#################################################################
+# Core Journey Planning Concepts
+#################################################################
+
+opra:JourneyPlan
+    a owl:Class ;
+    rdfs:label "Journey Plan"@en ;
+    skos:prefLabel "journey plan"@en ;
+    skos:altLabel "journey offer"@en ;
+    rdfs:comment "Result of a journey planning request combining trips and alternative routes."@en .
+
+opra:Trip
+    a owl:Class ;
+    rdfs:label "Trip"@en ;
+    skos:prefLabel "trip"@en ;
+    rdfs:comment "A connected sequence of legs representing a viable option for traveling from origin to destination."@en .
+
+opra:Leg
+    a owl:Class ;
+    rdfs:label "Leg"@en ;
+    skos:prefLabel "leg"@en ;
+    rdfs:comment "A continuous movement from one place to another using a single mode or service."@en .
+
+opra:TimingLeg
+    a owl:Class ;
+    rdfs:label "Timing Leg"@en ;
+    skos:prefLabel "timing leg"@en ;
+    rdfs:comment "Leg with explicit timing information (departure, arrival, duration)."@en ;
+    rdfs:subClassOf opra:Leg .
+
+opra:Place
+    a owl:Class ;
+    rdfs:label "Place"@en ;
+    skos:prefLabel "place"@en ;
+    skos:altLabel "location"@en ;
+    rdfs:comment "A geographic location in a journey plan (origin, destination, intermediate point)."@en .
+
+opra:StopPoint
+    a owl:Class ;
+    rdfs:label "Stop Point"@en ;
+    skos:prefLabel "stop point"@en ;
+    skos:altLabel "stop"@en ;
+    rdfs:comment "A scheduled stop along a public transport leg."@en ;
+    rdfs:subClassOf opra:Place .
+
+opra:Address
+    a owl:Class ;
+    rdfs:label "Address"@en ;
+    skos:prefLabel "address"@en ;
+    rdfs:comment "A postal address or street location."@en ;
+    rdfs:subClassOf opra:Place .
+
+#################################################################
+# Service & Vehicle Information
+#################################################################
+
+opra:PublicTransportService
+    a owl:Class ;
+    rdfs:label "Public Transport Service"@en ;
+    skos:prefLabel "public transport service"@en ;
+    skos:altLabel "service"@en ;
+    rdfs:comment "A public transport service offered for passenger journeys."@en .
+
+opra:OperatedService
+    a owl:Class ;
+    rdfs:label "Operated Service"@en ;
+    skos:prefLabel "operated service"@en ;
+    rdfs:comment "A service operated by a specific operator."@en ;
+    rdfs:subClassOf opra:PublicTransportService .
+
+opra:ServiceIntensity
+    a owl:Class ;
+    rdfs:label "Service Intensity"@en ;
+    skos:prefLabel "service intensity"@en ;
+    skos:altLabel "actual service intensity"@en ;
+    skos:altLabel "planned service intensity"@en ;
+    rdfs:comment "Operational metric describing intensity of delivered or planned public transport service."@en .
+
+opra:Vehicle
+    a owl:Class ;
+    rdfs:label "Vehicle"@en ;
+    skos:prefLabel "vehicle"@en ;
+    rdfs:comment "A physical conveyance used for a journey leg."@en .
+
+opra:VehicleType
+    a owl:Class ;
+    rdfs:label "Vehicle Type"@en ;
+    skos:prefLabel "vehicle type"@en ;
+    skos:altLabel "mode"@en ;
+    rdfs:comment "Classification of vehicles (bus, tram, train, etc.)."@en .
+
+#################################################################
+# Booking & Realtime
+#################################################################
+
+opra:BookingArrangement
+    a owl:Class ;
+    rdfs:label "Booking Arrangement"@en ;
+    skos:prefLabel "booking arrangement"@en ;
+    rdfs:comment "Conditions and options for booking a journey leg."@en .
+
+opra:RealtimeStatus
+    a owl:Class ;
+    rdfs:label "Realtime Status"@en ;
+    skos:prefLabel "realtime status"@en ;
+    skos:altLabel "status"@en ;
+    rdfs:comment "Current operational status of a service or vehicle."@en .
+
+opra:Delay
+    a owl:Class ;
+    rdfs:label "Delay"@en ;
+    skos:prefLabel "delay"@en ;
+    rdfs:comment "A departure or arrival time deviation from schedule."@en .
+
+#################################################################
+# Accessibility & Passenger Information
+#################################################################
+
+opra:PassengerInformation
+    a owl:Class ;
+    rdfs:label "Passenger Information"@en ;
+    skos:prefLabel "passenger information"@en ;
+    rdfs:comment "Information relevant to passengers for a journey or leg."@en .
+
+opra:AccessibilityInfo
+    a owl:Class ;
+    rdfs:label "Accessibility Info"@en ;
+    skos:prefLabel "accessibility info"@en ;
+    rdfs:comment "Information about accessibility of a service or venue."@en ;
+    rdfs:subClassOf opra:PassengerInformation .
+
+opra:Facility
+    a owl:Class ;
+    rdfs:label "Facility"@en ;
+    skos:prefLabel "facility"@en ;
+    rdfs:comment "Amenity available on a vehicle or at a stop."@en .
+
+#################################################################
+# Operators & Organizations
+#################################################################
+
+opra:Operator
+    a owl:Class ;
+    rdfs:label "Operator"@en ;
+    skos:prefLabel "operator"@en ;
+    rdfs:comment "Organisation operating services."@en .
+
+opra:Authority
+    a owl:Class ;
+    rdfs:label "Authority"@en ;
+    skos:prefLabel "authority"@en ;
+    rdfs:comment "Public authority organizing or regulating services."@en .
+
+#################################################################
+# OpRa Relationships
+#################################################################
+
+opra:hasTrip
+    a owl:ObjectProperty ;
+    rdfs:label "has trip"@en ;
+    skos:prefLabel "has trip"@en ;
+    rdfs:comment "Relates a journey plan to its constituent trips."@en ;
+    rdfs:domain opra:JourneyPlan ;
+    rdfs:range opra:Trip .
+
+opra:hasLeg
+    a owl:ObjectProperty ;
+    rdfs:label "has leg"@en ;
+    skos:prefLabel "has leg"@en ;
+    rdfs:comment "Relates a trip to its constituent legs."@en ;
+    rdfs:domain opra:Trip ;
+    rdfs:range opra:Leg .
+
+opra:departFrom
+    a owl:ObjectProperty ;
+    rdfs:label "depart from"@en ;
+    skos:prefLabel "depart from"@en ;
+    rdfs:comment "Relates a leg or trip to its departure place."@en ;
+    rdfs:range opra:Place .
+
+opra:arriveAt
+    a owl:ObjectProperty ;
+    rdfs:label "arrive at"@en ;
+    skos:prefLabel "arrive at"@en ;
+    rdfs:comment "Relates a leg or trip to its arrival place."@en ;
+    rdfs:range opra:Place .
+
+opra:usesService
+    a owl:ObjectProperty ;
+    rdfs:label "uses service"@en ;
+    skos:prefLabel "uses service"@en ;
+    rdfs:comment "Relates a leg to the service it uses."@en ;
+    rdfs:domain opra:Leg ;
+    rdfs:range opra:PublicTransportService .
+
+opra:operatedBy
+    a owl:ObjectProperty ;
+    rdfs:label "operated by"@en ;
+    skos:prefLabel "operated by"@en ;
+    rdfs:comment "Relates a service to its operator."@en ;
+    rdfs:domain opra:PublicTransportService ;
+    rdfs:range opra:Operator .
+
+opra:hasServiceIntensity
+    a owl:ObjectProperty ;
+    rdfs:label "has service intensity"@en ;
+    skos:prefLabel "has service intensity"@en ;
+    rdfs:comment "Relates an OpRa service to its service intensity metrics."@en ;
+    rdfs:domain opra:PublicTransportService ;
+    rdfs:range opra:ServiceIntensity .
+
+opra:hasAccessibility
+    a owl:ObjectProperty ;
+    rdfs:label "has accessibility"@en ;
+    skos:prefLabel "has accessibility"@en ;
+    rdfs:comment "Relates a leg or stop to its accessibility information."@en ;
+    rdfs:range opra:AccessibilityInfo .
+
+opra:hasBookingArrangement
+    a owl:ObjectProperty ;
+    rdfs:label "has booking arrangement"@en ;
+    skos:prefLabel "has booking arrangement"@en ;
+    rdfs:comment "Relates a leg to its booking options."@en ;
+    rdfs:domain opra:Leg ;
+    rdfs:range opra:BookingArrangement .

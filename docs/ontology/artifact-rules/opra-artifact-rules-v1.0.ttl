@@ -1,0 +1,20 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix opra: <https://opra.org.uk/ontology/opra#> .
+@prefix rule: <https://napcore.eu/ontology/rules#> .
+
+<https://napcore.eu/ontology/opra-artifact-rules/v1.0>
+    a owl:Ontology ;
+    rdfs:label "OpRa artifact-derived rules ontology"@en ;
+    owl:versionInfo "opra-artifact-rules-v1.0" ;
+    rdfs:comment "Normative OpRa constraints derived from OpRa XSD artifacts. This module is standard-scoped and version-scoped."@en .
+
+rule:ArtifactDerivedRule a owl:Class .
+rule:appliesTo a owl:ObjectProperty .
+rule:minOccurs a owl:DatatypeProperty .
+rule:maxOccurs a owl:DatatypeProperty .
+rule:derivedFromSchema a owl:DatatypeProperty .
+rule:derivedFromXPath a owl:DatatypeProperty .
+
+# Initial module scaffold. Add OpRa rule individuals only from concrete XSD constraints.

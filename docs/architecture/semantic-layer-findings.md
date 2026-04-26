@@ -34,9 +34,14 @@ Reuse common core vocabularies and gradually build a project ontology for NAPCOR
 Initial ontology draft artifacts:
 - `docs/ontology/README.md`
 - `docs/ontology/napcore-its.ttl`
-- `docs/ontology/netex-federated.ttl`
-- `docs/ontology/opra-federated.ttl`
-- `docs/ontology/standards-alignment.ttl`
+- `docs/ontology/standards/netex.ttl`
+- `docs/ontology/standards/opra.ttl`
+- `docs/ontology/standards/siri.ttl`
+- `docs/ontology/standards/datex.ttl`
+- `docs/ontology/alignments/nits-netex-align.ttl`
+- `docs/ontology/alignments/nits-opra-align.ttl`
+- `docs/ontology/alignments/nits-siri-align.ttl`
+- `docs/ontology/alignments/nits-datex-align.ttl`
 
 ### Core Reuse Set
 - SKOS for concept schemes, preferred labels, alternative labels, and broader/narrower relations.
@@ -47,7 +52,7 @@ Initial ontology draft artifacts:
 - Introduce a project namespace for transport-specific relations not covered by the reused cores.
 - Core namespace: `https://napcore.eu/ontology/nits#`
 - Core prefix: `nits:`
-- Current positioning: minimal canonical anchor layer with per-standard federated modules and explicit alignment assertions.
+- Current positioning: minimal canonical anchor layer with per-standard modules and explicit alignment assertions.
 
 ## Minimum Modeling Profile (Phase 1)
 - `skos:Concept` as the concept backbone across core and standard-local modules.
@@ -64,7 +69,7 @@ Initial ontology draft artifacts:
 ## Incremental Roadmap
 1. Phase A: establish SKOS + PROV-O + DCTERMS baseline and seed concepts from Transmodel family standards and materials.
 2. Phase B: connect concept aliases and evidence links to existing indexed chunks and retrieval traces.
-3. Phase C: expand project ontology for NAPCORE overlap (Transmodel, NeTEx, SIRI, OJP/OpRa) and relation typing.
+3. Phase C: expand project ontology for NAPCORE overlap (Transmodel, NeTEx, SIRI, OpRa) and relation typing.
 4. Phase D: extend ontology coverage with DATEX II concepts and mappings.
 5. Phase E: evaluate graph-aware retrieval impact on evidence relevance and citation precision.
 

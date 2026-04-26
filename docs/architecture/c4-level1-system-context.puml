@@ -22,7 +22,8 @@ actor "Ticketing Agent" as TICKET
 
 rectangle "NAPCORE Helpdesk System\n(FAQ-first + RAG fallback)" as HELPDESK #DCE9FF
 rectangle "Approved GitHub Repositories\n(NeTEx-CEN/NeTEx + allowlisted sources)" as GITHUB
-rectangle "LLM Provider API" as LLM
+rectangle "GraphDB Semantic Store\n(Ontology + alignments)" as GRAPHDB
+rectangle "LLM Provider API\n(Default generation backend)" as LLM
 
 PTO --> HELPDESK : Asks standards\nimplementation questions
 PTA --> HELPDESK : Asks policy and\ncompliance-related questions
@@ -38,10 +39,12 @@ INTEGRATOR -[hidden]right-> TICKET
 
 ' Bottom layer: external systems below helpdesk
 HELPDESK -[hidden]down-> GITHUB
-GITHUB -[hidden]right-> LLM
+GITHUB -[hidden]right-> GRAPHDB
+GRAPHDB -[hidden]right-> LLM
 
 HELPDESK --> GITHUB : Retrieves approved\nsource documents and chunks
-HELPDESK --> LLM : Generates grounded answers\nfrom retrieved evidence only
+HELPDESK --> GRAPHDB : Queries concept graph\nfor semantic expansion
+HELPDESK --> LLM : Generates grounded answers\nfrom retrieved evidence\n(default generation path)
 
 note bottom of HELPDESK
 Knowledge boundary: approved GitHub repositories only.
