@@ -1,0 +1,23 @@
+services:
+  graphdb:
+    image: ${GRAPHDB_IMAGE:-ontotext/graphdb:11.3.3}
+    container_name: napcore-helpdesk-graphdb
+    restart: unless-stopped
+    ports:
+      - "7200:7200"
+    environment:
+      GDB_JAVA_OPTS: >-
+        -Xms${GRAPHDB_HEAP_MIN:-1g}
+        -Xmx${GRAPHDB_HEAP_MAX:-1g}
+    volumes:
+      - graphdb-data:/opt/graphdb/home
+      - ./secrets/graphdb.license:/opt/graphdb/home/conf/graphdb.license:ro
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:7200/rest/repositories"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+volumes:
+  graphdb-data:

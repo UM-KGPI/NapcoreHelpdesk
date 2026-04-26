@@ -1,0 +1,27 @@
+services:
+  backend:
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST:-host.docker.internal}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:-napcore_helpdesk}
+      POSTGRES_USER: ${POSTGRES_USER:-napcore}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-napcore}
+    depends_on: !reset
+      - redis
+      - graphdb
+
+  celery-worker:
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST:-host.docker.internal}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:-napcore_helpdesk}
+      POSTGRES_USER: ${POSTGRES_USER:-napcore}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-napcore}
+
+  celery-beat:
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST:-host.docker.internal}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:-napcore_helpdesk}
+      POSTGRES_USER: ${POSTGRES_USER:-napcore}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-napcore}
