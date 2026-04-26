@@ -1,4 +1,4 @@
-export type StandardsScope = "Transmodel" | "NeTEx" | "SIRI" | "OJP" | "OpRa" | "DATEX II" | "Profile Documentation";
+export type StandardsScope = "Transmodel" | "NeTEx" | "SIRI" | "OpRa" | "DATEX II" | "Profile Documentation";
 
 export type AnswerMode = "faq" | "rag" | "abstain";
 
@@ -16,6 +16,15 @@ export interface AnswerTrace {
   matchedFaqEntryId: string | null;
   retrievalEventIds: string[];
   evidenceLinkIds?: string[];
+  provenanceIds?: string[];
+  ruleHitsCount?: number;
+  ruleConclusions?: Array<Record<string, unknown>>;
+  ontologyVersions?: Array<{
+    ontologyKey: string;
+    version: string;
+    graphUri: string;
+    contentHash: string;
+  }>;
   semanticQuery?: {
     intent: string;
     normativity: "mandatory" | "recommended" | "optional" | "unspecified";

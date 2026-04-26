@@ -50,22 +50,22 @@ const DEFAULT_INDEX_REPO_PRESETS: IndexRepoPreset[] = [
     id: "netex",
     label: "NeTEx",
     repoUrl: "https://github.com/NeTEx-CEN/NeTEx",
-    repoPath: "/Users/andrejt/Research/repositories/git/NeTEx",
+    repoPath: "/app/repos/NeTEx",
     profile: "netex",
   },
   {
     id: "opra",
     label: "OpRa",
     repoUrl: "https://github.com/OpRa-CEN/OpRa",
-    repoPath: "/Users/andrejt/Research/repositories/git/OpRa",
+    repoPath: "/app/repos/OpRa",
     profile: "opra",
   },
   {
-    id: "profile_documentation",
-    label: "Profile Documentation v2",
-    repoUrl: "https://github.com/hfjelstad/Profile_Documentation_v2",
-    repoPath: "/Users/andrejt/Research/repositories/git/Profile_Documentation_v2",
-    profile: "profile_documentation",
+    id: "siri",
+    label: "SIRI",
+    repoUrl: "https://github.com/SIRI-CEN/SIRI",
+    repoPath: "/app/repos/SIRI",
+    profile: "siri",
   },
 ];
 
@@ -117,7 +117,7 @@ export default function App() {
   const [indexProfile, setIndexProfile] = useState(DEFAULT_INDEX_REPO_PRESETS[0].profile);
   const [indexIncremental, setIndexIncremental] = useState(true);
   const [indexPrune, setIndexPrune] = useState(true);
-  const [indexIncludeIssues, setIndexIncludeIssues] = useState(true);
+  const [indexIncludeIssues, setIndexIncludeIssues] = useState(false);
   const [indexAutoAllowRepository, setIndexAutoAllowRepository] = useState(true);
   const [indexResult, setIndexResult] = useState<IndexRepositoryResponse | null>(null);
   const [indexBusy, setIndexBusy] = useState(false);

@@ -1,10 +1,11 @@
 import type { FormEvent } from "react";
 
 import type { AnswerResponse, StandardsScope } from "../types";
+import AnswerMarkdown from "./AnswerMarkdown";
 
 export type ChatProfile = "deterministic-grounded" | "llm-ready";
 
-const STANDARDS: StandardsScope[] = ["Transmodel", "NeTEx", "SIRI", "OJP", "OpRa", "DATEX II", "Profile Documentation"];
+const STANDARDS: StandardsScope[] = ["Transmodel", "NeTEx", "SIRI", "OpRa", "DATEX II", "Profile Documentation"];
 
 export interface ChatTurn {
   id: string;
@@ -81,7 +82,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
           {chatTurns.map((turn) => (
             <article key={turn.id} className={`chat-bubble ${turn.role === "user" ? "chat-user" : "chat-assistant"}`}>
               <p className="chat-role">{turn.role}</p>
-              <p>{turn.text}</p>
+              {turn.role === "assistant" ? <AnswerMarkdown text={turn.text} /> : <p>{turn.text}</p>}
               {turn.answer && (
                 <>
                   <p className="muted tiny">
@@ -149,14 +150,18 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                       </details>
                     )}
                   {turn.answer.citations.length > 0 && (
-                    <ul>
-                      {turn.answer.citations.map((citation) => (
-                        <li key={`${turn.id}-${citation.chunkId}`}>
-                          <a href={citation.repositoryUrl} target="_blank" rel="noreferrer">{citation.label ?? citation.sourcePath}</a>
-                          <span className="muted"> · {citation.sourcePath} · {citation.commitSha.slice(0, 7)}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    <>
+                      <p className="tiny"><strong>Evidence list</strong></p>
+                      <ul>
+                        {turn.answer.citations.map((citation, index) => (
+                          <li key={`${turn.id}-${citation.chunkId}`}>
+                            <strong>{`[E${index + 1}]`}</strong>{" "}
+                            <a href={citation.repositoryUrl} target="_blank" rel="noreferrer">{citation.label ?? citation.sourcePath}</a>
+                            <span className="muted"> · {citation.sourcePath} · {citation.commitSha.slice(0, 7)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
                   )}
                   <p className="muted tiny">requestId: {turn.requestId ?? turn.answer.trace.requestId}</p>
                 </>

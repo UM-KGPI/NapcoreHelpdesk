@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import AnswerMarkdown from "./AnswerMarkdown";
 
 import type {
   AnswerResponse,
@@ -12,7 +13,7 @@ import type {
   StandardsScope,
 } from "../types";
 
-const STANDARDS: StandardsScope[] = ["Transmodel", "NeTEx", "SIRI", "OJP", "OpRa", "DATEX II"];
+const STANDARDS: StandardsScope[] = ["Transmodel", "NeTEx", "SIRI", "OpRa", "DATEX II"];
 const TRANSITION_ACTIONS = ["submit_for_review", "request_changes", "approve", "reject", "publish", "reopen"] as const;
 const BOARD_STATUSES = ["draft", "review", "approved", "rejected", "published"] as const;
 const BOARD_REASONS = ["LOW_CONFIDENCE", "CITATION_GAP", "POLICY_REVIEW", "USER_ESCALATION"] as const;
@@ -239,7 +240,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                 <article className="result-card">
                   <h3>Answer Result</h3>
                   <p className="mode-pill">mode: {answerResult.mode}</p>
-                  <p>{answerResult.answer}</p>
+                  <AnswerMarkdown text={answerResult.answer} />
                   <p>
                     confidence: <strong>{answerResult.confidence.toFixed(2)}</strong>
                   </p>
@@ -247,12 +248,13 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                     reviewRequired: <strong>{String(answerResult.reviewRequired)}</strong>
                   </p>
 
-                  <h4>Citations</h4>
+                  <h4>Evidence List</h4>
                   {answerResult.citations.length === 0 && <p className="muted">No citations returned.</p>}
                   {answerResult.citations.length > 0 && (
                     <ul>
-                      {answerResult.citations.map((citation) => (
+                      {answerResult.citations.map((citation, index) => (
                         <li key={`${citation.chunkId}-${citation.sourcePath}`}>
+                          <strong>{`[E${index + 1}]`}</strong>{" "}
                           <a href={citation.repositoryUrl} target="_blank" rel="noreferrer">{citation.label ?? citation.sourcePath}</a>
                           <span className="muted"> · {citation.sourcePath} · {citation.commitSha.slice(0, 7)}</span>
                         </li>
