@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: diagrams-db diagrams-c4 slides-pdf slides-pptx openapi-validate backend-check backend-migrate backend-run backend-index frontend-install frontend-dev frontend-build frontend-test
+.PHONY: diagrams-db diagrams-c4 slides-pdf slides-pptx openapi-validate backend-check backend-migrate backend-run backend-index frontend-install frontend-dev frontend-build frontend-test pre-commit-install pre-commit-run pre-commit-update
 
 diagrams-db:
 	@bash scripts/render-plantuml.sh db/database-er-diagram.puml
@@ -42,3 +42,9 @@ frontend-build:
 
 frontend-test:
 	@cd frontend && npm run test
+
+pre-commit-install: ; @command -v pre-commit >/dev/null 2>&1 || { echo "pre-commit is not installed. Install with: pip install pre-commit"; exit 1; }; pre-commit install
+
+pre-commit-run: ; @command -v pre-commit >/dev/null 2>&1 || { echo "pre-commit is not installed. Install with: pip install pre-commit"; exit 1; }; pre-commit run --all-files
+
+pre-commit-update: ; @command -v pre-commit >/dev/null 2>&1 || { echo "pre-commit is not installed. Install with: pip install pre-commit"; exit 1; }; pre-commit autoupdate

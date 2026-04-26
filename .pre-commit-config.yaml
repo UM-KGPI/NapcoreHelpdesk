@@ -1,0 +1,33 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: mixed-line-ending
+
+  - repo: local
+    hooks:
+      - id: backend-django-check
+        name: backend-django-check
+        language: system
+        pass_filenames: false
+        entry: bash -lc 'cd backend && DJANGO_USE_SQLITE=True DJANGO_SECRET_KEY=precommit-secret-key JWT_SECRET_KEY=precommit-jwt-secret-key-at-least-32-bytes ../.venv/bin/python manage.py check'
+        files: ^backend/
+
+      - id: backend-migration-drift-check
+        name: backend-migration-drift-check
+        language: system
+        pass_filenames: false
+        entry: bash -lc 'cd backend && DJANGO_USE_SQLITE=True DJANGO_SECRET_KEY=precommit-secret-key JWT_SECRET_KEY=precommit-jwt-secret-key-at-least-32-bytes ../.venv/bin/python manage.py makemigrations --check --dry-run'
+        files: ^backend/
+
+      - id: frontend-build-check
+        name: frontend-build-check
+        language: system
+        pass_filenames: false
+        entry: bash -lc 'cd frontend && npm run build'
+        files: ^frontend/
