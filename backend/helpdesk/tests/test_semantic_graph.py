@@ -6,6 +6,7 @@ from django.test import SimpleTestCase
 
 import helpdesk.services.semantic_graph as semantic_graph
 from helpdesk.services.semantic_graph import (
+    _build_concept_example_paths_from_ontology,
     _build_concept_nits_mapping,
     _build_nits_relations,
     _validate_ontology_payload,
@@ -188,3 +189,37 @@ class SemanticGraphMappingTests(SimpleTestCase):
                 ontology_name="nits",
                 required_namespace="nits",
             )
+
+    def test_build_concept_example_paths_collects_line_example_sources(self):
+        paths = _build_concept_example_paths_from_ontology(
+            {
+                "concepts": {
+                    "netex:Line": {
+                        "example_sources": [
+                            "examples/functions/line/NeTEx_01_simple_line.xml",
+                            "examples/functions/line",
+                        ]
+                    }
+                }
+            }
+        )
+
+        self.assertEqual(
+            paths["netex:Line"],
+            {
+                "examples/functions/line/NeTEx_01_simple_line.xml",
+                "examples/functions/line",
+            },
+        )
+
+    def test_extract_graph_concepts_can_match_example_alias_on_standard_concept(self):
+        with patch.object(
+            semantic_graph,
+            "GRAPH_CONCEPT_ALIASES",
+            {"netex:Line": {"simple line", "simple line xml"}},
+        ):
+            concepts = semantic_graph.extract_graph_concepts(
+                "Show me a NeTEx XML example for a simple line with stop points."
+            )
+
+        self.assertIn("netex:Line", concepts)

@@ -1,9 +1,10 @@
 include:
-  - opra
+  - siri
   - profile
   - model
   - docs
   - examples
+  - xsd
   - readme
 exclude:
   - .tmp/

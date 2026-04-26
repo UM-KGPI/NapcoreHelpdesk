@@ -32,6 +32,7 @@ class SourceChunk(TimestampedModel):
     chunk_type = models.CharField(max_length=32, default="prose", blank=True)
     doc_type = models.CharField(max_length=32, default="guide", blank=True)
     heading = models.CharField(max_length=512, blank=True)
+    structured_metadata = models.JSONField(default=dict, blank=True)
     # PostgreSQL uses pgvector; SQLite falls back to JSON via PortableVectorField.
     embedding_vector = PortableVectorField(dimensions=1536, default=list, blank=True)
 
@@ -277,6 +278,58 @@ class AnswerEvidenceLink(TimestampedModel):
             f"AnswerEvidenceLink(evidence_link_id={self.evidence_link_id}, "
             f"answer_id={self.answer_id})"
         )
+
+
+class OntologyAssetVersion(TimestampedModel):
+    """Tracks versioned ontology assets loaded into the semantic layer."""
+
+    ontology_key = models.CharField(max_length=64, unique=True)
+    file_path = models.CharField(max_length=512)
+    graph_uri = models.CharField(max_length=255)
+    version = models.CharField(max_length=64)
+    content_hash = models.CharField(max_length=64)
+    graphdb_repository = models.CharField(max_length=255, blank=True)
+    last_loaded_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["ontology_key"]
+        indexes = [
+            models.Index(fields=["version"], name="ontology_version_idx"),
+            models.Index(fields=["content_hash"], name="ontology_hash_idx"),
+        ]
+
+    def __str__(self):
+        return f"OntologyAssetVersion(key={self.ontology_key}, version={self.version})"
+
+
+class EvidenceProvenance(TimestampedModel):
+    """Persisted provenance payload for answer evidence and rule derivations."""
+
+    provenance_id = models.CharField(max_length=128, unique=True)
+    question_event = models.ForeignKey(
+        QuestionEvent,
+        on_delete=models.CASCADE,
+        related_name="evidence_provenance_records",
+    )
+    evidence_link = models.ForeignKey(
+        AnswerEvidenceLink,
+        on_delete=models.CASCADE,
+        related_name="provenance_records",
+    )
+    core_concepts = models.JSONField(default=list, blank=True)
+    ontology_versions = models.JSONField(default=list, blank=True)
+    rule_conclusions = models.JSONField(default=list, blank=True)
+    provenance_payload = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["provenance_id"], name="prov_id_idx"),
+            models.Index(fields=["question_event"], name="prov_qevent_idx"),
+        ]
+
+    def __str__(self):
+        return f"EvidenceProvenance(provenance_id={self.provenance_id})"
 
 
 class EditorialQueueItem(TimestampedModel):

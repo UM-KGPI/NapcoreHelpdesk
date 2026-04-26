@@ -10,6 +10,7 @@ from unittest.mock import patch
 import jwt
 import yaml
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -27,6 +28,7 @@ from helpdesk.models import (
     AnswerEvidenceLink,
     EditorialQueueItem,
     EditorialQueueTransition,
+    EvidenceProvenance,
     FAQVersion,
     RetrievalEvent,
 )
@@ -208,8 +210,8 @@ class HelpdeskApiTests(APITestCase):
         response = self.client.post(
             reverse("answer-question"),
             {
-                "question": "Explain OJP operational exchange setup sequence.",
-                "standardsScope": ["OJP"],
+                "question": "Explain OpRa operational exchange setup sequence.",
+                "standardsScope": ["OpRa"],
             },
             format="json",
             HTTP_X_REQUEST_ID="req-rag-001",
@@ -232,8 +234,16 @@ class HelpdeskApiTests(APITestCase):
             AnswerEvidenceLink.objects.filter(question_event_id=question_event_id).count(),
             1,
         )
+        self.assertGreaterEqual(
+            EvidenceProvenance.objects.filter(question_event_id=question_event_id).count(),
+            1,
+        )
 
-    @override_settings(GRAPH_RAG_ENABLED=True)
+    @override_settings(
+        GRAPH_RAG_ENABLED=True,
+        GRAPHDB_ENABLED=True,
+        GRAPHDB_SPARQL_ENDPOINT="http://graphdb.local/repositories/helpdesk",
+    )
     def test_answer_includes_graph_trace_when_graph_mode_enabled(self):
         """Ensure graph trace fields are populated when graph mode is requested and enabled."""
         response = self.client.post(
@@ -261,6 +271,10 @@ class HelpdeskApiTests(APITestCase):
         self.assertIn("repositoryCoverageCount", response.data["trace"])
         self.assertIn("conceptCoverageCount", response.data["trace"])
         self.assertIn("semanticAlignmentScore", response.data["trace"])
+        self.assertIn("provenanceIds", response.data["trace"])
+        self.assertIn("ruleHitsCount", response.data["trace"])
+        self.assertIn("ruleConclusions", response.data["trace"])
+        self.assertIn("ontologyVersions", response.data["trace"])
         self.assertGreaterEqual(response.data["trace"]["graphExpansionHops"], 0)
         self.assertGreaterEqual(response.data["trace"]["graphEvidenceCount"], 0)
         self.assertGreaterEqual(response.data["trace"]["repositoryCoverageCount"], 0)
@@ -586,7 +600,85 @@ class HelpdeskApiTests(APITestCase):
         )
         self.assertEqual(len(response.data["trace"]["crossStandardEvidencePartitions"]), 2)
 
-    @override_settings(GRAPH_RAG_ENABLED=True)
+    @override_settings(
+        EVIDENCE_GATE_ENABLED=True,
+        EVIDENCE_GATE_MIN_ALIGNMENT=0.6,
+        EVIDENCE_GATE_MIN_CHUNKS=1,
+        EVIDENCE_GATE_MIN_REPOSITORIES_MULTI_SCOPE=2,
+    )
+    @patch("helpdesk.api.views.parse_question_to_semantic_query")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_answer_abstains_when_evidence_gate_rejects_low_alignment(self, retrieve_mock, parse_mock):
+        """Generic evidence gate should force abstention when alignment is too low."""
+
+        parse_mock.return_value = SimpleNamespace(
+            core_concept="nits:journey-pattern",
+            ambiguous_core_concept=False,
+            candidate_standards=["NeTEx"],
+            confidence={"intent": 0.9, "concept": 0.95},
+            as_dict=lambda: {
+                "intent": "cross_standard_relation",
+                "normativity": "unspecified",
+                "coreConcept": "nits:journey-pattern",
+                "coreConcepts": ["nits:journey-pattern"],
+                "ambiguousCoreConcept": False,
+                "candidateStandards": ["NeTEx"],
+                "originalTerms": ["JourneyPattern"],
+                "confidence": {"intent": 0.9, "concept": 0.95},
+            },
+        )
+        retrieve_mock.return_value = (
+            [
+                {
+                    "text": "Sparse mention with weak semantic match.",
+                    "score": 0.81,
+                    "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+                    "commitSha": "abc123",
+                    "sourcePath": "docs/weak.md",
+                    "chunkId": "chunk-gate-1",
+                    "label": "Weak",
+                    "retrievalEventId": "re-test-gate-001",
+                    "standardsScope": ["NeTEx"],
+                }
+            ],
+            {
+                "graphRagVariant": "control",
+                "graphExpansionHops": 0,
+                "graphExpansionSource": "none",
+                "graphConceptIds": [],
+                "graphCandidatesAdded": 0,
+                "graphEvidenceCount": 1,
+                "graphScoreContribution": 0.0,
+                "graphProvenanceChainCount": 0,
+                "repositoryCoverageCount": 1,
+                "conceptCoverageCount": 1,
+                "semanticAlignmentScore": 0.22,
+                "retrievalLatencyMs": 5.0,
+            },
+        )
+
+        response = self.client.post(
+            reverse("answer-question"),
+            {
+                "question": "How does journey pattern map?",
+                "generationProfile": "deterministic-grounded",
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-evidence-gate-001",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_matches_schema("AnswerResponse", response.data)
+        self.assertEqual(response.data["mode"], "abstain")
+        self.assertTrue(response.data["abstained"])
+        self.assertEqual(response.data["trace"]["semanticFallback"], "PARTIAL_EVIDENCE")
+
+    @override_settings(
+        GRAPH_RAG_ENABLED=True,
+        GRAPHDB_ENABLED=True,
+        GRAPHDB_SPARQL_ENDPOINT="http://graphdb.local/repositories/helpdesk",
+    )
     @patch("helpdesk.api.views.retrieve_chunks_with_trace")
     def test_answer_uses_graph_when_enabled_and_option_omitted(self, retrieve_mock):
         """Graph retrieval runs whenever GRAPH_RAG_ENABLED=True, regardless of request options."""
@@ -637,7 +729,11 @@ class HelpdeskApiTests(APITestCase):
         self.assertTrue(retrieve_mock.called)
         self.assertTrue(retrieve_mock.call_args.kwargs.get("graph_rag_enabled"))
 
-    @override_settings(GRAPH_RAG_ENABLED=True)
+    @override_settings(
+        GRAPH_RAG_ENABLED=True,
+        GRAPHDB_ENABLED=True,
+        GRAPHDB_SPARQL_ENDPOINT="http://graphdb.local/repositories/helpdesk",
+    )
     @patch("helpdesk.api.views.retrieve_chunks_with_trace")
     def test_answer_ignores_explicit_graph_opt_out_when_enabled(self, retrieve_mock):
         """graphRagEnabled=false in request options is ignored — graph runs unconditionally when GRAPH_RAG_ENABLED=True."""
@@ -689,6 +785,20 @@ class HelpdeskApiTests(APITestCase):
         self.assertTrue(retrieve_mock.called)
         # graphRagEnabled:false must be ignored; graph is always active with GRAPH_RAG_ENABLED=True
         self.assertTrue(retrieve_mock.call_args.kwargs.get("graph_rag_enabled"))
+
+    @override_settings(GRAPH_RAG_ENABLED=True, GRAPHDB_ENABLED=False, GRAPHDB_SPARQL_ENDPOINT="")
+    def test_answer_rejects_graph_runtime_without_graphdb_configuration(self):
+        with self.assertRaises(ImproperlyConfigured):
+            self.client.post(
+                reverse("answer-question"),
+                {
+                    "question": "How are delayed journey statistics represented in OpRa examples?",
+                    "standardsScope": ["OpRa"],
+                },
+                format="json",
+                HTTP_X_REQUEST_ID="req-rag-graph-misconfigured-001",
+                **self.auth_headers(),
+            )
 
     def test_select_citations_deduplicates_and_prefers_cross_repository_coverage(self):
         """Ensure citation selection mixes top evidence across repositories before filling extras."""
@@ -785,8 +895,8 @@ class HelpdeskApiTests(APITestCase):
         response = self.client.post(
             reverse("answer-question"),
             {
-                "question": "Explain OJP operational exchange setup sequence.",
-                "standardsScope": ["OJP"],
+                "question": "Explain OpRa operational exchange setup sequence.",
+                "standardsScope": ["OpRa"],
                 "generationProfile": "llm-ready",
             },
             format="json",
@@ -816,8 +926,8 @@ class HelpdeskApiTests(APITestCase):
         response = self.client.post(
             reverse("answer-question"),
             {
-                "question": "Explain OJP operational exchange setup sequence.",
-                "standardsScope": ["OJP"],
+                "question": "Explain OpRa operational exchange setup sequence.",
+                "standardsScope": ["OpRa"],
                 "generationProfile": "llm-ready",
             },
             format="json",
@@ -878,7 +988,7 @@ class HelpdeskApiTests(APITestCase):
         """Ensure policy-review reasons route queue items directly to review status."""
         answer_response = self.client.post(
             reverse("answer-question"),
-            {"question": "Explain OJP operational exchange setup sequence."},
+            {"question": "Explain OpRa operational exchange setup sequence."},
             format="json",
             HTTP_X_REQUEST_ID="req-editorial-source",
             **self.auth_headers(),
@@ -906,7 +1016,7 @@ class HelpdeskApiTests(APITestCase):
         """Ensure transition requests fail when caller lacks required workflow role."""
         answer_response = self.client.post(
             reverse("answer-question"),
-            {"question": "Explain OJP operational exchange setup sequence."},
+            {"question": "Explain OpRa operational exchange setup sequence."},
             format="json",
             HTTP_X_REQUEST_ID="req-transition-source-1",
             **self.auth_headers(),
@@ -943,7 +1053,7 @@ class HelpdeskApiTests(APITestCase):
         """Ensure valid role-based transitions update state and persist audit entries."""
         answer_response = self.client.post(
             reverse("answer-question"),
-            {"question": "Explain OJP operational exchange setup sequence."},
+            {"question": "Explain OpRa operational exchange setup sequence."},
             format="json",
             HTTP_X_REQUEST_ID="req-transition-source-2",
             **self.auth_headers(),
@@ -1012,7 +1122,7 @@ class HelpdeskApiTests(APITestCase):
         """Ensure impossible transitions return conflict instead of mutating state."""
         answer_response = self.client.post(
             reverse("answer-question"),
-            {"question": "Explain OJP operational exchange setup sequence."},
+            {"question": "Explain OpRa operational exchange setup sequence."},
             format="json",
             HTTP_X_REQUEST_ID="req-transition-source-3",
             **self.auth_headers(),
@@ -1049,7 +1159,7 @@ class HelpdeskApiTests(APITestCase):
         """Ensure editorial board endpoint returns paginated queue rows and supports filters."""
         answer_response = self.client.post(
             reverse("answer-question"),
-            {"question": "Explain OJP operational exchange setup sequence."},
+            {"question": "Explain OpRa operational exchange setup sequence."},
             format="json",
             HTTP_X_REQUEST_ID="req-board-source-1",
             **self.auth_headers(),
@@ -1106,7 +1216,7 @@ class HelpdeskApiTests(APITestCase):
         """Ensure board rows expose only actions permitted for the caller's roles."""
         answer_response = self.client.post(
             reverse("answer-question"),
-            {"question": "Explain OJP operational exchange setup sequence."},
+            {"question": "Explain OpRa operational exchange setup sequence."},
             format="json",
             HTTP_X_REQUEST_ID="req-board-source-roles",
             **self.auth_headers(),
@@ -1151,7 +1261,7 @@ class HelpdeskApiTests(APITestCase):
         """Ensure board metrics endpoint returns status and aging aggregates."""
         answer_response = self.client.post(
             reverse("answer-question"),
-            {"question": "Explain OJP operational exchange setup sequence."},
+            {"question": "Explain OpRa operational exchange setup sequence."},
             format="json",
             HTTP_X_REQUEST_ID="req-metrics-source-1",
             **self.auth_headers(),

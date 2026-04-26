@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 
-STANDARDS_SCOPE_CHOICES = ["Transmodel", "NeTEx", "SIRI", "OJP", "OpRa", "DATEX II"]
+STANDARDS_SCOPE_CHOICES = ["Transmodel", "NeTEx", "SIRI", "OpRa", "DATEX II"]
 
 
 class AnswerOptionsSerializer(serializers.Serializer):

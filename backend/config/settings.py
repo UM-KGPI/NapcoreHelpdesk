@@ -15,7 +15,10 @@ env = environ.Env(
     DEV_JWT_DEFAULT_SUBJECT=(str, "user-local"),
     DEV_JWT_DEFAULT_ROLES=(str, "editor,reviewer,publisher"),
     DEV_JWT_TTL_MINUTES=(int, 480),
-    ALLOWED_SOURCE_REPOSITORIES=(str, "https://github.com/NeTEx-CEN/NeTEx"),
+    ALLOWED_SOURCE_REPOSITORIES=(
+        str,
+        "https://github.com/NeTEx-CEN/NeTEx,https://github.com/SIRI-CEN/SIRI,https://github.com/OpRa-CEN/OpRa",
+    ),
     INDEX_SCHEDULE_REPO_URL=(str, ""),
     INDEX_SCHEDULE_REPO_PATH=(str, ""),
     INDEX_SCHEDULE_PROFILE=(str, "netex"),
@@ -38,7 +41,15 @@ env = environ.Env(
     EMBEDDING_API_KEY=(str, ""),
     EMBEDDING_MODEL=(str, "text-embedding-3-small"),
     EMBEDDING_TIMEOUT_SECONDS=(int, 30),
+    SEED_REPO_NETEX=(str, "https://github.com/NeTEx-CEN/NeTEx"),
+    SEED_REPO_SIRI=(str, "https://github.com/SIRI-CEN/SIRI"),
+    SEED_REPO_OPRA=(str, "https://github.com/OpRa-CEN/OpRa"),
     GRAPH_RAG_ENABLED=(bool, False),
+    SEMANTIC_LOW_CONFIDENCE_THRESHOLD=(float, 0.60),
+    EVIDENCE_GATE_ENABLED=(bool, False),
+    EVIDENCE_GATE_MIN_ALIGNMENT=(float, 0.30),
+    EVIDENCE_GATE_MIN_CHUNKS=(int, 1),
+    EVIDENCE_GATE_MIN_REPOSITORIES_MULTI_SCOPE=(int, 2),
     GRAPHDB_ENABLED=(bool, False),
     GRAPHDB_SPARQL_ENDPOINT=(str, ""),
     GRAPHDB_REPOSITORY=(str, ""),
@@ -46,12 +57,13 @@ env = environ.Env(
     GRAPHDB_PASSWORD=(str, ""),
     GRAPHDB_TIMEOUT_SECONDS=(int, 5),
     GRAPH_RAG_VARIANT=(str, "baseline"),
-    NEO4J_ENABLED=(bool, False),
-    NEO4J_EXPERIMENTAL_ENABLED=(bool, False),
-    NEO4J_URI=(str, ""),
-    NEO4J_USER=(str, "neo4j"),
-    NEO4J_PASSWORD=(str, ""),
-    NEO4J_DATABASE=(str, "neo4j"),
+    GRAPH_EXPANSION_MAX_CONCEPTS=(int, 64),
+    GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS=(int, 40),
+    RETRIEVAL_DIVERSITY_ENABLED=(bool, True),
+    RETRIEVAL_MAX_SAME_SOURCE_PATH=(int, 2),
+    RETRIEVAL_MMR_LAMBDA=(float, 0.92),
+    RETRIEVAL_KEYWORD_TRAP_PENALTY=(float, 0.60),
+    POLICY_STRICT_CLAIM_GUARD=(bool, False),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -161,7 +173,10 @@ DEV_JWT_TTL_MINUTES = env("DEV_JWT_TTL_MINUTES")
 
 ALLOWED_SOURCE_REPOSITORIES = {
     value.strip()
-    for value in env("ALLOWED_SOURCE_REPOSITORIES", default="https://github.com/NeTEx-CEN/NeTEx").split(",")
+    for value in env(
+        "ALLOWED_SOURCE_REPOSITORIES",
+        default="https://github.com/NeTEx-CEN/NeTEx,https://github.com/SIRI-CEN/SIRI,https://github.com/OpRa-CEN/OpRa",
+    ).split(",")
     if value.strip()
 }
 
@@ -190,19 +205,33 @@ EMBEDDING_API_BASE_URL = env("EMBEDDING_API_BASE_URL").strip() or "https://api.o
 EMBEDDING_API_KEY = env("EMBEDDING_API_KEY").strip()
 EMBEDDING_MODEL = env("EMBEDDING_MODEL").strip() or "text-embedding-3-small"
 EMBEDDING_TIMEOUT_SECONDS = env("EMBEDDING_TIMEOUT_SECONDS")
+SEED_REPO_NETEX = env("SEED_REPO_NETEX").strip() or "https://github.com/NeTEx-CEN/NeTEx"
+SEED_REPO_SIRI = env("SEED_REPO_SIRI").strip() or "https://github.com/SIRI-CEN/SIRI"
+SEED_REPO_OPRA = env("SEED_REPO_OPRA").strip() or "https://github.com/OpRa-CEN/OpRa"
+ALLOWED_SOURCE_REPOSITORIES |= {
+    SEED_REPO_NETEX,
+    SEED_REPO_SIRI,
+    SEED_REPO_OPRA,
+}
 GRAPH_RAG_ENABLED = env("GRAPH_RAG_ENABLED")
+SEMANTIC_LOW_CONFIDENCE_THRESHOLD = env("SEMANTIC_LOW_CONFIDENCE_THRESHOLD")
+EVIDENCE_GATE_ENABLED = env("EVIDENCE_GATE_ENABLED")
+EVIDENCE_GATE_MIN_ALIGNMENT = env("EVIDENCE_GATE_MIN_ALIGNMENT")
+EVIDENCE_GATE_MIN_CHUNKS = env("EVIDENCE_GATE_MIN_CHUNKS")
+EVIDENCE_GATE_MIN_REPOSITORIES_MULTI_SCOPE = env("EVIDENCE_GATE_MIN_REPOSITORIES_MULTI_SCOPE")
 GRAPHDB_ENABLED = env("GRAPHDB_ENABLED")
 GRAPHDB_SPARQL_ENDPOINT = env("GRAPHDB_SPARQL_ENDPOINT", default="").strip()
 GRAPHDB_REPOSITORY = env("GRAPHDB_REPOSITORY", default="").strip()
 GRAPHDB_USER = env("GRAPHDB_USER", default="").strip()
 GRAPHDB_PASSWORD = env("GRAPHDB_PASSWORD", default="").strip()
 GRAPHDB_TIMEOUT_SECONDS = env("GRAPHDB_TIMEOUT_SECONDS")
-NEO4J_ENABLED = env("NEO4J_ENABLED")
-NEO4J_EXPERIMENTAL_ENABLED = env("NEO4J_EXPERIMENTAL_ENABLED")
-NEO4J_URI = env("NEO4J_URI", default="").strip()
-NEO4J_USER = env("NEO4J_USER", default="neo4j").strip() or "neo4j"
-NEO4J_PASSWORD = env("NEO4J_PASSWORD", default="").strip()
-NEO4J_DATABASE = env("NEO4J_DATABASE", default="neo4j").strip() or "neo4j"
+GRAPH_EXPANSION_MAX_CONCEPTS = env("GRAPH_EXPANSION_MAX_CONCEPTS")
+GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS = env("GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS")
+RETRIEVAL_DIVERSITY_ENABLED = env("RETRIEVAL_DIVERSITY_ENABLED")
+RETRIEVAL_MAX_SAME_SOURCE_PATH = env("RETRIEVAL_MAX_SAME_SOURCE_PATH")
+RETRIEVAL_MMR_LAMBDA = env("RETRIEVAL_MMR_LAMBDA")
+RETRIEVAL_KEYWORD_TRAP_PENALTY = env("RETRIEVAL_KEYWORD_TRAP_PENALTY")
+POLICY_STRICT_CLAIM_GUARD = env("POLICY_STRICT_CLAIM_GUARD")
 
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://localhost:6379/1")

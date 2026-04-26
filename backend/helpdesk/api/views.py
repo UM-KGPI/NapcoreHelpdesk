@@ -29,11 +29,15 @@ from helpdesk.services.event_logger import log_question_event
 from helpdesk.services.faq_matcher import match_faq
 from helpdesk.services.grounded_generator import generate_answer
 from helpdesk.services.llm_generator import LLMGenerationError, generate_answer_llm
+from helpdesk.services.ontology_registry import current_ontology_version_payload
 from helpdesk.services.policy_guard import evaluate_policy
+from helpdesk.services.provenance_mapper import persist_evidence_provenance
 from helpdesk.services.question_parsing import parse_question_to_semantic_query
 from helpdesk.services.index_builder import index_repository
 from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 from helpdesk.services.retrieval_event_logger import log_retrieval_events
+from helpdesk.services.rule_engine import evaluate_semantic_rules
+from helpdesk.services.runtime_requirements import ensure_graph_runtime_ready
 
 from .serializers import (
     AnswerRequestSerializer,
@@ -237,7 +241,10 @@ def _resolve_graph_rag_enabled(_options: dict) -> bool:
     Variant flags and per-request opt-out are not honoured: knowledge graph
     expansion should always apply so that reasoning is repo-independent.
     """
-    return bool(settings.GRAPH_RAG_ENABLED)
+    if settings.GRAPH_RAG_ENABLED:
+        ensure_graph_runtime_ready()
+        return True
+    return False
 
 
 def _request_actor_id(request):
@@ -307,6 +314,52 @@ def _classify_partial_evidence(
     }
 
 
+def _evaluate_evidence_gate(*, chunks: list[dict], graph_trace: dict, effective_scope: list[str]) -> dict:
+    """Apply generic grounding checks before generation.
+
+    This guard is intentionally benchmark-agnostic and uses only retrieval/trace
+    quality signals.
+    """
+
+    min_chunks = max(1, int(getattr(settings, "EVIDENCE_GATE_MIN_CHUNKS", 1)))
+    min_alignment = float(getattr(settings, "EVIDENCE_GATE_MIN_ALIGNMENT", 0.30))
+    min_multi_scope_repositories = max(
+        1,
+        int(getattr(settings, "EVIDENCE_GATE_MIN_REPOSITORIES_MULTI_SCOPE", 2)),
+    )
+
+    if len(chunks) < min_chunks:
+        return {
+            "allowed": False,
+            "reason": "INSUFFICIENT_EVIDENCE",
+            "review_required": False,
+        }
+
+    alignment = float(graph_trace.get("semanticAlignmentScore", 0.0))
+    if alignment < min_alignment:
+        return {
+            "allowed": False,
+            "reason": "LOW_RETRIEVAL_CONFIDENCE",
+            "review_required": True,
+        }
+
+    if len(effective_scope) > 1:
+        repository_coverage = int(graph_trace.get("repositoryCoverageCount", 0))
+        expected_repositories = min(len(effective_scope), min_multi_scope_repositories)
+        if repository_coverage < expected_repositories:
+            return {
+                "allowed": False,
+                "reason": "CROSS_STANDARD_GAP",
+                "review_required": True,
+            }
+
+    return {
+        "allowed": True,
+        "reason": None,
+        "review_required": True,
+    }
+
+
 def _infer_standard_from_chunk(chunk: dict, effective_scope: list[str]) -> str | None:
     chunk_scope = chunk.get("standardsScope") or chunk.get("standards_scope") or []
     if isinstance(chunk_scope, list):
@@ -326,7 +379,6 @@ def _infer_standard_from_chunk(chunk: dict, effective_scope: list[str]) -> str |
         "NeTEx": ["netex"],
         "OpRa": ["opra"],
         "SIRI": ["siri"],
-        "OJP": ["ojp"],
         "DATEX II": ["datex"],
         "Transmodel": ["transmodel"],
     }
@@ -543,6 +595,9 @@ class QuestionAnswerView(APIView):
         evidence_link_ids = []
         citations = []
         retrieved_chunks = []
+        provenance_ids = []
+        rule_result = {"rulesEvaluated": [], "conclusions": [], "matchedRuleCount": 0}
+        ontology_versions = []
         graph_trace = {
             "graphRagVariant": "control",
             "graphExpansionHops": 0,
@@ -570,6 +625,15 @@ class QuestionAnswerView(APIView):
             )
             semantic_fallback = "AMBIGUOUS_CORE_CONCEPT"
 
+        semantic_confidence = getattr(semantic_query, "confidence", None)
+        if semantic_confidence is None and hasattr(semantic_query, "as_dict"):
+            semantic_confidence = (semantic_query.as_dict() or {}).get("confidence")
+        semantic_confidence = semantic_confidence or {}
+        concept_confidence = semantic_confidence.get("concept")
+        semantic_low_confidence_threshold = float(
+            getattr(settings, "SEMANTIC_LOW_CONFIDENCE_THRESHOLD", 0.60)
+        )
+
         faq_match = match_faq(question=question, scope=effective_scope)
         if faq_match and faq_match["confidence"] >= faq_min_confidence and faq_match.get("scope_match", True):
             mode = QuestionEvent.MODE_FAQ
@@ -588,6 +652,23 @@ class QuestionAnswerView(APIView):
             answer_text = (
                 "I could not map your question to a known standards concept yet. "
                 "Please clarify by naming a concrete concept, artifact, or standard scope."
+            )
+            citations = []
+        elif (
+            concept_confidence is not None
+            and float(concept_confidence) < semantic_low_confidence_threshold
+            and allow_abstain
+            and not scope
+        ):
+            mode = QuestionEvent.MODE_ABSTAIN
+            confidence = 0.0
+            abstained = True
+            abstention_reason = QuestionEvent.REASON_INSUFFICIENT_EVIDENCE
+            review_required = True
+            semantic_fallback = "NO_CONCEPT_MATCH"
+            answer_text = (
+                "I cannot safely determine the intended standards concept from this question yet. "
+                "Please clarify the target concept or provide a standards scope."
             )
             citations = []
         else:
@@ -632,13 +713,24 @@ class QuestionAnswerView(APIView):
             retrieved_chunks = chunks
             retrieval_event_ids = [chunk["retrievalEventId"] for chunk in chunks]
 
-            if not chunks and allow_abstain:
+            if getattr(settings, "EVIDENCE_GATE_ENABLED", False):
+                evidence_gate = _evaluate_evidence_gate(
+                    chunks=chunks,
+                    graph_trace=graph_trace,
+                    effective_scope=effective_scope,
+                )
+            else:
+                evidence_gate = {"allowed": True, "reason": None, "review_required": True}
+
+            if (not chunks or not evidence_gate["allowed"]) and allow_abstain:
                 # Abstain if we cannot provide grounded evidence safely.
                 mode = QuestionEvent.MODE_ABSTAIN
                 confidence = 0.0
                 abstained = True
                 abstention_reason = QuestionEvent.REASON_INSUFFICIENT_EVIDENCE
-                review_required = False
+                review_required = evidence_gate.get("review_required", False)
+                if semantic_fallback is None and not evidence_gate.get("allowed", True):
+                    semantic_fallback = "PARTIAL_EVIDENCE"
                 answer_text = "I do not have sufficient approved-source evidence to answer this safely."
             else:
                 use_llm = generation_profile == "llm-ready" and settings.LLM_ENABLED
@@ -676,6 +768,14 @@ class QuestionAnswerView(APIView):
                     mode = QuestionEvent.MODE_RAG
                     review_required = policy["review_required"] or review_required
 
+            if mode == QuestionEvent.MODE_RAG and retrieved_chunks:
+                rule_result = evaluate_semantic_rules(
+                    semantic_query=semantic_query,
+                    retrieved_chunks=retrieved_chunks,
+                    effective_scope=effective_scope,
+                )
+                ontology_versions = current_ontology_version_payload()
+
         answer_id = f"ans-{uuid4().hex[:12]}"
         # Persist the orchestration outcome as a question event before child trace records.
         event = log_question_event(
@@ -701,6 +801,21 @@ class QuestionAnswerView(APIView):
         # Persist retrieval/evidence rows and mirror their IDs into event trace arrays.
         persisted_retrieval_ids = log_retrieval_events(question_event=event, chunks=retrieved_chunks)
         evidence_link_ids = map_evidence(question_event=event, answer_id=answer_id, chunks=citations)
+        citation_chunks = []
+        if citations and retrieved_chunks:
+            chunks_by_id = {chunk.get("chunkId"): chunk for chunk in retrieved_chunks if chunk.get("chunkId")}
+            for citation in citations:
+                chunk = chunks_by_id.get(citation.get("chunkId"))
+                if chunk:
+                    citation_chunks.append(chunk)
+        provenance_ids = persist_evidence_provenance(
+            question_event=event,
+            answer_id=answer_id,
+            chunks=citation_chunks,
+            semantic_query=semantic_query,
+            graph_trace=graph_trace,
+            rule_result=rule_result,
+        )
         event.retrieval_event_ids = persisted_retrieval_ids
         event.evidence_link_ids = evidence_link_ids
         event.save(update_fields=["retrieval_event_ids", "evidence_link_ids", "updated_at"])
@@ -744,6 +859,10 @@ class QuestionAnswerView(APIView):
                     "repositoryCoverageCount": graph_trace.get("repositoryCoverageCount", 0),
                     "conceptCoverageCount": graph_trace.get("conceptCoverageCount", 0),
                     "semanticAlignmentScore": graph_trace.get("semanticAlignmentScore", 0.0),
+                    "provenanceIds": provenance_ids,
+                    "ruleHitsCount": rule_result["matchedRuleCount"],
+                    "ruleConclusions": rule_result["conclusions"],
+                    "ontologyVersions": ontology_versions,
                     "semanticQuery": semantic_query.as_dict(),
                     "semanticDisambiguationRequired": semantic_disambiguation_required,
                     "semanticDisambiguationPrompt": semantic_disambiguation_prompt,

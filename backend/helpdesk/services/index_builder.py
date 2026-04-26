@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import re
 import ssl
@@ -40,6 +41,8 @@ GLOBAL_EXCLUDE_RULES = [
     "test",
     "node_modules",
 ]
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -104,14 +107,14 @@ def current_commit_sha(repo_path: Path) -> str:
 
 def infer_scope(source_path: str, chunk_text: str, repo_url: str = "") -> list[str]:
     """Heuristic scope tagging for retrieval filtering and analytics.
-    
+
     Tags chunks based on content keywords and repository source.
     Repositories are auto-tagged regardless of content to ensure consistent retrieval.
     """
     scope = set()
     blob = f"{source_path}\n{chunk_text}".lower()
     repo_lower = repo_url.lower()
-    
+
     # Auto-tag by source repository
     if "netex" in repo_lower:
         scope.add("NeTEx")
@@ -119,13 +122,11 @@ def infer_scope(source_path: str, chunk_text: str, repo_url: str = "") -> list[s
         scope.add("SIRI")
     if "opra" in repo_lower:
         scope.add("OpRa")
-    if "ojp" in repo_lower:
-        scope.add("OJP")
     if "datex" in repo_lower:
         scope.add("DATEX II")
     if "profile_documentation" in repo_lower or "hfjelstad" in repo_lower:
         scope.add("Profile Documentation")
-    
+
     # Enhance with content-based detection
     if "netex" in blob and "NeTEx" not in scope:
         scope.add("NeTEx")
@@ -135,11 +136,9 @@ def infer_scope(source_path: str, chunk_text: str, repo_url: str = "") -> list[s
         scope.add("Transmodel")
     if "opra" in blob and "OpRa" not in scope:
         scope.add("OpRa")
-    if "ojp" in blob and "OJP" not in scope:
-        scope.add("OJP")
     if "datex" in blob and "DATEX II" not in scope:
         scope.add("DATEX II")
-    
+
     return sorted(scope)
 
 
@@ -398,6 +397,83 @@ def _extract_xsd_attributes(node: ET.Element, limit: int = 12) -> list[str]:
         if len(attributes) >= limit:
             break
     return attributes
+
+
+def _extract_xsd_required_child_elements(node: ET.Element, limit: int = 12) -> list[str]:
+    required_children: list[str] = []
+    child_paths = [
+        "./xs:complexType/xs:sequence/xs:element",
+        "./xs:complexType/xs:choice/xs:element",
+    ]
+    for path in child_paths:
+        for child in node.findall(path, XSD_NS):
+            min_occurs = (child.get("minOccurs") or "1").strip()
+            if min_occurs == "0":
+                continue
+            name = child.get("ref") or child.get("name") or child.get("type") or ""
+            name = name.strip()
+            if name and name not in required_children:
+                required_children.append(name)
+            if len(required_children) >= limit:
+                return required_children
+    return required_children
+
+
+def _extract_xsd_required_attributes(node: ET.Element, limit: int = 12) -> list[str]:
+    required_attributes: list[str] = []
+    for attr in node.findall("./xs:complexType/xs:attribute", XSD_NS):
+        if (attr.get("use") or "").strip() != "required":
+            continue
+        name = attr.get("ref") or attr.get("name") or attr.get("type") or ""
+        name = name.strip()
+        if name and name not in required_attributes:
+            required_attributes.append(name)
+        if len(required_attributes) >= limit:
+            break
+    return required_attributes
+
+
+def extract_xsd_structured_metadata(text: str, max_declarations: int = 250) -> dict[str, dict]:
+    """Parse XSD and return declaration-level structured metadata keyed by heading/name."""
+    try:
+        root = ET.fromstring(text)
+    except ET.ParseError:
+        return {}
+
+    declarations = list(root.findall("./xs:element", XSD_NS))
+    declarations.extend(root.findall("./xs:complexType", XSD_NS))
+    declarations.extend(root.findall("./xs:simpleType", XSD_NS))
+
+    structured: dict[str, dict] = {}
+    for node in declarations[:max_declarations]:
+        declaration_type = node.tag.rsplit("}", 1)[-1]
+        declaration_name = (node.get("name") or node.get("ref") or "").strip()
+        if declaration_type not in {"element", "complexType", "simpleType"} or not declaration_name:
+            continue
+
+        base_type = node.get("type") or ""
+        if not base_type:
+            restriction = node.find("./xs:simpleType/xs:restriction", XSD_NS)
+            if restriction is not None:
+                base_type = restriction.get("base", "")
+        if not base_type:
+            extension = node.find("./xs:complexContent/xs:extension", XSD_NS)
+            if extension is not None:
+                base_type = extension.get("base", "")
+
+        structured[declaration_name] = {
+            "schema": {
+                "declarationType": declaration_type,
+                "declarationName": declaration_name,
+                "baseType": base_type,
+                "childElements": _extract_xsd_child_elements(node),
+                "requiredChildElements": _extract_xsd_required_child_elements(node),
+                "attributes": _extract_xsd_attributes(node),
+                "requiredAttributes": _extract_xsd_required_attributes(node),
+                "documentation": _extract_xsd_documentation(node),
+            }
+        }
+    return structured
 
 
 def _build_xsd_summary_text(node: ET.Element, source_name: str) -> tuple[str, str] | None:
@@ -697,6 +773,12 @@ def _github_api_get_json(
     return parsed, link_header
 
 
+def _is_github_rate_limit_error(error_text: str) -> bool:
+    """Return True when GitHub API response indicates rate limiting."""
+    lowered = error_text.lower()
+    return "rate limit" in lowered
+
+
 def _extract_next_link(link_header: str) -> str | None:
     """Parse RFC5988 Link header and return rel=next URL if present."""
     if not link_header:
@@ -729,12 +811,18 @@ def fetch_github_issue_documents(
 
     next_url: str | None = issue_url
     while next_url:
-        payload, link_header = _github_api_get_json(
-            next_url,
-            github_token=github_token,
-            verify_ssl=verify_ssl,
-            ca_bundle=ca_bundle,
-        )
+        try:
+            payload, link_header = _github_api_get_json(
+                next_url,
+                github_token=github_token,
+                verify_ssl=verify_ssl,
+                ca_bundle=ca_bundle,
+            )
+        except ValueError as exc:
+            if _is_github_rate_limit_error(str(exc)):
+                logger.warning("GitHub issues ingestion stopped due to API rate limit for %s", repo_url)
+                break
+            raise
         if not isinstance(payload, list):
             raise ValueError(f"Unexpected GitHub issues API response for {repo_url}")
 
@@ -764,12 +852,23 @@ def fetch_github_issue_documents(
             comments_count = int(issue.get("comments") or 0)
             comments_url = str(issue.get("comments_url") or "").strip()
             if comments_count > 0 and comments_url:
-                comments_payload, _ = _github_api_get_json(
-                    comments_url,
-                    github_token=github_token,
-                    verify_ssl=verify_ssl,
-                    ca_bundle=ca_bundle,
-                )
+                try:
+                    comments_payload, _ = _github_api_get_json(
+                        comments_url,
+                        github_token=github_token,
+                        verify_ssl=verify_ssl,
+                        ca_bundle=ca_bundle,
+                    )
+                except ValueError as exc:
+                    if _is_github_rate_limit_error(str(exc)):
+                        logger.warning(
+                            "Skipping issue comments due to GitHub API rate limit for %s issue #%s",
+                            repo_url,
+                            number,
+                        )
+                        comments_payload = []
+                    else:
+                        raise
                 if isinstance(comments_payload, list):
                     comment_blocks = []
                     for comment in comments_payload:
@@ -903,6 +1002,11 @@ def index_repository(
                 chunk_overlap=chunk_overlap,
                 source_name=relative_path,
             )
+            xsd_metadata = (
+                extract_xsd_structured_metadata(raw_text)
+                if file_path.suffix.lower() == ".xsd"
+                else {}
+            )
             if not structured:
                 stats.skipped_files += 1
                 continue
@@ -933,6 +1037,7 @@ def index_repository(
                         "heading": heading,
                         "standards_scope": standards_scope,
                         "doc_type": doc_type,
+                        "structured_metadata": xsd_metadata.get(heading, {}),
                         "quality_score": compute_chunk_quality(
                             source_path=relative_path,
                             chunk_text=enriched_chunk_text,
@@ -972,6 +1077,7 @@ def index_repository(
                     "chunk_type": chunk_record["chunk_type"],
                     "doc_type": chunk_record["doc_type"],
                     "heading": chunk_record["heading"],
+                    "structured_metadata": chunk_record["structured_metadata"],
                     "embedding_vector": chunk_embedding,
                 }
 
@@ -1001,12 +1107,19 @@ def index_repository(
             )
 
         if include_issues:
-            issue_documents = fetch_github_issue_documents(
-                repo_url=repo_url,
-                github_token=github_token,
-                verify_ssl=github_verify_ssl,
-                ca_bundle=github_ca_bundle,
-            )
+            try:
+                issue_documents = fetch_github_issue_documents(
+                    repo_url=repo_url,
+                    github_token=github_token,
+                    verify_ssl=github_verify_ssl,
+                    ca_bundle=github_ca_bundle,
+                )
+            except ValueError as exc:
+                if _is_github_rate_limit_error(str(exc)):
+                    logger.warning("Skipping GitHub issues ingestion due to API rate limit for %s", repo_url)
+                    issue_documents = []
+                else:
+                    raise
             for issue_doc in issue_documents:
                 stats.scanned_files += 1
 
@@ -1062,6 +1175,7 @@ def index_repository(
                             "heading": heading,
                             "standards_scope": standards_scope,
                             "doc_type": doc_type,
+                            "structured_metadata": {},
                             "quality_score": compute_chunk_quality(
                                 source_path=source_path,
                                 chunk_text=chunk_text,
@@ -1100,6 +1214,7 @@ def index_repository(
                         "chunk_type": issue_chunk_record["chunk_type"],
                         "doc_type": issue_chunk_record["doc_type"],
                         "heading": issue_chunk_record["heading"],
+                        "structured_metadata": issue_chunk_record["structured_metadata"],
                         "embedding_vector": chunk_embedding,
                     }
 

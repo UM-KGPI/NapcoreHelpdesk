@@ -113,3 +113,50 @@ class QuestionParsingServiceTests(SimpleTestCase):
 
         self.assertEqual(semantic_query.core_concept, "nits:journey-pattern")
         self.assertEqual(semantic_query.candidate_standards, ["NeTEx"])
+
+    @patch("helpdesk.services.question_parsing.get_concept_nits_ids")
+    @patch("helpdesk.services.question_parsing.expand_graph_concepts")
+    @patch("helpdesk.services.question_parsing.extract_graph_concepts")
+    def test_parse_ranks_and_caps_core_concept_candidates(self, extract_mock, expand_mock, nch_mock):
+        extract_mock.return_value = {"netex:line", "netex:network", "opra:service"}
+        expand_mock.return_value = {
+            "netex:line",
+            "netex:network",
+            "opra:service",
+            "nits:abstract-delivery-element-responding-for",
+            "nits:activation-point",
+            "nits:expected-passenger-count",
+            "nits:journey-pattern",
+            "nits:line-network",
+            "nits:service",
+        }
+        nch_mock.return_value = {
+            "nits:abstract-delivery-element-responding-for",
+            "nits:activation-point",
+            "nits:expected-passenger-count",
+            "nits:journey-pattern",
+            "nits:line-network",
+            "nits:service",
+            "nits:network",
+            "nits:line",
+        }
+
+        semantic_query = self.service.parse(
+            text="How does service intensity relate to line and network concepts?",
+            requested_scope=[],
+        )
+
+        self.assertLessEqual(len(semantic_query.core_concepts), 6)
+        self.assertIn(semantic_query.core_concept, {"nits:line", "nits:network", "nits:line-network", "nits:service"})
+
+    def test_extract_original_terms_keeps_informative_lowercase_tokens(self):
+        terms = self.service._extract_original_terms(
+            "Show me a NeTEx XML example for a simple line with stop points"
+        )
+
+        lowered = {value.lower() for value in terms}
+        self.assertIn("netex", lowered)
+        self.assertIn("line", lowered)
+        self.assertIn("stop", lowered)
+        self.assertIn("example", lowered)
+        self.assertNotIn("show", lowered)

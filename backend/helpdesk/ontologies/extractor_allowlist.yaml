@@ -32,6 +32,24 @@ allowlist_exact:
     - VehicleLoadEntry
     - PreparednessLevel
     - IndicatorFrame
+  siri:
+    - VehicleMonitoring
+    - StopMonitoring
+    - EstimatedTimetable
+    - GeneralMessage
+    - SituationExchange
+    - FacilityMonitoring
+    - ConnectionMonitoring
+    - ConnectionTimetable
+    - ProductionTimetable
+    - StopTimetable
+    - MonitoredVehicleJourney
+    - EstimatedVehicleJourney
+    - DatedVehicleJourney
+  datex:
+    - TrafficEvent
+  transmodel:
+    - Journey
 
 allowlist_token:
   netex:
@@ -49,6 +67,22 @@ allowlist_token:
     - journey
     - vehicle
     - indicator
+  siri:
+    - vehicle
+    - journey
+    - stop
+    - monitor
+    - timetable
+    - estimated
+    - facility
+    - connection
+    - message
+    - situation
+  datex:
+    - traffic
+    - event
+    - incident
+    - situation
 
 denylist_concept_ids:
   - netex:Line_Dummy

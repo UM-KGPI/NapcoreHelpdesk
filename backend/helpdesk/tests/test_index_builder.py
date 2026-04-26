@@ -215,6 +215,11 @@ class SourceIndexBuilderTests(TestCase):
                 self.assertIn("Schema declaration: element PassengerStopAssignment", chunk.text)
                 self.assertIn("Direct child elements: ScheduledStopPointRef, StopPlaceRef", chunk.text)
                 self.assertIn("Attributes: version (required)", chunk.text)
+                self.assertEqual(
+                    chunk.structured_metadata["schema"]["requiredChildElements"],
+                    ["ScheduledStopPointRef", "StopPlaceRef"],
+                )
+                self.assertEqual(chunk.structured_metadata["schema"]["requiredAttributes"], ["version"])
                 self.assertNotIn("<xs:schema", chunk.text)
 
     @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/OpRa-CEN/OpRa"})

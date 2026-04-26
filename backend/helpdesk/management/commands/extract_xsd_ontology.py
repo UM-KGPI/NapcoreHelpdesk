@@ -2,9 +2,10 @@
 Management command to extract concept glossary from NeTEx, OpRa, and SIRI XSD schemas.
 
 Usage:
-    python manage.py extract_xsd_ontology --netex-path /path/to/NeTEx --opra-path /path/to/OpRa --siri-path /path/to/SIRI --output ontologies/standards.yaml
+    python manage.py extract_xsd_ontology --netex-path /path/to/NeTEx --opra-path /path/to/OpRa --siri-path /path/to/SIRI --output ontologies/standards.json
 """
 
+import json
 import logging
 import re
 import xml.etree.ElementTree as ET
@@ -249,7 +250,7 @@ def extract_documentation(element: ET.Element) -> str:
     annotation = element.find("xsd:annotation", XSD_NS)
     if annotation is None:
         return ""
-    
+
     doc = annotation.find("xsd:documentation", XSD_NS)
     if doc is not None and doc.text:
         return doc.text.strip()
@@ -267,7 +268,7 @@ def _is_domain_concept(elem_name: str, description: str) -> bool:
         "DerivedViewStructure", "ValueStructure", "SupportStructure", "InFrame", "AbstractStructure"
     ]):
         return False
-    
+
     # Skip enums and small types
     if any(x in elem_name for x in ["Enumeration", "Enum", "Code", "Alias", "Role", "Period", "Plate", "Cleardown"]):
         return False
@@ -275,11 +276,11 @@ def _is_domain_concept(elem_name: str, description: str) -> bool:
     # Skip explicit technical suffixes.
     if elem_name.endswith(("Structure", "Group", "Type", "Dummy", "View")):
         return False
-    
+
     # Domain concepts should have substantive descriptions
     if description and len(description) > 25:
         return True
-    
+
     return False
 
 
@@ -378,40 +379,40 @@ def extract_concepts_from_xsd(
 ) -> Dict[str, Dict]:
     """
     Extract concept definitions from a single XSD file.
-    
+
     Returns dict mapping concept_id -> {name, description, labels}
     """
     concepts = {}
-    
+
     if not xsd_path.exists():
         logger.warning(f"XSD file not found: {xsd_path}")
         return concepts
-    
+
     try:
         tree = ET.parse(xsd_path)
         root = tree.getroot()
     except Exception as e:
         logger.error(f"Failed to parse {xsd_path}: {e}")
         return concepts
-    
+
     # Extract top-level xsd:element definitions (best signal for domain entities).
     for elem in root.findall("xsd:element", XSD_NS):
         elem_name = elem.get("name")
         if not elem_name:
             continue
-        
+
         doc = extract_documentation(elem)
         if not _is_domain_concept(elem_name, doc):
             continue
         if not _is_allowlisted_concept(namespace_prefix, elem_name, disable_allowlist):
             continue
-        
+
         concept_id = f"{namespace_prefix}:{elem_name}"
         if concept_id in DENYLIST_CONCEPT_IDS:
             continue
         labels = _generate_labels(elem_name, doc)
         related_to = _extract_related_concepts(elem, namespace_prefix, concept_id)
-        
+
         concepts[concept_id] = {
             "name": elem_name,
             "description": doc,
@@ -419,17 +420,17 @@ def extract_concepts_from_xsd(
             "source": str(xsd_path.relative_to(source_root)) if source_root else str(xsd_path.name),
             "related_to": related_to,
         }
-    
+
     return concepts
 
 
 def _generate_labels(name: str, description: str) -> List[str]:
     """Generate query labels from element name and documentation."""
     labels = set()
-    
+
     # Add the name as-is (lowercase)
     labels.add(name.lower())
-    
+
     # Split camelCase: VehicleJourney -> vehicle journey
     camel_case = re.sub(r"([a-z])([A-Z])", r"\1 \2", name).lower()
     if camel_case != name.lower():
@@ -439,7 +440,7 @@ def _generate_labels(name: str, description: str) -> List[str]:
     snake_like = re.sub(r"_+", " ", name).lower().strip()
     if snake_like and snake_like != name.lower() and snake_like != camel_case:
         labels.add(snake_like)
-    
+
     # Extract first few words from documentation if they are domain-aligned.
     if description:
         words = description.split()[:5]
@@ -478,7 +479,7 @@ def _generate_labels(name: str, description: str) -> List[str]:
                 and token_overlap >= 1
             ):
                 labels.add(phrase)
-    
+
     return sorted(list(labels))
 
 
@@ -589,7 +590,7 @@ def extract_concept_links_from_examples(
 
 class Command(BaseCommand):
     help = "Extract concept glossary from NeTEx, OpRa, and SIRI XSD schemas"
-    
+
     def add_arguments(self, parser):
         parser.add_argument(
             "--netex-path",
@@ -609,8 +610,8 @@ class Command(BaseCommand):
         parser.add_argument(
             "--output",
             type=Path,
-            default=Path(__file__).parent.parent.parent / "ontologies" / "standards.yaml",
-            help="Output path for updated ontology YAML",
+            default=Path(__file__).parent.parent.parent / "ontologies" / "standards.json",
+            help="Output path for updated ontology JSON inventory",
         )
         parser.add_argument(
             "--merge",
@@ -642,7 +643,7 @@ class Command(BaseCommand):
             action="store_true",
             help="Skip extracting concept links from XML files under examples/.",
         )
-    
+
     def handle(self, *args, **options):
         global ALLOWLIST_EXACT, ALLOWLIST_TOKEN, DENYLIST_CONCEPT_IDS
 
@@ -662,10 +663,10 @@ class Command(BaseCommand):
         ALLOWLIST_EXACT = loaded_exact
         ALLOWLIST_TOKEN = loaded_token
         DENYLIST_CONCEPT_IDS = loaded_denylist
-        
+
         if not netex_path:
             netex_path = Path("/Users/andrejt/Research/repositories/git/NeTEx")
-        
+
         netex_path = Path(netex_path)
         if not netex_path.exists():
             raise CommandError(f"NeTEx path does not exist: {netex_path}")
@@ -681,14 +682,14 @@ class Command(BaseCommand):
         siri_path = Path(siri_path)
         if not siri_path.exists():
             raise CommandError(f"SIRI path does not exist: {siri_path}")
-        
+
         self.stdout.write(f"Extracting concepts from NeTEx at {netex_path}")
-        
+
         # Load existing ontology if merging
         ontology = {}
         if merge and output_path.exists():
             with open(output_path) as f:
-                ontology = yaml.safe_load(f) or {}
+                ontology = json.load(f) or {}
 
         if "concepts" not in ontology:
             ontology["concepts"] = {}
@@ -709,7 +710,7 @@ class Command(BaseCommand):
                 removed_noisy += 1
         if removed_noisy:
             self.stdout.write(f"Removed {removed_noisy} denylisted concepts")
-        
+
         # Extract NeTEx concepts
         netex_concepts = {}
         netex_files = _iter_xsd_files(netex_path, standard="netex", key_files_only=netex_key_files_only)
@@ -727,7 +728,7 @@ class Command(BaseCommand):
             if netex_key_files_only:
                 relative_path = xsd_file.relative_to(netex_path / "xsd")
                 self.stdout.write(f"  ✓ {relative_path}: {len(concepts)} concepts")
-        
+
         self.stdout.write(
             f"\nTotal NeTEx concepts extracted: {len(netex_concepts)} "
             f"from {len(netex_files)} XSD files ({netex_with_concepts} yielded concepts)"
@@ -795,7 +796,7 @@ class Command(BaseCommand):
             concept_data["related_to"] = [
                 cid for cid in concept_data.get("related_to", []) if cid in known_concepts
             ]
-        
+
         # Add extracted concepts, preserving existing ones if merging
         extracted_at = datetime.now(timezone.utc).isoformat()
         for concept_id, concept_data in netex_concepts.items():
@@ -892,12 +893,12 @@ class Command(BaseCommand):
                 f"Linked XML examples: scanned {netex_scanned + opra_scanned + siri_scanned} files, "
                 f"concepts with example links: {len(merged_sources)}"
             )
-        
+
         # Write output
         output_path.parent.mkdir(parents=True, exist_ok=True)
         with open(output_path, "w") as f:
-            yaml.dump(ontology, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
-        
+            json.dump(ontology, f, indent=2, ensure_ascii=False)
+
         self.stdout.write(
             self.style.SUCCESS(f"\n✓ Ontology updated at {output_path}")
         )

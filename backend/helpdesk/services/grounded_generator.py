@@ -96,6 +96,51 @@ def _extract_key_concepts(text: str) -> set[str]:
     return set(w.lower() for w in text.split() if len(w) > 3)
 
 
+def _is_structured_example_request(question_lower: str) -> bool:
+    asks_for_example = any(term in question_lower for term in ["example", "sample", "snippet"])
+    asks_for_structured_payload = any(term in question_lower for term in ["xml", "json", "yaml", "code"])
+    return asks_for_example and asks_for_structured_payload
+
+
+def _build_structured_example_answer(chunks: list[dict]) -> str:
+    example_paths: list[str] = []
+    concept_signals: set[str] = set()
+    for chunk in chunks:
+        source_path = str(chunk.get("sourcePath", "")).strip()
+        if source_path and (source_path.endswith(".xml") or source_path.startswith("examples/")):
+            example_paths.append(source_path)
+        text = str(chunk.get("text", "")).lower()
+        if "scheduledstoppoint" in text or "scheduled stop point" in text:
+            concept_signals.add("ScheduledStopPoint")
+        if "stopplace" in text or "stop place" in text:
+            concept_signals.add("StopPlace")
+        if "passengerstopassignment" in text or "stopassignment" in text or "stop assignment" in text:
+            concept_signals.add("PassengerStopAssignment")
+        if "line" in text:
+            concept_signals.add("Line")
+
+    ordered_paths: list[str] = []
+    seen_paths: set[str] = set()
+    for path in example_paths:
+        if path not in seen_paths:
+            seen_paths.add(path)
+            ordered_paths.append(path)
+
+    path_text = ", ".join(ordered_paths[:3]) if ordered_paths else "the cited NeTEx example files"
+    if concept_signals:
+        concept_text = ", ".join(sorted(concept_signals))
+        return (
+            f"The retrieved evidence points to {path_text}. "
+            f"For this kind of NeTEx example, the evidence references structures such as {concept_text}. "
+            "I cannot safely embed a fresh XML example unless that exact snippet is present in the retrieved evidence, because inventing one can change the model semantics."
+        )
+
+    return (
+        f"The retrieved evidence points to {path_text}. "
+        "I cannot safely embed a fresh XML example unless that exact snippet is present in the retrieved evidence, because the answer must stay source-grounded."
+    )
+
+
 def _build_adaptive_answer(question: str, chunks: list[dict]) -> str:
     """
     Build a deterministic answer adapted to the question using concept matching
@@ -108,6 +153,9 @@ def _build_adaptive_answer(question: str, chunks: list[dict]) -> str:
 
     if _is_delay_journey_exchange_intent(question_lower):
         return _build_delay_exchange_cross_repo_answer(chunks)
+
+    if _is_structured_example_request(question_lower):
+        return _build_structured_example_answer(chunks)
 
     if any(term in question_lower for term in ["delayed", "delay", "late"]) and any(
         term in question_lower for term in ["journey", "journeys"]
@@ -127,7 +175,7 @@ def _build_adaptive_answer(question: str, chunks: list[dict]) -> str:
             "such as DATED VEHICLE JOURNEY, DATED PASSING TIME, and TYPE OF DELAY, then aggregate the "
             "results into the appropriate monitoring or KPI reporting views."
         )
-    
+
     # Check for domain-specific patterns that map to templates.
     if any(term in question_lower for term in ["timetable", "service frame", "netex", "exchange"]):
         if "implement" in question_lower or "build" in question_lower or "create" in question_lower:
@@ -148,7 +196,7 @@ def _build_adaptive_answer(question: str, chunks: list[dict]) -> str:
                 "design your ServiceFrame and TimetableFrame according to the standard, "
                 "and validate against published test cases before deployment."
             )
-    
+
     if any(term in question_lower for term in ["siri", "real-time", "realtime", "monitoring"]):
         if "implement" in question_lower or "setup" in question_lower:
             return (
@@ -161,7 +209,7 @@ def _build_adaptive_answer(question: str, chunks: list[dict]) -> str:
                 "SIRI real-time exchange requires aligning your data format with the approved profile, "
                 "publishing entities with consistent identifiers, and validating message structure against examples."
             )
-    
+
     if any(term in question_lower for term in ["stop", "place", "location", "geography"]):
         if "identifier" in question_lower or "id" in question_lower:
             return (
@@ -173,7 +221,7 @@ def _build_adaptive_answer(question: str, chunks: list[dict]) -> str:
                 "Stop Place data modeling should align with the approved geographic and administrative hierarchy, "
                 "maintain referential integrity, and include accurate location and accessibility information."
             )
-    
+
     # Generic fallback: acknowledge retrieved evidence and recommend validation.
     return (
         "Based on the approved repository evidence, design your implementation according to "
@@ -184,7 +232,7 @@ def _build_adaptive_answer(question: str, chunks: list[dict]) -> str:
 def generate_answer(question: str, chunks: list[dict]) -> dict:
     """
     Generate a deterministic grounded answer from top retrieval evidence.
-    
+
     This is **not** an LLM call. It uses:
     - Pattern matching on the question to route to domain-specific templates
     - Chunk relevance scores (not content) to inform confidence
@@ -203,7 +251,7 @@ def generate_answer(question: str, chunks: list[dict]) -> dict:
     # Confidence reflects retrieval score: higher relevance = higher confidence.
     # Capped at 0.9 for deterministic mode (leave room for LLM later) and floored at 0.55.
     confidence = min(0.9, max(0.55, top["score"]))
-    
+
     # Build adaptive answer based on question patterns and chunk context.
     answer = _build_adaptive_answer(question=question, chunks=chunks)
 

@@ -5,6 +5,18 @@ from django.conf import settings
 from urllib.parse import urlparse
 
 
+_STRONG_CLAIM_MARKERS = (
+    "always",
+    "never",
+    "guarantee",
+    "guarantees",
+    "fully compliant",
+    "compliant",
+    "must",
+    "shall",
+)
+
+
 def _normalize_repository_url(raw_url: str) -> str:
     """Normalize citation URLs to repository roots for allow-list checks.
 
@@ -49,6 +61,16 @@ def evaluate_policy(answer_text: str, citations: list[dict]) -> dict:
             return {
                 "allowed": False,
                 "reason": "POLICY_BLOCK",
+                "review_required": True,
+            }
+
+    if getattr(settings, "POLICY_STRICT_CLAIM_GUARD", False):
+        lowered = answer_text.lower()
+        has_strong_claim = any(marker in lowered for marker in _STRONG_CLAIM_MARKERS)
+        if has_strong_claim and len(citations) < 2:
+            return {
+                "allowed": False,
+                "reason": "INSUFFICIENT_EVIDENCE",
                 "review_required": True,
             }
 

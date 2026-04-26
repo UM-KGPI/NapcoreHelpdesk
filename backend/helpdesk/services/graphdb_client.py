@@ -23,6 +23,81 @@ DEFAULT_NAMESPACES = {
     "nch": "https://napcore.eu/ontology/helpdesk#",
 }
 
+STANDARD_ARTIFACT_RULE_SPECS = {
+    "netex": (
+        "artifact-rules/netex-artifact-rules-v1.0.ttl",
+        "https://napcore.eu/graph/artifact-rules/netex/v1.0",
+    ),
+    "opra": (
+        "artifact-rules/opra-artifact-rules-v1.0.ttl",
+        "https://napcore.eu/graph/artifact-rules/opra/v1.0",
+    ),
+    "siri": (
+        "artifact-rules/siri-artifact-rules-v1.0.ttl",
+        "https://napcore.eu/graph/artifact-rules/siri/v1.0",
+    ),
+    "datex": (
+        "artifact-rules/datex-artifact-rules-v1.0.ttl",
+        "https://napcore.eu/graph/artifact-rules/datex/v1.0",
+    ),
+}
+
+STANDARD_GRAPH_SCOPE = {
+    "netex": [
+        "https://napcore.eu/graph/standards/netex",
+        "https://napcore.eu/graph/alignments/netex",
+    ],
+    "opra": [
+        "https://napcore.eu/graph/standards/opra",
+        "https://napcore.eu/graph/alignments/opra",
+    ],
+    "siri": [
+        "https://napcore.eu/graph/standards/siri",
+        "https://napcore.eu/graph/alignments/siri",
+    ],
+    "datex": [
+        "https://napcore.eu/graph/standards/datex",
+        "https://napcore.eu/graph/alignments/datex",
+    ],
+}
+
+STANDARD_ALIASES = {
+    "netex": "netex",
+    "opra": "opra",
+    "siri": "siri",
+    "datex": "datex",
+    "datexii": "datex",
+    "datex ii": "datex",
+}
+
+
+def build_graph_scope_for_standards(
+    standards: set[str],
+    *,
+    include_artifact_rules: bool,
+) -> list[str]:
+    """Build an ordered named-graph scope for GraphDB queries.
+
+    Graph scope is standard-specific and can optionally include
+    artifact-derived rules for normative queries.
+    """
+
+    normalized: list[str] = []
+    for standard in sorted(standards):
+        alias = STANDARD_ALIASES.get(standard.strip().lower())
+        if alias and alias not in normalized:
+            normalized.append(alias)
+
+    graph_uris: list[str] = []
+    for standard in normalized:
+        graph_uris.extend(STANDARD_GRAPH_SCOPE.get(standard, []))
+        if include_artifact_rules and standard in STANDARD_ARTIFACT_RULE_SPECS:
+            _file_rel_path, artifact_graph_uri = STANDARD_ARTIFACT_RULE_SPECS[standard]
+            graph_uris.append(artifact_graph_uri)
+
+    # Keep stable order while removing duplicates.
+    return list(dict.fromkeys(graph_uris))
+
 
 def _build_auth_header(username: str | None, password: str | None) -> str | None:
     user = (username or "").strip()
@@ -73,6 +148,7 @@ def query_graphdb_concept_expansion(
     username: str = "",
     password: str = "",
     timeout_seconds: int = 10,
+    graph_uris: list[str] | None = None,
 ) -> set[str]:
     """Query GraphDB for SKOS-based concept expansion and return expanded concept IDs."""
 
@@ -89,13 +165,26 @@ def query_graphdb_concept_expansion(
     # SPARQL 1.1 property paths do not support {n,m} quantifiers.
     # Use a plain path for 1 hop, or + for multi-hop traversal.
     quant = "" if safe_hops == 1 else "+"
-    query = (
-        "SELECT DISTINCT ?related WHERE { "
-        f"VALUES ?seed {{ {values} }} "
-        f"?seed (({relation_paths})|^({relation_paths})){quant} ?related . "
-        "FILTER(isIRI(?related)) "
-        "}"
-    )
+    if graph_uris:
+        graph_values = " ".join(f"<{iri}>" for iri in graph_uris)
+        query = (
+            "SELECT DISTINCT ?related WHERE { "
+            f"VALUES ?seed {{ {values} }} "
+            f"VALUES ?g {{ {graph_values} }} "
+            "GRAPH ?g { "
+            f"?seed (({relation_paths})|^({relation_paths})){quant} ?related . "
+            "} "
+            "FILTER(isIRI(?related)) "
+            "}"
+        )
+    else:
+        query = (
+            "SELECT DISTINCT ?related WHERE { "
+            f"VALUES ?seed {{ {values} }} "
+            f"?seed (({relation_paths})|^({relation_paths})){quant} ?related . "
+            "FILTER(isIRI(?related)) "
+            "}"
+        )
 
     query_endpoint = _normalize_repository_endpoint(endpoint=endpoint, repository=repository)
     auth_header = _build_auth_header(username=username, password=password)
@@ -195,23 +284,75 @@ def load_default_ontology_graphs(
     username: str = "",
     password: str = "",
     replace: bool = True,
+    include_artifact_rules: bool = False,
+    artifact_rule_standards: set[str] | None = None,
 ) -> list[dict]:
-    """Load core + standards + alignment ontologies into named graphs in GraphDB."""
+    """Load core + standards + alignment ontologies into named graphs in GraphDB.
+
+    Artifact-derived rules are intentionally opt-in because they should only be
+    active for standard-specific, normative constraint reasoning.
+    """
 
     base_dir = Path(__file__).resolve().parents[3]
     ontology_dir = base_dir / "docs" / "ontology"
 
     graph_specs = [
-        (ontology_dir / "napcore-its.ttl", "https://napcore.eu/graph/core/napcore-its"),
-        (ontology_dir / "netex-federated.ttl", "https://napcore.eu/graph/standards/netex"),
-        (ontology_dir / "opra-federated.ttl", "https://napcore.eu/graph/standards/opra"),
-        (ontology_dir / "siri-federated.ttl", "https://napcore.eu/graph/standards/siri"),
-        (ontology_dir / "datex-federated.ttl", "https://napcore.eu/graph/standards/datex"),
-        (ontology_dir / "standards-alignment.ttl", "https://napcore.eu/graph/alignments/standards"),
+        (
+            "napcore-its",
+            ontology_dir / "napcore-its.ttl",
+            "https://napcore.eu/graph/core/napcore-its",
+        ),
+        ("netex", ontology_dir / "standards" / "netex.ttl", "https://napcore.eu/graph/standards/netex"),
+        ("opra", ontology_dir / "standards" / "opra.ttl", "https://napcore.eu/graph/standards/opra"),
+        ("siri", ontology_dir / "standards" / "siri.ttl", "https://napcore.eu/graph/standards/siri"),
+        ("datex", ontology_dir / "standards" / "datex.ttl", "https://napcore.eu/graph/standards/datex"),
+        (
+            "netex-examples",
+            ontology_dir / "examples" / "netex-examples.ttl",
+            "https://napcore.eu/graph/examples/netex",
+        ),
+        (
+            "nits-netex-align",
+            ontology_dir / "alignments" / "nits-netex-align.ttl",
+            "https://napcore.eu/graph/alignments/netex",
+        ),
+        (
+            "nits-opra-align",
+            ontology_dir / "alignments" / "nits-opra-align.ttl",
+            "https://napcore.eu/graph/alignments/opra",
+        ),
+        (
+            "nits-siri-align",
+            ontology_dir / "alignments" / "nits-siri-align.ttl",
+            "https://napcore.eu/graph/alignments/siri",
+        ),
+        (
+            "nits-datex-align",
+            ontology_dir / "alignments" / "nits-datex-align.ttl",
+            "https://napcore.eu/graph/alignments/datex",
+        ),
     ]
 
+    if include_artifact_rules:
+        requested = (
+            sorted(STANDARD_ARTIFACT_RULE_SPECS.keys())
+            if artifact_rule_standards is None
+            else sorted({item.strip().lower() for item in artifact_rule_standards if item.strip()})
+        )
+        unsupported = [name for name in requested if name not in STANDARD_ARTIFACT_RULE_SPECS]
+        if unsupported:
+            supported = ", ".join(sorted(STANDARD_ARTIFACT_RULE_SPECS.keys()))
+            unsupported_joined = ", ".join(unsupported)
+            raise ValueError(
+                f"Unsupported artifact-rule standards: {unsupported_joined}. Supported: {supported}"
+            )
+
+        for standard in requested:
+            file_rel_path, graph_uri = STANDARD_ARTIFACT_RULE_SPECS[standard]
+            graph_specs.append((f"{standard}-artifact-rules-v1.0", ontology_dir / file_rel_path, graph_uri))
+
     results: list[dict] = []
-    for file_path, graph_uri in graph_specs:
+    for ontology_key, file_path, graph_uri in graph_specs:
         if not file_path.exists():
             raise FileNotFoundError(f"Ontology file not found: {file_path}")
         content = file_path.read_text(encoding="utf-8")
@@ -226,6 +367,7 @@ def load_default_ontology_graphs(
             replace=replace,
         )
         result["filePath"] = str(file_path)
+        result["ontologyKey"] = ontology_key
         results.append(result)
 
     return results

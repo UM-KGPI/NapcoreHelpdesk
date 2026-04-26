@@ -16,8 +16,10 @@ except Exception:  # pragma: no cover - only unavailable in non-postgres-only en
 from helpdesk.models import SourceChunk
 from helpdesk.db_fields import HAS_NATIVE_PGVECTOR
 from helpdesk.services.embeddings import build_text_embedding, cosine_similarity, normalize_text_tokens
-from helpdesk.services.graphdb_client import query_graphdb_concept_expansion
-from helpdesk.services.neo4j_importer import query_neo4j_concept_expansion
+from helpdesk.services.graphdb_client import (
+    build_graph_scope_for_standards,
+    query_graphdb_concept_expansion,
+)
 from helpdesk.services.semantic_graph import (
     GRAPH_CONCEPT_ALIASES,
     expand_graph_concepts,
@@ -34,7 +36,7 @@ except Exception:  # pragma: no cover - optional dependency in SQLite-only envir
 
 DEFAULT_CHUNKS = [
     {
-        "repository_url": "https://github.com/NeTEx-CEN/NeTEx",
+        "repository_url": settings.SEED_REPO_NETEX,
         "commit_sha": "placeholder",
         "source_path": "README.md",
         "chunk_id": "rag-c-001",
@@ -48,7 +50,7 @@ DEFAULT_CHUNKS = [
         ),
     },
     {
-        "repository_url": "https://github.com/NeTEx-CEN/NeTEx",
+        "repository_url": settings.SEED_REPO_SIRI,
         "commit_sha": "placeholder",
         "source_path": "README.md",
         "chunk_id": "rag-c-002",
@@ -62,24 +64,10 @@ DEFAULT_CHUNKS = [
         ),
     },
     {
-        "repository_url": "https://github.com/NeTEx-CEN/NeTEx",
+        "repository_url": settings.SEED_REPO_OPRA,
         "commit_sha": "placeholder",
         "source_path": "README.md",
         "chunk_id": "rag-c-003",
-        "label": "OJP context",
-        "text": "OJP provides profile-based operational and planning data exchange flows.",
-        "standards_scope": ["OJP"],
-        "quality_score": 0.78,
-        "doc_type": "readme",
-        "embedding_vector": build_text_embedding(
-            "OJP provides profile-based operational and planning data exchange flows."
-        ),
-    },
-    {
-        "repository_url": "https://github.com/NeTEx-CEN/NeTEx",
-        "commit_sha": "placeholder",
-        "source_path": "README.md",
-        "chunk_id": "rag-c-004",
         "label": "OpRa context",
         "text": "OpRa defines operational and performance metrics exchange profiles for transport networks.",
         "standards_scope": ["OpRa"],
@@ -311,7 +299,7 @@ def _jaccard_similarity(left: set[str], right: set[str]) -> float:
     return len(intersection) / len(union)
 
 
-def _diversified_top_k(candidates: list[dict], top_k: int) -> list[dict]:
+def _diversified_top_k(candidates: list[dict], top_k: int, mmr_lambda: float) -> list[dict]:
     """Greedy MMR-like selection to reduce near-duplicate evidence concentration."""
 
     if len(candidates) <= top_k:
@@ -332,8 +320,6 @@ def _diversified_top_k(candidates: list[dict], top_k: int) -> list[dict]:
 
     selected: list[dict] = []
     remaining = list(candidates)
-    mmr_lambda = 0.92
-
     while remaining and len(selected) < top_k:
         best_idx = 0
         best_score = float("-inf")
@@ -355,6 +341,45 @@ def _diversified_top_k(candidates: list[dict], top_k: int) -> list[dict]:
         candidate.pop("_diversityTokens", None)
 
     return selected
+
+
+def _cap_expanded_concepts(
+    *,
+    question_concepts: set[str],
+    expanded_concepts: set[str],
+    max_concepts: int,
+) -> set[str]:
+    """Cap expanded graph concepts to reduce query drift and noisy fan-out."""
+
+    if max_concepts <= 0:
+        return set()
+    if len(expanded_concepts) <= max_concepts:
+        return expanded_concepts
+
+    prioritized = sorted(
+        expanded_concepts,
+        key=lambda concept_id: (concept_id not in question_concepts, concept_id),
+    )
+    return set(prioritized[:max_concepts])
+
+
+def _apply_source_path_cap(candidates: list[dict], max_per_source_path: int) -> list[dict]:
+    """Limit repeated hits from the same source path before final selection."""
+
+    if max_per_source_path <= 0:
+        return candidates
+
+    kept: list[dict] = []
+    per_path_count: dict[str, int] = {}
+    for candidate in candidates:
+        source_path = str(candidate.get("sourcePath", "") or "")
+        current_count = per_path_count.get(source_path, 0)
+        if source_path and current_count >= max_per_source_path:
+            continue
+        kept.append(candidate)
+        if source_path:
+            per_path_count[source_path] = current_count + 1
+    return kept
 
 
 DOC_TYPE_BASE_ADJUSTMENTS = {
@@ -382,6 +407,14 @@ def _question_doc_type_hints(question: str) -> set[str]:
     for doc_type, markers in DOC_TYPE_HINTS.items():
         if any(marker in lower_question for marker in markers):
             hinted.add(doc_type)
+
+    # "example XML" usually asks for an instance/example artifact, not schema/XSD definition.
+    asks_example_xml = "example" in lower_question and "xml" in lower_question
+    asks_schema_definition = "xsd" in lower_question or "schema" in lower_question
+    if asks_example_xml and not asks_schema_definition:
+        hinted.add("example")
+        hinted.discard("schema")
+
     return hinted
 
 
@@ -439,10 +472,49 @@ STANDARD_HINTS = {
     "NeTEx": {"netex"},
     "SIRI": {"siri"},
     "Transmodel": {"transmodel"},
-    "OJP": {"ojp"},
     "OpRa": {"opra"},
     "DATEX II": {"datex", "datexii", "datex2"},
 }
+
+_STANDARD_SCOPE_ALIASES = {
+    "netex": "netex",
+    "siri": "siri",
+    "opra": "opra",
+    "datex ii": "datex",
+    "datex": "datex",
+    "datex2": "datex",
+    "datexii": "datex",
+}
+
+
+def _is_normative_constraint_question(question: str) -> bool:
+    lower_question = (question or "").lower()
+    return bool(
+        re.search(
+            r"\b(mandatory|optional|required|must|shall|minoccurs|maxoccurs|cardinality)\b",
+            lower_question,
+        )
+    )
+
+
+def _active_graphdb_standards(
+    *,
+    scope: list[str] | None,
+    hinted_standards: set[str],
+) -> set[str]:
+    names: set[str] = set()
+
+    for standard in hinted_standards:
+        alias = _STANDARD_SCOPE_ALIASES.get((standard or "").strip().lower())
+        if alias:
+            names.add(alias)
+
+    for standard in scope or []:
+        alias = _STANDARD_SCOPE_ALIASES.get((standard or "").strip().lower())
+        if alias:
+            names.add(alias)
+
+    return names
 
 
 def _graph_score_adjustment(
@@ -454,6 +526,7 @@ def _graph_score_adjustment(
     source_path: str,
     label: str,
     heading: str,
+    hinted_doc_types: set[str] | None = None,
 ) -> tuple[float, bool, set[str]]:
     """Score adjustment for graph reasoning with provenance tracking.
 
@@ -477,7 +550,12 @@ def _graph_score_adjustment(
 
     direct_overlap = chunk_concepts.intersection(question_concepts)
     if direct_overlap:
-        return 0.20, True, direct_overlap
+        bonus = 0.0
+        if "example" in (hinted_doc_types or set()) and lowered_path.startswith("examples/"):
+            bonus += 0.06
+        if has_example_path_match:
+            bonus += 0.24
+        return 0.20 + bonus, True, direct_overlap
 
     expanded_overlap = chunk_concepts.intersection(expanded_concepts)
     if expanded_overlap:
@@ -492,39 +570,164 @@ def _graph_score_adjustment(
     return 0.0, False, set()
 
 
+def _alias_token_subset_match(alias: str, value: str) -> bool:
+    alias_tokens = set(_normalize_tokens(alias))
+    if not alias_tokens:
+        return False
+    value_tokens = set(_normalize_tokens(value))
+    return alias_tokens.issubset(value_tokens)
+
+
+def _graph_alias_match_score(
+    alias: str,
+    *,
+    source_path: str,
+    label: str,
+    heading: str,
+    text: str,
+) -> float:
+    alias_lower = (alias or "").strip().lower()
+    if not alias_lower:
+        return 0.0
+
+    alias_token_count = len(_normalize_tokens(alias_lower))
+    specificity = min(0.75, (alias_token_count * 0.12) + (min(len(alias_lower), 24) * 0.01))
+
+    normalized_source_path = (source_path or "").lower()
+    normalized_label = (label or "").lower()
+    normalized_heading = (heading or "").lower()
+    normalized_text = (text or "").lower()
+
+    if alias_lower in normalized_source_path or _alias_token_subset_match(alias_lower, source_path):
+        return 1.10 + specificity
+    if alias_lower in normalized_label or _alias_token_subset_match(alias_lower, label):
+        return 0.85 + specificity
+    if alias_lower in normalized_heading or _alias_token_subset_match(alias_lower, heading):
+        return 0.75 + specificity
+    if alias_lower in normalized_text or _alias_token_subset_match(alias_lower, text):
+        return 0.40 + specificity
+    return 0.0
+
+
+def _graph_candidate_rank_score(
+    chunk: SourceChunk,
+    aliases: set[str],
+    question: str,
+    hinted_doc_types: set[str],
+    concept_example_paths: set[str],
+) -> float:
+    source_path = chunk.source_path or ""
+    label = chunk.label or ""
+    heading = getattr(chunk, "heading", "") or ""
+    text = chunk.text or ""
+    lowered_path = source_path.lower().strip()
+    doc_type = (getattr(chunk, "doc_type", "") or "").lower()
+
+    score = max(
+        (
+            _graph_alias_match_score(
+                alias,
+                source_path=source_path,
+                label=label,
+                heading=heading,
+                text=text,
+            )
+            for alias in aliases
+        ),
+        default=0.0,
+    )
+
+    if question:
+        score += _token_overlap_score(
+            question=question,
+            chunk_text="\n".join([source_path, label, heading, text]),
+        ) * 0.75
+
+        lower_question = question.lower()
+        if "xml" in lower_question:
+            if lowered_path.endswith(".xml"):
+                score += 0.35
+            elif lowered_path.endswith(".xsd"):
+                score -= 0.12
+
+        for hint in _question_path_hints(question):
+            if hint in lowered_path:
+                score += 0.80
+
+    if "example" in hinted_doc_types:
+        if doc_type == "example":
+            score += 0.60
+        elif doc_type == "schema":
+            score -= 0.10
+    elif "schema" in hinted_doc_types and doc_type == "schema":
+        score += 0.20
+
+    if lowered_path.startswith("examples/"):
+        score += 0.15
+
+    if lowered_path and any(lowered_path.endswith(path.lower()) for path in concept_example_paths):
+        score += 1.40
+
+    return score
+
+
 def _graph_concept_candidates(
     expanded_concepts: set[str],
     top_k: int,
+    max_candidates: int | None = None,
     scope: list[str] | None = None,
+    question: str = "",
+    hinted_doc_types: set[str] | None = None,
+    concept_example_paths: set[str] | None = None,
 ):
     """Return DB chunks whose text mentions any alias of the expanded concept set.
 
     Builds an OR filter across all aliases for each concept ID present in
-    *expanded_concepts*, capped at ``max(10, top_k * 2)`` results.
-    Restricts candidates to schema/example chunks to avoid broad markdown
-    keyword hits dominating graph-mode reranking.
-    Returns an empty queryset when *expanded_concepts* is empty.
+    *expanded_concepts*, then ranks the raw matches before applying the final
+    candidate cap. Restricts candidates to schema/example chunks to avoid broad
+    markdown keyword hits dominating graph-mode reranking.
+    Returns an empty list when *expanded_concepts* is empty.
     """
 
     if not expanded_concepts:
-        return SourceChunk.objects.none()
+        return []
 
     alias_filter = models.Q()
+    candidate_aliases: set[str] = set()
     for concept_id in expanded_concepts:
         for alias in GRAPH_CONCEPT_ALIASES.get(concept_id, set()):
+            candidate_aliases.add(alias)
             alias_filter |= models.Q(text__icontains=alias)
             alias_filter |= models.Q(source_path__icontains=alias)
             alias_filter |= models.Q(label__icontains=alias)
             alias_filter |= models.Q(heading__icontains=alias)
 
     if not alias_filter:
-        return SourceChunk.objects.none()
+        return []
 
-    return (
+    resolved_max_candidates = max_candidates if max_candidates is not None else max(10, top_k * 2)
+    candidate_limit = max(0, resolved_max_candidates)
+    if candidate_limit == 0:
+        return []
+
+    ranked_candidates = []
+    for chunk in (
         SourceChunk.objects.filter(_scope_query_filter(scope))
         .filter(doc_type__in=["schema", "example"])
-        .filter(alias_filter)[: max(10, top_k * 2)]
-    )
+        .filter(alias_filter)
+        .only("id", "text", "source_path", "label", "heading", "doc_type", "quality_score")
+    ):
+        rank_score = _graph_candidate_rank_score(
+            chunk=chunk,
+            aliases=candidate_aliases,
+            question=question,
+            hinted_doc_types=hinted_doc_types or set(),
+            concept_example_paths=concept_example_paths or set(),
+        )
+        ranked_candidates.append((rank_score, float(chunk.quality_score), int(chunk.id), chunk))
+
+    ranked_candidates.sort(key=lambda value: (value[0], value[1], value[2]), reverse=True)
+    return [chunk for _rank_score, _quality_score, _chunk_id, chunk in ranked_candidates[:candidate_limit]]
 
 
 def _question_standard_hints(question: str) -> set[str]:
@@ -600,8 +803,23 @@ def retrieve_chunks_with_trace(
 
     _ensure_seed_chunks()
 
+    graph_expansion_max_concepts = max(1, int(getattr(settings, "GRAPH_EXPANSION_MAX_CONCEPTS", 64)))
+    graph_expansion_max_candidates = max(1, int(getattr(settings, "GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS", 40)))
+    source_path_cap = max(1, int(getattr(settings, "RETRIEVAL_MAX_SAME_SOURCE_PATH", 2)))
+    mmr_lambda = float(getattr(settings, "RETRIEVAL_MMR_LAMBDA", 0.92))
+    mmr_lambda = max(0.0, min(1.0, mmr_lambda))
+    retrieval_diversity_enabled = bool(getattr(settings, "RETRIEVAL_DIVERSITY_ENABLED", True))
+    keyword_trap_penalty = float(getattr(settings, "RETRIEVAL_KEYWORD_TRAP_PENALTY", 0.6))
+    keyword_trap_penalty = max(0.0, min(1.0, keyword_trap_penalty))
+
     hinted_standards = _question_standard_hints(question)
     hinted_doc_types = _question_doc_type_hints(question)
+
+    asks_example_xml = "example" in hinted_doc_types and "xml" in question.lower() and "xsd" not in question.lower()
+    if graph_rag_enabled and asks_example_xml:
+        # Reduce semantic fan-out for concrete example requests to avoid schema-heavy drift.
+        graph_expansion_max_concepts = min(graph_expansion_max_concepts, 16)
+        graph_expansion_max_candidates = min(graph_expansion_max_candidates, max(12, top_k * 2))
 
     # Concept extraction happens BEFORE embedding so canonical domain terms
     # are present in the query vector and align with indexed document vocabulary.
@@ -609,10 +827,17 @@ def retrieve_chunks_with_trace(
     graph_expansion_source = "none"
     if graph_rag_enabled and question_concepts:
         graphdb_enabled = getattr(settings, "GRAPHDB_ENABLED", False)
-        neo4j_experimental_enabled = getattr(settings, "NEO4J_EXPERIMENTAL_ENABLED", False)
 
         if graphdb_enabled:
             try:
+                active_standards = _active_graphdb_standards(
+                    scope=scope,
+                    hinted_standards=hinted_standards,
+                )
+                graph_scope = build_graph_scope_for_standards(
+                    active_standards,
+                    include_artifact_rules=_is_normative_constraint_question(question),
+                )
                 expanded_concepts = query_graphdb_concept_expansion(
                     concept_ids=question_concepts,
                     hops=1,
@@ -621,28 +846,20 @@ def retrieve_chunks_with_trace(
                     username=getattr(settings, "GRAPHDB_USER", ""),
                     password=getattr(settings, "GRAPHDB_PASSWORD", ""),
                     timeout_seconds=settings.GRAPHDB_TIMEOUT_SECONDS,
+                    graph_uris=graph_scope or None,
                 )
                 graph_expansion_source = "graphdb"
-            except Exception:
-                expanded_concepts = expand_graph_concepts(question_concepts, hops=1)
-                graph_expansion_source = "memory_fallback"
-        elif neo4j_experimental_enabled and getattr(settings, "NEO4J_ENABLED", False):
-            try:
-                expanded_concepts = query_neo4j_concept_expansion(
-                    concept_ids=question_concepts,
-                    hops=1,
-                    uri=settings.NEO4J_URI,
-                    username=settings.NEO4J_USER,
-                    password=settings.NEO4J_PASSWORD,
-                    database=settings.NEO4J_DATABASE,
-                )
-                graph_expansion_source = "neo4j_experimental"
             except Exception:
                 expanded_concepts = expand_graph_concepts(question_concepts, hops=1)
                 graph_expansion_source = "memory_fallback"
         else:
             expanded_concepts = expand_graph_concepts(question_concepts, hops=1)
             graph_expansion_source = "memory"
+        expanded_concepts = _cap_expanded_concepts(
+            question_concepts=question_concepts,
+            expanded_concepts=expanded_concepts,
+            max_concepts=graph_expansion_max_concepts,
+        )
         graph_expansion_hops = 1
     else:
         expanded_concepts = set()
@@ -685,7 +902,13 @@ def retrieve_chunks_with_trace(
             chunk_iterable = list(chunk_iterable)
             existing_ids = {chunk.id for chunk in chunk_iterable}
         for graph_chunk in _graph_concept_candidates(
-            expanded_concepts=expanded_concepts, top_k=top_k, scope=scope
+            expanded_concepts=expanded_concepts,
+            top_k=top_k,
+            max_candidates=graph_expansion_max_candidates,
+            scope=scope,
+            question=question,
+            hinted_doc_types=hinted_doc_types,
+            concept_example_paths=concept_example_paths,
         ):
             if graph_chunk.id not in existing_ids:
                 chunk_iterable.append(graph_chunk)
@@ -758,6 +981,7 @@ def retrieve_chunks_with_trace(
             source_path=chunk.source_path,
             label=chunk.label,
             heading=getattr(chunk, "heading", "") or "",
+            hinted_doc_types=hinted_doc_types,
         )
         raw_score += graph_adjustment
 
@@ -775,7 +999,7 @@ def retrieve_chunks_with_trace(
         # Break ties deterministically; keyword-trap chunks rank below genuine matches.
         rank_score = raw_score + (lexical_score * 0.01) + (vector_score * 0.005)
         if keyword_trap:
-            rank_score *= 0.6
+            rank_score *= keyword_trap_penalty
 
         candidates.append(
             {
@@ -788,6 +1012,11 @@ def retrieve_chunks_with_trace(
                 "sourcePath": chunk.source_path,
                 "chunkId": chunk.chunk_id,
                 "label": chunk.label,
+                "standardsScope": chunk.standards_scope or [],
+                "chunkType": getattr(chunk, "chunk_type", "") or "",
+                "docType": getattr(chunk, "doc_type", "") or "",
+                "heading": getattr(chunk, "heading", "") or "",
+                "structuredMetadata": getattr(chunk, "structured_metadata", {}) or {},
                 "retrievalEventId": f"re-{uuid4().hex[:8]}",
                 "_graphContribution": graph_adjustment,
                 "_graphHit": graph_hit,
@@ -796,7 +1025,11 @@ def retrieve_chunks_with_trace(
         )
 
     candidates.sort(key=lambda value: (value["_rankScore"], value["score"]), reverse=True)
-    trimmed = _diversified_top_k(candidates=candidates, top_k=top_k)
+    candidates = _apply_source_path_cap(candidates=candidates, max_per_source_path=source_path_cap)
+    if retrieval_diversity_enabled:
+        trimmed = _diversified_top_k(candidates=candidates, top_k=top_k, mmr_lambda=mmr_lambda)
+    else:
+        trimmed = candidates[:top_k]
     graph_hits = 0
     graph_total = 0.0
     provenance_chains: set[str] = set()
@@ -842,13 +1075,18 @@ def retrieve_chunks_with_trace(
         "graphExpansionHops": graph_expansion_hops,
         "graphExpansionSource": graph_expansion_source,
         "graphConceptIds": sorted(expanded_concepts) if graph_rag_enabled else [],
+        "graphConceptCap": graph_expansion_max_concepts if graph_rag_enabled else 0,
         "graphCandidatesAdded": graph_candidates_added if graph_rag_enabled else 0,
+        "graphCandidateCap": graph_expansion_max_candidates if graph_rag_enabled else 0,
         "graphEvidenceCount": graph_hits if graph_rag_enabled else 0,
         "graphScoreContribution": round(graph_total / len(trimmed), 4) if graph_rag_enabled and trimmed else 0.0,
         "graphProvenanceChainCount": len(provenance_chains) if graph_rag_enabled else 0,
         "repositoryCoverageCount": repository_coverage_count,
         "conceptCoverageCount": len(graph_concepts_in_trimmed),
         "semanticAlignmentScore": round(sum(vector_scores_trimmed) / len(vector_scores_trimmed), 4) if vector_scores_trimmed else 0.0,
+        "retrievalSourcePathCap": source_path_cap,
+        "retrievalDiversityEnabled": retrieval_diversity_enabled,
+        "retrievalMmrLambda": round(mmr_lambda, 4),
         "retrievalLatencyMs": round((time.time() - retrieval_start_time) * 1000, 1),
     }
     return trimmed, trace

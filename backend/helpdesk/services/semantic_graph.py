@@ -197,6 +197,20 @@ def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
         " }"
     )
 
+    example_rows = _sparql_get(
+        "SELECT DISTINCT ?concept ?label ?source WHERE {"
+        " ?artifact <https://napcore.eu/ontology/examples#illustratesConcept> ?concept ."
+        " OPTIONAL {"
+        "  ?artifact <http://www.w3.org/2004/02/skos/core#prefLabel>|"
+        "<http://www.w3.org/2004/02/skos/core#altLabel>|"
+        "<http://www.w3.org/2000/01/rdf-schema#label> ?label ."
+        " }"
+        " OPTIONAL { ?artifact <http://purl.org/dc/terms/source> ?source . }"
+        " FILTER(!CONTAINS(STR(?concept), 'napcore.eu/ontology/nits'))"
+        " FILTER(!CONTAINS(STR(?concept), 'www.w3.org'))"
+        " }"
+    )
+
     concepts: dict[str, dict] = {}
     for row in labels_rows:
         concept_id = _iri_to_concept_id(row.get("concept", ""))
@@ -227,6 +241,20 @@ def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
     for concept_id, nits_ids in nits_by_concept.items():
         specific = [n for n in nits_ids if n not in _ABSTRACT_NITS_IDS]
         concepts[concept_id]["maps_to_nits"] = specific[0] if specific else nits_ids[0]
+
+    for row in example_rows:
+        concept_id = _iri_to_concept_id(row.get("concept", ""))
+        label = row.get("label", "").strip()
+        source = row.get("source", "").strip()
+        if not concept_id or concept_id not in concepts:
+            continue
+        entry = concepts.setdefault(concept_id, {"labels": [], "related_to": []})
+        if label and label not in entry["labels"]:
+            entry["labels"].append(label)
+        if source:
+            example_sources = entry.setdefault("example_sources", [])
+            if source not in example_sources:
+                example_sources.append(source)
 
     namespaces = {
         "netex": "https://netex.org.uk/ontology/netex",
@@ -378,7 +406,7 @@ def _load_nits_ontology() -> dict:
 
 def _build_concept_aliases_from_ontology(ontology: dict) -> dict[str, set[str]]:
     """Build GRAPH_CONCEPT_ALIASES from ontology concept labels.
-    
+
     Converts concept IDs (with colons as is from YAML keys) to sets of labels.
     """
     aliases = {}
@@ -683,28 +711,28 @@ def _alias_matches_text(alias: str, normalized_text: str) -> bool:
 
 def _build_graph_relations_from_ontology(ontology: dict) -> dict[str, set[str]]:
     """Build GRAPH_RELATIONS from ontology concept relationships.
-    
+
     Creates bidirectional edges: if A.related_to includes B, then:
     - A -> B (explicit relationship)
     - B -> A (implicit reverse relationship)
     """
     relations = {}
     concepts = ontology.get("concepts", {})
-    
+
     for concept_id, concept_data in concepts.items():
         related = concept_data.get("related_to", [])
         if related:
             if concept_id not in relations:
                 relations[concept_id] = set()
             relations[concept_id].update(related)
-    
+
     # Add reverse relationships (bidirectional)
     for concept_id, related_set in list(relations.items()):
         for related_concept in related_set:
             if related_concept not in relations:
                 relations[related_concept] = set()
             relations[related_concept].add(concept_id)
-    
+
     # Cross-standard bridge: concepts mapped to the same NCH node are treated as
     # directly related so one-hop expansion can traverse standard boundaries.
     for aligned_concepts in NITS_TO_CONCEPTS.values():

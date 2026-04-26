@@ -543,7 +543,7 @@ components:
           type: array
           items:
             type: string
-            enum: [Transmodel, NeTEx, SIRI, OJP, OpRa, DATEX II, Profile Documentation]
+            enum: [Transmodel, NeTEx, SIRI, OpRa, DATEX II, Profile Documentation]
         language:
           type: string
           default: en
@@ -661,6 +661,22 @@ components:
           type: array
           items:
             type: string
+        provenanceIds:
+          type: array
+          items:
+            type: string
+        ruleHitsCount:
+          type: integer
+          minimum: 0
+        ruleConclusions:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        ontologyVersions:
+          type: array
+          items:
+            $ref: '#/components/schemas/OntologyVersionTrace'
         graphExpansionHops:
           type: integer
           minimum: 0
@@ -775,6 +791,19 @@ components:
           items:
             type: string
             enum: [mandatory, optional]
+      additionalProperties: false
+    OntologyVersionTrace:
+      type: object
+      required: [ontologyKey, version, graphUri, contentHash]
+      properties:
+        ontologyKey:
+          type: string
+        version:
+          type: string
+        graphUri:
+          type: string
+        contentHash:
+          type: string
       additionalProperties: false
     PromotionCandidatesResponse:
       type: object

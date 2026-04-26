@@ -8,6 +8,17 @@ from urllib.request import Request, urlopen
 
 logger = logging.getLogger(__name__)
 
+# Maps IRI domain fragment to human-readable standard name.
+# Used by discover_standards_for_core_concept to infer the standard from
+# the concept IRI namespace.
+_IRI_DOMAIN_TO_STANDARD: dict[str, str] = {
+    "netex.org.uk": "NeTEx",
+    "opra.org.uk": "OpRa",
+    "siri.org.uk": "SIRI",
+    "datex.org": "DATEX II",
+    "transmodel": "Transmodel",
+}
+
 
 class GraphDBConnector:
     """Minimal GraphDB SPARQL connector used for concept anchoring/discovery.
@@ -46,22 +57,28 @@ SELECT DISTINCT ?core WHERE {{
             return []
 
         sparql = f"""
-SELECT DISTINCT ?standard WHERE {{
-  BIND(<{core_concept_iri}> AS ?core)
-  ?core <http://www.w3.org/2002/07/owl#equivalentClass>|<http://www.w3.org/2000/01/rdf-schema#subClassOf> ?standardConcept .
-  ?standardConcept <http://purl.org/dc/terms/source> ?standard .
+SELECT DISTINCT ?stdConcept WHERE {{
+  ?stdConcept <http://www.w3.org/2002/07/owl#equivalentClass>|<http://www.w3.org/2000/01/rdf-schema#subClassOf> <{core_concept_iri}> .
+  FILTER(!CONTAINS(STR(?stdConcept), "napcore.eu/ontology/nits"))
+  FILTER(!CONTAINS(STR(?stdConcept), "www.w3.org"))
+  FILTER(!CONTAINS(STR(?stdConcept), "purl.org"))
 }}
 """.strip()
         rows = self._query_select(sparql)
-        return sorted({row.get("standard", "") for row in rows if row.get("standard")})
+        standards: list[str] = []
+        for row in rows:
+            iri = row.get("stdConcept", "")
+            for domain, name in _IRI_DOMAIN_TO_STANDARD.items():
+                if domain in iri and name not in standards:
+                    standards.append(name)
+                    break
+        return sorted(standards)
 
     def _query_select(self, sparql: str) -> list[dict[str, str]]:
         if not self.endpoint_url:
             return []
 
         payload = {"query": sparql}
-        if self.repository:
-            payload["default-graph-uri"] = self.repository
 
         request = Request(
             url=self.endpoint_url,
