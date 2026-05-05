@@ -38,6 +38,21 @@ x-backend-base: &backend-base
     LLM_API_BASE_URL: ${LLM_API_BASE_URL:-https://api.openai.com/v1}
     LLM_API_KEY: ${LLM_API_KEY:-}
     LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+    CONTROLLER_LLM_ENABLED: ${CONTROLLER_LLM_ENABLED:-False}
+    CONTROLLER_LLM_PROVIDER: ${CONTROLLER_LLM_PROVIDER:-openai-compatible}
+    CONTROLLER_LLM_API_BASE_URL: ${CONTROLLER_LLM_API_BASE_URL:-http://controller-llm:8080/v1}
+    CONTROLLER_LLM_API_KEY: ${CONTROLLER_LLM_API_KEY:-}
+    CONTROLLER_LLM_API_MODEL: ${CONTROLLER_LLM_API_MODEL:-Qwen3-8B-Q4_K_M}
+    CONTROLLER_LLM_VERIFY_SSL: ${CONTROLLER_LLM_VERIFY_SSL:-False}
+    CONTROLLER_LLM_CA_BUNDLE: ${CONTROLLER_LLM_CA_BUNDLE:-}
+    CONTROLLER_LLM_EXECUTABLE: ${CONTROLLER_LLM_EXECUTABLE:-/opt/llama.cpp/build/bin/llama-cli}
+    CONTROLLER_LLM_MODEL_PATH: ${CONTROLLER_LLM_MODEL_PATH:-/opt/llama.cpp/models/qwen3-8b/Qwen3-8B-Q4_K_M.gguf}
+    CONTROLLER_LLM_DEVICE: ${CONTROLLER_LLM_DEVICE:-none}
+    CONTROLLER_LLM_TIMEOUT_SECONDS: ${CONTROLLER_LLM_TIMEOUT_SECONDS:-20}
+    CONTROLLER_LLM_CTX_SIZE: ${CONTROLLER_LLM_CTX_SIZE:-2048}
+    CONTROLLER_LLM_MAX_TOKENS: ${CONTROLLER_LLM_MAX_TOKENS:-96}
+    CONTROLLER_LLM_THREADS: ${CONTROLLER_LLM_THREADS:-8}
+    CONTROLLER_LLM_TEMPERATURE: ${CONTROLLER_LLM_TEMPERATURE:-0.0}
     EMBEDDING_ENABLED: ${EMBEDDING_ENABLED:-False}
     EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-openai-compatible}
     EMBEDDING_API_BASE_URL: ${EMBEDDING_API_BASE_URL:-https://api.openai.com/v1}
@@ -83,6 +98,7 @@ services:
       - ./backend:/app/backend
       - ./docs:/app/docs:ro
       - ./scripts:/app/scripts:ro
+      - ${LLAMA_CPP_HOST_ROOT:-/Users/andrejt/Research/repositories/git/llama.cpp}:/opt/llama.cpp:ro
       - ../NeTEx:/app/repos/NeTEx:ro
       - ../OpRa:/app/repos/OpRa:ro
       - ../SIRI:/app/repos/SIRI:ro
@@ -95,6 +111,8 @@ services:
         condition: service_healthy
       graphdb:
         condition: service_healthy
+      controller-llm:
+        condition: service_started
 
   celery-worker:
     <<: *backend-base
@@ -158,6 +176,30 @@ services:
       start_period: 60s
     mem_limit: ${GRAPHDB_MEM_LIMIT:-4g}
     cpus: ${GRAPHDB_CPUS:-2.0}
+
+  controller-llm:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    restart: unless-stopped
+    command:
+      - -m
+      - ${CONTROLLER_LLM_SERVER_MODEL_PATH:-/models/qwen3-8b/Qwen3-8B-Q4_K_M.gguf}
+      - -c
+      - ${CONTROLLER_LLM_SERVER_CTX_SIZE:-2048}
+      - -t
+      - ${CONTROLLER_LLM_SERVER_THREADS:-8}
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8080"
+      - --jinja
+      - --reasoning-format
+      - none
+    volumes:
+      - ${LLAMA_CPP_HOST_ROOT:-/Users/andrejt/Research/repositories/git/llama.cpp}/models:/models:ro
+    expose:
+      - "8080"
+    mem_limit: ${CONTROLLER_LLM_MEM_LIMIT:-8g}
+    cpus: ${CONTROLLER_LLM_CPUS:-2.0}
 
 volumes:
   postgres-data:
