@@ -111,8 +111,6 @@ services:
         condition: service_healthy
       graphdb:
         condition: service_healthy
-      controller-llm:
-        condition: service_started
 
   celery-worker:
     <<: *backend-base
@@ -178,6 +176,7 @@ services:
     cpus: ${GRAPHDB_CPUS:-2.0}
 
   controller-llm:
+    profiles: ["controller-llm"]
     image: ghcr.io/ggml-org/llama.cpp:server
     restart: unless-stopped
     command:

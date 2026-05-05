@@ -12,7 +12,8 @@ help: ## Show this help message
 		| sed 's/:.*## */\t/' \
 		| sort \
 		| awk -F'\t' '{ printf "  %-36s %s\n", $$1, $$2 }'
-	@printf "\nRequired variables (where noted): REPO_URL, REPO_PATH, PROFILE, INCREMENTAL, BACKUP_ID\n\n"
+	@printf "\nRequired variables (where noted): REPO_URL, REPO_PATH, PROFILE, INCREMENTAL, BACKUP_ID\n"
+	@printf "Optional toggles: CONTROLLER_LLM=1 enables local Qwen controller sidecar for docker-dev-up targets\n\n"
 
 ## ─── Diagrams & Slides ───────────────────────────────────────────────────────
 diagrams-db: ## Render database ER diagram (PlantUML)
@@ -84,17 +85,23 @@ graphdb-bootstrap: graphdb-up graphdb-init graphdb-load graphdb-verify ## Full G
 docker-dev-build: ## Build Docker dev images
 	@docker compose -f docker-compose.dev.yml --profile local-db build
 
-docker-dev-up: ## Start Docker dev stack (alias for docker-dev-up-local-db)
+docker-dev-up: ## Start Docker dev stack (alias for docker-dev-up-local-db; set CONTROLLER_LLM=1 to enable Qwen controller)
 	@$(MAKE) docker-dev-up-local-db
 
-docker-dev-up-local-db: ## Start Docker dev stack with local PostgreSQL
-	@docker compose -f docker-compose.dev.yml --profile local-db up -d --build
+docker-dev-up-local-db: ## Start Docker dev stack with local PostgreSQL (set CONTROLLER_LLM=1 to include controller-llm)
+	@CONTROLLER_LLM_ENABLED="$$( [ "$${CONTROLLER_LLM:-0}" = "1" ] && echo True || echo False )"; \
+	CONTROLLER_PROFILE_ARGS="$$( [ "$${CONTROLLER_LLM:-0}" = "1" ] && echo "--profile controller-llm" )"; \
+	echo "Starting dev stack (CONTROLLER_LLM=$${CONTROLLER_LLM:-0})"; \
+	CONTROLLER_LLM_ENABLED="$$CONTROLLER_LLM_ENABLED" docker compose -f docker-compose.dev.yml --profile local-db $$CONTROLLER_PROFILE_ARGS up -d --build
 
 docker-dev-up-graphdb: ## Start only the GraphDB service in the dev stack
 	@docker compose -f docker-compose.dev.yml --profile local-db up -d --build graphdb
 
-docker-dev-up-external-postgres: ## Start dev stack using external PostgreSQL
-	@docker compose -f docker-compose.dev.yml -f docker-compose.external-postgres.yml up -d --build backend celery-worker celery-beat frontend redis graphdb
+docker-dev-up-external-postgres: ## Start dev stack using external PostgreSQL (set CONTROLLER_LLM=1 to include controller-llm)
+	@CONTROLLER_LLM_ENABLED="$$( [ "$${CONTROLLER_LLM:-0}" = "1" ] && echo True || echo False )"; \
+	CONTROLLER_PROFILE_ARGS="$$( [ "$${CONTROLLER_LLM:-0}" = "1" ] && echo "--profile controller-llm" )"; \
+	echo "Starting external-postgres stack (CONTROLLER_LLM=$${CONTROLLER_LLM:-0})"; \
+	CONTROLLER_LLM_ENABLED="$$CONTROLLER_LLM_ENABLED" docker compose -f docker-compose.dev.yml -f docker-compose.external-postgres.yml $$CONTROLLER_PROFILE_ARGS up -d --build backend celery-worker celery-beat frontend redis graphdb $$( [ "$${CONTROLLER_LLM:-0}" = "1" ] && echo controller-llm )
 
 docker-dev-init-once: ## Initialise GraphDB repo and load ontologies inside running containers
 	@docker compose -f docker-compose.dev.yml --profile local-db exec -T backend bash /app/scripts/init-graphdb-repo.sh
