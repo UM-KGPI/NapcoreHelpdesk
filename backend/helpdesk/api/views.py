@@ -24,6 +24,7 @@ from helpdesk.services.editorial_workflow import (
     allowed_actions_for_status,
     apply_transition,
 )
+from helpdesk.services.controller_llm import ControllerLLMError, decide_route_with_controller_llm
 from helpdesk.services.evidence_mapper import map_evidence
 from helpdesk.services.event_logger import log_question_event
 from helpdesk.services.faq_matcher import match_faq
@@ -574,6 +575,7 @@ class QuestionAnswerView(APIView):
         question = data["question"].strip()
         scope = data.get("standardsScope", [])
         semantic_query = parse_question_to_semantic_query(text=question, requested_scope=scope)
+        semantic_query_dict = semantic_query.as_dict() if hasattr(semantic_query, "as_dict") else {}
         effective_scope = scope or semantic_query.candidate_standards
         semantic_disambiguation_required = False
         semantic_disambiguation_prompt = None
@@ -613,6 +615,18 @@ class QuestionAnswerView(APIView):
             "retrievalLatencyMs": 0.0,
         }
         faq_match = None
+        controller_route = None
+
+        # Optional controller model decides FAQ-first vs RAG route. Any failure falls back to current deterministic flow.
+        try:
+            controller_decision = decide_route_with_controller_llm(
+                question=question,
+                requested_scope=effective_scope,
+                semantic_query=semantic_query_dict,
+            )
+            controller_route = controller_decision.route if controller_decision else None
+        except ControllerLLMError:
+            controller_route = None
 
         # 1) FAQ-first: fast, deterministic, and usually high confidence.
         if not scope and semantic_query.ambiguous_core_concept and len(effective_scope) > 1:
@@ -635,7 +649,12 @@ class QuestionAnswerView(APIView):
         )
 
         faq_match = match_faq(question=question, scope=effective_scope)
-        if faq_match and faq_match["confidence"] >= faq_min_confidence and faq_match.get("scope_match", True):
+        if (
+            controller_route != "rag"
+            and faq_match
+            and faq_match["confidence"] >= faq_min_confidence
+            and faq_match.get("scope_match", True)
+        ):
             mode = QuestionEvent.MODE_FAQ
             confidence = faq_match["confidence"]
             review_required = faq_match["review_required"]
@@ -863,7 +882,7 @@ class QuestionAnswerView(APIView):
                     "ruleHitsCount": rule_result["matchedRuleCount"],
                     "ruleConclusions": rule_result["conclusions"],
                     "ontologyVersions": ontology_versions,
-                    "semanticQuery": semantic_query.as_dict(),
+                    "semanticQuery": semantic_query_dict,
                     "semanticDisambiguationRequired": semantic_disambiguation_required,
                     "semanticDisambiguationPrompt": semantic_disambiguation_prompt,
                     "semanticFallback": semantic_fallback,

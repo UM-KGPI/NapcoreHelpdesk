@@ -205,6 +205,28 @@ class HelpdeskApiTests(APITestCase):
             ).exists()
         )
 
+    @patch("helpdesk.api.views.decide_route_with_controller_llm")
+    def test_answer_skips_faq_when_controller_forces_rag(self, controller_mock):
+        """Controller route decision can bypass FAQ-first and continue through RAG path."""
+
+        controller_mock.return_value = SimpleNamespace(route="rag", intent="novel", confidence=0.9)
+
+        response = self.client.post(
+            reverse("answer-question"),
+            {
+                "question": "How to use NeTEx for exchanging a timetable?",
+                "standardsScope": ["NeTEx"],
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-controller-rag-001",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_matches_schema("AnswerResponse", response.data)
+        self.assertEqual(response.data["mode"], "rag")
+        self.assertIsNone(response.data["trace"]["matchedFaqEntryId"])
+
     def test_answer_returns_rag_mode_for_unknown_question(self):
         """Ensure unmatched intent falls back to RAG with retrieval trace IDs."""
         response = self.client.post(
