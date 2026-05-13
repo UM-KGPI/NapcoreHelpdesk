@@ -40,7 +40,7 @@ This index reduces discovery overhead by grouping the most important documents f
 
 ## Presentations
 
-- [Presentation README](presentation/README.md)
+- [Executive summary](presentation/napcore-helpdesk-executive-summary.md)
 
 ## Notes on document strategy
 
