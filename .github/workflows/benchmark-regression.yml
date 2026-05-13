@@ -1,0 +1,117 @@
+name: Benchmark Regression Tests
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'backend/helpdesk/services/retrieval_gateway.py'
+      - 'backend/helpdesk/services/semantic_graph.py'
+      - 'backend/config/settings.py'
+      - 'backend/.env'
+      - '.github/workflows/benchmark-regression.yml'
+
+jobs:
+  stratified-benchmark:
+    name: Stratified Benchmark (Pre-Merge)
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16-v0.5.1
+        env:
+          POSTGRES_DB: napcore_helpdesk_test
+          POSTGRES_USER: napcore
+          POSTGRES_PASSWORD: test_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Configure Django database
+        working-directory: ./backend
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings
+          DATABASE_URL: postgresql://napcore:test_password@localhost:5432/napcore_helpdesk_test
+          DJANGO_USE_SQLITE: 'False'
+          GRAPHDB_ENABLED: 'False'
+          LLM_ENABLED: 'False'
+        run: |
+          ../.venv/bin/python manage.py migrate --noinput 2>&1 | head -20
+
+      - name: Run stratified benchmark
+        working-directory: ./backend
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings
+          DATABASE_URL: postgresql://napcore:test_password@localhost:5432/napcore_helpdesk_test
+          DJANGO_USE_SQLITE: 'False'
+          GRAPHDB_ENABLED: 'False'
+          LLM_ENABLED: 'False'
+        run: |
+          ../.venv/bin/python manage.py benchmark_stratified \
+            --fail-on-regression 10 \
+            --output ./benchmark-stratified-pr-check.json
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: stratified-benchmark-results
+          path: backend/benchmark-stratified-pr-check.json
+
+      - name: Comment PR with results
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const results = JSON.parse(fs.readFileSync('./backend/benchmark-stratified-pr-check.json', 'utf8'));
+            const summary = results.summary;
+            const status = summary.gates_failed.length === 0 ? '✅ PASS' : '❌ FAIL';
+            
+            let comment = `## ${status} Stratified Benchmark Results\n\n`;
+            comment += `- **Questions**: ${summary.question_ok}/${summary.question_count} passed\n`;
+            comment += `- **Avg Latency**: ${summary.graph_avg_ms?.toFixed(1) || 'N/A'} ms\n`;
+            comment += `- **P95 Latency**: ${summary.graph_p95_ms?.toFixed(1) || 'N/A'} ms\n\n`;
+            
+            if (summary.gates_failed.length > 0) {
+              comment += `### Failed Gates\n`;
+              summary.gates_failed.forEach(gate => {
+                comment += `- ❌ ${gate}\n`;
+              });
+            } else {
+              comment += `### All Gates Passed ✅\n`;
+              summary.gates_passed.forEach(gate => {
+                comment += `- ✅ ${gate}\n`;
+              });
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Fail if gates failed
+        if: failure()
+        run: exit 1

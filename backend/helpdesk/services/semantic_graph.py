@@ -133,18 +133,20 @@ def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
     from urllib.request import Request, urlopen
 
     _IRI_PREFIX_MAP: dict[str, str] = {
-        "https://netex.org.uk/ontology/netex#": "netex",
-        "http://netex.org.uk/ontology/netex#": "netex",
+        "https://netex.org.uk/netex/2.0#": "netex",
+        "https://netex.org.uk/netex/2.0/": "netex",
         "http://napcore.example.org/ontology/netex#": "netex",
-        "https://opra.org.uk/ontology/opra#": "opra",
-        "http://opra.org.uk/ontology/opra#": "opra",
+        "https://transmodel-cen.eu/opra/1.0#": "opra",
+        "https://transmodel-cen.eu/opra/1.0/": "opra",
         "http://napcore.example.org/ontology/opra#": "opra",
-        "https://siri.org.uk/ontology/siri#": "siri",
-        "http://siri.org.uk/ontology/siri#": "siri",
+        "http://www.siri.org.uk/siri/2.1#": "siri",
+        "http://www.siri.org.uk/siri/2.1/": "siri",
         "http://napcore.example.org/ontology/siri#": "siri",
         "https://datex.org/ontology/datex#": "datex",
         "http://datex.org/ontology/datex#": "datex",
         "http://napcore.example.org/ontology/datex#": "datex",
+        "https://transmodel-cen.eu/6.2/": "transmodel",
+        "https://transmodel-cen.eu/6.2#": "transmodel",
         "https://napcore.eu/ontology/nits#": "nits",
         "http://napcore.eu/ontology/nits#": "nits",
         "http://napcore.example.org/ontology/nits#": "nits",
@@ -170,7 +172,7 @@ def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
             logger.warning("GraphDB ontology load failed: %s", exc)
             return []
 
-    # Labels for standard-specific concepts (netex, opra, siri, datex)
+    # Labels for standard-specific concepts (netex, opra, siri, datex, transmodel)
     labels_rows = _sparql_get(
         "SELECT ?concept ?label WHERE {"
         " ?concept <http://www.w3.org/2004/02/skos/core#prefLabel>|"
@@ -208,6 +210,34 @@ def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
         " OPTIONAL { ?artifact <http://purl.org/dc/terms/source> ?source . }"
         " FILTER(!CONTAINS(STR(?concept), 'napcore.eu/ontology/nits'))"
         " FILTER(!CONTAINS(STR(?concept), 'www.w3.org'))"
+        " }"
+    )
+
+    # skos:related links declared directly in standards ontologies (e.g. SIRI ~99 links)
+    skos_related_rows = _sparql_get(
+        "SELECT DISTINCT ?concept ?related WHERE {"
+        " ?concept <http://www.w3.org/2004/02/skos/core#related> ?related ."
+        " FILTER(!CONTAINS(STR(?concept), 'napcore.eu/ontology/nits'))"
+        " FILTER(!CONTAINS(STR(?concept), 'www.w3.org'))"
+        " FILTER(!CONTAINS(STR(?concept), 'purl.org'))"
+        " FILTER(!CONTAINS(STR(?related), 'napcore.eu/ontology/nits'))"
+        " FILTER(!CONTAINS(STR(?related), 'www.w3.org'))"
+        " FILTER(!CONTAINS(STR(?related), 'purl.org'))"
+        " }"
+    )
+
+    # owl:ObjectProperty domain→range links (e.g. OpRa hasTrip, hasLeg, departFrom, …)
+    object_property_rows = _sparql_get(
+        "SELECT DISTINCT ?concept ?related WHERE {"
+        " ?prop a <http://www.w3.org/2002/07/owl#ObjectProperty> ;"
+        "       <http://www.w3.org/2000/01/rdf-schema#domain> ?concept ;"
+        "       <http://www.w3.org/2000/01/rdf-schema#range> ?related ."
+        " FILTER(!CONTAINS(STR(?concept), 'napcore.eu/ontology/nits'))"
+        " FILTER(!CONTAINS(STR(?concept), 'www.w3.org'))"
+        " FILTER(!CONTAINS(STR(?concept), 'purl.org'))"
+        " FILTER(!CONTAINS(STR(?related), 'napcore.eu/ontology/nits'))"
+        " FILTER(!CONTAINS(STR(?related), 'www.w3.org'))"
+        " FILTER(!CONTAINS(STR(?related), 'purl.org'))"
         " }"
     )
 
@@ -256,11 +286,34 @@ def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
             if source not in example_sources:
                 example_sources.append(source)
 
+    # Populate related_to from skos:related and owl:ObjectProperty domain→range.
+    # Both directions are added so graph traversal is bidirectional.
+    for row in (*skos_related_rows, *object_property_rows):
+        concept_id = _iri_to_concept_id(row.get("concept", ""))
+        related_id = _iri_to_concept_id(row.get("related", ""))
+        if not concept_id or not related_id or concept_id == related_id:
+            continue
+        # Only link concepts that are known (appeared in labels query)
+        if concept_id not in concepts or related_id not in concepts:
+            continue
+        related_list = concepts[concept_id].setdefault("related_to", [])
+        if related_id not in related_list:
+            related_list.append(related_id)
+        # Reverse edge
+        reverse_list = concepts[related_id].setdefault("related_to", [])
+        if concept_id not in reverse_list:
+            reverse_list.append(concept_id)
+
+    _total_relations = sum(len(c.get("related_to", [])) for c in concepts.values()) // 2
+    if _total_relations:
+        logger.info("Loaded %d standards concept relations from GraphDB", _total_relations)
+
     namespaces = {
-        "netex": "https://netex.org.uk/ontology/netex",
-        "opra": "https://opra.org.uk/ontology/opra",
-        "siri": "https://siri.org.uk/ontology/siri",
+        "netex": "https://netex.org.uk/netex/2.0",
+        "opra": "https://transmodel-cen.eu/opra/1.0",
+        "siri": "http://www.siri.org.uk/siri/2.1",
         "datex": "https://datex.org/ontology/datex",
+        "transmodel": "https://transmodel-cen.eu/6.2",
         "nits": "https://napcore.eu/ontology/nits",
     }
     return {"namespaces": namespaces, "concepts": concepts}

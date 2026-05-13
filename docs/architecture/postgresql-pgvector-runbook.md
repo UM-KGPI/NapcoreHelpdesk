@@ -66,7 +66,7 @@ WHERE table_name = 'helpdesk_sourcechunk'
 1. Build retrieval index from an allowlisted repository:
 ```bash
 python manage.py build_source_index \
-  --repo-url https://github.com/NeTEx-CEN/NeTEx \
+  --repo-url https://github.com/TransmodelEcosystem/NeTEx \
   --repo-path /absolute/path/to/NeTEx \
   --profile netex \
   --incremental \
@@ -120,7 +120,7 @@ Expected: all listed migrations are marked `[X]`.
 4. Re-index allowlisted repositories:
 ```bash
 cd ..
-make backend-index REPO_URL=https://github.com/NeTEx-CEN/NeTEx REPO_PATH=/absolute/path/to/NeTEx PROFILE=netex INCREMENTAL=1
+make backend-index REPO_URL=https://github.com/TransmodelEcosystem/NeTEx REPO_PATH=/absolute/path/to/NeTEx PROFILE=netex INCREMENTAL=1
 make backend-index REPO_URL=https://github.com/OpRa-CEN/OpRa REPO_PATH=/absolute/path/to/OpRa PROFILE=opra INCREMENTAL=1
 ```
 

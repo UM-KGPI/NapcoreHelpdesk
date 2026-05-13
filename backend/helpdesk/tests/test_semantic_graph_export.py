@@ -58,7 +58,7 @@ class SemanticGraphExportTests(TestCase):
             embedding_vector=build_text_embedding("Delayed journey and delay statistics payload"),
         )
         SourceChunk.objects.create(
-            repository_url="https://github.com/NeTEx-CEN/NeTEx",
+            repository_url="https://github.com/TransmodelEcosystem/NeTEx",
             commit_sha="def456",
             source_path="docs/guide.md",
             chunk_id="netex-c-001",

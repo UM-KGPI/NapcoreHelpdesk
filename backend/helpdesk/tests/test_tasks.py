@@ -19,7 +19,7 @@ class IndexTasksTests(TestCase):
 
         self.assertEqual(result["status"], "skipped")
 
-    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/NeTEx-CEN/NeTEx"})
+    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/TransmodelEcosystem/NeTEx"})
     def test_reindex_default_repository_runs_incremental_index(self):
         """Ensure configured scheduler runs execute incremental index and record metrics."""
         with TemporaryDirectory() as tmp_dir:
@@ -29,7 +29,7 @@ class IndexTasksTests(TestCase):
             (docs / "guide.md").write_text("NeTEx and SIRI exchange guidance", encoding="utf-8")
 
             with override_settings(
-                INDEX_SCHEDULE_REPO_URL="https://github.com/NeTEx-CEN/NeTEx",
+                INDEX_SCHEDULE_REPO_URL="https://github.com/TransmodelEcosystem/NeTEx",
                 INDEX_SCHEDULE_REPO_PATH=str(repo_path),
                 INDEX_SCHEDULE_PROFILE="netex",
             ):

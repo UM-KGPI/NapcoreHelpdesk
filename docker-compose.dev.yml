@@ -10,6 +10,8 @@ x-backend-base: &backend-base
   env_file:
     - ./backend/.env
   environment: &backend-env
+    LD_LIBRARY_PATH: /opt/llama.cpp-linux
+    GGML_BACKEND_PATH: /opt/llama.cpp-linux/libggml-cpu-haswell.so
     DJANGO_SECRET_KEY: docker-dev-secret-key
     DJANGO_DEBUG: "True"
     DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend
@@ -25,7 +27,7 @@ x-backend-base: &backend-base
     DEV_JWT_DEFAULT_SUBJECT: user-local
     DEV_JWT_DEFAULT_ROLES: editor,reviewer,publisher
     DEV_JWT_TTL_MINUTES: "480"
-    ALLOWED_SOURCE_REPOSITORIES: https://github.com/NeTEx-CEN/NeTEx,https://github.com/NeTEx-CEN/test-Profile-Documentation,https://github.com/OpRa-CEN/OpRa
+    ALLOWED_SOURCE_REPOSITORIES: https://github.com/TransmodelEcosystem/NeTEx,https://github.com/NeTEx-CEN/test-Profile-Documentation,https://github.com/OpRa-CEN/OpRa
     CELERY_BROKER_URL: redis://redis:6379/0
     CELERY_RESULT_BACKEND: redis://redis:6379/1
     GRAPHDB_ENABLED: ${GRAPHDB_ENABLED:-True}
@@ -33,19 +35,17 @@ x-backend-base: &backend-base
     GRAPHDB_REPOSITORY: napcore-helpdesk
     GRAPHDB_TIMEOUT_SECONDS: "30"
     GRAPH_RAG_ENABLED: ${GRAPH_RAG_ENABLED:-False}
-    LLM_ENABLED: ${LLM_ENABLED:-False}
+    LLM_ENABLED: ${LLM_ENABLED:-True}
     LLM_PROVIDER: ${LLM_PROVIDER:-openai-compatible}
-    LLM_API_BASE_URL: ${LLM_API_BASE_URL:-https://api.openai.com/v1}
-    LLM_API_KEY: ${LLM_API_KEY:-}
+    LLM_API_BASE_URL: ${LLM_API_BASE_URL:-https://models.inference.ai.azure.com}
     LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
-    CONTROLLER_LLM_ENABLED: ${CONTROLLER_LLM_ENABLED:-False}
+    CONTROLLER_LLM_ENABLED: ${CONTROLLER_LLM_ENABLED:-True}
     CONTROLLER_LLM_PROVIDER: ${CONTROLLER_LLM_PROVIDER:-openai-compatible}
-    CONTROLLER_LLM_API_BASE_URL: ${CONTROLLER_LLM_API_BASE_URL:-http://controller-llm:8080/v1}
-    CONTROLLER_LLM_API_KEY: ${CONTROLLER_LLM_API_KEY:-}
-    CONTROLLER_LLM_API_MODEL: ${CONTROLLER_LLM_API_MODEL:-Qwen3-8B-Q4_K_M}
+    CONTROLLER_LLM_API_BASE_URL: ${CONTROLLER_LLM_API_BASE_URL:-https://models.inference.ai.azure.com}
+    CONTROLLER_LLM_API_MODEL: ${CONTROLLER_LLM_API_MODEL:-gpt-4o-mini}
     CONTROLLER_LLM_VERIFY_SSL: ${CONTROLLER_LLM_VERIFY_SSL:-False}
     CONTROLLER_LLM_CA_BUNDLE: ${CONTROLLER_LLM_CA_BUNDLE:-}
-    CONTROLLER_LLM_EXECUTABLE: ${CONTROLLER_LLM_EXECUTABLE:-/opt/llama.cpp/build/bin/llama-cli}
+    CONTROLLER_LLM_EXECUTABLE: ${CONTROLLER_LLM_EXECUTABLE:-/opt/llama.cpp-linux/llama-cli}
     CONTROLLER_LLM_MODEL_PATH: ${CONTROLLER_LLM_MODEL_PATH:-/opt/llama.cpp/models/qwen3-8b/Qwen3-8B-Q4_K_M.gguf}
     CONTROLLER_LLM_DEVICE: ${CONTROLLER_LLM_DEVICE:-none}
     CONTROLLER_LLM_TIMEOUT_SECONDS: ${CONTROLLER_LLM_TIMEOUT_SECONDS:-20}
@@ -177,15 +177,17 @@ services:
 
   controller-llm:
     profiles: ["controller-llm"]
-    image: ghcr.io/ggml-org/llama.cpp:server
+    image: ${CONTROLLER_LLM_SERVER_IMAGE:-ghcr.io/ggml-org/llama.cpp:server-b8400}
     restart: unless-stopped
     command:
       - -m
       - ${CONTROLLER_LLM_SERVER_MODEL_PATH:-/models/qwen3-8b/Qwen3-8B-Q4_K_M.gguf}
       - -c
-      - ${CONTROLLER_LLM_SERVER_CTX_SIZE:-2048}
+      - ${CONTROLLER_LLM_SERVER_CTX_SIZE:-1024}
       - -t
-      - ${CONTROLLER_LLM_SERVER_THREADS:-8}
+      - ${CONTROLLER_LLM_SERVER_THREADS:-6}
+      - -np
+      - ${CONTROLLER_LLM_SERVER_PARALLEL:-1}
       - --host
       - 0.0.0.0
       - --port
@@ -197,8 +199,8 @@ services:
       - ${LLAMA_CPP_HOST_ROOT:-/Users/andrejt/Research/repositories/git/llama.cpp}/models:/models:ro
     expose:
       - "8080"
-    mem_limit: ${CONTROLLER_LLM_MEM_LIMIT:-8g}
-    cpus: ${CONTROLLER_LLM_CPUS:-2.0}
+    mem_limit: ${CONTROLLER_LLM_MEM_LIMIT:-12g}
+    cpus: ${CONTROLLER_LLM_CPUS:-3.0}
 
 volumes:
   postgres-data:

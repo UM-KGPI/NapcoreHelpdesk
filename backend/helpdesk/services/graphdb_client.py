@@ -11,15 +11,14 @@ SKOS_RELATIONS = [
     "http://www.w3.org/2004/02/skos/core#related",
     "http://www.w3.org/2004/02/skos/core#relatedMatch",
     "http://www.w3.org/2004/02/skos/core#exactMatch",
-    "http://www.w3.org/2004/02/skos/core#closeMatch",
 ]
 
 DEFAULT_NAMESPACES = {
     "nits": "https://napcore.eu/ontology/nits#",
-    "netex": "https://napcore.eu/ontology/netex#",
-    "opra": "https://napcore.eu/ontology/opra#",
+    "netex": "https://netex.org.uk/netex/2.0#",
+    "opra": "https://transmodel-cen.eu/opra/1.0#",
     "datex": "https://napcore.eu/ontology/datex#",
-    "transmodel": "https://napcore.eu/ontology/transmodel#",
+    "transmodel": "https://transmodel-cen.eu/6.2/",
     "nch": "https://napcore.eu/ontology/helpdesk#",
 }
 
@@ -59,6 +58,10 @@ STANDARD_GRAPH_SCOPE = {
         "https://napcore.eu/graph/standards/datex",
         "https://napcore.eu/graph/alignments/datex",
     ],
+    "transmodel": [
+        "https://napcore.eu/graph/standards/transmodel",
+        "https://napcore.eu/graph/alignments/transmodel",
+    ],
 }
 
 STANDARD_ALIASES = {
@@ -68,6 +71,7 @@ STANDARD_ALIASES = {
     "datex": "datex",
     "datexii": "datex",
     "datex ii": "datex",
+    "transmodel": "transmodel",
 }
 
 
@@ -302,6 +306,11 @@ def load_default_ontology_graphs(
             ontology_dir / "napcore-its.ttl",
             "https://napcore.eu/graph/core/napcore-its",
         ),
+        (
+            "transmodel",
+            ontology_dir / "standards" / "transmodel.ttl",
+            "https://napcore.eu/graph/standards/transmodel",
+        ),
         ("netex", ontology_dir / "standards" / "netex.ttl", "https://napcore.eu/graph/standards/netex"),
         ("opra", ontology_dir / "standards" / "opra.ttl", "https://napcore.eu/graph/standards/opra"),
         ("siri", ontology_dir / "standards" / "siri.ttl", "https://napcore.eu/graph/standards/siri"),
@@ -310,6 +319,11 @@ def load_default_ontology_graphs(
             "netex-examples",
             ontology_dir / "examples" / "netex-examples.ttl",
             "https://napcore.eu/graph/examples/netex",
+        ),
+        (
+            "nits-transmodel-align",
+            ontology_dir / "alignments" / "nits-transmodel-align.ttl",
+            "https://napcore.eu/graph/alignments/transmodel",
         ),
         (
             "nits-netex-align",

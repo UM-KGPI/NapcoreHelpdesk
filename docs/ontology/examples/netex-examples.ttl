@@ -5,7 +5,7 @@
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix dct:  <http://purl.org/dc/terms/> .
 
-@prefix netex:    <https://netex.org.uk/ontology/netex#> .
+@prefix netex:    <https://netex.org.uk/netex/2.0#> .
 @prefix example:  <https://napcore.eu/ontology/examples#> .
 @prefix nexample: <https://napcore.eu/ontology/examples/netex#> .
 
@@ -21,7 +21,7 @@
     dct:created "2026-04-19"^^xsd:date ;
     owl:versionIRI <https://napcore.eu/ontology/examples/netex/0.1> ;
     owl:versionInfo "0.1-draft" ;
-    owl:imports <https://netex.org.uk/ontology/netex> ;
+    owl:imports <https://netex.org.uk/netex/2.0> ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
 #################################################################

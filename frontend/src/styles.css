@@ -49,6 +49,12 @@ body {
   color: #6b7280;
 }
 
+.app-version-line {
+  margin: 0.3rem 0 0;
+  font-size: 0.82rem;
+  color: #4b5563;
+}
+
 .hero {
   background: linear-gradient(125deg, #0f766e, #164e63 65%, #1f2937);
   color: #f7f8f8;
@@ -197,6 +203,43 @@ h1 {
 
 .chat-actions button {
   width: auto;
+}
+
+.chat-progress {
+  margin-top: 0.25rem;
+}
+
+.chat-progress-bar {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #ebe2cf;
+  border: 1px solid #d8c9ab;
+}
+
+.chat-progress-bar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -35%;
+  width: 35%;
+  height: 100%;
+  background: linear-gradient(90deg, #1f6d5a 0%, #2f9e84 100%);
+  animation: chat-progress-slide 1.05s linear infinite;
+}
+
+.chat-progress-label {
+  margin: 0.35rem 0 0;
+}
+
+@keyframes chat-progress-slide {
+  0% {
+    left: -35%;
+  }
+  100% {
+    left: 100%;
+  }
 }
 
 .panel {

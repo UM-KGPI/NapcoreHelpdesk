@@ -20,7 +20,7 @@ DEFAULT_FAQS = [
         ),
         "citations": [
             {
-                "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+                "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx",
                 "commitSha": "placeholder",
                 "sourcePath": "README.md",
                 "chunkId": "faq-c-001",
@@ -41,7 +41,7 @@ DEFAULT_FAQS = [
         ),
         "citations": [
             {
-                "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+                "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx",
                 "commitSha": "placeholder",
                 "sourcePath": "README.md",
                 "chunkId": "faq-c-002",

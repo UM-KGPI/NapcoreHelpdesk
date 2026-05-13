@@ -2,7 +2,13 @@ import { NavLink, Outlet } from "react-router-dom";
 
 import { useAuth } from "../auth-context";
 
-export default function SharedAppLayout() {
+interface SharedAppLayoutProps {
+  frontendVersion: string;
+  backendVersion: string;
+  backendBuildRef: string;
+}
+
+export default function SharedAppLayout({ frontendVersion, backendVersion, backendBuildRef }: SharedAppLayoutProps) {
   const {
     apiBaseUrl,
     setApiBaseUrl,
@@ -17,6 +23,7 @@ export default function SharedAppLayout() {
       <header className="app-title-header">
         <h1>NAPCORE Helpdesk</h1>
         <p className="app-subtitle">Source-Grounded Q&A Assistant with Editorial knowledge building for Transmodel ecosystem</p>
+        <p className="app-version-line">Frontend v{frontendVersion} · Backend v{backendVersion} ({backendBuildRef})</p>
       </header>
       <section className="panel route-switcher-panel">
         <div className="route-switcher-copy">

@@ -16,6 +16,12 @@ _STRONG_CLAIM_MARKERS = (
     "shall",
 )
 
+_REPOSITORY_ALIASES = {
+    # NeTEx canonical mirror aliases used by citation URL fallback logic.
+    "https://github.com/transmodelecosystem/netex": "https://github.com/TransmodelEcosystem/NeTEx",
+    "https://github.com/netex-cen/netex": "https://github.com/TransmodelEcosystem/NeTEx",
+}
+
 
 def _normalize_repository_url(raw_url: str) -> str:
     """Normalize citation URLs to repository roots for allow-list checks.
@@ -31,9 +37,11 @@ def _normalize_repository_url(raw_url: str) -> str:
     path_parts = [part for part in parsed.path.split("/") if part]
     if parsed.netloc.lower() == "github.com" and len(path_parts) >= 2:
         owner, repo = path_parts[0], path_parts[1]
-        return f"{parsed.scheme}://{parsed.netloc}/{owner}/{repo}"
+        normalized = f"{parsed.scheme}://{parsed.netloc}/{owner}/{repo}"
+        return _REPOSITORY_ALIASES.get(normalized.lower(), normalized)
 
-    return f"{parsed.scheme}://{parsed.netloc}{parsed.path}".rstrip("/")
+    normalized = f"{parsed.scheme}://{parsed.netloc}{parsed.path}".rstrip("/")
+    return _REPOSITORY_ALIASES.get(normalized.lower(), normalized)
 
 
 def evaluate_policy(answer_text: str, citations: list[dict]) -> dict:
