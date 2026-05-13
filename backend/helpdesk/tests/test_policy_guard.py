@@ -8,14 +8,14 @@ from helpdesk.services.policy_guard import evaluate_policy
 class PolicyGuardTests(SimpleTestCase):
     """Validate repository allow-list behavior for citation URLs."""
 
-    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/NeTEx-CEN/NeTEx"})
+    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/TransmodelEcosystem/NeTEx"})
     def test_allows_github_blob_url_from_approved_repository(self):
         result = evaluate_policy(
             answer_text="Grounded answer.",
             citations=[
                 {
                     "repositoryUrl": (
-                        "https://github.com/NeTEx-CEN/NeTEx/"
+                        "https://github.com/TransmodelEcosystem/NeTEx/"
                         "blob/de021e8/examples/functions/stopPlace/sample.xml"
                     )
                 }
@@ -42,7 +42,7 @@ class PolicyGuardTests(SimpleTestCase):
         self.assertTrue(result["allowed"])
         self.assertIsNone(result["reason"])
 
-    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/NeTEx-CEN/NeTEx"})
+    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/TransmodelEcosystem/NeTEx"})
     def test_blocks_unapproved_repository(self):
         result = evaluate_policy(
             answer_text="Grounded answer.",

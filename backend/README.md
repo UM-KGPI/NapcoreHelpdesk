@@ -53,10 +53,28 @@ LLM settings are configured through:
 - `LLM_MAX_TOKENS`
 - `LLM_TEMPERATURE`
 
+## Versioning
+- Single source of truth: repository-root `VERSION` file.
+- Frontend display uses `VITE_APP_VERSION` when provided, otherwise uses the root `VERSION` file at build time.
+- Backend health endpoints use `SERVICE_VERSION`; when unset, backend defaults to the root `VERSION` file.
+- Build traceability remains separate via `SERVICE_BUILD_REF` (for example git short SHA or release tag).
+
+Version bump workflow:
+1. Update the root `VERSION` file.
+2. Set `SERVICE_BUILD_REF` for the deployment/build.
+3. Rebuild frontend and restart backend containers/services.
+
+### Latest narration improvements (2026-05-13)
+- For XML/JSON/YAML example requests, the narration prompt now asks for one short verbatim fenced snippet from a single retrieved evidence block when available.
+- Fabricated example protection is enforced: generated structured code blocks are validated against retrieved evidence lines and rejected when unsupported.
+- If no safe verbatim snippet exists in evidence, narration must explicitly state that an embedded example cannot be provided safely.
+- Evidence citation links now avoid `blob/unknown` by resolving stable repository refs first and using repository-specific fallback refs when needed.
+- Single-token default wiring is supported for GitHub Models: `GITHUB_API_TOKEN` feeds `LLM_API_KEY` and `CONTROLLER_LLM_API_KEY` when dedicated keys are not set.
+
 ## Build retrieval index from repository sources
 Run from `backend/`:
 
-`../.venv/bin/python manage.py build_source_index --repo-url https://github.com/NeTEx-CEN/NeTEx --repo-path /absolute/path/to/NeTEx --profile netex --incremental --prune`
+`../.venv/bin/python manage.py build_source_index --repo-url https://github.com/TransmodelEcosystem/NeTEx --repo-path /absolute/path/to/NeTEx --profile netex --incremental --prune`
 
 This ingests supported text files (`.md`, `.txt`, `.yaml`, `.yml`, `.xml`, `.json`) into `SourceChunk`.
 Use `--include-ext` repeatedly to narrow file types.
@@ -73,7 +91,7 @@ Add new profiles by creating additional `<profile>.yaml` files with:
 Repository allow-list is enforced via `ALLOWED_SOURCE_REPOSITORIES`.
 
 Multiple approved repositories can be ingested side-by-side, for example:
-- `https://github.com/NeTEx-CEN/NeTEx`
+- `https://github.com/TransmodelEcosystem/NeTEx`
 - `https://github.com/NeTEx-CEN/test-Profile-Documentation`
 
 Store them as a comma-separated list in `ALLOWED_SOURCE_REPOSITORIES`.
@@ -91,6 +109,7 @@ Note for local SQLite:
 - Runtime uses `nits:` as the canonical core namespace and still supports legacy `maps_to_nch` fields for backward compatibility.
 - Canonical RDF/Turtle artifact for the same core graph: `../docs/ontology/napcore-its.ttl`.
 - Runtime implementation is in `helpdesk/services/semantic_graph.py`.
+- Canonical end-to-end runtime methodology: `../docs/architecture/query-to-evidence-methodology.md`.
 - Query reasoning flow:
   1. Lexical concept extraction from glossary labels and aliases.
   2. Mapping from glossary concepts to `nits:` concepts (`maps_to_nits`, legacy `maps_to_nch`, or synonym-derived mapping).
@@ -150,7 +169,7 @@ From repository root:
 - `make backend-check`
 - `make backend-migrate`
 - `make backend-run`
-- `make backend-index REPO_URL=https://github.com/NeTEx-CEN/NeTEx REPO_PATH=/absolute/path/to/NeTEx PROFILE=netex INCREMENTAL=1`
+- `make backend-index REPO_URL=https://github.com/TransmodelEcosystem/NeTEx REPO_PATH=/absolute/path/to/NeTEx PROFILE=netex INCREMENTAL=1`
 - `make frontend-install`
 - `make frontend-dev`
 - `make frontend-build`

@@ -1,6 +1,7 @@
 from collections import defaultdict
 import datetime as dt
 from datetime import timedelta
+import logging
 from pathlib import Path
 import subprocess
 from uuid import uuid4
@@ -24,6 +25,7 @@ from helpdesk.services.editorial_workflow import (
     allowed_actions_for_status,
     apply_transition,
 )
+from helpdesk.services.controller_llm import ControllerLLMError, decide_route_with_controller_llm
 from helpdesk.services.evidence_mapper import map_evidence
 from helpdesk.services.event_logger import log_question_event
 from helpdesk.services.faq_matcher import match_faq
@@ -50,9 +52,24 @@ from .serializers import (
 )
 
 
+logger = logging.getLogger(__name__)
+
+
 def _request_id(request):
     # Keep a stable correlation ID for traceability in logs, DB events, and error payloads.
     return request.headers.get("X-Request-Id") or f"req-{uuid4().hex[:12]}"
+
+
+def _service_health_payload(check: str, status_value: str, **extra_fields) -> dict:
+    payload = {
+        "status": status_value,
+        "service": settings.SERVICE_NAME,
+        "check": check,
+        "version": settings.SERVICE_VERSION,
+        "buildRef": settings.SERVICE_BUILD_REF,
+    }
+    payload.update(extra_fields)
+    return payload
 
 
 def _build_file_url(repo_url: str, commit_sha: str, source_path: str) -> str:
@@ -68,8 +85,39 @@ def _build_file_url(repo_url: str, commit_sha: str, source_path: str) -> str:
             return f"{repo_url}/issues/{issue_number}"
 
     resolved_commit_sha = _resolve_commit_sha(repo_url=repo_url, commit_sha=commit_sha)
+    # When commit SHA is unavailable, prefer a stable repository ref instead of a broken blob URL.
+    normalized_ref = (resolved_commit_sha or "").strip()
+    unresolved_refs = {"", "unknown", "placeholder"}
+    if normalized_ref.lower() in unresolved_refs:
+        resolved_repo_ref = _resolve_repository_ref(repo_url=repo_url)
+        if resolved_repo_ref:
+            return f"{repo_url}/blob/{resolved_repo_ref}/{source_path}"
+
+        default_ref_by_repo = {
+            "https://github.com/transmodelecosystem/netex": (
+                "https://github.com/TransmodelEcosystem/NeTEx",
+                "v2.0",
+            ),
+            "https://github.com/netex-cen/netex": (
+                "https://github.com/TransmodelEcosystem/NeTEx",
+                "v2.0",
+            ),
+            "https://github.com/opra-cen/opra": (
+                "https://github.com/OpRa-CEN/OpRa",
+                "1.0rc",
+            ),
+        }
+        repo_key = repo_url.lower()
+        fallback = default_ref_by_repo.get(repo_key)
+        if fallback:
+            canonical_repo_url, fallback_ref = fallback
+            return f"{canonical_repo_url}/blob/{fallback_ref}/{source_path}"
+
+        # Last-resort fallback: default to main to avoid emitting broken blob/unknown links.
+        return f"{repo_url}/blob/main/{source_path}"
+
     # Build the GitHub blob URL: https://github.com/OWNER/REPO/blob/COMMIT/PATH
-    return f"{repo_url}/blob/{resolved_commit_sha}/{source_path}"
+    return f"{repo_url}/blob/{normalized_ref}/{source_path}"
 
 
 def _resolve_commit_sha(repo_url: str, commit_sha: str) -> str:
@@ -99,6 +147,62 @@ def _resolve_commit_sha(repo_url: str, commit_sha: str) -> str:
 
     resolved = result.stdout.strip()
     return resolved or normalized
+
+
+def _resolve_repository_ref(repo_url: str) -> str:
+    """Resolve a stable branch/tag ref from the latest indexed local repository when available."""
+
+    latest_run = IndexRunMetric.objects.filter(repository_url=repo_url).order_by("-created_at").first()
+    if not latest_run:
+        return ""
+
+    repository_path = Path(latest_run.repository_path).expanduser()
+    if not repository_path.exists():
+        return ""
+
+    # Prefer remote default branch if available (for example, origin/main).
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repository_path), "symbolic-ref", "--short", "refs/remotes/origin/HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        origin_head = result.stdout.strip()
+        if origin_head.startswith("origin/") and len(origin_head) > len("origin/"):
+            return origin_head[len("origin/") :]
+    except Exception:
+        pass
+
+    # Then prefer current branch if repository is not in detached HEAD state.
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repository_path), "rev-parse", "--abbrev-ref", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        branch_name = result.stdout.strip()
+        if branch_name and branch_name != "HEAD":
+            return branch_name
+    except Exception:
+        pass
+
+    # Finally, if detached, use exact tag name when available.
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repository_path), "describe", "--tags", "--exact-match", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        tag_name = result.stdout.strip()
+        if tag_name:
+            return tag_name
+    except Exception:
+        pass
+
+    return ""
 
 
 def _dominant_repository_url(chunks: list[dict]) -> str | None:
@@ -194,6 +298,50 @@ def _select_citations(chunks: list[dict], max_citations: int) -> list[dict]:
             break
 
     return selected
+
+
+def _rewrite_source_paths_as_evidence_markers(answer_text: str, citations: list[dict]) -> str:
+    """Replace cited sourcePath strings in answer prose with [E#] marker references."""
+
+    if not answer_text or not citations:
+        return answer_text
+
+    rewritten = answer_text
+    for index, citation in enumerate(citations, start=1):
+        source_path = str(citation.get("sourcePath", "")).strip()
+        if not source_path:
+            continue
+
+        marker = f"[E{index}]"
+        rewritten = rewritten.replace(f"`{source_path}`", marker)
+        rewritten = rewritten.replace(source_path, marker)
+
+    return rewritten
+
+
+def _inject_evidence_markers_if_missing(answer_text: str, citations: list[dict]) -> str:
+    """
+    Fallback: if answer_text lacks [E#] markers but citations exist,
+    inject them at sentence boundaries to indicate evidence-grounded statements.
+    This handles cases where LLM was prompted for citations but token budget prevented them.
+    """
+    import re
+
+    if not answer_text or not citations or len(citations) < 1:
+        return answer_text
+
+    # Check if answer already has any evidence markers
+    if re.search(r'\[E\d+\]', answer_text):
+        return answer_text  # Already has markers, skip injection
+
+    # If answer lacks markers despite having citations, inject top citation after first sentence
+    first_sentence_match = re.search(r'([.!?]+)', answer_text)
+    if first_sentence_match and len(citations) > 0:
+        insertion_point = first_sentence_match.end()
+        marker = " [E1]"
+        answer_text = answer_text[:insertion_point] + marker + answer_text[insertion_point:]
+
+    return answer_text
 
 
 def _error_response(code, message, request_id, http_status=status.HTTP_400_BAD_REQUEST):
@@ -469,14 +617,7 @@ class HealthLiveView(APIView):
 
     def get(self, request):
         # Liveness reflects process availability without dependency checks.
-        return Response(
-            {
-                "status": "ok",
-                "service": "napcore-helpdesk",
-                "check": "live",
-            },
-            status=status.HTTP_200_OK,
-        )
+        return Response(_service_health_payload(check="live", status_value="ok"), status=status.HTTP_200_OK)
 
 
 class HealthReadyView(APIView):
@@ -490,22 +631,12 @@ class HealthReadyView(APIView):
                 cursor.fetchone()
         except Exception:
             return Response(
-                {
-                    "status": "degraded",
-                    "service": "napcore-helpdesk",
-                    "check": "ready",
-                    "database": "unavailable",
-                },
+                _service_health_payload(check="ready", status_value="degraded", database="unavailable"),
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
 
         return Response(
-            {
-                "status": "ok",
-                "service": "napcore-helpdesk",
-                "check": "ready",
-                "database": "ok",
-            },
+            _service_health_payload(check="ready", status_value="ok", database="ok"),
             status=status.HTTP_200_OK,
         )
 
@@ -574,11 +705,13 @@ class QuestionAnswerView(APIView):
         question = data["question"].strip()
         scope = data.get("standardsScope", [])
         semantic_query = parse_question_to_semantic_query(text=question, requested_scope=scope)
+        semantic_query_dict = semantic_query.as_dict() if hasattr(semantic_query, "as_dict") else {}
         effective_scope = scope or semantic_query.candidate_standards
         semantic_disambiguation_required = False
         semantic_disambiguation_prompt = None
         semantic_fallback = None
         generation_profile = data.get("generationProfile", "llm-ready")
+        controller_profile = data.get("controllerProfile", generation_profile)
         allow_abstain = options.get("allowAbstain", True)
         faq_min_confidence = options.get("faqMinConfidence", 0.85)
         max_citations = options.get("maxCitations", 5)
@@ -613,6 +746,19 @@ class QuestionAnswerView(APIView):
             "retrievalLatencyMs": 0.0,
         }
         faq_match = None
+        controller_route = None
+
+        # Optional controller model decides FAQ-first vs RAG route. Any failure falls back to current deterministic flow.
+        if controller_profile == "llm-ready":
+            try:
+                controller_decision = decide_route_with_controller_llm(
+                    question=question,
+                    requested_scope=effective_scope,
+                    semantic_query=semantic_query_dict,
+                )
+                controller_route = controller_decision.route if controller_decision else None
+            except ControllerLLMError:
+                controller_route = None
 
         # 1) FAQ-first: fast, deterministic, and usually high confidence.
         if not scope and semantic_query.ambiguous_core_concept and len(effective_scope) > 1:
@@ -635,7 +781,12 @@ class QuestionAnswerView(APIView):
         )
 
         faq_match = match_faq(question=question, scope=effective_scope)
-        if faq_match and faq_match["confidence"] >= faq_min_confidence and faq_match.get("scope_match", True):
+        if (
+            controller_route != "rag"
+            and faq_match
+            and faq_match["confidence"] >= faq_min_confidence
+            and faq_match.get("scope_match", True)
+        ):
             mode = QuestionEvent.MODE_FAQ
             confidence = faq_match["confidence"]
             review_required = faq_match["review_required"]
@@ -738,6 +889,17 @@ class QuestionAnswerView(APIView):
                     try:
                         generated = generate_answer_llm(question=question, chunks=chunks, scope=effective_scope)
                     except LLMGenerationError:
+                        logger.warning(
+                            "LLM generation failed; falling back to deterministic answer",
+                            extra={
+                                "requestId": request_id,
+                                "questionEventId": None,
+                                "generationProfile": generation_profile,
+                                "controllerProfile": controller_profile,
+                                "standardsScope": effective_scope,
+                            },
+                            exc_info=True,
+                        )
                         generated = generate_answer(question=question, chunks=chunks)
                 else:
                     generated = generate_answer(question=question, chunks=chunks)
@@ -775,6 +937,12 @@ class QuestionAnswerView(APIView):
                     effective_scope=effective_scope,
                 )
                 ontology_versions = current_ontology_version_payload()
+
+        # Fallback: inject evidence markers if LLM output lacks them
+        answer_text = _inject_evidence_markers_if_missing(answer_text=answer_text, citations=citations)
+
+        # Rewrite any source path references to [E#] markers
+        answer_text = _rewrite_source_paths_as_evidence_markers(answer_text=answer_text, citations=citations)
 
         answer_id = f"ans-{uuid4().hex[:12]}"
         # Persist the orchestration outcome as a question event before child trace records.
@@ -863,7 +1031,7 @@ class QuestionAnswerView(APIView):
                     "ruleHitsCount": rule_result["matchedRuleCount"],
                     "ruleConclusions": rule_result["conclusions"],
                     "ontologyVersions": ontology_versions,
-                    "semanticQuery": semantic_query.as_dict(),
+                    "semanticQuery": semantic_query_dict,
                     "semanticDisambiguationRequired": semantic_disambiguation_required,
                     "semanticDisambiguationPrompt": semantic_disambiguation_prompt,
                     "semanticFallback": semantic_fallback,

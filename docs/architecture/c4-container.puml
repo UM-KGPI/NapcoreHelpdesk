@@ -10,14 +10,17 @@ Person(integrator, "ITS System Integrator", "Integration stakeholder")
 Person(ticketing, "Ticketing Agent", "Ticketing stakeholder")
 
 System_Ext(github, "Approved GitHub Repositories", "Authoritative standards sources and allowlisted companion docs")
-System_Ext(llm, "LLM Provider API", "Optional grounded answer generation")
+System_Ext(controller_runtime, "Controller Model Runtime", "Local or remote runtime for intent, routing, and SPARQL planning")
+System_Ext(narration_runtime, "Narration Model Runtime", "Local or remote runtime for grounded answer composition")
 
 System_Boundary(boundary, "NAPCORE Helpdesk") {
   Container(gui, "Web GUI", "React + TypeScript + Vite", "Chat Session UX, operator console, references display, workflow controls")
   Container(api, "Question API / Orchestrator", "Django + DRF REST API", "FAQ-first decisioning, session-aware requests, and RAG fallback orchestration")
+  Container(controller, "Controller LLM Service", "Service", "Intent detection, route selection, and SPARQL/query plan drafting")
   Container(faq, "FAQ Service", "Service", "Canonical FAQ lookup and version management")
   Container(retrieval, "Retrieval Service", "Service", "Hybrid vector plus lexical search over indexed source chunks")
-  Container(guardrails, "Generation & Guardrails", "Service", "Deterministic grounded generation, optional LLM provider adapter, citation checks, abstention policy")
+  Container(narration, "Narration LLM Service", "Service", "Grounded answer composition from evidence pack and citations")
+  Container(guardrails, "Policy Guardrails Service", "Service", "SPARQL allowlist checks, citation checks, abstention policy, and source-policy enforcement")
   Container(editorial, "Editorial Workflow Service", "Service", "Draft, review, approve, publish flow")
   Container(ingest, "Ingestion Worker", "Worker", "Pull, parse, chunk, embed, and index allowlisted repositories")
   ContainerDb(pg, "Application Database", "PostgreSQL or SQLite local fallback", "FAQ, events, reviews, evidence links, source metadata")
@@ -32,18 +35,27 @@ Rel(integrator, gui, "Runs interoperability and deployment queries")
 Rel(ticketing, gui, "Runs ticketing integration queries")
 
 Rel(gui, api, "Submits question, session context, and generation profile", "HTTPS/JSON")
-Rel(api, faq, "High-confidence FAQ lookup")
-Rel(api, retrieval, "Fallback retrieval request")
-Rel(api, guardrails, "Grounded generation request")
+Rel(api, controller, "Intent + routing + query planning request")
+Rel(api, faq, "Canonical FAQ lookup when controller selects FAQ path")
+Rel(api, retrieval, "Retrieval request when controller selects RAG path")
+Rel(api, narration, "Grounded narration request with evidence pack")
+Rel(api, guardrails, "Validate query plans and final answer policy compliance")
 Rel(api, editorial, "Route low-confidence or flagged answers")
 Rel(api, pg, "Store question events and outcomes")
+
+Rel(controller, controller_runtime, "Run intent/routing/SPARQL planning prompt")
+Rel(controller, guardrails, "Preflight SPARQL and tool policy validation")
+Rel(controller, retrieval, "Issue retrieval plan and constraints")
+Rel(controller, sdb, "Plan and run constrained graph queries when graph mode is enabled", "SPARQL/HTTP")
 
 Rel(faq, pg, "Read/write FAQ entries and versions")
 Rel(retrieval, vdb, "Top-k semantic retrieval")
 Rel(retrieval, sdb, "Graph concept expansion and reranking when GRAPH_RAG_ENABLED and GRAPHDB_ENABLED", "SPARQL/HTTP")
 Rel(retrieval, pg, "Store retrieval events")
-Rel(guardrails, llm, "Generate from retrieved context only when llm-ready mode is enabled")
-Rel(guardrails, pg, "Store evidence links and policy results")
+Rel(narration, narration_runtime, "Compose answer from evidence pack only")
+Rel(narration, guardrails, "Request citation and policy validation")
+Rel(narration, pg, "Store rendered answer, citations, and confidence")
+Rel(guardrails, pg, "Store policy checks and abstention reasons")
 Rel(editorial, pg, "Store review decisions")
 Rel(ingest, github, "Pull primary and companion allowlisted repositories")
 Rel(ingest, vdb, "Upsert embeddings")
@@ -59,12 +71,14 @@ Lay_R(integrator, ticketing)
 Lay_D(pto, gui)
 ' Bottom layer: external systems below helpdesk boundary
 Lay_D(boundary, github)
-Lay_D(boundary, llm)
-Lay_R(github, llm)
+Lay_D(boundary, controller_runtime)
+Lay_D(boundary, narration_runtime)
+Lay_R(github, controller_runtime)
+Lay_R(controller_runtime, narration_runtime)
 
-note right of llm
+note right of narration_runtime
 Top layer: Users.
-Bottom layer: Approved source repositories and LLM.
+Bottom layer: Approved source repositories and model runtimes.
 end note
 
 note right of sdb

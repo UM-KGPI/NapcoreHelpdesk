@@ -1,7 +1,7 @@
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
-@prefix siri: <https://siri.org.uk/ontology/siri#> .
+@prefix siri: <http://www.siri.org.uk/siri/2.1#> .
 @prefix rule: <https://napcore.eu/ontology/rules#> .
 
 <https://napcore.eu/ontology/siri-artifact-rules/v1.0>

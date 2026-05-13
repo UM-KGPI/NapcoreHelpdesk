@@ -16,7 +16,7 @@ from helpdesk.services.retrieval_gateway import retrieve_chunks
 class SourceIndexBuilderTests(TestCase):
     """Verify indexing command guardrails, profile filtering, and incremental behavior."""
 
-    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/NeTEx-CEN/NeTEx"})
+    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/TransmodelEcosystem/NeTEx"})
     def test_build_source_index_command_indexes_repository_files(self):
         """Ensure an allowed repository is indexed into chunks and run metrics."""
         with TemporaryDirectory() as tmp_dir:
@@ -31,12 +31,12 @@ class SourceIndexBuilderTests(TestCase):
 
             call_command(
                 "build_source_index",
-                repo_url="https://github.com/NeTEx-CEN/NeTEx",
+                repo_url="https://github.com/TransmodelEcosystem/NeTEx",
                 repo_path=str(repo_path),
                 prune=True,
             )
 
-        chunks = SourceChunk.objects.filter(repository_url="https://github.com/NeTEx-CEN/NeTEx")
+        chunks = SourceChunk.objects.filter(repository_url="https://github.com/TransmodelEcosystem/NeTEx")
         self.assertGreater(chunks.count(), 0)
         self.assertTrue(chunks.filter(source_path="docs/guide.md").exists())
 
@@ -56,7 +56,7 @@ class SourceIndexBuilderTests(TestCase):
         self.assertTrue(IndexedSourceFile.objects.filter(source_path="docs/guide.md").exists())
         self.assertEqual(IndexRunMetric.objects.filter(status=IndexRunMetric.STATUS_SUCCESS).count(), 1)
 
-    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/NeTEx-CEN/NeTEx"})
+    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/TransmodelEcosystem/NeTEx"})
     def test_build_source_index_command_rejects_unapproved_repository(self):
         """Ensure repositories outside the configured allow-list are rejected."""
         with TemporaryDirectory() as tmp_dir:
@@ -70,7 +70,7 @@ class SourceIndexBuilderTests(TestCase):
                     repo_path=str(repo_path),
                 )
 
-    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/NeTEx-CEN/NeTEx"})
+    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/TransmodelEcosystem/NeTEx"})
     def test_build_source_index_command_rejects_unknown_profile(self):
         """Ensure unknown profile names fail fast during command validation."""
         with TemporaryDirectory() as tmp_dir:
@@ -80,12 +80,12 @@ class SourceIndexBuilderTests(TestCase):
             with self.assertRaises(CommandError):
                 call_command(
                     "build_source_index",
-                    repo_url="https://github.com/NeTEx-CEN/NeTEx",
+                    repo_url="https://github.com/TransmodelEcosystem/NeTEx",
                     repo_path=str(repo_path),
                     profile="nonexistent-profile",
                 )
 
-    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/NeTEx-CEN/NeTEx"})
+    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/TransmodelEcosystem/NeTEx"})
     def test_build_source_index_command_applies_netex_profile_filtering(self):
         """Ensure the NeTEx profile includes docs-like paths and excludes test paths."""
         with TemporaryDirectory() as tmp_dir:
@@ -100,7 +100,7 @@ class SourceIndexBuilderTests(TestCase):
 
             call_command(
                 "build_source_index",
-                repo_url="https://github.com/NeTEx-CEN/NeTEx",
+                repo_url="https://github.com/TransmodelEcosystem/NeTEx",
                 repo_path=str(repo_path),
                 profile="netex",
                 prune=True,
@@ -109,7 +109,7 @@ class SourceIndexBuilderTests(TestCase):
         self.assertTrue(SourceChunk.objects.filter(source_path="docs/netex.md").exists())
         self.assertFalse(SourceChunk.objects.filter(source_path="tests/skip.md").exists())
 
-    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/NeTEx-CEN/NeTEx"})
+    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/TransmodelEcosystem/NeTEx"})
     def test_build_source_index_command_incremental_skips_unchanged_files(self):
         """Ensure incremental mode skips unchanged files on subsequent runs."""
         with TemporaryDirectory() as tmp_dir:
@@ -121,7 +121,7 @@ class SourceIndexBuilderTests(TestCase):
 
             call_command(
                 "build_source_index",
-                repo_url="https://github.com/NeTEx-CEN/NeTEx",
+                repo_url="https://github.com/TransmodelEcosystem/NeTEx",
                 repo_path=str(repo_path),
                 incremental=True,
                 prune=True,
@@ -129,7 +129,7 @@ class SourceIndexBuilderTests(TestCase):
 
             call_command(
                 "build_source_index",
-                repo_url="https://github.com/NeTEx-CEN/NeTEx",
+                repo_url="https://github.com/TransmodelEcosystem/NeTEx",
                 repo_path=str(repo_path),
                 incremental=True,
                 prune=True,
@@ -140,7 +140,7 @@ class SourceIndexBuilderTests(TestCase):
         self.assertEqual(latest.mode, IndexRunMetric.MODE_INCREMENTAL)
         self.assertGreaterEqual(latest.skipped_files, 1)
 
-    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/NeTEx-CEN/NeTEx"})
+    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/TransmodelEcosystem/NeTEx"})
     def test_build_source_index_incremental_skips_when_head_changes_but_content_same(self):
         """Ensure per-file incremental logic does not re-upsert unchanged files on HEAD-only changes."""
         with TemporaryDirectory() as tmp_dir:
@@ -153,7 +153,7 @@ class SourceIndexBuilderTests(TestCase):
             with patch("helpdesk.services.index_builder.current_commit_sha", side_effect=["sha-old", "sha-new"]):
                 call_command(
                     "build_source_index",
-                    repo_url="https://github.com/NeTEx-CEN/NeTEx",
+                    repo_url="https://github.com/TransmodelEcosystem/NeTEx",
                     repo_path=str(repo_path),
                     incremental=True,
                     prune=True,
@@ -161,7 +161,7 @@ class SourceIndexBuilderTests(TestCase):
 
                 call_command(
                     "build_source_index",
-                    repo_url="https://github.com/NeTEx-CEN/NeTEx",
+                    repo_url="https://github.com/TransmodelEcosystem/NeTEx",
                     repo_path=str(repo_path),
                     incremental=True,
                     prune=True,
@@ -174,7 +174,7 @@ class SourceIndexBuilderTests(TestCase):
         self.assertEqual(latest.created_chunks, 0)
         self.assertEqual(latest.updated_chunks, 0)
 
-        @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/NeTEx-CEN/NeTEx"})
+        @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/TransmodelEcosystem/NeTEx"})
         def test_build_source_index_summarizes_xsd_without_indexing_raw_schema_blob(self):
                 """Ensure XSD files become compact schema summaries rather than raw schema windows."""
                 with TemporaryDirectory() as tmp_dir:
@@ -203,7 +203,7 @@ class SourceIndexBuilderTests(TestCase):
 
                         call_command(
                                 "build_source_index",
-                                repo_url="https://github.com/NeTEx-CEN/NeTEx",
+                                repo_url="https://github.com/TransmodelEcosystem/NeTEx",
                                 repo_path=str(repo_path),
                                 profile="netex",
                                 prune=True,
@@ -254,7 +254,7 @@ class SourceIndexBuilderTests(TestCase):
         self.assertEqual(chunks[0]["sourcePath"], "docs/late-journeys.md")
 
     def test_generate_answer_uses_evidence_driven_delayed_journey_template(self):
-        """Ensure delayed-journey questions use evidence-driven modelling terms, not the timetable template."""
+        """Ensure deterministic fallback remains evidence-grounded for delayed-journey asks."""
         result = generate_answer(
             question="How to exchange raw data for delayed journeys in OpRa?",
             chunks=[
@@ -270,12 +270,12 @@ class SourceIndexBuilderTests(TestCase):
             ],
         )
 
-        self.assertIn("Based on the retrieved evidence", result["answer"])
-        self.assertIn("DATED VEHICLE JOURNEY", result["answer"])
-        self.assertIn("TYPE OF DELAY", result["answer"])
+        self.assertIn("Based on retrieved approved-source evidence", result["answer"])
+        self.assertIn("docs/late-journeys.md", result["answer"])
+        self.assertIn("validate implementation", result["answer"])
 
     def test_generate_answer_combines_cross_repository_delay_exchange_evidence(self):
-        """Ensure delayed journey exchange answers synthesize signals across repositories."""
+        """Ensure deterministic fallback reports cross-repository evidence span."""
         result = generate_answer(
             question="How can I exchange delayed vehicle journeys?",
             chunks=[
@@ -291,7 +291,7 @@ class SourceIndexBuilderTests(TestCase):
                 {
                     "text": "SIRI supports real-time exchange in public transport systems.",
                     "score": 0.81,
-                    "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+                    "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx",
                     "commitSha": "def456",
                     "sourcePath": "README.md",
                     "chunkId": "chunk-generic",
@@ -300,10 +300,8 @@ class SourceIndexBuilderTests(TestCase):
             ],
         )
 
-        self.assertIn("across repository chunks", result["answer"])
-        self.assertIn("SIRI", result["answer"])
-        self.assertIn("NeTEx", result["answer"])
-        self.assertIn("OpRa", result["answer"])
+        self.assertIn("Based on retrieved approved-source evidence", result["answer"])
+        self.assertIn("Evidence spans multiple repositories", result["answer"])
 
     @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/OpRa-CEN/OpRa"})
     def test_retrieve_chunks_prefers_docs_model_content_over_readme(self):
@@ -342,7 +340,7 @@ class SourceIndexBuilderTests(TestCase):
     @override_settings(
         ALLOWED_SOURCE_REPOSITORIES={
             "https://github.com/OpRa-CEN/OpRa",
-            "https://github.com/NeTEx-CEN/NeTEx",
+            "https://github.com/TransmodelEcosystem/NeTEx",
         }
     )
     def test_retrieve_chunks_prefers_explicit_opra_intent_without_scope(self):
@@ -373,7 +371,7 @@ class SourceIndexBuilderTests(TestCase):
             )
             call_command(
                 "build_source_index",
-                repo_url="https://github.com/NeTEx-CEN/NeTEx",
+                repo_url="https://github.com/TransmodelEcosystem/NeTEx",
                 repo_path=str(netex_path),
                 profile="default",
                 prune=True,
@@ -392,7 +390,7 @@ class SourceIndexBuilderTests(TestCase):
     @override_settings(
         ALLOWED_SOURCE_REPOSITORIES={
             "https://github.com/OpRa-CEN/OpRa",
-            "https://github.com/NeTEx-CEN/NeTEx",
+            "https://github.com/TransmodelEcosystem/NeTEx",
         }
     )
     def test_retrieve_chunks_finds_opra_example_by_filename_with_scope(self):
@@ -421,7 +419,7 @@ class SourceIndexBuilderTests(TestCase):
 
             call_command(
                 "build_source_index",
-                repo_url="https://github.com/NeTEx-CEN/NeTEx",
+                repo_url="https://github.com/TransmodelEcosystem/NeTEx",
                 repo_path=str(netex_path),
                 profile="default",
                 prune=True,
@@ -450,7 +448,7 @@ class SourceIndexBuilderTests(TestCase):
     @override_settings(
         ALLOWED_SOURCE_REPOSITORIES={
             "https://github.com/OpRa-CEN/OpRa",
-            "https://github.com/NeTEx-CEN/NeTEx",
+            "https://github.com/TransmodelEcosystem/NeTEx",
         }
     )
     def test_retrieve_chunks_finds_opra_example_by_semantic_content(self):
@@ -489,7 +487,7 @@ class SourceIndexBuilderTests(TestCase):
 
             call_command(
                 "build_source_index",
-                repo_url="https://github.com/NeTEx-CEN/NeTEx",
+                repo_url="https://github.com/TransmodelEcosystem/NeTEx",
                 repo_path=str(netex_path),
                 profile="default",
                 prune=True,
@@ -517,7 +515,7 @@ class SourceIndexBuilderTests(TestCase):
     @override_settings(
         ALLOWED_SOURCE_REPOSITORIES={
             "https://github.com/OpRa-CEN/OpRa",
-            "https://github.com/NeTEx-CEN/NeTEx",
+            "https://github.com/TransmodelEcosystem/NeTEx",
         }
     )
     def test_retrieve_chunks_balances_delay_exchange_evidence_across_repositories(self):
@@ -554,7 +552,7 @@ class SourceIndexBuilderTests(TestCase):
             )
             call_command(
                 "build_source_index",
-                repo_url="https://github.com/NeTEx-CEN/NeTEx",
+                repo_url="https://github.com/TransmodelEcosystem/NeTEx",
                 repo_path=str(netex_path),
                 profile="default",
                 prune=True,
@@ -570,7 +568,7 @@ class SourceIndexBuilderTests(TestCase):
         self.assertTrue(chunks)
         repository_urls = {chunk["repositoryUrl"] for chunk in chunks}
         self.assertIn("https://github.com/OpRa-CEN/OpRa", repository_urls)
-        self.assertIn("https://github.com/NeTEx-CEN/NeTEx", repository_urls)
+        self.assertIn("https://github.com/TransmodelEcosystem/NeTEx", repository_urls)
 
     @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/OpRa-CEN/OpRa"})
     def test_index_builder_assigns_doc_type_from_paths(self):

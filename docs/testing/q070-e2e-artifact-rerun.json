@@ -5,35 +5,35 @@
   "answer": "Here is a simple NeTEx XML example for a line with stop points, based on the provided evidence:\n\n```xml\n<Network>\n    <StopPlaces>\n        <StopPlace id=\"stop_place_001\">\n            <Name>Stop Place A</Name>\n            <Quays>\n                <Quay id=\"quay_001\">\n                    <Name>Quay A</Name>\n                </Quay>\n            </Quays>\n        </StopPlace>\n        <StopPlace id=\"stop_place_002\">\n            <Name>Stop Place B</Name>\n            <Quays>\n                <Quay id=\"quay_002\">\n                    <Name>Quay B</Name>\n                </Quay>\n            </Quays>\n        </StopPlace>\n    </StopPlaces>\n    <ScheduledStopPoints>\n        <ScheduledStopPoint id=\"ssp_001\">\n            <Name>Scheduled Stop Point A</Name>\n            <Location>\n                <Latitude>36.905697</Latitude>\n                <Longitude>-116.76218</Longitude>\n            </Location>\n        </ScheduledStopPoint>\n        <ScheduledStopPoint id=\"ssp_002\">\n            <Name>Scheduled Stop Point B</Name>\n            <Location>\n                <Latitude>36.641496</Latitude>\n                <Longitude>-116.40094</Longitude>\n            </Location>\n        </ScheduledStopPoint>\n    </ScheduledStopPoints>\n    <StopAssignments>\n        <StopAssignment>\n            <StopPlaceRef ref=\"stop_place_001\"/>\n            <ScheduledStopPointRef ref=\"ssp_001\"/>\n        </StopAssignment>\n        <StopAssignment>\n            <StopPlaceRef ref=\"stop_place_002\"/>\n            <ScheduledStopPointRef ref=\"ssp_002\"/>\n        </StopAssignment>\n    </StopAssignments>\n</Network>\n```\n\nThis example illustrates the separation of scheduled stop points and stop places, as described in the NeTEx standards [E1], [E6]. Each stop place is associated with a scheduled stop point using a stop assignment, which aligns with the NeTEx structure [E1].",
   "citations": [
     {
-      "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/examples/functions/timetable/Netex_07.2_Bus_FlexibleTimetable_WithPattern.xml",
+      "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/examples/functions/timetable/Netex_07.2_Bus_FlexibleTimetable_WithPattern.xml",
       "commitSha": "de021e83a02522cff4ed936408bf927f798aae0d",
       "sourcePath": "examples/functions/timetable/Netex_07.2_Bus_FlexibleTimetable_WithPattern.xml",
       "chunkId": "src-13aed64e9579795bede68871",
       "label": "examples/functions/timetable/Netex_07.2_Bus_FlexibleTimetable_WithPattern.xml"
     },
     {
-      "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/examples/functions/timetable/Netex_08.1_BusTram_Timetable_AmbiguousLinks.xml",
+      "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/examples/functions/timetable/Netex_08.1_BusTram_Timetable_AmbiguousLinks.xml",
       "commitSha": "de021e83a02522cff4ed936408bf927f798aae0d",
       "sourcePath": "examples/functions/timetable/Netex_08.1_BusTram_Timetable_AmbiguousLinks.xml",
       "chunkId": "src-e7072f0c7babc0f8b79c2179",
       "label": "examples/functions/timetable/Netex_08.1_BusTram_Timetable_AmbiguousLinks.xml"
     },
     {
-      "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/examples/standards/gtfs/Netex_gtfs_exm1_Stops_1.xml",
+      "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/examples/standards/gtfs/Netex_gtfs_exm1_Stops_1.xml",
       "commitSha": "de021e83a02522cff4ed936408bf927f798aae0d",
       "sourcePath": "examples/standards/gtfs/Netex_gtfs_exm1_Stops_1.xml",
       "chunkId": "src-9ed9430dcadbbdb41be927b1",
       "label": "examples/standards/gtfs/Netex_gtfs_exm1_Stops_1.xml"
     },
     {
-      "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/examples/standards/nta/NTA-PI-01_EI_NTA_STOP_NaPTAN-XX_2020801.xml",
+      "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/examples/standards/nta/NTA-PI-01_EI_NTA_STOP_NaPTAN-XX_2020801.xml",
       "commitSha": "de021e83a02522cff4ed936408bf927f798aae0d",
       "sourcePath": "examples/standards/nta/NTA-PI-01_EI_NTA_STOP_NaPTAN-XX_2020801.xml",
       "chunkId": "src-53ab16d9a8de3be3ac5c2408",
       "label": "examples/standards/nta/NTA-PI-01_EI_NTA_STOP_NaPTAN-XX_2020801.xml"
     },
     {
-      "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/examples/standards/txc/FX-PI-01_UK_DFT_STOP_NaPTAN-060+086+110_20171217.xml",
+      "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/examples/standards/txc/FX-PI-01_UK_DFT_STOP_NaPTAN-060+086+110_20171217.xml",
       "commitSha": "de021e83a02522cff4ed936408bf927f798aae0d",
       "sourcePath": "examples/standards/txc/FX-PI-01_UK_DFT_STOP_NaPTAN-060+086+110_20171217.xml",
       "chunkId": "src-50514c4c736e1381d34a7675",

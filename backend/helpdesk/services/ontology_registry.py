@@ -16,6 +16,11 @@ ONTOLOGY_SPECS = [
         "graph_uri": "https://napcore.eu/graph/core/napcore-its",
     },
     {
+        "ontology_key": "transmodel",
+        "file_path": "standards/transmodel.ttl",
+        "graph_uri": "https://napcore.eu/graph/standards/transmodel",
+    },
+    {
         "ontology_key": "netex",
         "file_path": "standards/netex.ttl",
         "graph_uri": "https://napcore.eu/graph/standards/netex",
@@ -39,6 +44,11 @@ ONTOLOGY_SPECS = [
         "ontology_key": "netex-examples",
         "file_path": "examples/netex-examples.ttl",
         "graph_uri": "https://napcore.eu/graph/examples/netex",
+    },
+    {
+        "ontology_key": "nits-transmodel-align",
+        "file_path": "alignments/nits-transmodel-align.ttl",
+        "graph_uri": "https://napcore.eu/graph/alignments/transmodel",
     },
     {
         "ontology_key": "nits-netex-align",

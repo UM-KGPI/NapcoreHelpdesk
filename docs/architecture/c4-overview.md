@@ -23,6 +23,7 @@ This file introduces the C4 diagram set for the NAPCORE Helpdesk.
 
 ## Notes
 - The diagrams align with the FAQ-first + RAG fallback model.
+- The LLM path is split into a controller runtime (intent/routing/SPARQL planning) and a narration runtime (grounded answer composition).
 - Knowledge boundary remains restricted to approved GitHub repositories.
 - Graph-aware retrieval is represented as a first-class path using GraphDB-backed ontology expansion when enabled.
 - Abstention behavior is kept explicit for insufficient evidence.

@@ -62,7 +62,7 @@ make backend-index REPO_URL=<url> REPO_PATH=<path> PROFILE=netex INCREMENTAL=1
 **Example:**
 ```bash
 make backend-index \
-  REPO_URL=https://github.com/NeTEx-CEN/NeTEx \
+  REPO_URL=https://github.com/TransmodelEcosystem/NeTEx \
   REPO_PATH=/Users/you/repos/NeTEx \
   PROFILE=netex \
   INCREMENTAL=1
@@ -314,7 +314,7 @@ make health                 # Verify health
 ### Index New Repository
 ```bash
 make docker-dev-up          # Ensure containers running
-make backend-index REPO_URL=https://github.com/NeTEx-CEN/NeTEx \
+make backend-index REPO_URL=https://github.com/TransmodelEcosystem/NeTEx \
                    REPO_PATH=/absolute/path/to/NeTEx \
                    PROFILE=netex \
                    INCREMENTAL=1

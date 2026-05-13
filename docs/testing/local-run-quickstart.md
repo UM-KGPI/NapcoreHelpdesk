@@ -25,7 +25,7 @@ Active settings:
 - `POSTGRES_DB=napcore_helpdesk`, `POSTGRES_USER=napcore`, `POSTGRES_HOST=localhost`, `POSTGRES_PORT=5432`
 
 Allow-listed source repositories:
-- `https://github.com/NeTEx-CEN/NeTEx`
+- `https://github.com/TransmodelEcosystem/NeTEx`
 - `https://github.com/NeTEx-CEN/test-Profile-Documentation`
 - `https://github.com/OpRa-CEN/OpRa`
 - `https://github.com/hfjelstad/Profile_Documentation_v2`

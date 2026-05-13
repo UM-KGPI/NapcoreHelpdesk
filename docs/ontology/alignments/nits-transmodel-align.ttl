@@ -1,0 +1,110 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+
+@prefix nits:  <https://napcore.eu/ontology/nits#> .
+@prefix tm:    <https://transmodel-cen.eu/6.2/> .
+@prefix netex: <https://netex.org.uk/netex/2.0#> .
+@prefix opra:  <https://transmodel-cen.eu/opra/1.0#> .
+@prefix siri:  <http://www.siri.org.uk/siri/2.1#> .
+
+#################################################################
+# Ontology Header
+#################################################################
+
+<https://napcore.eu/ontology/nits/align/transmodel>
+    a owl:Ontology ;
+    dct:title "NITS-Transmodel Alignment Ontology"@en ;
+    dct:description "Alignment ontology connecting Transmodel concepts to NITS core concepts and to corresponding concepts in NeTEx, OpRa, and SIRI."@en ;
+    dct:creator "NAPCORE Working Group" ;
+    dct:created "2026-05-06"^^xsd:date ;
+    owl:versionIRI <https://napcore.eu/ontology/nits/align/transmodel/0.1> ;
+    owl:versionInfo "0.1-draft" ;
+    owl:imports <https://napcore.eu/ontology/nits/core> ;
+    owl:imports <https://transmodel-cen.eu/6.2> ;
+    owl:imports <https://netex.org.uk/netex/2.0> ;
+    owl:imports <https://transmodel-cen.eu/opra/1.0> ;
+    owl:imports <http://www.siri.org.uk/siri/2.1> ;
+    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+
+#################################################################
+# Transmodel to NITS Core Alignments
+#################################################################
+
+tm:LINE
+    rdfs:subClassOf nits:Service .
+
+tm:NETWORK
+    rdfs:subClassOf nits:SpatialEntity .
+
+tm:JOURNEY
+    rdfs:subClassOf nits:DomainConcept .
+
+tm:STOP_PLACE
+    rdfs:subClassOf nits:SpatialEntity .
+
+tm:SCHEDULED_STOP_POINT
+    rdfs:subClassOf nits:SpatialEntity .
+
+tm:QUAY
+    rdfs:subClassOf nits:SpatialEntity .
+
+tm:OPERATOR
+    rdfs:subClassOf nits:Actor .
+
+tm:ORGANISATION
+    rdfs:subClassOf nits:Actor .
+
+#################################################################
+# Cross-Standard Concept Relations
+#################################################################
+
+tm:QUAY
+    skos:exactMatch netex:Quay .
+
+tm:SCHEDULED_STOP_POINT
+    skos:exactMatch netex:ScheduledStopPoint ;
+    skos:relatedMatch opra:StopPoint ;
+    skos:relatedMatch siri:Stop .
+
+tm:LINE
+    skos:exactMatch netex:Line ;
+    skos:relatedMatch opra:PublicTransportService .
+
+tm:JOURNEY
+    skos:relatedMatch netex:Journey ;
+    skos:relatedMatch opra:Trip ;
+    skos:relatedMatch siri:Journey .
+
+#################################################################
+# Transmodel Object Properties (Reasoning Support)
+#################################################################
+
+tm:servesStopPoint
+    a owl:ObjectProperty ;
+    rdfs:label "serves stop point"@en ;
+    rdfs:comment "Links a Transmodel line to a scheduled stop point it serves."@en ;
+    rdfs:domain tm:LINE ;
+    rdfs:range tm:SCHEDULED_STOP_POINT ;
+    rdfs:subPropertyOf nits:involves ;
+    skos:exactMatch netex:visitsStop .
+
+tm:operatedBy
+    a owl:ObjectProperty ;
+    rdfs:label "operated by"@en ;
+    rdfs:comment "Links a Transmodel line or journey to its operator."@en ;
+    rdfs:range tm:OPERATOR ;
+    rdfs:subPropertyOf nits:involves ;
+    skos:exactMatch netex:operatedBy .
+
+tm:partOfNetwork
+    a owl:ObjectProperty ;
+    rdfs:label "part of network"@en ;
+    rdfs:comment "Links a Transmodel line to a containing network."@en ;
+    rdfs:domain tm:LINE ;
+    rdfs:range tm:NETWORK ;
+    rdfs:subPropertyOf nits:involves ;
+    skos:exactMatch netex:inNetwork .

@@ -15,6 +15,9 @@ Implement the helpdesk as a retrieval-augmented generation (RAG) system that pro
 ## API Contract
 - Implementation contract: [rag-fallback-api-contract.md](docs/architecture/rag-fallback-api-contract.md)
 
+## Methodology
+- Canonical end-to-end runtime methodology: [query-to-evidence-methodology.md](docs/architecture/query-to-evidence-methodology.md)
+
 ## Semantic Layer Extension
 - Graph-based semantic layer plan: [semantic-layer-plan.md](docs/architecture/semantic-layer-plan.md)
 - Semantic layer findings and ontology baseline: [semantic-layer-findings.md](docs/architecture/semantic-layer-findings.md)

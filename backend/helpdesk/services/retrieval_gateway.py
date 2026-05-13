@@ -139,7 +139,8 @@ def _question_path_hints(question: str) -> set[str]:
             normalized.endswith((".xml", ".xsd", ".md"))
             or "_" in normalized
             or "-" in normalized
-            or any(ch.isupper() for ch in token[1:])
+            or "/" in normalized
+            or any(ch.isdigit() for ch in normalized)
         ):
             hints.add(normalized)
     return hints
@@ -156,6 +157,7 @@ def _path_hint_candidates(question: str, top_k: int, scope: list[str] | None = N
     for hint in hints:
         path_filter |= models.Q(source_path__icontains=hint)
 
+    # Standard path hint limit
     return SourceChunk.objects.filter(_scope_query_filter(scope)).filter(path_filter)[: max(15, top_k * 3)]
 
 
@@ -236,6 +238,21 @@ def _postgres_hybrid_candidates(
             vector_distance=CosineDistance("embedding_vector", query_embedding),
         )
         .annotate(vector_similarity=1.0 - models.F("vector_distance"))
+        .only(
+            "id",
+            "text",
+            "repository_url",
+            "commit_sha",
+            "source_path",
+            "chunk_id",
+            "label",
+            "heading",
+            "standards_scope",
+            "chunk_type",
+            "doc_type",
+            "structured_metadata",
+            "quality_score",
+        )
         .order_by("-vector_similarity", "-lexical_rank")[: max(25, top_k * 5)]
     )
 
@@ -497,6 +514,50 @@ def _is_normative_constraint_question(question: str) -> bool:
     )
 
 
+def _is_mapping_relationship_question(question: str) -> bool:
+    """Detect questions about cross-standard relationships, alignments, or comparisons."""
+    lower_question = (question or "").lower()
+    return bool(
+        re.search(
+            r"\b(difference|relationship|compare|comparison|mapping|aligned|alignment|correspond|equivalent|same\s+as|relates?\s+to|between|cross-standard)\b",
+            lower_question,
+        )
+    )
+
+
+def _is_abstention_question(question: str) -> bool:
+    """Detect questions likely to benefit from abstention (out-of-scope, weak evidence)."""
+    lower_question = (question or "").lower()
+    return bool(
+        re.search(
+            r"\b(unsupported|not\s+supported|out\s+of\s+scope|beyond\s+scope|not\s+applicable|undefined|unspecified|unknown|ambiguous|unclear)\b",
+            lower_question,
+        )
+    )
+
+
+def _is_explanation_question(question: str) -> bool:
+    """Detect questions seeking detailed explanation or background."""
+    lower_question = (question or "").lower()
+    return bool(
+        re.search(
+            r"\b(explain|what\s+is|define|definition|background|overview|concept|understand|how\s+does|semantics?|meaning)\b",
+            lower_question,
+        )
+    )
+
+
+def _is_example_driven_question(question: str) -> bool:
+    """Detect questions requesting examples, use cases, or illustrations."""
+    lower_question = (question or "").lower()
+    return bool(
+        re.search(
+            r"\b(example|instance|use\s+case|sample|illustration|concrete|demonstrate|show|list|enumerate)\b",
+            lower_question,
+        )
+    )
+
+
 def _active_graphdb_standards(
     *,
     scope: list[str] | None,
@@ -692,17 +753,49 @@ def _graph_concept_candidates(
     if not expanded_concepts:
         return []
 
-    alias_filter = models.Q()
+    fast_alias_filter = models.Q()
+    text_alias_filter = models.Q()
     candidate_aliases: set[str] = set()
+    ranked_aliases: list[tuple[int, int, str]] = []
+    question_tokens = {token for token in TOKEN_PATTERN.findall((question or "").lower()) if len(token) >= 3}
+
     for concept_id in expanded_concepts:
         for alias in GRAPH_CONCEPT_ALIASES.get(concept_id, set()):
-            candidate_aliases.add(alias)
-            alias_filter |= models.Q(text__icontains=alias)
-            alias_filter |= models.Q(source_path__icontains=alias)
-            alias_filter |= models.Q(label__icontains=alias)
-            alias_filter |= models.Q(heading__icontains=alias)
+            normalized_alias = alias.strip()
+            if len(normalized_alias) < 3:
+                continue
 
-    if not alias_filter:
+            alias_tokens = {token for token in TOKEN_PATTERN.findall(normalized_alias.lower()) if len(token) >= 3}
+            overlap_score = len(alias_tokens.intersection(question_tokens)) if question_tokens else 0
+            specificity_score = min(len(normalized_alias), 120)
+            ranked_aliases.append((overlap_score, specificity_score, normalized_alias))
+
+    if not ranked_aliases:
+        return []
+
+    ranked_aliases.sort(key=lambda value: (value[0], value[1]), reverse=True)
+    alias_cap = max(8, min(40, top_k * 6))
+
+    selected_aliases: list[str] = []
+    seen_aliases: set[str] = set()
+    for overlap_score, _specificity_score, alias in ranked_aliases:
+        dedupe_key = alias.lower()
+        if dedupe_key in seen_aliases:
+            continue
+
+        # Keep high-overlap aliases first; once the cap is reached, stop.
+        selected_aliases.append(alias)
+        seen_aliases.add(dedupe_key)
+        if len(selected_aliases) >= alias_cap:
+            break
+
+    for alias in selected_aliases:
+        candidate_aliases.add(alias)
+        fast_alias_filter |= models.Q(source_path__icontains=alias)
+        fast_alias_filter |= models.Q(label__icontains=alias)
+        text_alias_filter |= models.Q(text__icontains=alias)
+
+    if not fast_alias_filter and not text_alias_filter:
         return []
 
     resolved_max_candidates = max_candidates if max_candidates is not None else max(10, top_k * 2)
@@ -710,13 +803,16 @@ def _graph_concept_candidates(
     if candidate_limit == 0:
         return []
 
-    ranked_candidates = []
-    for chunk in (
+    base_queryset = (
         SourceChunk.objects.filter(_scope_query_filter(scope))
         .filter(doc_type__in=["schema", "example"])
-        .filter(alias_filter)
         .only("id", "text", "source_path", "label", "heading", "doc_type", "quality_score")
-    ):
+    )
+
+    # Fast path: rely on source path / label matches first (usually enough for concrete example queries).
+    ranked_candidates = []
+    seen_chunk_ids: set[int] = set()
+    for chunk in base_queryset.filter(fast_alias_filter):
         rank_score = _graph_candidate_rank_score(
             chunk=chunk,
             aliases=candidate_aliases,
@@ -725,6 +821,25 @@ def _graph_concept_candidates(
             concept_example_paths=concept_example_paths or set(),
         )
         ranked_candidates.append((rank_score, float(chunk.quality_score), int(chunk.id), chunk))
+        seen_chunk_ids.add(int(chunk.id))
+
+    # Slow fallback: scan chunk text only when fast fields did not provide enough candidates.
+    if len(ranked_candidates) < candidate_limit and text_alias_filter:
+        remaining = max(0, candidate_limit - len(ranked_candidates))
+        # Keep the expensive text scan tightly bounded; path/label hits are preferred.
+        fallback_scan_limit = min(max(remaining * 2, candidate_limit), max(12, candidate_limit * 2))
+        fallback_queryset = base_queryset.filter(text_alias_filter)
+        if seen_chunk_ids:
+            fallback_queryset = fallback_queryset.exclude(id__in=seen_chunk_ids)
+        for chunk in fallback_queryset.order_by("-quality_score")[:fallback_scan_limit]:
+            rank_score = _graph_candidate_rank_score(
+                chunk=chunk,
+                aliases=candidate_aliases,
+                question=question,
+                hinted_doc_types=hinted_doc_types or set(),
+                concept_example_paths=concept_example_paths or set(),
+            )
+            ranked_candidates.append((rank_score, float(chunk.quality_score), int(chunk.id), chunk))
 
     ranked_candidates.sort(key=lambda value: (value[0], value[1], value[2]), reverse=True)
     return [chunk for _rank_score, _quality_score, _chunk_id, chunk in ranked_candidates[:candidate_limit]]
@@ -800,11 +915,21 @@ def retrieve_chunks_with_trace(
     - 20% indexed quality score
     """
     retrieval_start_time = time.time()
+    retrieval_start_perf = time.perf_counter()
+    stage_timing_ms: dict[str, float] = {}
 
+    def _record_stage(stage_key: str, stage_start: float) -> None:
+        elapsed_ms = (time.perf_counter() - stage_start) * 1000
+        stage_timing_ms[stage_key] = round(stage_timing_ms.get(stage_key, 0.0) + elapsed_ms, 1)
+
+    stage_start = time.perf_counter()
     _ensure_seed_chunks()
+    _record_stage("seedChunkEnsureMs", stage_start)
 
     graph_expansion_max_concepts = max(1, int(getattr(settings, "GRAPH_EXPANSION_MAX_CONCEPTS", 64)))
     graph_expansion_max_candidates = max(1, int(getattr(settings, "GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS", 40)))
+    retrieval_scoring_candidate_cap = max(12, int(getattr(settings, "RETRIEVAL_SCORING_CANDIDATE_CAP", 40)))
+    graph_preselect_multiplier = max(1, int(getattr(settings, "RETRIEVAL_GRAPH_PRESELECT_MULTIPLIER", 2)))
     source_path_cap = max(1, int(getattr(settings, "RETRIEVAL_MAX_SAME_SOURCE_PATH", 2)))
     mmr_lambda = float(getattr(settings, "RETRIEVAL_MMR_LAMBDA", 0.92))
     mmr_lambda = max(0.0, min(1.0, mmr_lambda))
@@ -821,11 +946,31 @@ def retrieve_chunks_with_trace(
         graph_expansion_max_concepts = min(graph_expansion_max_concepts, 16)
         graph_expansion_max_candidates = min(graph_expansion_max_candidates, max(12, top_k * 2))
 
+    # Apply intent-aware constraints to reduce graph candidate fan-out based on query semantics.
+    # These constraints target the observed dominant bottlenecks: graphCandidateQueryMs and candidateScoringMs.
+    if graph_rag_enabled:
+        if _is_mapping_relationship_question(question):
+            # Reduce fan-out for cross-standard mapping/relationship queries
+            graph_expansion_max_candidates = min(graph_expansion_max_candidates, max(8, top_k))
+        elif _is_abstention_question(question):
+            # Reduce fan-out for out-of-scope/weak-evidence queries
+            graph_expansion_max_candidates = min(graph_expansion_max_candidates, max(6, int(top_k * 0.8)))
+        elif _is_explanation_question(question):
+            # Slightly reduce fan-out for detailed explanation queries
+            graph_expansion_max_candidates = min(graph_expansion_max_candidates, max(10, top_k + 2))
+        elif _is_example_driven_question(question):
+            # Reduce fan-out for concrete example/use-case queries
+            graph_expansion_max_candidates = min(graph_expansion_max_candidates, max(8, top_k))
+
     # Concept extraction happens BEFORE embedding so canonical domain terms
     # are present in the query vector and align with indexed document vocabulary.
+    stage_start = time.perf_counter()
     question_concepts = extract_graph_concepts(question) if graph_rag_enabled else set()
+    _record_stage("conceptExtractMs", stage_start)
+
     graph_expansion_source = "none"
     if graph_rag_enabled and question_concepts:
+        stage_start = time.perf_counter()
         graphdb_enabled = getattr(settings, "GRAPHDB_ENABLED", False)
 
         if graphdb_enabled:
@@ -860,14 +1005,20 @@ def retrieve_chunks_with_trace(
             expanded_concepts=expanded_concepts,
             max_concepts=graph_expansion_max_concepts,
         )
+        _record_stage("graphExpandMs", stage_start)
         graph_expansion_hops = 1
     else:
         expanded_concepts = set()
         graph_expansion_hops = 0
+        stage_timing_ms["graphExpandMs"] = 0.0
 
+    stage_start = time.perf_counter()
     concept_example_paths = get_concept_example_paths(expanded_concepts) if expanded_concepts else set()
 
     canonical_concept_terms = get_concept_canonical_terms(expanded_concepts) if expanded_concepts else []
+    _record_stage("conceptMetadataMs", stage_start)
+
+    stage_start = time.perf_counter()
     query_embedding = build_text_embedding(
         _build_query_embedding_input(
             question=question,
@@ -876,7 +1027,9 @@ def retrieve_chunks_with_trace(
             expanded_concept_terms=canonical_concept_terms if canonical_concept_terms else None,
         )
     )
+    _record_stage("queryEmbeddingMs", stage_start)
 
+    stage_start = time.perf_counter()
     postgres_candidates = _postgres_hybrid_candidates(
         question=question,
         query_embedding=query_embedding,
@@ -885,7 +1038,9 @@ def retrieve_chunks_with_trace(
     )
     if postgres_candidates is None:
         postgres_candidates = _postgres_fts_candidates(question=question, top_k=top_k, scope=scope)
+    _record_stage("postgresCandidateQueryMs", stage_start)
 
+    stage_start = time.perf_counter()
     if postgres_candidates is not None:
         chunk_iterable = list(postgres_candidates)
         existing_ids = {chunk.id for chunk in chunk_iterable}
@@ -895,8 +1050,11 @@ def retrieve_chunks_with_trace(
     else:
         chunk_iterable = list(SourceChunk.objects.all())
         existing_ids = {chunk.id for chunk in chunk_iterable}
+    _record_stage("pathHintMergeMs", stage_start)
 
     graph_candidates_added = 0
+    graph_candidate_ids: list[int] = []
+    stage_start = time.perf_counter()
     if graph_rag_enabled and expanded_concepts:
         if not isinstance(chunk_iterable, list):
             chunk_iterable = list(chunk_iterable)
@@ -914,11 +1072,44 @@ def retrieve_chunks_with_trace(
                 chunk_iterable.append(graph_chunk)
                 existing_ids.add(graph_chunk.id)
                 graph_candidates_added += 1
+                graph_candidate_ids.append(int(graph_chunk.id))
+    _record_stage("graphCandidateQueryMs", stage_start)
 
+    stage_start = time.perf_counter()
+    selected_graph_ids: set[int] = set()
+    if len(chunk_iterable) > retrieval_scoring_candidate_cap:
+        graph_preselect_limit = min(
+            len(graph_candidate_ids),
+            max(top_k, top_k * graph_preselect_multiplier),
+        )
+        selected_graph_ids = set(graph_candidate_ids[:graph_preselect_limit])
+
+        base_candidates = [chunk for chunk in chunk_iterable if int(chunk.id) not in selected_graph_ids]
+        base_candidates.sort(
+            key=lambda chunk: (
+                float(getattr(chunk, "vector_similarity", 0.0) or 0.0),
+                float(getattr(chunk, "lexical_rank", 0.0) or 0.0),
+                float(getattr(chunk, "quality_score", 0.0) or 0.0),
+            ),
+            reverse=True,
+        )
+
+        base_limit = max(0, retrieval_scoring_candidate_cap - len(selected_graph_ids))
+        selected_base_ids = {int(chunk.id) for chunk in base_candidates[:base_limit]}
+
+        chunk_iterable = [
+            chunk
+            for chunk in chunk_iterable
+            if int(chunk.id) in selected_base_ids or int(chunk.id) in selected_graph_ids
+        ]
+    _record_stage("candidatePreselectMs", stage_start)
+
+    stage_start = time.perf_counter()
     candidates = []
     for chunk in chunk_iterable:
         if not _scope_matches(chunk.standards_scope or [], scope):
             continue
+
 
         lexical_score = float(getattr(chunk, "lexical_rank", 0.0))
         if lexical_score <= 0.0:
@@ -940,10 +1131,14 @@ def retrieve_chunks_with_trace(
             )
         lexical_score = max(0.0, min(1.0, lexical_score))
 
-        chunk_embedding = chunk.embedding_vector
-        if chunk_embedding is None or len(chunk_embedding) == 0:
-            chunk_embedding = build_text_embedding(_build_chunk_embedding_input(chunk))
-        vector_score = max(0.0, cosine_similarity(query_embedding, chunk_embedding))
+        vector_similarity = getattr(chunk, "vector_similarity", None)
+        if vector_similarity is not None:
+            vector_score = max(0.0, min(1.0, float(vector_similarity)))
+        else:
+            chunk_embedding = chunk.embedding_vector
+            if chunk_embedding is None or len(chunk_embedding) == 0:
+                chunk_embedding = build_text_embedding(_build_chunk_embedding_input(chunk))
+            vector_score = max(0.0, cosine_similarity(query_embedding, chunk_embedding))
         quality_score = max(0.0, min(1.0, chunk.quality_score))
         doc_type = (getattr(chunk, "doc_type", "guide") or "guide").lower()
 
@@ -1023,13 +1218,18 @@ def retrieve_chunks_with_trace(
                 "_graphProvenanceConceptIds": sorted(matching_concepts),
             }
         )
+    _record_stage("candidateScoringMs", stage_start)
 
+    stage_start = time.perf_counter()
     candidates.sort(key=lambda value: (value["_rankScore"], value["score"]), reverse=True)
     candidates = _apply_source_path_cap(candidates=candidates, max_per_source_path=source_path_cap)
     if retrieval_diversity_enabled:
         trimmed = _diversified_top_k(candidates=candidates, top_k=top_k, mmr_lambda=mmr_lambda)
     else:
         trimmed = candidates[:top_k]
+    _record_stage("candidateSelectionMs", stage_start)
+
+    stage_start = time.perf_counter()
     graph_hits = 0
     graph_total = 0.0
     provenance_chains: set[str] = set()
@@ -1049,7 +1249,9 @@ def retrieve_chunks_with_trace(
             candidate["graphProvenanceConceptIds"] = candidate.pop("_graphProvenanceConceptIds")
         else:
             candidate.pop("_graphProvenanceConceptIds", None)
+    _record_stage("trimmedPostprocessMs", stage_start)
 
+    stage_start = time.perf_counter()
     repository_coverage_count = len(
         {
             str(candidate.get("repositoryUrl", "")).strip()
@@ -1069,6 +1271,9 @@ def retrieve_chunks_with_trace(
             )
         )
         graph_concepts_in_trimmed.update(chunk_concepts)
+    _record_stage("coverageMetricsMs", stage_start)
+
+    stage_timing_ms["totalMeasuredMs"] = round((time.perf_counter() - retrieval_start_perf) * 1000, 1)
 
     trace = {
         "graphRagVariant": "control" if not graph_rag_enabled else "graph-rag",
@@ -1085,8 +1290,12 @@ def retrieve_chunks_with_trace(
         "conceptCoverageCount": len(graph_concepts_in_trimmed),
         "semanticAlignmentScore": round(sum(vector_scores_trimmed) / len(vector_scores_trimmed), 4) if vector_scores_trimmed else 0.0,
         "retrievalSourcePathCap": source_path_cap,
+        "retrievalScoringCandidateCap": retrieval_scoring_candidate_cap,
+        "retrievalGraphPreselectMultiplier": graph_preselect_multiplier,
+        "retrievalGraphPreselected": len(selected_graph_ids),
         "retrievalDiversityEnabled": retrieval_diversity_enabled,
         "retrievalMmrLambda": round(mmr_lambda, 4),
         "retrievalLatencyMs": round((time.time() - retrieval_start_time) * 1000, 1),
+        "retrievalStageTimingsMs": stage_timing_ms,
     }
     return trimmed, trace

@@ -160,7 +160,7 @@ class RetrievalGatewayTests(TestCase):
         for idx in range(8):
             generic_text = f"Line example structure {idx} with network and route references."
             SourceChunk.objects.create(
-                repository_url="https://github.com/NeTEx-CEN/NeTEx",
+                repository_url="https://github.com/TransmodelEcosystem/NeTEx",
                 commit_sha="abc",
                 source_path=f"examples/functions/line/line_structure_{idx}.xml",
                 chunk_id=f"generic-line-{idx}",
@@ -174,7 +174,7 @@ class RetrievalGatewayTests(TestCase):
 
         canonical_text = "Simple line XML example with stop points, StopPlace and ScheduledStopPoint."
         SourceChunk.objects.create(
-            repository_url="https://github.com/NeTEx-CEN/NeTEx",
+            repository_url="https://github.com/TransmodelEcosystem/NeTEx",
             commit_sha="abc",
             source_path="examples/functions/line/NeTEx_01_simple_line.xml",
             chunk_id="canonical-simple-line",

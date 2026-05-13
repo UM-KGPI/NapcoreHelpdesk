@@ -11,16 +11,18 @@ expected_graphs=(
   "https://napcore.eu/graph/alignments/netex"
   "https://napcore.eu/graph/alignments/opra"
   "https://napcore.eu/graph/alignments/siri"
+  "https://napcore.eu/graph/alignments/transmodel"
   "https://napcore.eu/graph/artifact-rules/datex/v1.0"
   "https://napcore.eu/graph/artifact-rules/netex/v1.0"
   "https://napcore.eu/graph/artifact-rules/opra/v1.0"
   "https://napcore.eu/graph/artifact-rules/siri/v1.0"
   "https://napcore.eu/graph/core/napcore-its"
-    "https://napcore.eu/graph/examples/netex"
+  "https://napcore.eu/graph/examples/netex"
   "https://napcore.eu/graph/standards/datex"
   "https://napcore.eu/graph/standards/netex"
   "https://napcore.eu/graph/standards/opra"
   "https://napcore.eu/graph/standards/siri"
+  "https://napcore.eu/graph/standards/transmodel"
 )
 
 if ! command -v curl >/dev/null 2>&1; then
