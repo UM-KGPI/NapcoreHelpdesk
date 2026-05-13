@@ -20,6 +20,7 @@ venv/
 .env.*
 
 # Django / local DB
+backend/db.sqlite3
 backend/celerybeat-schedule
 
 # Local backup artifacts
