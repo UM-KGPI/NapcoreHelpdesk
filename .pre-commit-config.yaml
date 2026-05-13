@@ -15,14 +15,14 @@ repos:
         name: backend-django-check
         language: system
         pass_filenames: false
-        entry: bash -lc 'cd backend && DJANGO_USE_SQLITE=True DJANGO_SECRET_KEY=precommit-secret-key JWT_SECRET_KEY=precommit-jwt-secret-key-at-least-32-bytes ../.venv/bin/python manage.py check'
+        entry: bash -lc 'cd backend && DJANGO_SECRET_KEY=precommit-secret-key JWT_SECRET_KEY=precommit-jwt-secret-key-at-least-32-bytes ../.venv/bin/python manage.py check'
         files: ^backend/
 
       - id: backend-migration-drift-check
         name: backend-migration-drift-check
         language: system
         pass_filenames: false
-        entry: bash -lc 'cd backend && DJANGO_USE_SQLITE=True DJANGO_SECRET_KEY=precommit-secret-key JWT_SECRET_KEY=precommit-jwt-secret-key-at-least-32-bytes ../.venv/bin/python manage.py makemigrations --check --dry-run'
+        entry: bash -lc 'cd backend && DJANGO_SECRET_KEY=precommit-secret-key JWT_SECRET_KEY=precommit-jwt-secret-key-at-least-32-bytes ../.venv/bin/python manage.py makemigrations --check --dry-run'
         files: ^backend/
 
       - id: frontend-build-check

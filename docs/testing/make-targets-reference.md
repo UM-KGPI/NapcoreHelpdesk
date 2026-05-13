@@ -26,7 +26,7 @@ make backend-migrate        # Apply database migrations
 
 **Details:**
 - `backend-check` runs Django's system check framework, validating installed apps, model constraints, and settings
-- `backend-migrate` applies pending migrations to the database (PostgreSQL or SQLite based on `DJANGO_USE_SQLITE` setting)
+- `backend-migrate` applies pending migrations to the PostgreSQL database
 
 ### Running Backend
 ```bash
@@ -41,7 +41,7 @@ make backend-run            # Start Django development server
 **Details:**
 - Runs `manage.py runserver` in the `.venv` environment
 - Requires `backend-migrate` to be run first
-- Requires PostgreSQL running if `DJANGO_USE_SQLITE=False` (default)
+- Requires PostgreSQL running
 
 ### Indexing & Data
 ```bash

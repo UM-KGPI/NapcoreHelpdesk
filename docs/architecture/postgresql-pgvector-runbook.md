@@ -13,7 +13,6 @@ This runbook describes how to deploy and verify the PostgreSQL + pgvector backen
 1. PostgreSQL 16+ instance reachable from backend runtime.
 2. pgvector extension package available on the database host.
 3. Application environment values configured in `backend/.env`:
-- `DJANGO_USE_SQLITE=False`
 - `POSTGRES_DB`
 - `POSTGRES_USER`
 - `POSTGRES_PASSWORD`
@@ -93,7 +92,6 @@ DROP INDEX IF EXISTS sourcechunk_embedding_ivfflat_idx;
 ```
 
 ## Operational Notes
-- SQLite remains supported for local development and tests when `DJANGO_USE_SQLITE=True`.
 - PostgreSQL path is the production baseline and should be used in staging/prod CI gates.
 - If retrieval latency grows, tune IVF list count and PostgreSQL planner settings per workload.
 - Index artifact cleanup rules are enforced globally in the index builder (not only per-profile), so current and future repository profiles automatically exclude temporary/generated paths.
@@ -102,9 +100,9 @@ DROP INDEX IF EXISTS sourcechunk_embedding_ivfflat_idx;
 1. Verify backend is in PostgreSQL mode:
 ```bash
 cd backend
-grep '^DJANGO_USE_SQLITE=' .env
+grep '^POSTGRES_' .env
 ```
-Expected: `DJANGO_USE_SQLITE=False`
+Expected: non-empty `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_HOST`, and `POSTGRES_PORT` values.
 
 2. Verify helpdesk migration chain:
 ```bash

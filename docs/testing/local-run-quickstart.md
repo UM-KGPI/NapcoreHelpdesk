@@ -3,7 +3,7 @@
 This is the single entry-point guide for running and testing NAPCORE Helpdesk locally.
 
 ## Recommended local mode
-The local runtime uses PostgreSQL with pgvector. SQLite is no longer the default.
+The local runtime uses PostgreSQL with pgvector.
 
 Prerequisites for PostgreSQL mode:
 - PostgreSQL running locally with the `vector` extension available
@@ -20,7 +20,6 @@ The environment file is at:
 - `backend/.env`
 
 Active settings:
-- `DJANGO_USE_SQLITE=False` — PostgreSQL mode
 - `LLM_ENABLED=True` — grounded generation via LLM provider
 - `POSTGRES_DB=napcore_helpdesk`, `POSTGRES_USER=napcore`, `POSTGRES_HOST=localhost`, `POSTGRES_PORT=5432`
 
