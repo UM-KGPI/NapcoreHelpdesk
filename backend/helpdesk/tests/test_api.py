@@ -858,7 +858,7 @@ class HelpdeskApiTests(APITestCase):
         citations = _select_citations(
             chunks=[
                 {
-                    "repositoryUrl": "https://github.com/NeTEx-CEN/test-Profile-Documentation",
+                    "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx",
                     "commitSha": "1727ab3",
                     "sourcePath": "README.md",
                     "chunkId": "chunk-a",
@@ -902,7 +902,7 @@ class HelpdeskApiTests(APITestCase):
             for item in citations
         }
         self.assertIn("https://github.com/OpRa-CEN/OpRa", citation_repositories)
-        self.assertIn("https://github.com/NeTEx-CEN/test-Profile-Documentation", citation_repositories)
+        self.assertIn("https://github.com/TransmodelEcosystem/NeTEx", citation_repositories)
 
     def test_rewrite_source_paths_as_evidence_markers(self):
         answer = (

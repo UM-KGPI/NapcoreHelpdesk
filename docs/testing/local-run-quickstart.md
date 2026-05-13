@@ -29,9 +29,7 @@ Active settings:
 
 Allow-listed source repositories:
 - `https://github.com/TransmodelEcosystem/NeTEx`
-- `https://github.com/NeTEx-CEN/test-Profile-Documentation`
 - `https://github.com/OpRa-CEN/OpRa`
-- `https://github.com/hfjelstad/Profile_Documentation_v2`
 
 ## 2. Apply backend migrations
 From repository root:
