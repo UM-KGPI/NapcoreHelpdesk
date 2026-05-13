@@ -49,7 +49,7 @@ class PolicyGuardTests(SimpleTestCase):
             citations=[
                 {
                     "repositoryUrl": (
-                        "https://github.com/NeTEx-CEN/test-Profile-Documentation/"
+                        "https://github.com/SIRI-CEN/SIRI/"
                         "blob/abc123/docs/example.md"
                     )
                 }
