@@ -21,6 +21,10 @@ The environment file is at:
 
 Active settings:
 - `LLM_ENABLED=True` — grounded generation via LLM provider
+- `LLM_PROVIDER=openai-compatible`
+- `LLM_API_BASE_URL=https://models.inference.ai.azure.com`
+- `LLM_MODEL=gpt-4o-mini`
+- `LLM_TIMEOUT_SECONDS=12`, `LLM_MAX_TOKENS=800`, `LLM_TEMPERATURE=0.2`
 - `POSTGRES_DB=napcore_helpdesk`, `POSTGRES_USER=napcore`, `POSTGRES_HOST=localhost`, `POSTGRES_PORT=5432`
 
 Allow-listed source repositories:
