@@ -7,11 +7,14 @@ This view explains the system boundary for non-technical and technical stakehold
 It shows who uses the helpdesk and which external systems it depends on.
 
 ## Stakeholders covered
-- PTO (Public Transport Operator)
-- PTA (Public Transport Authority)
-- Developer
-- ITS System Integrator
-- Ticketing Agent
+- NAP Manager (manages a national access point, ensures data publisher compliance)
+- Transport Authority (sets policy and oversees multimodal standards adoption)
+- Transport Operator (publishes journey, stop, and timetable data using NeTEx, SIRI, or OpRa)
+- Road Authority (publishes road network and traffic data using DATEX II)
+- Standards Implementer (developer or engineer implementing NeTEx, SIRI, DATEX II, or OpRa integrations)
+- ITS System Integrator (integrates across standards and deploys interoperability solutions)
+
+This list is representative, not exhaustive.
 
 ## Key messages
 1. All stakeholder groups use one shared chat-style helpdesk interface.

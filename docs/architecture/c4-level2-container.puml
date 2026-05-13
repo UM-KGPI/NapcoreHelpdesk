@@ -14,11 +14,12 @@ skinparam actor {
   BackgroundColor #EAF2FF
 }
 
-actor "PTO" as PTO
-actor "PTA" as PTA
-actor "Developer" as DEV
+actor "NAP Manager" as NAP_MGR
+actor "Transport Authority" as TRANSPORT_AUTH
+actor "Transport Operator" as TRANSPORT_OP
+actor "Road Authority" as ROAD_AUTH
+actor "Standards Implementer" as IMPLEMENTER
 actor "ITS System Integrator" as INTEGRATOR
-actor "Ticketing Agent" as TICKET
 
 rectangle "NAPCORE Helpdesk" as SYSTEM {
   rectangle "Web GUI\n(Container)" as GUI #EAF2FF
@@ -39,17 +40,19 @@ rectangle "Approved GitHub Repositories" as GITHUB
 rectangle "Controller Model Runtime" as CONTROLLER_LLM
 rectangle "Narration Model Runtime" as NARRATION_LLM
 
-PTO --> GUI : Ask questions
-PTA --> GUI : Ask questions
-DEV --> GUI : Ask questions
+NAP_MGR --> GUI : Ask questions
+TRANSPORT_AUTH --> GUI : Ask questions
+TRANSPORT_OP --> GUI : Ask questions
+ROAD_AUTH --> GUI : Ask questions
+IMPLEMENTER --> GUI : Ask questions
 INTEGRATOR --> GUI : Ask questions
-TICKET --> GUI : Ask questions
 
 ' Top layer: actors arranged horizontally
-PTO -[hidden]right-> PTA
-PTA -[hidden]right-> DEV
-DEV -[hidden]right-> INTEGRATOR
-INTEGRATOR -[hidden]right-> TICKET
+NAP_MGR -[hidden]right-> TRANSPORT_AUTH
+TRANSPORT_AUTH -[hidden]right-> TRANSPORT_OP
+TRANSPORT_OP -[hidden]right-> ROAD_AUTH
+ROAD_AUTH -[hidden]right-> IMPLEMENTER
+IMPLEMENTER -[hidden]right-> INTEGRATOR
 
 ' Bottom layer: external systems below SYSTEM
 SYSTEM -[hidden]down-> GITHUB

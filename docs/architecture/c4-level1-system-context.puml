@@ -14,11 +14,12 @@ skinparam actor {
   BackgroundColor #EAF2FF
 }
 
-actor "PTO\n(Public Transport Operator)" as PTO
-actor "PTA\n(Public Transport Authority)" as PTA
-actor "Developer" as DEV
+actor "NAP Manager" as NAP_MGR
+actor "Transport Authority" as TRANSPORT_AUTH
+actor "Transport Operator" as TRANSPORT_OP
+actor "Road Authority" as ROAD_AUTH
+actor "Standards Implementer" as IMPLEMENTER
 actor "ITS System Integrator" as INTEGRATOR
-actor "Ticketing Agent" as TICKET
 
 rectangle "NAPCORE Helpdesk System\n(FAQ-first + RAG fallback)" as HELPDESK #DCE9FF
 rectangle "Approved GitHub Repositories\n(NeTEx-CEN/NeTEx + allowlisted sources)" as GITHUB
@@ -26,17 +27,25 @@ rectangle "GraphDB Semantic Store\n(Ontology + alignments)" as GRAPHDB
 rectangle "Controller Model Runtime\n(Intent, routing, SPARQL planning)" as CONTROLLER_LLM
 rectangle "Narration Model Runtime\n(Grounded answer composition)" as NARRATION_LLM
 
-PTO --> HELPDESK : Asks standards\nimplementation questions
-PTA --> HELPDESK : Asks policy and\ncompliance-related questions
-DEV --> HELPDESK : Asks technical\nintegration questions
-INTEGRATOR --> HELPDESK : Asks interoperability\nand deployment questions
-TICKET --> HELPDESK : Asks ticketing\nintegration questions
+NAP_MGR --> HELPDESK : Asks NAP compliance
+and publishing questions
+TRANSPORT_AUTH --> HELPDESK : Asks governance and
+policy adoption questions
+TRANSPORT_OP --> HELPDESK : Asks publishing and
+implementation questions
+ROAD_AUTH --> HELPDESK : Asks road data and
+DATEX II questions
+IMPLEMENTER --> HELPDESK : Asks technical
+integration questions
+INTEGRATOR --> HELPDESK : Asks interoperability
+and deployment questions
 
 ' Top layer: actors arranged horizontally
-PTO -[hidden]right-> PTA
-PTA -[hidden]right-> DEV
-DEV -[hidden]right-> INTEGRATOR
-INTEGRATOR -[hidden]right-> TICKET
+NAP_MGR -[hidden]right-> TRANSPORT_AUTH
+TRANSPORT_AUTH -[hidden]right-> TRANSPORT_OP
+TRANSPORT_OP -[hidden]right-> ROAD_AUTH
+ROAD_AUTH -[hidden]right-> IMPLEMENTER
+IMPLEMENTER -[hidden]right-> INTEGRATOR
 
 ' Bottom layer: external systems below helpdesk
 HELPDESK -[hidden]down-> GITHUB

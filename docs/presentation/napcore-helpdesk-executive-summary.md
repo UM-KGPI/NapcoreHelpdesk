@@ -4,12 +4,13 @@
 Build a trustworthy helpdesk for multimodal standards questions that provides practical answers with traceable sources and no hallucinated claims.
 
 ## System Context
-The helpdesk serves five key stakeholder groups:
-- **PTO (Public Transport Operator)**: responsible for daily service delivery.
-- **PTA (Public Transport Authority)**: sets policy and standards compliance.
-- **Developer**: implements integration and APIs.
-- **ITS System Integrator**: connects helpdesk to broader mobility ecosystem.
-- **Ticketing Agent**: handles passenger-facing systems.
+The helpdesk serves a representative range of NAPCORE stakeholders:
+- **NAP Manager**: manages a national access point and ensures data publisher compliance.
+- **Transport Authority**: sets policy and oversees multimodal standards adoption.
+- **Transport Operator**: publishes journey, stop, and timetable data using NeTEx, SIRI, or OpRa.
+- **Road Authority**: publishes road network and traffic data using DATEX II.
+- **Standards Implementer**: developer or engineer implementing NeTEx, SIRI, DATEX II, or OpRa integrations.
+- **ITS System Integrator**: integrates across standards and deploys interoperability solutions.
 
 All groups access a single shared helpdesk interface. The system maintains a strict knowledge boundary by only retrieving answers from approved GitHub repositories (especially NeTEx-CEN/NeTEx). If evidence is insufficient, the system abstains rather than speculating.
 
