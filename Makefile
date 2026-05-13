@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: help diagrams-db diagrams-c4 slides-pdf slides-pptx openapi-validate backend-check backend-migrate backend-run backend-run-controller-local backend-run-controller-local-all backend-llm-server-local backend-run-narration-server-local backend-run-full-local dev-up dev-down backend-index backend-controller-smoke-local frontend-install frontend-dev frontend-build frontend-test graphdb-up graphdb-down graphdb-logs graphdb-init graphdb-load graphdb-verify graphdb-bootstrap docker-dev-build docker-dev-up docker-dev-up-local-db docker-dev-up-graphdb docker-dev-up-external-postgres docker-dev-init-once docker-dev-down docker-dev-logs docker-dev-backup docker-dev-doctor docker-dev-safe-prune docker-dev-restore pre-commit-install pre-commit-run pre-commit-update hooks-install version-print version-bump-patch version-bump-minor version-bump-major shared-postgres-up shared-postgres-down shared-postgres-logs shared-postgres-bootstrap-app shared-postgres-audit up down status status-external health
+.PHONY: help diagrams-db diagrams-c4 openapi-validate backend-check backend-migrate backend-run backend-run-controller-local backend-run-controller-local-all backend-llm-server-local backend-run-narration-server-local backend-run-full-local dev-up dev-down backend-index backend-controller-smoke-local frontend-install frontend-dev frontend-build frontend-test graphdb-up graphdb-down graphdb-logs graphdb-init graphdb-load graphdb-verify graphdb-bootstrap docker-dev-build docker-dev-up docker-dev-up-local-db docker-dev-up-graphdb docker-dev-up-external-postgres docker-dev-init-once docker-dev-down docker-dev-logs docker-dev-backup docker-dev-doctor docker-dev-safe-prune docker-dev-restore pre-commit-install pre-commit-run pre-commit-update hooks-install version-print version-bump-patch version-bump-minor version-bump-major shared-postgres-up shared-postgres-down shared-postgres-logs shared-postgres-bootstrap-app shared-postgres-audit up down status status-external health
 
 ## ─── Shortcut ────────────────────────────────────────────────────────────────
 help: ## Show this help message
@@ -21,12 +21,6 @@ diagrams-db: ## Render database ER diagram (PlantUML)
 
 diagrams-c4: ## Render all C4 architecture diagrams (PlantUML)
 	@bash scripts/render-plantuml.sh docs/architecture/c4-system-context.puml docs/architecture/c4-container.puml docs/architecture/c4-orchestrator-components.puml
-
-slides-pdf: ## Build presentation slides as PDF (pandoc)
-	@bash scripts/render-slides.sh pdf docs/presentation/napcore-helpdesk-presentation-pandoc.md dist/napcore-helpdesk-presentation.pdf
-
-slides-pptx: ## Build presentation slides as PPTX (pandoc)
-	@bash scripts/render-slides.sh pptx docs/presentation/napcore-helpdesk-presentation-pandoc-with-diagrams.md dist/napcore-helpdesk-presentation.pptx
 
 ## ─── API ─────────────────────────────────────────────────────────────────────
 openapi-validate: ## Validate api/openapi.yaml against OpenAPI spec
