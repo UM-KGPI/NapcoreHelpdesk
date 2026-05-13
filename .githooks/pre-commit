@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "${SKIP_AUTO_VERSION:-0}" == "1" ]]; then
+  exit 0
+fi
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+# If VERSION is already explicitly staged, do not change it again.
+if git diff --cached --name-only | grep -qx "VERSION"; then
+  exit 0
+fi
+
+bash scripts/bump_version.sh patch >/dev/null
+git add VERSION
+
+echo "Auto-bumped VERSION (patch). Set SKIP_AUTO_VERSION=1 to bypass."

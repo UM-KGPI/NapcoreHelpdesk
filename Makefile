@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: help diagrams-db diagrams-c4 slides-pdf slides-pptx openapi-validate backend-check backend-migrate backend-run backend-run-controller-local backend-run-controller-local-all backend-llm-server-local backend-run-narration-server-local backend-run-full-local dev-up dev-down backend-index backend-controller-smoke-local frontend-install frontend-dev frontend-build frontend-test graphdb-up graphdb-down graphdb-logs graphdb-init graphdb-load graphdb-verify graphdb-bootstrap docker-dev-build docker-dev-up docker-dev-up-local-db docker-dev-up-graphdb docker-dev-up-external-postgres docker-dev-init-once docker-dev-down docker-dev-logs docker-dev-backup docker-dev-doctor docker-dev-safe-prune docker-dev-restore pre-commit-install pre-commit-run pre-commit-update shared-postgres-up shared-postgres-down shared-postgres-logs shared-postgres-bootstrap-app shared-postgres-audit up down status status-external health
+.PHONY: help diagrams-db diagrams-c4 slides-pdf slides-pptx openapi-validate backend-check backend-migrate backend-run backend-run-controller-local backend-run-controller-local-all backend-llm-server-local backend-run-narration-server-local backend-run-full-local dev-up dev-down backend-index backend-controller-smoke-local frontend-install frontend-dev frontend-build frontend-test graphdb-up graphdb-down graphdb-logs graphdb-init graphdb-load graphdb-verify graphdb-bootstrap docker-dev-build docker-dev-up docker-dev-up-local-db docker-dev-up-graphdb docker-dev-up-external-postgres docker-dev-init-once docker-dev-down docker-dev-logs docker-dev-backup docker-dev-doctor docker-dev-safe-prune docker-dev-restore pre-commit-install pre-commit-run pre-commit-update hooks-install version-print version-bump-patch version-bump-minor version-bump-major shared-postgres-up shared-postgres-down shared-postgres-logs shared-postgres-bootstrap-app shared-postgres-audit up down status status-external health
 
 ## ─── Shortcut ────────────────────────────────────────────────────────────────
 help: ## Show this help message
@@ -55,7 +55,7 @@ backend-migrate: ## Apply all pending database migrations
 	@cd backend && ../.venv/bin/python manage.py migrate
 
 backend-run: ## Start the Django development server
-	@cd backend && ../.venv/bin/python manage.py runserver
+	@cd backend && SERVICE_BUILD_REF="$$(../scripts/build_ref.sh)" ../.venv/bin/python manage.py runserver
 
 backend-run-controller-local: ## Start local Django server with controller subprocess wired to local Qwen3-8B
 	@cd backend && CONTROLLER_LLM_ENABLED=True CONTROLLER_LLM_PROVIDER=subprocess CONTROLLER_LLM_EXECUTABLE="$${CONTROLLER_LLM_EXECUTABLE:-/Users/andrejt/Research/repositories/git/llama.cpp/build/bin/llama-cli}" CONTROLLER_LLM_MODEL_PATH="$${CONTROLLER_LLM_MODEL_PATH:-/Users/andrejt/Research/repositories/git/llama.cpp/models/qwen3-8b/Qwen3-8B-Q4_K_M.gguf}" CONTROLLER_LLM_DEVICE="$${CONTROLLER_LLM_DEVICE:-none}" CONTROLLER_LLM_CTX_SIZE="$${CONTROLLER_LLM_CTX_SIZE:-1024}" CONTROLLER_LLM_MAX_TOKENS="$${CONTROLLER_LLM_MAX_TOKENS:-96}" CONTROLLER_LLM_THREADS="$${CONTROLLER_LLM_THREADS:-8}" CONTROLLER_LLM_TEMPERATURE="$${CONTROLLER_LLM_TEMPERATURE:-0.0}" CONTROLLER_LLM_TIMEOUT_SECONDS="$${CONTROLLER_LLM_TIMEOUT_SECONDS:-45}" ../.venv/bin/python manage.py runserver
@@ -126,7 +126,7 @@ frontend-dev: ## Start the Vite development server
 	@cd frontend && npm run dev
 
 frontend-build: ## Build the frontend for production
-	@cd frontend && npm run build
+	@cd frontend && VITE_APP_VERSION="$$(../scripts/app_version.sh)" npm run build
 
 frontend-test: ## Run frontend tests (vitest)
 	@cd frontend && npm run test
@@ -222,6 +222,25 @@ pre-commit-run: ## Run all pre-commit hooks against all files
 pre-commit-update: ## Auto-update pre-commit hook revisions
 	@command -v pre-commit >/dev/null 2>&1 || { echo "pre-commit is not installed. Install with: pip install pre-commit"; exit 1; }
 	@pre-commit autoupdate
+
+hooks-install: ## Enable repository-local git hooks (.githooks)
+	@git config core.hooksPath .githooks
+	@chmod +x .githooks/pre-commit scripts/bump_version.sh scripts/build_ref.sh scripts/app_version.sh
+	@echo "Git hooks enabled from .githooks"
+
+version-print: ## Print repo version and computed app version
+	@echo "VERSION=$$(cat VERSION)"
+	@echo "APP_VERSION=$$(bash scripts/app_version.sh)"
+	@echo "BUILD_REF=$$(bash scripts/build_ref.sh)"
+
+version-bump-patch: ## Bump VERSION patch component (x.y.z -> x.y.z+1)
+	@bash scripts/bump_version.sh patch
+
+version-bump-minor: ## Bump VERSION minor component (x.y.z -> x.y+1.0)
+	@bash scripts/bump_version.sh minor
+
+version-bump-major: ## Bump VERSION major component (x.y.z -> x+1.0.0)
+	@bash scripts/bump_version.sh major
 
 ## ─── Shortcuts ──────────────────────────────────────────────────────────────
 up: ## Start dev stack (alias for docker-dev-up)
