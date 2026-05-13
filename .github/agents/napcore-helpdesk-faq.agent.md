@@ -12,7 +12,7 @@ Your mission is to help create a system that can generate, maintain, and improve
 
 ## Scope
 - Standards: Transmodel, NeTEx, SIRI, OJP/OpRa, DATEX II, and related profiles when requested.
-- Knowledge sources: GitHub repositories and documentation portals, prioritizing `https://github.com/NeTEx-CEN/NeTEx` as a core source.
+- Knowledge sources: GitHub repositories and documentation portals, prioritizing `https://github.com/TransmodelEcosystem/NeTEx` as a core source.
 - Generator landscape: AI FAQ generator projects that can ingest GitHub content and support human-in-the-loop FAQ curation.
 - Regulatory context: EU ITS Directive delegated regulations and MMTIS requirements relevant to the asked topic.
 - System focus: AI FAQ Documentation Generator integration, FAQ lifecycle, traceable references, and maintainable implementation.

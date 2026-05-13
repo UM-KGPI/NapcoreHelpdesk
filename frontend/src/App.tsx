@@ -5,7 +5,7 @@ import { HelpdeskApiClient } from "./api";
 import { AuthProvider } from "./auth-context";
 import EditorConsoleWorkspace from "./components/EditorConsoleWorkspace";
 import SharedAppLayout from "./components/SharedAppLayout";
-import UserChatWorkspace, { type ChatTurn } from "./components/UserChatWorkspace";
+import UserChatWorkspace, { type ChatProfile, type ChatTurn } from "./components/UserChatWorkspace";
 import type {
   AnswerResponse,
   EditorialBoardMetricsResponse,
@@ -15,6 +15,7 @@ import type {
   EditorialQueueTransitionResponse,
   IndexRepositoryResponse,
   PromotionCandidatesResponse,
+  HealthResponse,
   StandardsScope,
 } from "./types";
 
@@ -49,7 +50,7 @@ const DEFAULT_INDEX_REPO_PRESETS: IndexRepoPreset[] = [
   {
     id: "netex",
     label: "NeTEx",
-    repoUrl: "https://github.com/NeTEx-CEN/NeTEx",
+    repoUrl: "https://github.com/TransmodelEcosystem/NeTEx",
     repoPath: "/app/repos/NeTEx",
     profile: "netex",
   },
@@ -91,6 +92,7 @@ function createRequestId(): string {
 }
 
 export default function App() {
+  const frontendVersion = import.meta.env.VITE_APP_VERSION ?? __APP_VERSION__;
   const [apiBaseUrl, setApiBaseUrl] = useState("/api/v1");
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_STORAGE_KEY) ?? "");
   const [autoTokenEnabled, setAutoTokenEnabled] = useState(() => {
@@ -141,10 +143,12 @@ export default function App() {
   const [metricsSlaHours, setMetricsSlaHours] = useState(72);
   const [chatPrompt, setChatPrompt] = useState("How can I validate a NeTEx timetable profile before publishing?");
   const [chatTurns, setChatTurns] = useState<ChatTurn[]>([]);
-  const [chatProfile, setChatProfile] = useState<"deterministic-grounded" | "llm-ready">("llm-ready");
+  const [chatProfile, setChatProfile] = useState<ChatProfile>("llm-ready");
+  const [controllerProfile, setControllerProfile] = useState<ChatProfile>("llm-ready");
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [backendHealth, setBackendHealth] = useState<HealthResponse | null>(null);
 
   const client = useMemo(() => new HelpdeskApiClient({ baseUrl: apiBaseUrl, token }), [apiBaseUrl, token]);
   const authValue = useMemo(
@@ -166,6 +170,30 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(AUTO_TOKEN_STORAGE_KEY, String(autoTokenEnabled));
   }, [autoTokenEnabled]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadBackendHealthVersion(): Promise<void> {
+      try {
+        const publicClient = new HelpdeskApiClient({ baseUrl: apiBaseUrl, token: "" });
+        const health = await publicClient.getLiveHealth();
+        if (!cancelled) {
+          setBackendHealth(health);
+        }
+      } catch {
+        if (!cancelled) {
+          setBackendHealth(null);
+        }
+      }
+    }
+
+    void loadBackendHealthVersion();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [apiBaseUrl]);
 
   useEffect(() => {
     let cancelled = false;
@@ -204,34 +232,28 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    function isJwtExpired(jwt: string): boolean {
-      try {
-        const payload = JSON.parse(atob(jwt.split(".")[1])) as { exp?: number };
-        return typeof payload.exp === "number" && payload.exp * 1000 < Date.now();
-      } catch {
-        return true;
-      }
-    }
+    let cancelled = false;
 
     async function ensureDevToken(): Promise<void> {
       if (!autoTokenEnabled) {
         return;
       }
-      const existing = token.trim();
-      if (existing && !isJwtExpired(existing)) {
-        return;
-      }
       try {
         const devClient = new HelpdeskApiClient({ baseUrl: apiBaseUrl, token: "" });
         const issued = await devClient.issueDevToken();
-        setToken(issued.token);
+        if (!cancelled) {
+          setToken(issued.token);
+        }
       } catch {
         // Keep manual token mode if the dev endpoint is disabled.
       }
     }
 
     void ensureDevToken();
-  }, [apiBaseUrl, autoTokenEnabled, token]);
+    return () => {
+      cancelled = true;
+    };
+  }, [apiBaseUrl, autoTokenEnabled]);
 
   function toggleScope(scope: StandardsScope): void {
     setStandardsScope((prev) => {
@@ -244,6 +266,22 @@ export default function App() {
 
   function createSessionId(): string {
     return `sess-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  }
+
+  async function refreshDevTokenAfterUnauthorized(caught: unknown): Promise<string | null> {
+    const message = caught instanceof Error ? caught.message : String(caught);
+    if (!autoTokenEnabled || !message.startsWith("UNAUTHORIZED:")) {
+      return null;
+    }
+
+    try {
+      const devClient = new HelpdeskApiClient({ baseUrl: apiBaseUrl, token: "" });
+      const issued = await devClient.issueDevToken();
+      setToken(issued.token);
+      return issued.token;
+    } catch {
+      return null;
+    }
   }
 
   function onSelectIndexPreset(presetId: string): void {
@@ -288,6 +326,7 @@ export default function App() {
           standardsScope: standardsScope.length > 0 ? standardsScope : undefined,
           language: "en",
           generationProfile: chatProfile,
+          controllerProfile,
           options: {
             maxCitations: 5,
             allowAbstain: true,
@@ -315,6 +354,51 @@ export default function App() {
       ]);
       setChatPrompt("");
     } catch (caught) {
+      const refreshedToken = await refreshDevTokenAfterUnauthorized(caught);
+      if (refreshedToken) {
+        try {
+          const retryClient = new HelpdeskApiClient({ baseUrl: apiBaseUrl, token: refreshedToken });
+          const result = await retryClient.answerQuestion(
+            {
+              question: prompt,
+              sessionId,
+              userId,
+              standardsScope: standardsScope.length > 0 ? standardsScope : undefined,
+              language: "en",
+              generationProfile: chatProfile,
+              controllerProfile,
+              options: {
+                maxCitations: 5,
+                allowAbstain: true,
+                faqMinConfidence: chatProfile === "llm-ready" ? 1.0 : 0.85,
+                retrievalTopK: 6,
+                retrievalMinScore: 0.62,
+              },
+            },
+            requestId
+          );
+
+          setAnswerResult(result);
+          setQuestion(prompt);
+          setEditorialResult(null);
+          setChatTurns((prev) => [
+            ...prev,
+            {
+              id: `a-${requestId}`,
+              role: "assistant",
+              text: result.answer,
+              createdAt: new Date().toISOString(),
+              answer: result,
+              requestId: result.trace.requestId,
+            },
+          ]);
+          setChatPrompt("");
+          return;
+        } catch (retryCaught) {
+          setError(retryCaught instanceof Error ? retryCaught.message : String(retryCaught));
+          return;
+        }
+      }
       setError(caught instanceof Error ? caught.message : String(caught));
     } finally {
       setBusy(false);
@@ -353,6 +437,36 @@ export default function App() {
       setAnswerResult(result);
       setEditorialResult(null);
     } catch (caught) {
+      const refreshedToken = await refreshDevTokenAfterUnauthorized(caught);
+      if (refreshedToken) {
+        try {
+          const retryClient = new HelpdeskApiClient({ baseUrl: apiBaseUrl, token: refreshedToken });
+          const requestId = createRequestId();
+          const result = await retryClient.answerQuestion(
+            {
+              question,
+              sessionId,
+              userId,
+              standardsScope,
+              language: "en",
+              options: {
+                maxCitations: 5,
+                allowAbstain: true,
+                faqMinConfidence: 0.85,
+                retrievalTopK: 6,
+                retrievalMinScore: 0.62,
+              },
+            },
+            requestId
+          );
+          setAnswerResult(result);
+          setEditorialResult(null);
+          return;
+        } catch (retryCaught) {
+          setError(retryCaught instanceof Error ? retryCaught.message : String(retryCaught));
+          return;
+        }
+      }
       setError(caught instanceof Error ? caught.message : String(caught));
     } finally {
       setBusy(false);
@@ -501,7 +615,16 @@ export default function App() {
     <AuthProvider value={authValue}>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<SharedAppLayout />}>
+          <Route
+            path="/"
+            element={
+              <SharedAppLayout
+                frontendVersion={frontendVersion}
+                backendVersion={backendHealth?.version ?? "unknown"}
+                backendBuildRef={backendHealth?.buildRef ?? "unknown"}
+              />
+            }
+          >
             <Route index element={<Navigate to="/user" replace />} />
             <Route
               path="user"
@@ -510,6 +633,7 @@ export default function App() {
                   sessionId={sessionId}
                   userId={userId}
                   chatProfile={chatProfile}
+                  controllerProfile={controllerProfile}
                   standardsScope={standardsScope}
                   chatPrompt={chatPrompt}
                   chatTurns={chatTurns}
@@ -518,6 +642,7 @@ export default function App() {
                   setSessionId={setSessionId}
                   setUserId={setUserId}
                   setChatProfile={setChatProfile}
+                  setControllerProfile={setControllerProfile}
                   toggleScope={toggleScope}
                   setChatPrompt={setChatPrompt}
                   onSendChat={onSendChat}

@@ -2,7 +2,7 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix netex: <https://netex.org.uk/ontology/netex#> .
+@prefix netex: <https://netex.org.uk/netex/2.0#> .
 @prefix rule: <https://napcore.eu/ontology/rules#> .
 
 <https://napcore.eu/ontology/netex-artifact-rules/v1.0>

@@ -5,6 +5,7 @@ import type {
   EditorialBoardResponse,
   EditorialQueueResponse,
   EditorialQueueTransitionResponse,
+  HealthResponse,
   IndexRepositoryResponse,
   PromotionCandidatesResponse,
   StandardsScope,
@@ -17,6 +18,7 @@ export interface AnswerRequest {
   standardsScope?: StandardsScope[];
   language?: string;
   generationProfile?: "deterministic-grounded" | "llm-ready";
+  controllerProfile?: "deterministic-grounded" | "llm-ready";
   options?: {
     maxCitations?: number;
     allowAbstain?: boolean;
@@ -104,6 +106,10 @@ export class HelpdeskApiClient {
       method: "POST",
       body: "{}",
     }, false);
+  }
+
+  async getLiveHealth(): Promise<HealthResponse> {
+    return this.request<HealthResponse>("/health/live", { method: "GET" }, false);
   }
 
   async listPromotionCandidates(windowDays: number, minCount: number, onlyUnresolved: boolean): Promise<PromotionCandidatesResponse> {

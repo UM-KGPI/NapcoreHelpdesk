@@ -65,3 +65,12 @@ Tradeoffs:
 ## 7. Related Documents
 - C4 diagrams updated for Controller/Narration split in `docs/architecture/`.
 - Detailed benchmark appendix: `docs/testing/local-model-benchmark-report.md`.
+
+## 8. Latest Narration Hardening (2026-05-13)
+Recent backend updates tightened narration behavior for evidence-grounded answers.
+
+- Prompt shaping for implementation-example questions now explicitly asks for one short fenced snippet (6-20 lines) copied from a single evidence block when available.
+- Example safety remains strict: generated XML/JSON/YAML code blocks are validated against retrieved evidence lines, and fabricated blocks are rejected.
+- When evidence does not contain a safely reusable snippet, narration is instructed to say so explicitly and point to cited source files instead of inventing a sample.
+- Citation URL generation now avoids `blob/unknown` links by resolving stable refs first (indexed repository branch/tag), then using repository-specific fallback refs where configured (for example OpRa `1.0rc`).
+- LLM provider wiring now uses a single-token strategy by default (`GITHUB_API_TOKEN -> LLM_API_KEY -> CONTROLLER_LLM_API_KEY`) unless keys are explicitly overridden.
