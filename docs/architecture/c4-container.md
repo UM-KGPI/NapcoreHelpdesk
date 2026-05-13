@@ -1,6 +1,6 @@
 # C4 Container Diagram (Level 2)
 
-Diagram source: [c4-container.puml](docs/architecture/c4-container.puml)
+Diagram source: [c4-container.puml](c4-container.puml)
 
 ## Why this diagram matters
 This view explains how the system is split into deployable/runtime containers.
