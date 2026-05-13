@@ -13,7 +13,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         # Explicit repo URL/path keep indexing operations deliberate and auditable.
-        parser.add_argument("--repo-url", required=True, help="Approved repository URL (e.g., https://github.com/NeTEx-CEN/NeTEx)")
+        parser.add_argument("--repo-url", required=True, help="Approved repository URL (e.g., https://github.com/TransmodelEcosystem/NeTEx)")
         parser.add_argument("--repo-path", required=True, help="Local filesystem path to repository checkout")
         parser.add_argument(
             "--include-ext",

@@ -273,8 +273,13 @@ class QuestionParsingService:
         for core_concept in core_concepts:
             if not core_concept.startswith("nits:"):
                 continue
-            iri = f"{namespace_base}{core_concept.split(':', 1)[1]}"
-            for standard in connector.discover_standards_for_core_concept(iri):
+            local = core_concept.split(":", 1)[1]
+            iri = f"{namespace_base}{local}"
+            standards = connector.discover_standards_for_core_concept(iri)
+            if not standards:
+                standards = connector.discover_standards_for_core_concept_slug(local)
+
+            for standard in standards:
                 normalized = standard.strip()
                 if normalized and normalized not in discovered:
                     discovered.append(normalized)

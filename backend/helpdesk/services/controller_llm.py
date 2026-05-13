@@ -21,26 +21,28 @@ class ControllerDecision:
     confidence: float
 
 
-_JSON_OBJECT_PATTERN = re.compile(r"\{[\s\S]*\}")
+_JSON_OBJECT_PATTERN = re.compile(r"\{[\s\S]*?\}")
 _ALLOWED_ROUTES = {"faq", "rag"}
 
 
 def _extract_json_payload(text: str) -> dict:
     """Extract a JSON object from mixed llama-cli output (logs + model text)."""
 
-    candidate = ""
+    candidate_payload: dict | None = None
     for match in _JSON_OBJECT_PATTERN.findall(text or ""):
-        if '"route"' in match and '"confidence"' in match:
-            candidate = match
-    if not candidate:
+        if '"route"' not in match or '"confidence"' not in match:
+            continue
+        try:
+            parsed = json.loads(match)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(parsed, dict):
+            candidate_payload = parsed
+
+    if candidate_payload is None:
         raise ControllerLLMError("Controller output did not include a valid JSON payload.")
 
-    try:
-        payload = json.loads(candidate)
-    except json.JSONDecodeError as exc:
-        raise ControllerLLMError("Controller JSON payload could not be parsed.") from exc
-
-    return payload
+    return candidate_payload
 
 
 def _build_ssl_context() -> ssl.SSLContext:
@@ -56,6 +58,17 @@ def _build_ssl_context() -> ssl.SSLContext:
 
 def _validate_payload(payload: dict) -> ControllerDecision:
     route = str(payload.get("route", "")).strip().lower()
+    if route not in _ALLOWED_ROUTES:
+        has_faq = "faq" in route
+        has_rag = "rag" in route
+        if has_rag and not has_faq:
+            route = "rag"
+        elif has_faq and not has_rag:
+            route = "faq"
+        elif has_faq and has_rag:
+            # Ambiguous placeholder outputs (for example "faq|rag") default to safer RAG path.
+            route = "rag"
+
     if route not in _ALLOWED_ROUTES:
         raise ControllerLLMError("Controller route must be 'faq' or 'rag'.")
 
@@ -187,6 +200,9 @@ def decide_route_with_controller_llm(
         str(getattr(settings, "CONTROLLER_LLM_TEMPERATURE", 0.0)),
         "--reasoning",
         "off",
+        "--simple-io",
+        "-no-cnv",
+        "-st",
         "-p",
         _build_prompt(question=question, requested_scope=requested_scope, semantic_query=semantic_query),
     ]

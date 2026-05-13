@@ -67,7 +67,7 @@ Define implementation-ready API contracts for FAQ-first orchestration with RAG f
   "answer": "Start with the relevant timetable frame...",
   "citations": [
     {
-      "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+      "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx",
       "commitSha": "abc1234",
       "sourcePath": ".../timetable-guide.md",
       "chunkId": "3f2d...",
@@ -95,7 +95,7 @@ Define implementation-ready API contracts for FAQ-first orchestration with RAG f
   "answer": "For timetable exchange, start by...",
   "citations": [
     {
-      "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+      "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx",
       "commitSha": "abc1234",
       "sourcePath": ".../part-2.xml",
       "chunkId": "8de1...",
