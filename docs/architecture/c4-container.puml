@@ -3,11 +3,12 @@
 
 title C4 Level 2 - NAPCORE Helpdesk Container Diagram
 
-Person(pto, "PTO", "Public Transport Operator")
-Person(pta, "PTA", "Public Transport Authority")
-Person(dev, "Developer", "Implementation stakeholder")
-Person(integrator, "ITS System Integrator", "Integration stakeholder")
-Person(ticketing, "Ticketing Agent", "Ticketing stakeholder")
+Person(nap_mgr, "NAP Manager", "Manages a national access point and ensures data publisher compliance")
+Person(transport_authority, "Transport Authority", "Sets policy and oversees multimodal standards adoption")
+Person(transport_operator, "Transport Operator", "Publishes journey, stop, and timetable data using NeTEx, SIRI, or OpRa")
+Person(road_authority, "Road Authority", "Publishes road network and traffic data using DATEX II")
+Person(implementer, "Standards Implementer", "Developer or engineer implementing NeTEx, SIRI, DATEX II, or OpRa integrations")
+Person(integrator, "ITS System Integrator", "Integrates across standards and deploys interoperability solutions")
 
 System_Ext(github, "Approved GitHub Repositories", "Authoritative standards sources and allowlisted companion docs")
 System_Ext(controller_runtime, "Controller Model Runtime", "Local or remote runtime for intent, routing, and SPARQL planning")
@@ -28,11 +29,12 @@ System_Boundary(boundary, "NAPCORE Helpdesk") {
   ContainerDb(sdb, "Semantic Graph Store", "GraphDB (RDF/OWL + SPARQL)", "Ontology modules, alignments, and provenance-backed concept expansion")
 }
 
-Rel(pto, gui, "Runs chat and standards queries")
-Rel(pta, gui, "Runs chat and governance queries")
-Rel(dev, gui, "Runs technical integration queries")
+Rel(nap_mgr, gui, "Runs NAP compliance and publishing queries")
+Rel(transport_authority, gui, "Runs governance and policy adoption queries")
+Rel(transport_operator, gui, "Runs publishing and implementation queries")
+Rel(road_authority, gui, "Runs road data and DATEX II queries")
+Rel(implementer, gui, "Runs technical integration queries")
 Rel(integrator, gui, "Runs interoperability and deployment queries")
-Rel(ticketing, gui, "Runs ticketing integration queries")
 
 Rel(gui, api, "Submits question, session context, and generation profile", "HTTPS/JSON")
 Rel(api, controller, "Intent + routing + query planning request")
@@ -63,12 +65,13 @@ Rel(ingest, sdb, "Load ontology, alignments, and extraction outputs for semantic
 Rel(ingest, pg, "Store source metadata")
 
 ' Top layer: actors horizontally
-Lay_R(pto, pta)
-Lay_R(pta, dev)
-Lay_R(dev, integrator)
-Lay_R(integrator, ticketing)
+Lay_R(nap_mgr, transport_authority)
+Lay_R(transport_authority, transport_operator)
+Lay_R(transport_operator, road_authority)
+Lay_R(road_authority, implementer)
+Lay_R(implementer, integrator)
 ' Middle: helpdesk system below actors
-Lay_D(pto, gui)
+Lay_D(nap_mgr, gui)
 ' Bottom layer: external systems below helpdesk boundary
 Lay_D(boundary, github)
 Lay_D(boundary, controller_runtime)

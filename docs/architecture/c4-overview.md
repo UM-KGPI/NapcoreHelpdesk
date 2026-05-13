@@ -8,11 +8,14 @@ This file introduces the C4 diagram set for the NAPCORE Helpdesk.
 - Level 3 (Orchestrator Components): [c4-orchestrator-components.md](c4-orchestrator-components.md)
 
 ## Actors Included
-- PTO (Public Transport Operator)
-- PTA (Public Transport Authority)
-- Developer
-- ITS System Integrator
-- Ticketing Agent
+- NAP Manager (manages a national access point, ensures data publisher compliance)
+- Transport Authority (sets policy and oversees multimodal standards adoption)
+- Transport Operator (publishes journey, stop, and timetable data using NeTEx, SIRI, or OpRa)
+- Road Authority (publishes road network and traffic data using DATEX II)
+- Standards Implementer (developer or engineer implementing NeTEx, SIRI, DATEX II, or OpRa integrations)
+- ITS System Integrator (integrates across standards and deploys interoperability solutions)
+
+This list is representative of the NAPCORE constituency, not exhaustive.
 
 ## Purpose
 - Level 1: explain system scope and external dependencies for mixed technical and non-technical audiences.

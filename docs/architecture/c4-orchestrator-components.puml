@@ -5,7 +5,7 @@ LAYOUT_LEFT_RIGHT()
 
 title C4 Level 3 - Question API / Orchestrator Components
 
-Person(user, "End User", "PTO/PTA/Developer/ITS Integrator/Ticketing Agent")
+Person(user, "End User", "Representative NAPCORE stakeholder (NAP Manager, Transport/Road Authority, Operator, Standards Implementer, ITS Integrator)")
 Container(gui, "Web GUI", "Web App", "Chat Session UX and operator console")
 ContainerDb(pg, "Application Database", "PostgreSQL or SQLite local fallback", "Events, FAQ, reviews, evidence links")
 Container(vdb, "Vector Index", "pgvector or JSON fallback", "Embeddings and metadata")
