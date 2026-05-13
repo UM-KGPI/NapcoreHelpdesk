@@ -1,6 +1,6 @@
 # C4 Orchestrator Components (Level 3)
 
-Diagram source: [c4-orchestrator-components.puml](docs/architecture/c4-orchestrator-components.puml)
+Diagram source: [c4-orchestrator-components.puml](c4-orchestrator-components.puml)
 
 ## Why this diagram matters
 It decomposes the Question API / Orchestrator into components so implementation tasks can be assigned clearly.

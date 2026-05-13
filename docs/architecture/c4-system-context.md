@@ -1,6 +1,6 @@
 # C4 System Context (Level 1)
 
-Diagram source: [c4-system-context.puml](docs/architecture/c4-system-context.puml)
+Diagram source: [c4-system-context.puml](c4-system-context.puml)
 
 ## Why this diagram matters
 This view explains the system boundary for non-technical and technical stakeholders.

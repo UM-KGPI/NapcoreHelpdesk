@@ -3,9 +3,9 @@
 This file introduces the C4 diagram set for the NAPCORE Helpdesk.
 
 ## Included Levels
-- Level 1 (System Context): [c4-system-context.md](docs/architecture/c4-system-context.md)
-- Level 2 (Container): [c4-container.md](docs/architecture/c4-container.md)
-- Level 3 (Orchestrator Components): [c4-orchestrator-components.md](docs/architecture/c4-orchestrator-components.md)
+- Level 1 (System Context): [c4-system-context.md](c4-system-context.md)
+- Level 2 (Container): [c4-container.md](c4-container.md)
+- Level 3 (Orchestrator Components): [c4-orchestrator-components.md](c4-orchestrator-components.md)
 
 ## Actors Included
 - PTO (Public Transport Operator)

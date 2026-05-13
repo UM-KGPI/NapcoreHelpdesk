@@ -4,23 +4,23 @@
 Implement the helpdesk as a retrieval-augmented generation (RAG) system that produces source-grounded answers for standards questions and supports FAQ curation.
 
 ## UML Reference Diagram
-- Primary activity diagram: [rag-activity-diagram.svg](docs/architecture/rag-activity-diagram.svg)
+- Primary activity diagram: [rag-activity-diagram.svg](rag-activity-diagram.svg)
 
 ## C4 Diagrams
-- Overview: [c4-overview.md](docs/architecture/c4-overview.md)
-- Level 1: [c4-system-context.md](docs/architecture/c4-system-context.md)
-- Level 2: [c4-container.md](docs/architecture/c4-container.md)
-- Level 3 draft: [c4-orchestrator-components.md](docs/architecture/c4-orchestrator-components.md)
+- Overview: [c4-overview.md](c4-overview.md)
+- Level 1: [c4-system-context.md](c4-system-context.md)
+- Level 2: [c4-container.md](c4-container.md)
+- Level 3 draft: [c4-orchestrator-components.md](c4-orchestrator-components.md)
 
 ## API Contract
-- Implementation contract: [rag-fallback-api-contract.md](docs/architecture/rag-fallback-api-contract.md)
+- Implementation contract: [rag-fallback-api-contract.md](rag-fallback-api-contract.md)
 
 ## Methodology
-- Canonical end-to-end runtime methodology: [query-to-evidence-methodology.md](docs/architecture/query-to-evidence-methodology.md)
+- Canonical end-to-end runtime methodology: [query-to-evidence-methodology.md](query-to-evidence-methodology.md)
 
 ## Semantic Layer Extension
-- Graph-based semantic layer plan: [semantic-layer-plan.md](docs/architecture/semantic-layer-plan.md)
-- Semantic layer findings and ontology baseline: [semantic-layer-findings.md](docs/architecture/semantic-layer-findings.md)
+- Graph-based semantic layer plan: [semantic-layer-plan.md](semantic-layer-plan.md)
+- Semantic layer findings and ontology baseline: [semantic-layer-findings.md](semantic-layer-findings.md)
 - Canonical ontology assets: [../ontology/README.md](docs/ontology/README.md)
 - Runtime reasoning is anchored on the ontology set loaded into GraphDB: core `nits:` concepts plus standard modules and explicit alignments.
 
