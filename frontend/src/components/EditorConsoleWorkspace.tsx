@@ -594,7 +594,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                   type="text"
                   value={indexRepoUrl}
                   onChange={(e) => setIndexRepoUrl(e.target.value)}
-                  placeholder="https://github.com/NeTEx-CEN/NeTEx"
+                  placeholder="https://github.com/TransmodelEcosystem/NeTEx"
                 />
               </label>
               <label>
