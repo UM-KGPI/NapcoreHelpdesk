@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: help diagrams-db diagrams-c4 openapi-validate backend-check backend-migrate backend-run backend-run-controller-local backend-run-controller-local-all backend-llm-server-local backend-run-narration-server-local backend-run-full-local dev-up dev-down backend-index backend-controller-smoke-local frontend-install frontend-dev frontend-build frontend-test graphdb-up graphdb-down graphdb-logs graphdb-init graphdb-load graphdb-verify graphdb-bootstrap docker-dev-build docker-dev-up docker-dev-up-local-db docker-dev-up-graphdb docker-dev-up-external-postgres docker-dev-init-once docker-dev-down docker-dev-logs docker-dev-backup docker-dev-doctor docker-dev-safe-prune docker-dev-restore pre-commit-install pre-commit-run pre-commit-update hooks-install version-print version-bump-patch version-bump-minor version-bump-major shared-postgres-up shared-postgres-down shared-postgres-logs shared-postgres-bootstrap-app shared-postgres-audit up down status status-external health
+.PHONY: help diagrams-c4 openapi-validate backend-check backend-migrate backend-run backend-run-controller-local backend-run-controller-local-all backend-llm-server-local backend-run-narration-server-local backend-run-full-local dev-up dev-down backend-index backend-controller-smoke-local frontend-install frontend-dev frontend-build frontend-test graphdb-up graphdb-down graphdb-logs graphdb-init graphdb-load graphdb-verify graphdb-bootstrap docker-dev-build docker-dev-up docker-dev-up-local-db docker-dev-up-graphdb docker-dev-up-external-postgres docker-dev-init-once docker-dev-down docker-dev-logs docker-dev-backup docker-dev-doctor docker-dev-safe-prune docker-dev-restore pre-commit-install pre-commit-run pre-commit-update hooks-install version-print version-bump-patch version-bump-minor version-bump-major shared-postgres-up shared-postgres-down shared-postgres-logs shared-postgres-bootstrap-app shared-postgres-audit up down status status-external health
 
 ## ─── Shortcut ────────────────────────────────────────────────────────────────
 help: ## Show this help message
@@ -15,10 +15,7 @@ help: ## Show this help message
 	@printf "\nRequired variables (where noted): REPO_URL, REPO_PATH, PROFILE, INCREMENTAL, BACKUP_ID\n"
 	@printf "Start everything: make dev-up  |  Stop everything: make dev-down\n\n"
 
-## ─── Diagrams & Slides ───────────────────────────────────────────────────────
-diagrams-db: ## Render database ER diagram (PlantUML)
-	@bash scripts/render-plantuml.sh db/database-er-diagram.puml
-
+## ─── Diagrams ───────────────────────────────────────────────────────
 diagrams-c4: ## Render all C4 architecture diagrams (PlantUML)
 	@bash scripts/render-plantuml.sh docs/architecture/c4-system-context.puml docs/architecture/c4-container.puml docs/architecture/c4-orchestrator-components.puml
 
