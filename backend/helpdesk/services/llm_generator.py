@@ -15,6 +15,11 @@ class LLMGenerationError(Exception):
 FENCED_CODE_BLOCK_PATTERN = re.compile(r"```([A-Za-z0-9_+-]*)\n(.*?)```", re.DOTALL)
 
 
+def _is_github_models_base_url(api_base_url: str) -> bool:
+    base = (api_base_url or "").strip().lower()
+    return "models.inference.ai.azure.com" in base
+
+
 def _question_requests_verbatim_example(question: str) -> bool:
     question_lower = question.lower()
     asks_for_example = any(term in question_lower for term in ["example", "sample", "snippet"])
@@ -83,9 +88,24 @@ def _build_ssl_context() -> ssl.SSLContext:
     return context
 
 
-def _build_messages(question: str, chunks: list[dict], scope: list[str] | None = None) -> list[dict]:
+def _trim_chunk_text(text: str, max_chars: int) -> str:
+    if max_chars <= 0:
+        return text
+    if len(text) <= max_chars:
+        return text
+    return f"{text[:max_chars].rstrip()}\n...[truncated for latency]"
+
+
+def _build_messages(
+    question: str,
+    chunks: list[dict],
+    scope: list[str] | None = None,
+    max_chunks: int = 6,
+    max_chars_per_chunk: int = 1800,
+) -> list[dict]:
     context_lines = []
-    for index, chunk in enumerate(chunks[:6], start=1):
+    for index, chunk in enumerate(chunks[:max_chunks], start=1):
+        chunk_text = _trim_chunk_text(str(chunk.get("text", "")), max_chars=max_chars_per_chunk)
         context_lines.append(
             "\n".join(
                 [
@@ -93,7 +113,7 @@ def _build_messages(question: str, chunks: list[dict], scope: list[str] | None =
                     f"[E{index}] commit={chunk['commitSha']}",
                     f"[E{index}] source={chunk['sourcePath']}",
                     f"[E{index}] chunk={chunk['chunkId']}",
-                    f"[E{index}] text={chunk['text']}",
+                    f"[E{index}] text={chunk_text}",
                 ]
             )
         )
@@ -111,9 +131,11 @@ def _build_messages(question: str, chunks: list[dict], scope: list[str] | None =
         system_prompt = (
             f"{system_prompt} "
             "For XML, JSON, YAML, or code-example requests, only quote verbatim or lightly trimmed excerpts that are directly present in the evidence blocks. "
+            "When a usable snippet exists, include one fenced block (for example ```xml) of 6-20 lines copied from a single evidence block and cite that same block in nearby prose. "
             "Never synthesize a new example by combining structures across sources. "
             "If the evidence does not contain an exact usable snippet, say that you cannot provide an embedded example safely and point to the closest cited source file instead."
         )
+
     user_prompt = (
         f"Question:\n{question}\n\n"
         f"Requested scope: {scope_text}\n\n"
@@ -128,6 +150,43 @@ def _build_messages(question: str, chunks: list[dict], scope: list[str] | None =
     ]
 
 
+def _request_chat_completion(
+    api_base_url: str,
+    api_key: str,
+    model: str,
+    timeout_seconds: int,
+    temperature: float,
+    max_tokens: int,
+    messages: list[dict],
+) -> dict:
+    body = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+
+    headers = {
+        "Content-Type": "application/json",
+    }
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+
+    req = request.Request(
+        url=f"{api_base_url.rstrip('/')}/chat/completions",
+        data=json.dumps(body).encode("utf-8"),
+        method="POST",
+        headers=headers,
+    )
+
+    with request.urlopen(
+        req,
+        timeout=timeout_seconds,
+        context=_build_ssl_context(),
+    ) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
 def generate_answer_llm(question: str, chunks: list[dict], scope: list[str] | None = None) -> dict:
     """Generate a grounded answer through a configurable OpenAI-compatible API."""
 
@@ -135,46 +194,77 @@ def generate_answer_llm(question: str, chunks: list[dict], scope: list[str] | No
         raise LLMGenerationError("LLM mode is disabled by configuration.")
     if settings.LLM_PROVIDER != "openai-compatible":
         raise LLMGenerationError(f"Unsupported LLM provider: {settings.LLM_PROVIDER}")
-    if not settings.LLM_API_KEY:
-        raise LLMGenerationError("LLM API key is not configured.")
 
-    body = {
-        "model": settings.LLM_MODEL,
-        "messages": _build_messages(question=question, chunks=chunks, scope=scope),
-        "temperature": settings.LLM_TEMPERATURE,
-        "max_tokens": settings.LLM_MAX_TOKENS,
-    }
-
-    req = request.Request(
-        url=f"{settings.LLM_API_BASE_URL.rstrip('/')}/chat/completions",
-        data=json.dumps(body).encode("utf-8"),
-        method="POST",
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {settings.LLM_API_KEY}",
-        },
+    max_chunks = max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 4)))
+    max_chars_per_chunk = max(200, int(getattr(settings, "LLM_MAX_EVIDENCE_CHARS_PER_CHUNK", 1200)))
+    messages = _build_messages(
+        question=question,
+        chunks=chunks,
+        scope=scope,
+        max_chunks=max_chunks,
+        max_chars_per_chunk=max_chars_per_chunk,
     )
 
+    primary_base_url = (settings.LLM_API_BASE_URL or "").strip()
+    primary_api_key = (settings.LLM_API_KEY or "").strip()
+
+    request_targets = [
+        {
+            "api_base_url": primary_base_url,
+            "api_key": primary_api_key,
+            "model": settings.LLM_MODEL,
+            "timeout_seconds": settings.LLM_TIMEOUT_SECONDS,
+        }
+    ]
+
+    # If the primary key cannot access GitHub Models, retry once with the
+    # repository token.
+    github_api_token = (getattr(settings, "GITHUB_API_TOKEN", "") or "").strip()
+    if (
+        _is_github_models_base_url(primary_base_url)
+        and github_api_token
+        and github_api_token != primary_api_key
+    ):
+        request_targets.append(
+            {
+                "api_base_url": primary_base_url,
+                "api_key": github_api_token,
+                "model": settings.LLM_MODEL,
+                "timeout_seconds": settings.LLM_TIMEOUT_SECONDS,
+            }
+        )
+
+    payload = None
+    last_error = None
     try:
-        with request.urlopen(
-            req,
-            timeout=settings.LLM_TIMEOUT_SECONDS,
-            context=_build_ssl_context(),
-        ) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-    except error.HTTPError as exc:
-        try:
-            error_body = exc.read().decode("utf-8")
-        except Exception:  # pragma: no cover - best-effort diagnostics
-            error_body = ""
-        detail = f"LLM HTTP error: {exc.code}"
-        if error_body:
-            detail = f"{detail} - {error_body[:500]}"
-        raise LLMGenerationError(detail) from exc
-    except Exception as exc:  # pragma: no cover - network/runtime dependent
-        raise LLMGenerationError(
-            f"LLM request failed: {exc.__class__.__name__}: {exc}"
-        ) from exc
+        for target in request_targets:
+            try:
+                payload = _request_chat_completion(
+                    api_base_url=target["api_base_url"],
+                    api_key=target["api_key"],
+                    model=target["model"],
+                    timeout_seconds=target["timeout_seconds"],
+                    temperature=settings.LLM_TEMPERATURE,
+                    max_tokens=settings.LLM_MAX_TOKENS,
+                    messages=messages,
+                )
+                break
+            except error.HTTPError as exc:
+                try:
+                    error_body = exc.read().decode("utf-8")
+                except Exception:  # pragma: no cover - best-effort diagnostics
+                    error_body = ""
+                detail = f"LLM HTTP error: {exc.code}"
+                if error_body:
+                    detail = f"{detail} - {error_body[:500]}"
+                last_error = detail
+            except Exception as exc:  # pragma: no cover - network/runtime dependent
+                last_error = f"LLM request failed: {exc.__class__.__name__}: {exc}"
+    except Exception as exc:
+        raise LLMGenerationError(str(exc)) from exc
+
+    if payload is None:
+        raise LLMGenerationError(last_error or "LLM request failed.")
 
     choices = payload.get("choices") or []
     if not choices:
@@ -195,5 +285,5 @@ def generate_answer_llm(question: str, chunks: list[dict], scope: list[str] | No
         "confidence": confidence,
         "review_required": confidence < 0.82,
         "provider": settings.LLM_PROVIDER,
-        "model": settings.LLM_MODEL,
+        "model": (payload.get("model") or request_targets[0]["model"]),
     }
