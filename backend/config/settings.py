@@ -3,8 +3,24 @@ from pathlib import Path
 import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def _read_repo_version(default: str = "0.1.0") -> str:
+    version_file = BASE_DIR.parent / "VERSION"
+    try:
+        version = version_file.read_text(encoding="utf-8").strip()
+    except Exception:
+        return default
+    return version or default
+
+
+REPO_VERSION = _read_repo_version(default="0.1.0")
+
 env = environ.Env(
     DJANGO_DEBUG=(bool, True),
+    SERVICE_NAME=(str, "napcore-helpdesk"),
+    SERVICE_VERSION=(str, REPO_VERSION),
+    SERVICE_BUILD_REF=(str, "dev"),
     # Keep SQLite fallback for local tests; production/staging should set this to False.
     DJANGO_USE_SQLITE=(bool, True),
     JWT_SECRET_KEY=(str, "change-me-jwt-secret-key-at-least-32-bytes"),
@@ -17,7 +33,7 @@ env = environ.Env(
     DEV_JWT_TTL_MINUTES=(int, 480),
     ALLOWED_SOURCE_REPOSITORIES=(
         str,
-        "https://github.com/NeTEx-CEN/NeTEx,https://github.com/SIRI-CEN/SIRI,https://github.com/OpRa-CEN/OpRa",
+        "https://github.com/TransmodelEcosystem/NeTEx,https://github.com/SIRI-CEN/SIRI,https://github.com/OpRa-CEN/OpRa",
     ),
     INDEX_SCHEDULE_REPO_URL=(str, ""),
     INDEX_SCHEDULE_REPO_PATH=(str, ""),
@@ -33,15 +49,32 @@ env = environ.Env(
     LLM_VERIFY_SSL=(bool, True),
     LLM_CA_BUNDLE=(str, ""),
     LLM_TIMEOUT_SECONDS=(int, 20),
-    LLM_MAX_TOKENS=(int, 500),
+    LLM_MAX_TOKENS=(int, 250),
     LLM_TEMPERATURE=(float, 0.2),
+    LLM_MAX_EVIDENCE_CHUNKS=(int, 4),
+    LLM_MAX_EVIDENCE_CHARS_PER_CHUNK=(int, 1200),
+    CONTROLLER_LLM_ENABLED=(bool, False),
+    CONTROLLER_LLM_PROVIDER=(str, "subprocess"),
+    CONTROLLER_LLM_EXECUTABLE=(str, ""),
+    CONTROLLER_LLM_MODEL_PATH=(str, ""),
+    CONTROLLER_LLM_DEVICE=(str, "none"),
+    CONTROLLER_LLM_TIMEOUT_SECONDS=(int, 20),
+    CONTROLLER_LLM_CTX_SIZE=(int, 2048),
+    CONTROLLER_LLM_MAX_TOKENS=(int, 96),
+    CONTROLLER_LLM_THREADS=(int, 8),
+    CONTROLLER_LLM_TEMPERATURE=(float, 0.0),
+    CONTROLLER_LLM_API_BASE_URL=(str, ""),
+    CONTROLLER_LLM_API_KEY=(str, ""),
+    CONTROLLER_LLM_API_MODEL=(str, ""),
+    CONTROLLER_LLM_VERIFY_SSL=(bool, True),
+    CONTROLLER_LLM_CA_BUNDLE=(str, ""),
     EMBEDDING_ENABLED=(bool, False),
     EMBEDDING_PROVIDER=(str, "openai-compatible"),
     EMBEDDING_API_BASE_URL=(str, "https://api.openai.com/v1"),
     EMBEDDING_API_KEY=(str, ""),
     EMBEDDING_MODEL=(str, "text-embedding-3-small"),
     EMBEDDING_TIMEOUT_SECONDS=(int, 30),
-    SEED_REPO_NETEX=(str, "https://github.com/NeTEx-CEN/NeTEx"),
+    SEED_REPO_NETEX=(str, "https://github.com/TransmodelEcosystem/NeTEx"),
     SEED_REPO_SIRI=(str, "https://github.com/SIRI-CEN/SIRI"),
     SEED_REPO_OPRA=(str, "https://github.com/OpRa-CEN/OpRa"),
     GRAPH_RAG_ENABLED=(bool, False),
@@ -57,10 +90,12 @@ env = environ.Env(
     GRAPHDB_PASSWORD=(str, ""),
     GRAPHDB_TIMEOUT_SECONDS=(int, 5),
     GRAPH_RAG_VARIANT=(str, "baseline"),
-    GRAPH_EXPANSION_MAX_CONCEPTS=(int, 64),
-    GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS=(int, 40),
+    GRAPH_EXPANSION_MAX_CONCEPTS=(int, 56),
+    GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS=(int, 36),
     RETRIEVAL_DIVERSITY_ENABLED=(bool, True),
     RETRIEVAL_MAX_SAME_SOURCE_PATH=(int, 2),
+    RETRIEVAL_SCORING_CANDIDATE_CAP=(int, 32),
+    RETRIEVAL_GRAPH_PRESELECT_MULTIPLIER=(float, 2.0),
     RETRIEVAL_MMR_LAMBDA=(float, 0.92),
     RETRIEVAL_KEYWORD_TRAP_PENALTY=(float, 0.60),
     POLICY_STRICT_CLAIM_GUARD=(bool, False),
@@ -69,6 +104,9 @@ environ.Env.read_env(BASE_DIR / ".env")
 
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="change-me")
 DEBUG = env("DJANGO_DEBUG")
+SERVICE_NAME = env("SERVICE_NAME", default="napcore-helpdesk").strip() or "napcore-helpdesk"
+SERVICE_VERSION = env("SERVICE_VERSION", default=REPO_VERSION).strip() or REPO_VERSION
+SERVICE_BUILD_REF = env("SERVICE_BUILD_REF", default="dev").strip() or "dev"
 ALLOWED_HOSTS = [h.strip() for h in env("DJANGO_ALLOWED_HOSTS", default="localhost,127.0.0.1").split(",") if h.strip()]
 
 INSTALLED_APPS = [
@@ -175,7 +213,7 @@ ALLOWED_SOURCE_REPOSITORIES = {
     value.strip()
     for value in env(
         "ALLOWED_SOURCE_REPOSITORIES",
-        default="https://github.com/NeTEx-CEN/NeTEx,https://github.com/SIRI-CEN/SIRI,https://github.com/OpRa-CEN/OpRa",
+        default="https://github.com/TransmodelEcosystem/NeTEx,https://github.com/SIRI-CEN/SIRI,https://github.com/OpRa-CEN/OpRa",
     ).split(",")
     if value.strip()
 }
@@ -198,6 +236,23 @@ LLM_CA_BUNDLE = env("LLM_CA_BUNDLE", default="").strip() or GITHUB_CA_BUNDLE
 LLM_TIMEOUT_SECONDS = env("LLM_TIMEOUT_SECONDS")
 LLM_MAX_TOKENS = env("LLM_MAX_TOKENS")
 LLM_TEMPERATURE = env("LLM_TEMPERATURE")
+LLM_MAX_EVIDENCE_CHUNKS = env("LLM_MAX_EVIDENCE_CHUNKS")
+LLM_MAX_EVIDENCE_CHARS_PER_CHUNK = env("LLM_MAX_EVIDENCE_CHARS_PER_CHUNK")
+CONTROLLER_LLM_ENABLED = env("CONTROLLER_LLM_ENABLED")
+CONTROLLER_LLM_PROVIDER = env("CONTROLLER_LLM_PROVIDER", default="subprocess").strip() or "subprocess"
+CONTROLLER_LLM_EXECUTABLE = env("CONTROLLER_LLM_EXECUTABLE", default="").strip()
+CONTROLLER_LLM_MODEL_PATH = env("CONTROLLER_LLM_MODEL_PATH", default="").strip()
+CONTROLLER_LLM_DEVICE = env("CONTROLLER_LLM_DEVICE", default="none").strip() or "none"
+CONTROLLER_LLM_TIMEOUT_SECONDS = env("CONTROLLER_LLM_TIMEOUT_SECONDS")
+CONTROLLER_LLM_CTX_SIZE = env("CONTROLLER_LLM_CTX_SIZE")
+CONTROLLER_LLM_MAX_TOKENS = env("CONTROLLER_LLM_MAX_TOKENS")
+CONTROLLER_LLM_THREADS = env("CONTROLLER_LLM_THREADS")
+CONTROLLER_LLM_TEMPERATURE = env("CONTROLLER_LLM_TEMPERATURE")
+CONTROLLER_LLM_API_BASE_URL = env("CONTROLLER_LLM_API_BASE_URL", default="").strip() or LLM_API_BASE_URL
+CONTROLLER_LLM_API_KEY = env("CONTROLLER_LLM_API_KEY", default="").strip() or LLM_API_KEY
+CONTROLLER_LLM_API_MODEL = env("CONTROLLER_LLM_API_MODEL", default="").strip() or LLM_MODEL
+CONTROLLER_LLM_VERIFY_SSL = env("CONTROLLER_LLM_VERIFY_SSL")
+CONTROLLER_LLM_CA_BUNDLE = env("CONTROLLER_LLM_CA_BUNDLE", default="").strip()
 
 EMBEDDING_ENABLED = env("EMBEDDING_ENABLED")
 EMBEDDING_PROVIDER = env("EMBEDDING_PROVIDER").strip() or "openai-compatible"
@@ -205,7 +260,7 @@ EMBEDDING_API_BASE_URL = env("EMBEDDING_API_BASE_URL").strip() or "https://api.o
 EMBEDDING_API_KEY = env("EMBEDDING_API_KEY").strip()
 EMBEDDING_MODEL = env("EMBEDDING_MODEL").strip() or "text-embedding-3-small"
 EMBEDDING_TIMEOUT_SECONDS = env("EMBEDDING_TIMEOUT_SECONDS")
-SEED_REPO_NETEX = env("SEED_REPO_NETEX").strip() or "https://github.com/NeTEx-CEN/NeTEx"
+SEED_REPO_NETEX = env("SEED_REPO_NETEX").strip() or "https://github.com/TransmodelEcosystem/NeTEx"
 SEED_REPO_SIRI = env("SEED_REPO_SIRI").strip() or "https://github.com/SIRI-CEN/SIRI"
 SEED_REPO_OPRA = env("SEED_REPO_OPRA").strip() or "https://github.com/OpRa-CEN/OpRa"
 ALLOWED_SOURCE_REPOSITORIES |= {
@@ -229,6 +284,8 @@ GRAPH_EXPANSION_MAX_CONCEPTS = env("GRAPH_EXPANSION_MAX_CONCEPTS")
 GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS = env("GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS")
 RETRIEVAL_DIVERSITY_ENABLED = env("RETRIEVAL_DIVERSITY_ENABLED")
 RETRIEVAL_MAX_SAME_SOURCE_PATH = env("RETRIEVAL_MAX_SAME_SOURCE_PATH")
+RETRIEVAL_SCORING_CANDIDATE_CAP = env("RETRIEVAL_SCORING_CANDIDATE_CAP")
+RETRIEVAL_GRAPH_PRESELECT_MULTIPLIER = env("RETRIEVAL_GRAPH_PRESELECT_MULTIPLIER")
 RETRIEVAL_MMR_LAMBDA = env("RETRIEVAL_MMR_LAMBDA")
 RETRIEVAL_KEYWORD_TRAP_PENALTY = env("RETRIEVAL_KEYWORD_TRAP_PENALTY")
 POLICY_STRICT_CLAIM_GUARD = env("POLICY_STRICT_CLAIM_GUARD")

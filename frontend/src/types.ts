@@ -166,6 +166,15 @@ export interface IndexRepositoryResponse {
   deletedChunks: number;
 }
 
+export interface HealthResponse {
+  status: "ok" | "degraded";
+  service: string;
+  check: "live" | "ready";
+  version: string;
+  buildRef: string;
+  database?: string;
+}
+
 export interface ApiErrorEnvelope {
   error?: {
     code?: string;

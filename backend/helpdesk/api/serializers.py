@@ -42,6 +42,10 @@ class AnswerRequestSerializer(serializers.Serializer):
         required=False,
         default="llm-ready",
     )
+    controllerProfile = serializers.ChoiceField(
+        choices=["deterministic-grounded", "llm-ready"],
+        required=False,
+    )
     options = AnswerOptionsSerializer(required=False)
 
 

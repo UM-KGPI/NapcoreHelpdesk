@@ -5,24 +5,28 @@
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix dct:  <http://purl.org/dc/terms/> .
 
-@prefix opra: <https://opra.org.uk/ontology/opra#> .
+@prefix opra: <https://transmodel-cen.eu/opra/1.0#> .
+@prefix netex: <https://netex.org.uk/netex/2.0#> .
+@prefix siri: <https://w3id.org/mobility/siri#> .
+@prefix transmodel: <https://transmodel-cen.eu/transmodel/1.0#> .
+@prefix datex: <https://datex2.eu/ontology/1.0#> .
 
 #################################################################
 # Ontology Header
 #################################################################
 
-<https://opra.org.uk/ontology/opra>
+<https://transmodel-cen.eu/opra/1.0>
     a owl:Ontology ;
     dct:title "OpRa Conceptual Ontology"@en ;
-    dct:description "Conceptual OWL ontology representing core OpRa journey planning and planning services concepts for semantic reasoning and alignment. Abstracts from XML schemas."@en ;
+    dct:description "OpRa OWL ontology regenerated from the full recursive OpRa XSD tree. It contains conceptual classes extracted from all local schema files."@en ;
     dct:creator "OpRa / NAPCORE Community" ;
-    dct:created "2026-04-17"^^xsd:date ;
-    owl:versionIRI <https://opra.org.uk/ontology/opra/0.1> ;
-    owl:versionInfo "0.1-draft" ;
+    dct:created "2026-05-10"^^xsd:date ;
+    owl:versionIRI <https://transmodel-cen.eu/opra/1.0> ;
+    owl:versionInfo "0.2-xsd-rebuild" ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
 #################################################################
-# Core Journey Planning Concepts
+# Core OpRa Concepts
 #################################################################
 
 opra:JourneyPlan
@@ -246,3 +250,781 @@ opra:hasBookingArrangement
     rdfs:comment "Relates a leg to its booking options."@en ;
     rdfs:domain opra:Leg ;
     rdfs:range opra:BookingArrangement .
+
+#################################################################
+# XSD-Extracted Concepts
+#################################################################
+opra:AbstractCtxIndicator
+    a owl:Class ;
+    rdfs:label "Abstract Ctx Indicator"@en ;
+    skos:prefLabel "abstract ctx indicator"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_framework/opra_genericFramework/opra_GenericContextualIndicator_version.xsd. Dummy Supertype for a CONTEXTUAL INDICATOR."@en .
+
+opra:AbstractLogEntry
+    a owl:Class ;
+    rdfs:label "Abstract Log Entry"@en ;
+    skos:prefLabel "abstract log entry"@en ;
+    skos:altLabel "dummy supertype for log entry"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_framework/opra_genericFramework/opra_GeneralLogEntry_version.xsd. Dummy Supertype for LOG ENTRY."@en .
+
+opra:AbstractLoggableObject
+    a owl:Class ;
+    rdfs:label "Abstract Loggable Object"@en ;
+    skos:prefLabel "abstract loggable object"@en ;
+    skos:altLabel "dummy supertype for loggable object"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_framework/opra_genericFramework/opra_GeneralLogEntry_version.xsd. Dummy Supertype for LOGGABLE OBJECT."@en .
+
+opra:ActualCapacity
+    a owl:Class ;
+    rdfs:label "Actual Capacity"@en ;
+    skos:prefLabel "actual capacity"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_indicators/opra_capacity_version.xsd. Implementation of LOGGABLE OBJECT designed for recording ACTUAL CAPACITY information."@en ;
+    skos:related opra:AbstractIndicator .
+
+opra:ActualCapacityDiscoveryDelivery
+    a owl:Class ;
+    rdfs:label "Actual Capacity Discovery Delivery"@en ;
+    skos:prefLabel "actual capacity discovery delivery"@en ;
+    skos:altLabel "discovery delivery element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_capacity.xsd. A discovery delivery element to get ACTUAL CAPACITIes."@en ;
+    skos:related opra:OpraDiscoveryDelivery .
+
+opra:ActualCapacityDiscoveryRequest
+    a owl:Class ;
+    rdfs:label "Actual Capacity Discovery Request"@en ;
+    skos:prefLabel "actual capacity discovery request"@en ;
+    skos:altLabel "discovery request element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_capacity.xsd. A discovery request element to get ACTUAL CAPACITIes."@en ;
+    skos:related opra:OpraDiscoveryRequest .
+
+opra:ActualCapacityRequest
+    a owl:Class ;
+    rdfs:label "Actual Capacity Request"@en ;
+    skos:prefLabel "actual capacity request"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_capacity.xsd. A request element to get ACTUAL CAPACITIes."@en ;
+    skos:related opra:OpraFunctionalRequest .
+
+opra:ActualFleetDimensions
+    a owl:Class ;
+    rdfs:label "Actual Fleet Dimensions"@en ;
+    skos:prefLabel "actual fleet dimensions"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_indicators/opra_fleetDimensions_version.xsd. Implementation of LOGGABLE OBJECT designed for recording ACTUAL FLEET DIMENSIONS information."@en ;
+    skos:related opra:AbstractIndicator .
+
+opra:ActualFleetDimensionsDiscoveryDelivery
+    a owl:Class ;
+    rdfs:label "Actual Fleet Dimensions Discovery Delivery"@en ;
+    skos:prefLabel "actual fleet dimensions discovery delivery"@en ;
+    skos:altLabel "discovery delivery element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_fleetDimensions.xsd. A discovery delivery element to get ACTUAL FLEET DIMENSIONS."@en ;
+    skos:related opra:OpraDiscoveryDelivery .
+
+opra:ActualFleetDimensionsDiscoveryRequest
+    a owl:Class ;
+    rdfs:label "Actual Fleet Dimensions Discovery Request"@en ;
+    skos:prefLabel "actual fleet dimensions discovery request"@en ;
+    skos:altLabel "discovery request element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_fleetDimensions.xsd. A discovery request element to get ACTUAL FLEET DIMENSIONS."@en ;
+    skos:related opra:OpraDiscoveryRequest .
+
+opra:ActualFleetDimensionsRequest
+    a owl:Class ;
+    rdfs:label "Actual Fleet Dimensions Request"@en ;
+    skos:prefLabel "actual fleet dimensions request"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_fleetDimensions.xsd. A request element to get ACTUAL FLEET DIMENSIONS."@en ;
+    skos:related opra:OpraFunctionalRequest .
+
+opra:ActualFrame
+    a owl:Class ;
+    rdfs:label "Actual Frame"@en ;
+    skos:prefLabel "actual frame"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_framework/opra_frames/opra_actualFrame_version.xsd. The container element for the actual service within the VALIDITY CONDITIONs."@en .
+
+opra:ActualFrameRequest
+    a owl:Class ;
+    rdfs:label "Actual Frame Request"@en ;
+    skos:prefLabel "actual frame request"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_actualFrame.xsd. A request element to get ACTUAL FRAMEs."@en ;
+    skos:related opra:OpraFunctionalRequest .
+
+opra:ActualServiceDimensions
+    a owl:Class ;
+    rdfs:label "Actual Service Dimensions"@en ;
+    skos:prefLabel "actual service dimensions"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_indicators/opra_serviceDimensions_version.xsd. Implementation of LOGGABLE OBJECT designed for recording ACTUAL SERVICE DIMENSIONS information."@en ;
+    skos:related opra:AbstractIndicator .
+
+opra:ActualServiceDimensionsDiscoveryDelivery
+    a owl:Class ;
+    rdfs:label "Actual Service Dimensions Discovery Delivery"@en ;
+    skos:prefLabel "actual service dimensions discovery delivery"@en ;
+    skos:altLabel "discovery delivery element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_serviceDimensions.xsd. A discovery delivery element to get ACTUAL SERVICE DIMENSIONS."@en ;
+    skos:related opra:OpraDiscoveryDelivery .
+
+opra:ActualServiceDimensionsDiscoveryRequest
+    a owl:Class ;
+    rdfs:label "Actual Service Dimensions Discovery Request"@en ;
+    skos:prefLabel "actual service dimensions discovery request"@en ;
+    skos:altLabel "discovery request element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_serviceDimensions.xsd. A discovery request element to get ACTUAL SERVICE DIMENSIONS."@en ;
+    skos:related opra:OpraDiscoveryRequest .
+
+opra:ActualServiceDimensionsRequest
+    a owl:Class ;
+    rdfs:label "Actual Service Dimensions Request"@en ;
+    skos:prefLabel "actual service dimensions request"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_serviceDimensions.xsd. A request element to get ACTUAL SERVICE DIMENSIONS."@en ;
+    skos:related opra:OpraFunctionalRequest .
+
+opra:ActualServiceIntensity
+    a owl:Class ;
+    rdfs:label "Actual Service Intensity"@en ;
+    skos:prefLabel "actual service intensity"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_indicators/opra_serviceIntensity_version.xsd. Implementation of LOGGABLE OBJECT designed for recording ACTUAL SERVICE INTENSITY information."@en ;
+    skos:related opra:AbstractIndicator .
+
+opra:ActualServiceIntensityDiscoveryDelivery
+    a owl:Class ;
+    rdfs:label "Actual Service Intensity Discovery Delivery"@en ;
+    skos:prefLabel "actual service intensity discovery delivery"@en ;
+    skos:altLabel "discovery delivery element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_serviceIntensity.xsd. A discovery delivery element to get ACTUAL SERVICE INTENSITIes."@en ;
+    skos:related opra:OpraDiscoveryDelivery .
+
+opra:ActualServiceIntensityDiscoveryRequest
+    a owl:Class ;
+    rdfs:label "Actual Service Intensity Discovery Request"@en ;
+    skos:prefLabel "actual service intensity discovery request"@en ;
+    skos:altLabel "discovery request element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_serviceIntensity.xsd. A discovery request element to get ACTUAL SERVICE INTENSITIes."@en ;
+    skos:related opra:OpraDiscoveryRequest .
+
+opra:ActualServiceIntensityRequest
+    a owl:Class ;
+    rdfs:label "Actual Service Intensity Request"@en ;
+    skos:prefLabel "actual service intensity request"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_serviceIntensity.xsd. A request element to get ACTUAL SERVICE INTENSITIes."@en ;
+    skos:related opra:OpraFunctionalRequest .
+
+opra:AverageCommercialSpeed
+    a owl:Class ;
+    rdfs:label "Average Commercial Speed"@en ;
+    skos:prefLabel "average commercial speed"@en ;
+    skos:altLabel "speed value calculated from difference"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_indicators/opra_serviceIntensity_version.xsd. Speed value calculated from difference between arrival and departure time at terminals and ROUTE length, including stop waiting times."@en .
+
+opra:CancelledDatedVehicleJourneyCount
+    a owl:Class ;
+    rdfs:label "Cancelled Dated Vehicle Journey Count"@en ;
+    skos:prefLabel "cancelled dated vehicle journey count"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_indicators/opra_cancelledDatedVehicleJourney_version.xsd. Implementation of a CANCELLED DATED VEHICLE JOURNEY COUNT."@en ;
+    skos:related opra:AbstractIndicator .
+
+opra:CancelledDatedVehicleJourneyDiscoveryDelivery
+    a owl:Class ;
+    rdfs:label "Cancelled Dated Vehicle Journey Discovery Delivery"@en ;
+    skos:prefLabel "cancelled dated vehicle journey discovery delivery"@en ;
+    skos:altLabel "discovery delivery element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_cancelledDatedVehicleJourneys.xsd. A discovery delivery element to get CANCELLED DATED VEHICLE JOURNEYs."@en ;
+    skos:related opra:OpraDiscoveryDelivery .
+
+opra:CancelledDatedVehicleJourneyDiscoveryRequest
+    a owl:Class ;
+    rdfs:label "Cancelled Dated Vehicle Journey Discovery Request"@en ;
+    skos:prefLabel "cancelled dated vehicle journey discovery request"@en ;
+    skos:altLabel "discovery request element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_cancelledDatedVehicleJourneys.xsd. A discovery request element to get CANCELLED DATED VEHICLE JOURNEYs."@en ;
+    skos:related opra:OpraDiscoveryRequest .
+
+opra:CancelledDatedVehicleJourneysRequest
+    a owl:Class ;
+    rdfs:label "Cancelled Dated Vehicle Journeys Request"@en ;
+    skos:prefLabel "cancelled dated vehicle journeys request"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_cancelledDatedVehicleJourneys.xsd. A request element to get CANCELLED DATED VEHICLE JOURNEYs."@en ;
+    skos:related opra:OpraFunctionalRequest .
+
+opra:CapabilitiesRequest
+    a owl:Class ;
+    rdfs:label "Capabilities Request"@en ;
+    skos:prefLabel "capabilities request"@en ;
+    skos:altLabel "requests a the current capabilities"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra.xsd. Requests a the current capabilities of the server. Answered with a CapabilitiesResponse. Reserved for future use."@en .
+
+opra:CapabilitiesResponse
+    a owl:Class ;
+    rdfs:label "Capabilities Response"@en ;
+    skos:prefLabel "capabilities response"@en ;
+    skos:altLabel "responses with the capabilities of"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra.xsd. Responses with the capabilities of an implementation.  Reserved for future use."@en .
+
+opra:CapacitySpecification
+    a owl:Class ;
+    rdfs:label "Capacity Specification"@en ;
+    skos:prefLabel "capacity specification"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_indicators/opra_capacity_version.xsd. Element providing capability to specify methods and capacity values for VEHICLE TYPEs."@en .
+
+opra:ContextualIndicatorDiscoveryDelivery
+    a owl:Class ;
+    rdfs:label "Contextual Indicator Discovery Delivery"@en ;
+    skos:prefLabel "contextual indicator discovery delivery"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_contextualIndicators.xsd. A request element to get CONTEXTUAL INDICATORs."@en ;
+    skos:related opra:OpraDiscoveryDelivery .
+
+opra:ContextualIndicatorDiscoveryRequest
+    a owl:Class ;
+    rdfs:label "Contextual Indicator Discovery Request"@en ;
+    skos:prefLabel "contextual indicator discovery request"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_contextualIndicators.xsd. A request element to get CONTEXTUAL INDICATORs."@en ;
+    skos:related opra:OpraDiscoveryRequest .
+
+opra:ContextualIndicatorFrame
+    a owl:Class ;
+    rdfs:label "Contextual Indicator Frame"@en ;
+    skos:prefLabel "contextual indicator frame"@en ;
+    skos:altLabel "coherent set of contextual"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_framework/opra_frames/opra_contextualIndicatorFrame_version.xsd. A coherent set of CONTEXTUAL INDICATORs to which the same frame VALIDITY CONDITIONs have been assigned."@en .
+
+opra:ContextualIndicatorRequest
+    a owl:Class ;
+    rdfs:label "Contextual Indicator Request"@en ;
+    skos:prefLabel "contextual indicator request"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_contextualIndicators.xsd. A request element to get CONTEXTUAL INDICATORs."@en ;
+    skos:related opra:OpraFunctionalRequest .
+
+opra:DurationInterval
+    a owl:Class ;
+    rdfs:label "Duration Interval"@en ;
+    skos:prefLabel "duration interval"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_framework/opra_reusableComponents/opra_durationDistribution_support.xsd. Element for basic occurrence statistics of a DURATION INTERVAL."@en .
+
+opra:ExpectedPassengerCount
+    a owl:Class ;
+    rdfs:label "Expected Passenger Count"@en ;
+    skos:prefLabel "expected passenger count"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_indicators/opra_expectedPassengerCount_version.xsd. Implementation of LOGGABLE OBJECT designed for recording EXPECTED PASSENGER COUNT information."@en ;
+    skos:related opra:AbstractIndicator .
+
+opra:ExpectedPassengerCountDiscoveryDelivery
+    a owl:Class ;
+    rdfs:label "Expected Passenger Count Discovery Delivery"@en ;
+    skos:prefLabel "expected passenger count discovery delivery"@en ;
+    skos:altLabel "discovery delivery element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_expectedPassengerCounts.xsd. A discovery delivery element to get EXPECTED PASSENGER COUNTs."@en ;
+    skos:related opra:OpraDiscoveryDelivery .
+
+opra:ExpectedPassengerCountDiscoveryRequest
+    a owl:Class ;
+    rdfs:label "Expected Passenger Count Discovery Request"@en ;
+    skos:prefLabel "expected passenger count discovery request"@en ;
+    skos:altLabel "discovery request element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_expectedPassengerCounts.xsd. A discovery request element to get EXPECTED PASSENGER COUNTs."@en ;
+    skos:related opra:OpraDiscoveryRequest .
+
+opra:ExpectedPassengerCountRequest
+    a owl:Class ;
+    rdfs:label "Expected Passenger Count Request"@en ;
+    skos:prefLabel "expected passenger count request"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_expectedPassengerCounts.xsd. A request element to get EXPECTED PASSENGER COUNTs."@en ;
+    skos:related opra:OpraFunctionalRequest .
+
+opra:ExpectedServiceIntensity
+    a owl:Class ;
+    rdfs:label "Expected Service Intensity"@en ;
+    skos:prefLabel "expected service intensity"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_indicators/opra_serviceIntensity_version.xsd. Implementation of LOGGABLE OBJECT designed for recording EXPECTED SERVICE INTENSITY information."@en ;
+    skos:related opra:AbstractIndicator .
+
+opra:ExternalPassengerCount
+    a owl:Class ;
+    rdfs:label "External Passenger Count"@en ;
+    skos:prefLabel "external passenger count"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_indicators/opra_externalPassengerCount_version.xsd. Implementation of LOGGABLE OBJECT designed for recording EXTERNAL PASSENGER COUNT information."@en ;
+    skos:related opra:AbstractIndicator .
+
+opra:ExternalPassengerCountDiscoveryDelivery
+    a owl:Class ;
+    rdfs:label "External Passenger Count Discovery Delivery"@en ;
+    skos:prefLabel "external passenger count discovery delivery"@en ;
+    skos:altLabel "discovery delivery element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_externalPassengerCounts.xsd. A discovery delivery element to get EXTERNAL PASSENGER COUNTs."@en ;
+    skos:related opra:OpraDiscoveryDelivery .
+
+opra:ExternalPassengerCountDiscoveryRequest
+    a owl:Class ;
+    rdfs:label "External Passenger Count Discovery Request"@en ;
+    skos:prefLabel "external passenger count discovery request"@en ;
+    skos:altLabel "discovery request element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_externalPassengerCounts.xsd. A discovery request element to get EXTERNAL PASSENGER COUNTs."@en ;
+    skos:related opra:OpraDiscoveryRequest .
+
+opra:ExternalPassengerCountRequest
+    a owl:Class ;
+    rdfs:label "External Passenger Count Request"@en ;
+    skos:prefLabel "external passenger count request"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_externalPassengerCounts.xsd. A request element to get EXTERNAL PASSENGER COUNTs."@en ;
+    skos:related opra:OpraFunctionalRequest .
+
+opra:GeneralLogEntry
+    a owl:Class ;
+    rdfs:label "General Log Entry"@en ;
+    skos:prefLabel "general log entry"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_framework/opra_genericFramework/opra_GeneralLogEntry_version.xsd. A time-stamped record of an event or change of state."@en ;
+    skos:related opra:AbstractLogEntry .
+
+opra:GenericContextualIndicator
+    a owl:Class ;
+    rdfs:label "Generic Contextual Indicator"@en ;
+    skos:prefLabel "generic contextual indicator"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_framework/opra_genericFramework/opra_GenericContextualIndicator_version.xsd. Representation of a generic CONTEXTUAL INDICATOR."@en ;
+    skos:related opra:AbstractCtxIndicator .
+
+opra:IndicatorFrame
+    a owl:Class ;
+    rdfs:label "Indicator Frame"@en ;
+    skos:prefLabel "indicator frame"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_framework/opra_frames/opra_indicatorFrame_version.xsd. A coherent set of OpRa indicators to which the same frame VALIDITY CONDITIONs have been assigned."@en .
+
+opra:LateDatedVehicleJourneyCount
+    a owl:Class ;
+    rdfs:label "Late Dated Vehicle Journey Count"@en ;
+    skos:prefLabel "late dated vehicle journey count"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_indicators/opra_lateDatedVehicleJourney_version.xsd. Implementation of a LATE DATED VEHICLE JOURNEY COUNT."@en ;
+    skos:related opra:AbstractIndicator .
+
+opra:LateDatedVehicleJourneyDiscoveryDelivery
+    a owl:Class ;
+    rdfs:label "Late Dated Vehicle Journey Discovery Delivery"@en ;
+    skos:prefLabel "late dated vehicle journey discovery delivery"@en ;
+    skos:altLabel "discovery delivery element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_lateDatedVehicleJourneys.xsd. A discovery delivery element to get LATE DATED VEHICLE JOURNEYs."@en ;
+    skos:related opra:OpraDiscoveryDelivery .
+
+opra:LateDatedVehicleJourneyDiscoveryRequest
+    a owl:Class ;
+    rdfs:label "Late Dated Vehicle Journey Discovery Request"@en ;
+    skos:prefLabel "late dated vehicle journey discovery request"@en ;
+    skos:altLabel "discovery request element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_lateDatedVehicleJourneys.xsd. A discovery request element to get LATE DATED VEHICLE JOURNEYs."@en ;
+    skos:related opra:OpraDiscoveryRequest .
+
+opra:LateDatedVehicleJourneysRequest
+    a owl:Class ;
+    rdfs:label "Late Dated Vehicle Journeys Request"@en ;
+    skos:prefLabel "late dated vehicle journeys request"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_lateDatedVehicleJourneys.xsd. A request element to get LATE DATED VEHICLE JOURNEYs."@en ;
+    skos:related opra:OpraFunctionalRequest .
+
+opra:LoadOverJourneyDistance
+    a owl:Class ;
+    rdfs:label "Load Over Journey Distance"@en ;
+    skos:prefLabel "load over journey distance"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_indicators/opra_serviceIntensity_version.xsd. Mean passenger (and other transported unit) count per total journey distance unit [capita/m] or [capita/km] depending on DefaultSystemOfUnits for the FRAME."@en .
+
+opra:LogEntryValue
+    a owl:Class ;
+    rdfs:label "Log Entry Value"@en ;
+    skos:prefLabel "log entry value"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_framework/opra_genericFramework/opra_GeneralLogEntry_version.xsd. A time-stamped record of an event or change of state - new values/state."@en .
+
+opra:LoggableObject
+    a owl:Class ;
+    rdfs:label "Loggable Object"@en ;
+    skos:prefLabel "loggable object"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_framework/opra_genericFramework/opra_GeneralLogEntry_version.xsd. An entity for which LOG ENTRies may be made."@en ;
+    skos:related opra:AbstractLoggableObject .
+
+opra:MeanCapacityOverJourneyDistance
+    a owl:Class ;
+    rdfs:label "Mean Capacity Over Journey Distance"@en ;
+    skos:prefLabel "mean capacity over journey distance"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_indicators/opra_serviceIntensity_version.xsd. Average passenger (and other transported unit) capacity values provided per VEHICLE JOURNEY distance unit (see DefaultSystemOfUnits for the FRAME)"@en .
+
+opra:MeanCapacityOverNetworkDistance
+    a owl:Class ;
+    rdfs:label "Mean Capacity Over Network Distance"@en ;
+    skos:prefLabel "mean capacity over network distance"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_indicators/opra_serviceIntensity_version.xsd. Average passenger (and other transported unit) capacity values provided for a distance unit (see DefaultSystemOfUnits for the FRAME) of a NETWORK."@en .
+
+opra:MeanCapacityOverRouteDistance
+    a owl:Class ;
+    rdfs:label "Mean Capacity Over Route Distance"@en ;
+    skos:prefLabel "mean capacity over route distance"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_indicators/opra_serviceIntensity_version.xsd. Average passenger (and other transported unit) capacity values provided for a distance unit (see DefaultSystemOfUnits for the FRAME) of all ROUTEs considered."@en .
+
+opra:OnboardDeviceBasedPassengerCount
+    a owl:Class ;
+    rdfs:label "Onboard Device Based Passenger Count"@en ;
+    skos:prefLabel "onboard device based passenger count"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_indicators/opra_onboardDeviceBasedPassengerCount_version.xsd. Implementation of LOGGABLE OBJECT designed for recording ONBOARD DEVICE BASED PASSENGER COUNT information."@en ;
+    skos:related opra:AbstractIndicator .
+
+opra:OnboardDeviceBasedPassengerCountDiscoveryDelivery
+    a owl:Class ;
+    rdfs:label "Onboard Device Based Passenger Count Discovery Delivery"@en ;
+    skos:prefLabel "onboard device based passenger count discovery delivery"@en ;
+    skos:altLabel "discovery delivery element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_onboardDeviceBasedPassengerCounts.xsd. A discovery delivery element to get ONBOARD DEVICE BASED PASSENGER COUNTs."@en ;
+    skos:related opra:OpraDiscoveryDelivery .
+
+opra:OnboardDeviceBasedPassengerCountDiscoveryRequest
+    a owl:Class ;
+    rdfs:label "Onboard Device Based Passenger Count Discovery Request"@en ;
+    skos:prefLabel "onboard device based passenger count discovery request"@en ;
+    skos:altLabel "discovery request element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_onboardDeviceBasedPassengerCounts.xsd. A discovery request element to get ONBOARD DEVICE BASED PASSENGER COUNTs."@en ;
+    skos:related opra:OpraDiscoveryRequest .
+
+opra:OnboardDeviceBasedPassengerCountRequest
+    a owl:Class ;
+    rdfs:label "Onboard Device Based Passenger Count Request"@en ;
+    skos:prefLabel "onboard device based passenger count request"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_onboardDeviceBasedPassengerCounts.xsd. A request element to get ONBOARD DEVICE BASED PASSENGER COUNTs."@en ;
+    skos:related opra:OpraFunctionalRequest .
+
+opra:Opra
+    a owl:Class ;
+    rdfs:label "Opra"@en ;
+    skos:prefLabel "opra"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra.xsd. Operational Raw Data Root Element."@en ;
+    skos:related siri:Extensions .
+
+opra:OpraDiscoveryDelivery
+    a owl:Class ;
+    rdfs:label "Opra Discovery Delivery"@en ;
+    skos:prefLabel "opra discovery delivery"@en ;
+    skos:altLabel "abstract element to return discovery"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_request.xsd. Abstract element to return Discovery results. Specialisations shall include the reference data structures."@en .
+
+opra:OpraDiscoveryRequest
+    a owl:Class ;
+    rdfs:label "Opra Discovery Request"@en ;
+    skos:prefLabel "opra discovery request"@en ;
+    skos:altLabel "abstract opra discovery request element"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_request.xsd. Abstract OpRa Discovery Request element."@en ;
+    skos:related siri:AbstractDiscoveryRequest .
+
+opra:OpraError
+    a owl:Class ;
+    rdfs:label "Opra Error"@en ;
+    skos:prefLabel "opra error"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_request.xsd. Element for Opra related errors."@en ;
+    skos:related siri:OtherError .
+
+opra:OpraFunctionalDelivery
+    a owl:Class ;
+    rdfs:label "Opra Functional Delivery"@en ;
+    skos:prefLabel "opra functional delivery"@en ;
+    skos:altLabel "abstract delivery element responding for"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_request.xsd. Abstract delivery element, responding for OpraRequest elements."@en ;
+    skos:related siri:AbstractFunctionalServiceDelivery .
+
+opra:OpraFunctionalRequest
+    a owl:Class ;
+    rdfs:label "Opra Functional Request"@en ;
+    skos:prefLabel "opra functional request"@en ;
+    skos:altLabel "generic abstract opra request element"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_request.xsd. Generic abstract OpRa request element. Substitute this element with topic-specific request elements."@en ;
+    skos:related siri:AbstractFunctionalServiceRequest .
+
+opra:OpraPayloadDelivery
+    a owl:Class ;
+    rdfs:label "Opra Payload Delivery"@en ;
+    skos:prefLabel "opra payload delivery"@en ;
+    skos:altLabel "common delivery element responding to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_payload_delivery.xsd. Common delivery element, responding to OpraFunctionalRequests."@en ;
+    skos:related opra:OpraFunctionalDelivery .
+
+opra:OpraSubscriptionRequest
+    a owl:Class ;
+    rdfs:label "Opra Subscription Request"@en ;
+    skos:prefLabel "opra subscription request"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_request.xsd. General OpRa Subscription Request that subscribes to PublicationDelivery responses."@en .
+
+opra:PlannedCapacity
+    a owl:Class ;
+    rdfs:label "Planned Capacity"@en ;
+    skos:prefLabel "planned capacity"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_indicators/opra_capacity_version.xsd. Implementation of LOGGABLE OBJECT designed for recording PLANNED CAPACITY information."@en ;
+    skos:related opra:AbstractIndicator .
+
+opra:PlannedCapacityDiscoveryDelivery
+    a owl:Class ;
+    rdfs:label "Planned Capacity Discovery Delivery"@en ;
+    skos:prefLabel "planned capacity discovery delivery"@en ;
+    skos:altLabel "discovery delivery element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_capacity.xsd. A discovery delivery element to get PLANNED CAPACITIes."@en ;
+    skos:related opra:OpraDiscoveryDelivery .
+
+opra:PlannedCapacityDiscoveryRequest
+    a owl:Class ;
+    rdfs:label "Planned Capacity Discovery Request"@en ;
+    skos:prefLabel "planned capacity discovery request"@en ;
+    skos:altLabel "discovery request element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_capacity.xsd. A discovery request element to get PLANNED CAPACITIes."@en ;
+    skos:related opra:OpraDiscoveryRequest .
+
+opra:PlannedCapacityRequest
+    a owl:Class ;
+    rdfs:label "Planned Capacity Request"@en ;
+    skos:prefLabel "planned capacity request"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_capacity.xsd. A request element to get PLANNED CAPACITIes."@en ;
+    skos:related opra:OpraFunctionalRequest .
+
+opra:PlannedFleetDimensions
+    a owl:Class ;
+    rdfs:label "Planned Fleet Dimensions"@en ;
+    skos:prefLabel "planned fleet dimensions"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_indicators/opra_fleetDimensions_version.xsd. Implementation of LOGGABLE OBJECT designed for recording PLANNED FLEET DIMENSIONS information."@en ;
+    skos:related opra:AbstractIndicator .
+
+opra:PlannedFleetDimensionsDiscoveryDelivery
+    a owl:Class ;
+    rdfs:label "Planned Fleet Dimensions Discovery Delivery"@en ;
+    skos:prefLabel "planned fleet dimensions discovery delivery"@en ;
+    skos:altLabel "discovery delivery element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_fleetDimensions.xsd. A discovery delivery element to get PLANNED FLEET DIMENSIONS."@en ;
+    skos:related opra:OpraDiscoveryDelivery .
+
+opra:PlannedFleetDimensionsDiscoveryRequest
+    a owl:Class ;
+    rdfs:label "Planned Fleet Dimensions Discovery Request"@en ;
+    skos:prefLabel "planned fleet dimensions discovery request"@en ;
+    skos:altLabel "discovery request element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_fleetDimensions.xsd. A discovery request element to get PLANNED FLEET DIMENSIONS."@en ;
+    skos:related opra:OpraDiscoveryRequest .
+
+opra:PlannedFleetDimensionsRequest
+    a owl:Class ;
+    rdfs:label "Planned Fleet Dimensions Request"@en ;
+    skos:prefLabel "planned fleet dimensions request"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_fleetDimensions.xsd. A request element to get PLANNED FLEET DIMENSIONS."@en ;
+    skos:related opra:OpraFunctionalRequest .
+
+opra:PlannedFrame
+    a owl:Class ;
+    rdfs:label "Planned Frame"@en ;
+    skos:prefLabel "planned frame"@en ;
+    skos:altLabel "planned service within the"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_framework/opra_frames/opra_plannedFrame_version.xsd. The planned service within the frame VALIDITY CONDITIONs."@en .
+
+opra:PlannedFrameRequest
+    a owl:Class ;
+    rdfs:label "Planned Frame Request"@en ;
+    skos:prefLabel "planned frame request"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_plannedFrame.xsd. A request element to get PLANNED FRAMEs."@en ;
+    skos:related opra:OpraFunctionalRequest .
+
+opra:PlannedServiceDimensions
+    a owl:Class ;
+    rdfs:label "Planned Service Dimensions"@en ;
+    skos:prefLabel "planned service dimensions"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_indicators/opra_serviceDimensions_version.xsd. Implementation of LOGGABLE OBJECT designed for recording PLANNED SERVICE DIMENSIONS information."@en ;
+    skos:related opra:AbstractIndicator .
+
+opra:PlannedServiceDimensionsDiscoveryDelivery
+    a owl:Class ;
+    rdfs:label "Planned Service Dimensions Discovery Delivery"@en ;
+    skos:prefLabel "planned service dimensions discovery delivery"@en ;
+    skos:altLabel "discovery delivery element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_serviceDimensions.xsd. A discovery delivery element to get PLANNED SERVICE DIMENSIONS."@en ;
+    skos:related opra:OpraDiscoveryDelivery .
+
+opra:PlannedServiceDimensionsDiscoveryRequest
+    a owl:Class ;
+    rdfs:label "Planned Service Dimensions Discovery Request"@en ;
+    skos:prefLabel "planned service dimensions discovery request"@en ;
+    skos:altLabel "discovery request element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_serviceDimensions.xsd. A discovery request element to get PLANNED SERVICE DIMENSIONS."@en ;
+    skos:related opra:OpraDiscoveryRequest .
+
+opra:PlannedServiceDimensionsRequest
+    a owl:Class ;
+    rdfs:label "Planned Service Dimensions Request"@en ;
+    skos:prefLabel "planned service dimensions request"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_serviceDimensions.xsd. A request element to get PLANNED SERVICE DIMENSIONS."@en ;
+    skos:related opra:OpraFunctionalRequest .
+
+opra:PlannedServiceIntensity
+    a owl:Class ;
+    rdfs:label "Planned Service Intensity"@en ;
+    skos:prefLabel "planned service intensity"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_indicators/opra_serviceIntensity_version.xsd. Implementation of LOGGABLE OBJECT designed for recording PLANNED SERVICE INTENSITY information."@en ;
+    skos:related opra:AbstractIndicator .
+
+opra:PlannedServiceIntensityDiscoveryDelivery
+    a owl:Class ;
+    rdfs:label "Planned Service Intensity Discovery Delivery"@en ;
+    skos:prefLabel "planned service intensity discovery delivery"@en ;
+    skos:altLabel "discovery delivery element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_serviceIntensity.xsd. A discovery delivery element to get PLANNED SERVICE INTENSITIes."@en ;
+    skos:related opra:OpraDiscoveryDelivery .
+
+opra:PlannedServiceIntensityDiscoveryRequest
+    a owl:Class ;
+    rdfs:label "Planned Service Intensity Discovery Request"@en ;
+    skos:prefLabel "planned service intensity discovery request"@en ;
+    skos:altLabel "discovery request element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_serviceIntensity.xsd. A discovery request element to get PLANNED SERVICE INTENSITIes."@en ;
+    skos:related opra:OpraDiscoveryRequest .
+
+opra:PlannedServiceIntensityRequest
+    a owl:Class ;
+    rdfs:label "Planned Service Intensity Request"@en ;
+    skos:prefLabel "planned service intensity request"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_serviceIntensity.xsd. A request element to get PLANNED SERVICE INTENSITIes."@en ;
+    skos:related opra:OpraFunctionalRequest .
+
+opra:PreparednessLevel
+    a owl:Class ;
+    rdfs:label "Preparedness Level"@en ;
+    skos:prefLabel "preparedness level"@en ;
+    skos:altLabel "preparedness level to state reliability"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_framework/opra_frames/opra_indicatorFrame_version.xsd. Preparedness level to state reliability by the data producer."@en .
+
+opra:PublicationDelivery
+    a owl:Class ;
+    rdfs:label "Publication Delivery"@en ;
+    skos:prefLabel "publication delivery"@en ;
+    skos:altLabel "opra publication delivery that contains"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_publication.xsd. OpRa publication delivery that contains a payload and refreshes in the specified interval."@en ;
+    skos:related opra:OpraFunctionalDelivery .
+
+opra:PublicationRequest
+    a owl:Class ;
+    rdfs:label "Publication Request"@en ;
+    skos:prefLabel "publication request"@en ;
+    skos:altLabel "bulk publication request for"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_publication.xsd. A bulk publication request for OpRa objects specifying which elements should be returned. Can be echoed back in a publication response."@en ;
+    skos:related opra:OpraFunctionalRequest .
+
+opra:ServiceDelivery
+    a owl:Class ;
+    rdfs:label "Service Delivery"@en ;
+    skos:prefLabel "service delivery"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra.xsd. Response from Producer to Consumer to deliver payload data. Either answers a direct ServiceRequest, or asynchronously satisfies a subscription. May be sent directly in one step, or fetched in response to a DataSupply Request."@en .
+
+opra:ServiceRequest
+    a owl:Class ;
+    rdfs:label "Service Request"@en ;
+    skos:prefLabel "service request"@en ;
+    skos:altLabel "request from consumer to producer"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra.xsd. Request from Consumer to Producer for immediate delivery of data. Answered with a ServiceDelivery (or a DataReadyRequest)"@en .
+
+opra:SubscriptionRequest
+    a owl:Class ;
+    rdfs:label "Subscription Request"@en ;
+    skos:prefLabel "subscription request"@en ;
+    skos:altLabel "request from subscriber to producer"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra.xsd. Request from Subscriber to Producer for a subscription. Answered with a SubscriptionResponse."@en .
+
+opra:TicketingBasedPassengerCount
+    a owl:Class ;
+    rdfs:label "Ticketing Based Passenger Count"@en ;
+    skos:prefLabel "ticketing based passenger count"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_indicators/opra_ticketingBasedPassengerCount_version.xsd. Implementation of LOGGABLE OBJECT designed for recording TICKETING BASED PASSENGER COUNT information."@en ;
+    skos:related opra:AbstractIndicator .
+
+opra:TicketingBasedPassengerCountDiscoveryDelivery
+    a owl:Class ;
+    rdfs:label "Ticketing Based Passenger Count Discovery Delivery"@en ;
+    skos:prefLabel "ticketing based passenger count discovery delivery"@en ;
+    skos:altLabel "discovery delivery element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_ticketingBasedPassengerCounts.xsd. A discovery delivery element to get TICKETING BASED PASSENGER COUNTs."@en ;
+    skos:related opra:OpraDiscoveryDelivery .
+
+opra:TicketingBasedPassengerCountDiscoveryRequest
+    a owl:Class ;
+    rdfs:label "Ticketing Based Passenger Count Discovery Request"@en ;
+    skos:prefLabel "ticketing based passenger count discovery request"@en ;
+    skos:altLabel "discovery request element to"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_ticketingBasedPassengerCounts.xsd. A discovery request element to get TICKETING BASED PASSENGER COUNTs."@en ;
+    skos:related opra:OpraDiscoveryRequest .
+
+opra:TicketingBasedPassengerCountRequest
+    a owl:Class ;
+    rdfs:label "Ticketing Based Passenger Count Request"@en ;
+    skos:prefLabel "ticketing based passenger count request"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_service/opra_service_ticketingBasedPassengerCounts.xsd. A request element to get TICKETING BASED PASSENGER COUNTs."@en ;
+    skos:related opra:OpraFunctionalRequest .
+
+opra:TransportPerformance
+    a owl:Class ;
+    rdfs:label "Transport Performance"@en ;
+    skos:prefLabel "transport performance"@en ;
+    skos:altLabel "total loaded transport performance within"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_indicators/opra_serviceIntensity_version.xsd. Total loaded transport performance within the scope, measured in [passenger-meter] or [passenger-km] depending on DefaultSystemOfUnits for the FRAME."@en .
+
+opra:TransportPerformancePerVehicle
+    a owl:Class ;
+    rdfs:label "Transport Performance Per Vehicle"@en ;
+    skos:prefLabel "transport performance per vehicle"@en ;
+    skos:altLabel "average loaded transport performance measured"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_indicators/opra_serviceIntensity_version.xsd. Average loaded transport performance measured in [passenger-meter/vehicle] or [passenger-km/vehicle] depending on DefaultSystemOfUnits for the FRAME."@en .
+
+opra:TypeOfDelay
+    a owl:Class ;
+    rdfs:label "Type Of Delay"@en ;
+    skos:prefLabel "type of delay"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_framework/opra_reusableComponents/opra_delayClassification_version.xsd. Element for a TYPE OF DELAY classifying DELAYs, e.g. for implementing regulations that differentiate between DELAYs."@en .
+
+opra:VehicleLoadEntry
+    a owl:Class ;
+    rdfs:label "Vehicle Load Entry"@en ;
+    skos:prefLabel "vehicle load entry"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_framework/opra_reusableComponents/opra_vehicleOccupancy_version.xsd. Element for a VEHICLE LOAD ENTRY recording a state or summary."@en .
+
+opra:VehicleTypeCapacity
+    a owl:Class ;
+    rdfs:label "Vehicle Type Capacity"@en ;
+    skos:prefLabel "vehicle type capacity"@en ;
+    skos:altLabel "element to represent capacity values"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_indicators/opra_capacity_version.xsd. Element to represent capacity values for a VEHICLE TYPE."@en .
+
+opra:opraDiscoveryDeliveries
+    a owl:Class ;
+    rdfs:label "Opra Discovery Deliveries"@en ;
+    skos:prefLabel "opra discovery deliveries"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_request.xsd. Collection element for OpraDiscoveryDelivery elements."@en .
+
+opra:opraDiscoveryRequests
+    a owl:Class ;
+    rdfs:label "Opra Discovery Requests"@en ;
+    skos:prefLabel "opra discovery requests"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_request.xsd. Collection element for OpraDiscoveryRequest elements."@en .
+
+opra:opraFunctionalDeliveries
+    a owl:Class ;
+    rdfs:label "Opra Functional Deliveries"@en ;
+    skos:prefLabel "opra functional deliveries"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_request.xsd. Collection element for OpraFunctionDelivery elements."@en .
+
+opra:opraFunctionalRequests
+    a owl:Class ;
+    rdfs:label "Opra Functional Requests"@en ;
+    skos:prefLabel "opra functional requests"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_request.xsd. Main collection element for an OpRa (bulk) request."@en .
+
+opra:opraSubscriptionRequests
+    a owl:Class ;
+    rdfs:label "Opra Subscription Requests"@en ;
+    skos:prefLabel "opra subscription requests"@en ;
+    rdfs:comment "Extracted from OpRa XSD source: opra_request.xsd. Collection element for OpraSubscriptionRequest elements."@en .

@@ -75,7 +75,7 @@ nits:Line
     skos:altLabel "transport line"@en ;
     skos:altLabel "public transport line"@en ;
     skos:altLabel "route line"@en ;
-    rdfs:comment "Abstract named service line grouping journeys and stopping patterns."@en ;
+    rdfs:comment "Abstract named service line grouping journeys and stopping patterns. Transitional bridge concept kept for compatibility during migration toward standard-native concept ownership."@en ;
     rdfs:subClassOf nits:Service .
 
 nits:Journey
@@ -83,7 +83,7 @@ nits:Journey
     rdfs:label "Journey"@en ;
     skos:prefLabel "journey"@en ;
     skos:altLabel "transport journey"@en ;
-    rdfs:comment "Abstract representation of movement through space and time."@en ;
+    rdfs:comment "Abstract representation of movement through space and time. Transitional bridge concept kept for compatibility during migration toward standard-native concept ownership."@en ;
     rdfs:subClassOf nits:DomainConcept .
 
 nits:JourneyComponent
@@ -122,7 +122,7 @@ nits:Network
     rdfs:label "Network"@en ;
     skos:prefLabel "network"@en ;
     skos:altLabel "transport network"@en ;
-    rdfs:comment "Abstract transport network grouping related lines and services."@en ;
+    rdfs:comment "Abstract transport network grouping related lines and services. Transitional bridge concept kept for compatibility during migration toward standard-native concept ownership."@en ;
     rdfs:subClassOf nits:SpatialEntity .
 
 nits:Location
@@ -140,7 +140,7 @@ nits:Stop
     skos:altLabel "stop point"@en ;
     skos:altLabel "scheduled stop point"@en ;
     skos:related nits:Location ;
-    rdfs:comment "Abstract stopping location without prescribing structural detail."@en ;
+    rdfs:comment "Abstract stopping location without prescribing structural detail. Transitional bridge concept kept for compatibility during migration toward standard-native concept ownership."@en ;
     rdfs:subClassOf nits:SpatialEntity .
 
 #################################################################
@@ -180,7 +180,7 @@ nits:Organisation
     rdfs:label "Organisation"@en ;
     skos:prefLabel "organisation"@en ;
     skos:altLabel "organization"@en ;
-    rdfs:comment "Abstract organisation participating in ITS contexts."@en ;
+    rdfs:comment "Abstract organisation participating in ITS contexts. Transitional bridge concept kept for compatibility during migration toward standard-native concept ownership."@en ;
     rdfs:subClassOf nits:Actor .
 
 #################################################################
@@ -278,6 +278,38 @@ nits:Profile
     rdfs:subClassOf nits:DomainConcept .
 
 #################################################################
+# Standards Ecosystem Concepts
+#################################################################
+
+nits:StandardsEcosystem
+    a owl:Class ;
+    rdfs:label "Standards Ecosystem"@en ;
+    skos:prefLabel "standards ecosystem"@en ;
+    rdfs:comment "Abstract ecosystem grouping interoperable transport standards and their ontologies."@en ;
+    rdfs:subClassOf nits:DomainConcept .
+
+nits:TransmodelEcosystem
+    a owl:Class ;
+    rdfs:label "Transmodel Ecosystem"@en ;
+    skos:prefLabel "transmodel ecosystem"@en ;
+    rdfs:comment "Ecosystem anchored in Transmodel and including related specifications such as NeTEx, OpRa, and SIRI."@en ;
+    rdfs:subClassOf nits:StandardsEcosystem .
+
+nits:TechnicalSpecification
+    a owl:Class ;
+    rdfs:label "Technical Specification"@en ;
+    skos:prefLabel "technical specification"@en ;
+    rdfs:comment "A transport technical specification that defines interoperable concepts and exchange semantics."@en ;
+    rdfs:subClassOf nits:DomainConcept .
+
+nits:SpecificationOntology
+    a owl:Class ;
+    rdfs:label "Specification Ontology"@en ;
+    skos:prefLabel "specification ontology"@en ;
+    rdfs:comment "Ontology artifact representing formalized concepts of a technical specification."@en ;
+    rdfs:subClassOf nits:DataArtifact .
+
+#################################################################
 # Minimal Relationship Vocabulary (OWL)
 #################################################################
 
@@ -316,6 +348,85 @@ nits:governs
     rdfs:label "governs"@en ;
     skos:prefLabel "governs"@en ;
     rdfs:comment "Relates an authority or organisation to governed concepts."@en .
+
+nits:belongsToEcosystem
+    a owl:ObjectProperty ;
+    rdfs:label "belongs to ecosystem"@en ;
+    skos:prefLabel "belongs to ecosystem"@en ;
+    rdfs:domain nits:TechnicalSpecification ;
+    rdfs:range nits:StandardsEcosystem ;
+    rdfs:comment "Links a technical specification to the standards ecosystem it belongs to."@en .
+
+nits:hasSpecificationOntology
+    a owl:ObjectProperty ;
+    rdfs:label "has specification ontology"@en ;
+    skos:prefLabel "has specification ontology"@en ;
+    rdfs:domain nits:TechnicalSpecification ;
+    rdfs:range nits:SpecificationOntology ;
+    rdfs:comment "Links a technical specification to its corresponding ontology artifact."@en .
+
+nits:describesSpecification
+    a owl:ObjectProperty ;
+    rdfs:label "describes specification"@en ;
+    skos:prefLabel "describes specification"@en ;
+    owl:inverseOf nits:hasSpecificationOntology ;
+    rdfs:domain nits:SpecificationOntology ;
+    rdfs:range nits:TechnicalSpecification ;
+    rdfs:comment "Inverse relation linking an ontology artifact to the specification it formalizes."@en .
+
+#################################################################
+# Standards and Ontology Individuals
+#################################################################
+
+nits:TransmodelSpecification
+    a nits:TechnicalSpecification ;
+    rdfs:label "Transmodel"@en ;
+    nits:belongsToEcosystem nits:TransmodelEcosystem .
+
+nits:NeTExSpecification
+    a nits:TechnicalSpecification ;
+    rdfs:label "NeTEx"@en ;
+    nits:belongsToEcosystem nits:TransmodelEcosystem .
+
+nits:OpRaSpecification
+    a nits:TechnicalSpecification ;
+    rdfs:label "OpRa"@en ;
+    nits:belongsToEcosystem nits:TransmodelEcosystem .
+
+nits:SIRISpecification
+    a nits:TechnicalSpecification ;
+    rdfs:label "SIRI"@en ;
+    nits:belongsToEcosystem nits:TransmodelEcosystem .
+
+nits:DATEXIISpecification
+    a nits:TechnicalSpecification ;
+    rdfs:label "DATEX II"@en ;
+    rdfs:comment "DATEX II is modeled as a technical specification outside of the Transmodel ecosystem."@en .
+
+nits:TransmodelOntology
+    a nits:SpecificationOntology ;
+    rdfs:label "Transmodel Ontology"@en ;
+    nits:describesSpecification nits:TransmodelSpecification .
+
+nits:NeTExOntology
+    a nits:SpecificationOntology ;
+    rdfs:label "NeTEx Ontology"@en ;
+    nits:describesSpecification nits:NeTExSpecification .
+
+nits:OpRaOntology
+    a nits:SpecificationOntology ;
+    rdfs:label "OpRa Ontology"@en ;
+    nits:describesSpecification nits:OpRaSpecification .
+
+nits:SIRIOntology
+    a nits:SpecificationOntology ;
+    rdfs:label "SIRI Ontology"@en ;
+    nits:describesSpecification nits:SIRISpecification .
+
+nits:DATEXIIOntology
+    a nits:SpecificationOntology ;
+    rdfs:label "DATEX II Ontology"@en ;
+    nits:describesSpecification nits:DATEXIISpecification .
 
 nits:exchangedBetween
     a owl:ObjectProperty ;

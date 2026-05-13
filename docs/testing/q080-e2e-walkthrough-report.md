@@ -34,6 +34,54 @@ Following chapter 19, this walkthrough validates that runtime orchestration proc
 ## Example User Question
 "How does OpRa service intensity relate to NeTEx line and network concepts?"
 
+## 2026-05-11 Stage-Profiled Benchmark Update (Control vs Graph)
+To validate whether q070 optimizations generalize, we ran an in-process control-vs-graph benchmark for q080 using the same retrieval settings (`top_k=6`, `min_score=0.62`, `scope=["OpRa", "NeTEx"]`) with active bounded preselection.
+
+Applied runtime settings:
+- `GRAPHDB_TIMEOUT_SECONDS=3`
+- `GRAPH_EXPANSION_MAX_CONCEPTS=8`
+- `GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS=12`
+- `RETRIEVAL_SCORING_CANDIDATE_CAP=32`
+- `RETRIEVAL_GRAPH_PRESELECT_MULTIPLIER=2`
+
+### Measured results
+- Control mode (`graph_rag_enabled=false`):
+	- retrieval latency: `~2500.0 ms`
+	- top-1: `docs/opra_qm_query_model_section.md`
+- Graph mode (`graph_rag_enabled=true`):
+	- retrieval latency: `~15429.7 ms`
+	- graph concept IDs: `8`
+	- graph candidates added: `12`
+	- graph evidence count: `6`
+	- `retrievalGraphPreselected`: `12`
+	- top evidence includes mixed OpRa + NeTEx artifacts (`opra_service_serviceIntensity.xsd`, `NeTEx_01_simple_line.xml`)
+
+### Stage timing trace (graph-rag, q080)
+
+```text
+retrievalStageTimingsMs={
+	"seedChunkEnsureMs": 1.6,
+	"conceptExtractMs": 22.1,
+	"graphExpandMs": 8.1,
+	"conceptMetadataMs": 0.0,
+	"queryEmbeddingMs": 0.3,
+	"postgresCandidateQueryMs": 1.2,
+	"pathHintMergeMs": 2127.0,
+	"graphCandidateQueryMs": 10129.4,
+	"candidatePreselectMs": 0.0,
+	"candidateScoringMs": 2762.4,
+	"candidateSelectionMs": 0.4,
+	"trimmedPostprocessMs": 0.0,
+	"coverageMetricsMs": 376.7,
+	"totalMeasuredMs": 15429.4
+}
+```
+
+### Interpretation
+- q070 optimizations generalized to q080 behaviorally (stable mixed-standard evidence and active preselection) but not to near-control latency.
+- For q080, the dominant bottleneck is `graphCandidateQueryMs` rather than scoring.
+- Next performance work should focus on reducing graph candidate query fan-out/cost in cross-standard graph mode.
+
 ## Step 1: Core Concept Identification
 Observed in tuned rerun trace semantic query payload:
 
@@ -134,11 +182,11 @@ In relation to NeTEx, the concepts of service intensity can be linked to the bro
 Evidence list (IDs used in answer text):
 
 - [E1] `xsd/netex_framework/netex_reusableComponents/netex_mode_support.xsd`
-	Source: <https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/xsd/netex_framework/netex_reusableComponents/netex_mode_support.xsd>
+	Source: <https://github.com/TransmodelEcosystem/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/xsd/netex_framework/netex_reusableComponents/netex_mode_support.xsd>
 - [E2] `xsd/opra_service/opra_service_serviceIntensity.xsd`
 	Source: <https://github.com/OpRa-CEN/OpRa/blob/86eaeba401ddc853d34796a383a5c92ae3ccd1c8/xsd/opra_service/opra_service_serviceIntensity.xsd>
 - [E3] `xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd`
-	Source: <https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd>
+	Source: <https://github.com/TransmodelEcosystem/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd>
 
 Citations were attached and persisted as evidence links.
 

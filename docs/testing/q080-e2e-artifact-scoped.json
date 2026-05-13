@@ -11,7 +11,7 @@
     "answer": "The OpRa service intensity is defined through elements such as ActualServiceIntensityRequest and PlannedServiceIntensityRequest, which are part of the OpRa schema for managing service intensity data in public transport systems [E1], [E2]. These elements allow for the retrieval of actual and planned service intensities, which are crucial for operational planning and real-time service adjustments.\n\nIn relation to NeTEx, the concepts of service intensity can be integrated with the NeTEx framework, which includes elements like CommonSection that facilitate the synchronization of service journeys across various routes [E3]. However, the specific relationship between OpRa service intensity and NeTEx line and network concepts is not explicitly detailed in the provided evidence. Therefore, further information or evidence would be needed to clarify how these two systems interact or complement each other in practice.",
     "citations": [
       {
-        "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/xsd/netex_framework/netex_reusableComponents/netex_mode_support.xsd",
+        "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/xsd/netex_framework/netex_reusableComponents/netex_mode_support.xsd",
         "commitSha": "de021e83a02522cff4ed936408bf927f798aae0d",
         "sourcePath": "xsd/netex_framework/netex_reusableComponents/netex_mode_support.xsd",
         "chunkId": "src-aa5b131384ab42e5d52a47a8",
@@ -25,21 +25,21 @@
         "label": "xsd/opra_service/opra_service_serviceIntensity.xsd"
       },
       {
-        "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
+        "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
         "commitSha": "de021e83a02522cff4ed936408bf927f798aae0d",
         "sourcePath": "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
         "chunkId": "src-36266bcf5ac6891346ec79c5",
         "label": "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd"
       },
       {
-        "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/xsd/netex_part_2/netex_all_objects_part2.xsd",
+        "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/xsd/netex_part_2/netex_all_objects_part2.xsd",
         "commitSha": "de021e83a02522cff4ed936408bf927f798aae0d",
         "sourcePath": "xsd/netex_part_2/netex_all_objects_part2.xsd",
         "chunkId": "src-d3969c651081d169610c4c57",
         "label": "xsd/netex_part_2/netex_all_objects_part2.xsd"
       },
       {
-        "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
+        "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx/blob/de021e83a02522cff4ed936408bf927f798aae0d/xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
         "commitSha": "de021e83a02522cff4ed936408bf927f798aae0d",
         "sourcePath": "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
         "chunkId": "src-251aeca0dfdbc521256a299c",
@@ -464,7 +464,7 @@
           "graphExpansionSource": "graphdb"
         },
         "sourcePath": "xsd/netex_part_2/part2_journeyTimes/netex_interchange_version.xsd",
-        "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+        "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx",
         "structuredMetadata": {},
         "competencyQuestionIds": [
           "CQ-OPRA-ROLE-01",
@@ -601,7 +601,7 @@
           "graphExpansionSource": "graphdb"
         },
         "sourcePath": "xsd/netex_part_2/netex_all_objects_part2.xsd",
-        "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+        "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx",
         "structuredMetadata": {},
         "competencyQuestionIds": [
           "CQ-OPRA-ROLE-01",
@@ -738,7 +738,7 @@
           "graphExpansionSource": "graphdb"
         },
         "sourcePath": "xsd/netex_part_1/part1_tacticalPlanning/netex_commonSection_version.xsd",
-        "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+        "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx",
         "structuredMetadata": {},
         "competencyQuestionIds": [
           "CQ-OPRA-ROLE-01",
@@ -1012,7 +1012,7 @@
           "graphExpansionSource": "graphdb"
         },
         "sourcePath": "xsd/netex_framework/netex_reusableComponents/netex_mode_support.xsd",
-        "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+        "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx",
         "structuredMetadata": {},
         "competencyQuestionIds": [
           "CQ-OPRA-ROLE-01",

@@ -23,7 +23,8 @@ actor "Ticketing Agent" as TICKET
 rectangle "NAPCORE Helpdesk System\n(FAQ-first + RAG fallback)" as HELPDESK #DCE9FF
 rectangle "Approved GitHub Repositories\n(NeTEx-CEN/NeTEx + allowlisted sources)" as GITHUB
 rectangle "GraphDB Semantic Store\n(Ontology + alignments)" as GRAPHDB
-rectangle "LLM Provider API\n(Default generation backend)" as LLM
+rectangle "Controller Model Runtime\n(Intent, routing, SPARQL planning)" as CONTROLLER_LLM
+rectangle "Narration Model Runtime\n(Grounded answer composition)" as NARRATION_LLM
 
 PTO --> HELPDESK : Asks standards\nimplementation questions
 PTA --> HELPDESK : Asks policy and\ncompliance-related questions
@@ -40,20 +41,22 @@ INTEGRATOR -[hidden]right-> TICKET
 ' Bottom layer: external systems below helpdesk
 HELPDESK -[hidden]down-> GITHUB
 GITHUB -[hidden]right-> GRAPHDB
-GRAPHDB -[hidden]right-> LLM
+GRAPHDB -[hidden]right-> CONTROLLER_LLM
+CONTROLLER_LLM -[hidden]right-> NARRATION_LLM
 
 HELPDESK --> GITHUB : Retrieves approved\nsource documents and chunks
 HELPDESK --> GRAPHDB : Queries concept graph\nfor semantic expansion
-HELPDESK --> LLM : Generates grounded answers\nfrom retrieved evidence\n(default generation path)
+HELPDESK --> CONTROLLER_LLM : Runs controller prompts\nfor intent and route planning
+HELPDESK --> NARRATION_LLM : Composes answer from\nevidence pack only
 
 note bottom of HELPDESK
 Knowledge boundary: approved GitHub repositories only.
 If evidence is insufficient, system abstains.
 end note
 
-note right of LLM
+note right of NARRATION_LLM
 Top layer: Users.
-Bottom layer: Approved source repositories and LLM.
+Bottom layer: Approved source repositories and model runtimes.
 end note
 
 @enduml

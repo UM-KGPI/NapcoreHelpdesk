@@ -20,6 +20,7 @@ interface UserChatWorkspaceProps {
   sessionId: string;
   userId: string;
   chatProfile: ChatProfile;
+  controllerProfile: ChatProfile;
   standardsScope: StandardsScope[];
   chatPrompt: string;
   chatTurns: ChatTurn[];
@@ -28,6 +29,7 @@ interface UserChatWorkspaceProps {
   setSessionId: (value: string) => void;
   setUserId: (value: string) => void;
   setChatProfile: (value: ChatProfile) => void;
+  setControllerProfile: (value: ChatProfile) => void;
   toggleScope: (scope: StandardsScope) => void;
   setChatPrompt: (value: string) => void;
   onSendChat: (event: FormEvent<HTMLFormElement>) => Promise<void>;
@@ -39,6 +41,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
     sessionId,
     userId,
     chatProfile,
+    controllerProfile,
     standardsScope,
     chatPrompt,
     chatTurns,
@@ -47,6 +50,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
     setSessionId,
     setUserId,
     setChatProfile,
+    setControllerProfile,
     toggleScope,
     setChatPrompt,
     onSendChat,
@@ -186,6 +190,13 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
             <button type="submit" disabled={busy || !token || !chatPrompt.trim()}>Send</button>
             <button type="button" onClick={onResetChatSession} disabled={busy}>New Session</button>
           </div>
+
+          {busy && (
+            <div className="chat-progress" role="status" aria-live="polite" aria-label="Generating answer">
+              <div className="chat-progress-bar" />
+              <p className="chat-progress-label muted tiny">Generating answer...</p>
+            </div>
+          )}
         </form>
 
         <details className="advanced-controls collapsible-panel">
@@ -205,6 +216,13 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
               <label>
                 User ID
                 <input value={userId} onChange={(event) => setUserId(event.target.value)} />
+              </label>
+              <label>
+                Intent Routing Profile
+                <select value={controllerProfile} onChange={(event) => setControllerProfile(event.target.value as ChatProfile)}>
+                  <option value="llm-ready">llm-ready (default)</option>
+                  <option value="deterministic-grounded">deterministic-grounded</option>
+                </select>
               </label>
               <label>
                 Generation Profile

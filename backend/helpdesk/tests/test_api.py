@@ -22,7 +22,7 @@ from rest_framework.test import APIRequestFactory
 from rest_framework.test import APITestCase
 
 from helpdesk.api.exceptions import custom_exception_handler
-from helpdesk.api.views import _build_file_url, _select_citations
+from helpdesk.api.views import _build_file_url, _rewrite_source_paths_as_evidence_markers, _select_citations
 from helpdesk.services.llm_generator import LLMGenerationError
 from helpdesk.models import (
     AnswerEvidenceLink,
@@ -123,6 +123,9 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["status"], "ok")
         self.assertEqual(response.data["check"], "live")
+        self.assertEqual(response.data["service"], settings.SERVICE_NAME)
+        self.assertEqual(response.data["version"], settings.SERVICE_VERSION)
+        self.assertEqual(response.data["buildRef"], settings.SERVICE_BUILD_REF)
 
     def test_health_ready_reports_ok_with_database_probe(self):
         """Ensure readiness endpoint reports healthy when database check succeeds."""
@@ -132,6 +135,9 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(response.data["status"], "ok")
         self.assertEqual(response.data["check"], "ready")
         self.assertEqual(response.data["database"], "ok")
+        self.assertEqual(response.data["service"], settings.SERVICE_NAME)
+        self.assertEqual(response.data["version"], settings.SERVICE_VERSION)
+        self.assertEqual(response.data["buildRef"], settings.SERVICE_BUILD_REF)
 
     @override_settings(DEBUG=True, DEV_JWT_AUTO_ISSUE=True)
     def test_dev_token_endpoint_issues_token_in_debug(self):
@@ -204,6 +210,53 @@ class HelpdeskApiTests(APITestCase):
                 is_published=True,
             ).exists()
         )
+
+    @patch("helpdesk.api.views.decide_route_with_controller_llm")
+    def test_answer_skips_faq_when_controller_forces_rag(self, controller_mock):
+        """Controller route decision can bypass FAQ-first and continue through RAG path."""
+
+        controller_mock.return_value = SimpleNamespace(route="rag", intent="novel", confidence=0.9)
+
+        response = self.client.post(
+            reverse("answer-question"),
+            {
+                "question": "How to use NeTEx for exchanging a timetable?",
+                "standardsScope": ["NeTEx"],
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-controller-rag-001",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_matches_schema("AnswerResponse", response.data)
+        self.assertEqual(response.data["mode"], "rag")
+        self.assertIsNone(response.data["trace"]["matchedFaqEntryId"])
+
+    @patch("helpdesk.api.views.decide_route_with_controller_llm")
+    def test_answer_skips_controller_when_controller_profile_is_deterministic(self, controller_mock):
+        """Controller is bypassed when the request asks deterministic intent routing."""
+
+        controller_mock.return_value = SimpleNamespace(route="rag", intent="novel", confidence=0.9)
+
+        response = self.client.post(
+            reverse("answer-question"),
+            {
+                "question": "How to use NeTEx for exchanging a timetable?",
+                "standardsScope": ["NeTEx"],
+                "generationProfile": "llm-ready",
+                "controllerProfile": "deterministic-grounded",
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-controller-disabled-001",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_matches_schema("AnswerResponse", response.data)
+        self.assertEqual(response.data["mode"], "faq")
+        self.assertIsNotNone(response.data["trace"]["matchedFaqEntryId"])
+        controller_mock.assert_not_called()
 
     def test_answer_returns_rag_mode_for_unknown_question(self):
         """Ensure unmatched intent falls back to RAG with retrieval trace IDs."""
@@ -306,7 +359,7 @@ class HelpdeskApiTests(APITestCase):
                 {
                     "text": "ServiceJourneyPattern is aligned with OpRa journey concepts.",
                     "score": 0.84,
-                    "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+                    "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx",
                     "commitSha": "abc123",
                     "sourcePath": "docs/journey-pattern.md",
                     "chunkId": "chunk-1",
@@ -409,7 +462,7 @@ class HelpdeskApiTests(APITestCase):
                 {
                     "text": "Journey pattern mapping details.",
                     "score": 0.82,
-                    "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+                    "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx",
                     "commitSha": "abc123",
                     "sourcePath": "docs/journey-pattern.md",
                     "chunkId": "chunk-ambiguity-1",
@@ -473,7 +526,7 @@ class HelpdeskApiTests(APITestCase):
                 {
                     "text": "Sparse chunk mentioning journey pattern once.",
                     "score": 0.58,
-                    "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+                    "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx",
                     "commitSha": "abc123",
                     "sourcePath": "docs/sparse.md",
                     "chunkId": "chunk-partial-1",
@@ -544,7 +597,7 @@ class HelpdeskApiTests(APITestCase):
                 {
                     "text": "NeTEx SHALL provide journey pattern exchange details.",
                     "score": 0.84,
-                    "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+                    "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx",
                     "commitSha": "abc123",
                     "sourcePath": "docs/netex-journey.md",
                     "chunkId": "chunk-conflict-1",
@@ -632,7 +685,7 @@ class HelpdeskApiTests(APITestCase):
                 {
                     "text": "Sparse mention with weak semantic match.",
                     "score": 0.81,
-                    "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+                    "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx",
                     "commitSha": "abc123",
                     "sourcePath": "docs/weak.md",
                     "chunkId": "chunk-gate-1",
@@ -851,6 +904,29 @@ class HelpdeskApiTests(APITestCase):
         self.assertIn("https://github.com/OpRa-CEN/OpRa", citation_repositories)
         self.assertIn("https://github.com/NeTEx-CEN/test-Profile-Documentation", citation_repositories)
 
+    def test_rewrite_source_paths_as_evidence_markers(self):
+        answer = (
+            "Based on retrieved approved-source evidence (for example: "
+            "examples/functions/line/NeTEx_01_simple_line.xml, "
+            "examples/functions/fares/Netex_51.3_Bus_SimpleFares_ZoneToZone_AdultChildProduct.xml), "
+            "follow the profile guidance."
+        )
+        citations = [
+            {
+                "sourcePath": "examples/functions/line/NeTEx_01_simple_line.xml",
+            },
+            {
+                "sourcePath": "examples/functions/fares/Netex_51.3_Bus_SimpleFares_ZoneToZone_AdultChildProduct.xml",
+            },
+        ]
+
+        rewritten = _rewrite_source_paths_as_evidence_markers(answer_text=answer, citations=citations)
+
+        self.assertIn("[E1]", rewritten)
+        self.assertIn("[E2]", rewritten)
+        self.assertNotIn("examples/functions/line/NeTEx_01_simple_line.xml", rewritten)
+        self.assertNotIn("examples/functions/fares/Netex_51.3_Bus_SimpleFares_ZoneToZone_AdultChildProduct.xml", rewritten)
+
     @patch("helpdesk.api.views._resolve_commit_sha", return_value="3734861abcdef0123456789abcdef012345678")
     def test_build_file_url_expands_short_commit_sha(self, resolve_commit_sha_mock):
         """Ensure citation URLs use an expanded commit SHA when available."""
@@ -872,12 +948,93 @@ class HelpdeskApiTests(APITestCase):
     def test_build_file_url_maps_issue_path_to_issue_url(self):
         """Ensure synthetic indexed issue paths link to the actual GitHub issue page."""
         url = _build_file_url(
-            repo_url="https://github.com/NeTEx-CEN/NeTEx",
+            repo_url="https://github.com/TransmodelEcosystem/NeTEx",
             commit_sha="2024-03-22T12:07:32Z",
             source_path="issues/691.md",
         )
 
-        self.assertEqual(url, "https://github.com/NeTEx-CEN/NeTEx/issues/691")
+        self.assertEqual(url, "https://github.com/TransmodelEcosystem/NeTEx/issues/691")
+
+    @patch("helpdesk.api.views._resolve_commit_sha", return_value="unknown")
+    @patch("helpdesk.api.views._resolve_repository_ref", return_value="")
+    def test_build_file_url_uses_tree_ref_when_commit_is_unknown_for_transmodel_netex(
+        self, resolve_repository_ref_mock, resolve_commit_sha_mock
+    ):
+        """Ensure unknown commit refs for Transmodel NeTEx cite canonical v2.0 blob paths."""
+        url = _build_file_url(
+            repo_url="https://github.com/TransmodelEcosystem/NeTEx",
+            commit_sha="unknown",
+            source_path="examples/functions/line/NeTEx_01_simple_line.xml",
+        )
+
+        self.assertEqual(
+            url,
+            "https://github.com/TransmodelEcosystem/NeTEx/blob/v2.0/examples/functions/line/NeTEx_01_simple_line.xml",
+        )
+        resolve_commit_sha_mock.assert_called_once_with(
+            repo_url="https://github.com/TransmodelEcosystem/NeTEx",
+            commit_sha="unknown",
+        )
+        resolve_repository_ref_mock.assert_called_once_with(repo_url="https://github.com/TransmodelEcosystem/NeTEx")
+
+    @patch("helpdesk.api.views._resolve_commit_sha", return_value="unknown")
+    @patch("helpdesk.api.views._resolve_repository_ref", return_value="")
+    def test_build_file_url_uses_tree_ref_when_commit_is_unknown_for_netex_cen(
+        self, resolve_repository_ref_mock, resolve_commit_sha_mock
+    ):
+        """Ensure unknown commit refs for NeTEx-CEN normalize to canonical v2.0 blob paths."""
+        url = _build_file_url(
+            repo_url="https://github.com/NeTEx-CEN/NeTEx",
+            commit_sha="unknown",
+            source_path="examples/functions/line/NeTEx_01_simple_line.xml",
+        )
+
+        self.assertEqual(
+            url,
+            "https://github.com/TransmodelEcosystem/NeTEx/blob/v2.0/examples/functions/line/NeTEx_01_simple_line.xml",
+        )
+        resolve_commit_sha_mock.assert_called_once_with(
+            repo_url="https://github.com/NeTEx-CEN/NeTEx",
+            commit_sha="unknown",
+        )
+        resolve_repository_ref_mock.assert_called_once_with(repo_url="https://github.com/NeTEx-CEN/NeTEx")
+
+    @patch("helpdesk.api.views._resolve_commit_sha", return_value="unknown")
+    @patch("helpdesk.api.views._resolve_repository_ref", return_value="")
+    def test_build_file_url_uses_tree_ref_when_commit_is_unknown_for_opra(self, resolve_repository_ref_mock, resolve_commit_sha_mock):
+        """Ensure unknown commit refs for OpRa use the stable 1.0rc tag."""
+        url = _build_file_url(
+            repo_url="https://github.com/OpRa-CEN/OpRa",
+            commit_sha="unknown",
+            source_path="examples/CancelledAndLateDatedVehicleJourneys.xml",
+        )
+
+        self.assertEqual(
+            url,
+            "https://github.com/OpRa-CEN/OpRa/blob/1.0rc/examples/CancelledAndLateDatedVehicleJourneys.xml",
+        )
+        resolve_commit_sha_mock.assert_called_once_with(
+            repo_url="https://github.com/OpRa-CEN/OpRa",
+            commit_sha="unknown",
+        )
+        resolve_repository_ref_mock.assert_called_once_with(repo_url="https://github.com/OpRa-CEN/OpRa")
+
+    @patch("helpdesk.api.views._resolve_commit_sha", return_value="unknown")
+    @patch("helpdesk.api.views._resolve_repository_ref", return_value="")
+    def test_build_file_url_uses_main_when_unknown_and_repo_unmapped(self, resolve_repository_ref_mock, resolve_commit_sha_mock):
+        """Ensure unknown refs on unmapped repositories avoid blob/unknown links."""
+        url = _build_file_url(
+            repo_url="https://github.com/example-org/example-repo",
+            commit_sha="unknown",
+            source_path="docs/spec.md",
+        )
+
+        self.assertEqual(url, "https://github.com/example-org/example-repo/blob/main/docs/spec.md")
+        resolve_commit_sha_mock.assert_called_once_with(
+            repo_url="https://github.com/example-org/example-repo",
+            commit_sha="unknown",
+        )
+        resolve_repository_ref_mock.assert_called_once_with(repo_url="https://github.com/example-org/example-repo")
 
     @override_settings(LLM_ENABLED=True)
     @patch("helpdesk.api.views.generate_answer_llm")
@@ -923,17 +1080,18 @@ class HelpdeskApiTests(APITestCase):
             "review_required": True,
         }
 
-        response = self.client.post(
-            reverse("answer-question"),
-            {
-                "question": "Explain OpRa operational exchange setup sequence.",
-                "standardsScope": ["OpRa"],
-                "generationProfile": "llm-ready",
-            },
-            format="json",
-            HTTP_X_REQUEST_ID="req-llm-fallback-001",
-            **self.auth_headers(),
-        )
+        with self.assertLogs("helpdesk.api.views", level="WARNING") as logs:
+            response = self.client.post(
+                reverse("answer-question"),
+                {
+                    "question": "Explain OpRa operational exchange setup sequence.",
+                    "standardsScope": ["OpRa"],
+                    "generationProfile": "llm-ready",
+                },
+                format="json",
+                HTTP_X_REQUEST_ID="req-llm-fallback-001",
+                **self.auth_headers(),
+            )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assert_matches_schema("AnswerResponse", response.data)
@@ -941,6 +1099,7 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(response.data["answer"], "Deterministic fallback answer.")
         self.assertTrue(llm_mock.called)
         self.assertTrue(deterministic_mock.called)
+        self.assertTrue(any("LLM generation failed; falling back to deterministic answer" in line for line in logs.output))
 
     def test_promotion_candidates_returns_aggregated_items(self):
         """Ensure repeated questions aggregate into promotion candidates."""

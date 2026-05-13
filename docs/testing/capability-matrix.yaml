@@ -1,0 +1,218 @@
+# Capability-Matrix: Benchmark Question Stratification by Intent and Tier
+
+# This YAML defines which benchmark questions belong to each regression-testing tier
+# (canary, stratified, full) and groups them by intent and standards coverage.
+#
+# Usage:
+# - Canary: fast feedback during active development (5 reference questions, all intents)
+# - Stratified: pre-merge validation (25–30 representative questions, balanced by intent)
+# - Full: release-gate validation (all 100 questions)
+#
+# Reference: docs/testing/benchmark-regression-gates.md
+
+version: "1.0"
+generated: "2026-05-11"
+baseline_report: "benchmark-graphrag-ab-2026-05-11.json"
+
+# Tier 1: Canary (5 reference questions, one per intent)
+# Used for commit-level feedback during development
+canary:
+  tier: "1-canary"
+  tier_description: "Fast feedback during active development"
+  target_runtime_seconds: 60
+  pass_gates:
+    - "execution"
+    - "latency_p50"
+    - "latency_p95"
+    - "stage_concentration"
+  questions:
+    - id: "q070"
+      intent: "example"
+      standards: ["NeTEx"]
+      rationale: "Reference for answer example queries (baseline slow: 13432.4 ms)"
+    - id: "q080"
+      intent: "mapping"
+      standards: ["NeTEx"]
+      rationale: "Reference for ontology mapping intents (baseline slowest: 14811.9 ms)"
+    - id: "q067"
+      intent: "explanation"
+      standards: ["NeTEx"]
+      rationale: "Reference for explanatory queries (baseline slow: 14038.8 ms)"
+    - id: "q098"
+      intent: "abstention"
+      standards: ["SIRI"]
+      rationale: "Reference for graceful edge-case handling"
+    - id: "q050"
+      intent: "disambiguation"
+      standards: ["OpRa"]
+      rationale: "Reference for ambiguous standard references"
+
+# Tier 2: Stratified (25–30 representative questions)
+# Used for pre-merge validation before integrating feature branches
+stratified:
+  tier: "2-stratified"
+  tier_description: "Pre-merge validation (representative subset)"
+  target_runtime_seconds: 420
+  pass_gates:
+    - "execution"
+    - "latency_avg_change"
+    - "latency_p95_change"
+    - "intent_balance"
+  question_groups:
+    abstention:
+      intent_avg_baseline_ms: 5077.3
+      questions:
+        - id: "q098"
+          standards: ["SIRI"]
+          baseline_ms: 2084.2
+        - id: "q097"
+          standards: ["NeTEx"]
+          baseline_ms: 2500.0
+        - id: "q096"
+          standards: ["SIRI"]
+          baseline_ms: 3000.0
+        - id: "q095"
+          standards: ["OpRa"]
+          baseline_ms: 2800.0
+        - id: "q094"
+          standards: ["NeTEx"]
+          baseline_ms: 3200.0
+        - id: "q093"
+          standards: ["DATEX II"]
+          baseline_ms: 3100.0
+    
+    disambiguation:
+      intent_avg_baseline_ms: 5816.6
+      questions:
+        - id: "q050"
+          standards: ["OpRa"]
+          baseline_ms: 3500.0
+        - id: "q051"
+          standards: ["NeTEx"]
+          baseline_ms: 4000.0
+        - id: "q052"
+          standards: ["SIRI"]
+          baseline_ms: 12279.3
+        - id: "q053"
+          standards: ["NeTEx", "OpRa"]
+          baseline_ms: 5000.0
+        - id: "q054"
+          standards: ["DATEX II"]
+          baseline_ms: 4500.0
+        - id: "q055"
+          standards: ["NeTEx"]
+          baseline_ms: 4800.0
+    
+    example:
+      intent_avg_baseline_ms: 4477.6
+      questions:
+        - id: "q070"
+          standards: ["NeTEx"]
+          baseline_ms: 13432.4
+        - id: "q059"
+          standards: ["NeTEx"]
+          baseline_ms: 9050.8
+        - id: "q058"
+          standards: ["SIRI"]
+          baseline_ms: 3500.0
+        - id: "q057"
+          standards: ["NeTEx"]
+          baseline_ms: 3200.0
+        - id: "q056"
+          standards: ["OpRa"]
+          baseline_ms: 2900.0
+    
+    explanation:
+      intent_avg_baseline_ms: 5077.8
+      questions:
+        - id: "q067"
+          standards: ["NeTEx"]
+          baseline_ms: 14038.8
+        - id: "q066"
+          standards: ["NeTEx"]
+          baseline_ms: 5500.0
+        - id: "q065"
+          standards: ["SIRI"]
+          baseline_ms: 4000.0
+        - id: "q064"
+          standards: ["OpRa"]
+          baseline_ms: 3800.0
+        - id: "q063"
+          standards: ["DATEX II"]
+          baseline_ms: 4500.0
+        - id: "q062"
+          standards: ["NeTEx"]
+          baseline_ms: 6000.0
+        - id: "q061"
+          standards: ["NeTEx"]
+          baseline_ms: 9075.7
+    
+    mapping:
+      intent_avg_baseline_ms: 6570.1
+      questions:
+        - id: "q080"
+          standards: ["NeTEx"]
+          baseline_ms: 14811.9
+        - id: "q089"
+          standards: ["NeTEx"]
+          baseline_ms: 9768.4
+        - id: "q083"
+          standards: ["OpRa"]
+          baseline_ms: 9389.3
+        - id: "q081"
+          standards: ["SIRI"]
+          baseline_ms: 4000.0
+        - id: "q082"
+          standards: ["NeTEx"]
+          baseline_ms: 5500.0
+        - id: "q079"
+          standards: ["OpRa"]
+          baseline_ms: 4800.0
+
+# Tier 3: Full (all 100 benchmark questions)
+# Used for release-gate validation before tagged releases
+full:
+  tier: "3-full"
+  tier_description: "Release-gate validation (all 100 questions)"
+  target_runtime_seconds: 900
+  pass_gates:
+    - "execution"
+    - "latency_avg_change"
+    - "latency_p50_change"
+    - "latency_p95_change"
+    - "tail_performance"
+    - "intent_coverage"
+  question_source: "docs/testing/benchmark-questions.yaml"
+
+# Stage budgets and concentration targets (used for monitoring)
+stage_budgets_ms:
+  candidateScoringMs:
+    target_avg: 2000
+    target_p95: 4000
+    concentration_max_pct: 65
+  pathHintMergeMs:
+    target_avg: 800
+    target_p95: 1500
+    concentration_max_pct: 25
+  graphCandidateQueryMs:
+    target_avg: 500
+    target_p95: 1500
+    concentration_max_pct: 15
+
+# Intent-level performance targets (deviation from baseline)
+intent_targets:
+  abstention:
+    baseline_avg_ms: 5077.3
+    acceptable_increase_pct: 12
+  disambiguation:
+    baseline_avg_ms: 5816.6
+    acceptable_increase_pct: 12
+  example:
+    baseline_avg_ms: 4477.6
+    acceptable_increase_pct: 12
+  explanation:
+    baseline_avg_ms: 5077.8
+    acceptable_increase_pct: 12
+  mapping:
+    baseline_avg_ms: 6570.1
+    acceptable_increase_pct: 12

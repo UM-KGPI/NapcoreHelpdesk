@@ -128,7 +128,7 @@ paths:
                     confidence: 0.93
                     answer: Start with the relevant timetable frame.
                     citations:
-                      - repositoryUrl: https://github.com/NeTEx-CEN/NeTEx
+                      - repositoryUrl: https://github.com/TransmodelEcosystem/NeTEx
                         commitSha: abc1234
                         sourcePath: docs/timetable-guide.md
                         chunkId: c-001
@@ -155,7 +155,7 @@ paths:
                     confidence: 0.77
                     answer: For timetable exchange, start by defining service and timetable frames.
                     citations:
-                      - repositoryUrl: https://github.com/NeTEx-CEN/NeTEx
+                      - repositoryUrl: https://github.com/TransmodelEcosystem/NeTEx
                         commitSha: abc1234
                         sourcePath: profile/part-2.xml
                         chunkId: c-067
@@ -483,7 +483,7 @@ paths:
             examples:
               netex_incremental:
                 value:
-                  repoUrl: https://github.com/NeTEx-CEN/NeTEx
+                  repoUrl: https://github.com/TransmodelEcosystem/NeTEx
                   repoPath: /data/repos/NeTEx
                   profile: netex
                   incremental: true
@@ -547,12 +547,19 @@ components:
         language:
           type: string
           default: en
+        generationProfile:
+          type: string
+          enum: [deterministic-grounded, llm-ready]
+          default: llm-ready
+        controllerProfile:
+          type: string
+          enum: [deterministic-grounded, llm-ready]
         options:
           $ref: '#/components/schemas/AnswerOptions'
       additionalProperties: false
     HealthResponse:
       type: object
-      required: [status, service, check]
+      required: [status, service, check, version, buildRef]
       properties:
         status:
           type: string
@@ -562,6 +569,10 @@ components:
         check:
           type: string
           enum: [live, ready]
+        version:
+          type: string
+        buildRef:
+          type: string
         database:
           type: string
       additionalProperties: false
