@@ -3,8 +3,8 @@
 This document explains the logic represented in the PlantUML diagram.
 
 ## Source Of Truth
-- Diagram source: [db/database-er-diagram.puml](db/database-er-diagram.puml)
-- Physical schema source: [db/migrations/001_initial_schema.sql](db/migrations/001_initial_schema.sql)
+- Schema is managed by Django migrations in `backend/helpdesk/migrations/`.
+- Use `make backend-migrate` to apply migrations.
 
 ## 1) Knowledge Boundary And Ingestion
 1. `approved_repositories` is the allowlist of GitHub repositories that are allowed as knowledge sources.
