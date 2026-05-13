@@ -28,10 +28,8 @@ This folder contains the initial backend scaffold for NAPCORE Helpdesk.
 4. Start the server.
 
 ## Database baseline
-- Architecture baseline is PostgreSQL-first (`DJANGO_USE_SQLITE=False`) with pgvector-ready schema.
-- SQLite remains supported for local tests and lightweight development by setting `DJANGO_USE_SQLITE=True`.
+- Architecture baseline is PostgreSQL with pgvector-ready schema.
 - On PostgreSQL, migration `0006_pgvector_native_alignment` enables the `vector` extension and creates an IVF Flat index on `SourceChunk.embedding_vector`.
-- On SQLite, embeddings transparently fall back to JSON storage while keeping the same service interfaces.
 - Operational rollout checklist: [docs/architecture/postgresql-pgvector-runbook.md](../docs/architecture/postgresql-pgvector-runbook.md)
 
 ## API request headers
@@ -98,9 +96,8 @@ Store them as a comma-separated list in `ALLOWED_SOURCE_REPOSITORIES`.
 
 Each run records telemetry in `IndexRunMetric` and incremental state in `IndexedSourceFile`.
 
-Note for local SQLite:
-- `--prune` may hit SQLite parameter limits on very large repositories.
-- If that happens, run without `--prune` or use PostgreSQL for production-scale indexing.
+Note:
+- `--prune` on very large repositories can create large SQL statements; if needed, run without `--prune` and perform a later cleanup pass.
 
 ## Semantic reasoning model (implemented)
 - The backend retrieval path uses an explicit two-layer semantic setup:

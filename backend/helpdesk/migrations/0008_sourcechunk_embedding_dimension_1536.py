@@ -11,7 +11,6 @@ class Migration(migrations.Migration):
     re-indexed. Re-run the index command for all repositories after applying this migration.
 
     PostgreSQL/pgvector: this alters the vector(64) column type to vector(1536).
-    SQLite: the underlying JSONField stores arrays of any length; no structural change needed.
     """
 
     dependencies = [

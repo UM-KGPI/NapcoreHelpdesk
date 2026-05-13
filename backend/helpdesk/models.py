@@ -33,7 +33,7 @@ class SourceChunk(TimestampedModel):
     doc_type = models.CharField(max_length=32, default="guide", blank=True)
     heading = models.CharField(max_length=512, blank=True)
     structured_metadata = models.JSONField(default=dict, blank=True)
-    # PostgreSQL uses pgvector; SQLite falls back to JSON via PortableVectorField.
+    # PostgreSQL uses pgvector; PortableVectorField keeps value normalization centralized.
     embedding_vector = PortableVectorField(dimensions=1536, default=list, blank=True)
 
     class Meta:

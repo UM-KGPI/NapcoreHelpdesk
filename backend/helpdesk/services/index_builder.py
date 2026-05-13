@@ -657,7 +657,7 @@ def build_chunk_id(repo_url: str, rel_path: str, index: int, chunk_text: str) ->
 
 
 def _delete_chunks_by_ids(repository_url: str, chunk_ids: list[str], batch_size: int = DELETE_BATCH_SIZE) -> int:
-    """Delete chunks in bounded batches to avoid SQLite variable limits."""
+    """Delete chunks in bounded batches to avoid large variable lists in a single query."""
     if not chunk_ids:
         return 0
 
@@ -686,7 +686,7 @@ def _delete_stale_source_chunks(
 
 
 def _prune_repository_chunks(repository_url: str, seen_chunk_ids: set[str]) -> int:
-    """Prune repository chunks using batched deletes to stay SQLite-compatible."""
+    """Prune repository chunks using batched deletes."""
     existing_chunk_ids = list(SourceChunk.objects.filter(repository_url=repository_url).values_list("chunk_id", flat=True))
     stale_chunk_ids = [chunk_id for chunk_id in existing_chunk_ids if chunk_id not in seen_chunk_ids]
     return _delete_chunks_by_ids(repository_url, stale_chunk_ids)

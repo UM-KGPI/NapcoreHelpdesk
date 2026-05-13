@@ -18,6 +18,29 @@ jobs:
   build-release-artifacts:
     name: Build and Publish Release Artifacts
     runs-on: ubuntu-latest
+    env:
+      DJANGO_SECRET_KEY: release-secret
+      JWT_SECRET_KEY: release-jwt-secret-key-at-least-32-bytes
+      POSTGRES_DB: napcore_helpdesk
+      POSTGRES_USER: napcore
+      POSTGRES_PASSWORD: napcore
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: napcore_helpdesk
+          POSTGRES_USER: napcore
+          POSTGRES_PASSWORD: napcore
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U napcore -d napcore_helpdesk"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
 
     steps:
       - name: Checkout
@@ -43,10 +66,21 @@ jobs:
       - name: Install frontend dependencies
         run: npm --prefix frontend install
 
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..30}; do
+            if PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT 1" >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "PostgreSQL did not become ready in time" >&2
+          exit 1
+
       - name: Run backend tests
         run: |
           cd backend
-          DJANGO_USE_SQLITE=True DJANGO_SECRET_KEY=release-secret JWT_SECRET_KEY=release-jwt-secret-key-at-least-32-bytes python manage.py test -v 1
+          python manage.py test -v 1
 
       - name: Run frontend tests and build
         run: |

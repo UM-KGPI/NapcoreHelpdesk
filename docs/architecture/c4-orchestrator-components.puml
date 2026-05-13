@@ -7,8 +7,8 @@ title C4 Level 3 - Question API / Orchestrator Components
 
 Person(user, "End User", "Representative NAPCORE stakeholder (NAP Manager, Transport/Road Authority, Operator, Standards Implementer, ITS Integrator)")
 Container(gui, "Web GUI", "Web App", "Chat Session UX and operator console")
-ContainerDb(pg, "Application Database", "PostgreSQL or SQLite local fallback", "Events, FAQ, reviews, evidence links")
-Container(vdb, "Vector Index", "pgvector or JSON fallback", "Embeddings and metadata")
+ContainerDb(pg, "Application Database", "PostgreSQL", "Events, FAQ, reviews, evidence links")
+Container(vdb, "Vector Index", "pgvector", "Embeddings and metadata")
 ContainerDb(graphdb, "Semantic Graph Store", "GraphDB", "Ontology/alignment graph and concept expansion data")
 System_Ext(controller_runtime, "Controller Model Runtime", "Local or remote runtime for intent, routing, and SPARQL planning")
 System_Ext(narration_runtime, "Narration Model Runtime", "Local or remote runtime for grounded answer composition")

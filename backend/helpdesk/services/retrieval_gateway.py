@@ -8,7 +8,7 @@ from django.conf import settings
 
 try:
     from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
-except Exception:  # pragma: no cover - only unavailable in non-postgres-only environments
+except Exception:  # pragma: no cover - unavailable when postgres search extras are missing
     SearchQuery = None
     SearchRank = None
     SearchVector = None
@@ -30,7 +30,7 @@ from helpdesk.services.semantic_graph import (
 
 try:
     from pgvector.django import CosineDistance  # type: ignore
-except Exception:  # pragma: no cover - optional dependency in SQLite-only environments
+except Exception:  # pragma: no cover - optional dependency when pgvector package is missing
     CosineDistance = None
 
 

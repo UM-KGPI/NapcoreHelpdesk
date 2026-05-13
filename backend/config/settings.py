@@ -21,8 +21,6 @@ env = environ.Env(
     SERVICE_NAME=(str, "napcore-helpdesk"),
     SERVICE_VERSION=(str, REPO_VERSION),
     SERVICE_BUILD_REF=(str, "dev"),
-    # Keep SQLite fallback for local tests; production/staging should set this to False.
-    DJANGO_USE_SQLITE=(bool, True),
     JWT_SECRET_KEY=(str, "change-me-jwt-secret-key-at-least-32-bytes"),
     JWT_ALGORITHM=(str, "HS256"),
     JWT_ISSUER=(str, ""),
@@ -151,27 +149,19 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-if env("DJANGO_USE_SQLITE"):
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": env("POSTGRES_DB", default="napcore_helpdesk"),
+        "USER": env("POSTGRES_USER", default="napcore"),
+        "PASSWORD": env("POSTGRES_PASSWORD", default="napcore"),
+        "HOST": env("POSTGRES_HOST", default="localhost"),
+        "PORT": env("POSTGRES_PORT", default="5432"),
+        # Use template1 for test databases so preinstalled extensions (e.g., pgvector)
+        # are inherited without requiring superuser rights in migrations.
+        "TEST": {"TEMPLATE": "template1"},
     }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": env("POSTGRES_DB", default="napcore_helpdesk"),
-            "USER": env("POSTGRES_USER", default="napcore"),
-            "PASSWORD": env("POSTGRES_PASSWORD", default="napcore"),
-            "HOST": env("POSTGRES_HOST", default="localhost"),
-            "PORT": env("POSTGRES_PORT", default="5432"),
-            # Use template1 for test databases so preinstalled extensions (e.g., pgvector)
-            # are inherited without requiring superuser rights in migrations.
-            "TEST": {"TEMPLATE": "template1"},
-        }
-    }
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},

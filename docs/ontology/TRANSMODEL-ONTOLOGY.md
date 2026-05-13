@@ -139,7 +139,7 @@ The Transmodel ontology can be integrated into the NAPCORE FAQ helpdesk to:
    ```sparql
   PREFIX tm: <https://transmodel-cen.eu/6.2/>
    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-   
+
    SELECT ?class ?label ?comment
    WHERE {
      ?class a <http://www.w3.org/2002/07/owl#Class> ;
@@ -162,7 +162,7 @@ The Transmodel ontology can be integrated into the NAPCORE FAQ helpdesk to:
 | **EA Tool Version** | EA v16 |
 | **Transmodel Version** | 6.2 (2024) |
 | **Generation Date** | 2026-05-05 |
-| **Generation Tool** | Python 3 + sqlite3 |
+| **Generation Tool** | Python 3 |
 
 ---
 
@@ -208,6 +208,6 @@ rapper -g /path/to/transmodel.ttl
 
 ---
 
-**Last Updated**: 2026-05-05  
-**Ontology Version**: 6.2  
+**Last Updated**: 2026-05-05
+**Ontology Version**: 6.2
 **Maintainer**: NAPCORE Helpdesk Project

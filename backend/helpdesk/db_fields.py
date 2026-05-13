@@ -1,17 +1,9 @@
 from __future__ import annotations
 
-from django.conf import settings
 from django.db import models
 
 
-def _is_sqlite_default_engine() -> bool:
-    engine = settings.DATABASES.get("default", {}).get("ENGINE", "")
-    return engine.endswith("sqlite3")
-
-
 def _load_native_vector_field():
-    if _is_sqlite_default_engine():
-        return None
     try:
         from pgvector.django import VectorField  # type: ignore
 
@@ -55,7 +47,7 @@ if _NativeVectorField:
 else:
 
     class PortableVectorField(models.JSONField):
-        """JSON fallback field for SQLite/local test compatibility."""
+        """JSON fallback field for environments without pgvector."""
 
         def __init__(self, *args, dimensions: int = 64, **kwargs):
             self.dimensions = dimensions

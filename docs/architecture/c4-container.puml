@@ -24,8 +24,8 @@ System_Boundary(boundary, "NAPCORE Helpdesk") {
   Container(guardrails, "Policy Guardrails Service", "Service", "SPARQL allowlist checks, citation checks, abstention policy, and source-policy enforcement")
   Container(editorial, "Editorial Workflow Service", "Service", "Draft, review, approve, publish flow")
   Container(ingest, "Ingestion Worker", "Worker", "Pull, parse, chunk, embed, and index allowlisted repositories")
-  ContainerDb(pg, "Application Database", "PostgreSQL or SQLite local fallback", "FAQ, events, reviews, evidence links, source metadata")
-  ContainerDb(vdb, "Vector Index", "pgvector or JSON fallback", "Chunk embeddings and retrieval metadata")
+  ContainerDb(pg, "Application Database", "PostgreSQL", "FAQ, events, reviews, evidence links, source metadata")
+  ContainerDb(vdb, "Vector Index", "pgvector", "Chunk embeddings and retrieval metadata")
   ContainerDb(sdb, "Semantic Graph Store", "GraphDB (RDF/OWL + SPARQL)", "Ontology modules, alignments, and provenance-backed concept expansion")
 }
 
