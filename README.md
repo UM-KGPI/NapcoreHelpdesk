@@ -18,6 +18,10 @@ The runtime uses a split LLM path:
 - Controller path: intent detection, route selection, and constrained query planning
 - Narration path: grounded answer composition from evidence and citations
 
+![C4 System Context](docs/architecture/c4-system-context.svg)
+
+_Figure: C4 Level 1 system context._
+
 Core architecture docs:
 
 - [C4 overview](docs/architecture/c4-overview.md)
