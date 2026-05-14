@@ -38,9 +38,6 @@ describe("Editorial Board flows", () => {
       mockJsonResponse([])
     );
     fetchMock.mockResolvedValueOnce(
-      mockJsonResponse([])
-    );
-    fetchMock.mockResolvedValueOnce(
       mockJsonResponse({
         page: 1,
         pageSize: 10,
@@ -124,7 +121,6 @@ describe("Editorial Board flows", () => {
 
     fetchMock
       .mockResolvedValueOnce(mockJsonResponse([]))
-      .mockResolvedValueOnce(mockJsonResponse([]))
       .mockResolvedValueOnce(mockJsonResponse(boardPayload))
       .mockResolvedValueOnce(
         mockJsonResponse({
@@ -186,9 +182,6 @@ describe("Editorial Board flows", () => {
 
   it("loads KPI metrics and renders key tiles", async () => {
     const fetchMock = vi.mocked(globalThis.fetch);
-    fetchMock.mockResolvedValueOnce(
-      mockJsonResponse([])
-    );
     fetchMock.mockResolvedValueOnce(
       mockJsonResponse([])
     );
@@ -258,9 +251,6 @@ describe("Editorial Board flows", () => {
 
   it("shows error banner when KPI metrics request fails", async () => {
     const fetchMock = vi.mocked(globalThis.fetch);
-    fetchMock.mockResolvedValueOnce(
-      mockJsonResponse([])
-    );
     fetchMock.mockResolvedValueOnce(
       mockJsonResponse([])
     );
