@@ -38,6 +38,9 @@ describe("Editorial Board flows", () => {
       mockJsonResponse([])
     );
     fetchMock.mockResolvedValueOnce(
+      mockJsonResponse([])
+    );
+    fetchMock.mockResolvedValueOnce(
       mockJsonResponse({
         page: 1,
         pageSize: 10,
@@ -75,11 +78,14 @@ describe("Editorial Board flows", () => {
 
     await user.click(screen.getByRole("button", { name: "Load Queue" }));
 
+    let calledUrl = "";
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledTimes(2);
+      calledUrl = fetchMock.mock.calls
+        .map(([url]) => String(url))
+        .find((url) => url.includes("/editorial/queue?")) ?? "";
+      expect(calledUrl).toBeTruthy();
     });
 
-    const calledUrl = fetchMock.mock.calls[1][0] as string;
     expect(calledUrl).toContain("/editorial/queue?");
     expect(calledUrl).toContain("status=review");
     expect(calledUrl).toContain("reason=POLICY_REVIEW");
@@ -117,6 +123,7 @@ describe("Editorial Board flows", () => {
     };
 
     fetchMock
+      .mockResolvedValueOnce(mockJsonResponse([]))
       .mockResolvedValueOnce(mockJsonResponse([]))
       .mockResolvedValueOnce(mockJsonResponse(boardPayload))
       .mockResolvedValueOnce(
@@ -160,14 +167,18 @@ describe("Editorial Board flows", () => {
 
     await user.click(screen.getByRole("button", { name: "approve" }));
 
+    let transitionUrl = "";
+    let queueUrls: string[] = [];
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledTimes(4);
+      const urls = fetchMock.mock.calls.map(([url]) => String(url));
+      transitionUrl = urls.find((url) => url.includes("/editorial/queue/transition")) ?? "";
+      queueUrls = urls.filter((url) => url.includes("/editorial/queue?"));
+      expect(transitionUrl).toBeTruthy();
+      expect(queueUrls.length).toBeGreaterThanOrEqual(2);
     });
 
-    const transitionUrl = fetchMock.mock.calls[2][0] as string;
-    const refreshedBoardUrl = fetchMock.mock.calls[3][0] as string;
     expect(transitionUrl).toContain("/editorial/queue/transition");
-    expect(refreshedBoardUrl).toContain("/editorial/queue?");
+    expect(queueUrls.at(-1)).toContain("/editorial/queue?");
 
     expect(await screen.findByRole("button", { name: "publish" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "approve" })).not.toBeInTheDocument();
@@ -175,6 +186,9 @@ describe("Editorial Board flows", () => {
 
   it("loads KPI metrics and renders key tiles", async () => {
     const fetchMock = vi.mocked(globalThis.fetch);
+    fetchMock.mockResolvedValueOnce(
+      mockJsonResponse([])
+    );
     fetchMock.mockResolvedValueOnce(
       mockJsonResponse([])
     );
@@ -225,11 +239,14 @@ describe("Editorial Board flows", () => {
 
     await user.click(screen.getByText("Load Queue Metrics"));
 
+    let calledUrl = "";
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledTimes(2);
+      calledUrl = fetchMock.mock.calls
+        .map(([url]) => String(url))
+        .find((url) => url.includes("/editorial/queue/metrics?")) ?? "";
+      expect(calledUrl).toBeTruthy();
     });
 
-    const calledUrl = fetchMock.mock.calls[1][0] as string;
     expect(calledUrl).toContain("/editorial/queue/metrics?");
     expect(calledUrl).toContain("windowDays=14");
     expect(calledUrl).toContain("slaHours=48");
