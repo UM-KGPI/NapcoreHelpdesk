@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { FormEvent } from "react";
 
 import type { AnswerResponse, StandardsScope } from "../types";
@@ -57,6 +58,17 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
     onResetChatSession,
   } = props;
 
+  const latestUserTurnId = [...chatTurns].reverse().find((turn) => turn.role === "user")?.id;
+  const latestUserTurnRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!busy || !latestUserTurnRef.current) {
+      return;
+    }
+
+    latestUserTurnRef.current.scrollIntoView({ block: "nearest", behavior: "auto" });
+  }, [busy, latestUserTurnId]);
+
   return (
     <section className="workspace-section user-workspace">
       <section className="panel chat-panel">
@@ -84,7 +96,11 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
         <div className="chat-log" aria-live="polite">
           {chatTurns.length === 0 && <p className="muted">Start a conversation. The client remembers turn history in this session.</p>}
           {chatTurns.map((turn) => (
-            <article key={turn.id} className={`chat-bubble ${turn.role === "user" ? "chat-user" : "chat-assistant"}`}>
+            <article
+              key={turn.id}
+              ref={turn.id === latestUserTurnId ? latestUserTurnRef : undefined}
+              className={`chat-bubble ${turn.role === "user" ? "chat-user" : "chat-assistant"}`}
+            >
               <p className="chat-role">{turn.role}</p>
               {turn.role === "assistant" ? <AnswerMarkdown text={turn.text} /> : <p>{turn.text}</p>}
               {turn.answer && (
