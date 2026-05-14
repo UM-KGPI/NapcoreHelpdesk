@@ -1096,7 +1096,7 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assert_matches_schema("AnswerResponse", response.data)
         self.assertEqual(response.data["mode"], "rag")
-        self.assertEqual(response.data["answer"], "Deterministic fallback answer.")
+        self.assertEqual(response.data["answer"], "Deterministic fallback answer. [E1]")
         self.assertTrue(llm_mock.called)
         self.assertTrue(deterministic_mock.called)
         self.assertTrue(any("LLM generation failed; falling back to deterministic answer" in line for line in logs.output))

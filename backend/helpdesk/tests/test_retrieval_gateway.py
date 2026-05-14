@@ -121,7 +121,7 @@ class RetrievalGatewayTests(TestCase):
         )
 
         self.assertEqual(trace["graphConceptCap"], 16)
-        self.assertEqual(trace["graphCandidateCap"], 12)
+        self.assertEqual(trace["graphCandidateCap"], 8)
 
     @override_settings(
         GRAPHDB_ENABLED=True,

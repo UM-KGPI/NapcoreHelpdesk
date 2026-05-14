@@ -24,6 +24,20 @@ This checklist closes the operations hardening loop for production readiness.
 - Follow [postgresql-pgvector-runbook.md](postgresql-pgvector-runbook.md).
 - Verify pgvector extension and index health after migrations.
 
+## Deployment environment configuration
+- Do not commit a production `.env` file.
+- Keep [backend/.env.example](../../backend/.env.example) as the template for required keys and fill real values only on the deployment server or in the secret manager.
+- At minimum, provide `DJANGO_SECRET_KEY`, `JWT_SECRET_KEY`, `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, and `POSTGRES_PORT`.
+- Set `DJANGO_DEBUG=False` and a production `DJANGO_ALLOWED_HOSTS` list before exposing the service.
+- Add optional values such as `GITHUB_API_TOKEN`, `LLM_*`, `GRAPHDB_*`, and `INDEX_SCHEDULE_*` only when the deployment uses those integrations.
+- Prefer environment injection from Compose, systemd, Kubernetes, or a managed secret store over copying developer-local `.env` files.
+
+### Concrete server patterns
+- Docker Compose: keep a server-local env file outside the repo and pass it with `--env-file` or the Compose `env_file` setting; mount only the values needed for that deployment.
+- systemd: store secrets in an `EnvironmentFile=` path owned by the service user, or define them in a drop-in under `/etc/systemd/system/<service>.service.d/`.
+- Kubernetes: map non-secret values with a ConfigMap and secret values with a Secret, then expose them to the backend container as environment variables.
+- In every case, rotate any key that was ever present in a local developer `.env` before using the same deployment identity in production.
+
 ## Retrieval quality benchmark
 Run after any change to indexing, scoring weights, ontology expansion, or graph-RAG settings.
 

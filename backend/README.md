@@ -194,7 +194,6 @@ Related settings in `.env`:
 - CI workflow: `../.github/workflows/ci.yml`
 - Security workflow: `../.github/workflows/security.yml`
 - Release workflow: `../.github/workflows/release.yml`
-- Deployment checklist: `../docs/architecture/deployment-operations-checklist.md`
 - First user testing pack: `../docs/testing/first-user-testing-pack.md`
 - Day 1 execution sheet: `../docs/testing/day-1-execution-sheet.md`
 - Pilot feedback template: `../.github/ISSUE_TEMPLATE/pilot-feedback.yml`

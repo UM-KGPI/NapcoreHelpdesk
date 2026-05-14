@@ -252,7 +252,6 @@ Exit criteria:
     - keep tighter graph candidate cap (`max(10, top_k * 2)`), but remove hard doc_type gating;
     - score graph candidates by alias quality (exact token/phrase match > loose substring);
     - add intent-aware graph gating (apply expansion boosts only for mapping/disambiguation intents).
-- ✅ **Metrics runbook update (2026-04-16)** — benchmark procedure added to `docs/architecture/deployment-operations-checklist.md`.
 
 Success targets (vs baseline):
 - Citation precision: +10% relative improvement.

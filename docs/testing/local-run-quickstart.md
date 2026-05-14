@@ -249,5 +249,5 @@ If Docker is not installed, Graph-aware retrieval still falls back to in-memory 
 ## 12. Related docs
 - `backend/README.md`
 - `frontend/README.md`
-- `docs/architecture/deployment-operations-checklist.md`
+- `docs/README.md`
 - `docs/testing/docker-dev-quickstart.md`
