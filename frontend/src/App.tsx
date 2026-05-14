@@ -15,7 +15,6 @@ import type {
   EditorialQueueTransitionResponse,
   IndexRepositoryResponse,
   PromotionCandidatesResponse,
-  HealthResponse,
   StandardsScope,
 } from "./types";
 
@@ -148,8 +147,6 @@ export default function App() {
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [backendHealth, setBackendHealth] = useState<HealthResponse | null>(null);
-
   const client = useMemo(() => new HelpdeskApiClient({ baseUrl: apiBaseUrl, token }), [apiBaseUrl, token]);
   const authValue = useMemo(
     () => ({
@@ -170,30 +167,6 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(AUTO_TOKEN_STORAGE_KEY, String(autoTokenEnabled));
   }, [autoTokenEnabled]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadBackendHealthVersion(): Promise<void> {
-      try {
-        const publicClient = new HelpdeskApiClient({ baseUrl: apiBaseUrl, token: "" });
-        const health = await publicClient.getLiveHealth();
-        if (!cancelled) {
-          setBackendHealth(health);
-        }
-      } catch {
-        if (!cancelled) {
-          setBackendHealth(null);
-        }
-      }
-    }
-
-    void loadBackendHealthVersion();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [apiBaseUrl]);
 
   useEffect(() => {
     let cancelled = false;
@@ -619,9 +592,7 @@ export default function App() {
             path="/"
             element={
               <SharedAppLayout
-                frontendVersion={frontendVersion}
-                backendVersion={backendHealth?.version ?? "unknown"}
-                backendBuildRef={backendHealth?.buildRef ?? "unknown"}
+                appVersion={frontendVersion}
               />
             }
           >

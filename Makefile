@@ -156,11 +156,13 @@ docker-dev-up-local-db: ## Start Docker dev stack with local PostgreSQL (CONTROL
 		CONTROLLER_LLM_MODE="$${CONTROLLER_LLM_MODE:-subprocess}"; \
 		CONTROLLER_LLM_PROVIDER="$$( [ "$$CONTROLLER_LLM_MODE" = "server" ] && echo openai-compatible || echo subprocess )"; \
 		CONTROLLER_PROFILE_ARGS="$$( [ "$$CONTROLLER_LLM" = "1" ] && [ "$$CONTROLLER_LLM_MODE" = "server" ] && echo "--profile controller-llm" )"; \
+		VITE_APP_VERSION="$$(bash scripts/app_version.sh)"; \
 		echo "Starting dev stack (CONTROLLER_LLM=$$CONTROLLER_LLM, MODE=$$CONTROLLER_LLM_MODE)"; \
-		CONTROLLER_LLM_ENABLED="$$CONTROLLER_LLM_ENABLED" CONTROLLER_LLM_PROVIDER="$$CONTROLLER_LLM_PROVIDER" docker compose -f docker-compose.dev.yml --profile local-db $$CONTROLLER_PROFILE_ARGS up -d --build; \
+		VITE_APP_VERSION="$$VITE_APP_VERSION" CONTROLLER_LLM_ENABLED="$$CONTROLLER_LLM_ENABLED" CONTROLLER_LLM_PROVIDER="$$CONTROLLER_LLM_PROVIDER" docker compose -f docker-compose.dev.yml --profile local-db $$CONTROLLER_PROFILE_ARGS up -d --build; \
 	else \
+		VITE_APP_VERSION="$$(bash scripts/app_version.sh)"; \
 		echo "Starting dev stack (using env/.env controller settings)"; \
-		docker compose -f docker-compose.dev.yml --profile local-db up -d --build; \
+		VITE_APP_VERSION="$$VITE_APP_VERSION" docker compose -f docker-compose.dev.yml --profile local-db up -d --build; \
 	fi
 
 docker-dev-up-graphdb: ## Start only the GraphDB service in the dev stack
@@ -172,11 +174,13 @@ docker-dev-up-external-postgres: ## Start dev stack using external PostgreSQL (C
 		CONTROLLER_LLM_MODE="$${CONTROLLER_LLM_MODE:-subprocess}"; \
 		CONTROLLER_LLM_PROVIDER="$$( [ "$$CONTROLLER_LLM_MODE" = "server" ] && echo openai-compatible || echo subprocess )"; \
 		CONTROLLER_PROFILE_ARGS="$$( [ "$$CONTROLLER_LLM" = "1" ] && [ "$$CONTROLLER_LLM_MODE" = "server" ] && echo "--profile controller-llm" )"; \
+		VITE_APP_VERSION="$$(bash scripts/app_version.sh)"; \
 		echo "Starting external-postgres stack (CONTROLLER_LLM=$$CONTROLLER_LLM, MODE=$$CONTROLLER_LLM_MODE)"; \
-		CONTROLLER_LLM_ENABLED="$$CONTROLLER_LLM_ENABLED" CONTROLLER_LLM_PROVIDER="$$CONTROLLER_LLM_PROVIDER" docker compose -f docker-compose.dev.yml -f docker-compose.external-postgres.yml $$CONTROLLER_PROFILE_ARGS up -d --build backend celery-worker celery-beat frontend redis graphdb $$( [ "$$CONTROLLER_LLM" = "1" ] && [ "$$CONTROLLER_LLM_MODE" = "server" ] && echo controller-llm ); \
+		VITE_APP_VERSION="$$VITE_APP_VERSION" CONTROLLER_LLM_ENABLED="$$CONTROLLER_LLM_ENABLED" CONTROLLER_LLM_PROVIDER="$$CONTROLLER_LLM_PROVIDER" docker compose -f docker-compose.dev.yml -f docker-compose.external-postgres.yml $$CONTROLLER_PROFILE_ARGS up -d --build backend celery-worker celery-beat frontend redis graphdb $$( [ "$$CONTROLLER_LLM" = "1" ] && [ "$$CONTROLLER_LLM_MODE" = "server" ] && echo controller-llm ); \
 	else \
+		VITE_APP_VERSION="$$(bash scripts/app_version.sh)"; \
 		echo "Starting external-postgres stack (using env/.env controller settings)"; \
-		docker compose -f docker-compose.dev.yml -f docker-compose.external-postgres.yml up -d --build backend celery-worker celery-beat frontend redis graphdb; \
+		VITE_APP_VERSION="$$VITE_APP_VERSION" docker compose -f docker-compose.dev.yml -f docker-compose.external-postgres.yml up -d --build backend celery-worker celery-beat frontend redis graphdb; \
 	fi
 
 docker-dev-init-once: ## Initialise GraphDB repo and load ontologies inside running containers
