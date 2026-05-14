@@ -221,7 +221,14 @@ jobs:
       - name: Install PlantUML and Graphviz
         run: |
           sudo apt-get update
-          sudo apt-get install -y plantuml graphviz
+          sudo apt-get install -y graphviz default-jre wget
+          sudo wget -O /usr/local/bin/plantuml.jar https://github.com/plantuml/plantuml/releases/download/v1.2025.2/plantuml-1.2025.2.jar
+          cat <<'EOF' | sudo tee /usr/local/bin/plantuml >/dev/null
+          #!/usr/bin/env bash
+          exec java -jar /usr/local/bin/plantuml.jar "$@"
+          EOF
+          sudo chmod +x /usr/local/bin/plantuml
+          plantuml -version
 
       - name: Build C4 diagrams
         run: make diagrams-c4
