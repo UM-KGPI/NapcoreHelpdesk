@@ -19,6 +19,7 @@ def _env_truthy(name: str, default: bool = False) -> bool:
 
 
 STRICT_ONTOLOGY_VALIDATION = _env_truthy("NAPCORE_ONTOLOGY_STRICT_VALIDATION", default=False)
+SKIP_GRAPHDB_IMPORT = _env_truthy("NAPCORE_SKIP_GRAPHDB_IMPORT", default=False)
 
 
 def _validate_ontology_payload(
@@ -408,6 +409,10 @@ def _load_ontology() -> dict:
     Raises RuntimeError when GraphDB is not configured or contains no concept
     data. This service intentionally avoids any YAML fallback.
     """
+    if SKIP_GRAPHDB_IMPORT or not _env_truthy("GRAPHDB_ENABLED", default=False):
+        logger.info("Skipping GraphDB ontology import; returning empty ontology for local checks.")
+        return {"namespaces": {}, "concepts": {}, "relationships": []}
+
     endpoint = os.getenv("GRAPHDB_SPARQL_ENDPOINT", "").strip()
     if not endpoint:
         raise RuntimeError(
@@ -429,6 +434,10 @@ def _load_ontology() -> dict:
 
 def _load_nits_ontology() -> dict:
     """Load the dedicated NITS ontology used for cross-standard reasoning from GraphDB."""
+
+    if SKIP_GRAPHDB_IMPORT or not _env_truthy("GRAPHDB_ENABLED", default=False):
+        logger.info("Skipping GraphDB NITS import; returning empty ontology for local checks.")
+        return {"namespaces": {}, "concepts": {}, "relationships": []}
 
     endpoint = os.getenv("GRAPHDB_SPARQL_ENDPOINT", "").strip()
     if not endpoint:
