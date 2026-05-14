@@ -137,8 +137,15 @@ def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
         "https://netex.org.uk/netex/2.0#": "netex",
         "https://netex.org.uk/netex/2.0/": "netex",
         "http://napcore.example.org/ontology/netex#": "netex",
+        "https://netex.org.uk/netex/2.0#": "netex",
+        "https://netex.org.uk/netex/2.0/": "netex",
+        "https://napcore.eu/ontology/netex#": "netex",
+        "http://napcore.eu/ontology/netex#": "netex",
+        "http://napcore.example.org/ontology/netex#": "netex",
         "https://transmodel-cen.eu/opra/1.0#": "opra",
         "https://transmodel-cen.eu/opra/1.0/": "opra",
+        "https://napcore.eu/ontology/opra#": "opra",
+        "http://napcore.eu/ontology/opra#": "opra",
         "http://napcore.example.org/ontology/opra#": "opra",
         "http://www.siri.org.uk/siri/2.1#": "siri",
         "http://www.siri.org.uk/siri/2.1/": "siri",
@@ -499,6 +506,20 @@ _NITS_ONTOLOGY = _load_nits_ontology()
 GRAPH_CONCEPT_ALIASES = _build_concept_aliases_from_ontology(_ONTOLOGY)
 GRAPH_CONCEPT_EXAMPLE_PATHS = _build_concept_example_paths_from_ontology(_ONTOLOGY)
 
+_FALLBACK_GRAPH_CONCEPT_ALIASES = {
+    "opra:DelayedJourney": {"delayed journey", "delayed journeys"},
+    "opra:DelayStatistics": {"delay statistics", "delaystatistics", "delayed journey statistics"},
+    "opra:LateDatedVehicleJourneyEntry": {
+        "latedatedvehiclejourneyentry",
+        "late dated vehicle journey entry",
+        "late dated vehicle journey",
+    },
+    "netex:VehicleJourney": {"vehicle journey"},
+    "netex:ScheduledStopPoint": {"scheduled stop point"},
+    "netex:StopPlace": {"stop place"},
+    "netex:ServiceJourneyPattern": {"service journey pattern"},
+}
+
 
 TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
 
@@ -826,7 +847,8 @@ GRAPH_RELATIONS = _build_graph_relations_from_ontology(_ONTOLOGY)
 def extract_graph_concepts(text: str) -> set[str]:
     normalized_text = _normalize_for_matching(text)
     concepts: set[str] = set()
-    for concept_id, aliases in GRAPH_CONCEPT_ALIASES.items():
+    aliases_by_concept = GRAPH_CONCEPT_ALIASES or _FALLBACK_GRAPH_CONCEPT_ALIASES
+    for concept_id, aliases in aliases_by_concept.items():
         if any(_alias_matches_text(alias, normalized_text) for alias in aliases):
             concepts.add(concept_id)
     return concepts

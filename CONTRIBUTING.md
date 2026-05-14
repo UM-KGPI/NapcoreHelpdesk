@@ -91,4 +91,3 @@ If backend API shape changes:
 - [Documentation index](docs/README.md)
 - [Make targets reference](docs/testing/make-targets-reference.md)
 - [Local run quickstart](docs/testing/local-run-quickstart.md)
-- [Deployment and operations checklist](docs/architecture/deployment-operations-checklist.md)

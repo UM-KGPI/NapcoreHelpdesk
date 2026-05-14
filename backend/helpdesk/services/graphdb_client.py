@@ -22,6 +22,30 @@ DEFAULT_NAMESPACES = {
     "nch": "https://napcore.eu/ontology/helpdesk#",
 }
 
+_NETEX_IRI_PREFIXES = (
+    "https://netex.org.uk/netex/2.0#",
+    "https://netex.org.uk/netex/2.0/",
+    "https://napcore.eu/ontology/netex#",
+    "http://napcore.eu/ontology/netex#",
+    "http://napcore.example.org/ontology/netex#",
+)
+
+_OPRA_IRI_PREFIXES = (
+    "https://transmodel-cen.eu/opra/1.0#",
+    "https://transmodel-cen.eu/opra/1.0/",
+    "https://napcore.eu/ontology/opra#",
+    "http://napcore.eu/ontology/opra#",
+    "http://napcore.example.org/ontology/opra#",
+)
+
+_OPRA_IRI_PREFIXES = (
+    "https://transmodel-cen.eu/opra/1.0#",
+    "https://transmodel-cen.eu/opra/1.0/",
+    "https://napcore.eu/ontology/opra#",
+    "http://napcore.eu/ontology/opra#",
+    "http://napcore.example.org/ontology/opra#",
+)
+
 STANDARD_ARTIFACT_RULE_SPECS = {
     "netex": (
         "artifact-rules/netex-artifact-rules-v1.0.ttl",
@@ -140,6 +164,12 @@ def _iri_to_concept_id(iri: str) -> str | None:
     for prefix, namespace in DEFAULT_NAMESPACES.items():
         if iri.startswith(namespace):
             return f"{prefix}:{iri[len(namespace):]}"
+    for namespace in _NETEX_IRI_PREFIXES:
+        if iri.startswith(namespace):
+            return f"netex:{iri[len(namespace):]}"
+    for namespace in _OPRA_IRI_PREFIXES:
+        if iri.startswith(namespace):
+            return f"opra:{iri[len(namespace):]}"
     return None
 
 

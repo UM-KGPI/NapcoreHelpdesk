@@ -271,7 +271,8 @@ class SourceIndexBuilderTests(TestCase):
         )
 
         self.assertIn("Based on retrieved approved-source evidence", result["answer"])
-        self.assertIn("docs/late-journeys.md", result["answer"])
+        self.assertIn("[E1]", result["answer"])
+        self.assertNotIn("docs/late-journeys.md", result["answer"])
         self.assertIn("validate implementation", result["answer"])
 
     def test_generate_answer_combines_cross_repository_delay_exchange_evidence(self):
