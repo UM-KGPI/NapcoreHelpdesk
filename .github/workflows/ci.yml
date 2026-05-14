@@ -37,6 +37,17 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+  secret-scan:
+    name: Secret Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Scan repository for secrets
+        run: bash scripts/scan_secrets.sh
+
   backend-quality:
     name: Backend Quality Gates
     runs-on: ubuntu-latest
@@ -46,6 +57,9 @@ jobs:
     env:
       DJANGO_SECRET_KEY: ci-secret-key
       JWT_SECRET_KEY: ci-jwt-secret-key-at-least-32-bytes
+      NAPCORE_SKIP_GRAPHDB_IMPORT: "1"
+      GRAPHDB_ENABLED: "False"
+      GRAPH_RAG_ENABLED: "False"
       POSTGRES_DB: napcore_helpdesk
       POSTGRES_USER: napcore
       POSTGRES_PASSWORD: napcore
@@ -113,6 +127,9 @@ jobs:
     env:
       DJANGO_SECRET_KEY: ci-secret-key
       JWT_SECRET_KEY: ci-jwt-secret-key-at-least-32-bytes
+      NAPCORE_SKIP_GRAPHDB_IMPORT: "1"
+      GRAPHDB_ENABLED: "False"
+      GRAPH_RAG_ENABLED: "False"
       POSTGRES_DB: napcore_helpdesk
       POSTGRES_USER: napcore
       POSTGRES_PASSWORD: napcore
