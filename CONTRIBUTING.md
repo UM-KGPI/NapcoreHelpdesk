@@ -56,6 +56,11 @@ This repository now supports both build-based and commit-based version automatio
 	- After that, each commit bumps `VERSION` patch unless `VERSION` is already staged.
 	- Bypass for one commit with `SKIP_AUTO_VERSION=1 git commit ...`.
 
+- Merge-based bumping (GitHub Actions):
+	- On merge to `main`, `.github/workflows/version-bump-on-merge.yml` updates `VERSION` automatically.
+	- Label PR with one of: `version:major`, `version:minor`, `version:patch`.
+	- If no version label is present, it defaults to a `patch` bump.
+
 Manual bump helpers:
 
 - `make version-bump-patch`

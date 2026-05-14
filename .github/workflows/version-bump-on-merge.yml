@@ -1,0 +1,119 @@
+name: Version Bump On Merge
+
+on:
+  pull_request_target:
+    types:
+      - closed
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  bump-version:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Determine bump level
+        id: bump_level
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = (context.payload.pull_request.labels || []).map((l) => l.name);
+            let bump = "patch";
+            if (labels.includes("version:major")) {
+              bump = "major";
+            } else if (labels.includes("version:minor")) {
+              bump = "minor";
+            } else if (labels.includes("version:patch")) {
+              bump = "patch";
+            }
+
+            core.setOutput("bump", bump);
+            core.setOutput("labels", labels.join(", ") || "none");
+
+      - name: Bump VERSION
+        id: bump_version
+        env:
+          BUMP: ${{ steps.bump_level.outputs.bump }}
+        run: |
+          set -euo pipefail
+
+          if [[ ! -f VERSION ]]; then
+            echo "VERSION file is missing" >&2
+            exit 1
+          fi
+
+          raw="$(tr -d '[:space:]' < VERSION)"
+          base="${raw%%+*}"
+          base="${base%%-*}"
+
+          IFS='.' read -r major minor patch <<< "$base"
+          if [[ ! "$major" =~ ^[0-9]+$ || ! "$minor" =~ ^[0-9]+$ || ! "$patch" =~ ^[0-9]+$ ]]; then
+            echo "Unsupported VERSION format: $raw" >&2
+            exit 1
+          fi
+
+          case "$BUMP" in
+            major)
+              major=$((major + 1))
+              minor=0
+              patch=0
+              ;;
+            minor)
+              minor=$((minor + 1))
+              patch=0
+              ;;
+            patch)
+              patch=$((patch + 1))
+              ;;
+            *)
+              echo "Unsupported bump level: $BUMP" >&2
+              exit 1
+              ;;
+          esac
+
+          new_version="$major.$minor.$patch"
+          echo "$new_version" > VERSION
+          echo "new_version=$new_version" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and push VERSION bump
+        env:
+          NEW_VERSION: ${{ steps.bump_version.outputs.new_version }}
+          BUMP: ${{ steps.bump_level.outputs.bump }}
+          LABELS: ${{ steps.bump_level.outputs.labels }}
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet -- VERSION; then
+            echo "No VERSION change detected; nothing to commit."
+            exit 0
+          fi
+
+          git add VERSION
+          git commit -m "chore(version): bump to $NEW_VERSION ($BUMP)"
+          git push
+
+      - name: Workflow summary
+        env:
+          NEW_VERSION: ${{ steps.bump_version.outputs.new_version }}
+          BUMP: ${{ steps.bump_level.outputs.bump }}
+          LABELS: ${{ steps.bump_level.outputs.labels }}
+        run: |
+          {
+            echo "## Version Bump"
+            echo "- PR labels: $LABELS"
+            echo "- Applied bump: $BUMP"
+            echo "- New VERSION: $NEW_VERSION"
+          } >> "$GITHUB_STEP_SUMMARY"
