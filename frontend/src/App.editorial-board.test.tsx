@@ -245,6 +245,9 @@ describe("Editorial Board flows", () => {
       mockJsonResponse([])
     );
     fetchMock.mockResolvedValueOnce(
+      mockJsonResponse([])
+    );
+    fetchMock.mockResolvedValueOnce(
       mockJsonResponse(
         {
           error: {
