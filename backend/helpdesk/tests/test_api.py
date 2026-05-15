@@ -29,6 +29,7 @@ from helpdesk.models import (
     EditorialQueueItem,
     EditorialQueueTransition,
     EvidenceProvenance,
+    FAQEntry,
     FAQVersion,
     RetrievalEvent,
 )
@@ -1276,6 +1277,70 @@ class HelpdeskApiTests(APITestCase):
             ).count(),
             3,
         )
+
+    def test_editorial_publish_persists_faq_for_future_reuse(self):
+        """Ensure publish transition stores a FAQ version from the approved answer."""
+        answer_response = self.client.post(
+            reverse("answer-question"),
+            {"question": "How should NeTEx timetable frames be prepared for exchange?"},
+            format="json",
+            HTTP_X_REQUEST_ID="req-transition-source-faq-publish",
+            **self.auth_headers(),
+        )
+        question_event_id = answer_response.data["trace"]["questionEventId"]
+        answer_text = answer_response.data["answer"]
+
+        queue_response = self.client.post(
+            reverse("editorial-queue"),
+            {
+                "questionEventId": question_event_id,
+                "reason": "LOW_CONFIDENCE",
+                "priority": "normal",
+            },
+            format="json",
+            **self.auth_headers(),
+        )
+
+        self.client.post(
+            reverse("editorial-queue-transition"),
+            {
+                "queueItemId": queue_response.data["queueItemId"],
+                "action": "submit_for_review",
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-transition-faq-submit",
+            **self.auth_headers(roles=["editor"]),
+        )
+        self.client.post(
+            reverse("editorial-queue-transition"),
+            {
+                "queueItemId": queue_response.data["queueItemId"],
+                "action": "approve",
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-transition-faq-approve",
+            **self.auth_headers(roles=["reviewer"]),
+        )
+        publish_response = self.client.post(
+            reverse("editorial-queue-transition"),
+            {
+                "queueItemId": queue_response.data["queueItemId"],
+                "action": "publish",
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-transition-faq-publish",
+            **self.auth_headers(roles=["publisher"]),
+        )
+
+        self.assertEqual(publish_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(publish_response.data["status"], "published")
+
+        published_version = FAQVersion.objects.filter(answer=answer_text, is_published=True).order_by("-id").first()
+        self.assertIsNotNone(published_version)
+        self.assertTrue(published_version.faq_entry.is_active)
+        self.assertIsInstance(published_version.citations, list)
+        self.assertGreaterEqual(len(published_version.faq_entry.keyword_tokens), 1)
+        self.assertGreaterEqual(FAQEntry.objects.filter(faq_entry_id=published_version.faq_entry.faq_entry_id).count(), 1)
 
     def test_editorial_transition_rejects_invalid_state_change(self):
         """Ensure impossible transitions return conflict instead of mutating state."""
