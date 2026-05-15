@@ -9,6 +9,7 @@ from uuid import uuid4
 import jwt
 from django.conf import settings
 from django.db import connection
+from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import status
@@ -28,6 +29,7 @@ from helpdesk.services.editorial_workflow import (
 from helpdesk.services.controller_llm import ControllerLLMError, decide_route_with_controller_llm
 from helpdesk.services.evidence_mapper import map_evidence
 from helpdesk.services.event_logger import log_question_event
+from helpdesk.services.faq_publication import publish_queue_item_to_faq
 from helpdesk.services.faq_matcher import match_faq
 from helpdesk.services.grounded_generator import generate_answer
 from helpdesk.services.llm_generator import LLMGenerationError, generate_answer_llm
@@ -1244,13 +1246,16 @@ class EditorialQueueTransitionView(APIView):
         actor_id = _request_actor_id(request)
 
         try:
-            transition = apply_transition(
-                queue_item=item,
-                action=data["action"],
-                actor_id=actor_id,
-                actor_roles=actor_roles,
-                comment=data.get("comment", ""),
-            )
+            with transaction.atomic():
+                transition = apply_transition(
+                    queue_item=item,
+                    action=data["action"],
+                    actor_id=actor_id,
+                    actor_roles=actor_roles,
+                    comment=data.get("comment", ""),
+                )
+                if data["action"] == "publish":
+                    publish_queue_item_to_faq(queue_item=item)
         except WorkflowTransitionNotAllowed as exc:
             return _error_response(
                 code="INVALID_STATE_TRANSITION",
@@ -1264,6 +1269,13 @@ class EditorialQueueTransitionView(APIView):
                 message=str(exc),
                 request_id=request_id,
                 http_status=status.HTTP_403_FORBIDDEN,
+            )
+        except ValueError as exc:
+            return _error_response(
+                code="FAQ_PUBLISH_FAILED",
+                message=str(exc),
+                request_id=request_id,
+                http_status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
         return Response(
