@@ -101,6 +101,81 @@ export class HelpdeskApiClient {
     });
   }
 
+  async answerQuestionStream(
+    payload: AnswerRequest,
+    requestId: string,
+    onToken: (delta: string) => void,
+    signal?: AbortSignal,
+  ): Promise<AnswerResponse> {
+    const response = await fetch(`${this.baseUrl}/questions/answer/stream`, {
+      method: "POST",
+      signal,
+      headers: {
+        ...defaultHeaders,
+        Authorization: `Bearer ${this.token}`,
+        "X-Request-Id": requestId,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const bodyText = await response.text();
+      let errorCode = `HTTP_${response.status}`;
+      try {
+        const parsed = JSON.parse(bodyText) as { error?: { code?: string; message?: string } };
+        errorCode = parsed?.error?.code ?? errorCode;
+        const msg = parsed?.error?.message ?? response.statusText;
+        throw new Error(`${errorCode}: ${msg}`);
+      } catch {
+        throw new Error(`${errorCode}: ${response.statusText}`);
+      }
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error("STREAM_UNAVAILABLE: Response body is not readable.");
+    }
+
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      // Process complete SSE lines delimited by double newline.
+      let boundary: number;
+      while ((boundary = buffer.indexOf("\n\n")) !== -1) {
+        const eventText = buffer.slice(0, boundary).trim();
+        buffer = buffer.slice(boundary + 2);
+
+        if (!eventText.startsWith("data:")) continue;
+        const jsonStr = eventText.slice("data:".length).trim();
+
+        let event: { type: string; delta?: string; answer?: AnswerResponse; code?: string; message?: string };
+        try {
+          event = JSON.parse(jsonStr) as typeof event;
+        } catch {
+          continue;
+        }
+
+        if (event.type === "token" && event.delta != null) {
+          onToken(event.delta);
+        } else if (event.type === "done" && event.answer != null) {
+          return event.answer;
+        } else if (event.type === "error") {
+          throw new Error(`${event.code ?? "STREAM_ERROR"}: ${event.message ?? "Unknown stream error"}`);
+        } else if (event.type === "llm_fallback") {
+          // LLM failed mid-stream; deterministic fallback was used.
+          // Continue consuming until "done" event arrives.
+        }
+      }
+    }
+
+    throw new Error("STREAM_ENDED: Stream closed without a done event.");
+  }
+
   async issueDevToken(): Promise<DevTokenResponse> {
     return this.request<DevTokenResponse>("/auth/dev-token", {
       method: "POST",

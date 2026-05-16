@@ -96,6 +96,18 @@ netex:appliesOnOperatingDay
     rdfs:range netex:OperatingDay .
 
 #################################################################
+# Standard Root Concept
+#################################################################
+
+netex:NeTEx
+    a owl:Class ;
+    rdfs:label "NeTEx"@en ;
+    skos:prefLabel "netex"@en ;
+    skos:altLabel "network and timetable exchange"@en ;
+    skos:altLabel "netex specification"@en ;
+    rdfs:comment "Canonical root concept for the NeTEx technical specification, used for standard-level semantic anchoring."@en .
+
+#################################################################
 # Extracted NeTEx Concepts
 #################################################################
 

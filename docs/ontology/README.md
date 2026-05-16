@@ -58,6 +58,8 @@ Recommended commands:
 Notes:
 - Full-tree XSD scanning is now the default for both NeTEx and OpRa.
 - Use `--netex-key-files-only` or `--opra-key-files-only` only if you need the earlier focused extraction mode.
+- Manual post-regeneration guard (required for current pipeline): after each regeneration of `docs/ontology/standards/netex.ttl`, re-add a standard root concept `netex:NeTEx` with lexical labels (`rdfs:label "NeTEx"@en`, `skos:prefLabel "netex"@en`, optional `skos:altLabel` variants) so semantic parsing can anchor plain-language questions like "What is NeTEx?".
+- Keep alignment parity with this guard by ensuring `docs/ontology/alignments/nits-netex-align.ttl` contains a mapping from `netex:NeTEx` to `nits:NeTExSpecification`.
 - After local ontology updates, publish them to GraphDB to preserve 1:1 parity using `manage.py load_graphdb_ontologies --apply`.
 
 Rebuild alignment ontologies using the per-standard alignment artifacts in `docs/ontology/alignments/` and the XSD-grounded workflow.

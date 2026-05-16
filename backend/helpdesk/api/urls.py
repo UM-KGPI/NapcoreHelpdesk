@@ -9,6 +9,7 @@ from .views import (
     HealthReadyView,
     IndexRepositoryView,
     PromotionCandidatesView,
+    QuestionAnswerStreamView,
     QuestionAnswerView,
 )
 
@@ -17,6 +18,7 @@ urlpatterns = [
     path("health/ready", HealthReadyView.as_view(), name="health-ready"),
     path("auth/dev-token", DevTokenView.as_view(), name="auth-dev-token"),
     path("questions/answer", QuestionAnswerView.as_view(), name="answer-question"),
+    path("questions/answer/stream", QuestionAnswerStreamView.as_view(), name="answer-question-stream"),
     path("faqs/promotion-candidates", PromotionCandidatesView.as_view(), name="promotion-candidates"),
     path("editorial/queue", EditorialQueueView.as_view(), name="editorial-queue"),
     path("editorial/queue/metrics", EditorialQueueMetricsView.as_view(), name="editorial-queue-metrics"),
