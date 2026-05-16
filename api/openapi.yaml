@@ -234,6 +234,79 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/questions/answer/stream:
+    post:
+      tags: [QnA]
+      summary: Stream question narration with FAQ-first and RAG fallback
+      operationId: streamAnswerQuestion
+      parameters:
+        - name: X-Request-Id
+          in: header
+          required: true
+          description: Request correlation identifier
+          schema:
+            type: string
+            minLength: 1
+        - name: X-User-Id
+          in: header
+          required: false
+          schema:
+            type: string
+        - name: X-Session-Id
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnswerRequest'
+      responses:
+        '200':
+          description: Server-sent events stream with token deltas and final answer payload
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: SSE payloads encoded as data events with token deltas and a final done event
+        '400':
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Policy conflict (for example unsupported claims)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Valid request but cannot be answered within policy constraints
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/faqs/promotion-candidates:
     get:
       tags: [FAQOps]

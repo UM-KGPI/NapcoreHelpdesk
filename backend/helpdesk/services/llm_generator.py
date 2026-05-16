@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import ssl
+from collections.abc import Generator
 from urllib import error, request
 
 from django.conf import settings
@@ -287,3 +288,133 @@ def generate_answer_llm(question: str, chunks: list[dict], scope: list[str] | No
         "provider": settings.LLM_PROVIDER,
         "model": (payload.get("model") or request_targets[0]["model"]),
     }
+
+
+def _stream_request_chat_completion(
+    api_base_url: str,
+    api_key: str,
+    model: str,
+    timeout_seconds: int,
+    temperature: float,
+    max_tokens: int,
+    messages: list[dict],
+) -> Generator[str, None, None]:
+    """Yield raw token delta strings from an OpenAI-compatible streaming chat completion."""
+    body = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+        "stream": True,
+    }
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+
+    req = request.Request(
+        url=f"{api_base_url.rstrip('/')}/chat/completions",
+        data=json.dumps(body).encode("utf-8"),
+        method="POST",
+        headers=headers,
+    )
+    with request.urlopen(req, timeout=timeout_seconds, context=_build_ssl_context()) as response:
+        for raw_line in response:
+            line = raw_line.decode("utf-8").strip()
+            if not line.startswith("data:"):
+                continue
+            payload_str = line[len("data:"):].strip()
+            if payload_str == "[DONE]":
+                break
+            try:
+                chunk = json.loads(payload_str)
+            except json.JSONDecodeError:
+                continue
+            choices = chunk.get("choices") or []
+            if not choices:
+                continue
+            delta = choices[0].get("delta", {}).get("content") or ""
+            if delta:
+                yield delta
+
+
+def stream_answer_llm(
+    question: str,
+    chunks: list[dict],
+    scope: list[str] | None = None,
+) -> Generator[tuple[str, object], None, None]:
+    """
+    Generator yielding (event_type, payload) tuples for streaming narration.
+
+    Yields:
+        ("token", delta_str) — for each token from the LLM.
+        ("done", metadata_dict) — once after all tokens, with answer metadata.
+
+    Raises LLMGenerationError on setup failure, network error, or grounding
+    validation failure.  If raised after tokens have already been yielded,
+    the caller should emit an SSE error event so the client can discard the
+    partial text.
+    """
+    if not settings.LLM_ENABLED:
+        raise LLMGenerationError("LLM mode is disabled by configuration.")
+    if settings.LLM_PROVIDER != "openai-compatible":
+        raise LLMGenerationError(f"Unsupported LLM provider: {settings.LLM_PROVIDER}")
+
+    primary_base_url = (settings.LLM_API_BASE_URL or "").strip()
+    primary_api_key = (settings.LLM_API_KEY or "").strip()
+    if not primary_base_url:
+        raise LLMGenerationError("LLM API base URL is not configured.")
+
+    max_chunks = max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 4)))
+    max_chars_per_chunk = max(200, int(getattr(settings, "LLM_MAX_EVIDENCE_CHARS_PER_CHUNK", 1200)))
+    messages = _build_messages(
+        question=question,
+        chunks=chunks,
+        scope=scope,
+        max_chunks=max_chunks,
+        max_chars_per_chunk=max_chars_per_chunk,
+    )
+
+    deltas: list[str] = []
+    try:
+        for delta in _stream_request_chat_completion(
+            api_base_url=primary_base_url,
+            api_key=primary_api_key,
+            model=settings.LLM_MODEL,
+            timeout_seconds=settings.LLM_TIMEOUT_SECONDS,
+            temperature=settings.LLM_TEMPERATURE,
+            max_tokens=settings.LLM_MAX_TOKENS,
+            messages=messages,
+        ):
+            deltas.append(delta)
+            yield ("token", delta)
+    except error.HTTPError as exc:
+        try:
+            error_body = exc.read().decode("utf-8")
+        except Exception:
+            error_body = ""
+        detail = f"LLM HTTP error: {exc.code}"
+        if error_body:
+            detail = f"{detail} - {error_body[:500]}"
+        raise LLMGenerationError(detail) from exc
+    except error.URLError as exc:
+        raise LLMGenerationError(f"LLM stream request failed: {exc.reason}") from exc
+
+    full_answer = "".join(deltas)
+    if not full_answer.strip():
+        raise LLMGenerationError("LLM stream response was empty.")
+
+    _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
+
+    top_score = chunks[0].get("score", 0.0) if chunks else 0.0
+    confidence = min(0.94, max(0.60, float(top_score)))
+
+    yield (
+        "done",
+        {
+            "answer": full_answer,
+            "confidence": confidence,
+            "review_required": confidence < 0.82,
+            "provider": settings.LLM_PROVIDER,
+            "model": settings.LLM_MODEL,
+        },
+    )

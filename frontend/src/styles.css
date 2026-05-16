@@ -161,6 +161,7 @@ h1 {
 
 .chat-log {
   margin-top: 0;
+  position: relative;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: #fffaf0;

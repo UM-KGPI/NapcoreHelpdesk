@@ -277,6 +277,7 @@ export default function App() {
     }
 
     const requestId = createRequestId();
+    const assistantTurnId = `a-${requestId}`;
     setChatTurns((prev) => [
       ...prev,
       {
@@ -290,26 +291,88 @@ export default function App() {
     setBusy(true);
     setError(null);
 
-    try {
-      const result = await client.answerQuestion(
-        {
-          question: prompt,
-          sessionId,
-          userId,
-          standardsScope: standardsScope.length > 0 ? standardsScope : undefined,
-          language: "en",
-          generationProfile: chatProfile,
-          controllerProfile,
-          options: {
-            maxCitations: 5,
-            allowAbstain: true,
-            faqMinConfidence: chatProfile === "llm-ready" ? 1.0 : 0.85,
-            retrievalTopK: 6,
-            retrievalMinScore: 0.62,
-          },
-        },
-        requestId
+    const answerPayload = {
+      question: prompt,
+      sessionId,
+      userId,
+      standardsScope: standardsScope.length > 0 ? standardsScope : undefined,
+      language: "en",
+      generationProfile: chatProfile,
+      controllerProfile,
+      options: {
+        maxCitations: 5,
+        allowAbstain: true,
+        faqMinConfidence: chatProfile === "llm-ready" ? 1.0 : 0.85,
+        retrievalTopK: 6,
+        retrievalMinScore: 0.62,
+      },
+    };
+
+    const useStreaming = chatProfile === "llm-ready";
+
+    const handleStreamToken = (delta: string) => {
+      setChatTurns((prev) =>
+        prev.map((t) =>
+          t.id === assistantTurnId ? { ...t, text: t.text + delta } : t
+        )
       );
+    };
+
+    try {
+      if (useStreaming) {
+        // Insert a placeholder assistant turn immediately so the user sees typing start.
+        setChatTurns((prev) => [
+          ...prev,
+          {
+            id: assistantTurnId,
+            role: "assistant",
+            text: "",
+            createdAt: new Date().toISOString(),
+          },
+        ]);
+
+        let result: import("./types").AnswerResponse;
+        try {
+          result = await client.answerQuestionStream(answerPayload, requestId, handleStreamToken);
+        } catch (streamErr) {
+          // Streaming endpoint unavailable or failed — retry with the regular endpoint.
+          // Remove the placeholder turn first, then fall through to the non-streaming path.
+          setChatTurns((prev) => prev.filter((t) => t.id !== assistantTurnId));
+          result = await client.answerQuestion(answerPayload, requestId);
+          setChatTurns((prev) => [
+            ...prev,
+            {
+              id: assistantTurnId,
+              role: "assistant",
+              text: result.answer,
+              createdAt: new Date().toISOString(),
+              answer: result,
+              requestId: result.trace.requestId,
+            },
+          ]);
+          setAnswerResult(result);
+          setQuestion(prompt);
+          setEditorialResult(null);
+          setChatPrompt("");
+          return;
+        }
+
+        // Streaming completed: update the placeholder turn with full metadata.
+        setChatTurns((prev) =>
+          prev.map((t) =>
+            t.id === assistantTurnId
+              ? { ...t, text: result.answer, answer: result, requestId: result.trace.requestId }
+              : t
+          )
+        );
+        setAnswerResult(result);
+        setQuestion(prompt);
+        setEditorialResult(null);
+        setChatPrompt("");
+        return;
+      }
+
+      const result = await client.answerQuestion(answerPayload, requestId);
 
       setAnswerResult(result);
       setQuestion(prompt);
@@ -317,7 +380,7 @@ export default function App() {
       setChatTurns((prev) => [
         ...prev,
         {
-          id: `a-${requestId}`,
+          id: assistantTurnId,
           role: "assistant",
           text: result.answer,
           createdAt: new Date().toISOString(),
@@ -327,29 +390,13 @@ export default function App() {
       ]);
       setChatPrompt("");
     } catch (caught) {
+      // Remove any streaming placeholder turn on error.
+      setChatTurns((prev) => prev.filter((t) => t.id !== assistantTurnId || t.text !== ""));
       const refreshedToken = await refreshDevTokenAfterUnauthorized(caught);
       if (refreshedToken) {
         try {
           const retryClient = new HelpdeskApiClient({ baseUrl: apiBaseUrl, token: refreshedToken });
-          const result = await retryClient.answerQuestion(
-            {
-              question: prompt,
-              sessionId,
-              userId,
-              standardsScope: standardsScope.length > 0 ? standardsScope : undefined,
-              language: "en",
-              generationProfile: chatProfile,
-              controllerProfile,
-              options: {
-                maxCitations: 5,
-                allowAbstain: true,
-                faqMinConfidence: chatProfile === "llm-ready" ? 1.0 : 0.85,
-                retrievalTopK: 6,
-                retrievalMinScore: 0.62,
-              },
-            },
-            requestId
-          );
+          const result = await retryClient.answerQuestion(answerPayload, requestId);
 
           setAnswerResult(result);
           setQuestion(prompt);
@@ -357,7 +404,7 @@ export default function App() {
           setChatTurns((prev) => [
             ...prev,
             {
-              id: `a-${requestId}`,
+              id: assistantTurnId,
               role: "assistant",
               text: result.answer,
               createdAt: new Date().toISOString(),
@@ -390,23 +437,62 @@ export default function App() {
 
     try {
       const requestId = createRequestId();
-      const result = await client.answerQuestion(
-        {
-          question,
-          sessionId,
-          userId,
-          standardsScope,
-          language: "en",
-          options: {
-            maxCitations: 5,
-            allowAbstain: true,
-            faqMinConfidence: 0.85,
-            retrievalTopK: 6,
-            retrievalMinScore: 0.62,
-          },
+      const answerPayload = {
+        question,
+        sessionId,
+        userId,
+        standardsScope,
+        language: "en",
+        generationProfile: chatProfile,
+        controllerProfile,
+        options: {
+          maxCitations: 5,
+          allowAbstain: true,
+          faqMinConfidence: chatProfile === "llm-ready" ? 1.0 : 0.85,
+          retrievalTopK: 6,
+          retrievalMinScore: 0.62,
         },
-        requestId
-      );
+      };
+
+      const useStreaming = chatProfile === "llm-ready";
+      if (useStreaming) {
+        setAnswerResult({
+          answerId: `streaming-${requestId}`,
+          mode: "rag",
+          confidence: 0,
+          answer: "",
+          citations: [],
+          abstained: false,
+          abstentionReason: null,
+          reviewRequired: true,
+          trace: {
+            requestId,
+            questionEventId: `streaming-${requestId}`,
+            matchedFaqEntryId: null,
+            retrievalEventIds: [],
+          },
+        });
+
+        const result = await client.answerQuestionStream(
+          answerPayload,
+          requestId,
+          (delta) => {
+            setAnswerResult((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    answer: prev.answer + delta,
+                  }
+                : prev
+            );
+          }
+        );
+        setAnswerResult(result);
+        setEditorialResult(null);
+        return;
+      }
+
+      const result = await client.answerQuestion(answerPayload, requestId);
       setAnswerResult(result);
       setEditorialResult(null);
     } catch (caught) {
@@ -415,23 +501,62 @@ export default function App() {
         try {
           const retryClient = new HelpdeskApiClient({ baseUrl: apiBaseUrl, token: refreshedToken });
           const requestId = createRequestId();
-          const result = await retryClient.answerQuestion(
-            {
-              question,
-              sessionId,
-              userId,
-              standardsScope,
-              language: "en",
-              options: {
-                maxCitations: 5,
-                allowAbstain: true,
-                faqMinConfidence: 0.85,
-                retrievalTopK: 6,
-                retrievalMinScore: 0.62,
-              },
+          const answerPayload = {
+            question,
+            sessionId,
+            userId,
+            standardsScope,
+            language: "en",
+            generationProfile: chatProfile,
+            controllerProfile,
+            options: {
+              maxCitations: 5,
+              allowAbstain: true,
+              faqMinConfidence: chatProfile === "llm-ready" ? 1.0 : 0.85,
+              retrievalTopK: 6,
+              retrievalMinScore: 0.62,
             },
-            requestId
-          );
+          };
+
+          const useStreaming = chatProfile === "llm-ready";
+          if (useStreaming) {
+            setAnswerResult({
+              answerId: `streaming-${requestId}`,
+              mode: "rag",
+              confidence: 0,
+              answer: "",
+              citations: [],
+              abstained: false,
+              abstentionReason: null,
+              reviewRequired: true,
+              trace: {
+                requestId,
+                questionEventId: `streaming-${requestId}`,
+                matchedFaqEntryId: null,
+                retrievalEventIds: [],
+              },
+            });
+
+            const result = await retryClient.answerQuestionStream(
+              answerPayload,
+              requestId,
+              (delta) => {
+                setAnswerResult((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        answer: prev.answer + delta,
+                      }
+                    : prev
+                );
+              }
+            );
+            setAnswerResult(result);
+            setEditorialResult(null);
+            return;
+          }
+
+          const result = await retryClient.answerQuestion(answerPayload, requestId);
           setAnswerResult(result);
           setEditorialResult(null);
           return;
