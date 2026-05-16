@@ -27,6 +27,9 @@
 # Core Transport Concept Alignments
 #################################################################
 
+netex:NeTEx
+    owl:equivalentClass nits:NeTExSpecification .
+
 netex:Service
     owl:equivalentClass nits:Service .
 

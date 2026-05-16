@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import type { FormEvent } from "react";
 
 import type { AnswerResponse, StandardsScope } from "../types";
@@ -59,14 +59,42 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
   } = props;
 
   const latestUserTurnId = [...chatTurns].reverse().find((turn) => turn.role === "user")?.id;
+  const chatLogRef = useRef<HTMLDivElement | null>(null);
   const latestUserTurnRef = useRef<HTMLElement | null>(null);
 
-  useEffect(() => {
-    if (!busy || !latestUserTurnRef.current) {
+  const alignLatestUserBubbleToTop = () => {
+    if (!latestUserTurnRef.current || !chatLogRef.current) {
       return;
     }
 
-    latestUserTurnRef.current.scrollIntoView({ block: "nearest", behavior: "auto" });
+    const chatLog = chatLogRef.current;
+    const latestUserTurn = latestUserTurnRef.current;
+    const containerRect = chatLog.getBoundingClientRect();
+    const bubbleRect = latestUserTurn.getBoundingClientRect();
+    const delta = bubbleRect.top - containerRect.top;
+    chatLog.scrollTop = Math.max(0, chatLog.scrollTop + delta - 8);
+  };
+
+  useLayoutEffect(() => {
+    if (!busy || !latestUserTurnRef.current || !chatLogRef.current) {
+      return;
+    }
+
+    alignLatestUserBubbleToTop();
+    const frameId = window.requestAnimationFrame(alignLatestUserBubbleToTop);
+    return () => window.cancelAnimationFrame(frameId);
+  }, [busy, latestUserTurnId, chatTurns.length]);
+
+  useEffect(() => {
+    if (!busy) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      alignLatestUserBubbleToTop();
+    }, 60);
+
+    return () => window.clearInterval(intervalId);
   }, [busy, latestUserTurnId]);
 
   return (
@@ -93,7 +121,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
           </div>
         </details>
 
-        <div className="chat-log" aria-live="polite">
+        <div className="chat-log" aria-live="polite" ref={chatLogRef}>
           {chatTurns.length === 0 && <p className="muted">Start a conversation. The client remembers turn history in this session.</p>}
           {chatTurns.map((turn) => (
             <article

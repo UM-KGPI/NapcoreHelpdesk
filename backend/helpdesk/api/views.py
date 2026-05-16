@@ -1,6 +1,7 @@
 from collections import defaultdict
 import datetime as dt
 from datetime import timedelta
+import json
 import logging
 from pathlib import Path
 import subprocess
@@ -11,6 +12,7 @@ from django.conf import settings
 from django.db import connection
 from django.db import transaction
 from django.db.models import Q
+from django.http import StreamingHttpResponse
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import AllowAny
@@ -32,7 +34,7 @@ from helpdesk.services.event_logger import log_question_event
 from helpdesk.services.faq_publication import publish_queue_item_to_faq
 from helpdesk.services.faq_matcher import match_faq
 from helpdesk.services.grounded_generator import generate_answer
-from helpdesk.services.llm_generator import LLMGenerationError, generate_answer_llm
+from helpdesk.services.llm_generator import LLMGenerationError, generate_answer_llm, stream_answer_llm
 from helpdesk.services.ontology_registry import current_ontology_version_payload
 from helpdesk.services.policy_guard import evaluate_policy
 from helpdesk.services.provenance_mapper import persist_evidence_provenance
@@ -1049,6 +1051,396 @@ class QuestionAnswerView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+class QuestionAnswerStreamView(APIView):
+    """
+    Streaming variant of QuestionAnswerView. Returns an SSE stream so the
+    browser can render narration tokens as they arrive from the LLM.
+
+    SSE event shapes:
+      data: {"type":"token","delta":"..."}
+      data: {"type":"done","answer":{...full AnswerResponse payload...}}
+      data: {"type":"error","code":"...","message":"..."}
+
+    Note: true per-token streaming at the WSGI layer requires an async or
+    green-thread worker (e.g. gunicorn with gevent).  Django's dev server
+    (runserver) streams correctly.  Nginx must be configured with
+    proxy_buffering off or X-Accel-Buffering: no (set below).
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        # Pass StreamingHttpResponse through without DRF wrapping.
+        if isinstance(response, StreamingHttpResponse):
+            return response
+        return super().finalize_response(request, response, *args, **kwargs)
+
+    def post(self, request):
+        request_id = _request_id(request)
+        if "X-Request-Id" not in request.headers:
+            return _error_response(
+                code="MISSING_HEADER",
+                message="X-Request-Id header is required.",
+                request_id=request_id,
+                http_status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = AnswerRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        data = serializer.validated_data
+
+        streaming_response = StreamingHttpResponse(
+            self._event_stream(request, data, request_id),
+            content_type="text/event-stream",
+        )
+        streaming_response["Cache-Control"] = "no-cache"
+        streaming_response["X-Accel-Buffering"] = "no"
+        return streaming_response
+
+    def _sse(self, payload: dict) -> str:
+        return f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
+
+    def _event_stream(self, request, data, request_id):  # noqa: C901
+        options = data.get("options", {})
+        question = data["question"].strip()
+        scope = data.get("standardsScope", [])
+        semantic_query = parse_question_to_semantic_query(text=question, requested_scope=scope)
+        semantic_query_dict = semantic_query.as_dict() if hasattr(semantic_query, "as_dict") else {}
+        effective_scope = scope or semantic_query.candidate_standards
+        semantic_disambiguation_required = False
+        semantic_disambiguation_prompt = None
+        semantic_fallback = None
+        generation_profile = data.get("generationProfile", "llm-ready")
+        controller_profile = data.get("controllerProfile", generation_profile)
+        allow_abstain = options.get("allowAbstain", True)
+        faq_min_confidence = options.get("faqMinConfidence", 0.85)
+        max_citations = options.get("maxCitations", 5)
+        retrieval_top_k = options.get("retrievalTopK", 6)
+        retrieval_min_score = options.get("retrievalMinScore", 0.62)
+
+        mode = QuestionEvent.MODE_RAG
+        confidence = 0.0
+        abstained = False
+        abstention_reason = None
+        review_required = True
+        matched_faq_entry_id = None
+        retrieval_event_ids = []
+        evidence_link_ids = []
+        citations = []
+        retrieved_chunks = []
+        rule_result = {"rulesEvaluated": [], "conclusions": [], "matchedRuleCount": 0}
+        ontology_versions = []
+        graph_trace = {
+            "graphRagVariant": "control",
+            "graphExpansionHops": 0,
+            "graphExpansionSource": "none",
+            "graphConceptIds": [],
+            "graphCandidatesAdded": 0,
+            "graphEvidenceCount": 0,
+            "graphScoreContribution": 0.0,
+            "graphProvenanceChainCount": 0,
+            "repositoryCoverageCount": 0,
+            "conceptCoverageCount": 0,
+            "semanticAlignmentScore": 0.0,
+            "retrievalLatencyMs": 0.0,
+        }
+        controller_route = None
+
+        if controller_profile == "llm-ready":
+            try:
+                controller_decision = decide_route_with_controller_llm(
+                    question=question,
+                    requested_scope=effective_scope,
+                    semantic_query=semantic_query_dict,
+                )
+                controller_route = controller_decision.route if controller_decision else None
+            except ControllerLLMError:
+                controller_route = None
+
+        if not scope and semantic_query.ambiguous_core_concept and len(effective_scope) > 1:
+            effective_scope = [effective_scope[0]]
+            semantic_disambiguation_required = True
+            semantic_disambiguation_prompt = (
+                "Your question maps to multiple core concepts. "
+                "Please clarify the intended standard or artifact type for a more precise answer."
+            )
+            semantic_fallback = "AMBIGUOUS_CORE_CONCEPT"
+
+        semantic_confidence = getattr(semantic_query, "confidence", None)
+        if semantic_confidence is None and hasattr(semantic_query, "as_dict"):
+            semantic_confidence = (semantic_query.as_dict() or {}).get("confidence")
+        semantic_confidence = semantic_confidence or {}
+        concept_confidence = semantic_confidence.get("concept")
+        semantic_low_confidence_threshold = float(
+            getattr(settings, "SEMANTIC_LOW_CONFIDENCE_THRESHOLD", 0.60)
+        )
+
+        faq_match = match_faq(question=question, scope=effective_scope)
+        answer_text = ""
+
+        if (
+            controller_route != "rag"
+            and faq_match
+            and faq_match["confidence"] >= faq_min_confidence
+            and faq_match.get("scope_match", True)
+        ):
+            mode = QuestionEvent.MODE_FAQ
+            confidence = faq_match["confidence"]
+            review_required = faq_match["review_required"]
+            matched_faq_entry_id = faq_match["faq_entry_id"]
+            answer_text = faq_match["answer"]
+            citations = faq_match["citations"][:max_citations]
+        elif semantic_query.core_concept == "nits:unknown-concept" and allow_abstain and not effective_scope:
+            mode = QuestionEvent.MODE_ABSTAIN
+            confidence = 0.0
+            abstained = True
+            abstention_reason = QuestionEvent.REASON_INSUFFICIENT_EVIDENCE
+            review_required = True
+            semantic_fallback = "NO_CONCEPT_MATCH"
+            answer_text = (
+                "I could not map your question to a known standards concept yet. "
+                "Please clarify by naming a concrete concept, artifact, or standard scope."
+            )
+            citations = []
+        elif (
+            concept_confidence is not None
+            and float(concept_confidence) < semantic_low_confidence_threshold
+            and allow_abstain
+            and not scope
+        ):
+            mode = QuestionEvent.MODE_ABSTAIN
+            confidence = 0.0
+            abstained = True
+            abstention_reason = QuestionEvent.REASON_INSUFFICIENT_EVIDENCE
+            review_required = True
+            semantic_fallback = "NO_CONCEPT_MATCH"
+            answer_text = (
+                "I cannot safely determine the intended standards concept from this question yet. "
+                "Please clarify the target concept or provide a standards scope."
+            )
+            citations = []
+        else:
+            graph_rag_enabled = _resolve_graph_rag_enabled(options)
+            chunks, graph_trace = retrieve_chunks_with_trace(
+                question=question,
+                top_k=retrieval_top_k,
+                min_score=retrieval_min_score,
+                scope=effective_scope,
+                graph_rag_enabled=graph_rag_enabled,
+            )
+            relaxed_min_score = min(retrieval_min_score, 0.45)
+            if not chunks and relaxed_min_score < retrieval_min_score:
+                chunks, graph_trace = retrieve_chunks_with_trace(
+                    question=question,
+                    top_k=retrieval_top_k,
+                    min_score=relaxed_min_score,
+                    scope=effective_scope,
+                    graph_rag_enabled=graph_rag_enabled,
+                )
+            _SEMANTIC_ALIGNMENT_RETRY_THRESHOLD = 0.35
+            if chunks and graph_trace.get("semanticAlignmentScore", 1.0) < _SEMANTIC_ALIGNMENT_RETRY_THRESHOLD:
+                wider_chunks, wider_trace = retrieve_chunks_with_trace(
+                    question=question,
+                    top_k=retrieval_top_k * 2,
+                    min_score=relaxed_min_score,
+                    scope=effective_scope,
+                    graph_rag_enabled=graph_rag_enabled,
+                )
+                if wider_trace.get("semanticAlignmentScore", 0.0) > graph_trace.get("semanticAlignmentScore", 0.0):
+                    chunks, graph_trace = wider_chunks, wider_trace
+
+            retrieved_chunks = chunks
+            retrieval_event_ids = [chunk["retrievalEventId"] for chunk in chunks]
+
+            if getattr(settings, "EVIDENCE_GATE_ENABLED", False):
+                evidence_gate = _evaluate_evidence_gate(
+                    chunks=chunks,
+                    graph_trace=graph_trace,
+                    effective_scope=effective_scope,
+                )
+            else:
+                evidence_gate = {"allowed": True, "reason": None, "review_required": True}
+
+            if (not chunks or not evidence_gate["allowed"]) and allow_abstain:
+                mode = QuestionEvent.MODE_ABSTAIN
+                confidence = 0.0
+                abstained = True
+                abstention_reason = QuestionEvent.REASON_INSUFFICIENT_EVIDENCE
+                review_required = evidence_gate.get("review_required", False)
+                if semantic_fallback is None and not evidence_gate.get("allowed", True):
+                    semantic_fallback = "PARTIAL_EVIDENCE"
+                answer_text = "I do not have sufficient approved-source evidence to answer this safely."
+            else:
+                use_llm = generation_profile == "llm-ready" and settings.LLM_ENABLED
+                if use_llm:
+                    # Stream tokens to the client; accumulate for post-stream processing.
+                    generated = None
+                    try:
+                        for event_type, payload in stream_answer_llm(
+                            question=question,
+                            chunks=chunks,
+                            scope=effective_scope,
+                        ):
+                            if event_type == "token":
+                                yield self._sse({"type": "token", "delta": payload})
+                            elif event_type == "done":
+                                generated = payload
+                    except LLMGenerationError as exc:
+                        logger.warning(
+                            "LLM stream generation failed; falling back to deterministic answer",
+                            extra={"requestId": request_id},
+                            exc_info=True,
+                        )
+                        # Tokens may have been partially emitted; signal client to discard them.
+                        yield self._sse({"type": "llm_fallback", "message": str(exc)})
+                        generated = generate_answer(question=question, chunks=chunks)
+
+                    answer_text = generated["answer"]
+                    confidence = generated["confidence"]
+                    review_required = generated["review_required"]
+                else:
+                    generated = generate_answer(question=question, chunks=chunks)
+                    answer_text = generated["answer"]
+                    confidence = generated["confidence"]
+                    review_required = generated["review_required"]
+
+                citations = _select_citations(chunks=chunks, max_citations=max_citations)
+                policy = evaluate_policy(answer_text=answer_text, citations=citations)
+                if not policy["allowed"]:
+                    if allow_abstain:
+                        mode = QuestionEvent.MODE_ABSTAIN
+                        confidence = 0.0
+                        abstained = True
+                        abstention_reason = policy["reason"]
+                        review_required = policy["review_required"]
+                        citations = []
+                        answer_text = "I do not have sufficient approved-source evidence to answer this safely."
+                    else:
+                        yield self._sse({
+                            "type": "error",
+                            "code": "POLICY_BLOCK",
+                            "message": "Request cannot be answered within policy constraints.",
+                        })
+                        return
+                else:
+                    mode = QuestionEvent.MODE_RAG
+                    review_required = policy["review_required"] or review_required
+
+            if mode == QuestionEvent.MODE_RAG and retrieved_chunks:
+                rule_result = evaluate_semantic_rules(
+                    semantic_query=semantic_query,
+                    retrieved_chunks=retrieved_chunks,
+                    effective_scope=effective_scope,
+                )
+                ontology_versions = current_ontology_version_payload()
+
+        answer_text = _inject_evidence_markers_if_missing(answer_text=answer_text, citations=citations)
+        answer_text = _rewrite_source_paths_as_evidence_markers(answer_text=answer_text, citations=citations)
+
+        answer_id = f"ans-{uuid4().hex[:12]}"
+
+        event = log_question_event(
+            {
+                "request_id": request_id,
+                "question": question,
+                "session_id": data.get("sessionId", ""),
+                "user_id": data.get("userId", ""),
+                "standards_scope": effective_scope,
+                "language": data.get("language", "en"),
+                "mode": mode,
+                "confidence": confidence,
+                "answer": answer_text,
+                "abstained": abstained,
+                "abstention_reason": abstention_reason,
+                "review_required": review_required,
+                "matched_faq_entry_id": matched_faq_entry_id,
+                "retrieval_event_ids": retrieval_event_ids,
+                "evidence_link_ids": evidence_link_ids,
+            }
+        )
+
+        persisted_retrieval_ids = log_retrieval_events(question_event=event, chunks=retrieved_chunks)
+        evidence_link_ids = map_evidence(question_event=event, answer_id=answer_id, chunks=citations)
+        citation_chunks = []
+        if citations and retrieved_chunks:
+            chunks_by_id = {chunk.get("chunkId"): chunk for chunk in retrieved_chunks if chunk.get("chunkId")}
+            for citation in citations:
+                chunk = chunks_by_id.get(citation.get("chunkId"))
+                if chunk:
+                    citation_chunks.append(chunk)
+        provenance_ids = persist_evidence_provenance(
+            question_event=event,
+            answer_id=answer_id,
+            chunks=citation_chunks,
+            semantic_query=semantic_query,
+            graph_trace=graph_trace,
+            rule_result=rule_result,
+        )
+        event.retrieval_event_ids = persisted_retrieval_ids
+        event.evidence_link_ids = evidence_link_ids
+        event.save(update_fields=["retrieval_event_ids", "evidence_link_ids", "updated_at"])
+
+        partial_evidence = _classify_partial_evidence(
+            mode=mode,
+            abstained=abstained,
+            confidence=confidence,
+            chunks=retrieved_chunks,
+            graph_trace=graph_trace,
+            effective_scope=effective_scope,
+        )
+        cross_standard_analysis = _build_cross_standard_analysis(
+            mode=mode,
+            effective_scope=effective_scope,
+            chunks=retrieved_chunks,
+        )
+        if partial_evidence["semanticProvisional"] and semantic_fallback is None:
+            semantic_fallback = "PARTIAL_EVIDENCE"
+
+        yield self._sse({
+            "type": "done",
+            "answer": {
+                "answerId": answer_id,
+                "mode": mode,
+                "confidence": confidence,
+                "answer": answer_text,
+                "citations": citations,
+                "abstained": abstained,
+                "abstentionReason": abstention_reason,
+                "reviewRequired": review_required,
+                "trace": {
+                    "requestId": request_id,
+                    "questionEventId": str(event.id),
+                    "matchedFaqEntryId": matched_faq_entry_id,
+                    "retrievalEventIds": persisted_retrieval_ids,
+                    "evidenceLinkIds": evidence_link_ids,
+                    "graphExpansionHops": graph_trace["graphExpansionHops"],
+                    "graphConceptIds": graph_trace["graphConceptIds"],
+                    "graphEvidenceCount": graph_trace["graphEvidenceCount"],
+                    "graphScoreContribution": graph_trace["graphScoreContribution"],
+                    "repositoryCoverageCount": graph_trace.get("repositoryCoverageCount", 0),
+                    "conceptCoverageCount": graph_trace.get("conceptCoverageCount", 0),
+                    "semanticAlignmentScore": graph_trace.get("semanticAlignmentScore", 0.0),
+                    "provenanceIds": provenance_ids,
+                    "ruleHitsCount": rule_result["matchedRuleCount"],
+                    "ruleConclusions": rule_result["conclusions"],
+                    "ontologyVersions": ontology_versions,
+                    "semanticQuery": semantic_query_dict,
+                    "semanticDisambiguationRequired": semantic_disambiguation_required,
+                    "semanticDisambiguationPrompt": semantic_disambiguation_prompt,
+                    "semanticFallback": semantic_fallback,
+                    "semanticProvisional": partial_evidence["semanticProvisional"],
+                    "semanticProvisionalReason": partial_evidence["semanticProvisionalReason"],
+                    "evidenceCoverageLevel": partial_evidence["evidenceCoverageLevel"],
+                    "crossStandardConflict": cross_standard_analysis["crossStandardConflict"],
+                    "crossStandardConflictType": cross_standard_analysis["crossStandardConflictType"],
+                    "crossStandardEvidencePartitions": cross_standard_analysis["crossStandardEvidencePartitions"],
+                },
+            },
+        })
 
 
 class PromotionCandidatesView(APIView):
