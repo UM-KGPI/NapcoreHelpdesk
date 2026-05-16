@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import AnswerMarkdown from "./AnswerMarkdown";
 
 import type {
@@ -115,6 +115,8 @@ interface EditorConsoleWorkspaceProps {
 
 export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProps) {
   const [activeTab, setActiveTab] = useState<EditorTab>("indexing");
+  const answerResultRef = useRef<HTMLElement | null>(null);
+  const lastAnswerRequestIdRef = useRef<string | null>(null);
   const {
     question,
     sessionId,
@@ -193,6 +195,16 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
     onIndexRepository,
   } = props;
 
+  useEffect(() => {
+    const requestId = answerResult?.trace.requestId;
+    if (!requestId || requestId === lastAnswerRequestIdRef.current) {
+      return;
+    }
+
+    lastAnswerRequestIdRef.current = requestId;
+    answerResultRef.current?.scrollIntoView({ block: "start", behavior: "auto" });
+  }, [answerResult?.trace.requestId]);
+
   const canQueueCurrentAnswer = Boolean(answerResult?.trace.questionEventId);
 
   return (
@@ -237,8 +249,12 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
               </form>
 
               {answerResult && (
-                <article className="result-card">
+                <article className="result-card" ref={answerResultRef}>
                   <h3>Answer Result</h3>
+                  <div className="answer-stream-question">
+                    <p className="muted tiny">Question</p>
+                    <p>{question}</p>
+                  </div>
                   <p className="mode-pill">mode: {answerResult.mode}</p>
                   <AnswerMarkdown text={answerResult.answer} />
                   <p>

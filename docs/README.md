@@ -47,3 +47,4 @@ This index reduces discovery overhead by grouping the most important documents f
 - Root-level documents (`README.md`, `CONTRIBUTING.md`) are the primary public entrypoints.
 - Detailed implementation and operational material remains under `docs/`.
 - New docs should be added only when existing pages cannot be extended cleanly.
+- Ontology pipeline known limitation: after regenerating `docs/ontology/standards/netex.ttl`, a manual `netex:NeTEx` root concept + label patch is currently required to preserve plain-language NeTEx semantic anchoring; see `docs/ontology/README.md` for the authoritative regeneration checklist.
