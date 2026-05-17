@@ -9,11 +9,13 @@ on:
 
 permissions:
   contents: write
-  pull-requests: read
+  pull-requests: write
 
 jobs:
   bump-version:
-    if: github.event.pull_request.merged == true
+    if: >-
+      github.event.pull_request.merged == true &&
+      !startsWith(github.event.pull_request.title, 'chore(version): bump to')
     runs-on: ubuntu-latest
 
     steps:
@@ -85,35 +87,44 @@ jobs:
           echo "$new_version" > VERSION
           echo "new_version=$new_version" >> "$GITHUB_OUTPUT"
 
-      - name: Commit and push VERSION bump
+      - name: Create VERSION bump pull request
+        id: create_pr
         env:
           NEW_VERSION: ${{ steps.bump_version.outputs.new_version }}
           BUMP: ${{ steps.bump_level.outputs.bump }}
           LABELS: ${{ steps.bump_level.outputs.labels }}
-        run: |
-          set -euo pipefail
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          if git diff --quiet -- VERSION; then
-            echo "No VERSION change detected; nothing to commit."
-            exit 0
-          fi
-
-          git add VERSION
-          git commit -m "chore(version): bump to $NEW_VERSION ($BUMP)"
-          git push
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore(version): bump to ${{ steps.bump_version.outputs.new_version }} (${{ steps.bump_level.outputs.bump }})"
+          title: "chore(version): bump to ${{ steps.bump_version.outputs.new_version }} (${{ steps.bump_level.outputs.bump }})"
+          body: |
+            ## Automated version bump
+            - Triggered by merged PR #${{ github.event.pull_request.number }}
+            - Source PR labels: ${{ steps.bump_level.outputs.labels }}
+            - Applied bump: ${{ steps.bump_level.outputs.bump }}
+            - New VERSION: ${{ steps.bump_version.outputs.new_version }}
+          base: main
+          branch: chore/version-bump-${{ steps.bump_version.outputs.new_version }}
+          delete-branch: true
+          add-paths: |
+            VERSION
 
       - name: Workflow summary
         env:
           NEW_VERSION: ${{ steps.bump_version.outputs.new_version }}
           BUMP: ${{ steps.bump_level.outputs.bump }}
           LABELS: ${{ steps.bump_level.outputs.labels }}
+          PR_URL: ${{ steps.create_pr.outputs.pull-request-url }}
         run: |
           {
             echo "## Version Bump"
             echo "- PR labels: $LABELS"
             echo "- Applied bump: $BUMP"
             echo "- New VERSION: $NEW_VERSION"
+            if [[ -n "${PR_URL:-}" ]]; then
+              echo "- Opened bump PR: $PR_URL"
+            else
+              echo "- No bump PR opened (likely no VERSION diff)."
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
