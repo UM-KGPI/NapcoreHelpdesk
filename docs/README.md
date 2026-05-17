@@ -27,6 +27,7 @@ This index reduces discovery overhead by grouping the most important documents f
 - [First user testing pack](testing/first-user-testing-pack.md)
 - [Backup and restore workflow](testing/backup-restore-workflow.md)
 - [Docker dev quickstart](testing/docker-dev-quickstart.md)
+- [LLM token and cost estimates](testing/llm-token-cost-estimates.md)
 
 ## Requirements
 

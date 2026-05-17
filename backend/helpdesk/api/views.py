@@ -46,6 +46,7 @@ from helpdesk.services.rule_engine import evaluate_semantic_rules
 from helpdesk.services.runtime_requirements import ensure_graph_runtime_ready
 
 from .serializers import (
+    AnswerFeedbackRequestSerializer,
     AnswerRequestSerializer,
     EditorialQueueListQuerySerializer,
     EditorialQueueMetricsQuerySerializer,
@@ -1047,6 +1048,8 @@ class QuestionAnswerView(APIView):
                     "crossStandardEvidencePartitions": cross_standard_analysis[
                         "crossStandardEvidencePartitions"
                     ],
+                    "userLikes": event.user_likes,
+                    "userDislikes": event.user_dislikes,
                 }
             },
             status=status.HTTP_200_OK,
@@ -1438,9 +1441,47 @@ class QuestionAnswerStreamView(APIView):
                     "crossStandardConflict": cross_standard_analysis["crossStandardConflict"],
                     "crossStandardConflictType": cross_standard_analysis["crossStandardConflictType"],
                     "crossStandardEvidencePartitions": cross_standard_analysis["crossStandardEvidencePartitions"],
+                    "userLikes": event.user_likes,
+                    "userDislikes": event.user_dislikes,
                 },
             },
         })
+
+
+class QuestionFeedbackView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        request_id = _request_id(request)
+        serializer = AnswerFeedbackRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        event = QuestionEvent.objects.filter(request_id=data["requestId"]).order_by("-created_at").first()
+        if event is None:
+            return _error_response(
+                code="REQUEST_NOT_FOUND",
+                message="requestId does not reference an existing question event.",
+                request_id=request_id,
+                http_status=status.HTTP_404_NOT_FOUND,
+            )
+
+        user_likes = bool(data.get("userLikes", False))
+        user_dislikes = bool(data.get("userDislikes", False))
+
+        event.user_likes = user_likes
+        event.user_dislikes = user_dislikes
+        event.save(update_fields=["user_likes", "user_dislikes", "updated_at"])
+
+        return Response(
+            {
+                "requestId": event.request_id,
+                "questionEventId": str(event.id),
+                "userLikes": event.user_likes,
+                "userDislikes": event.user_dislikes,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class PromotionCandidatesView(APIView):
@@ -1462,6 +1503,7 @@ class PromotionCandidatesView(APIView):
             lambda: {
                 "questionCount": 0,
                 "lastAskedAt": None,
+                "lastQuestionEventId": None,
                 "unresolved": False,
             }
         )
@@ -1471,7 +1513,9 @@ class PromotionCandidatesView(APIView):
             intent = " ".join(event.question.lower().strip().split())
             bucket = buckets[intent]
             bucket["questionCount"] += 1
-            bucket["lastAskedAt"] = max(bucket["lastAskedAt"], event.created_at) if bucket["lastAskedAt"] else event.created_at
+            if bucket["lastAskedAt"] is None or event.created_at >= bucket["lastAskedAt"]:
+                bucket["lastAskedAt"] = event.created_at
+                bucket["lastQuestionEventId"] = str(event.id)
             bucket["unresolved"] = bucket["unresolved"] or event.review_required or event.abstained
 
         items = []
@@ -1489,6 +1533,7 @@ class PromotionCandidatesView(APIView):
 
             items.append(
                 {
+                    "questionEventId": bucket["lastQuestionEventId"],
                     "normalizedIntent": intent,
                     "questionCount": count,
                     "notHelpfulRate": 0.0,
@@ -1724,6 +1769,9 @@ class EditorialQueueMetricsView(APIView):
             created_at__gte=now - timedelta(hours=72),
         ).count()
         age_over_72 = unresolved.filter(created_at__lt=now - timedelta(hours=72)).count()
+        # Feedback counters are computed from question events in the same window.
+        feedback_window_events = QuestionEvent.objects.filter(created_at__gte=since)
+        feedback_today_events = feedback_window_events.filter(created_at__gte=now - timedelta(hours=24))
 
         return Response(
             {
@@ -1740,6 +1788,14 @@ class EditorialQueueMetricsView(APIView):
                     "lt24h": age_0_24,
                     "h24to72": age_24_72,
                     "gt72h": age_over_72,
+                },
+                "feedbackToday": {
+                    "likes": feedback_today_events.filter(user_likes=True).count(),
+                    "dislikes": feedback_today_events.filter(user_dislikes=True).count(),
+                },
+                "feedbackWindow": {
+                    "likes": feedback_window_events.filter(user_likes=True).count(),
+                    "dislikes": feedback_window_events.filter(user_dislikes=True).count(),
                 },
             },
             status=status.HTTP_200_OK,

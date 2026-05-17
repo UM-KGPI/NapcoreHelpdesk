@@ -49,6 +49,19 @@ class AnswerRequestSerializer(serializers.Serializer):
     options = AnswerOptionsSerializer(required=False)
 
 
+class AnswerFeedbackRequestSerializer(serializers.Serializer):
+    """Payload for persisting per-answer user feedback by request ID."""
+
+    requestId = serializers.CharField()
+    userLikes = serializers.BooleanField(required=False, default=False)
+    userDislikes = serializers.BooleanField(required=False, default=False)
+
+    def validate(self, attrs):
+        if attrs.get("userLikes") and attrs.get("userDislikes"):
+            raise serializers.ValidationError("userLikes and userDislikes cannot both be true.")
+        return attrs
+
+
 class PromotionCandidatesQuerySerializer(serializers.Serializer):
     """Query params for generating FAQ promotion candidates from telemetry."""
 
