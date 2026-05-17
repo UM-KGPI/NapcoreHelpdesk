@@ -307,6 +307,54 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/questions/feedback:
+    post:
+      tags: [QnA]
+      summary: Persist user feedback for an answer by request ID
+      operationId: saveAnswerFeedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnswerFeedbackRequest'
+            examples:
+              like:
+                value:
+                  requestId: req-abc123
+                  userLikes: true
+                  userDislikes: false
+      responses:
+        '200':
+          description: Feedback persisted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnswerFeedbackResponse'
+        '400':
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: requestId not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/faqs/promotion-candidates:
     get:
       tags: [FAQOps]
@@ -810,6 +858,36 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CrossStandardEvidencePartition'
+        userLikes:
+          type: boolean
+        userDislikes:
+          type: boolean
+      additionalProperties: false
+    AnswerFeedbackRequest:
+      type: object
+      required: [requestId]
+      properties:
+        requestId:
+          type: string
+        userLikes:
+          type: boolean
+          default: false
+        userDislikes:
+          type: boolean
+          default: false
+      additionalProperties: false
+    AnswerFeedbackResponse:
+      type: object
+      required: [requestId, questionEventId, userLikes, userDislikes]
+      properties:
+        requestId:
+          type: string
+        questionEventId:
+          type: string
+        userLikes:
+          type: boolean
+        userDislikes:
+          type: boolean
       additionalProperties: false
     SemanticQuery:
       type: object
@@ -905,8 +983,10 @@ components:
     PromotionCandidate:
       type: object
       required:
-        [normalizedIntent, questionCount, notHelpfulRate, lastAskedAt, recommendedAction]
+        [questionEventId, normalizedIntent, questionCount, notHelpfulRate, lastAskedAt, recommendedAction]
       properties:
+        questionEventId:
+          type: string
         normalizedIntent:
           type: string
         questionCount:
@@ -1055,7 +1135,7 @@ components:
     EditorialQueueMetricsResponse:
       type: object
       required:
-        [windowDays, slaHours, generatedAt, totalItems, unresolvedItems, overdueItems, byStatus, byPriority, byReason, agingBuckets]
+        [windowDays, slaHours, generatedAt, totalItems, unresolvedItems, overdueItems, byStatus, byPriority, byReason, agingBuckets, feedbackToday, feedbackWindow]
       properties:
         windowDays:
           type: integer
@@ -1137,6 +1217,28 @@ components:
               type: integer
               minimum: 0
             gt72h:
+              type: integer
+              minimum: 0
+          additionalProperties: false
+        feedbackToday:
+          type: object
+          required: [likes, dislikes]
+          properties:
+            likes:
+              type: integer
+              minimum: 0
+            dislikes:
+              type: integer
+              minimum: 0
+          additionalProperties: false
+        feedbackWindow:
+          type: object
+          required: [likes, dislikes]
+          properties:
+            likes:
+              type: integer
+              minimum: 0
+            dislikes:
               type: integer
               minimum: 0
           additionalProperties: false

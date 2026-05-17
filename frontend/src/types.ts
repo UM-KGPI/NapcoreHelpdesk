@@ -54,6 +54,8 @@ export interface AnswerTrace {
     | "EVIDENCE_COVERAGE_ASYMMETRY"
     | null;
   crossStandardEvidencePartitions?: CrossStandardEvidencePartition[];
+  userLikes?: boolean;
+  userDislikes?: boolean;
 }
 
 export interface CrossStandardEvidencePartition {
@@ -77,6 +79,7 @@ export interface AnswerResponse {
 }
 
 export interface PromotionCandidate {
+  questionEventId: string;
   normalizedIntent: string;
   questionCount: number;
   notHelpfulRate: number;
@@ -147,6 +150,14 @@ export interface EditorialBoardMetricsResponse {
     lt24h: number;
     h24to72: number;
     gt72h: number;
+  };
+  feedbackToday: {
+    likes: number;
+    dislikes: number;
+  };
+  feedbackWindow: {
+    likes: number;
+    dislikes: number;
   };
 }
 

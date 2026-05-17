@@ -22,10 +22,12 @@ class QuestionEventAdmin(admin.ModelAdmin):
 		"confidence",
 		"abstained",
 		"review_required",
+		"user_likes",
+		"user_dislikes",
 		"created_at",
 	)
 	search_fields = ("request_id", "question", "session_id", "user_id")
-	list_filter = ("mode", "abstained", "review_required", "language")
+	list_filter = ("mode", "abstained", "review_required", "user_likes", "user_dislikes", "language")
 
 
 @admin.register(FAQEntry)
