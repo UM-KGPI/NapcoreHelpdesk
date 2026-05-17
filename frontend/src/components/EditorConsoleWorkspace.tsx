@@ -13,7 +13,7 @@ import type {
   StandardsScope,
 } from "../types";
 
-const STANDARDS: StandardsScope[] = ["Transmodel", "NeTEx", "SIRI", "OpRa", "DATEX II"];
+const STANDARDS: StandardsScope[] = ["Transmodel", "NeTEx", "SIRI", "OpRa"];
 const TRANSITION_ACTIONS = ["submit_for_review", "request_changes", "approve", "reject", "publish", "reopen"] as const;
 const BOARD_STATUSES = ["draft", "review", "approved", "rejected", "published"] as const;
 const BOARD_REASONS = ["LOW_CONFIDENCE", "CITATION_GAP", "POLICY_REVIEW", "USER_ESCALATION"] as const;
@@ -272,7 +272,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                         <li key={`${citation.chunkId}-${citation.sourcePath}`}>
                           <strong>{`[E${index + 1}]`}</strong>{" "}
                           <a href={citation.repositoryUrl} target="_blank" rel="noreferrer">{citation.label ?? citation.sourcePath}</a>
-                          <span className="muted"> · {citation.sourcePath} · {citation.commitSha.slice(0, 7)}</span>
+                          <span className="muted"> · {citation.sourcePath}</span>
                         </li>
                       ))}
                     </ul>
@@ -431,6 +431,10 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                     <div className="kpi-tile"><span>Total</span><strong>{boardMetrics.totalItems}</strong></div>
                     <div className="kpi-tile"><span>Unresolved</span><strong>{boardMetrics.unresolvedItems}</strong></div>
                     <div className="kpi-tile"><span>Overdue</span><strong>{boardMetrics.overdueItems}</strong></div>
+                    <div className="kpi-tile"><span>Likes 24h</span><strong>{boardMetrics.feedbackToday.likes}</strong></div>
+                    <div className="kpi-tile"><span>Dislikes 24h</span><strong>{boardMetrics.feedbackToday.dislikes}</strong></div>
+                    <div className="kpi-tile"><span>{`Likes ${boardMetrics.windowDays}d`}</span><strong>{boardMetrics.feedbackWindow.likes}</strong></div>
+                    <div className="kpi-tile"><span>{`Dislikes ${boardMetrics.windowDays}d`}</span><strong>{boardMetrics.feedbackWindow.dislikes}</strong></div>
                     <div className="kpi-tile"><span>Draft</span><strong>{boardMetrics.byStatus.draft}</strong></div>
                     <div className="kpi-tile"><span>Review</span><strong>{boardMetrics.byStatus.review}</strong></div>
                     <div className="kpi-tile"><span>Approved</span><strong>{boardMetrics.byStatus.approved}</strong></div>
@@ -578,6 +582,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                         <li key={`${item.normalizedIntent}-${item.lastAskedAt}`}>
                           <strong>{item.normalizedIntent}</strong>
                           <span className="muted"> · count {item.questionCount} · {item.recommendedAction}</span>
+                          <div className="muted tiny">questionEventId: {item.questionEventId}</div>
                         </li>
                       ))}
                     </ul>

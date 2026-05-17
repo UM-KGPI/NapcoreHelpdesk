@@ -34,6 +34,19 @@ export interface EditorialQueueRequest {
   priority?: "low" | "normal" | "high";
 }
 
+export interface AnswerFeedbackRequest {
+  requestId: string;
+  userLikes?: boolean;
+  userDislikes?: boolean;
+}
+
+export interface AnswerFeedbackResponse {
+  requestId: string;
+  questionEventId: string;
+  userLikes: boolean;
+  userDislikes: boolean;
+}
+
 export interface EditorialQueueTransitionRequest {
   queueItemId: string;
   action: "submit_for_review" | "request_changes" | "approve" | "reject" | "publish" | "reopen";
@@ -97,6 +110,13 @@ export class HelpdeskApiClient {
       headers: {
         "X-Request-Id": requestId,
       },
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async submitAnswerFeedback(payload: AnswerFeedbackRequest): Promise<AnswerFeedbackResponse> {
+    return this.request<AnswerFeedbackResponse>("/questions/feedback", {
+      method: "POST",
       body: JSON.stringify(payload),
     });
   }
