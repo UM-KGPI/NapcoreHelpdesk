@@ -140,7 +140,7 @@ export default function App() {
   const [boardPageSize, setBoardPageSize] = useState(10);
   const [metricsWindowDays, setMetricsWindowDays] = useState(30);
   const [metricsSlaHours, setMetricsSlaHours] = useState(72);
-  const [chatPrompt, setChatPrompt] = useState("How can I validate a NeTEx timetable profile before publishing?");
+  const [chatPrompt, setChatPrompt] = useState("How can I validate a timetable in NeTEx XML file before publishing?");
   const [chatTurns, setChatTurns] = useState<ChatTurn[]>([]);
   const [chatProfile, setChatProfile] = useState<ChatProfile>("llm-ready");
   const [controllerProfile, setControllerProfile] = useState<ChatProfile>("llm-ready");
@@ -571,6 +571,56 @@ export default function App() {
     }
   }
 
+  async function onSetAnswerFeedback(requestId: string, userLikes: boolean, userDislikes: boolean): Promise<void> {
+    setError(null);
+    try {
+      const result = await client.submitAnswerFeedback({
+        requestId,
+        userLikes,
+        userDislikes,
+      });
+
+      setChatTurns((prev) =>
+        prev.map((turn) => {
+          if (!turn.answer) {
+            return turn;
+          }
+          const turnRequestId = turn.requestId ?? turn.answer.trace.requestId;
+          if (turnRequestId !== result.requestId) {
+            return turn;
+          }
+          return {
+            ...turn,
+            answer: {
+              ...turn.answer,
+              trace: {
+                ...turn.answer.trace,
+                userLikes: result.userLikes,
+                userDislikes: result.userDislikes,
+              },
+            },
+          };
+        })
+      );
+
+      setAnswerResult((prev) => {
+        if (!prev || prev.trace.requestId !== result.requestId) {
+          return prev;
+        }
+        return {
+          ...prev,
+          trace: {
+            ...prev.trace,
+            userLikes: result.userLikes,
+            userDislikes: result.userDislikes,
+          },
+        };
+      });
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    }
+  }
+
   async function onLoadPromotionCandidates(): Promise<void> {
     setBusy(true);
     setError(null);
@@ -743,6 +793,7 @@ export default function App() {
                   setChatPrompt={setChatPrompt}
                   onSendChat={onSendChat}
                   onResetChatSession={onResetChatSession}
+                  onSetAnswerFeedback={onSetAnswerFeedback}
                 />
               }
             />

@@ -216,6 +216,14 @@ describe("Editorial Board flows", () => {
           h24to72: 3,
           gt72h: 1,
         },
+        feedbackToday: {
+          likes: 4,
+          dislikes: 1,
+        },
+        feedbackWindow: {
+          likes: 9,
+          dislikes: 3,
+        },
       })
     );
 
