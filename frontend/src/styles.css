@@ -579,6 +579,11 @@ button:disabled {
   padding: 0.45rem;
 }
 
+.board-table input[type="radio"] {
+  width: auto;
+  margin: 0;
+}
+
 .button-column {
   display: grid;
   gap: 0.3rem;

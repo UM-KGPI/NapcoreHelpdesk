@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import AnswerMarkdown from "./AnswerMarkdown";
 
 import type {
   AnswerResponse,
+  AskedQuestionRow,
   EditorialBoardMetricsResponse,
   EditorialBoardItem,
   EditorialBoardResponse,
@@ -41,6 +42,8 @@ interface EditorConsoleWorkspaceProps {
   userId: string;
   standardsScope: StandardsScope[];
   answerResult: AnswerResponse | null;
+  askedQuestions: AskedQuestionRow[];
+  selectedQuestionEventId: string;
   promotionResult: PromotionCandidatesResponse | null;
   editorialResult: EditorialQueueResponse | null;
   transitionResult: EditorialQueueTransitionResponse | null;
@@ -73,6 +76,7 @@ interface EditorConsoleWorkspaceProps {
   setOnlyUnresolved: (value: boolean) => void;
   setQueueReason: (value: QueueReason) => void;
   setQueuePriority: (value: QueuePriority) => void;
+  setSelectedQuestionEventId: (value: string) => void;
   setTransitionQueueItemId: (value: string) => void;
   setTransitionAction: (value: TransitionAction) => void;
   setTransitionComment: (value: string) => void;
@@ -85,8 +89,9 @@ interface EditorConsoleWorkspaceProps {
   setMetricsWindowDays: (value: number) => void;
   setMetricsSlaHours: (value: number) => void;
   onAskQuestion: (event: FormEvent<HTMLFormElement>) => Promise<void>;
+  onLoadAskedQuestions: () => Promise<void>;
   onLoadPromotionCandidates: () => Promise<void>;
-  onQueueEditorial: () => Promise<void>;
+  onQueueEditorial: (questionEventIdOverride?: string) => Promise<void>;
   onTransitionEditorial: () => Promise<void>;
   onLoadEditorialBoard: () => Promise<void>;
   onQuickTransition: (item: EditorialBoardItem, action: TransitionAction) => Promise<void>;
@@ -115,6 +120,9 @@ interface EditorConsoleWorkspaceProps {
 
 export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProps) {
   const [activeTab, setActiveTab] = useState<EditorTab>("indexing");
+  const [askedSearch, setAskedSearch] = useState("");
+  const [askedOnlyReviewRequired, setAskedOnlyReviewRequired] = useState(false);
+  const [askedMode, setAskedMode] = useState<"" | "faq" | "rag" | "abstain">("");
   const answerResultRef = useRef<HTMLElement | null>(null);
   const lastAnswerRequestIdRef = useRef<string | null>(null);
   const {
@@ -123,6 +131,8 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
     userId,
     standardsScope,
     answerResult,
+    askedQuestions,
+    selectedQuestionEventId,
     promotionResult,
     editorialResult,
     transitionResult,
@@ -155,6 +165,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
     setOnlyUnresolved,
     setQueueReason,
     setQueuePriority,
+    setSelectedQuestionEventId,
     setTransitionQueueItemId,
     setTransitionAction,
     setTransitionComment,
@@ -167,6 +178,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
     setMetricsWindowDays,
     setMetricsSlaHours,
     onAskQuestion,
+    onLoadAskedQuestions,
     onLoadPromotionCandidates,
     onQueueEditorial,
     onTransitionEditorial,
@@ -205,7 +217,40 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
     answerResultRef.current?.scrollIntoView({ block: "start", behavior: "auto" });
   }, [answerResult?.trace.requestId]);
 
-  const canQueueCurrentAnswer = Boolean(answerResult?.trace.questionEventId);
+  const filteredAskedQuestions = useMemo(() => {
+    const needle = askedSearch.trim().toLowerCase();
+    return askedQuestions.filter((item) => {
+      if (askedOnlyReviewRequired && !item.reviewRequired) {
+        return false;
+      }
+      if (askedMode && item.mode !== askedMode) {
+        return false;
+      }
+      if (!needle) {
+        return true;
+      }
+      return (
+        item.question.toLowerCase().includes(needle) ||
+        item.requestId.toLowerCase().includes(needle) ||
+        item.questionEventId.toLowerCase().includes(needle)
+      );
+    });
+  }, [askedMode, askedOnlyReviewRequired, askedQuestions, askedSearch]);
+
+  const askedModeCounts = useMemo(() => {
+    return askedQuestions.reduce(
+      (acc, item) => {
+        acc[item.mode] += 1;
+        return acc;
+      },
+      { faq: 0, rag: 0, abstain: 0 }
+    );
+  }, [askedQuestions]);
+
+  const canQueueSelectedQuestion = Boolean(selectedQuestionEventId);
+  const boardItems = boardResult?.items ?? [];
+  const inReviewBoardItems = boardItems.filter((item) => item.status !== "published");
+  const faqBoardItems = boardItems.filter((item) => item.status === "published");
 
   return (
     <section className="workspace-section editor-workspace">
@@ -320,8 +365,98 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
         {activeTab === "editorial" && (
           <>
             <section className="panel step-3-routing">
-              <h2>Send to Review Queue</h2>
-              <p className="muted">Take the current answer outcome and place it into editorial review with a reason and priority.</p>
+              <h2>Questions Asked</h2>
+              <p className="muted">Select questions from the full asked-question history and send chosen rows into review.</p>
+
+              <div className="grid-three">
+                <label>
+                  Search
+                  <input
+                    value={askedSearch}
+                    onChange={(event) => setAskedSearch(event.target.value)}
+                    placeholder="question, requestId, questionEventId"
+                  />
+                </label>
+                <label>
+                  Mode
+                  <select value={askedMode} onChange={(event) => setAskedMode(event.target.value as "" | "faq" | "rag" | "abstain") }>
+                    <option value="">any</option>
+                    <option value="faq">faq</option>
+                    <option value="rag">rag</option>
+                    <option value="abstain">abstain</option>
+                  </select>
+                </label>
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={askedOnlyReviewRequired}
+                    onChange={(event) => setAskedOnlyReviewRequired(event.target.checked)}
+                  />
+                  Only reviewRequired
+                </label>
+              </div>
+
+              <div className="button-row">
+                <button
+                  onClick={() => {
+                    setAskedSearch("");
+                    setAskedOnlyReviewRequired(false);
+                    setAskedMode("");
+                    void onLoadAskedQuestions();
+                  }}
+                  disabled={busy || !token}
+                >
+                  Load questions
+                </button>
+              </div>
+              <p className="muted tiny">Loaded mode counts: rag {askedModeCounts.rag} · faq {askedModeCounts.faq} · abstain {askedModeCounts.abstain}</p>
+
+              <h3>Questions</h3>
+              <p className="muted tiny">Select one row, then click Send Selected for Review.</p>
+              <div className="table-wrap">
+                <table className="board-table">
+                  <thead>
+                    <tr>
+                      <th>Select</th>
+                      <th>Question</th>
+                      <th>Mode</th>
+                      <th>Confidence</th>
+                      <th>reviewRequired</th>
+                      <th>Asked</th>
+                      <th>questionEventId</th>
+                      <th>requestId</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredAskedQuestions.length === 0 && (
+                      <tr>
+                        <td colSpan={8} className="muted">No stored question events found for current filters.</td>
+                      </tr>
+                    )}
+                    {filteredAskedQuestions.map((item) => (
+                      <tr key={item.requestId}>
+                        <td>
+                          <input
+                            type="radio"
+                            name="selectedQuestionForReview"
+                            checked={selectedQuestionEventId === item.questionEventId}
+                            onChange={() => setSelectedQuestionEventId(item.questionEventId)}
+                            aria-label={`Select question ${item.questionEventId}`}
+                          />
+                        </td>
+                        <td>{item.question}</td>
+                        <td>{item.mode}</td>
+                        <td>{item.confidence.toFixed(2)}</td>
+                        <td>{String(item.reviewRequired)}</td>
+                        <td>{item.askedAt}</td>
+                        <td>{item.questionEventId}</td>
+                        <td>{item.requestId}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
               <div className="stack">
                 <label>
                   Reason
@@ -340,7 +475,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                     <option value="high">high</option>
                   </select>
                 </label>
-                <button onClick={onQueueEditorial} disabled={busy || !token || !canQueueCurrentAnswer}>Send to Review</button>
+                <button onClick={() => onQueueEditorial(selectedQuestionEventId)} disabled={busy || !token || !canQueueSelectedQuestion}>Send Selected for Review</button>
               </div>
 
               {editorialResult && (
@@ -405,7 +540,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
             </section>
 
             <section className="panel step-5-board">
-              <h2>Review Queue</h2>
+              <h2>Questions In Review</h2>
               <p className="muted">Filter queue items, inspect workload metrics, and apply inline workflow actions.</p>
               <h3>Queue Metrics</h3>
               <div className="grid-three">
@@ -506,11 +641,11 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
 
               {boardResult && (
                 <article className="result-card">
-                  <h3>Queue Rows</h3>
+                  <h3>Questions In Review</h3>
                   <p className="muted">page {boardResult.page} · size {boardResult.pageSize} · total {boardResult.total}</p>
                   <p className="muted">roles: {(boardResult.actorRoles ?? []).join(", ") || "none"}</p>
-                  {(boardResult.items ?? []).length === 0 && <p className="muted">No queue items found.</p>}
-                  {(boardResult.items ?? []).length > 0 && (
+                  {inReviewBoardItems.length === 0 && <p className="muted">No in-review items found for current filters.</p>}
+                  {inReviewBoardItems.length > 0 && (
                     <div className="table-wrap">
                       <table className="board-table">
                         <thead>
@@ -523,7 +658,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                           </tr>
                         </thead>
                         <tbody>
-                          {(boardResult.items ?? []).map((item) => (
+                          {inReviewBoardItems.map((item) => (
                             <tr key={item.queueItemId}>
                               <td>{item.status}</td>
                               <td>{item.priority}</td>
@@ -554,7 +689,43 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
             </section>
 
             <section className="panel step-6-promotion">
-              <h2>FAQ Promotion Signals</h2>
+              <h2>FAQ</h2>
+              <p className="muted">Final list of approved questions.</p>
+
+              {!boardResult && <p className="muted">Load Queue first to populate promoted FAQ rows.</p>}
+              {boardResult && faqBoardItems.length === 0 && <p className="muted">No published FAQ questions found for current filters.</p>}
+              {boardResult && faqBoardItems.length > 0 && (
+                <div className="table-wrap">
+                  <table className="board-table">
+                    <thead>
+                      <tr>
+                        <th>Status</th>
+                        <th>Reason</th>
+                        <th>Priority</th>
+                        <th>Question</th>
+                        <th>Updated</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {faqBoardItems.map((item) => (
+                        <tr key={item.queueItemId}>
+                          <td>{item.status}</td>
+                          <td>{item.reason}</td>
+                          <td>{item.priority}</td>
+                          <td>
+                            <div>{item.question}</div>
+                            <div className="muted tiny">{item.requestId}</div>
+                            <div className="muted tiny">{item.queueItemId}</div>
+                          </td>
+                          <td>{item.updatedAt}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              <h3>FAQ Promotion Signals</h3>
               <p className="muted">Look for repeated unanswered intents that may deserve curated FAQ coverage.</p>
               <div className="grid-three">
                 <label>
