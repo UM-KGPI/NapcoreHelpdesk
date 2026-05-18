@@ -62,6 +62,16 @@ class AnswerFeedbackRequestSerializer(serializers.Serializer):
         return attrs
 
 
+class QuestionEventsListQuerySerializer(serializers.Serializer):
+    """Query params for listing persisted question events for editor review intake."""
+
+    page = serializers.IntegerField(required=False, min_value=1, default=1)
+    pageSize = serializers.IntegerField(required=False, min_value=1, max_value=200, default=100)
+    mode = serializers.ChoiceField(choices=["faq", "rag", "abstain"], required=False)
+    reviewRequired = serializers.BooleanField(required=False, allow_null=True, default=None)
+    search = serializers.CharField(required=False, allow_blank=True, default="")
+
+
 class PromotionCandidatesQuerySerializer(serializers.Serializer):
     """Query params for generating FAQ promotion candidates from telemetry."""
 
