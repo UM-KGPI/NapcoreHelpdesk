@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from helpdesk.models import FAQEntry, FAQVersion
+from helpdesk.services.faq_text_utils import question_word_stems, stem_token
 
 
 def _contains_any(text: str, tokens: list[str]) -> bool:
@@ -88,8 +89,14 @@ def _faq_score(question: str, entry: FAQEntry) -> float:
     if not base_tokens:
         return 0.0
 
-    lower_question = question.lower()
-    hits = sum(1 for token in base_tokens if token.lower() in lower_question)
+    # Stem stored tokens and question words separately, then intersect on the
+    # stemmed forms.  This gives us two improvements over the old approach:
+    #   1. Morphological variants match: "validation" == "validate" (both → "valid")
+    #   2. Word-boundary tokenization prevents substring false positives:
+    #      token "time" no longer matches inside "timetable".
+    stemmed_tokens = {stem_token(t) for t in base_tokens}
+    q_stems = question_word_stems(question)
+    hits = sum(1 for stem in stemmed_tokens if stem in q_stems)
 
     # Avoid broad false positives (for example, matching only "netex") that would
     # incorrectly short-circuit the FAQ-first path and bypass RAG/LLM generation.

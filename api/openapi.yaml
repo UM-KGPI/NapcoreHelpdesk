@@ -355,6 +355,68 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/questions/events:
+    get:
+      tags: [QnA]
+      summary: List persisted question events for editorial intake
+      operationId: listQuestionEvents
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 100
+        - name: mode
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [faq, rag, abstain]
+        - name: reviewRequired
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Question events returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionEventsResponse'
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/faqs/promotion-candidates:
     get:
       tags: [FAQOps]
@@ -888,6 +950,47 @@ components:
           type: boolean
         userDislikes:
           type: boolean
+      additionalProperties: false
+    AskedQuestionRow:
+      type: object
+      required: [question, askedAt, requestId, questionEventId, mode, confidence, reviewRequired]
+      properties:
+        question:
+          type: string
+        askedAt:
+          type: string
+          format: date-time
+        requestId:
+          type: string
+        questionEventId:
+          type: string
+        mode:
+          type: string
+          enum: [faq, rag, abstain]
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        reviewRequired:
+          type: boolean
+      additionalProperties: false
+    QuestionEventsResponse:
+      type: object
+      required: [page, pageSize, total, items]
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+        total:
+          type: integer
+          minimum: 0
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AskedQuestionRow'
       additionalProperties: false
     SemanticQuery:
       type: object

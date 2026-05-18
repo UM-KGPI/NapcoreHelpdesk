@@ -54,6 +54,7 @@ from .serializers import (
     EditorialQueueTransitionRequestSerializer,
     IndexRepositoryRequestSerializer,
     PromotionCandidatesQuerySerializer,
+    QuestionEventsListQuerySerializer,
 )
 
 
@@ -787,11 +788,14 @@ class QuestionAnswerView(APIView):
 
         faq_match = match_faq(question=question, scope=effective_scope)
         if (
-            controller_route != "rag"
-            and faq_match
+            faq_match
             and faq_match["confidence"] >= faq_min_confidence
             and faq_match.get("scope_match", True)
         ):
+            # FAQ always wins when a published entry matches above the confidence
+            # threshold.  The controller route is intentionally ignored here: its
+            # role is to disambiguate RAG vs abstain when no FAQ exists, not to
+            # override curated editorial answers.
             mode = QuestionEvent.MODE_FAQ
             confidence = faq_match["confidence"]
             review_required = faq_match["review_required"]
@@ -1186,11 +1190,14 @@ class QuestionAnswerStreamView(APIView):
         answer_text = ""
 
         if (
-            controller_route != "rag"
-            and faq_match
+            faq_match
             and faq_match["confidence"] >= faq_min_confidence
             and faq_match.get("scope_match", True)
         ):
+            # FAQ always wins when a published entry matches above the confidence
+            # threshold.  The controller route is intentionally ignored here: its
+            # role is to disambiguate RAG vs abstain when no FAQ exists, not to
+            # override curated editorial answers.
             mode = QuestionEvent.MODE_FAQ
             confidence = faq_match["confidence"]
             review_required = faq_match["review_required"]
@@ -1479,6 +1486,61 @@ class QuestionFeedbackView(APIView):
                 "questionEventId": str(event.id),
                 "userLikes": event.user_likes,
                 "userDislikes": event.user_dislikes,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class QuestionEventsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Return persisted question events so editorial intake does not depend on the current tab session.
+        serializer = QuestionEventsListQuerySerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        queryset = QuestionEvent.objects.all()
+
+        mode_value = data.get("mode")
+        if mode_value:
+            queryset = queryset.filter(mode=mode_value)
+
+        review_required = data.get("reviewRequired", None)
+        if review_required is not None:
+            queryset = queryset.filter(review_required=review_required)
+
+        search = data.get("search", "").strip()
+        if search:
+            queryset = queryset.filter(
+                Q(question__icontains=search)
+                | Q(request_id__icontains=search)
+                | Q(id__icontains=search)
+            )
+
+        page = data["page"]
+        page_size = data["pageSize"]
+        total = queryset.count()
+        offset = (page - 1) * page_size
+        items = list(queryset[offset: offset + page_size])
+
+        return Response(
+            {
+                "page": page,
+                "pageSize": page_size,
+                "total": total,
+                "items": [
+                    {
+                        "question": item.question,
+                        "askedAt": item.created_at.isoformat().replace("+00:00", "Z"),
+                        "requestId": item.request_id,
+                        "questionEventId": str(item.id),
+                        "mode": item.mode,
+                        "confidence": float(item.confidence),
+                        "reviewRequired": bool(item.review_required),
+                    }
+                    for item in items
+                ],
             },
             status=status.HTTP_200_OK,
         )
