@@ -17,6 +17,8 @@ This index reduces discovery overhead by grouping the most important documents f
 - [Orchestrator components](architecture/c4-orchestrator-components.md)
 - [RAG architecture](architecture/rag-architecture.md)
 - [Database logic](architecture/database-logic.md)
+- [ERD schema with cardinalities](architecture/erd-schema.md)
+- [Editor review BPMN](architecture/editor-review-process-bpmn.md)
 - [PostgreSQL + pgvector runbook](architecture/postgresql-pgvector-runbook.md)
 - [Deployment and operations checklist](architecture/deployment-operations-checklist.md)
 

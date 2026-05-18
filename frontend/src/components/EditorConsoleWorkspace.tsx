@@ -123,6 +123,8 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
   const [askedSearch, setAskedSearch] = useState("");
   const [askedOnlyReviewRequired, setAskedOnlyReviewRequired] = useState(false);
   const [askedMode, setAskedMode] = useState<"" | "faq" | "rag" | "abstain">("");
+  const [askedShowAdvancedIds, setAskedShowAdvancedIds] = useState(false);
+  const [selectedIntent, setSelectedIntent] = useState<string>("");
   const answerResultRef = useRef<HTMLElement | null>(null);
   const lastAnswerRequestIdRef = useRef<string | null>(null);
   const {
@@ -217,9 +219,16 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
     answerResultRef.current?.scrollIntoView({ block: "start", behavior: "auto" });
   }, [answerResult?.trace.requestId]);
 
+  function normalizeIntent(questionText: string): string {
+    return questionText.toLowerCase().trim().split(/\s+/).filter(Boolean).join(" ");
+  }
+
   const filteredAskedQuestions = useMemo(() => {
     const needle = askedSearch.trim().toLowerCase();
     return askedQuestions.filter((item) => {
+      if (selectedIntent && normalizeIntent(item.question) !== selectedIntent) {
+        return false;
+      }
       if (askedOnlyReviewRequired && !item.reviewRequired) {
         return false;
       }
@@ -235,7 +244,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
         item.questionEventId.toLowerCase().includes(needle)
       );
     });
-  }, [askedMode, askedOnlyReviewRequired, askedQuestions, askedSearch]);
+  }, [askedMode, askedOnlyReviewRequired, askedQuestions, askedSearch, selectedIntent]);
 
   const askedModeCounts = useMemo(() => {
     return askedQuestions.reduce(
@@ -246,6 +255,8 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
       { faq: 0, rag: 0, abstain: 0 }
     );
   }, [askedQuestions]);
+
+  const selectedIntentQuestionsCount = filteredAskedQuestions.length;
 
   const canQueueSelectedQuestion = Boolean(selectedQuestionEventId);
   const boardItems = boardResult?.items ?? [];
@@ -365,8 +376,92 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
         {activeTab === "editorial" && (
           <>
             <section className="panel step-3-routing">
-              <h2>Questions Asked</h2>
-              <p className="muted">Select questions from the full asked-question history and send chosen rows into review.</p>
+              <h2>Review Priorities</h2>
+              <p className="muted">Start from the most repeated unresolved intents, then inspect matching questions before routing one into review.</p>
+
+              <div className="grid-three">
+                <label>
+                  windowDays
+                  <input type="number" min={1} value={windowDays} onChange={(event) => setWindowDays(Number(event.target.value))} />
+                </label>
+                <label>
+                  minCount
+                  <input type="number" min={1} value={minCount} onChange={(event) => setMinCount(Number(event.target.value))} />
+                </label>
+                <label className="checkbox-label">
+                  <input type="checkbox" checked={onlyUnresolved} onChange={(event) => setOnlyUnresolved(event.target.checked)} />
+                  onlyUnresolved
+                </label>
+              </div>
+
+              <div className="button-row">
+                <button onClick={onLoadPromotionCandidates} disabled={busy || !token}>Load Priorities</button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedIntent("")}
+                  disabled={busy || !selectedIntent}
+                >
+                  Clear Intent
+                </button>
+              </div>
+
+              {promotionResult && (
+                <article className="result-card">
+                  <h3>Top Candidate Intents</h3>
+                  {promotionResult.items.length === 0 && <p className="muted">No candidate intents found for these filters.</p>}
+                  {promotionResult.items.length > 0 && (
+                    <div className="table-wrap">
+                      <table className="board-table">
+                        <thead>
+                          <tr>
+                            <th>Intent</th>
+                            <th>Count</th>
+                            <th>Last Asked</th>
+                            <th>Recommended Action</th>
+                            <th>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {promotionResult.items.map((item) => (
+                            <tr key={`${item.normalizedIntent}-${item.lastAskedAt}`}>
+                              <td>
+                                <div>{item.normalizedIntent}</div>
+                                <div className="muted tiny">{item.questionEventId}</div>
+                              </td>
+                              <td>{item.questionCount}</td>
+                              <td>{item.lastAskedAt}</td>
+                              <td>{item.recommendedAction}</td>
+                              <td>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedIntent(item.normalizedIntent);
+                                    setAskedSearch("");
+                                    setAskedMode("");
+                                    setAskedOnlyReviewRequired(false);
+                                    void onLoadAskedQuestions();
+                                  }}
+                                  disabled={busy || !token}
+                                >
+                                  View Questions
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </article>
+              )}
+            </section>
+
+            <section className="panel step-4-transition">
+              <h2>Questions For Selected Intent</h2>
+              <p className="muted">Inspect the raw questions behind the chosen priority and select one to send into the review queue.</p>
+
+              {!selectedIntent && <p className="muted">Select a candidate intent in Review Priorities to inspect its related questions.</p>}
+              {selectedIntent && <p className="muted">Selected intent: <strong>{selectedIntent}</strong> <span className="tiny">· {selectedIntentQuestionsCount} matching questions</span></p>}
 
               <div className="grid-three">
                 <label>
@@ -395,6 +490,14 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                   Only reviewRequired
                 </label>
               </div>
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={askedShowAdvancedIds}
+                  onChange={(event) => setAskedShowAdvancedIds(event.target.checked)}
+                />
+                Advanced: show questionEventId column
+              </label>
 
               <div className="button-row">
                 <button
@@ -402,6 +505,9 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                     setAskedSearch("");
                     setAskedOnlyReviewRequired(false);
                     setAskedMode("");
+                    if (!selectedIntent) {
+                      setSelectedQuestionEventId("");
+                    }
                     void onLoadAskedQuestions();
                   }}
                   disabled={busy || !token}
@@ -423,14 +529,14 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                       <th>Confidence</th>
                       <th>reviewRequired</th>
                       <th>Asked</th>
-                      <th>questionEventId</th>
                       <th>requestId</th>
+                      {askedShowAdvancedIds && <th>questionEventId</th>}
                     </tr>
                   </thead>
                   <tbody>
                     {filteredAskedQuestions.length === 0 && (
                       <tr>
-                        <td colSpan={8} className="muted">No stored question events found for current filters.</td>
+                        <td colSpan={askedShowAdvancedIds ? 8 : 7} className="muted">No stored question events found for current filters.</td>
                       </tr>
                     )}
                     {filteredAskedQuestions.map((item) => (
@@ -449,8 +555,8 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                         <td>{item.confidence.toFixed(2)}</td>
                         <td>{String(item.reviewRequired)}</td>
                         <td>{item.askedAt}</td>
-                        <td>{item.questionEventId}</td>
                         <td>{item.requestId}</td>
+                        {askedShowAdvancedIds && <td>{item.questionEventId}</td>}
                       </tr>
                     ))}
                   </tbody>
@@ -488,9 +594,9 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
               )}
             </section>
 
-            <section className="panel step-4-transition">
-              <h2>Update Queue Status</h2>
-              <p className="muted">Apply a workflow transition to a specific queue item.</p>
+            <section className="panel step-5-board">
+              <h2>Review Queue</h2>
+              <p className="muted">Apply workflow transitions to questions already routed into editorial review.</p>
               <div className="stack">
                 <label>
                   Queue Item ID
@@ -537,11 +643,6 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                   </p>
                 </article>
               )}
-            </section>
-
-            <section className="panel step-5-board">
-              <h2>Questions In Review</h2>
-              <p className="muted">Filter queue items, inspect workload metrics, and apply inline workflow actions.</p>
               <h3>Queue Metrics</h3>
               <div className="grid-three">
                 <label>
@@ -725,41 +826,6 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                 </div>
               )}
 
-              <h3>FAQ Promotion Signals</h3>
-              <p className="muted">Look for repeated unanswered intents that may deserve curated FAQ coverage.</p>
-              <div className="grid-three">
-                <label>
-                  windowDays
-                  <input type="number" min={1} value={windowDays} onChange={(event) => setWindowDays(Number(event.target.value))} />
-                </label>
-                <label>
-                  minCount
-                  <input type="number" min={1} value={minCount} onChange={(event) => setMinCount(Number(event.target.value))} />
-                </label>
-                <label className="checkbox-label">
-                  <input type="checkbox" checked={onlyUnresolved} onChange={(event) => setOnlyUnresolved(event.target.checked)} />
-                  onlyUnresolved
-                </label>
-              </div>
-              <button onClick={onLoadPromotionCandidates} disabled={busy || !token}>Load Signals</button>
-
-              {promotionResult && (
-                <article className="result-card">
-                  <h3>Top Candidate Intents</h3>
-                  {promotionResult.items.length === 0 && <p className="muted">No candidates found for these filters.</p>}
-                  {promotionResult.items.length > 0 && (
-                    <ul>
-                      {promotionResult.items.map((item) => (
-                        <li key={`${item.normalizedIntent}-${item.lastAskedAt}`}>
-                          <strong>{item.normalizedIntent}</strong>
-                          <span className="muted"> · count {item.questionCount} · {item.recommendedAction}</span>
-                          <div className="muted tiny">questionEventId: {item.questionEventId}</div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </article>
-              )}
             </section>
           </>
         )}

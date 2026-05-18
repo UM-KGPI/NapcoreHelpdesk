@@ -1,0 +1,110 @@
+@startuml editor-review-process-bpmn
+title Editor Review Process: Routing Score + Editorial Verdict
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #f9f6ef
+  BorderColor #8f7f67
+  FontColor #1f2b26
+  DiamondBackgroundColor #f3ede0
+  DiamondBorderColor #8f7f67
+  StartColor #0f766e
+  EndColor #9a3412
+  BarColor #8f7f67
+}
+
+start
+
+partition "Editor" {
+  :Open Editor Review workspace;
+  :Load review priorities;
+}
+
+partition "Helpdesk" {
+  :Aggregate top candidate intents\nfrom question telemetry;
+}
+
+partition "Editor" {
+  :Inspect Top Candidate Intents;
+  if (Intent worth review?) then (yes)
+    :Select candidate intent;
+    :Load questions for selected intent;
+  else (no)
+    :Adjust filters\nor monitor later;
+    stop
+  endif
+}
+
+partition "Helpdesk" {
+  :Return matching question events\nfor selected intent;
+  :Compute routing score for matching\nand review routing;
+}
+
+partition "Editor" {
+  :Inspect matching questions;
+  if (Routing score below threshold?) then (yes)
+    :System routes candidate to editorial queue;
+  else (no)
+    :System keeps FAQ/RAG automatic path;
+  endif
+
+  if (Editor manually sends question to review?) then (yes)
+    :Select one question;
+    :Set reason and priority;
+    :Send selected for review;
+  else (no)
+    :Return to priorities\nor choose another intent;
+    stop
+  endif
+}
+
+partition "Helpdesk" {
+  :Create EditorialQueueItem;
+  if (Reason is policy/user escalation?) then (yes)
+    :Initial status = review;
+  else (no)
+    :Initial status = draft;
+  endif
+}
+
+partition "Editor" {
+  :Open Review Queue;
+  :Inspect queue item and evidence;
+  if (Editor verdict: not good?) then (yes)
+    :Request changes or reject;
+    stop
+  else (no)
+  endif
+
+  if (Editor verdict: good?) then (yes)
+    :Approve item;
+  else (reject)
+    :Reject item;
+    stop
+  endif
+}
+
+partition "Helpdesk" {
+  :Record transition audit event;
+}
+
+partition "Editor" {
+  if (Ready to publish as FAQ?) then (yes)
+    :Publish approved item;
+  else (no)
+    stop
+  endif
+}
+
+partition "Helpdesk" {
+  :Create/update FAQ entry and version;
+  :Mark queue item published;
+}
+
+partition "Editor" {
+  :View published FAQ list;
+}
+
+stop
+@enduml

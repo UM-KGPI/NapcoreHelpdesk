@@ -788,11 +788,14 @@ class QuestionAnswerView(APIView):
 
         faq_match = match_faq(question=question, scope=effective_scope)
         if (
-            controller_route != "rag"
-            and faq_match
+            faq_match
             and faq_match["confidence"] >= faq_min_confidence
             and faq_match.get("scope_match", True)
         ):
+            # FAQ always wins when a published entry matches above the confidence
+            # threshold.  The controller route is intentionally ignored here: its
+            # role is to disambiguate RAG vs abstain when no FAQ exists, not to
+            # override curated editorial answers.
             mode = QuestionEvent.MODE_FAQ
             confidence = faq_match["confidence"]
             review_required = faq_match["review_required"]
@@ -1187,11 +1190,14 @@ class QuestionAnswerStreamView(APIView):
         answer_text = ""
 
         if (
-            controller_route != "rag"
-            and faq_match
+            faq_match
             and faq_match["confidence"] >= faq_min_confidence
             and faq_match.get("scope_match", True)
         ):
+            # FAQ always wins when a published entry matches above the confidence
+            # threshold.  The controller route is intentionally ignored here: its
+            # role is to disambiguate RAG vs abstain when no FAQ exists, not to
+            # override curated editorial answers.
             mode = QuestionEvent.MODE_FAQ
             confidence = faq_match["confidence"]
             review_required = faq_match["review_required"]
