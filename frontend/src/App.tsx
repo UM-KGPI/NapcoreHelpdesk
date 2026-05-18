@@ -318,7 +318,7 @@ export default function App() {
       options: {
         maxCitations: 5,
         allowAbstain: true,
-        faqMinConfidence: chatProfile === "llm-ready" ? 1.0 : 0.85,
+        faqMinConfidence: 0.85,
         retrievalTopK: 6,
         retrievalMinScore: 0.62,
       },
@@ -464,7 +464,7 @@ export default function App() {
         options: {
           maxCitations: 5,
           allowAbstain: true,
-          faqMinConfidence: chatProfile === "llm-ready" ? 1.0 : 0.85,
+          faqMinConfidence: 0.85,
           retrievalTopK: 6,
           retrievalMinScore: 0.62,
         },
@@ -554,7 +554,7 @@ export default function App() {
             options: {
               maxCitations: 5,
               allowAbstain: true,
-              faqMinConfidence: chatProfile === "llm-ready" ? 1.0 : 0.85,
+              faqMinConfidence: 0.85,
               retrievalTopK: 6,
               retrievalMinScore: 0.62,
             },

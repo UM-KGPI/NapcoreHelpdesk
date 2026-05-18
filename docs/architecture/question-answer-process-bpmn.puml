@@ -1,0 +1,68 @@
+@startuml question-answer-process-bpmn
+title Question to Answer Process (BPMN-style)
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #eef6fb
+  BorderColor #4f6b86
+  FontColor #1f2b26
+  DiamondBackgroundColor #e2eef8
+  DiamondBorderColor #4f6b86
+  StartColor #0f766e
+  EndColor #9a3412
+  BarColor #4f6b86
+}
+
+start
+
+partition "User" {
+  :Ask question in Helpdesk UI;
+}
+
+partition "Helpdesk" {
+  :Receive question request;
+  :Parse intent, scope, and concepts;
+  :Compute routing score and confidence signals;
+}
+
+partition "Helpdesk" {
+  if (FAQ match score above threshold?) then (yes)
+    :Select published FAQ answer;
+    :Attach FAQ citations;
+    :Set mode = FAQ;
+  else (no)
+    :Run RAG retrieval on approved sources;
+    if (Evidence sufficient and aligned?) then (yes)
+      :Generate grounded answer;
+      :Apply policy and citation checks;
+      if (Policy pass?) then (yes)
+        :Set mode = RAG;
+      else (no)
+        :Set mode = abstain;
+        :Set reason = policy or evidence block;
+      endif
+    else (no)
+      :Set mode = abstain;
+      :Set reason = insufficient evidence;
+    endif
+  endif
+}
+
+partition "Helpdesk" {
+  :Persist question event, retrieval traces,
+  and evidence links;
+
+  if (Review required?) then (yes)
+    :Create editorial queue item;
+  else (no)
+  endif
+}
+
+partition "User" {
+  :Receive answer or abstention response
+  with traceable citations when available;
+}
+
+stop
+@enduml
