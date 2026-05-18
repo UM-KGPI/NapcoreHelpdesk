@@ -78,6 +78,23 @@ export interface AnswerResponse {
   trace: AnswerTrace;
 }
 
+export interface AskedQuestionRow {
+  question: string;
+  askedAt: string;
+  requestId: string;
+  questionEventId: string;
+  mode: AnswerMode;
+  confidence: number;
+  reviewRequired: boolean;
+}
+
+export interface QuestionEventsResponse {
+  page: number;
+  pageSize: number;
+  total: number;
+  items: AskedQuestionRow[];
+}
+
 export interface PromotionCandidate {
   questionEventId: string;
   normalizedIntent: string;

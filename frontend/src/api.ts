@@ -8,6 +8,7 @@ import type {
   HealthResponse,
   IndexRepositoryResponse,
   PromotionCandidatesResponse,
+  QuestionEventsResponse,
   StandardsScope,
 } from "./types";
 
@@ -67,6 +68,14 @@ export interface EditorialBoardMetricsQuery {
   slaHours?: number;
 }
 
+export interface QuestionEventsQuery {
+  page?: number;
+  pageSize?: number;
+  mode?: "faq" | "rag" | "abstain";
+  reviewRequired?: boolean;
+  search?: string;
+}
+
 export interface IndexRepositoryRequest {
   repoUrl: string;
   repoPath: string;
@@ -118,6 +127,18 @@ export class HelpdeskApiClient {
     return this.request<AnswerFeedbackResponse>("/questions/feedback", {
       method: "POST",
       body: JSON.stringify(payload),
+    });
+  }
+
+  async listQuestionEvents(query: QuestionEventsQuery = {}): Promise<QuestionEventsResponse> {
+    const params = new URLSearchParams();
+    params.set("page", String(query.page ?? 1));
+    params.set("pageSize", String(query.pageSize ?? 100));
+    if (query.mode) params.set("mode", query.mode);
+    if (query.reviewRequired != null) params.set("reviewRequired", String(query.reviewRequired));
+    if (query.search && query.search.trim()) params.set("search", query.search.trim());
+    return this.request<QuestionEventsResponse>(`/questions/events?${params.toString()}`, {
+      method: "GET",
     });
   }
 

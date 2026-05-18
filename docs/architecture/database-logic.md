@@ -2,6 +2,8 @@
 
 This document explains the logic represented in the PlantUML diagram.
 
+For the current model-level ERD with explicit cardinalities, see [ERD schema with cardinalities](erd-schema.md).
+
 ## Source Of Truth
 - Schema is managed by Django migrations in `backend/helpdesk/migrations/`.
 - Use `make backend-migrate` to apply migrations.

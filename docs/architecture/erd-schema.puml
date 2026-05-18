@@ -1,0 +1,138 @@
+@startuml erd-schema
+title NAPCORE Helpdesk ERD (Django Models)
+
+hide circle
+skinparam linetype ortho
+skinparam packageStyle rectangle
+
+entity "SourceChunk" as SourceChunk {
+  * id : bigint <<PK>>
+  --
+  * chunk_id : varchar(128) <<UK>>
+  repository_url : url
+  commit_sha : varchar(64)
+  source_path : varchar(512)
+  quality_score : float
+}
+
+entity "IndexedSourceFile" as IndexedSourceFile {
+  * id : bigint <<PK>>
+  --
+  repository_url : url
+  source_path : varchar(512)
+  commit_sha : varchar(64)
+  content_hash : varchar(64)
+  ..
+  Unique(repository_url, source_path)
+}
+
+entity "IndexRunMetric" as IndexRunMetric {
+  * id : bigint <<PK>>
+  --
+  repository_url : url
+  repository_path : varchar(1024)
+  profile : varchar(64)
+  mode : enum(full|incremental)
+  status : enum(success|failed)
+}
+
+entity "QuestionEvent" as QuestionEvent {
+  * id : bigint <<PK>>
+  --
+  request_id : varchar(128)
+  question : text
+  mode : enum(faq|rag|abstain)
+  confidence : float
+  review_required : bool
+}
+
+entity "RetrievalEvent" as RetrievalEvent {
+  * id : bigint <<PK>>
+  --
+  retrieval_event_id : varchar(128) <<UK>>
+  question_event_id : bigint <<FK>>
+  chunk_id : varchar(128)
+  score : float
+}
+
+entity "AnswerEvidenceLink" as AnswerEvidenceLink {
+  * id : bigint <<PK>>
+  --
+  evidence_link_id : varchar(128) <<UK>>
+  question_event_id : bigint <<FK>>
+  answer_id : varchar(128)
+  chunk_id : varchar(128)
+}
+
+entity "EvidenceProvenance" as EvidenceProvenance {
+  * id : bigint <<PK>>
+  --
+  provenance_id : varchar(128) <<UK>>
+  question_event_id : bigint <<FK>>
+  evidence_link_id : bigint <<FK>>
+}
+
+entity "EditorialQueueItem" as EditorialQueueItem {
+  * id : bigint <<PK>>
+  --
+  queue_item_id : uuid <<UK>>
+  question_event_id : bigint <<FK>>
+  reason : enum
+  priority : enum
+  status : enum
+}
+
+entity "EditorialQueueTransition" as EditorialQueueTransition {
+  * id : bigint <<PK>>
+  --
+  queue_item_id : bigint <<FK>>
+  action : enum
+  from_status : enum
+  to_status : enum
+}
+
+entity "FAQEntry" as FAQEntry {
+  * id : bigint <<PK>>
+  --
+  faq_entry_id : varchar(128) <<UK>>
+  normalized_intent : varchar(512)
+  is_active : bool
+}
+
+entity "FAQVersion" as FAQVersion {
+  * id : bigint <<PK>>
+  --
+  faq_entry_id : bigint <<FK>>
+  version : int
+  is_published : bool
+  ..
+  Unique(faq_entry_id, version)
+}
+
+entity "OntologyAssetVersion" as OntologyAssetVersion {
+  * id : bigint <<PK>>
+  --
+  ontology_key : varchar(64) <<UK>>
+  version : varchar(64)
+  graph_uri : varchar(255)
+}
+
+QuestionEvent ||--o{ RetrievalEvent : logs
+QuestionEvent ||--o{ AnswerEvidenceLink : grounds
+QuestionEvent ||--o{ EvidenceProvenance : has
+AnswerEvidenceLink ||--o{ EvidenceProvenance : provenance
+
+QuestionEvent ||--o{ EditorialQueueItem : routes
+EditorialQueueItem ||--o{ EditorialQueueTransition : transitions
+
+FAQEntry ||--|{ FAQVersion : versions
+
+SourceChunk ||..o{ RetrievalEvent : chunk_id logical link
+SourceChunk ||..o{ AnswerEvidenceLink : chunk_id logical link
+
+note right of SourceChunk
+No DB foreign key from RetrievalEvent/AnswerEvidenceLink
+to SourceChunk; linkage is via chunk_id value.
+end note
+
+@enduml

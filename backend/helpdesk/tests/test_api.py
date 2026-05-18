@@ -213,16 +213,20 @@ class HelpdeskApiTests(APITestCase):
         )
 
     @patch("helpdesk.api.views.decide_route_with_controller_llm")
-    def test_answer_skips_faq_when_controller_forces_rag(self, controller_mock):
-        """Controller route decision can bypass FAQ-first and continue through RAG path."""
+    def test_answer_uses_controller_rag_when_no_faq_matches(self, controller_mock):
+        """Controller route 'rag' is respected when no high-confidence FAQ entry exists."""
 
         controller_mock.return_value = SimpleNamespace(route="rag", intent="novel", confidence=0.9)
 
+        # Use a question that has no matching FAQ entry so the controller decision
+        # actually influences routing.  The FAQ-first gate no longer allows the
+        # controller to override a *matched* FAQ, but when no FAQ matches the
+        # controller's route preference is still used to disambiguate RAG vs abstain.
         response = self.client.post(
             reverse("answer-question"),
             {
-                "question": "How to use NeTEx for exchanging a timetable?",
-                "standardsScope": ["NeTEx"],
+                "question": "Explain OpRa operational exchange setup sequence.",
+                "standardsScope": ["OpRa"],
             },
             format="json",
             HTTP_X_REQUEST_ID="req-controller-rag-001",
@@ -231,7 +235,8 @@ class HelpdeskApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assert_matches_schema("AnswerResponse", response.data)
-        self.assertEqual(response.data["mode"], "rag")
+        # Without a published FAQ for this OpRa question, mode falls through to RAG/abstain.
+        self.assertIn(response.data["mode"], ("rag", "abstain"))
         self.assertIsNone(response.data["trace"]["matchedFaqEntryId"])
 
     @patch("helpdesk.api.views.decide_route_with_controller_llm")

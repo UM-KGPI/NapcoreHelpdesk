@@ -11,6 +11,7 @@ from .views import (
     PromotionCandidatesView,
     QuestionAnswerStreamView,
     QuestionAnswerView,
+    QuestionEventsView,
     QuestionFeedbackView,
 )
 
@@ -20,6 +21,7 @@ urlpatterns = [
     path("auth/dev-token", DevTokenView.as_view(), name="auth-dev-token"),
     path("questions/answer", QuestionAnswerView.as_view(), name="answer-question"),
     path("questions/answer/stream", QuestionAnswerStreamView.as_view(), name="answer-question-stream"),
+    path("questions/events", QuestionEventsView.as_view(), name="questions-events"),
     path("questions/feedback", QuestionFeedbackView.as_view(), name="answer-feedback"),
     path("faqs/promotion-candidates", PromotionCandidatesView.as_view(), name="promotion-candidates"),
     path("editorial/queue", EditorialQueueView.as_view(), name="editorial-queue"),

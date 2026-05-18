@@ -8,6 +8,7 @@ import SharedAppLayout from "./components/SharedAppLayout";
 import UserChatWorkspace, { type ChatProfile, type ChatTurn } from "./components/UserChatWorkspace";
 import type {
   AnswerResponse,
+  AskedQuestionRow,
   EditorialBoardMetricsResponse,
   EditorialBoardItem,
   EditorialBoardResponse,
@@ -105,6 +106,8 @@ export default function App() {
   const [standardsScope, setStandardsScope] = useState<StandardsScope[]>([]);
 
   const [answerResult, setAnswerResult] = useState<AnswerResponse | null>(null);
+  const [askedQuestions, setAskedQuestions] = useState<AskedQuestionRow[]>([]);
+  const [selectedQuestionEventId, setSelectedQuestionEventId] = useState("");
   const [promotionResult, setPromotionResult] = useState<PromotionCandidatesResponse | null>(null);
   const [editorialResult, setEditorialResult] = useState<EditorialQueueResponse | null>(null);
   const [transitionResult, setTransitionResult] = useState<EditorialQueueTransitionResponse | null>(null);
@@ -228,6 +231,19 @@ export default function App() {
     };
   }, [apiBaseUrl, autoTokenEnabled]);
 
+  async function onLoadAskedQuestions(): Promise<void> {
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await client.listQuestionEvents({ page: 1, pageSize: 100 });
+      setAskedQuestions(result.items);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function toggleScope(scope: StandardsScope): void {
     setStandardsScope((prev) => {
       if (prev.includes(scope)) {
@@ -302,7 +318,7 @@ export default function App() {
       options: {
         maxCitations: 5,
         allowAbstain: true,
-        faqMinConfidence: chatProfile === "llm-ready" ? 1.0 : 0.85,
+        faqMinConfidence: 0.85,
         retrievalTopK: 6,
         retrievalMinScore: 0.62,
       },
@@ -448,7 +464,7 @@ export default function App() {
         options: {
           maxCitations: 5,
           allowAbstain: true,
-          faqMinConfidence: chatProfile === "llm-ready" ? 1.0 : 0.85,
+          faqMinConfidence: 0.85,
           retrievalTopK: 6,
           retrievalMinScore: 0.62,
         },
@@ -488,12 +504,38 @@ export default function App() {
           }
         );
         setAnswerResult(result);
+        setAskedQuestions((prev) => {
+          const row: AskedQuestionRow = {
+            question,
+            askedAt: new Date().toISOString(),
+            requestId: result.trace.requestId,
+            questionEventId: result.trace.questionEventId,
+            mode: result.mode,
+            confidence: result.confidence,
+            reviewRequired: result.reviewRequired,
+          };
+          const next = [row, ...prev.filter((item) => item.requestId !== row.requestId)];
+          return next.slice(0, 200);
+        });
         setEditorialResult(null);
         return;
       }
 
       const result = await client.answerQuestion(answerPayload, requestId);
       setAnswerResult(result);
+      setAskedQuestions((prev) => {
+        const row: AskedQuestionRow = {
+          question,
+          askedAt: new Date().toISOString(),
+          requestId: result.trace.requestId,
+          questionEventId: result.trace.questionEventId,
+          mode: result.mode,
+          confidence: result.confidence,
+          reviewRequired: result.reviewRequired,
+        };
+        const next = [row, ...prev.filter((item) => item.requestId !== row.requestId)];
+        return next.slice(0, 200);
+      });
       setEditorialResult(null);
     } catch (caught) {
       const refreshedToken = await refreshDevTokenAfterUnauthorized(caught);
@@ -512,7 +554,7 @@ export default function App() {
             options: {
               maxCitations: 5,
               allowAbstain: true,
-              faqMinConfidence: chatProfile === "llm-ready" ? 1.0 : 0.85,
+              faqMinConfidence: 0.85,
               retrievalTopK: 6,
               retrievalMinScore: 0.62,
             },
@@ -552,12 +594,38 @@ export default function App() {
               }
             );
             setAnswerResult(result);
+            setAskedQuestions((prev) => {
+              const row: AskedQuestionRow = {
+                question,
+                askedAt: new Date().toISOString(),
+                requestId: result.trace.requestId,
+                questionEventId: result.trace.questionEventId,
+                mode: result.mode,
+                confidence: result.confidence,
+                reviewRequired: result.reviewRequired,
+              };
+              const next = [row, ...prev.filter((item) => item.requestId !== row.requestId)];
+              return next.slice(0, 200);
+            });
             setEditorialResult(null);
             return;
           }
 
           const result = await retryClient.answerQuestion(answerPayload, requestId);
           setAnswerResult(result);
+          setAskedQuestions((prev) => {
+            const row: AskedQuestionRow = {
+              question,
+              askedAt: new Date().toISOString(),
+              requestId: result.trace.requestId,
+              questionEventId: result.trace.questionEventId,
+              mode: result.mode,
+              confidence: result.confidence,
+              reviewRequired: result.reviewRequired,
+            };
+            const next = [row, ...prev.filter((item) => item.requestId !== row.requestId)];
+            return next.slice(0, 200);
+          });
           setEditorialResult(null);
           return;
         } catch (retryCaught) {
@@ -634,8 +702,9 @@ export default function App() {
     }
   }
 
-  async function onQueueEditorial(): Promise<void> {
-    if (!answerResult?.trace.questionEventId) {
+  async function onQueueEditorial(questionEventIdOverride?: string): Promise<void> {
+    const questionEventId = questionEventIdOverride || selectedQuestionEventId || answerResult?.trace.questionEventId;
+    if (!questionEventId) {
       return;
     }
 
@@ -643,7 +712,7 @@ export default function App() {
     setError(null);
     try {
       const result = await client.routeToEditorialQueue({
-        questionEventId: answerResult.trace.questionEventId,
+        questionEventId,
         reason: queueReason,
         priority: queuePriority,
       });
@@ -806,6 +875,8 @@ export default function App() {
                   userId={userId}
                   standardsScope={standardsScope}
                   answerResult={answerResult}
+                  askedQuestions={askedQuestions}
+                  selectedQuestionEventId={selectedQuestionEventId}
                   promotionResult={promotionResult}
                   editorialResult={editorialResult}
                   transitionResult={transitionResult}
@@ -838,6 +909,7 @@ export default function App() {
                   setOnlyUnresolved={setOnlyUnresolved}
                   setQueueReason={setQueueReason}
                   setQueuePriority={setQueuePriority}
+                  setSelectedQuestionEventId={setSelectedQuestionEventId}
                   setTransitionQueueItemId={setTransitionQueueItemId}
                   setTransitionAction={setTransitionAction}
                   setTransitionComment={setTransitionComment}
@@ -850,6 +922,7 @@ export default function App() {
                   setMetricsWindowDays={setMetricsWindowDays}
                   setMetricsSlaHours={setMetricsSlaHours}
                   onAskQuestion={onAskQuestion}
+                  onLoadAskedQuestions={onLoadAskedQuestions}
                   onLoadPromotionCandidates={onLoadPromotionCandidates}
                   onQueueEditorial={onQueueEditorial}
                   onTransitionEditorial={onTransitionEditorial}
