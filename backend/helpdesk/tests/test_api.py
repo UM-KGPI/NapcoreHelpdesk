@@ -31,6 +31,7 @@ from helpdesk.models import (
     EvidenceProvenance,
     FAQEntry,
     FAQVersion,
+    QuestionEvent,
     RetrievalEvent,
 )
 
@@ -1130,6 +1131,97 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(response.data["windowDays"], 30)
         self.assertEqual(response.data["minCount"], 1)
         self.assertGreaterEqual(len(response.data["items"]), 1)
+
+    @patch("helpdesk.services.semantic_clustering.build_text_embeddings_batch")
+    def test_editorial_semantic_clusters_groups_paraphrases(self, embedding_batch_mock):
+        """Semantic clustering should group related questions and keep outliers as singleton events."""
+        now = timezone.now()
+        questions = [
+            "How do I reset my password?",
+            "I forgot my login password",
+            "Need account password help",
+            "How to export NeTEx line timetable?",
+        ]
+        for index, question in enumerate(questions):
+            event = QuestionEvent.objects.create(
+                request_id=f"req-sc-{index}",
+                question=question,
+                mode="rag",
+                confidence=0.5,
+                answer="placeholder",
+            )
+            QuestionEvent.objects.filter(pk=event.pk).update(created_at=now - dt.timedelta(minutes=index))
+
+        embedding_batch_mock.return_value = [
+            [1.0, 0.0, 0.0],
+            [0.96, 0.04, 0.0],
+            [0.9, 0.1, 0.0],
+            [0.0, 1.0, 0.0],
+        ]
+
+        response = self.client.get(
+            reverse("editorial-semantic-clusters"),
+            {
+                "windowDays": 30,
+                "minClusterSize": 2,
+                "similarityThreshold": 0.8,
+                "maxEvents": 50,
+            },
+            format="json",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_matches_schema("EditorialSemanticClustersResponse", response.data)
+        self.assertEqual(response.data["totalEvents"], 4)
+        self.assertEqual(response.data["clusteredEvents"], 3)
+        self.assertEqual(response.data["singletonEvents"], 1)
+        self.assertEqual(len(response.data["clusters"]), 1)
+        self.assertEqual(response.data["clusters"][0]["memberCount"], 3)
+        self.assertIn("keywordAggregation", response.data["clusters"][0])
+        self.assertIn("topKeywords", response.data["clusters"][0]["keywordAggregation"])
+
+    def test_answer_feedback_persists_success_and_citation_click_signals(self):
+        """Feedback endpoint should persist answer-success and citation-click telemetry."""
+        answer_response = self.client.post(
+            reverse("answer-question"),
+            {"question": "How to use NeTEx for exchanging a timetable?"},
+            format="json",
+            HTTP_X_REQUEST_ID="req-feedback-extended-source",
+            **self.auth_headers(),
+        )
+        request_id = answer_response.data["trace"]["requestId"]
+
+        response = self.client.post(
+            reverse("answer-feedback"),
+            {
+                "requestId": request_id,
+                "userLikes": True,
+                "userDislikes": False,
+                "answerSuccess": True,
+                "citationClicksDelta": 2,
+            },
+            format="json",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_matches_schema("AnswerFeedbackResponse", response.data)
+        self.assertTrue(response.data["userLikes"])
+        self.assertFalse(response.data["userDislikes"])
+        self.assertTrue(response.data["answerSuccess"])
+        self.assertEqual(response.data["citationClickCount"], 2)
+
+        metrics_response = self.client.get(
+            reverse("editorial-queue-metrics"),
+            {"windowDays": 30, "slaHours": 72},
+            format="json",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(metrics_response.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(metrics_response.data["feedbackWindow"]["answerSuccess"], 1)
+        self.assertGreaterEqual(metrics_response.data["feedbackWindow"]["citationClicks"], 2)
 
     def test_answer_does_not_use_faq_for_single_keyword_overlap(self):
         """Ensure FAQ-first does not trigger on weak single-token overlap like only 'NeTEx'."""

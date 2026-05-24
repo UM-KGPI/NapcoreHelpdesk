@@ -53,11 +53,13 @@ class AnswerFeedbackRequestSerializer(serializers.Serializer):
     """Payload for persisting per-answer user feedback by request ID."""
 
     requestId = serializers.CharField()
-    userLikes = serializers.BooleanField(required=False, default=False)
-    userDislikes = serializers.BooleanField(required=False, default=False)
+    userLikes = serializers.BooleanField(required=False)
+    userDislikes = serializers.BooleanField(required=False)
+    answerSuccess = serializers.BooleanField(required=False, allow_null=True)
+    citationClicksDelta = serializers.IntegerField(required=False, min_value=0, default=0)
 
     def validate(self, attrs):
-        if attrs.get("userLikes") and attrs.get("userDislikes"):
+        if attrs.get("userLikes") is True and attrs.get("userDislikes") is True:
             raise serializers.ValidationError("userLikes and userDislikes cannot both be true.")
         return attrs
 
@@ -78,6 +80,15 @@ class PromotionCandidatesQuerySerializer(serializers.Serializer):
     windowDays = serializers.IntegerField(required=False, min_value=1, default=14)
     minCount = serializers.IntegerField(required=False, min_value=1, default=5)
     onlyUnresolved = serializers.BooleanField(required=False, default=False)
+
+
+class SemanticClustersQuerySerializer(serializers.Serializer):
+    """Query params for semantic clustering over recent question events."""
+
+    windowDays = serializers.IntegerField(required=False, min_value=1, default=30)
+    minClusterSize = serializers.IntegerField(required=False, min_value=2, default=2)
+    similarityThreshold = serializers.FloatField(required=False, min_value=0.0, max_value=1.0, default=0.82)
+    maxEvents = serializers.IntegerField(required=False, min_value=1, max_value=2000, default=500)
 
 
 class EditorialQueueRequestSerializer(serializers.Serializer):

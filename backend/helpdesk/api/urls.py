@@ -3,6 +3,7 @@ from django.urls import path
 from .views import (
     DevTokenView,
     EditorialQueueMetricsView,
+    EditorialSemanticClustersView,
     EditorialQueueView,
     EditorialQueueTransitionView,
     HealthLiveView,
@@ -25,6 +26,7 @@ urlpatterns = [
     path("questions/feedback", QuestionFeedbackView.as_view(), name="answer-feedback"),
     path("faqs/promotion-candidates", PromotionCandidatesView.as_view(), name="promotion-candidates"),
     path("editorial/queue", EditorialQueueView.as_view(), name="editorial-queue"),
+    path("editorial/semantic-clusters", EditorialSemanticClustersView.as_view(), name="editorial-semantic-clusters"),
     path("editorial/queue/metrics", EditorialQueueMetricsView.as_view(), name="editorial-queue-metrics"),
     path("editorial/queue/transition", EditorialQueueTransitionView.as_view(), name="editorial-queue-transition"),
     path("admin/index", IndexRepositoryView.as_view(), name="admin-index"),

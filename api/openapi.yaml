@@ -324,6 +324,14 @@ paths:
                   requestId: req-abc123
                   userLikes: true
                   userDislikes: false
+              citationClick:
+                value:
+                  requestId: req-abc123
+                  citationClicksDelta: 1
+              success:
+                value:
+                  requestId: req-abc123
+                  answerSuccess: true
       responses:
         '200':
           description: Feedback persisted
@@ -544,6 +552,67 @@ paths:
                 $ref: '#/components/schemas/EditorialQueueResponse'
         '400':
           description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/editorial/semantic-clusters:
+    get:
+      tags: [Editorial]
+      summary: Run semantic clustering over recent question events
+      operationId: runEditorialSemanticClustering
+      parameters:
+        - name: windowDays
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 30
+        - name: minClusterSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 2
+            default: 2
+        - name: similarityThreshold
+          in: query
+          required: false
+          schema:
+            type: number
+            minimum: 0
+            maximum: 1
+            default: 0.82
+        - name: maxEvents
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 2000
+            default: 500
+      responses:
+        '200':
+          description: Semantic clusters returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditorialSemanticClustersResponse'
+        '400':
+          description: Invalid query parameters
           content:
             application/json:
               schema:
@@ -924,6 +993,11 @@ components:
           type: boolean
         userDislikes:
           type: boolean
+        answerSuccess:
+          type: [boolean, "null"]
+        citationClickCount:
+          type: integer
+          minimum: 0
       additionalProperties: false
     AnswerFeedbackRequest:
       type: object
@@ -933,14 +1007,18 @@ components:
           type: string
         userLikes:
           type: boolean
-          default: false
         userDislikes:
           type: boolean
-          default: false
+        answerSuccess:
+          type: [boolean, "null"]
+        citationClicksDelta:
+          type: integer
+          minimum: 0
+          default: 0
       additionalProperties: false
     AnswerFeedbackResponse:
       type: object
-      required: [requestId, questionEventId, userLikes, userDislikes]
+      required: [requestId, questionEventId, userLikes, userDislikes, answerSuccess, citationClickCount]
       properties:
         requestId:
           type: string
@@ -950,6 +1028,11 @@ components:
           type: boolean
         userDislikes:
           type: boolean
+        answerSuccess:
+          type: [boolean, "null"]
+        citationClickCount:
+          type: integer
+          minimum: 0
       additionalProperties: false
     AskedQuestionRow:
       type: object
@@ -1104,6 +1187,133 @@ components:
         recommendedAction:
           type: string
           enum: [CREATE_FAQ_DRAFT, REVIEW_EXISTING_FAQ, MONITOR]
+      additionalProperties: false
+    EditorialSemanticClustersResponse:
+      type: object
+      required:
+        [generatedAt, windowDays, minClusterSize, similarityThreshold, maxEvents, totalEvents, clusteredEvents, singletonEvents, clusters]
+      properties:
+        generatedAt:
+          type: string
+          format: date-time
+        windowDays:
+          type: integer
+        minClusterSize:
+          type: integer
+        similarityThreshold:
+          type: number
+          minimum: 0
+          maximum: 1
+        maxEvents:
+          type: integer
+        totalEvents:
+          type: integer
+          minimum: 0
+        clusteredEvents:
+          type: integer
+          minimum: 0
+        singletonEvents:
+          type: integer
+          minimum: 0
+        clusters:
+          type: array
+          items:
+            $ref: '#/components/schemas/EditorialSemanticCluster'
+      additionalProperties: false
+    EditorialSemanticCluster:
+      type: object
+      required:
+        [clusterId, labelHint, validationSignal, memberCount, averageSimilarity, latestAskedAt, questionEventIds, sampleQuestions, keywordAggregation, members]
+      properties:
+        clusterId:
+          type: string
+        labelHint:
+          type: string
+        validationSignal:
+          type: string
+          enum: [strong, medium, weak]
+        memberCount:
+          type: integer
+          minimum: 1
+        averageSimilarity:
+          type: number
+          minimum: 0
+          maximum: 1
+        latestAskedAt:
+          type: string
+          format: date-time
+        questionEventIds:
+          type: array
+          items:
+            type: string
+        sampleQuestions:
+          type: array
+          items:
+            type: string
+        keywordAggregation:
+          $ref: '#/components/schemas/KeywordAggregation'
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/EditorialSemanticClusterMember'
+      additionalProperties: false
+    KeywordAggregation:
+      type: object
+      required: [topKeywords, topBigrams, lexicalCohesion]
+      properties:
+        topKeywords:
+          type: array
+          items:
+            $ref: '#/components/schemas/KeywordCount'
+        topBigrams:
+          type: array
+          items:
+            $ref: '#/components/schemas/NgramCount'
+        lexicalCohesion:
+          type: number
+          minimum: 0
+          maximum: 1
+      additionalProperties: false
+    KeywordCount:
+      type: object
+      required: [token, count]
+      properties:
+        token:
+          type: string
+        count:
+          type: integer
+          minimum: 1
+      additionalProperties: false
+    NgramCount:
+      type: object
+      required: [ngram, count]
+      properties:
+        ngram:
+          type: string
+        count:
+          type: integer
+          minimum: 1
+      additionalProperties: false
+    EditorialSemanticClusterMember:
+      type: object
+      required: [questionEventId, question, askedAt, requestId, mode, reviewRequired, abstained]
+      properties:
+        questionEventId:
+          type: string
+        question:
+          type: string
+        askedAt:
+          type: string
+          format: date-time
+        requestId:
+          type: string
+        mode:
+          type: string
+          enum: [faq, rag, abstain]
+        reviewRequired:
+          type: boolean
+        abstained:
+          type: boolean
       additionalProperties: false
     EditorialQueueRequest:
       type: object
@@ -1325,23 +1535,35 @@ components:
           additionalProperties: false
         feedbackToday:
           type: object
-          required: [likes, dislikes]
+          required: [likes, dislikes, answerSuccess, citationClicks]
           properties:
             likes:
               type: integer
               minimum: 0
             dislikes:
+              type: integer
+              minimum: 0
+            answerSuccess:
+              type: integer
+              minimum: 0
+            citationClicks:
               type: integer
               minimum: 0
           additionalProperties: false
         feedbackWindow:
           type: object
-          required: [likes, dislikes]
+          required: [likes, dislikes, answerSuccess, citationClicks]
           properties:
             likes:
               type: integer
               minimum: 0
             dislikes:
+              type: integer
+              minimum: 0
+            answerSuccess:
+              type: integer
+              minimum: 0
+            citationClicks:
               type: integer
               minimum: 0
           additionalProperties: false
