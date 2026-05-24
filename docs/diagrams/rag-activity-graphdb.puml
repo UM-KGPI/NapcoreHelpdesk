@@ -1,5 +1,5 @@
 @startuml rag-activity-graphdb
-title RAG Activity Flow (with GraphDB path)
+title Helpdesk Activity Flow
 
 skinparam backgroundColor white
 skinparam shadowing false
