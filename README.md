@@ -28,32 +28,6 @@ Essential architecture doc:
 
 ## Quickstart (local)
 
-Prerequisites:
-
-- Python virtual environment at `.venv`
-- Node.js + npm
-- PostgreSQL (default local mode)
-
-Run from repository root:
-
-```bash
-make backend-migrate
-make backend-run
-```
-
-In a second terminal:
-
-```bash
-make frontend-install
-make frontend-dev
-```
-
-Main URLs:
-
-- Backend API: `http://localhost:8000/api/v1`
-- Frontend user UI: `http://localhost:5173/user`
-- Frontend operator UI: `http://localhost:5173/editor`
-
 Install guides:
 
 - [Installation (local and Docker)](docs/installation.md)
@@ -75,15 +49,16 @@ API contract:
 - [API description](docs/api-description.md)
 - [OpenAPI source](api/openapi.yaml)
 
+Additional essentials:
+
+- [Semantic store](docs/semantic-store.md)
+- [LLM usage](docs/llm-usage.md)
+
 ## Documentation
 
 Public docs index:
 
 - [Documentation index](docs/README.md)
-
-Deep internal documentation has been moved to:
-
-- `.mylocal/docs/`
 
 ## Contributing
 
