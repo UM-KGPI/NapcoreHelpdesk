@@ -24,6 +24,7 @@ backend/celerybeat-schedule
 
 # Local backup artifacts
 .backups/
+.mylocal/
 
 # Frontend
 frontend/node_modules/
