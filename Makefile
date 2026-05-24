@@ -17,13 +17,13 @@ help: ## Show this help message
 
 ## ─── Diagrams ───────────────────────────────────────────────────────
 diagrams-c4: ## Render all C4 architecture diagrams (PlantUML)
-	@bash scripts/render-plantuml.sh docs/architecture/c4-system-context.puml docs/architecture/c4-container.puml docs/architecture/c4-orchestrator-components.puml
+	@bash scripts/render-plantuml.sh .mylocal/docs/architecture/c4-system-context.puml .mylocal/docs/architecture/c4-container.puml .mylocal/docs/architecture/c4-orchestrator-components.puml
 
 diagrams-erd: ## Render ERD architecture diagram (PlantUML -> SVG)
-	@bash scripts/render-plantuml.sh docs/architecture/erd-schema.puml
+	@bash scripts/render-plantuml.sh docs/diagrams/erd-schema.puml
 
 diagrams-bpmn: ## Render BPMN process diagrams (PlantUML -> SVG)
-	@bash scripts/render-plantuml.sh docs/architecture/editor-review-process-bpmn.puml docs/architecture/question-answer-process-bpmn.puml
+	@bash scripts/render-plantuml.sh .mylocal/docs/architecture/editor-review-process-bpmn.puml .mylocal/docs/architecture/question-answer-process-bpmn.puml
 
 ## ─── API ─────────────────────────────────────────────────────────────────────
 openapi-validate: ## Validate api/openapi.yaml against OpenAPI spec

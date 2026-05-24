@@ -18,16 +18,13 @@ The runtime uses a split LLM path:
 - Controller path: intent detection, route selection, and constrained query planning
 - Narration path: grounded answer composition from evidence and citations
 
-![C4 System Context](docs/architecture/c4-system-context.svg)
+![C4 System Context](docs/diagrams/c4-system-context.svg)
 
 _Figure: C4 Level 1 system context._
 
-Core architecture docs:
+Essential architecture doc:
 
-- [C4 overview](docs/architecture/c4-overview.md)
-- [Container diagram](docs/architecture/c4-container.md)
-- [Orchestrator components](docs/architecture/c4-orchestrator-components.md)
-- [RAG architecture](docs/architecture/rag-architecture.md)
+- [Architecture overview](docs/architecture-overview.md)
 
 ## Quickstart (local)
 
@@ -57,9 +54,9 @@ Main URLs:
 - Frontend user UI: `http://localhost:5173/user`
 - Frontend operator UI: `http://localhost:5173/editor`
 
-Full local run guide:
+Install guides:
 
-- [Local run quickstart](docs/testing/local-run-quickstart.md)
+- [Installation (local and Docker)](docs/installation.md)
 
 ## Most used Make targets
 
@@ -73,18 +70,20 @@ Full local run guide:
 - `make frontend-test`
 - `make health`
 
-Complete target reference:
+API contract:
 
-- [Make targets reference](docs/testing/make-targets-reference.md)
+- [API description](docs/api-description.md)
+- [OpenAPI source](api/openapi.yaml)
 
 ## Documentation
 
-Use this order:
+Public docs index:
 
-1. [Documentation index](docs/README.md)
-2. [Architecture](docs/architecture/c4-overview.md)
-3. [Testing and operations](docs/testing/local-run-quickstart.md)
-4. [Functional requirements](docs/requirements/functional-requirements.md)
+- [Documentation index](docs/README.md)
+
+Deep internal documentation has been moved to:
+
+- `.mylocal/docs/`
 
 ## Contributing
 
