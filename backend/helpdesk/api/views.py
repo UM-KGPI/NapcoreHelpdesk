@@ -44,6 +44,7 @@ from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 from helpdesk.services.retrieval_event_logger import log_retrieval_events
 from helpdesk.services.rule_engine import evaluate_semantic_rules
 from helpdesk.services.runtime_requirements import ensure_graph_runtime_ready
+from helpdesk.services.semantic_clustering import build_semantic_clusters
 
 from .serializers import (
     AnswerFeedbackRequestSerializer,
@@ -54,6 +55,7 @@ from .serializers import (
     EditorialQueueTransitionRequestSerializer,
     IndexRepositoryRequestSerializer,
     PromotionCandidatesQuerySerializer,
+    SemanticClustersQuerySerializer,
     QuestionEventsListQuerySerializer,
 )
 
@@ -1054,6 +1056,8 @@ class QuestionAnswerView(APIView):
                     ],
                     "userLikes": event.user_likes,
                     "userDislikes": event.user_dislikes,
+                    "answerSuccess": event.answer_success,
+                    "citationClickCount": event.citation_click_count,
                 }
             },
             status=status.HTTP_200_OK,
@@ -1450,6 +1454,8 @@ class QuestionAnswerStreamView(APIView):
                     "crossStandardEvidencePartitions": cross_standard_analysis["crossStandardEvidencePartitions"],
                     "userLikes": event.user_likes,
                     "userDislikes": event.user_dislikes,
+                    "answerSuccess": event.answer_success,
+                    "citationClickCount": event.citation_click_count,
                 },
             },
         })
@@ -1473,12 +1479,26 @@ class QuestionFeedbackView(APIView):
                 http_status=status.HTTP_404_NOT_FOUND,
             )
 
-        user_likes = bool(data.get("userLikes", False))
-        user_dislikes = bool(data.get("userDislikes", False))
+        if "userLikes" in data:
+            event.user_likes = bool(data.get("userLikes"))
+        if "userDislikes" in data:
+            event.user_dislikes = bool(data.get("userDislikes"))
+        if "answerSuccess" in data:
+            event.answer_success = data.get("answerSuccess")
 
-        event.user_likes = user_likes
-        event.user_dislikes = user_dislikes
-        event.save(update_fields=["user_likes", "user_dislikes", "updated_at"])
+        citation_clicks_delta = int(data.get("citationClicksDelta", 0))
+        if citation_clicks_delta > 0:
+            event.citation_click_count += citation_clicks_delta
+
+        event.save(
+            update_fields=[
+                "user_likes",
+                "user_dislikes",
+                "answer_success",
+                "citation_click_count",
+                "updated_at",
+            ]
+        )
 
         return Response(
             {
@@ -1486,6 +1506,8 @@ class QuestionFeedbackView(APIView):
                 "questionEventId": str(event.id),
                 "userLikes": event.user_likes,
                 "userDislikes": event.user_dislikes,
+                "answerSuccess": event.answer_success,
+                "citationClickCount": event.citation_click_count,
             },
             status=status.HTTP_200_OK,
         )
@@ -1614,6 +1636,24 @@ class PromotionCandidatesView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+class EditorialSemanticClustersView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Manual trigger endpoint for semantic clustering over recent question events.
+        serializer = SemanticClustersQuerySerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        result = build_semantic_clusters(
+            window_days=data["windowDays"],
+            min_cluster_size=data["minClusterSize"],
+            similarity_threshold=float(data["similarityThreshold"]),
+            max_events=data["maxEvents"],
+        )
+        return Response(result, status=status.HTTP_200_OK)
 
 
 class EditorialQueueView(APIView):
@@ -1854,10 +1894,14 @@ class EditorialQueueMetricsView(APIView):
                 "feedbackToday": {
                     "likes": feedback_today_events.filter(user_likes=True).count(),
                     "dislikes": feedback_today_events.filter(user_dislikes=True).count(),
+                    "answerSuccess": feedback_today_events.filter(answer_success=True).count(),
+                    "citationClicks": sum(item.citation_click_count for item in feedback_today_events),
                 },
                 "feedbackWindow": {
                     "likes": feedback_window_events.filter(user_likes=True).count(),
                     "dislikes": feedback_window_events.filter(user_dislikes=True).count(),
+                    "answerSuccess": feedback_window_events.filter(answer_success=True).count(),
+                    "citationClicks": sum(item.citation_click_count for item in feedback_window_events),
                 },
             },
             status=status.HTTP_200_OK,

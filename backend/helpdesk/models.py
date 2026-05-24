@@ -157,6 +157,8 @@ class QuestionEvent(TimestampedModel):
     review_required = models.BooleanField(default=False)
     user_likes = models.BooleanField(default=False)
     user_dislikes = models.BooleanField(default=False)
+    answer_success = models.BooleanField(null=True, blank=True)
+    citation_click_count = models.IntegerField(default=0)
 
     # Trace links used by downstream debugging and editorial workflows.
     matched_faq_entry_id = models.CharField(max_length=128, null=True, blank=True)

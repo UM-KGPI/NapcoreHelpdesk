@@ -9,8 +9,8 @@ import type {
   EditorialBoardResponse,
   EditorialQueueResponse,
   EditorialQueueTransitionResponse,
+  EditorialSemanticClustersResponse,
   IndexRepositoryResponse,
-  PromotionCandidatesResponse,
   StandardsScope,
 } from "../types";
 
@@ -44,14 +44,11 @@ interface EditorConsoleWorkspaceProps {
   answerResult: AnswerResponse | null;
   askedQuestions: AskedQuestionRow[];
   selectedQuestionEventId: string;
-  promotionResult: PromotionCandidatesResponse | null;
   editorialResult: EditorialQueueResponse | null;
   transitionResult: EditorialQueueTransitionResponse | null;
   boardResult: EditorialBoardResponse | null;
   boardMetrics: EditorialBoardMetricsResponse | null;
-  windowDays: number;
-  minCount: number;
-  onlyUnresolved: boolean;
+  semanticClustersResult: EditorialSemanticClustersResponse | null;
   queueReason: QueueReason;
   queuePriority: QueuePriority;
   transitionQueueItemId: string;
@@ -65,15 +62,16 @@ interface EditorConsoleWorkspaceProps {
   boardPageSize: number;
   metricsWindowDays: number;
   metricsSlaHours: number;
+  semanticWindowDays: number;
+  semanticMinClusterSize: number;
+  semanticSimilarityThreshold: number;
+  semanticMaxEvents: number;
   busy: boolean;
   token: string;
   setQuestion: (value: string) => void;
   setSessionId: (value: string) => void;
   setUserId: (value: string) => void;
   toggleScope: (scope: StandardsScope) => void;
-  setWindowDays: (value: number) => void;
-  setMinCount: (value: number) => void;
-  setOnlyUnresolved: (value: boolean) => void;
   setQueueReason: (value: QueueReason) => void;
   setQueuePriority: (value: QueuePriority) => void;
   setSelectedQuestionEventId: (value: string) => void;
@@ -88,14 +86,18 @@ interface EditorConsoleWorkspaceProps {
   setBoardPageSize: (value: number) => void;
   setMetricsWindowDays: (value: number) => void;
   setMetricsSlaHours: (value: number) => void;
+  setSemanticWindowDays: (value: number) => void;
+  setSemanticMinClusterSize: (value: number) => void;
+  setSemanticSimilarityThreshold: (value: number) => void;
+  setSemanticMaxEvents: (value: number) => void;
   onAskQuestion: (event: FormEvent<HTMLFormElement>) => Promise<void>;
   onLoadAskedQuestions: () => Promise<void>;
-  onLoadPromotionCandidates: () => Promise<void>;
   onQueueEditorial: (questionEventIdOverride?: string) => Promise<void>;
   onTransitionEditorial: () => Promise<void>;
   onLoadEditorialBoard: () => Promise<void>;
   onQuickTransition: (item: EditorialBoardItem, action: TransitionAction) => Promise<void>;
   onLoadBoardMetrics: () => Promise<void>;
+  onLoadSemanticClusters: () => Promise<void>;
   indexPresetId: string;
   indexRepoPresets: IndexRepoPresetOption[];
   indexRepoUrl: string;
@@ -124,7 +126,6 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
   const [askedOnlyReviewRequired, setAskedOnlyReviewRequired] = useState(false);
   const [askedMode, setAskedMode] = useState<"" | "faq" | "rag" | "abstain">("");
   const [askedShowAdvancedIds, setAskedShowAdvancedIds] = useState(false);
-  const [selectedIntent, setSelectedIntent] = useState<string>("");
   const answerResultRef = useRef<HTMLElement | null>(null);
   const lastAnswerRequestIdRef = useRef<string | null>(null);
   const {
@@ -135,14 +136,11 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
     answerResult,
     askedQuestions,
     selectedQuestionEventId,
-    promotionResult,
     editorialResult,
     transitionResult,
     boardResult,
     boardMetrics,
-    windowDays,
-    minCount,
-    onlyUnresolved,
+    semanticClustersResult,
     queueReason,
     queuePriority,
     transitionQueueItemId,
@@ -156,15 +154,16 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
     boardPageSize,
     metricsWindowDays,
     metricsSlaHours,
+    semanticWindowDays,
+    semanticMinClusterSize,
+    semanticSimilarityThreshold,
+    semanticMaxEvents,
     busy,
     token,
     setQuestion,
     setSessionId,
     setUserId,
     toggleScope,
-    setWindowDays,
-    setMinCount,
-    setOnlyUnresolved,
     setQueueReason,
     setQueuePriority,
     setSelectedQuestionEventId,
@@ -179,14 +178,18 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
     setBoardPageSize,
     setMetricsWindowDays,
     setMetricsSlaHours,
+    setSemanticWindowDays,
+    setSemanticMinClusterSize,
+    setSemanticSimilarityThreshold,
+    setSemanticMaxEvents,
     onAskQuestion,
     onLoadAskedQuestions,
-    onLoadPromotionCandidates,
     onQueueEditorial,
     onTransitionEditorial,
     onLoadEditorialBoard,
     onQuickTransition,
     onLoadBoardMetrics,
+    onLoadSemanticClusters,
     indexPresetId,
     indexRepoPresets,
     indexRepoUrl,
@@ -219,16 +222,9 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
     answerResultRef.current?.scrollIntoView({ block: "start", behavior: "auto" });
   }, [answerResult?.trace.requestId]);
 
-  function normalizeIntent(questionText: string): string {
-    return questionText.toLowerCase().trim().split(/\s+/).filter(Boolean).join(" ");
-  }
-
   const filteredAskedQuestions = useMemo(() => {
     const needle = askedSearch.trim().toLowerCase();
     return askedQuestions.filter((item) => {
-      if (selectedIntent && normalizeIntent(item.question) !== selectedIntent) {
-        return false;
-      }
       if (askedOnlyReviewRequired && !item.reviewRequired) {
         return false;
       }
@@ -244,7 +240,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
         item.questionEventId.toLowerCase().includes(needle)
       );
     });
-  }, [askedMode, askedOnlyReviewRequired, askedQuestions, askedSearch, selectedIntent]);
+  }, [askedMode, askedOnlyReviewRequired, askedQuestions, askedSearch]);
 
   const askedModeCounts = useMemo(() => {
     return askedQuestions.reduce(
@@ -255,8 +251,6 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
       { faq: 0, rag: 0, abstain: 0 }
     );
   }, [askedQuestions]);
-
-  const selectedIntentQuestionsCount = filteredAskedQuestions.length;
 
   const canQueueSelectedQuestion = Boolean(selectedQuestionEventId);
   const boardItems = boardResult?.items ?? [];
@@ -375,77 +369,70 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
 
         {activeTab === "editorial" && (
           <>
-            <section className="panel step-3-routing">
-              <h2>Review Priorities</h2>
-              <p className="muted">Start from the most repeated unresolved intents, then inspect matching questions before routing one into review.</p>
+            <section className="panel step-3-clustering">
+              <h2>Semantic Clusters</h2>
+              <p className="muted">Group related QuestionEvent rows by semantic similarity, then use keyword aggregation labels and validation signals for triage.</p>
 
               <div className="grid-three">
                 <label>
                   windowDays
-                  <input type="number" min={1} value={windowDays} onChange={(event) => setWindowDays(Number(event.target.value))} />
+                  <input type="number" min={1} value={semanticWindowDays} onChange={(event) => setSemanticWindowDays(Number(event.target.value))} />
                 </label>
                 <label>
-                  minCount
-                  <input type="number" min={1} value={minCount} onChange={(event) => setMinCount(Number(event.target.value))} />
+                  minClusterSize
+                  <input type="number" min={2} value={semanticMinClusterSize} onChange={(event) => setSemanticMinClusterSize(Number(event.target.value))} />
                 </label>
-                <label className="checkbox-label">
-                  <input type="checkbox" checked={onlyUnresolved} onChange={(event) => setOnlyUnresolved(event.target.checked)} />
-                  onlyUnresolved
+                <label>
+                  similarityThreshold
+                  <input type="number" min={0} max={1} step={0.01} value={semanticSimilarityThreshold} onChange={(event) => setSemanticSimilarityThreshold(Number(event.target.value))} />
+                </label>
+              </div>
+              <div className="grid-two">
+                <label>
+                  maxEvents
+                  <input type="number" min={1} max={2000} value={semanticMaxEvents} onChange={(event) => setSemanticMaxEvents(Number(event.target.value))} />
+                </label>
+                <label>
+                  Semantic Batch
+                  <button onClick={onLoadSemanticClusters} disabled={busy || !token}>Run Semantic Clustering</button>
                 </label>
               </div>
 
-              <div className="button-row">
-                <button onClick={onLoadPromotionCandidates} disabled={busy || !token}>Load Priorities</button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedIntent("")}
-                  disabled={busy || !selectedIntent}
-                >
-                  Clear Intent
-                </button>
-              </div>
-
-              {promotionResult && (
+              {semanticClustersResult && (
                 <article className="result-card">
-                  <h3>Top Candidate Intents</h3>
-                  {promotionResult.items.length === 0 && <p className="muted">No candidate intents found for these filters.</p>}
-                  {promotionResult.items.length > 0 && (
+                  <h3>Cluster Results</h3>
+                  <p className="muted">generated {semanticClustersResult.generatedAt}</p>
+                  <p className="muted tiny">totalEvents {semanticClustersResult.totalEvents} · clusteredEvents {semanticClustersResult.clusteredEvents} · singletonEvents {semanticClustersResult.singletonEvents}</p>
+                  {semanticClustersResult.clusters.length === 0 && <p className="muted">No clusters met the minimum cluster size for current filters.</p>}
+                  {semanticClustersResult.clusters.length > 0 && (
                     <div className="table-wrap">
                       <table className="board-table">
                         <thead>
                           <tr>
-                            <th>Intent</th>
-                            <th>Count</th>
-                            <th>Last Asked</th>
-                            <th>Recommended Action</th>
-                            <th>Action</th>
+                            <th>Label</th>
+                            <th>Signal</th>
+                            <th>Members</th>
+                            <th>Keywords</th>
+                            <th>Top Bigrams</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {promotionResult.items.map((item) => (
-                            <tr key={`${item.normalizedIntent}-${item.lastAskedAt}`}>
+                          {semanticClustersResult.clusters.map((cluster) => (
+                            <tr key={cluster.clusterId}>
                               <td>
-                                <div>{item.normalizedIntent}</div>
-                                <div className="muted tiny">{item.questionEventId}</div>
+                                <div>{cluster.labelHint}</div>
+                                <div className="muted tiny">{cluster.clusterId}</div>
                               </td>
-                              <td>{item.questionCount}</td>
-                              <td>{item.lastAskedAt}</td>
-                              <td>{item.recommendedAction}</td>
                               <td>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedIntent(item.normalizedIntent);
-                                    setAskedSearch("");
-                                    setAskedMode("");
-                                    setAskedOnlyReviewRequired(false);
-                                    void onLoadAskedQuestions();
-                                  }}
-                                  disabled={busy || !token}
-                                >
-                                  View Questions
-                                </button>
+                                <div>{cluster.validationSignal}</div>
+                                <div className="muted tiny">sim {cluster.averageSimilarity.toFixed(2)} · cohesion {cluster.keywordAggregation.lexicalCohesion.toFixed(2)}</div>
                               </td>
+                              <td>
+                                <div>{cluster.memberCount}</div>
+                                <div className="muted tiny">{cluster.questionEventIds.slice(0, 2).join(", ")}{cluster.questionEventIds.length > 2 ? " ..." : ""}</div>
+                              </td>
+                              <td>{cluster.keywordAggregation.topKeywords.slice(0, 3).map((item) => item.token).join(", ") || "none"}</td>
+                              <td>{cluster.keywordAggregation.topBigrams.slice(0, 2).map((item) => item.ngram).join(", ") || "none"}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -457,11 +444,8 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
             </section>
 
             <section className="panel step-4-transition">
-              <h2>Questions For Selected Intent</h2>
-              <p className="muted">Inspect the raw questions behind the chosen priority and select one to send into the review queue.</p>
-
-              {!selectedIntent && <p className="muted">Select a candidate intent in Review Priorities to inspect its related questions.</p>}
-              {selectedIntent && <p className="muted">Selected intent: <strong>{selectedIntent}</strong> <span className="tiny">· {selectedIntentQuestionsCount} matching questions</span></p>}
+              <h2>Questions for Review</h2>
+              <p className="muted">Inspect the stored questions, filter the list, and select one to send into the review queue.</p>
 
               <div className="grid-three">
                 <label>
@@ -505,9 +489,6 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                     setAskedSearch("");
                     setAskedOnlyReviewRequired(false);
                     setAskedMode("");
-                    if (!selectedIntent) {
-                      setSelectedQuestionEventId("");
-                    }
                     void onLoadAskedQuestions();
                   }}
                   disabled={busy || !token}
@@ -669,8 +650,12 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                     <div className="kpi-tile"><span>Overdue</span><strong>{boardMetrics.overdueItems}</strong></div>
                     <div className="kpi-tile"><span>Likes 24h</span><strong>{boardMetrics.feedbackToday.likes}</strong></div>
                     <div className="kpi-tile"><span>Dislikes 24h</span><strong>{boardMetrics.feedbackToday.dislikes}</strong></div>
+                    <div className="kpi-tile"><span>Success 24h</span><strong>{boardMetrics.feedbackToday.answerSuccess}</strong></div>
+                    <div className="kpi-tile"><span>Citation Clicks 24h</span><strong>{boardMetrics.feedbackToday.citationClicks}</strong></div>
                     <div className="kpi-tile"><span>{`Likes ${boardMetrics.windowDays}d`}</span><strong>{boardMetrics.feedbackWindow.likes}</strong></div>
                     <div className="kpi-tile"><span>{`Dislikes ${boardMetrics.windowDays}d`}</span><strong>{boardMetrics.feedbackWindow.dislikes}</strong></div>
+                    <div className="kpi-tile"><span>{`Success ${boardMetrics.windowDays}d`}</span><strong>{boardMetrics.feedbackWindow.answerSuccess}</strong></div>
+                    <div className="kpi-tile"><span>{`Citation Clicks ${boardMetrics.windowDays}d`}</span><strong>{boardMetrics.feedbackWindow.citationClicks}</strong></div>
                     <div className="kpi-tile"><span>Draft</span><strong>{boardMetrics.byStatus.draft}</strong></div>
                     <div className="kpi-tile"><span>Review</span><strong>{boardMetrics.byStatus.review}</strong></div>
                     <div className="kpi-tile"><span>Approved</span><strong>{boardMetrics.byStatus.approved}</strong></div>

@@ -35,7 +35,15 @@ interface UserChatWorkspaceProps {
   setChatPrompt: (value: string) => void;
   onSendChat: (event: FormEvent<HTMLFormElement>) => Promise<void>;
   onResetChatSession: () => void;
-  onSetAnswerFeedback: (requestId: string, userLikes: boolean, userDislikes: boolean) => Promise<void>;
+  onSetAnswerFeedback: (
+    requestId: string,
+    payload: {
+      userLikes?: boolean;
+      userDislikes?: boolean;
+      answerSuccess?: boolean | null;
+      citationClicksDelta?: number;
+    }
+  ) => Promise<void>;
 }
 
 export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
@@ -135,7 +143,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
         const feedbackDislike = turn.answer.trace.userDislikes ?? false;
         lines.push("");
         lines.push(
-          `Trace: requestId=${turn.requestId ?? turn.answer.trace.requestId}; mode=${turn.answer.mode}; confidence=${turn.answer.confidence.toFixed(2)}; userLikes=${String(feedbackLike)}; userDislikes=${String(feedbackDislike)}`
+          `Trace: requestId=${turn.requestId ?? turn.answer.trace.requestId}; mode=${turn.answer.mode}; confidence=${turn.answer.confidence.toFixed(2)}; userLikes=${String(feedbackLike)}; userDislikes=${String(feedbackDislike)}; answerSuccess=${String(turn.answer.trace.answerSuccess ?? null)}; citationClickCount=${String(turn.answer.trace.citationClickCount ?? 0)}`
         );
       }
       lines.push("");
@@ -153,10 +161,18 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
     URL.revokeObjectURL(link.href);
   };
 
-  const setFeedback = async (requestId: string, userLikes: boolean, userDislikes: boolean) => {
+  const setFeedback = async (
+    requestId: string,
+    payload: {
+      userLikes?: boolean;
+      userDislikes?: boolean;
+      answerSuccess?: boolean | null;
+      citationClicksDelta?: number;
+    }
+  ) => {
     setFeedbackPendingByRequestId((prev) => ({ ...prev, [requestId]: true }));
     try {
-      await onSetAnswerFeedback(requestId, userLikes, userDislikes);
+      await onSetAnswerFeedback(requestId, payload);
     } finally {
       setFeedbackPendingByRequestId((prev) => {
         const next = { ...prev };
@@ -267,7 +283,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                           return;
                         }
                         const currentLike = turn.answer?.trace.userLikes ?? false;
-                        void setFeedback(requestId, !currentLike, false);
+                        void setFeedback(requestId, { userLikes: !currentLike, userDislikes: false });
                       }}
                       disabled={feedbackPendingByRequestId[turn.requestId ?? turn.answer.trace.requestId] === true}
                       title="Good answer"
@@ -284,13 +300,30 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                           return;
                         }
                         const currentDislike = turn.answer?.trace.userDislikes ?? false;
-                        void setFeedback(requestId, false, !currentDislike);
+                        void setFeedback(requestId, { userLikes: false, userDislikes: !currentDislike });
                       }}
                       disabled={feedbackPendingByRequestId[turn.requestId ?? turn.answer.trace.requestId] === true}
                       title="Answer could be better"
                       aria-label="Answer could be better"
                     >
                       👎
+                    </button>
+                    <button
+                      type="button"
+                      className={`chat-icon-button ${(turn.answer.trace.answerSuccess ?? false) ? "chat-icon-button-active" : ""}`}
+                      onClick={() => {
+                        const requestId = turn.requestId ?? turn.answer?.trace.requestId;
+                        if (!requestId) {
+                          return;
+                        }
+                        const current = turn.answer?.trace.answerSuccess ?? false;
+                        void setFeedback(requestId, { answerSuccess: !current });
+                      }}
+                      disabled={feedbackPendingByRequestId[turn.requestId ?? turn.answer.trace.requestId] === true}
+                      title="Answer solved my task"
+                      aria-label="Answer solved my task"
+                    >
+                      ✅
                     </button>
                   </div>
                   {turn.answer.citations.length > 0 && (
@@ -300,7 +333,20 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                         {turn.answer.citations.map((citation, index) => (
                           <li key={`${turn.id}-${citation.chunkId}`}>
                             <strong>{`[E${index + 1}]`}</strong>{" "}
-                            <a href={citation.repositoryUrl} target="_blank" rel="noreferrer">{citation.label ?? citation.sourcePath}</a>
+                            <a
+                              href={citation.repositoryUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={() => {
+                                const requestId = turn.requestId ?? turn.answer?.trace.requestId;
+                                if (!requestId) {
+                                  return;
+                                }
+                                void onSetAnswerFeedback(requestId, { citationClicksDelta: 1 });
+                              }}
+                            >
+                              {citation.label ?? citation.sourcePath}
+                            </a>
                             <span className="muted"> · {citation.sourcePath}</span>
                           </li>
                         ))}
@@ -309,6 +355,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                   )}
                   <p className="muted tiny">
                     requestId: {turn.requestId ?? turn.answer.trace.requestId} · mode: {turn.answer.mode} · confidence: {turn.answer.confidence.toFixed(2)}
+                    {` · answerSuccess: ${String(turn.answer.trace.answerSuccess ?? null)} · citationClicks: ${String(turn.answer.trace.citationClickCount ?? 0)}`}
                   </p>
                 </>
               )}

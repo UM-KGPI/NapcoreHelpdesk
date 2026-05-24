@@ -6,6 +6,7 @@ from celery import shared_task
 from django.conf import settings
 
 from helpdesk.services.index_builder import index_repository
+from helpdesk.services.semantic_clustering import build_semantic_clusters
 
 
 @shared_task(name="helpdesk.reindex_default_repository")
@@ -42,4 +43,25 @@ def reindex_default_repository() -> dict:
         "created_chunks": stats.created_chunks,
         "updated_chunks": stats.updated_chunks,
         "deleted_chunks": stats.deleted_chunks,
+    }
+
+
+@shared_task(name="helpdesk.run_semantic_clustering_batch")
+def run_semantic_clustering_batch() -> dict:
+    """Scheduled semantic clustering batch over recent question events."""
+
+    result = build_semantic_clusters(
+        window_days=settings.SEMANTIC_CLUSTER_WINDOW_DAYS,
+        min_cluster_size=settings.SEMANTIC_CLUSTER_MIN_SIZE,
+        similarity_threshold=settings.SEMANTIC_CLUSTER_SIMILARITY_THRESHOLD,
+        max_events=settings.SEMANTIC_CLUSTER_MAX_EVENTS,
+    )
+    return {
+        "status": "ok",
+        "generatedAt": result["generatedAt"],
+        "windowDays": result["windowDays"],
+        "totalEvents": result["totalEvents"],
+        "clusteredEvents": result["clusteredEvents"],
+        "singletonEvents": result["singletonEvents"],
+        "clusterCount": len(result["clusters"]),
     }
