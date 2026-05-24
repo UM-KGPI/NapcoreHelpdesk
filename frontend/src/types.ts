@@ -56,6 +56,8 @@ export interface AnswerTrace {
   crossStandardEvidencePartitions?: CrossStandardEvidencePartition[];
   userLikes?: boolean;
   userDislikes?: boolean;
+  answerSuccess?: boolean | null;
+  citationClickCount?: number;
 }
 
 export interface CrossStandardEvidencePartition {
@@ -171,11 +173,66 @@ export interface EditorialBoardMetricsResponse {
   feedbackToday: {
     likes: number;
     dislikes: number;
+    answerSuccess: number;
+    citationClicks: number;
   };
   feedbackWindow: {
     likes: number;
     dislikes: number;
+    answerSuccess: number;
+    citationClicks: number;
   };
+}
+
+export interface SemanticKeywordCount {
+  token: string;
+  count: number;
+}
+
+export interface SemanticNgramCount {
+  ngram: string;
+  count: number;
+}
+
+export interface SemanticKeywordAggregation {
+  topKeywords: SemanticKeywordCount[];
+  topBigrams: SemanticNgramCount[];
+  lexicalCohesion: number;
+}
+
+export interface EditorialSemanticClusterMember {
+  questionEventId: string;
+  question: string;
+  askedAt: string;
+  requestId: string;
+  mode: AnswerMode;
+  reviewRequired: boolean;
+  abstained: boolean;
+}
+
+export interface EditorialSemanticCluster {
+  clusterId: string;
+  labelHint: string;
+  validationSignal: "strong" | "medium" | "weak";
+  memberCount: number;
+  averageSimilarity: number;
+  latestAskedAt: string;
+  questionEventIds: string[];
+  sampleQuestions: string[];
+  keywordAggregation: SemanticKeywordAggregation;
+  members: EditorialSemanticClusterMember[];
+}
+
+export interface EditorialSemanticClustersResponse {
+  generatedAt: string;
+  windowDays: number;
+  minClusterSize: number;
+  similarityThreshold: number;
+  maxEvents: number;
+  totalEvents: number;
+  clusteredEvents: number;
+  singletonEvents: number;
+  clusters: EditorialSemanticCluster[];
 }
 
 export interface IndexRepositoryResponse {

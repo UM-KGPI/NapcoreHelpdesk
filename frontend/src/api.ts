@@ -3,6 +3,7 @@ import type {
   ApiErrorEnvelope,
   EditorialBoardMetricsResponse,
   EditorialBoardResponse,
+  EditorialSemanticClustersResponse,
   EditorialQueueResponse,
   EditorialQueueTransitionResponse,
   HealthResponse,
@@ -39,6 +40,8 @@ export interface AnswerFeedbackRequest {
   requestId: string;
   userLikes?: boolean;
   userDislikes?: boolean;
+  answerSuccess?: boolean | null;
+  citationClicksDelta?: number;
 }
 
 export interface AnswerFeedbackResponse {
@@ -46,6 +49,15 @@ export interface AnswerFeedbackResponse {
   questionEventId: string;
   userLikes: boolean;
   userDislikes: boolean;
+  answerSuccess: boolean | null;
+  citationClickCount: number;
+}
+
+export interface SemanticClustersQuery {
+  windowDays?: number;
+  minClusterSize?: number;
+  similarityThreshold?: number;
+  maxEvents?: number;
 }
 
 export interface EditorialQueueTransitionRequest {
@@ -271,6 +283,17 @@ export class HelpdeskApiClient {
     params.set("windowDays", String(query.windowDays ?? 30));
     params.set("slaHours", String(query.slaHours ?? 72));
     return this.request<EditorialBoardMetricsResponse>(`/editorial/queue/metrics?${params.toString()}`, {
+      method: "GET",
+    });
+  }
+
+  async runEditorialSemanticClusters(query: SemanticClustersQuery): Promise<EditorialSemanticClustersResponse> {
+    const params = new URLSearchParams();
+    params.set("windowDays", String(query.windowDays ?? 30));
+    params.set("minClusterSize", String(query.minClusterSize ?? 2));
+    params.set("similarityThreshold", String(query.similarityThreshold ?? 0.82));
+    params.set("maxEvents", String(query.maxEvents ?? 500));
+    return this.request<EditorialSemanticClustersResponse>(`/editorial/semantic-clusters?${params.toString()}`, {
       method: "GET",
     });
   }

@@ -14,8 +14,8 @@ import type {
   EditorialBoardResponse,
   EditorialQueueResponse,
   EditorialQueueTransitionResponse,
+  EditorialSemanticClustersResponse,
   IndexRepositoryResponse,
-  PromotionCandidatesResponse,
   StandardsScope,
 } from "./types";
 
@@ -108,11 +108,11 @@ export default function App() {
   const [answerResult, setAnswerResult] = useState<AnswerResponse | null>(null);
   const [askedQuestions, setAskedQuestions] = useState<AskedQuestionRow[]>([]);
   const [selectedQuestionEventId, setSelectedQuestionEventId] = useState("");
-  const [promotionResult, setPromotionResult] = useState<PromotionCandidatesResponse | null>(null);
   const [editorialResult, setEditorialResult] = useState<EditorialQueueResponse | null>(null);
   const [transitionResult, setTransitionResult] = useState<EditorialQueueTransitionResponse | null>(null);
   const [boardResult, setBoardResult] = useState<EditorialBoardResponse | null>(null);
   const [boardMetrics, setBoardMetrics] = useState<EditorialBoardMetricsResponse | null>(null);
+  const [semanticClustersResult, setSemanticClustersResult] = useState<EditorialSemanticClustersResponse | null>(null);
 
   const [indexRepoPresets, setIndexRepoPresets] = useState<IndexRepoPreset[]>(DEFAULT_INDEX_REPO_PRESETS);
   const [indexPresetId, setIndexPresetId] = useState(DEFAULT_INDEX_REPO_PRESETS[0].id);
@@ -125,10 +125,6 @@ export default function App() {
   const [indexAutoAllowRepository, setIndexAutoAllowRepository] = useState(true);
   const [indexResult, setIndexResult] = useState<IndexRepositoryResponse | null>(null);
   const [indexBusy, setIndexBusy] = useState(false);
-
-  const [windowDays, setWindowDays] = useState(14);
-  const [minCount, setMinCount] = useState(3);
-  const [onlyUnresolved, setOnlyUnresolved] = useState(true);
 
   const [queueReason, setQueueReason] = useState<"LOW_CONFIDENCE" | "CITATION_GAP" | "POLICY_REVIEW" | "USER_ESCALATION">("LOW_CONFIDENCE");
   const [queuePriority, setQueuePriority] = useState<"low" | "normal" | "high">("normal");
@@ -143,6 +139,10 @@ export default function App() {
   const [boardPageSize, setBoardPageSize] = useState(10);
   const [metricsWindowDays, setMetricsWindowDays] = useState(30);
   const [metricsSlaHours, setMetricsSlaHours] = useState(72);
+  const [semanticWindowDays, setSemanticWindowDays] = useState(30);
+  const [semanticMinClusterSize, setSemanticMinClusterSize] = useState(2);
+  const [semanticSimilarityThreshold, setSemanticSimilarityThreshold] = useState(0.82);
+  const [semanticMaxEvents, setSemanticMaxEvents] = useState(500);
   const [chatPrompt, setChatPrompt] = useState("How can I validate a timetable in NeTEx XML file before publishing?");
   const [chatTurns, setChatTurns] = useState<ChatTurn[]>([]);
   const [chatProfile, setChatProfile] = useState<ChatProfile>("llm-ready");
@@ -639,13 +639,20 @@ export default function App() {
     }
   }
 
-  async function onSetAnswerFeedback(requestId: string, userLikes: boolean, userDislikes: boolean): Promise<void> {
+  async function onSetAnswerFeedback(
+    requestId: string,
+    payload: {
+      userLikes?: boolean;
+      userDislikes?: boolean;
+      answerSuccess?: boolean | null;
+      citationClicksDelta?: number;
+    }
+  ): Promise<void> {
     setError(null);
     try {
       const result = await client.submitAnswerFeedback({
         requestId,
-        userLikes,
-        userDislikes,
+        ...payload,
       });
 
       setChatTurns((prev) =>
@@ -665,6 +672,8 @@ export default function App() {
                 ...turn.answer.trace,
                 userLikes: result.userLikes,
                 userDislikes: result.userDislikes,
+                answerSuccess: result.answerSuccess,
+                citationClickCount: result.citationClickCount,
               },
             },
           };
@@ -681,24 +690,13 @@ export default function App() {
             ...prev.trace,
             userLikes: result.userLikes,
             userDislikes: result.userDislikes,
+            answerSuccess: result.answerSuccess,
+            citationClickCount: result.citationClickCount,
           },
         };
       });
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
-    }
-  }
-
-  async function onLoadPromotionCandidates(): Promise<void> {
-    setBusy(true);
-    setError(null);
-    try {
-      const result = await client.listPromotionCandidates(windowDays, minCount, onlyUnresolved);
-      setPromotionResult(result);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : String(caught));
-    } finally {
-      setBusy(false);
     }
   }
 
@@ -804,6 +802,24 @@ export default function App() {
     }
   }
 
+  async function onLoadSemanticClusters(): Promise<void> {
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await client.runEditorialSemanticClusters({
+        windowDays: semanticWindowDays,
+        minClusterSize: semanticMinClusterSize,
+        similarityThreshold: semanticSimilarityThreshold,
+        maxEvents: semanticMaxEvents,
+      });
+      setSemanticClustersResult(result);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function onIndexRepository(): Promise<void> {
     setBusy(true);
     setIndexBusy(true);
@@ -877,14 +893,11 @@ export default function App() {
                   answerResult={answerResult}
                   askedQuestions={askedQuestions}
                   selectedQuestionEventId={selectedQuestionEventId}
-                  promotionResult={promotionResult}
                   editorialResult={editorialResult}
                   transitionResult={transitionResult}
                   boardResult={boardResult}
                   boardMetrics={boardMetrics}
-                  windowDays={windowDays}
-                  minCount={minCount}
-                  onlyUnresolved={onlyUnresolved}
+                  semanticClustersResult={semanticClustersResult}
                   queueReason={queueReason}
                   queuePriority={queuePriority}
                   transitionQueueItemId={transitionQueueItemId}
@@ -898,15 +911,16 @@ export default function App() {
                   boardPageSize={boardPageSize}
                   metricsWindowDays={metricsWindowDays}
                   metricsSlaHours={metricsSlaHours}
+                  semanticWindowDays={semanticWindowDays}
+                  semanticMinClusterSize={semanticMinClusterSize}
+                  semanticSimilarityThreshold={semanticSimilarityThreshold}
+                  semanticMaxEvents={semanticMaxEvents}
                   busy={busy}
                   token={token}
                   setQuestion={setQuestion}
                   setSessionId={setSessionId}
                   setUserId={setUserId}
                   toggleScope={toggleScope}
-                  setWindowDays={setWindowDays}
-                  setMinCount={setMinCount}
-                  setOnlyUnresolved={setOnlyUnresolved}
                   setQueueReason={setQueueReason}
                   setQueuePriority={setQueuePriority}
                   setSelectedQuestionEventId={setSelectedQuestionEventId}
@@ -921,14 +935,18 @@ export default function App() {
                   setBoardPageSize={setBoardPageSize}
                   setMetricsWindowDays={setMetricsWindowDays}
                   setMetricsSlaHours={setMetricsSlaHours}
+                  setSemanticWindowDays={setSemanticWindowDays}
+                  setSemanticMinClusterSize={setSemanticMinClusterSize}
+                  setSemanticSimilarityThreshold={setSemanticSimilarityThreshold}
+                  setSemanticMaxEvents={setSemanticMaxEvents}
                   onAskQuestion={onAskQuestion}
                   onLoadAskedQuestions={onLoadAskedQuestions}
-                  onLoadPromotionCandidates={onLoadPromotionCandidates}
                   onQueueEditorial={onQueueEditorial}
                   onTransitionEditorial={onTransitionEditorial}
                   onLoadEditorialBoard={onLoadEditorialBoard}
                   onQuickTransition={onQuickTransition}
                   onLoadBoardMetrics={onLoadBoardMetrics}
+                  onLoadSemanticClusters={onLoadSemanticClusters}
                   indexRepoUrl={indexRepoUrl}
                   indexRepoPath={indexRepoPath}
                   indexProfile={indexProfile}
