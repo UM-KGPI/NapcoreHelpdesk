@@ -143,7 +143,7 @@ export default function App() {
   const [semanticMinClusterSize, setSemanticMinClusterSize] = useState(2);
   const [semanticSimilarityThreshold, setSemanticSimilarityThreshold] = useState(0.82);
   const [semanticMaxEvents, setSemanticMaxEvents] = useState(500);
-  const [chatPrompt, setChatPrompt] = useState("How can I validate a timetable in NeTEx XML file before publishing?");
+  const [chatPrompt, setChatPrompt] = useState("How is a journey departure time represented in NeTEx XML?");
   const [chatTurns, setChatTurns] = useState<ChatTurn[]>([]);
 
   const [busy, setBusy] = useState(false);
