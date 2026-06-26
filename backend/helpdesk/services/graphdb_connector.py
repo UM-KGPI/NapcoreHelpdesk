@@ -57,11 +57,12 @@ class GraphDBConnector:
         if not term.strip():
             return []
 
-        escaped_term = term.replace('"', '\\"')
+        escaped_term = term.replace('"', '\"')
         sparql = f"""
 SELECT DISTINCT ?core WHERE {{
-  ?standardConcept <http://www.w3.org/2004/02/skos/core#prefLabel>|<http://www.w3.org/2004/02/skos/core#altLabel> \"{escaped_term}\" .
-    ?standardConcept {_ALIGNMENT_PATH} ?core .
+  ?standardConcept <http://www.w3.org/2004/02/skos/core#prefLabel>|<http://www.w3.org/2004/02/skos/core#altLabel>|<http://www.w3.org/2000/01/rdf-schema#label> ?label .
+  FILTER(LCASE(STR(?label)) = LCASE(\"{escaped_term}\"))
+  ?standardConcept {_ALIGNMENT_PATH} ?core .
 }}
 """.strip()
         rows = self._query_select(sparql)

@@ -41,7 +41,15 @@ def _semantic_terms(semantic_query) -> set[str]:
 @lru_cache(maxsize=1)
 def _load_competency_registry() -> list[dict]:
     repo_root = Path(__file__).resolve().parents[3]
-    registry_path = repo_root / "docs" / "testing" / "competency-questions-artifact-rules.json"
+    candidates = [
+        repo_root / "docs" / "testing" / "competency-questions-artifact-rules.json",
+        repo_root / ".mylocal" / "docs" / "testing" / "competency-questions-artifact-rules.json",
+    ]
+
+    registry_path = next((path for path in candidates if path.exists()), None)
+    if registry_path is None:
+        return []
+
     payload = json.loads(registry_path.read_text(encoding="utf-8"))
     return list(payload.get("competencyQuestions") or [])
 
