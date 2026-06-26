@@ -64,7 +64,7 @@ const DEFAULT_INDEX_REPO_PRESETS: IndexRepoPreset[] = [
   {
     id: "siri",
     label: "SIRI",
-    repoUrl: "https://github.com/SIRI-CEN/SIRI",
+    repoUrl: "https://github.com/TransmodelEcosystem/SIRI",
     repoPath: "/app/repos/SIRI",
     profile: "siri",
   },
