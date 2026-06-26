@@ -778,7 +778,13 @@ def _alias_matches_text(alias: str, normalized_text: str) -> bool:
 
     alias_tokens = normalized_alias.split()
 
-    # Short single-token aliases (abbreviations like "ET", "VM") must appear as
+    # 1-2 char labels (e.g. transmodel:a label="a", transmodel:in label="in") are
+    # too short to be semantically distinctive and produce false positives by
+    # matching common English articles/prepositions in any question text.
+    if len(alias_tokens) == 1 and len(normalized_alias) <= 2:
+        return False
+
+    # Short single-token aliases (abbreviations like "LOG", "LEG") must appear as
     # complete words to avoid false substring matches (e.g. "ET" in "netex").
     if len(alias_tokens) == 1 and len(normalized_alias) < 4:
         return normalized_alias in set(normalized_text.split())
