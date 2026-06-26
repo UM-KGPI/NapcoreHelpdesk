@@ -50,7 +50,7 @@ const DEFAULT_INDEX_REPO_PRESETS: IndexRepoPreset[] = [
   {
     id: "netex",
     label: "NeTEx",
-    repoUrl: "https://github.com/NeTEx-CEN/NeTEx",
+    repoUrl: "https://github.com/TransmodelEcosystem/NeTEx",
     repoPath: "/app/repos/NeTEx",
     profile: "netex",
   },

@@ -103,11 +103,11 @@ def _build_file_url(repo_url: str, commit_sha: str, source_path: str) -> str:
 
         default_ref_by_repo = {
             "https://github.com/transmodelecosystem/netex": (
-                "https://github.com/NeTEx-CEN/NeTEx",
+                "https://github.com/TransmodelEcosystem/NeTEx",
                 "v2.0",
             ),
             "https://github.com/netex-cen/netex": (
-                "https://github.com/NeTEx-CEN/NeTEx",
+                "https://github.com/TransmodelEcosystem/NeTEx",
                 "v2.0",
             ),
             "https://github.com/opra-cen/opra": (
