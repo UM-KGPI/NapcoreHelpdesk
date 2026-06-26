@@ -277,6 +277,7 @@ h1 {
   border-radius: 14px;
   padding: 1rem;
   box-shadow: 0 7px 22px rgba(31, 43, 38, 0.06);
+  min-width: 0;
 }
 
 .step-1-index {
