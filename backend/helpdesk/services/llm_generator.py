@@ -103,6 +103,7 @@ def _build_messages(
     scope: list[str] | None = None,
     max_chunks: int = 6,
     max_chars_per_chunk: int = 1800,
+    faq_hint: str | None = None,
 ) -> list[dict]:
     context_lines = []
     for index, chunk in enumerate(chunks[:max_chunks], start=1):
@@ -137,9 +138,16 @@ def _build_messages(
             "If the evidence does not contain an exact usable snippet, say that you cannot provide an embedded example safely and point to the closest cited source file instead."
         )
 
+    faq_section = ""
+    if faq_hint:
+        faq_section = (
+            f"Editorial baseline (approved directional answer — enrich and ground it using the evidence blocks below, do not copy verbatim):\n{faq_hint}\n\n"
+        )
+
     user_prompt = (
         f"Question:\n{question}\n\n"
         f"Requested scope: {scope_text}\n\n"
+        f"{faq_section}"
         f"Evidence blocks:\n{context}\n\n"
         "Write a scoped answer with explicit [E#] markers tied to evidence blocks only. "
         "If the evidence does not support the requested detail, explicitly say what is missing."
@@ -188,7 +196,12 @@ def _request_chat_completion(
         return json.loads(response.read().decode("utf-8"))
 
 
-def generate_answer_llm(question: str, chunks: list[dict], scope: list[str] | None = None) -> dict:
+def generate_answer_llm(
+    question: str,
+    chunks: list[dict],
+    scope: list[str] | None = None,
+    faq_hint: str | None = None,
+) -> dict:
     """Generate a grounded answer through a configurable OpenAI-compatible API."""
 
     if not settings.LLM_ENABLED:
@@ -204,6 +217,7 @@ def generate_answer_llm(question: str, chunks: list[dict], scope: list[str] | No
         scope=scope,
         max_chunks=max_chunks,
         max_chars_per_chunk=max_chars_per_chunk,
+        faq_hint=faq_hint,
     )
 
     primary_base_url = (settings.LLM_API_BASE_URL or "").strip()
@@ -341,6 +355,7 @@ def stream_answer_llm(
     question: str,
     chunks: list[dict],
     scope: list[str] | None = None,
+    faq_hint: str | None = None,
 ) -> Generator[tuple[str, object], None, None]:
     """
     Generator yielding (event_type, payload) tuples for streaming narration.
@@ -372,6 +387,7 @@ def stream_answer_llm(
         scope=scope,
         max_chunks=max_chunks,
         max_chars_per_chunk=max_chars_per_chunk,
+        faq_hint=faq_hint,
     )
 
     deltas: list[str] = []
