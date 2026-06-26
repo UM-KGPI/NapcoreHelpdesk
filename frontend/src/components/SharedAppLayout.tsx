@@ -15,14 +15,7 @@ function formatAppVersion(appVersion: string): string {
 }
 
 export default function SharedAppLayout({ appVersion }: SharedAppLayoutProps) {
-  const {
-    apiBaseUrl,
-    setApiBaseUrl,
-    token,
-    setToken,
-    autoTokenEnabled,
-    setAutoTokenEnabled,
-  } = useAuth();
+  useAuth();
 
   return (
     <div className="page-shell">
@@ -46,32 +39,6 @@ export default function SharedAppLayout({ appVersion }: SharedAppLayoutProps) {
       </section>
 
       <Outlet />
-
-      <details className="panel credentials-panel system-panel collapsible-panel">
-        <summary className="collapsible-summary">
-          <div className="system-panel-header">
-            <p className="kicker">System Settings</p>
-            <h2>Connection</h2>
-            <p className="muted">API and token settings live here when you need to troubleshoot or switch environments.</p>
-          </div>
-        </summary>
-        <div className="collapsible-body">
-          <div className="grid-two">
-            <label>
-              API Base URL
-              <input value={apiBaseUrl} onChange={(event) => setApiBaseUrl(event.target.value)} placeholder="/api/v1" />
-            </label>
-            <label>
-              JWT Bearer Token
-              <input value={token} onChange={(event) => setToken(event.target.value)} placeholder="Paste token" />
-            </label>
-          </div>
-          <label className="checkbox-label">
-            <input type="checkbox" checked={autoTokenEnabled} onChange={(event) => setAutoTokenEnabled(event.target.checked)} />
-            auto-create dev JWT on page reload
-          </label>
-        </div>
-      </details>
     </div>
   );
 }

@@ -794,16 +794,61 @@ class QuestionAnswerView(APIView):
             and faq_match["confidence"] >= faq_min_confidence
             and faq_match.get("scope_match", True)
         ):
-            # FAQ always wins when a published entry matches above the confidence
-            # threshold.  The controller route is intentionally ignored here: its
-            # role is to disambiguate RAG vs abstain when no FAQ exists, not to
-            # override curated editorial answers.
+            # FAQ match identifies the intent and scope. Run retrieval + LLM to
+            # produce a grounded answer enriched from actual source evidence.
+            # The stored FAQ answer is passed as a directional hint to the LLM.
+            # Fall back to the stored answer when retrieval or LLM is unavailable.
             mode = QuestionEvent.MODE_FAQ
-            confidence = faq_match["confidence"]
-            review_required = faq_match["review_required"]
             matched_faq_entry_id = faq_match["faq_entry_id"]
-            answer_text = faq_match["answer"]
-            citations = faq_match["citations"][:max_citations]
+
+            graph_rag_enabled = _resolve_graph_rag_enabled(options)
+            chunks, graph_trace = retrieve_chunks_with_trace(
+                question=question,
+                top_k=retrieval_top_k,
+                min_score=retrieval_min_score,
+                scope=effective_scope,
+                graph_rag_enabled=graph_rag_enabled,
+            )
+            retrieved_chunks = chunks
+            retrieval_event_ids = [chunk["retrievalEventId"] for chunk in chunks]
+
+            use_llm = generation_profile == "llm-ready" and settings.LLM_ENABLED
+            if chunks and use_llm:
+                try:
+                    generated = generate_answer_llm(
+                        question=question,
+                        chunks=chunks,
+                        scope=effective_scope,
+                        faq_hint=faq_match["answer"],
+                    )
+                    answer_text = generated["answer"]
+                    confidence = generated["confidence"]
+                    review_required = generated["review_required"]
+                    citations = _select_citations(chunks=chunks, max_citations=max_citations)
+                except LLMGenerationError:
+                    logger.warning(
+                        "LLM generation failed on FAQ-enriched path; using stored FAQ answer",
+                        extra={
+                            "requestId": request_id,
+                            "faqEntryId": matched_faq_entry_id,
+                        },
+                        exc_info=True,
+                    )
+                    answer_text = faq_match["answer"]
+                    confidence = faq_match["confidence"]
+                    review_required = faq_match["review_required"]
+                    citations = faq_match["citations"][:max_citations]
+            elif chunks:
+                generated = generate_answer(question=question, chunks=chunks)
+                answer_text = generated["answer"]
+                confidence = generated["confidence"]
+                review_required = generated["review_required"]
+                citations = _select_citations(chunks=chunks, max_citations=max_citations)
+            else:
+                answer_text = faq_match["answer"]
+                confidence = faq_match["confidence"]
+                review_required = faq_match["review_required"]
+                citations = faq_match["citations"][:max_citations]
         elif semantic_query.core_concept == "nits:unknown-concept" and allow_abstain and not effective_scope:
             mode = QuestionEvent.MODE_ABSTAIN
             confidence = 0.0
@@ -1198,16 +1243,67 @@ class QuestionAnswerStreamView(APIView):
             and faq_match["confidence"] >= faq_min_confidence
             and faq_match.get("scope_match", True)
         ):
-            # FAQ always wins when a published entry matches above the confidence
-            # threshold.  The controller route is intentionally ignored here: its
-            # role is to disambiguate RAG vs abstain when no FAQ exists, not to
-            # override curated editorial answers.
+            # FAQ match identifies the intent and scope. Run retrieval + LLM to
+            # produce a grounded answer enriched from actual source evidence.
+            # The stored FAQ answer is passed as a directional hint to the LLM.
+            # Fall back to the stored answer when retrieval or LLM is unavailable.
             mode = QuestionEvent.MODE_FAQ
-            confidence = faq_match["confidence"]
-            review_required = faq_match["review_required"]
             matched_faq_entry_id = faq_match["faq_entry_id"]
-            answer_text = faq_match["answer"]
-            citations = faq_match["citations"][:max_citations]
+
+            graph_rag_enabled = _resolve_graph_rag_enabled(options)
+            chunks, graph_trace = retrieve_chunks_with_trace(
+                question=question,
+                top_k=retrieval_top_k,
+                min_score=retrieval_min_score,
+                scope=effective_scope,
+                graph_rag_enabled=graph_rag_enabled,
+            )
+            retrieved_chunks = chunks
+            retrieval_event_ids = [chunk["retrievalEventId"] for chunk in chunks]
+
+            use_llm = generation_profile == "llm-ready" and settings.LLM_ENABLED
+            if chunks and use_llm:
+                generated = None
+                try:
+                    for event_type, payload in stream_answer_llm(
+                        question=question,
+                        chunks=chunks,
+                        scope=effective_scope,
+                        faq_hint=faq_match["answer"],
+                    ):
+                        if event_type == "token":
+                            yield self._sse({"type": "token", "delta": payload})
+                        elif event_type == "done":
+                            generated = payload
+                except LLMGenerationError as exc:
+                    logger.warning(
+                        "LLM stream failed on FAQ-enriched path; using stored FAQ answer",
+                        extra={"requestId": request_id, "faqEntryId": matched_faq_entry_id},
+                        exc_info=True,
+                    )
+                    yield self._sse({"type": "llm_fallback", "message": str(exc)})
+
+                if generated:
+                    answer_text = generated["answer"]
+                    confidence = generated["confidence"]
+                    review_required = generated["review_required"]
+                    citations = _select_citations(chunks=chunks, max_citations=max_citations)
+                else:
+                    answer_text = faq_match["answer"]
+                    confidence = faq_match["confidence"]
+                    review_required = faq_match["review_required"]
+                    citations = faq_match["citations"][:max_citations]
+            elif chunks:
+                generated = generate_answer(question=question, chunks=chunks)
+                answer_text = generated["answer"]
+                confidence = generated["confidence"]
+                review_required = generated["review_required"]
+                citations = _select_citations(chunks=chunks, max_citations=max_citations)
+            else:
+                answer_text = faq_match["answer"]
+                confidence = faq_match["confidence"]
+                review_required = faq_match["review_required"]
+                citations = faq_match["citations"][:max_citations]
         elif semantic_query.core_concept == "nits:unknown-concept" and allow_abstain and not effective_scope:
             mode = QuestionEvent.MODE_ABSTAIN
             confidence = 0.0
