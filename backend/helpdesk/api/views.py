@@ -110,6 +110,14 @@ def _build_file_url(repo_url: str, commit_sha: str, source_path: str) -> str:
                 "https://github.com/TransmodelEcosystem/NeTEx",
                 "v2.0",
             ),
+            "https://github.com/transmodelecosystem/siri": (
+                "https://github.com/TransmodelEcosystem/SIRI",
+                "v2.2",
+            ),
+            "https://github.com/siri-cen/siri": (
+                "https://github.com/TransmodelEcosystem/SIRI",
+                "v2.2",
+            ),
             "https://github.com/opra-cen/opra": (
                 "https://github.com/OpRa-CEN/OpRa",
                 "1.0rc",
