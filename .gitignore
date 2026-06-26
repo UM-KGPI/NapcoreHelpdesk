@@ -32,6 +32,10 @@ frontend/dist/
 frontend/*.tsbuildinfo
 
 
+# Docs symlinks / local-only testing output
+docs/ontology
+docs/testing
+
 # Secrets (license files, credentials - never commit)
 secrets/
 graphdb.license
