@@ -1,12 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
-import type { AnswerResponse, StandardsScope } from "../types";
+import type { AnswerResponse } from "../types";
 import AnswerMarkdown from "./AnswerMarkdown";
-
-export type ChatProfile = "deterministic-grounded" | "llm-ready";
-
-const STANDARDS: StandardsScope[] = ["Transmodel", "NeTEx", "SIRI", "OpRa"];
 
 export interface ChatTurn {
   id: string;
@@ -18,20 +14,10 @@ export interface ChatTurn {
 }
 
 interface UserChatWorkspaceProps {
-  sessionId: string;
-  userId: string;
-  chatProfile: ChatProfile;
-  controllerProfile: ChatProfile;
-  standardsScope: StandardsScope[];
   chatPrompt: string;
   chatTurns: ChatTurn[];
   token: string;
   busy: boolean;
-  setSessionId: (value: string) => void;
-  setUserId: (value: string) => void;
-  setChatProfile: (value: ChatProfile) => void;
-  setControllerProfile: (value: ChatProfile) => void;
-  toggleScope: (scope: StandardsScope) => void;
   setChatPrompt: (value: string) => void;
   onSendChat: (event: FormEvent<HTMLFormElement>) => Promise<void>;
   onResetChatSession: () => void;
@@ -48,20 +34,10 @@ interface UserChatWorkspaceProps {
 
 export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
   const {
-    sessionId,
-    userId,
-    chatProfile,
-    controllerProfile,
-    standardsScope,
     chatPrompt,
     chatTurns,
     token,
     busy,
-    setSessionId,
-    setUserId,
-    setChatProfile,
-    setControllerProfile,
-    toggleScope,
     setChatPrompt,
     onSendChat,
     onResetChatSession,
@@ -152,7 +128,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
     const fileText = lines.join("\n");
     const blob = new Blob([fileText], { type: "text/plain;charset=utf-8" });
     const link = document.createElement("a");
-    const exportId = sessionId.trim() ? sessionId.trim().replace(/[^a-zA-Z0-9_-]/g, "-") : "chat";
+    const exportId = "chat";
     link.href = URL.createObjectURL(blob);
     link.download = `${exportId}-${Date.now()}.txt`;
     document.body.appendChild(link);
@@ -235,8 +211,8 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
               <p className="muted">Check the returned answer and references, and inspect the overall quality of the response.</p>
             </div>
             <div>
-              <strong>3. Tune only if needed</strong>
-              <p className="muted">Open Advanced Settings only when you want to change session identity, scope, or generation profile.</p>
+              <strong>3. Follow up</strong>
+              <p className="muted">Continue the conversation with follow-up questions. The assistant maintains session context across turns.</p>
             </div>
           </div>
         </details>
@@ -283,7 +259,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                           return;
                         }
                         const currentLike = turn.answer?.trace.userLikes ?? false;
-                        void setFeedback(requestId, { userLikes: !currentLike, userDislikes: false });
+                        void setFeedback(requestId, { userLikes: !currentLike, userDislikes: false, answerSuccess: !currentLike });
                       }}
                       disabled={feedbackPendingByRequestId[turn.requestId ?? turn.answer.trace.requestId] === true}
                       title="Good answer"
@@ -300,30 +276,13 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                           return;
                         }
                         const currentDislike = turn.answer?.trace.userDislikes ?? false;
-                        void setFeedback(requestId, { userLikes: false, userDislikes: !currentDislike });
+                        void setFeedback(requestId, { userLikes: false, userDislikes: !currentDislike, answerSuccess: currentDislike });
                       }}
                       disabled={feedbackPendingByRequestId[turn.requestId ?? turn.answer.trace.requestId] === true}
                       title="Answer could be better"
                       aria-label="Answer could be better"
                     >
                       👎
-                    </button>
-                    <button
-                      type="button"
-                      className={`chat-icon-button ${(turn.answer.trace.answerSuccess ?? false) ? "chat-icon-button-active" : ""}`}
-                      onClick={() => {
-                        const requestId = turn.requestId ?? turn.answer?.trace.requestId;
-                        if (!requestId) {
-                          return;
-                        }
-                        const current = turn.answer?.trace.answerSuccess ?? false;
-                        void setFeedback(requestId, { answerSuccess: !current });
-                      }}
-                      disabled={feedbackPendingByRequestId[turn.requestId ?? turn.answer.trace.requestId] === true}
-                      title="Answer solved my task"
-                      aria-label="Answer solved my task"
-                    >
-                      ✅
                     </button>
                   </div>
                   {turn.answer.citations.length > 0 && (
@@ -387,55 +346,6 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
             </div>
           )}
         </form>
-
-        <details className="advanced-controls collapsible-panel">
-          <summary className="collapsible-summary advanced-controls-header">
-            <div>
-              <h3>Advanced Settings</h3>
-              <p className="muted">Open this only when you want to adjust session identity, retrieval scope, or generation profile.</p>
-            </div>
-          </summary>
-
-          <div className="collapsible-body">
-            <div className="grid-three">
-              <label>
-                Session ID
-                <input value={sessionId} onChange={(event) => setSessionId(event.target.value)} />
-              </label>
-              <label>
-                User ID
-                <input value={userId} onChange={(event) => setUserId(event.target.value)} />
-              </label>
-              <label>
-                Intent Routing Profile
-                <select value={controllerProfile} onChange={(event) => setControllerProfile(event.target.value as ChatProfile)}>
-                  <option value="llm-ready">llm-ready (default)</option>
-                  <option value="deterministic-grounded">deterministic-grounded</option>
-                </select>
-              </label>
-              <label>
-                Generation Profile
-                <select value={chatProfile} onChange={(event) => setChatProfile(event.target.value as ChatProfile)}>
-                  <option value="llm-ready">llm-ready (default)</option>
-                  <option value="deterministic-grounded">deterministic-grounded</option>
-                </select>
-              </label>
-            </div>
-
-            <fieldset className="panel-subsection advanced-scope">
-              <legend>Standards Scope</legend>
-              <p className="muted">Selecting one or more standards restricts retrieval to those standards. Leave all unchecked to search across all indexed sources.</p>
-              <div className="checkbox-grid">
-                {STANDARDS.map((scope) => (
-                  <label key={scope} className="checkbox-label">
-                    <input type="checkbox" checked={standardsScope.includes(scope)} onChange={() => toggleScope(scope)} />
-                    {scope}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-          </div>
-        </details>
 
       </section>
     </section>

@@ -5,7 +5,7 @@ import { HelpdeskApiClient } from "./api";
 import { AuthProvider } from "./auth-context";
 import EditorConsoleWorkspace from "./components/EditorConsoleWorkspace";
 import SharedAppLayout from "./components/SharedAppLayout";
-import UserChatWorkspace, { type ChatProfile, type ChatTurn } from "./components/UserChatWorkspace";
+import UserChatWorkspace, { type ChatTurn } from "./components/UserChatWorkspace";
 import type {
   AnswerResponse,
   AskedQuestionRow,
@@ -145,8 +145,6 @@ export default function App() {
   const [semanticMaxEvents, setSemanticMaxEvents] = useState(500);
   const [chatPrompt, setChatPrompt] = useState("How can I validate a timetable in NeTEx XML file before publishing?");
   const [chatTurns, setChatTurns] = useState<ChatTurn[]>([]);
-  const [chatProfile, setChatProfile] = useState<ChatProfile>("llm-ready");
-  const [controllerProfile, setControllerProfile] = useState<ChatProfile>("llm-ready");
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -313,8 +311,8 @@ export default function App() {
       userId,
       standardsScope: standardsScope.length > 0 ? standardsScope : undefined,
       language: "en",
-      generationProfile: chatProfile,
-      controllerProfile,
+      generationProfile: "llm-ready" as const,
+      controllerProfile: "llm-ready" as const,
       options: {
         maxCitations: 5,
         allowAbstain: true,
@@ -324,7 +322,7 @@ export default function App() {
       },
     };
 
-    const useStreaming = chatProfile === "llm-ready";
+    const useStreaming = true;
 
     const handleStreamToken = (delta: string) => {
       setChatTurns((prev) =>
@@ -459,8 +457,8 @@ export default function App() {
         userId,
         standardsScope,
         language: "en",
-        generationProfile: chatProfile,
-        controllerProfile,
+        generationProfile: "llm-ready" as const,
+        controllerProfile: "llm-ready" as const,
         options: {
           maxCitations: 5,
           allowAbstain: true,
@@ -470,7 +468,7 @@ export default function App() {
         },
       };
 
-      const useStreaming = chatProfile === "llm-ready";
+      const useStreaming = true;
       if (useStreaming) {
         setAnswerResult({
           answerId: `streaming-${requestId}`,
@@ -549,8 +547,8 @@ export default function App() {
             userId,
             standardsScope,
             language: "en",
-            generationProfile: chatProfile,
-            controllerProfile,
+            generationProfile: "llm-ready" as const,
+            controllerProfile: "llm-ready" as const,
             options: {
               maxCitations: 5,
               allowAbstain: true,
@@ -560,7 +558,7 @@ export default function App() {
             },
           };
 
-          const useStreaming = chatProfile === "llm-ready";
+          const useStreaming = true;
           if (useStreaming) {
             setAnswerResult({
               answerId: `streaming-${requestId}`,
@@ -861,20 +859,10 @@ export default function App() {
               path="user"
               element={
                 <UserChatWorkspace
-                  sessionId={sessionId}
-                  userId={userId}
-                  chatProfile={chatProfile}
-                  controllerProfile={controllerProfile}
-                  standardsScope={standardsScope}
                   chatPrompt={chatPrompt}
                   chatTurns={chatTurns}
                   token={token}
                   busy={busy}
-                  setSessionId={setSessionId}
-                  setUserId={setUserId}
-                  setChatProfile={setChatProfile}
-                  setControllerProfile={setControllerProfile}
-                  toggleScope={toggleScope}
                   setChatPrompt={setChatPrompt}
                   onSendChat={onSendChat}
                   onResetChatSession={onResetChatSession}

@@ -337,8 +337,8 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
             <details className="panel step-2-context system-panel-inline collapsible-panel">
               <summary className="collapsible-summary">
                 <div className="system-panel-header">
-                  <p className="kicker">System Settings</p>
-                  <h2>Request Context</h2>
+                  <p className="kicker">Request Context</p>
+                  <h2>Session &amp; Scope</h2>
                   <p className="muted">Session identifiers and standards filters stay available without competing with the main editor workflow.</p>
                 </div>
               </summary>
