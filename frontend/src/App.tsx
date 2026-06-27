@@ -11,7 +11,6 @@ import type {
   AskedQuestionRow,
   EditorialBoardItem,
   EditorialBoardResponse,
-  EditorialQueueResponse,
   IndexRepositoryResponse,
   StandardsScope,
 } from "./types";
@@ -101,7 +100,6 @@ export default function App() {
   const [answerResult, setAnswerResult] = useState<AnswerResponse | null>(null);
   const [askedQuestions, setAskedQuestions] = useState<AskedQuestionRow[]>([]);
   const [selectedQuestionEventId, setSelectedQuestionEventId] = useState("");
-  const [editorialResult, setEditorialResult] = useState<EditorialQueueResponse | null>(null);
   const [boardResult, setBoardResult] = useState<EditorialBoardResponse | null>(null);
 
   const [indexRepoPresets, setIndexRepoPresets] = useState<IndexRepoPreset[]>(DEFAULT_INDEX_REPO_PRESETS);
@@ -332,7 +330,6 @@ export default function App() {
           ]);
           setAnswerResult(result);
           setQuestion(prompt);
-          setEditorialResult(null);
           setChatPrompt("");
           return;
         }
@@ -347,7 +344,6 @@ export default function App() {
         );
         setAnswerResult(result);
         setQuestion(prompt);
-        setEditorialResult(null);
         setChatPrompt("");
         return;
       }
@@ -356,7 +352,6 @@ export default function App() {
 
       setAnswerResult(result);
       setQuestion(prompt);
-      setEditorialResult(null);
       setChatTurns((prev) => [
         ...prev,
         {
@@ -380,7 +375,6 @@ export default function App() {
 
           setAnswerResult(result);
           setQuestion(prompt);
-          setEditorialResult(null);
           setChatTurns((prev) => [
             ...prev,
             {
@@ -481,7 +475,6 @@ export default function App() {
           const next = [row, ...prev.filter((item) => item.requestId !== row.requestId)];
           return next.slice(0, 200);
         });
-        setEditorialResult(null);
         return;
       }
 
@@ -500,7 +493,6 @@ export default function App() {
         const next = [row, ...prev.filter((item) => item.requestId !== row.requestId)];
         return next.slice(0, 200);
       });
-      setEditorialResult(null);
     } catch (caught) {
       const refreshedToken = await refreshDevTokenAfterUnauthorized(caught);
       if (refreshedToken) {
@@ -571,7 +563,6 @@ export default function App() {
               const next = [row, ...prev.filter((item) => item.requestId !== row.requestId)];
               return next.slice(0, 200);
             });
-            setEditorialResult(null);
             return;
           }
 
@@ -590,7 +581,6 @@ export default function App() {
             const next = [row, ...prev.filter((item) => item.requestId !== row.requestId)];
             return next.slice(0, 200);
           });
-          setEditorialResult(null);
           return;
         } catch (retryCaught) {
           setError(retryCaught instanceof Error ? retryCaught.message : String(retryCaught));
@@ -673,12 +663,11 @@ export default function App() {
     setBusy(true);
     setError(null);
     try {
-      const result = await client.routeToEditorialQueue({
+      await client.routeToEditorialQueue({
         questionEventId,
         reason: queueReason,
         priority: "normal",
       });
-      setEditorialResult(result);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
     } finally {
@@ -780,7 +769,6 @@ export default function App() {
                   answerResult={answerResult}
                   askedQuestions={askedQuestions}
                   selectedQuestionEventId={selectedQuestionEventId}
-                  editorialResult={editorialResult}
                   boardResult={boardResult}
                   queueReason={queueReason}
                   boardStatus={boardStatus}

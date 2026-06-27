@@ -6,7 +6,6 @@ import type {
   AskedQuestionRow,
   EditorialBoardItem,
   EditorialBoardResponse,
-  EditorialQueueResponse,
   IndexRepositoryResponse,
 } from "../types";
 const TRANSITION_ACTIONS = ["submit_for_review", "request_changes", "approve", "reject", "publish", "reopen"] as const;
@@ -30,7 +29,6 @@ interface EditorConsoleWorkspaceProps {
   answerResult: AnswerResponse | null;
   askedQuestions: AskedQuestionRow[];
   selectedQuestionEventId: string;
-  editorialResult: EditorialQueueResponse | null;
   boardResult: EditorialBoardResponse | null;
   queueReason: QueueReason;
   boardStatus: BoardStatus | "";
@@ -77,7 +75,6 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
     answerResult,
     askedQuestions,
     selectedQuestionEventId,
-    editorialResult,
     boardResult,
     queueReason,
     boardStatus,
@@ -323,14 +320,6 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                 <button onClick={() => onQueueEditorial(selectedQuestionEventId)} disabled={busy || !token || !canQueueSelectedQuestion}>Send Selected for Review</button>
               </div>
 
-              {editorialResult && (
-                <article className="result-card">
-                  <h3>Queue Result</h3>
-                  <p>queued: <strong>{String(editorialResult.queued)}</strong></p>
-                  <p>queueItemId: <code>{editorialResult.queueItemId}</code></p>
-                  <p>status: <strong>{editorialResult.status}</strong></p>
-                </article>
-              )}
             </section>
 
             <section className="panel step-5-board">
