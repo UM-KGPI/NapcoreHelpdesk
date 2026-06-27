@@ -9,12 +9,10 @@ import UserChatWorkspace, { type ChatTurn } from "./components/UserChatWorkspace
 import type {
   AnswerResponse,
   AskedQuestionRow,
-  EditorialBoardMetricsResponse,
   EditorialBoardItem,
   EditorialBoardResponse,
   EditorialQueueResponse,
   EditorialQueueTransitionResponse,
-  EditorialSemanticClustersResponse,
   IndexRepositoryResponse,
   StandardsScope,
 } from "./types";
@@ -28,15 +26,11 @@ const TRANSITION_ACTIONS = [
   "reopen",
 ] as const;
 const BOARD_STATUSES = ["draft", "review", "approved", "rejected", "published"] as const;
-const BOARD_REASONS = ["LOW_CONFIDENCE", "CITATION_GAP", "POLICY_REVIEW", "USER_ESCALATION"] as const;
-const BOARD_PRIORITIES = ["low", "normal", "high"] as const;
 const TOKEN_STORAGE_KEY = "napcore.helpdesk.jwt";
 const AUTO_TOKEN_STORAGE_KEY = "napcore.helpdesk.autoToken";
 
 type TransitionAction = (typeof TRANSITION_ACTIONS)[number];
 type BoardStatus = (typeof BOARD_STATUSES)[number];
-type BoardReason = (typeof BOARD_REASONS)[number];
-type BoardPriority = (typeof BOARD_PRIORITIES)[number];
 
 type IndexRepoPreset = {
   id: string;
@@ -111,8 +105,6 @@ export default function App() {
   const [editorialResult, setEditorialResult] = useState<EditorialQueueResponse | null>(null);
   const [transitionResult, setTransitionResult] = useState<EditorialQueueTransitionResponse | null>(null);
   const [boardResult, setBoardResult] = useState<EditorialBoardResponse | null>(null);
-  const [boardMetrics, setBoardMetrics] = useState<EditorialBoardMetricsResponse | null>(null);
-  const [semanticClustersResult, setSemanticClustersResult] = useState<EditorialSemanticClustersResponse | null>(null);
 
   const [indexRepoPresets, setIndexRepoPresets] = useState<IndexRepoPreset[]>(DEFAULT_INDEX_REPO_PRESETS);
   const [indexPresetId, setIndexPresetId] = useState(DEFAULT_INDEX_REPO_PRESETS[0].id);
@@ -127,22 +119,7 @@ export default function App() {
   const [indexBusy, setIndexBusy] = useState(false);
 
   const [queueReason, setQueueReason] = useState<"LOW_CONFIDENCE" | "CITATION_GAP" | "POLICY_REVIEW" | "USER_ESCALATION">("LOW_CONFIDENCE");
-  const [queuePriority, setQueuePriority] = useState<"low" | "normal" | "high">("normal");
-  const [transitionQueueItemId, setTransitionQueueItemId] = useState("");
-  const [transitionAction, setTransitionAction] = useState<TransitionAction>("submit_for_review");
-  const [transitionComment, setTransitionComment] = useState("");
-  const [boardStatus, setBoardStatus] = useState<BoardStatus | "">("");
-  const [boardReason, setBoardReason] = useState<BoardReason | "">("");
-  const [boardPriority, setBoardPriority] = useState<BoardPriority | "">("");
-  const [boardSearch, setBoardSearch] = useState("");
-  const [boardPage, setBoardPage] = useState(1);
-  const [boardPageSize, setBoardPageSize] = useState(10);
-  const [metricsWindowDays, setMetricsWindowDays] = useState(30);
-  const [metricsSlaHours, setMetricsSlaHours] = useState(72);
-  const [semanticWindowDays, setSemanticWindowDays] = useState(30);
-  const [semanticMinClusterSize, setSemanticMinClusterSize] = useState(2);
-  const [semanticSimilarityThreshold, setSemanticSimilarityThreshold] = useState(0.82);
-  const [semanticMaxEvents, setSemanticMaxEvents] = useState(500);
+  const [boardStatus, setBoardStatus] = useState<BoardStatus | ("")>("");
   const [chatPrompt, setChatPrompt] = useState("How is a journey departure time represented in NeTEx XML?");
   const [chatTurns, setChatTurns] = useState<ChatTurn[]>([]);
 
@@ -701,34 +678,10 @@ export default function App() {
       const result = await client.routeToEditorialQueue({
         questionEventId,
         reason: queueReason,
-        priority: queuePriority,
+        priority: "normal",
       });
       setEditorialResult(result);
-      setTransitionQueueItemId(result.queueItemId);
       setTransitionResult(null);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : String(caught));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function onTransitionEditorial(): Promise<void> {
-    if (!transitionQueueItemId.trim()) {
-      setError("queueItemId is required for transition.");
-      return;
-    }
-
-    setBusy(true);
-    setError(null);
-    try {
-      const result = await client.transitionEditorialQueue({
-        queueItemId: transitionQueueItemId.trim(),
-        action: transitionAction,
-        comment: transitionComment,
-      });
-      setTransitionResult(result);
-      await onLoadEditorialBoard();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
     } finally {
@@ -742,11 +695,8 @@ export default function App() {
     try {
       const result = await client.listEditorialBoard({
         status: boardStatus || undefined,
-        reason: boardReason || undefined,
-        priority: boardPriority || undefined,
-        search: boardSearch,
-        page: boardPage,
-        pageSize: boardPageSize,
+        page: 1,
+        pageSize: 50,
       });
       setBoardResult(result);
     } catch (caught) {
@@ -765,43 +715,8 @@ export default function App() {
         action,
         comment: `board action: ${action}`,
       });
-      setTransitionQueueItemId(item.queueItemId);
       setTransitionResult(result);
       await onLoadEditorialBoard();
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : String(caught));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function onLoadBoardMetrics(): Promise<void> {
-    setBusy(true);
-    setError(null);
-    try {
-      const result = await client.getEditorialBoardMetrics({
-        windowDays: metricsWindowDays,
-        slaHours: metricsSlaHours,
-      });
-      setBoardMetrics(result);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : String(caught));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function onLoadSemanticClusters(): Promise<void> {
-    setBusy(true);
-    setError(null);
-    try {
-      const result = await client.runEditorialSemanticClusters({
-        windowDays: semanticWindowDays,
-        minClusterSize: semanticMinClusterSize,
-        similarityThreshold: semanticSimilarityThreshold,
-        maxEvents: semanticMaxEvents,
-      });
-      setSemanticClustersResult(result);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
     } finally {
@@ -872,54 +787,19 @@ export default function App() {
                   editorialResult={editorialResult}
                   transitionResult={transitionResult}
                   boardResult={boardResult}
-                  boardMetrics={boardMetrics}
-                  semanticClustersResult={semanticClustersResult}
                   queueReason={queueReason}
-                  queuePriority={queuePriority}
-                  transitionQueueItemId={transitionQueueItemId}
-                  transitionAction={transitionAction}
-                  transitionComment={transitionComment}
                   boardStatus={boardStatus}
-                  boardReason={boardReason}
-                  boardPriority={boardPriority}
-                  boardSearch={boardSearch}
-                  boardPage={boardPage}
-                  boardPageSize={boardPageSize}
-                  metricsWindowDays={metricsWindowDays}
-                  metricsSlaHours={metricsSlaHours}
-                  semanticWindowDays={semanticWindowDays}
-                  semanticMinClusterSize={semanticMinClusterSize}
-                  semanticSimilarityThreshold={semanticSimilarityThreshold}
-                  semanticMaxEvents={semanticMaxEvents}
                   busy={busy}
                   token={token}
                   setQuestion={setQuestion}
                   setQueueReason={setQueueReason}
-                  setQueuePriority={setQueuePriority}
                   setSelectedQuestionEventId={setSelectedQuestionEventId}
-                  setTransitionQueueItemId={setTransitionQueueItemId}
-                  setTransitionAction={setTransitionAction}
-                  setTransitionComment={setTransitionComment}
                   setBoardStatus={setBoardStatus}
-                  setBoardReason={setBoardReason}
-                  setBoardPriority={setBoardPriority}
-                  setBoardSearch={setBoardSearch}
-                  setBoardPage={setBoardPage}
-                  setBoardPageSize={setBoardPageSize}
-                  setMetricsWindowDays={setMetricsWindowDays}
-                  setMetricsSlaHours={setMetricsSlaHours}
-                  setSemanticWindowDays={setSemanticWindowDays}
-                  setSemanticMinClusterSize={setSemanticMinClusterSize}
-                  setSemanticSimilarityThreshold={setSemanticSimilarityThreshold}
-                  setSemanticMaxEvents={setSemanticMaxEvents}
                   onAskQuestion={onAskQuestion}
                   onLoadAskedQuestions={onLoadAskedQuestions}
                   onQueueEditorial={onQueueEditorial}
-                  onTransitionEditorial={onTransitionEditorial}
                   onLoadEditorialBoard={onLoadEditorialBoard}
                   onQuickTransition={onQuickTransition}
-                  onLoadBoardMetrics={onLoadBoardMetrics}
-                  onLoadSemanticClusters={onLoadSemanticClusters}
                   indexRepoUrl={indexRepoUrl}
                   indexRepoPath={indexRepoPath}
                   indexProfile={indexProfile}
