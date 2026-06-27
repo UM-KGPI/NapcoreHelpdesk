@@ -4,25 +4,18 @@ import AnswerMarkdown from "./AnswerMarkdown";
 import type {
   AnswerResponse,
   AskedQuestionRow,
-  EditorialBoardMetricsResponse,
   EditorialBoardItem,
   EditorialBoardResponse,
   EditorialQueueResponse,
   EditorialQueueTransitionResponse,
-  EditorialSemanticClustersResponse,
   IndexRepositoryResponse,
 } from "../types";
 const TRANSITION_ACTIONS = ["submit_for_review", "request_changes", "approve", "reject", "publish", "reopen"] as const;
 const BOARD_STATUSES = ["draft", "review", "approved", "rejected", "published"] as const;
-const BOARD_REASONS = ["LOW_CONFIDENCE", "CITATION_GAP", "POLICY_REVIEW", "USER_ESCALATION"] as const;
-const BOARD_PRIORITIES = ["low", "normal", "high"] as const;
 
 type TransitionAction = (typeof TRANSITION_ACTIONS)[number];
 type BoardStatus = (typeof BOARD_STATUSES)[number];
-type BoardReason = (typeof BOARD_REASONS)[number];
-type BoardPriority = (typeof BOARD_PRIORITIES)[number];
 type QueueReason = "LOW_CONFIDENCE" | "CITATION_GAP" | "POLICY_REVIEW" | "USER_ESCALATION";
-type QueuePriority = "low" | "normal" | "high";
 type EditorTab = "assist" | "editorial" | "indexing";
 
 type IndexRepoPresetOption = {
@@ -41,54 +34,19 @@ interface EditorConsoleWorkspaceProps {
   editorialResult: EditorialQueueResponse | null;
   transitionResult: EditorialQueueTransitionResponse | null;
   boardResult: EditorialBoardResponse | null;
-  boardMetrics: EditorialBoardMetricsResponse | null;
-  semanticClustersResult: EditorialSemanticClustersResponse | null;
   queueReason: QueueReason;
-  queuePriority: QueuePriority;
-  transitionQueueItemId: string;
-  transitionAction: TransitionAction;
-  transitionComment: string;
   boardStatus: BoardStatus | "";
-  boardReason: BoardReason | "";
-  boardPriority: BoardPriority | "";
-  boardSearch: string;
-  boardPage: number;
-  boardPageSize: number;
-  metricsWindowDays: number;
-  metricsSlaHours: number;
-  semanticWindowDays: number;
-  semanticMinClusterSize: number;
-  semanticSimilarityThreshold: number;
-  semanticMaxEvents: number;
   busy: boolean;
   token: string;
   setQuestion: (value: string) => void;
   setQueueReason: (value: QueueReason) => void;
-  setQueuePriority: (value: QueuePriority) => void;
   setSelectedQuestionEventId: (value: string) => void;
-  setTransitionQueueItemId: (value: string) => void;
-  setTransitionAction: (value: TransitionAction) => void;
-  setTransitionComment: (value: string) => void;
   setBoardStatus: (value: BoardStatus | "") => void;
-  setBoardReason: (value: BoardReason | "") => void;
-  setBoardPriority: (value: BoardPriority | "") => void;
-  setBoardSearch: (value: string) => void;
-  setBoardPage: (value: number) => void;
-  setBoardPageSize: (value: number) => void;
-  setMetricsWindowDays: (value: number) => void;
-  setMetricsSlaHours: (value: number) => void;
-  setSemanticWindowDays: (value: number) => void;
-  setSemanticMinClusterSize: (value: number) => void;
-  setSemanticSimilarityThreshold: (value: number) => void;
-  setSemanticMaxEvents: (value: number) => void;
   onAskQuestion: (event: FormEvent<HTMLFormElement>) => Promise<void>;
   onLoadAskedQuestions: () => Promise<void>;
   onQueueEditorial: (questionEventIdOverride?: string) => Promise<void>;
-  onTransitionEditorial: () => Promise<void>;
   onLoadEditorialBoard: () => Promise<void>;
   onQuickTransition: (item: EditorialBoardItem, action: TransitionAction) => Promise<void>;
-  onLoadBoardMetrics: () => Promise<void>;
-  onLoadSemanticClusters: () => Promise<void>;
   indexPresetId: string;
   indexRepoPresets: IndexRepoPresetOption[];
   indexRepoUrl: string;
@@ -113,10 +71,7 @@ interface EditorConsoleWorkspaceProps {
 
 export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProps) {
   const [activeTab, setActiveTab] = useState<EditorTab>("indexing");
-  const [askedSearch, setAskedSearch] = useState("");
   const [askedOnlyReviewRequired, setAskedOnlyReviewRequired] = useState(false);
-  const [askedMode, setAskedMode] = useState<"" | "faq" | "rag" | "abstain">("");
-  const [askedShowAdvancedIds, setAskedShowAdvancedIds] = useState(false);
   const answerResultRef = useRef<HTMLElement | null>(null);
   const lastAnswerRequestIdRef = useRef<string | null>(null);
   const {
@@ -127,54 +82,19 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
     editorialResult,
     transitionResult,
     boardResult,
-    boardMetrics,
-    semanticClustersResult,
     queueReason,
-    queuePriority,
-    transitionQueueItemId,
-    transitionAction,
-    transitionComment,
     boardStatus,
-    boardReason,
-    boardPriority,
-    boardSearch,
-    boardPage,
-    boardPageSize,
-    metricsWindowDays,
-    metricsSlaHours,
-    semanticWindowDays,
-    semanticMinClusterSize,
-    semanticSimilarityThreshold,
-    semanticMaxEvents,
     busy,
     token,
     setQuestion,
     setQueueReason,
-    setQueuePriority,
     setSelectedQuestionEventId,
-    setTransitionQueueItemId,
-    setTransitionAction,
-    setTransitionComment,
     setBoardStatus,
-    setBoardReason,
-    setBoardPriority,
-    setBoardSearch,
-    setBoardPage,
-    setBoardPageSize,
-    setMetricsWindowDays,
-    setMetricsSlaHours,
-    setSemanticWindowDays,
-    setSemanticMinClusterSize,
-    setSemanticSimilarityThreshold,
-    setSemanticMaxEvents,
     onAskQuestion,
     onLoadAskedQuestions,
     onQueueEditorial,
-    onTransitionEditorial,
     onLoadEditorialBoard,
     onQuickTransition,
-    onLoadBoardMetrics,
-    onLoadSemanticClusters,
     indexPresetId,
     indexRepoPresets,
     indexRepoUrl,
@@ -208,24 +128,13 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
   }, [answerResult?.trace.requestId]);
 
   const filteredAskedQuestions = useMemo(() => {
-    const needle = askedSearch.trim().toLowerCase();
     return askedQuestions.filter((item) => {
       if (askedOnlyReviewRequired && !item.reviewRequired) {
         return false;
       }
-      if (askedMode && item.mode !== askedMode) {
-        return false;
-      }
-      if (!needle) {
-        return true;
-      }
-      return (
-        item.question.toLowerCase().includes(needle) ||
-        item.requestId.toLowerCase().includes(needle) ||
-        item.questionEventId.toLowerCase().includes(needle)
-      );
+      return true;
     });
-  }, [askedMode, askedOnlyReviewRequired, askedQuestions, askedSearch]);
+  }, [askedOnlyReviewRequired, askedQuestions]);
 
   const askedModeCounts = useMemo(() => {
     return askedQuestions.reduce(
@@ -324,126 +233,22 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
 
         {activeTab === "editorial" && (
           <>
-            <section className="panel step-3-clustering">
-              <h2>Semantic Clusters</h2>
-              <p className="muted">Group related QuestionEvent rows by semantic similarity, then use keyword aggregation labels and validation signals for triage.</p>
-
-              <div className="grid-three">
-                <label>
-                  windowDays
-                  <input type="number" min={1} value={semanticWindowDays} onChange={(event) => setSemanticWindowDays(Number(event.target.value))} />
-                </label>
-                <label>
-                  minClusterSize
-                  <input type="number" min={2} value={semanticMinClusterSize} onChange={(event) => setSemanticMinClusterSize(Number(event.target.value))} />
-                </label>
-                <label>
-                  similarityThreshold
-                  <input type="number" min={0} max={1} step={0.01} value={semanticSimilarityThreshold} onChange={(event) => setSemanticSimilarityThreshold(Number(event.target.value))} />
-                </label>
-              </div>
-              <div className="grid-two">
-                <label>
-                  maxEvents
-                  <input type="number" min={1} max={2000} value={semanticMaxEvents} onChange={(event) => setSemanticMaxEvents(Number(event.target.value))} />
-                </label>
-                <label>
-                  Semantic Batch
-                  <button onClick={onLoadSemanticClusters} disabled={busy || !token}>Run Semantic Clustering</button>
-                </label>
-              </div>
-
-              {semanticClustersResult && (
-                <article className="result-card">
-                  <h3>Cluster Results</h3>
-                  <p className="muted">generated {semanticClustersResult.generatedAt}</p>
-                  <p className="muted tiny">totalEvents {semanticClustersResult.totalEvents} · clusteredEvents {semanticClustersResult.clusteredEvents} · singletonEvents {semanticClustersResult.singletonEvents}</p>
-                  {semanticClustersResult.clusters.length === 0 && <p className="muted">No clusters met the minimum cluster size for current filters.</p>}
-                  {semanticClustersResult.clusters.length > 0 && (
-                    <div className="table-wrap">
-                      <table className="board-table">
-                        <thead>
-                          <tr>
-                            <th>Label</th>
-                            <th>Signal</th>
-                            <th>Members</th>
-                            <th>Keywords</th>
-                            <th>Top Bigrams</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {semanticClustersResult.clusters.map((cluster) => (
-                            <tr key={cluster.clusterId}>
-                              <td>
-                                <div>{cluster.labelHint}</div>
-                                <div className="muted tiny">{cluster.clusterId}</div>
-                              </td>
-                              <td>
-                                <div>{cluster.validationSignal}</div>
-                                <div className="muted tiny">sim {cluster.averageSimilarity.toFixed(2)} · cohesion {cluster.keywordAggregation.lexicalCohesion.toFixed(2)}</div>
-                              </td>
-                              <td>
-                                <div>{cluster.memberCount}</div>
-                                <div className="muted tiny">{cluster.questionEventIds.slice(0, 2).join(", ")}{cluster.questionEventIds.length > 2 ? " ..." : ""}</div>
-                              </td>
-                              <td>{cluster.keywordAggregation.topKeywords.slice(0, 3).map((item) => item.token).join(", ") || "none"}</td>
-                              <td>{cluster.keywordAggregation.topBigrams.slice(0, 2).map((item) => item.ngram).join(", ") || "none"}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </article>
-              )}
-            </section>
-
             <section className="panel step-4-transition">
               <h2>Questions for Review</h2>
-              <p className="muted">Inspect the stored questions, filter the list, and select one to send into the review queue.</p>
+              <p className="muted">Inspect the stored questions and select one to send into the review queue.</p>
 
-              <div className="grid-three">
-                <label>
-                  Search
-                  <input
-                    value={askedSearch}
-                    onChange={(event) => setAskedSearch(event.target.value)}
-                    placeholder="question, requestId, questionEventId"
-                  />
-                </label>
-                <label>
-                  Mode
-                  <select value={askedMode} onChange={(event) => setAskedMode(event.target.value as "" | "faq" | "rag" | "abstain") }>
-                    <option value="">any</option>
-                    <option value="faq">faq</option>
-                    <option value="rag">rag</option>
-                    <option value="abstain">abstain</option>
-                  </select>
-                </label>
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={askedOnlyReviewRequired}
-                    onChange={(event) => setAskedOnlyReviewRequired(event.target.checked)}
-                  />
-                  Only reviewRequired
-                </label>
-              </div>
               <label className="checkbox-label">
                 <input
                   type="checkbox"
-                  checked={askedShowAdvancedIds}
-                  onChange={(event) => setAskedShowAdvancedIds(event.target.checked)}
+                  checked={askedOnlyReviewRequired}
+                  onChange={(event) => setAskedOnlyReviewRequired(event.target.checked)}
                 />
-                Advanced: show questionEventId column
+                Only reviewRequired
               </label>
 
               <div className="button-row">
                 <button
                   onClick={() => {
-                    setAskedSearch("");
-                    setAskedOnlyReviewRequired(false);
-                    setAskedMode("");
                     void onLoadAskedQuestions();
                   }}
                   disabled={busy || !token}
@@ -466,13 +271,12 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                       <th>reviewRequired</th>
                       <th>Asked</th>
                       <th>requestId</th>
-                      {askedShowAdvancedIds && <th>questionEventId</th>}
                     </tr>
                   </thead>
                   <tbody>
                     {filteredAskedQuestions.length === 0 && (
                       <tr>
-                        <td colSpan={askedShowAdvancedIds ? 8 : 7} className="muted">No stored question events found for current filters.</td>
+                        <td colSpan={7} className="muted">No stored question events found for current filters.</td>
                       </tr>
                     )}
                     {filteredAskedQuestions.map((item) => (
@@ -492,7 +296,6 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                         <td>{String(item.reviewRequired)}</td>
                         <td>{item.askedAt}</td>
                         <td>{item.requestId}</td>
-                        {askedShowAdvancedIds && <td>{item.questionEventId}</td>}
                       </tr>
                     ))}
                   </tbody>
@@ -507,14 +310,6 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                     <option value="CITATION_GAP">CITATION_GAP</option>
                     <option value="POLICY_REVIEW">POLICY_REVIEW</option>
                     <option value="USER_ESCALATION">USER_ESCALATION</option>
-                  </select>
-                </label>
-                <label>
-                  Priority
-                  <select value={queuePriority} onChange={(event) => setQueuePriority(event.target.value as QueuePriority)}>
-                    <option value="low">low</option>
-                    <option value="normal">normal</option>
-                    <option value="high">high</option>
                   </select>
                 </label>
                 <button onClick={() => onQueueEditorial(selectedQuestionEventId)} disabled={busy || !token || !canQueueSelectedQuestion}>Send Selected for Review</button>
@@ -532,36 +327,19 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
 
             <section className="panel step-5-board">
               <h2>Review Queue</h2>
-              <p className="muted">Apply workflow transitions to questions already routed into editorial review.</p>
-              <div className="stack">
+              <p className="muted">Review questions in the editorial queue and apply workflow transitions.</p>
+
+              <div className="button-row">
                 <label>
-                  Queue Item ID
-                  <input
-                    value={transitionQueueItemId}
-                    onChange={(event) => setTransitionQueueItemId(event.target.value)}
-                    placeholder="Paste queueItemId"
-                  />
-                </label>
-                <label>
-                  Action
-                  <select value={transitionAction} onChange={(event) => setTransitionAction(event.target.value as TransitionAction)}>
-                    {TRANSITION_ACTIONS.map((action) => (
-                      <option key={action} value={action}>{action}</option>
+                  Status
+                  <select value={boardStatus} onChange={(event) => setBoardStatus(event.target.value as BoardStatus | "") }>
+                    <option value="">any</option>
+                    {BOARD_STATUSES.map((value) => (
+                      <option key={value} value={value}>{value}</option>
                     ))}
                   </select>
                 </label>
-                <label>
-                  Comment
-                  <textarea
-                    value={transitionComment}
-                    onChange={(event) => setTransitionComment(event.target.value)}
-                    rows={2}
-                    placeholder="Optional transition comment"
-                  />
-                </label>
-                <button onClick={onTransitionEditorial} disabled={busy || !token || !transitionQueueItemId.trim()}>
-                  Apply Status Update
-                </button>
+                <button onClick={onLoadEditorialBoard} disabled={busy || !token}>Load Queue</button>
               </div>
 
               {transitionResult && (
@@ -579,111 +357,11 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                   </p>
                 </article>
               )}
-              <h3>Queue Metrics</h3>
-              <div className="grid-three">
-                <label>
-                  metricsWindowDays
-                  <input type="number" min={1} value={metricsWindowDays} onChange={(event) => setMetricsWindowDays(Number(event.target.value))} />
-                </label>
-                <label>
-                  metricsSlaHours
-                  <input type="number" min={1} value={metricsSlaHours} onChange={(event) => setMetricsSlaHours(Number(event.target.value))} />
-                </label>
-                <label>
-                  Metrics
-                  <button onClick={onLoadBoardMetrics} disabled={busy || !token}>Load Queue Metrics</button>
-                </label>
-              </div>
-
-              {boardMetrics && (
-                <article className="result-card">
-                  <h3>Queue Metrics</h3>
-                  <p className="muted">generated {boardMetrics.generatedAt}</p>
-                  <div className="kpi-grid">
-                    <div className="kpi-tile"><span>Total</span><strong>{boardMetrics.totalItems}</strong></div>
-                    <div className="kpi-tile"><span>Unresolved</span><strong>{boardMetrics.unresolvedItems}</strong></div>
-                    <div className="kpi-tile"><span>Overdue</span><strong>{boardMetrics.overdueItems}</strong></div>
-                    <div className="kpi-tile"><span>Likes 24h</span><strong>{boardMetrics.feedbackToday.likes}</strong></div>
-                    <div className="kpi-tile"><span>Dislikes 24h</span><strong>{boardMetrics.feedbackToday.dislikes}</strong></div>
-                    <div className="kpi-tile"><span>Success 24h</span><strong>{boardMetrics.feedbackToday.answerSuccess}</strong></div>
-                    <div className="kpi-tile"><span>Citation Clicks 24h</span><strong>{boardMetrics.feedbackToday.citationClicks}</strong></div>
-                    <div className="kpi-tile"><span>{`Likes ${boardMetrics.windowDays}d`}</span><strong>{boardMetrics.feedbackWindow.likes}</strong></div>
-                    <div className="kpi-tile"><span>{`Dislikes ${boardMetrics.windowDays}d`}</span><strong>{boardMetrics.feedbackWindow.dislikes}</strong></div>
-                    <div className="kpi-tile"><span>{`Success ${boardMetrics.windowDays}d`}</span><strong>{boardMetrics.feedbackWindow.answerSuccess}</strong></div>
-                    <div className="kpi-tile"><span>{`Citation Clicks ${boardMetrics.windowDays}d`}</span><strong>{boardMetrics.feedbackWindow.citationClicks}</strong></div>
-                    <div className="kpi-tile"><span>Draft</span><strong>{boardMetrics.byStatus.draft}</strong></div>
-                    <div className="kpi-tile"><span>Review</span><strong>{boardMetrics.byStatus.review}</strong></div>
-                    <div className="kpi-tile"><span>Approved</span><strong>{boardMetrics.byStatus.approved}</strong></div>
-                    <div className="kpi-tile"><span>lt24h</span><strong>{boardMetrics.agingBuckets.lt24h}</strong></div>
-                    <div className="kpi-tile"><span>24to72h</span><strong>{boardMetrics.agingBuckets.h24to72}</strong></div>
-                    <div className="kpi-tile"><span>gt72h</span><strong>{boardMetrics.agingBuckets.gt72h}</strong></div>
-                  </div>
-                </article>
-              )}
-
-              <div className="grid-three">
-                <label>
-                  Status
-                  <select value={boardStatus} onChange={(event) => setBoardStatus(event.target.value as BoardStatus | "") }>
-                    <option value="">any</option>
-                    {BOARD_STATUSES.map((value) => (
-                      <option key={value} value={value}>{value}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Reason
-                  <select value={boardReason} onChange={(event) => setBoardReason(event.target.value as BoardReason | "") }>
-                    <option value="">any</option>
-                    {BOARD_REASONS.map((value) => (
-                      <option key={value} value={value}>{value}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Priority
-                  <select value={boardPriority} onChange={(event) => setBoardPriority(event.target.value as BoardPriority | "") }>
-                    <option value="">any</option>
-                    {BOARD_PRIORITIES.map((value) => (
-                      <option key={value} value={value}>{value}</option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-              <div className="grid-two">
-                <label>
-                  Search question/requestId
-                  <input value={boardSearch} onChange={(event) => setBoardSearch(event.target.value)} placeholder="search text" />
-                </label>
-                <label>
-                  pageSize
-                  <input type="number" min={1} max={100} value={boardPageSize} onChange={(event) => setBoardPageSize(Number(event.target.value))} />
-                </label>
-              </div>
-              <div className="button-row">
-                <button onClick={onLoadEditorialBoard} disabled={busy || !token}>Load Queue</button>
-                <button
-                  onClick={() => {
-                    setBoardPage(Math.max(1, boardPage - 1));
-                  }}
-                  disabled={busy || boardPage <= 1}
-                >
-                  Prev
-                </button>
-                <button
-                  onClick={() => {
-                    setBoardPage(boardPage + 1);
-                  }}
-                  disabled={busy}
-                >
-                  Next
-                </button>
-              </div>
 
               {boardResult && (
                 <article className="result-card">
                   <h3>Questions In Review</h3>
-                  <p className="muted">page {boardResult.page} · size {boardResult.pageSize} · total {boardResult.total}</p>
+                  <p className="muted">total {boardResult.total}</p>
                   <p className="muted">roles: {(boardResult.actorRoles ?? []).join(", ") || "none"}</p>
                   {inReviewBoardItems.length === 0 && <p className="muted">No in-review items found for current filters.</p>}
                   {inReviewBoardItems.length > 0 && (
