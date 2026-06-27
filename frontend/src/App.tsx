@@ -698,8 +698,8 @@ export default function App() {
     setError(null);
     try {
       const [approved, published] = await Promise.all([
-        client.listEditorialBoard({ status: "approved", page: 1, pageSize: 200 }),
-        client.listEditorialBoard({ status: "published", page: 1, pageSize: 200 }),
+        client.listEditorialBoard({ status: "approved", page: 1, pageSize: 100 }),
+        client.listEditorialBoard({ status: "published", page: 1, pageSize: 100 }),
       ]);
       setFaqItems([...approved.items, ...published.items]);
     } catch (caught) {
