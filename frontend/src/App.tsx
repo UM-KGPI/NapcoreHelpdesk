@@ -12,7 +12,6 @@ import type {
   EditorialBoardItem,
   EditorialBoardResponse,
   EditorialQueueResponse,
-  EditorialQueueTransitionResponse,
   IndexRepositoryResponse,
   StandardsScope,
 } from "./types";
@@ -103,7 +102,6 @@ export default function App() {
   const [askedQuestions, setAskedQuestions] = useState<AskedQuestionRow[]>([]);
   const [selectedQuestionEventId, setSelectedQuestionEventId] = useState("");
   const [editorialResult, setEditorialResult] = useState<EditorialQueueResponse | null>(null);
-  const [transitionResult, setTransitionResult] = useState<EditorialQueueTransitionResponse | null>(null);
   const [boardResult, setBoardResult] = useState<EditorialBoardResponse | null>(null);
 
   const [indexRepoPresets, setIndexRepoPresets] = useState<IndexRepoPreset[]>(DEFAULT_INDEX_REPO_PRESETS);
@@ -681,7 +679,6 @@ export default function App() {
         priority: "normal",
       });
       setEditorialResult(result);
-      setTransitionResult(null);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
     } finally {
@@ -710,12 +707,11 @@ export default function App() {
     setBusy(true);
     setError(null);
     try {
-      const result = await client.transitionEditorialQueue({
+      await client.transitionEditorialQueue({
         queueItemId: item.queueItemId,
         action,
         comment: `board action: ${action}`,
       });
-      setTransitionResult(result);
       await onLoadEditorialBoard();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
@@ -785,7 +781,6 @@ export default function App() {
                   askedQuestions={askedQuestions}
                   selectedQuestionEventId={selectedQuestionEventId}
                   editorialResult={editorialResult}
-                  transitionResult={transitionResult}
                   boardResult={boardResult}
                   queueReason={queueReason}
                   boardStatus={boardStatus}
