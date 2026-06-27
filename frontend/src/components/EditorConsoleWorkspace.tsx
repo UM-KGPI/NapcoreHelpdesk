@@ -148,8 +148,8 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
 
   const canQueueSelectedQuestion = Boolean(selectedQuestionEventId);
   const boardItems = boardResult?.items ?? [];
-  const inReviewBoardItems = boardItems.filter((item) => item.status !== "published");
-  const faqBoardItems = boardItems.filter((item) => item.status === "published");
+  const inReviewBoardItems = boardItems.filter((item) => item.status === "draft" || item.status === "review" || item.status === "rejected");
+  const faqBoardItems = boardItems.filter((item) => item.status === "approved" || item.status === "published");
 
   return (
     <section className="workspace-section editor-workspace">
@@ -409,10 +409,10 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
 
             <section className="panel step-6-promotion">
               <h2>FAQ</h2>
-              <p className="muted">Final list of approved questions.</p>
+              <p className="muted">Approved and published questions.</p>
 
-              {!boardResult && <p className="muted">Load Queue first to populate promoted FAQ rows.</p>}
-              {boardResult && faqBoardItems.length === 0 && <p className="muted">No published FAQ questions found for current filters.</p>}
+              {!boardResult && <p className="muted">Load Queue first to populate FAQ rows.</p>}
+              {boardResult && faqBoardItems.length === 0 && <p className="muted">No approved or published questions found for current filters.</p>}
               {boardResult && faqBoardItems.length > 0 && (
                 <div className="table-wrap">
                   <table className="board-table">
@@ -420,9 +420,9 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                       <tr>
                         <th>Status</th>
                         <th>Reason</th>
-                        <th>Priority</th>
                         <th>Question</th>
                         <th>Updated</th>
+                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -430,13 +430,22 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                         <tr key={item.queueItemId}>
                           <td>{item.status}</td>
                           <td>{item.reason}</td>
-                          <td>{item.priority}</td>
                           <td>
                             <div>{item.question}</div>
                             <div className="muted tiny">{item.requestId}</div>
                             <div className="muted tiny">{item.queueItemId}</div>
                           </td>
                           <td>{item.updatedAt}</td>
+                          <td>
+                            <div className="button-column">
+                              {item.allowedActions.length === 0 && <span className="muted tiny">—</span>}
+                              {item.allowedActions.map((action) => (
+                                <button key={`${item.queueItemId}-${action}`} onClick={() => onQuickTransition(item, action)} disabled={busy || !token}>
+                                  {action}
+                                </button>
+                              ))}
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
