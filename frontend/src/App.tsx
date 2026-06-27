@@ -101,6 +101,7 @@ export default function App() {
   const [askedQuestions, setAskedQuestions] = useState<AskedQuestionRow[]>([]);
   const [selectedQuestionEventId, setSelectedQuestionEventId] = useState("");
   const [boardResult, setBoardResult] = useState<EditorialBoardResponse | null>(null);
+  const [faqItems, setFaqItems] = useState<EditorialBoardItem[]>([]);
 
   const [indexRepoPresets, setIndexRepoPresets] = useState<IndexRepoPreset[]>(DEFAULT_INDEX_REPO_PRESETS);
   const [indexPresetId, setIndexPresetId] = useState(DEFAULT_INDEX_REPO_PRESETS[0].id);
@@ -692,6 +693,22 @@ export default function App() {
     }
   }
 
+  async function onLoadFaq(): Promise<void> {
+    setBusy(true);
+    setError(null);
+    try {
+      const [approved, published] = await Promise.all([
+        client.listEditorialBoard({ status: "approved", page: 1, pageSize: 200 }),
+        client.listEditorialBoard({ status: "published", page: 1, pageSize: 200 }),
+      ]);
+      setFaqItems([...approved.items, ...published.items]);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function onQuickTransition(item: EditorialBoardItem, action: TransitionAction): Promise<void> {
     setBusy(true);
     setError(null);
@@ -770,6 +787,7 @@ export default function App() {
                   askedQuestions={askedQuestions}
                   selectedQuestionEventId={selectedQuestionEventId}
                   boardResult={boardResult}
+                  faqItems={faqItems}
                   queueReason={queueReason}
                   boardStatus={boardStatus}
                   busy={busy}
@@ -782,6 +800,7 @@ export default function App() {
                   onLoadAskedQuestions={onLoadAskedQuestions}
                   onQueueEditorial={onQueueEditorial}
                   onLoadEditorialBoard={onLoadEditorialBoard}
+                  onLoadFaq={onLoadFaq}
                   onQuickTransition={onQuickTransition}
                   indexRepoUrl={indexRepoUrl}
                   indexRepoPath={indexRepoPath}
