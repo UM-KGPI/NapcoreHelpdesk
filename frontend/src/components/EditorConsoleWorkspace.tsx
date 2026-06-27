@@ -7,7 +7,6 @@ import type {
   EditorialBoardItem,
   EditorialBoardResponse,
   EditorialQueueResponse,
-  EditorialQueueTransitionResponse,
   IndexRepositoryResponse,
 } from "../types";
 const TRANSITION_ACTIONS = ["submit_for_review", "request_changes", "approve", "reject", "publish", "reopen"] as const;
@@ -32,7 +31,6 @@ interface EditorConsoleWorkspaceProps {
   askedQuestions: AskedQuestionRow[];
   selectedQuestionEventId: string;
   editorialResult: EditorialQueueResponse | null;
-  transitionResult: EditorialQueueTransitionResponse | null;
   boardResult: EditorialBoardResponse | null;
   queueReason: QueueReason;
   boardStatus: BoardStatus | "";
@@ -80,7 +78,6 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
     askedQuestions,
     selectedQuestionEventId,
     editorialResult,
-    transitionResult,
     boardResult,
     queueReason,
     boardStatus,
@@ -350,68 +347,45 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                 <button onClick={onLoadEditorialBoard} disabled={busy || !token}>Load Queue</button>
               </div>
 
-              {transitionResult && (
-                <article className="result-card">
-                  <h3>Status Update Result</h3>
-                  <p>queueItemId: <code>{transitionResult.queueItemId}</code></p>
-                  <p>status: <strong>{transitionResult.status}</strong></p>
-                  <p>
-                    action: <strong>{transitionResult.transition.action}</strong>
-                    <span className="muted"> · {transitionResult.transition.fromStatus} to {transitionResult.transition.toStatus}</span>
-                  </p>
-                  <p>
-                    actor: <strong>{transitionResult.transition.actorId}</strong>
-                    <span className="muted"> · roles: {transitionResult.transition.actorRoles.join(", ") || "none"}</span>
-                  </p>
-                </article>
-              )}
-
-              {boardResult && (
-                <article className="result-card">
-                  <h3>Questions In Review</h3>
-                  <p className="muted">total {boardResult.total}</p>
-                  <p className="muted">roles: {(boardResult.actorRoles ?? []).join(", ") || "none"}</p>
-                  {inReviewBoardItems.length === 0 && <p className="muted">No in-review items found for current filters.</p>}
-                  {inReviewBoardItems.length > 0 && (
-                    <div className="table-wrap">
-                      <table className="board-table">
-                        <thead>
-                          <tr>
-                            <th>Status</th>
-                            <th>Priority</th>
-                            <th>Reason</th>
-                            <th>Question</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {inReviewBoardItems.map((item) => (
-                            <tr key={item.queueItemId}>
-                              <td>{item.status}</td>
-                              <td>{item.priority}</td>
-                              <td>{item.reason}</td>
-                              <td>
-                                <div>{item.question}</div>
-                                <div className="muted tiny">{item.requestId}</div>
-                                <div className="muted tiny">{item.queueItemId}</div>
-                              </td>
-                              <td>
-                                <div className="button-column">
-                                  {item.allowedActions.length === 0 && <span className="muted tiny">No allowed actions</span>}
-                                  {item.allowedActions.map((action) => (
-                                    <button key={`${item.queueItemId}-${action}`} onClick={() => onQuickTransition(item, action)} disabled={busy || !token}>
-                                      {action}
-                                    </button>
-                                  ))}
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </article>
+              {boardResult && inReviewBoardItems.length === 0 && <p className="muted">No in-review items for current filter.</p>}
+              {boardResult && inReviewBoardItems.length > 0 && (
+                <div className="table-wrap">
+                  <table className="board-table">
+                    <thead>
+                      <tr>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>Reason</th>
+                        <th>Question</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {inReviewBoardItems.map((item) => (
+                        <tr key={item.queueItemId}>
+                          <td>{item.status}</td>
+                          <td>{item.priority}</td>
+                          <td>{item.reason}</td>
+                          <td>
+                            <div>{item.question}</div>
+                            <div className="muted tiny">{item.requestId}</div>
+                            <div className="muted tiny">{item.queueItemId}</div>
+                          </td>
+                          <td>
+                            <div className="button-column">
+                              {item.allowedActions.length === 0 && <span className="muted tiny">No allowed actions</span>}
+                              {item.allowedActions.map((action) => (
+                                <button key={`${item.queueItemId}-${action}`} onClick={() => onQuickTransition(item, action)} disabled={busy || !token}>
+                                  {action}
+                                </button>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </section>
 
