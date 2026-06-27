@@ -35,6 +35,7 @@ interface EditorConsoleWorkspaceProps {
   askedQuestions: AskedQuestionRow[];
   selectedQuestionEventId: string;
   boardResult: EditorialBoardResponse | null;
+  faqItems: EditorialBoardItem[];
   queueReason: QueueReason;
   boardStatus: BoardStatus | "";
   busy: boolean;
@@ -47,6 +48,7 @@ interface EditorConsoleWorkspaceProps {
   onLoadAskedQuestions: () => Promise<void>;
   onQueueEditorial: (questionEventIdOverride?: string) => Promise<void>;
   onLoadEditorialBoard: () => Promise<void>;
+  onLoadFaq: () => Promise<void>;
   onQuickTransition: (item: EditorialBoardItem, action: TransitionAction) => Promise<void>;
   indexPresetId: string;
   indexRepoPresets: IndexRepoPresetOption[];
@@ -81,6 +83,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
     askedQuestions,
     selectedQuestionEventId,
     boardResult,
+    faqItems,
     queueReason,
     boardStatus,
     busy,
@@ -93,6 +96,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
     onLoadAskedQuestions,
     onQueueEditorial,
     onLoadEditorialBoard,
+    onLoadFaq,
     onQuickTransition,
     indexPresetId,
     indexRepoPresets,
@@ -161,7 +165,6 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
   const canQueueSelectedQuestion = Boolean(selectedQuestionEventId);
   const boardItems = boardResult?.items ?? [];
   const inReviewBoardItems = boardItems.filter((item) => item.status === "draft" || item.status === "review" || item.status === "rejected");
-  const faqBoardItems = boardItems.filter((item) => item.status === "approved" || item.status === "published");
 
   return (
     <section className="workspace-section editor-workspace">
@@ -387,9 +390,12 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
               <h2>FAQ</h2>
               <p className="muted">Approved and published questions.</p>
 
-              {!boardResult && <p className="muted">Load Queue first to populate FAQ rows.</p>}
-              {boardResult && faqBoardItems.length === 0 && <p className="muted">No approved or published questions found for current filters.</p>}
-              {boardResult && faqBoardItems.length > 0 && (
+              <div className="button-row">
+                <button onClick={onLoadFaq} disabled={busy || !token}>Load FAQs</button>
+              </div>
+
+              {faqItems.length === 0 && <p className="muted">No approved or published questions found.</p>}
+              {faqItems.length > 0 && (
                 <div className="table-wrap">
                   <table className="board-table">
                     <thead>
@@ -402,7 +408,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                       </tr>
                     </thead>
                     <tbody>
-                      {faqBoardItems.map((item) => (
+                      {faqItems.map((item) => (
                         <tr key={item.queueItemId}>
                           <td>{item.status}</td>
                           <td>{item.reason}</td>
