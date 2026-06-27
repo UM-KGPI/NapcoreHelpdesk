@@ -11,10 +11,7 @@ import type {
   EditorialQueueTransitionResponse,
   EditorialSemanticClustersResponse,
   IndexRepositoryResponse,
-  StandardsScope,
 } from "../types";
-
-const STANDARDS: StandardsScope[] = ["Transmodel", "NeTEx", "SIRI", "OpRa"];
 const TRANSITION_ACTIONS = ["submit_for_review", "request_changes", "approve", "reject", "publish", "reopen"] as const;
 const BOARD_STATUSES = ["draft", "review", "approved", "rejected", "published"] as const;
 const BOARD_REASONS = ["LOW_CONFIDENCE", "CITATION_GAP", "POLICY_REVIEW", "USER_ESCALATION"] as const;
@@ -38,9 +35,6 @@ type IndexRepoPresetOption = {
 
 interface EditorConsoleWorkspaceProps {
   question: string;
-  sessionId: string;
-  userId: string;
-  standardsScope: StandardsScope[];
   answerResult: AnswerResponse | null;
   askedQuestions: AskedQuestionRow[];
   selectedQuestionEventId: string;
@@ -69,9 +63,6 @@ interface EditorConsoleWorkspaceProps {
   busy: boolean;
   token: string;
   setQuestion: (value: string) => void;
-  setSessionId: (value: string) => void;
-  setUserId: (value: string) => void;
-  toggleScope: (scope: StandardsScope) => void;
   setQueueReason: (value: QueueReason) => void;
   setQueuePriority: (value: QueuePriority) => void;
   setSelectedQuestionEventId: (value: string) => void;
@@ -130,9 +121,6 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
   const lastAnswerRequestIdRef = useRef<string | null>(null);
   const {
     question,
-    sessionId,
-    userId,
-    standardsScope,
     answerResult,
     askedQuestions,
     selectedQuestionEventId,
@@ -161,9 +149,6 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
     busy,
     token,
     setQuestion,
-    setSessionId,
-    setUserId,
-    toggleScope,
     setQueueReason,
     setQueuePriority,
     setSelectedQuestionEventId,
@@ -334,36 +319,6 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
               )}
             </section>
 
-            <details className="panel step-2-context system-panel-inline collapsible-panel">
-              <summary className="collapsible-summary">
-                <div className="system-panel-header">
-                  <p className="kicker">Request Context</p>
-                  <h2>Session &amp; Scope</h2>
-                  <p className="muted">Session identifiers and standards filters stay available without competing with the main editor workflow.</p>
-                </div>
-              </summary>
-              <div className="collapsible-body">
-                <div className="grid-two">
-                  <label>
-                    Session ID
-                    <input value={sessionId} onChange={(event) => setSessionId(event.target.value)} />
-                  </label>
-                  <label>
-                    User ID
-                    <input value={userId} onChange={(event) => setUserId(event.target.value)} />
-                  </label>
-                </div>
-                <fieldset className="scope-grid advanced-scope">
-                  <legend>Standards Scope</legend>
-                  {STANDARDS.map((scope) => (
-                    <label key={scope} className="scope-item">
-                      <input type="checkbox" checked={standardsScope.includes(scope)} onChange={() => toggleScope(scope)} />
-                      {scope}
-                    </label>
-                  ))}
-                </fieldset>
-              </div>
-            </details>
           </>
         )}
 
