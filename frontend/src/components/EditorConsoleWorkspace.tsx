@@ -197,8 +197,10 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
         {activeTab === "assist" && (
           <>
             <section className="panel step-2-ask">
-              <h2>Run Helpdesk Query</h2>
-              <p className="muted">Use this to simulate a user question and inspect the grounded response before routing anything into review.</p>
+              <div className="panel-title-row">
+                <h2>Run Helpdesk Query</h2>
+                <p className="muted">Simulate a user question and inspect the grounded response before routing anything into review.</p>
+              </div>
               <form onSubmit={onAskQuestion} className="stack">
                 <label>
                   Question
@@ -249,8 +251,10 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
         {activeTab === "editorial" && (
           <>
             <section className="panel step-4-transition">
-              <h2>Questions for Review</h2>
-              <p className="muted">Inspect the stored questions and select one to send into the review queue.</p>
+              <div className="panel-title-row">
+                <h2>Questions for Review</h2>
+                <p className="muted">Inspect the stored questions and select one to send into the review queue.</p>
+              </div>
 
               <label className="checkbox-label">
                 <input
@@ -331,8 +335,10 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
             </section>
 
             <section className="panel step-5-board">
-              <h2>Review Queue</h2>
-              <p className="muted">Review questions in the editorial queue and apply workflow transitions.</p>
+              <div className="panel-title-row">
+                <h2>Review Queue</h2>
+                <p className="muted">Review questions in the editorial queue and apply workflow transitions.</p>
+              </div>
 
               <div className="button-row">
                 <select aria-label="Status filter" value={boardStatus} onChange={(event) => setBoardStatus(event.target.value as BoardStatus | "")}>
@@ -387,8 +393,10 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
             </section>
 
             <section className="panel step-6-promotion">
-              <h2>FAQ</h2>
-              <p className="muted">Approved and published questions.</p>
+              <div className="panel-title-row">
+                <h2>FAQ</h2>
+                <p className="muted">Approved and published questions.</p>
+              </div>
 
               <div className="button-row">
                 <button onClick={onLoadFaq} disabled={busy || !token}>Load FAQs</button>
@@ -441,8 +449,10 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
 
         {activeTab === "indexing" && (
           <section className="panel step-1-index">
-            <h2>Refresh Source Index</h2>
-            <p className="muted">Trigger ingestion on a locally-cloned approved repository.</p>
+            <div className="panel-title-row">
+              <h2>Refresh Source Index</h2>
+              <p className="muted">Trigger ingestion on a locally-cloned approved repository.</p>
+            </div>
             <p className="muted">Incremental mode uses per-file content hashing, so unchanged files are skipped even when repository HEAD changes.</p>
             <div className="stack">
               <label>

@@ -571,6 +571,23 @@ button:disabled {
   width: auto;
 }
 
+.panel-title-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.panel-title-row h2 {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.panel-title-row p {
+  margin: 0;
+}
+
 .table-wrap {
   overflow-x: auto;
 }
