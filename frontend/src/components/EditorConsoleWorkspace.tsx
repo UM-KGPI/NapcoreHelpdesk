@@ -11,6 +11,11 @@ import type {
 const TRANSITION_ACTIONS = ["submit_for_review", "request_changes", "approve", "reject", "publish", "reopen"] as const;
 const BOARD_STATUSES = ["draft", "review", "approved", "rejected", "published"] as const;
 
+function formatAction(action: string): string {
+  if (action === "submit_for_review") return "review";
+  return action.replace(/_/g, " ");
+}
+
 type TransitionAction = (typeof TRANSITION_ACTIONS)[number];
 type BoardStatus = (typeof BOARD_STATUSES)[number];
 type QueueReason = "LOW_CONFIDENCE" | "CITATION_GAP" | "POLICY_REVIEW" | "USER_ESCALATION";
@@ -365,7 +370,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                               {item.allowedActions.length === 0 && <span className="muted tiny">No allowed actions</span>}
                               {item.allowedActions.map((action) => (
                                 <button key={`${item.queueItemId}-${action}`} onClick={() => onQuickTransition(item, action)} disabled={busy || !token}>
-                                  {action}
+                                  {formatAction(action)}
                                 </button>
                               ))}
                             </div>
@@ -412,7 +417,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                               {item.allowedActions.length === 0 && <span className="muted tiny">—</span>}
                               {item.allowedActions.map((action) => (
                                 <button key={`${item.queueItemId}-${action}`} onClick={() => onQuickTransition(item, action)} disabled={busy || !token}>
-                                  {action}
+                                  {formatAction(action)}
                                 </button>
                               ))}
                             </div>

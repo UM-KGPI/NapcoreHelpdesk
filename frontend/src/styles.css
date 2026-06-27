@@ -559,7 +559,15 @@ button:disabled {
   margin-top: 0.7rem;
 }
 
+.button-row > * {
+  margin-top: 0;
+}
+
 .button-row button {
+  width: auto;
+}
+
+.button-row select {
   width: auto;
 }
 
