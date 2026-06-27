@@ -16,6 +16,10 @@ function formatAction(action: string): string {
   return action.replace(/_/g, " ");
 }
 
+function formatReason(reason: string): string {
+  return reason.toLowerCase().replace(/_/g, " ");
+}
+
 type TransitionAction = (typeof TRANSITION_ACTIONS)[number];
 type BoardStatus = (typeof BOARD_STATUSES)[number];
 type QueueReason = "LOW_CONFIDENCE" | "CITATION_GAP" | "POLICY_REVIEW" | "USER_ESCALATION";
@@ -324,10 +328,10 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
 
               <div className="button-row">
                 <select aria-label="Queue reason" value={queueReason} onChange={(event) => setQueueReason(event.target.value as QueueReason)}>
-                  <option value="LOW_CONFIDENCE">LOW_CONFIDENCE</option>
-                  <option value="CITATION_GAP">CITATION_GAP</option>
-                  <option value="POLICY_REVIEW">POLICY_REVIEW</option>
-                  <option value="USER_ESCALATION">USER_ESCALATION</option>
+                  <option value="LOW_CONFIDENCE">low confidence</option>
+                  <option value="CITATION_GAP">citation gap</option>
+                  <option value="POLICY_REVIEW">policy review</option>
+                  <option value="USER_ESCALATION">user escalation</option>
                 </select>
                 <button onClick={() => onQueueEditorial(selectedQuestionEventId)} disabled={busy || !token || !canQueueSelectedQuestion}>Send Selected for Review</button>
               </div>
@@ -368,7 +372,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                         <tr key={item.queueItemId}>
                           <td>{item.status}</td>
                           <td>{item.priority}</td>
-                          <td>{item.reason}</td>
+                          <td>{formatReason(item.reason)}</td>
                           <td>
                             <div>{item.question}</div>
                             <div className="muted tiny">{item.requestId}</div>
@@ -419,7 +423,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                       {faqItems.map((item) => (
                         <tr key={item.queueItemId}>
                           <td>{item.status}</td>
-                          <td>{item.reason}</td>
+                          <td>{formatReason(item.reason)}</td>
                           <td>
                             <div>{item.question}</div>
                             <div className="muted tiny">{item.requestId}</div>
