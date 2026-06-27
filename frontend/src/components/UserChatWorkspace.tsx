@@ -259,7 +259,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                           return;
                         }
                         const currentLike = turn.answer?.trace.userLikes ?? false;
-                        void setFeedback(requestId, { userLikes: !currentLike, userDislikes: false, answerSuccess: !currentLike });
+                        void setFeedback(requestId, { userLikes: !currentLike, userDislikes: false, answerSuccess: currentLike ? null : true });
                       }}
                       disabled={feedbackPendingByRequestId[turn.requestId ?? turn.answer.trace.requestId] === true}
                       title="Good answer"
@@ -276,7 +276,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                           return;
                         }
                         const currentDislike = turn.answer?.trace.userDislikes ?? false;
-                        void setFeedback(requestId, { userLikes: false, userDislikes: !currentDislike, answerSuccess: currentDislike });
+                        void setFeedback(requestId, { userLikes: false, userDislikes: !currentDislike, answerSuccess: currentDislike ? null : false });
                       }}
                       disabled={feedbackPendingByRequestId[turn.requestId ?? turn.answer.trace.requestId] === true}
                       title="Answer could be better"
