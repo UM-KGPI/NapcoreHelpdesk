@@ -102,8 +102,8 @@ export default function App() {
 
   const [question, setQuestion] = useState("How to use NeTEx for exchanging a timetable?");
   const [sessionId, setSessionId] = useState("sess-local");
-  const [userId, setUserId] = useState("user-local");
-  const [standardsScope, setStandardsScope] = useState<StandardsScope[]>([]);
+  const userId = "user-local";
+  const [standardsScope] = useState<StandardsScope[]>([]);
 
   const [answerResult, setAnswerResult] = useState<AnswerResponse | null>(null);
   const [askedQuestions, setAskedQuestions] = useState<AskedQuestionRow[]>([]);
@@ -240,15 +240,6 @@ export default function App() {
     } finally {
       setBusy(false);
     }
-  }
-
-  function toggleScope(scope: StandardsScope): void {
-    setStandardsScope((prev) => {
-      if (prev.includes(scope)) {
-        return prev.filter((item) => item !== scope);
-      }
-      return [...prev, scope];
-    });
   }
 
   function createSessionId(): string {
@@ -875,9 +866,6 @@ export default function App() {
               element={
                 <EditorConsoleWorkspace
                   question={question}
-                  sessionId={sessionId}
-                  userId={userId}
-                  standardsScope={standardsScope}
                   answerResult={answerResult}
                   askedQuestions={askedQuestions}
                   selectedQuestionEventId={selectedQuestionEventId}
@@ -906,9 +894,6 @@ export default function App() {
                   busy={busy}
                   token={token}
                   setQuestion={setQuestion}
-                  setSessionId={setSessionId}
-                  setUserId={setUserId}
-                  toggleScope={toggleScope}
                   setQueueReason={setQueueReason}
                   setQueuePriority={setQueuePriority}
                   setSelectedQuestionEventId={setSelectedQuestionEventId}
