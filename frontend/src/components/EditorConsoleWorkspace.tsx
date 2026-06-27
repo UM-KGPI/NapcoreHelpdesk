@@ -344,15 +344,12 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
               <p className="muted">Review questions in the editorial queue and apply workflow transitions.</p>
 
               <div className="button-row">
-                <label>
-                  Status
-                  <select value={boardStatus} onChange={(event) => setBoardStatus(event.target.value as BoardStatus | "") }>
-                    <option value="">any</option>
-                    {BOARD_STATUSES.map((value) => (
-                      <option key={value} value={value}>{value}</option>
-                    ))}
-                  </select>
-                </label>
+                <select aria-label="Status filter" value={boardStatus} onChange={(event) => setBoardStatus(event.target.value as BoardStatus | "")}>
+                  <option value="">any status</option>
+                  {BOARD_STATUSES.map((value) => (
+                    <option key={value} value={value}>{value}</option>
+                  ))}
+                </select>
                 <button onClick={onLoadEditorialBoard} disabled={busy || !token}>Load Queue</button>
               </div>
 
