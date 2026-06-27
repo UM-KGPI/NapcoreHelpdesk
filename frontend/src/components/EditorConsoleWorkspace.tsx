@@ -316,16 +316,13 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                 </table>
               </div>
 
-              <div className="stack">
-                <label>
-                  Reason
-                  <select value={queueReason} onChange={(event) => setQueueReason(event.target.value as QueueReason)}>
-                    <option value="LOW_CONFIDENCE">LOW_CONFIDENCE</option>
-                    <option value="CITATION_GAP">CITATION_GAP</option>
-                    <option value="POLICY_REVIEW">POLICY_REVIEW</option>
-                    <option value="USER_ESCALATION">USER_ESCALATION</option>
-                  </select>
-                </label>
+              <div className="button-row">
+                <select aria-label="Queue reason" value={queueReason} onChange={(event) => setQueueReason(event.target.value as QueueReason)}>
+                  <option value="LOW_CONFIDENCE">LOW_CONFIDENCE</option>
+                  <option value="CITATION_GAP">CITATION_GAP</option>
+                  <option value="POLICY_REVIEW">POLICY_REVIEW</option>
+                  <option value="USER_ESCALATION">USER_ESCALATION</option>
+                </select>
                 <button onClick={() => onQueueEditorial(selectedQuestionEventId)} disabled={busy || !token || !canQueueSelectedQuestion}>Send Selected for Review</button>
               </div>
 
