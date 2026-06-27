@@ -314,7 +314,6 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                   )}
                   <p className="muted tiny">
                     requestId: {turn.requestId ?? turn.answer.trace.requestId} · mode: {turn.answer.mode} · confidence: {turn.answer.confidence.toFixed(2)}
-                    {` · answerSuccess: ${String(turn.answer.trace.answerSuccess ?? null)} · citationClicks: ${String(turn.answer.trace.citationClickCount ?? 0)}`}
                   </p>
                 </>
               )}
