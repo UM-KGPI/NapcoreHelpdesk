@@ -127,13 +127,26 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
     answerResultRef.current?.scrollIntoView({ block: "start", behavior: "auto" });
   }, [answerResult?.trace.requestId]);
 
-  const filteredAskedQuestions = useMemo(() => {
-    return askedQuestions.filter((item) => {
+  const groupedAskedQuestions = useMemo(() => {
+    type GroupedRow = AskedQuestionRow & { count: number };
+    const groups = new Map<string, GroupedRow>();
+    for (const item of askedQuestions) {
       if (askedOnlyReviewRequired && !item.reviewRequired) {
-        return false;
+        continue;
       }
-      return true;
-    });
+      const key = item.question.trim().toLowerCase();
+      const existing = groups.get(key);
+      if (!existing) {
+        groups.set(key, { ...item, count: 1 });
+      } else {
+        // Representative: prefer reviewRequired=true; among ties prefer most recent
+        const useNew =
+          (item.reviewRequired && !existing.reviewRequired) ||
+          (item.reviewRequired === existing.reviewRequired && item.askedAt > existing.askedAt);
+        groups.set(key, { ...(useNew ? item : existing), count: existing.count + 1 });
+      }
+    }
+    return Array.from(groups.values());
   }, [askedOnlyReviewRequired, askedQuestions]);
 
   const askedModeCounts = useMemo(() => {
@@ -259,27 +272,26 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
               <p className="muted tiny">Loaded mode counts: rag {askedModeCounts.rag} · faq {askedModeCounts.faq} · abstain {askedModeCounts.abstain}</p>
 
               <h3>Questions</h3>
-              <p className="muted tiny">Select one row, then click Send Selected for Review.</p>
+              <p className="muted tiny">Identical questions are grouped — count shows how many times each was asked. Select one row, then click Send Selected for Review.</p>
               <div className="table-wrap">
                 <table className="board-table">
                   <thead>
                     <tr>
                       <th>Select</th>
                       <th>Question</th>
+                      <th>Asked</th>
                       <th>Mode</th>
                       <th>Confidence</th>
                       <th>reviewRequired</th>
-                      <th>Asked</th>
-                      <th>requestId</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredAskedQuestions.length === 0 && (
+                    {groupedAskedQuestions.length === 0 && (
                       <tr>
-                        <td colSpan={7} className="muted">No stored question events found for current filters.</td>
+                        <td colSpan={6} className="muted">No stored question events found for current filters.</td>
                       </tr>
                     )}
-                    {filteredAskedQuestions.map((item) => (
+                    {groupedAskedQuestions.map((item) => (
                       <tr key={item.requestId}>
                         <td>
                           <input
@@ -290,12 +302,14 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                             aria-label={`Select question ${item.questionEventId}`}
                           />
                         </td>
-                        <td>{item.question}</td>
+                        <td>
+                          <div>{item.question}</div>
+                          {item.count > 1 && <div className="muted tiny">×{item.count} asked</div>}
+                        </td>
+                        <td>{item.askedAt}</td>
                         <td>{item.mode}</td>
                         <td>{item.confidence.toFixed(2)}</td>
                         <td>{String(item.reviewRequired)}</td>
-                        <td>{item.askedAt}</td>
-                        <td>{item.requestId}</td>
                       </tr>
                     ))}
                   </tbody>
