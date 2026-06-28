@@ -624,6 +624,10 @@ button:disabled {
   margin: 0;
 }
 
+.board-table .col-actions {
+  width: 9rem;
+}
+
 .sort-btn {
   background: none;
   border: none;

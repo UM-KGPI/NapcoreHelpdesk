@@ -360,7 +360,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                       <SortTh col="confidence" sort={askedSort} onSort={(c) => setAskedSort((prev) => toggleSortState(prev, c))}>Confidence</SortTh>
                       <SortTh col="likes" sort={askedSort} onSort={(c) => setAskedSort((prev) => toggleSortState(prev, c))}>Likes</SortTh>
                       <SortTh col="status" sort={askedSort} onSort={(c) => setAskedSort((prev) => toggleSortState(prev, c))}>Status</SortTh>
-                      <th>Actions</th>
+                      <th className="col-actions">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -521,7 +521,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                       <tr>
                         <th>Question</th>
                         <SortTh col="status" sort={reviewSort} onSort={(c) => setReviewSort((prev) => toggleSortState(prev, c))}>Status</SortTh>
-                        <th>Actions</th>
+                        <th className="col-actions">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
