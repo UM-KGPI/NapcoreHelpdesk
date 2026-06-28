@@ -455,6 +455,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                                         </>
                                       )}
                                     </div>
+                                    <p className="muted tiny">{item.requestId}</p>
                                     <div className="detail-row-actions">
                                       {deleteConfirmId === item.questionEventId ? (
                                         <>
@@ -534,7 +535,6 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                             <tr>
                               <td>
                                 <div>{item.question}</div>
-                                <div className="muted tiny">{item.requestId}</div>
                               </td>
                               <td><span className={`faq-status-pill status-${item.status}`}>{item.status}</span></td>
                               <td>
@@ -577,23 +577,26 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                                     <p className="muted tiny">Failed to load: {detailErrors[item.questionEventId]}</p>
                                   )}
                                   {detail && (
-                                    <div className="faq-card-body">
-                                      <AnswerMarkdown text={detail.answer} />
-                                      {detail.citations.length > 0 && (
-                                        <>
-                                          <p className="tiny"><strong>Evidence</strong></p>
-                                          <ul>
-                                            {detail.citations.map((c, i) => (
-                                              <li key={`${item.queueItemId}-c${i}`}>
-                                                <strong>[E{i + 1}]</strong>{" "}
-                                                <a href={c.repositoryUrl} target="_blank" rel="noreferrer">{c.label ?? c.sourcePath}</a>
-                                                <span className="muted"> · {c.sourcePath}</span>
-                                              </li>
-                                            ))}
-                                          </ul>
-                                        </>
-                                      )}
-                                    </div>
+                                    <>
+                                      <div className="faq-card-body">
+                                        <AnswerMarkdown text={detail.answer} />
+                                        {detail.citations.length > 0 && (
+                                          <>
+                                            <p className="tiny"><strong>Evidence</strong></p>
+                                            <ul>
+                                              {detail.citations.map((c, i) => (
+                                                <li key={`${item.queueItemId}-c${i}`}>
+                                                  <strong>[E{i + 1}]</strong>{" "}
+                                                  <a href={c.repositoryUrl} target="_blank" rel="noreferrer">{c.label ?? c.sourcePath}</a>
+                                                  <span className="muted"> · {c.sourcePath}</span>
+                                                </li>
+                                              ))}
+                                            </ul>
+                                          </>
+                                        )}
+                                      </div>
+                                      <p className="muted tiny">{item.requestId}</p>
+                                    </>
                                   )}
                                 </td>
                               </tr>
