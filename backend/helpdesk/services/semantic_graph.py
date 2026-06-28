@@ -84,17 +84,6 @@ def _validate_ontology_payload(
             logger.warning("Ignoring invalid related_to for concept %s in %s ontology", concept_id, ontology_name)
             related_to = []
 
-        example_sources = concept_data.get("example_sources")
-        if example_sources is None:
-            example_sources = []
-        if not isinstance(example_sources, list) or any(not isinstance(item, str) for item in example_sources):
-            logger.warning(
-                "Ignoring invalid example_sources for concept %s in %s ontology",
-                concept_id,
-                ontology_name,
-            )
-            example_sources = []
-
         maps_to_nits = concept_data.get("maps_to_nits")
         if maps_to_nits is not None and not isinstance(maps_to_nits, str):
             logger.warning("Ignoring non-string maps_to_nits for concept %s in %s ontology", concept_id, ontology_name)
@@ -113,7 +102,6 @@ def _validate_ontology_payload(
         sanitized = dict(concept_data)
         sanitized["labels"] = labels
         sanitized["related_to"] = related_to
-        sanitized["example_sources"] = example_sources
         if maps_to_nits is None:
             sanitized.pop("maps_to_nits", None)
         else:
@@ -219,20 +207,6 @@ def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
         " }"
     )
 
-    example_rows = _sparql_get(
-        "SELECT DISTINCT ?concept ?label ?source WHERE {"
-        " ?artifact <https://napcore.eu/ontology/examples#illustratesConcept> ?concept ."
-        " OPTIONAL {"
-        "  ?artifact <http://www.w3.org/2004/02/skos/core#prefLabel>|"
-        "<http://www.w3.org/2004/02/skos/core#altLabel>|"
-        "<http://www.w3.org/2000/01/rdf-schema#label> ?label ."
-        " }"
-        " OPTIONAL { ?artifact <http://purl.org/dc/terms/source> ?source . }"
-        " FILTER(!CONTAINS(STR(?concept), 'napcore.eu/ontology/nits'))"
-        " FILTER(!CONTAINS(STR(?concept), 'www.w3.org'))"
-        " }"
-    )
-
     # skos:related links declared directly in standards ontologies (e.g. SIRI ~99 links)
     skos_related_rows = _sparql_get(
         "SELECT DISTINCT ?concept ?related WHERE {"
@@ -291,20 +265,6 @@ def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
     for concept_id, nits_ids in nits_by_concept.items():
         specific = [n for n in nits_ids if n not in _ABSTRACT_NITS_IDS]
         concepts[concept_id]["maps_to_nits"] = specific[0] if specific else nits_ids[0]
-
-    for row in example_rows:
-        concept_id = _iri_to_concept_id(row.get("concept", ""))
-        label = row.get("label", "").strip()
-        source = row.get("source", "").strip()
-        if not concept_id or concept_id not in concepts:
-            continue
-        entry = concepts.setdefault(concept_id, {"labels": [], "related_to": []})
-        if label and label not in entry["labels"]:
-            entry["labels"].append(label)
-        if source:
-            example_sources = entry.setdefault("example_sources", [])
-            if source not in example_sources:
-                example_sources.append(source)
 
     # Populate related_to from skos:related and owl:ObjectProperty domain→range.
     # Both directions are added so graph traversal is bidirectional.
@@ -499,24 +459,10 @@ def _build_concept_aliases_from_ontology(ontology: dict) -> dict[str, set[str]]:
     return aliases
 
 
-def _build_concept_example_paths_from_ontology(ontology: dict) -> dict[str, set[str]]:
-    """Build concept -> example source paths index from ontology metadata."""
-
-    paths: dict[str, set[str]] = {}
-    concepts = ontology.get("concepts", {})
-    for concept_id, concept_data in concepts.items():
-        sources = concept_data.get("example_sources") or []
-        cleaned = {str(source).strip() for source in sources if str(source).strip()}
-        if cleaned:
-            paths[concept_id] = cleaned
-    return paths
-
-
 # Load ontologies at module initialization
 _ONTOLOGY = _load_ontology()
 _NITS_ONTOLOGY = _load_nits_ontology()
 GRAPH_CONCEPT_ALIASES = _build_concept_aliases_from_ontology(_ONTOLOGY)
-GRAPH_CONCEPT_EXAMPLE_PATHS = _build_concept_example_paths_from_ontology(_ONTOLOGY)
 
 _FALLBACK_GRAPH_CONCEPT_ALIASES = {
     "opra:DelayedJourney": {"delayed journey", "delayed journeys"},
@@ -796,9 +742,11 @@ def _alias_matches_text(alias: str, normalized_text: str) -> bool:
     if len(alias_tokens) == 1 and len(normalized_alias) <= 2:
         return False
 
-    # Short single-token aliases (abbreviations like "LOG", "LEG") must appear as
-    # complete words to avoid false substring matches (e.g. "ET" in "netex").
-    if len(alias_tokens) == 1 and len(normalized_alias) < 4:
+    # Single-token aliases must appear as complete words to avoid false substring matches.
+    # "line" must not match "linetype"; "siri" must not match "expiry"; "when" must not
+    # match "whenever".  The token-subset fallback below already handles multi-token
+    # aliases like "type of line", so this guard only fires for single-token ones.
+    if len(alias_tokens) == 1:
         return normalized_alias in set(normalized_text.split())
 
     if normalized_alias in normalized_text:
@@ -901,15 +849,6 @@ def get_concept_nch_ids(concept_ids: set[str]) -> set[str]:
     """Backward-compatible alias for older NCH naming."""
 
     return get_concept_nits_ids(concept_ids)
-
-
-def get_concept_example_paths(concept_ids: set[str]) -> set[str]:
-    """Return example file paths associated with provided concept IDs."""
-
-    paths: set[str] = set()
-    for concept_id in concept_ids:
-        paths.update(GRAPH_CONCEPT_EXAMPLE_PATHS.get(concept_id, set()))
-    return paths
 
 
 def expand_graph_concepts(concepts: set[str], hops: int = 1) -> set[str]:

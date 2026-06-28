@@ -10,8 +10,6 @@ x-backend-base: &backend-base
   env_file:
     - ./backend/.env
   environment: &backend-env
-    LD_LIBRARY_PATH: /opt/llama.cpp-linux
-    GGML_BACKEND_PATH: /opt/llama.cpp-linux/libggml-cpu-haswell.so
     DJANGO_SECRET_KEY: docker-dev-secret-key
     DJANGO_DEBUG: "True"
     DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend
@@ -26,28 +24,21 @@ x-backend-base: &backend-base
     DEV_JWT_DEFAULT_SUBJECT: user-local
     DEV_JWT_DEFAULT_ROLES: editor,reviewer,publisher
     DEV_JWT_TTL_MINUTES: "480"
-    ALLOWED_SOURCE_REPOSITORIES: https://github.com/TransmodelEcosystem/NeTEx,https://github.com/OpRa-CEN/OpRa
+    ALLOWED_SOURCE_REPOSITORIES: https://github.com/TransmodelEcosystem/NeTEx,https://github.com/SIRI-CEN/SIRI,https://github.com/OpRa-CEN/OpRa
     CELERY_BROKER_URL: redis://redis:6379/0
     CELERY_RESULT_BACKEND: redis://redis:6379/1
     GRAPHDB_ENABLED: ${GRAPHDB_ENABLED:-True}
     GRAPHDB_SPARQL_ENDPOINT: http://graphdb:7200/repositories/napcore-helpdesk
     GRAPHDB_REPOSITORY: napcore-helpdesk
     GRAPHDB_TIMEOUT_SECONDS: "30"
-    GRAPH_RAG_ENABLED: ${GRAPH_RAG_ENABLED:-False}
+    GRAPH_RAG_ENABLED: ${GRAPH_RAG_ENABLED:-True}
     LLM_ENABLED: ${LLM_ENABLED:-True}
     LLM_PROVIDER: ${LLM_PROVIDER:-openai-compatible}
     CONTROLLER_LLM_ENABLED: ${CONTROLLER_LLM_ENABLED:-True}
     CONTROLLER_LLM_PROVIDER: ${CONTROLLER_LLM_PROVIDER:-openai-compatible}
     CONTROLLER_LLM_VERIFY_SSL: ${CONTROLLER_LLM_VERIFY_SSL:-False}
     CONTROLLER_LLM_CA_BUNDLE: ${CONTROLLER_LLM_CA_BUNDLE:-}
-    CONTROLLER_LLM_EXECUTABLE: ${CONTROLLER_LLM_EXECUTABLE:-/opt/llama.cpp-linux/llama-cli}
-    CONTROLLER_LLM_MODEL_PATH: ${CONTROLLER_LLM_MODEL_PATH:-/opt/llama.cpp/models/qwen3-8b/Qwen3-8B-Q4_K_M.gguf}
-    CONTROLLER_LLM_DEVICE: ${CONTROLLER_LLM_DEVICE:-none}
     CONTROLLER_LLM_TIMEOUT_SECONDS: ${CONTROLLER_LLM_TIMEOUT_SECONDS:-20}
-    CONTROLLER_LLM_CTX_SIZE: ${CONTROLLER_LLM_CTX_SIZE:-2048}
-    CONTROLLER_LLM_MAX_TOKENS: ${CONTROLLER_LLM_MAX_TOKENS:-96}
-    CONTROLLER_LLM_THREADS: ${CONTROLLER_LLM_THREADS:-8}
-    CONTROLLER_LLM_TEMPERATURE: ${CONTROLLER_LLM_TEMPERATURE:-0.0}
     EMBEDDING_ENABLED: ${EMBEDDING_ENABLED:-False}
     EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-openai-compatible}
     EMBEDDING_API_BASE_URL: ${EMBEDDING_API_BASE_URL:-https://api.openai.com/v1}
@@ -94,7 +85,6 @@ services:
       - ./docs:/app/docs:ro
       - ./.mylocal/docs/ontology:/app/docs/ontology:ro
       - ./scripts:/app/scripts:ro
-      - ${LLAMA_CPP_HOST_ROOT:-/Users/andrejt/Research/repositories/git/llama.cpp}:/opt/llama.cpp:ro
       - ../NeTEx:/app/repos/NeTEx:ro
       - ../OpRa:/app/repos/OpRa:ro
       - ../SIRI:/app/repos/SIRI:ro
