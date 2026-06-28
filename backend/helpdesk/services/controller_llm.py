@@ -1,3 +1,16 @@
+"""
+LLM-based routing controller for the answer orchestration pipeline.
+
+Classifies incoming questions into a route decision (FAQ, RAG, or abstain)
+using a lightweight LLM call. Falls back gracefully when the model is
+unavailable or exceeds the timeout, returning a neutral decision that
+allows downstream handlers to apply their own heuristics.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-05-06  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

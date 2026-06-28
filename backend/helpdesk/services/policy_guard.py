@@ -1,3 +1,15 @@
+"""
+Policy-based content filtering for questions and answer candidates.
+
+Evaluates questions and proposed answers against configured policy rules
+before they are served or stored. A policy violation is raised as a signal
+that the orchestration layer converts into an abstention response.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-03-28  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 from django.conf import settings

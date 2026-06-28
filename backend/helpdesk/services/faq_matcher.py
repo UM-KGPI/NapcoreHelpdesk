@@ -1,3 +1,15 @@
+"""
+FAQ-first answer matching against stored canonical entries.
+
+Compares an incoming question against active FAQEntry records using
+embedding similarity. Returns the best matching FAQVersion when confidence
+exceeds the configured threshold, short-circuiting the RAG retrieval path.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-03-28  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 from helpdesk.models import FAQEntry, FAQVersion

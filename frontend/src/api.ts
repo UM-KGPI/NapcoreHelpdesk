@@ -1,3 +1,16 @@
+/**
+ * Typed HTTP client for all NapcoreHelpdesk backend API endpoints.
+ *
+ * Each method maps to one REST operation and normalizes error responses into
+ * a consistent Error object so callers never need to branch on HTTP status.
+ * Streaming answers are consumed via a ReadableStream reader and forwarded
+ * token-by-token through the supplied onToken callback.
+ *
+ * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+ * Crafted by: AI coding agents
+ * Created: 2026-03-28  |  Modified: 2026-06-28
+ */
+
 import type {
   AnswerResponse,
   ApiErrorEnvelope,

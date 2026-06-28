@@ -1,3 +1,15 @@
+"""
+Text normalization utilities for FAQ matching and deduplication.
+
+Canonical normalization (lowercasing, whitespace collapse, punctuation
+stripping) makes matching robust to minor surface variations in how the
+same question is phrased across repeated asks.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-05-18  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 import re

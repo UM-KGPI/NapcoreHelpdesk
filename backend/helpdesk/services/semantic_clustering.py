@@ -1,3 +1,15 @@
+"""
+Groups recent question events into semantic clusters for FAQ promotion analysis.
+
+Uses embedding similarity to cluster questions asked within a rolling time
+window. Clusters with high member counts and low helpfulness rates surface
+as promotion candidates for the editorial queue.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-05-24  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 from collections import Counter

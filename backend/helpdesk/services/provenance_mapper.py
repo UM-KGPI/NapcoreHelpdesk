@@ -1,3 +1,14 @@
+"""
+Persists provenance chains linking answer evidence to ontology versions and rule conclusions.
+
+Records which ontology assets and rule derivations contributed to each
+AnswerEvidenceLink, enabling full auditability of how an answer was constructed.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-04-26  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 from helpdesk.models import AnswerEvidenceLink, EvidenceProvenance, QuestionEvent

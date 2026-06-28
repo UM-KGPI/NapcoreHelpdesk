@@ -1,3 +1,16 @@
+/**
+ * End-user Q&A chat interface with streaming answer display.
+ *
+ * Presents a conversational turn list and pipes SSE token deltas from the
+ * streaming endpoint into the active assistant message in real time.
+ * useLayoutEffect is used (not useEffect) for scroll-to-bottom to avoid a
+ * visible layout flash after each token appended to the message.
+ *
+ * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+ * Crafted by: AI coding agents
+ * Created: 2026-03-29  |  Modified: 2026-06-28
+ */
+
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 

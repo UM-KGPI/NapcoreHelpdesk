@@ -1,3 +1,14 @@
+"""
+Abstraction over the embedding API used for vector similarity search.
+
+Wraps an OpenAI-compatible embeddings endpoint. Swapping the underlying
+provider only requires changing the configuration, not the call sites.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-04-14  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 import json

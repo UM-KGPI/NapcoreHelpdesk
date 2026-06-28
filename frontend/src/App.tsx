@@ -1,3 +1,29 @@
+/**
+ * Root application: routing, global auth state, and editorial workflow handlers.
+ *
+ * All server state (asked questions, board items, FAQs) is owned here and
+ * passed down as props to keep child components pure and testable.
+ *
+ * Key design decisions:
+ *   boardStatusMap is kept separate from boardResult so the Status column in
+ *   Questions Asked can refresh independently of which queue filter or page
+ *   is active. It is populated with a dedicated unfiltered fetch (pageSize 100,
+ *   the backend cap) rather than derived from boardResult.
+ *
+ *   onQuickTransition triggers onLoadAskedQuestions only for the 'revoke' action
+ *   because revoke moves an approved item back into the asked-questions view.
+ *   Other transitions change only the queue status, already reflected by the
+ *   boardStatusMap refresh that always runs.
+ *
+ *   onDeleteQuestionEvent also removes matching items from boardResult
+ *   client-side to keep Questions in Review in sync without a round-trip;
+ *   the backend ON DELETE CASCADE handles DB consistency.
+ *
+ * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+ * Crafted by: AI coding agents
+ * Created: 2026-03-28  |  Modified: 2026-06-28
+ */
+
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 

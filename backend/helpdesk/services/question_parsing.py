@@ -1,3 +1,15 @@
+"""
+Semantic parsing of natural-language questions into structured query objects.
+
+Extracts intent, core concepts, normativity signals, and candidate standards
+from a question string. The resulting SemanticQuery drives SPARQL rule
+evaluation and retrieval scope filtering in downstream services.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-04-16  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

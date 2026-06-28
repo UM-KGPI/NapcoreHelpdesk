@@ -1,3 +1,15 @@
+/**
+ * React context for JWT token state and dev token issuance.
+ *
+ * Provides the token string and an auto-token flag to all components.
+ * The dev-token endpoint is available only when the backend is running in
+ * development mode; production traffic goes through the real identity provider.
+ *
+ * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+ * Crafted by: AI coding agents
+ * Created: 2026-03-29  |  Modified: 2026-06-28
+ */
+
 import type { ReactNode } from "react";
 import { createContext, useContext } from "react";
 

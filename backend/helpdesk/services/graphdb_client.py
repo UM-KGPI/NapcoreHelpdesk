@@ -1,3 +1,15 @@
+"""
+Low-level HTTP client for the GraphDB REST API.
+
+Handles authentication, SPARQL query submission over the repositories
+endpoint, and response parsing. Higher-level semantic operations should
+use graphdb_connector.py rather than calling this client directly.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-04-16  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 import base64

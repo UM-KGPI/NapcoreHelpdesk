@@ -1,3 +1,29 @@
+/**
+ * Editorial Console UI — the main editor-facing workspace.
+ *
+ * Renders three editorial sub-views inside the "Review Q&As" tab:
+ *   Questions Asked     — grouped, deduped question list with status badges and sort
+ *   Questions in Review — in_review items only, with workflow action buttons
+ *   FAQs                — approved items with full answer, evidence, and revoke
+ *
+ * Design notes:
+ *   Questions in Review shows only in_review items. Rejected/revoked items are
+ *   visible via the Status column in Questions Asked, not here.
+ *
+ *   Grouped rows deduplicate by normalized question text; the representative is
+ *   the one with reviewRequired=true, or the most recent if none qualify.
+ *
+ *   SortTh is defined outside the component to avoid re-creating it on each
+ *   render without needing useCallback on every sort handler closure.
+ *
+ *   boardStatusMap is passed from App.tsx (not derived here) so the Status
+ *   column can update independently of queue state when "Load questions" is clicked.
+ *
+ * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+ * Crafted by: AI coding agents
+ * Created: 2026-04-14  |  Modified: 2026-06-28
+ */
+
 import React, { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import AnswerMarkdown from "./AnswerMarkdown";
 

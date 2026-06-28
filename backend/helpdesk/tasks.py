@@ -1,3 +1,14 @@
+"""
+Background task definitions for async helpdesk operations.
+
+Wraps long-running operations (repository indexing, ontology loading) that
+can be dispatched via a task queue rather than blocking an API request.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-03-28  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 from pathlib import Path

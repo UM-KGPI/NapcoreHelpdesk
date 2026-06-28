@@ -1,3 +1,15 @@
+/*
+ * NapcoreHelpdesk — application styles.
+ *
+ * Organized by layer: CSS custom properties → base reset → typography →
+ * layout → components (panels, tables, buttons, badges, FAQ cards) →
+ * utilities → responsive overrides.
+ *
+ * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+ * Crafted by: AI coding agents
+ * Created: 2026-03-28  |  Modified: 2026-06-28
+ */
+
 :root {
   color-scheme: light;
   --bg: #fbf8ef;

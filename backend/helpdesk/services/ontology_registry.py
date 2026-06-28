@@ -1,3 +1,14 @@
+"""
+Tracks and validates versioned ontology assets loaded into the semantic layer.
+
+Compares content hashes of local TTL files against OntologyAssetVersion
+records to detect when ontologies must be re-loaded into GraphDB named graphs.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-04-26  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 import hashlib

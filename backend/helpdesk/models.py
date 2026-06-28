@@ -1,3 +1,21 @@
+"""
+Domain models for the NapcoreHelpdesk system.
+
+Covers the source index (SourceChunk, IndexedSourceFile, IndexRunMetric),
+question orchestration outcomes (QuestionEvent, RetrievalEvent, AnswerEvidenceLink),
+FAQ storage (FAQEntry, FAQVersion), ontology versioning (OntologyAssetVersion),
+provenance records (EvidenceProvenance), and the editorial review queue
+(EditorialQueueItem, EditorialQueueTransition).
+
+The editorial queue uses a five-state life cycle: in_review → approved/rejected,
+approved → revoked, rejected → reopen → in_review. Transition guards and role
+constraints live in services/editorial_workflow.py, not here.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-03-28  |  Modified: 2026-06-28
+"""
+
 from django.db import models
 import uuid
 

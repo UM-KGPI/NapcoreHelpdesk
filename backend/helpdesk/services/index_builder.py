@@ -1,3 +1,15 @@
+"""
+Orchestrates source repository ingestion and semantic chunk indexing.
+
+Clones or updates a repository, splits content into overlapping chunks,
+generates embeddings, and upserts SourceChunk records. Supports incremental
+runs (skips unchanged files by content hash) and pruning of removed files.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-03-28  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 import hashlib
