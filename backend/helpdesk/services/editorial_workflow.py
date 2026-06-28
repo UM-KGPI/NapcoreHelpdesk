@@ -55,6 +55,13 @@ TRANSITION_RULES: dict[tuple[str, str], TransitionRule] = {
     ),
     (
         EditorialQueueItem.STATUS_APPROVED,
+        EditorialQueueTransition.ACTION_PUBLISH,
+    ): TransitionRule(
+        to_status=EditorialQueueItem.STATUS_PUBLISHED,
+        allowed_roles=frozenset({"publisher", "admin"}),
+    ),
+    (
+        EditorialQueueItem.STATUS_APPROVED,
         EditorialQueueTransition.ACTION_REVOKE,
     ): TransitionRule(
         to_status=EditorialQueueItem.STATUS_REVOKED,
