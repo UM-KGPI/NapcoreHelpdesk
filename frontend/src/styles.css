@@ -582,6 +582,19 @@ button:disabled {
 .panel-title-row h2 {
   margin: 0;
   flex-shrink: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.heading-count {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.05rem 0.5rem;
 }
 
 .panel-title-row p {
@@ -611,9 +624,114 @@ button:disabled {
   margin: 0;
 }
 
+.sort-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  font-weight: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+}
+
+.sort-btn:hover:enabled {
+  background: none;
+  color: var(--accent);
+}
+
+.sort-indicator {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.sort-btn.sort-active .sort-indicator {
+  color: var(--accent);
+}
+
 .button-column {
   display: grid;
   gap: 0.3rem;
+}
+
+.detail-row {
+  padding: 0.75rem 1rem !important;
+  background: var(--paper);
+  border-top: none !important;
+}
+
+.faq-card-list {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.faq-card {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.85rem 1rem;
+  background: var(--paper);
+}
+
+.faq-card-question {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.faq-status-pill {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent-strong);
+  border: 1px solid var(--line);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.detail-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--line);
+}
+
+.btn-danger {
+  background: #c0392b;
+  color: #fff;
+  border: 1px solid #a93226;
+}
+.btn-danger:hover:not(:disabled) { background: #a93226; }
+
+.btn-danger-outline {
+  background: transparent;
+  color: #c0392b;
+  border: 1px solid #c0392b;
+}
+.btn-danger-outline:hover:not(:disabled) { background: #fdf0ee; }
+
+.likes-cell { text-align: center; }
+.likes-positive { color: #2a9d5c; font-weight: 600; font-size: 0.85rem; }
+.likes-negative { color: #c0392b; font-weight: 600; font-size: 0.85rem; }
+.likes-zero { color: var(--text-muted); font-weight: 600; font-size: 0.85rem; }
+
+.faq-card-body {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--line);
 }
 
 .button-column button {

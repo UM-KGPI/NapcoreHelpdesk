@@ -17,7 +17,6 @@ _IRI_DOMAIN_TO_STANDARD: dict[str, str] = {
     "transmodel-cen.eu/opra": "OpRa",
     "siri.org.uk": "SIRI",
     "www.siri.org.uk": "SIRI",
-    "datex.org": "DATEX II",
     "transmodel": "Transmodel",
 }
 

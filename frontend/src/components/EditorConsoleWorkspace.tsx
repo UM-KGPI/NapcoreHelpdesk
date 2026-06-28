@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import React, { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import AnswerMarkdown from "./AnswerMarkdown";
 
 import type {
@@ -7,23 +7,49 @@ import type {
   EditorialBoardItem,
   EditorialBoardResponse,
   IndexRepositoryResponse,
+  QuestionEventDetail,
 } from "../types";
-const TRANSITION_ACTIONS = ["submit_for_review", "request_changes", "approve", "reject", "publish", "reopen"] as const;
-const BOARD_STATUSES = ["draft", "review", "approved", "rejected", "published"] as const;
+const TRANSITION_ACTIONS = ["approve", "reject", "revoke", "reopen"] as const;
+const BOARD_STATUSES = ["in_review", "approved", "rejected", "revoked"] as const;
 
-function formatAction(action: string): string {
-  if (action === "submit_for_review") return "review";
-  return action.replace(/_/g, " ");
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
-function formatReason(reason: string): string {
-  return reason.toLowerCase().replace(/_/g, " ");
+function formatAction(action: string): string {
+  const label = action.replace(/_/g, " ");
+  return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
 type TransitionAction = (typeof TRANSITION_ACTIONS)[number];
 type BoardStatus = (typeof BOARD_STATUSES)[number];
-type QueueReason = "LOW_CONFIDENCE" | "CITATION_GAP" | "POLICY_REVIEW" | "USER_ESCALATION";
-type EditorTab = "assist" | "editorial" | "indexing";
+type AskedStatusFilter = "" | BoardStatus;
+type EditorTab = "assist" | "editorial" | "faq" | "indexing";
+type SortDir = "asc" | "desc";
+type SortState = { col: string; dir: SortDir } | null;
+
+const PRIORITY_ORDER: Record<string, number> = { high: 0, normal: 1, low: 2 };
+
+function toggleSortState(current: SortState, col: string): SortState {
+  if (!current || current.col !== col) return { col, dir: "asc" };
+  if (current.dir === "asc") return { col, dir: "desc" };
+  return null;
+}
+
+function SortTh({ col, sort, onSort, children }: { col: string; sort: SortState; onSort: (col: string) => void; children: React.ReactNode }) {
+  const active = sort?.col === col;
+  const indicator = active ? (sort.dir === "asc" ? "▲" : "▼") : "⇅";
+  return (
+    <th>
+      <button type="button" className={`sort-btn${active ? " sort-active" : ""}`} onClick={() => onSort(col)}>
+        {children} <span className="sort-indicator">{indicator}</span>
+      </button>
+    </th>
+  );
+}
+
+const FAQ_PAGE_SIZE = 10;
 
 type IndexRepoPresetOption = {
   id: string;
@@ -40,19 +66,18 @@ interface EditorConsoleWorkspaceProps {
   selectedQuestionEventId: string;
   boardResult: EditorialBoardResponse | null;
   faqItems: EditorialBoardItem[];
-  queueReason: QueueReason;
-  boardStatus: BoardStatus | "";
+  boardStatusMap: Map<string, string>;
   busy: boolean;
   token: string;
   setQuestion: (value: string) => void;
-  setQueueReason: (value: QueueReason) => void;
   setSelectedQuestionEventId: (value: string) => void;
-  setBoardStatus: (value: BoardStatus | "") => void;
   onAskQuestion: (event: FormEvent<HTMLFormElement>) => Promise<void>;
   onLoadAskedQuestions: () => Promise<void>;
   onQueueEditorial: (questionEventIdOverride?: string) => Promise<void>;
+  onDeleteQuestionEvent: (questionEventIds: string[]) => Promise<void>;
   onLoadEditorialBoard: () => Promise<void>;
   onLoadFaq: () => Promise<void>;
+  onLoadQuestionEventDetail: (questionEventId: string) => Promise<QuestionEventDetail>;
   onQuickTransition: (item: EditorialBoardItem, action: TransitionAction) => Promise<void>;
   indexPresetId: string;
   indexRepoPresets: IndexRepoPresetOption[];
@@ -78,29 +103,36 @@ interface EditorConsoleWorkspaceProps {
 
 export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProps) {
   const [activeTab, setActiveTab] = useState<EditorTab>("indexing");
-  const [askedOnlyReviewRequired, setAskedOnlyReviewRequired] = useState(false);
+  const [askedStatusFilter, setAskedStatusFilter] = useState<AskedStatusFilter>("");
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [faqPage, setFaqPage] = useState(1);
+  const [openCardId, setOpenCardId] = useState<string | null>(null);
+  const [questionsOpenId, setQuestionsOpenId] = useState<string | null>(null);
+  const [reviewOpenId, setReviewOpenId] = useState<string | null>(null);
+  const [detailCache, setDetailCache] = useState<Record<string, QuestionEventDetail>>({});
+  const [detailLoading, setDetailLoading] = useState<Set<string>>(new Set());
+  const [detailErrors, setDetailErrors] = useState<Record<string, string>>({});
+  const [askedSort, setAskedSort] = useState<SortState>(null);
+  const [reviewSort, setReviewSort] = useState<SortState>(null);
   const answerResultRef = useRef<HTMLElement | null>(null);
   const lastAnswerRequestIdRef = useRef<string | null>(null);
   const {
     question,
     answerResult,
     askedQuestions,
-    selectedQuestionEventId,
     boardResult,
     faqItems,
-    queueReason,
-    boardStatus,
+    boardStatusMap,
     busy,
     token,
     setQuestion,
-    setQueueReason,
-    setSelectedQuestionEventId,
-    setBoardStatus,
     onAskQuestion,
     onLoadAskedQuestions,
     onQueueEditorial,
+    onDeleteQuestionEvent,
     onLoadEditorialBoard,
     onLoadFaq,
+    onLoadQuestionEventDetail,
     onQuickTransition,
     indexPresetId,
     indexRepoPresets,
@@ -135,46 +167,77 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
   }, [answerResult?.trace.requestId]);
 
   const groupedAskedQuestions = useMemo(() => {
-    type GroupedRow = AskedQuestionRow & { count: number };
+    type GroupedRow = AskedQuestionRow & { count: number; likesCount: number; dislikesCount: number; allEventIds: string[] };
     const groups = new Map<string, GroupedRow>();
     for (const item of askedQuestions) {
-      if (askedOnlyReviewRequired && !item.reviewRequired) {
-        continue;
-      }
       const key = item.question.trim().toLowerCase();
       const existing = groups.get(key);
       if (!existing) {
-        groups.set(key, { ...item, count: 1 });
+        groups.set(key, { ...item, count: 1, likesCount: item.userLikes ? 1 : 0, dislikesCount: item.userDislikes ? 1 : 0, allEventIds: [item.questionEventId] });
       } else {
-        // Representative: prefer reviewRequired=true; among ties prefer most recent
         const useNew =
           (item.reviewRequired && !existing.reviewRequired) ||
           (item.reviewRequired === existing.reviewRequired && item.askedAt > existing.askedAt);
-        groups.set(key, { ...(useNew ? item : existing), count: existing.count + 1 });
+        groups.set(key, {
+          ...(useNew ? item : existing),
+          count: existing.count + 1,
+          likesCount: existing.likesCount + (item.userLikes ? 1 : 0),
+          dislikesCount: existing.dislikesCount + (item.userDislikes ? 1 : 0),
+          allEventIds: [...existing.allEventIds, item.questionEventId],
+        });
       }
     }
     return Array.from(groups.values());
-  }, [askedOnlyReviewRequired, askedQuestions]);
-
-  const askedModeCounts = useMemo(() => {
-    return askedQuestions.reduce(
-      (acc, item) => {
-        acc[item.mode] += 1;
-        return acc;
-      },
-      { faq: 0, rag: 0, abstain: 0 }
-    );
   }, [askedQuestions]);
 
-  const canQueueSelectedQuestion = Boolean(selectedQuestionEventId);
+  useEffect(() => {
+    setFaqPage(1);
+    setOpenCardId(null);
+  }, [faqItems]);
+
+  const filteredAskedQuestions = useMemo(() => {
+    if (!askedStatusFilter) return groupedAskedQuestions;
+    return groupedAskedQuestions.filter((item) => {
+      const s = boardStatusMap.get(item.requestId);
+      return s === askedStatusFilter;
+    });
+  }, [groupedAskedQuestions, askedStatusFilter, boardStatusMap]);
+
+  const sortedAskedQuestions = useMemo(() => {
+    if (!askedSort) return filteredAskedQuestions;
+    const { col, dir } = askedSort;
+    return [...filteredAskedQuestions].sort((a, b) => {
+      let cmp = 0;
+      if (col === "askedAt") cmp = a.askedAt.localeCompare(b.askedAt);
+      else if (col === "confidence") cmp = a.confidence - b.confidence;
+      else if (col === "likes") cmp = (a.likesCount - a.dislikesCount) - (b.likesCount - b.dislikesCount);
+      else if (col === "status") {
+        const sa = boardStatusMap.get(a.requestId) ?? "";
+        const sb = boardStatusMap.get(b.requestId) ?? "";
+        cmp = sa.localeCompare(sb);
+      }
+      return dir === "asc" ? cmp : -cmp;
+    });
+  }, [filteredAskedQuestions, askedSort, boardStatusMap]);
+
   const boardItems = boardResult?.items ?? [];
-  const inReviewBoardItems = boardItems.filter((item) => item.status === "draft" || item.status === "review" || item.status === "rejected");
+  const inReviewBoardItems = boardItems.filter((item) => item.status === "in_review");
+
+  const sortedReviewItems = useMemo(() => {
+    if (!reviewSort) return inReviewBoardItems;
+    const { col, dir } = reviewSort;
+    return [...inReviewBoardItems].sort((a, b) => {
+      const cmp = col === "priority" ? (PRIORITY_ORDER[a.priority] ?? 1) - (PRIORITY_ORDER[b.priority] ?? 1) : 0;
+      return dir === "asc" ? cmp : -cmp;
+    });
+  }, [inReviewBoardItems, reviewSort]);
+  const faqTotalPages = Math.max(1, Math.ceil(faqItems.length / FAQ_PAGE_SIZE));
+  const faqPageItems = faqItems.slice((faqPage - 1) * FAQ_PAGE_SIZE, faqPage * FAQ_PAGE_SIZE);
 
   return (
     <section className="workspace-section editor-workspace">
       <header className="workspace-header">
-        <p className="kicker">Editor Workspace</p>
-        <h2>Editor Console</h2>
+<h2>Editorial Console</h2>
         <p className="muted">Operational controls for harvesting and indexing trusted knowledge sources, Q&amp;A validation, editorial review.</p>
       </header>
 
@@ -187,12 +250,16 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
             Dry run Q&amp;A
           </button>
           <button type="button" className={activeTab === "editorial" ? "tab-button tab-button-active" : "tab-button"} onClick={() => setActiveTab("editorial")}>
-            Editor Review
+            Review Q&amp;As
+          </button>
+          <button type="button" className={activeTab === "faq" ? "tab-button tab-button-active" : "tab-button"} onClick={() => setActiveTab("faq")}>
+            FAQs
           </button>
         </div>
         <p className="muted tab-strip-copy">
           {activeTab === "assist" && "Run a question, inspect the answer, and adjust request context only when needed."}
-          {activeTab === "editorial" && "Triage answers, move queue items through workflow states, and review promotion signals."}
+          {activeTab === "editorial" && "Triage answers and move queue items through workflow states."}
+          {activeTab === "faq" && "Browse approved answers with full answer text and evidence links."}
           {activeTab === "indexing" && "Refresh approved repositories and monitor indexing output."}
         </p>
       </section>
@@ -211,6 +278,12 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                   <textarea value={question} onChange={(event) => setQuestion(event.target.value)} rows={4} required />
                 </label>
                 <button type="submit" disabled={busy || !token}>Run Query</button>
+                {busy && (
+                  <div className="chat-progress" role="status" aria-live="polite" aria-label="Generating answer">
+                    <div className="chat-progress-bar" />
+                    <p className="chat-progress-label muted tiny">Generating answer…</p>
+                  </div>
+                )}
               </form>
 
               {answerResult && (
@@ -256,199 +329,386 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
           <>
             <section className="panel step-4-transition">
               <div className="panel-title-row">
-                <h2>Questions for Review</h2>
+                <h2>
+                  Questions Asked
+                  {groupedAskedQuestions.length > 0 && (
+                    <span className="heading-count">
+                      {askedStatusFilter
+                        ? `${filteredAskedQuestions.length} / ${groupedAskedQuestions.length}`
+                        : groupedAskedQuestions.length}
+                    </span>
+                  )}
+                </h2>
                 <p className="muted">Inspect the stored questions and select one to send into the review queue.</p>
               </div>
 
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={askedOnlyReviewRequired}
-                  onChange={(event) => setAskedOnlyReviewRequired(event.target.checked)}
-                />
-                Only reviewRequired
-              </label>
-
               <div className="button-row">
-                <button
-                  onClick={() => {
-                    void onLoadAskedQuestions();
-                  }}
-                  disabled={busy || !token}
-                >
-                  Load questions
-                </button>
+                <select aria-label="Status filter" value={askedStatusFilter} onChange={(event) => setAskedStatusFilter(event.target.value as AskedStatusFilter)}>
+                  <option value="">All</option>
+                  {BOARD_STATUSES.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+                <button onClick={() => void onLoadAskedQuestions()} disabled={busy || !token}>Load questions</button>
               </div>
-              <p className="muted tiny">Loaded mode counts: rag {askedModeCounts.rag} · faq {askedModeCounts.faq} · abstain {askedModeCounts.abstain}</p>
 
-              <h3>Questions</h3>
-              <p className="muted tiny">Identical questions are grouped — count shows how many times each was asked. Select one row, then click Send Selected for Review.</p>
               <div className="table-wrap">
                 <table className="board-table">
                   <thead>
                     <tr>
-                      <th>Select</th>
                       <th>Question</th>
-                      <th>Asked</th>
-                      <th>Mode</th>
-                      <th>Confidence</th>
-                      <th>reviewRequired</th>
+                      <SortTh col="askedAt" sort={askedSort} onSort={(c) => setAskedSort((prev) => toggleSortState(prev, c))}>Asked</SortTh>
+                      <SortTh col="confidence" sort={askedSort} onSort={(c) => setAskedSort((prev) => toggleSortState(prev, c))}>Confidence</SortTh>
+                      <SortTh col="likes" sort={askedSort} onSort={(c) => setAskedSort((prev) => toggleSortState(prev, c))}>Likes</SortTh>
+                      <SortTh col="status" sort={askedSort} onSort={(c) => setAskedSort((prev) => toggleSortState(prev, c))}>Status</SortTh>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {groupedAskedQuestions.length === 0 && (
+                    {sortedAskedQuestions.length === 0 && (
                       <tr>
-                        <td colSpan={6} className="muted">No stored question events found for current filters.</td>
+                        <td colSpan={6} className="muted">No stored question events found.</td>
                       </tr>
                     )}
-                    {groupedAskedQuestions.map((item) => (
-                      <tr key={item.requestId}>
-                        <td>
-                          <input
-                            type="radio"
-                            name="selectedQuestionForReview"
-                            checked={selectedQuestionEventId === item.questionEventId}
-                            onChange={() => setSelectedQuestionEventId(item.questionEventId)}
-                            aria-label={`Select question ${item.questionEventId}`}
-                          />
-                        </td>
-                        <td>
-                          <div>{item.question}</div>
-                          {item.count > 1 && <div className="muted tiny">×{item.count} asked</div>}
-                        </td>
-                        <td>{item.askedAt}</td>
-                        <td>{item.mode}</td>
-                        <td>{item.confidence.toFixed(2)}</td>
-                        <td>{String(item.reviewRequired)}</td>
-                      </tr>
-                    ))}
+                    {sortedAskedQuestions.map((item) => {
+                      const isOpen = questionsOpenId === item.questionEventId;
+                      const detail = detailCache[item.questionEventId];
+                      const loading = detailLoading.has(item.questionEventId);
+                      return (
+                        <React.Fragment key={item.requestId}>
+                          <tr>
+                            <td>
+                              <div>{item.question}</div>
+                              {item.count > 1 && <span className="heading-count">×{item.count}</span>}
+                            </td>
+                            <td>{formatDate(item.askedAt)}</td>
+                            <td>{item.confidence.toFixed(2)}</td>
+                            <td className="likes-cell">
+                              {(() => {
+                                const net = item.likesCount - item.dislikesCount;
+                                if (item.likesCount === 0 && item.dislikesCount === 0) return null;
+                                return <span className={net > 0 ? "likes-positive" : net < 0 ? "likes-negative" : "likes-zero"}>{net > 0 ? `+${net}` : net}</span>;
+                              })()}
+                            </td>
+                            <td>
+                              {(() => {
+                                const s = boardStatusMap.get(item.requestId);
+                                return s ? <span className={`faq-status-pill status-${s}`}>{s}</span> : null;
+                              })()}
+                            </td>
+                            <td>
+                              <div className="button-column">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (isOpen && detail) {
+                                      setQuestionsOpenId(null);
+                                    } else {
+                                      setQuestionsOpenId(item.questionEventId);
+                                      if (!detail && !loading) {
+                                        setDetailErrors((prev) => { const n = { ...prev }; delete n[item.questionEventId]; return n; });
+                                        setDetailLoading((prev) => { const s = new Set(prev); s.add(item.questionEventId); return s; });
+                                        void onLoadQuestionEventDetail(item.questionEventId)
+                                          .then((d) => setDetailCache((prev) => ({ ...prev, [item.questionEventId]: d })))
+                                          .catch((err: unknown) => setDetailErrors((prev) => ({ ...prev, [item.questionEventId]: err instanceof Error ? err.message : String(err) })))
+                                          .finally(() => setDetailLoading((prev) => { const s = new Set(prev); s.delete(item.questionEventId); return s; }));
+                                      }
+                                    }
+                                  }}
+                                  disabled={loading}
+                                >
+                                  {loading ? "Loading…" : isOpen && detail ? "Hide" : "Show"}
+                                </button>
+                                {isOpen && detail && !boardStatusMap.has(item.requestId) && (
+                                  <button
+                                    onClick={() => onQueueEditorial(item.questionEventId)}
+                                    disabled={busy || !token}
+                                  >
+                                    Send for review
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                          {isOpen && (
+                            <tr>
+                              <td colSpan={6} className="detail-row">
+                                {loading && <p className="muted tiny">Loading answer…</p>}
+                                {!loading && !detail && detailErrors[item.questionEventId] && (
+                                  <p className="muted tiny">Failed to load: {detailErrors[item.questionEventId]}</p>
+                                )}
+                                {detail && (
+                                  <>
+                                    <div className="faq-card-body">
+                                      <AnswerMarkdown text={detail.answer} />
+                                      {detail.citations.length > 0 && (
+                                        <>
+                                          <p className="tiny"><strong>Evidence</strong></p>
+                                          <ul>
+                                            {detail.citations.map((c, i) => (
+                                              <li key={`${item.requestId}-c${i}`}>
+                                                <strong>[E{i + 1}]</strong>{" "}
+                                                <a href={c.repositoryUrl} target="_blank" rel="noreferrer">{c.label ?? c.sourcePath}</a>
+                                                <span className="muted"> · {c.sourcePath}</span>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        </>
+                                      )}
+                                    </div>
+                                    <div className="detail-row-actions">
+                                      {deleteConfirmId === item.questionEventId ? (
+                                        <>
+                                          <span className="muted tiny">Delete this question and its answer permanently?</span>
+                                          <button
+                                            className="btn-danger"
+                                            onClick={() => {
+                                              setDeleteConfirmId(null);
+                                              setQuestionsOpenId(null);
+                                              void onDeleteQuestionEvent(item.allEventIds);
+                                            }}
+                                            disabled={busy}
+                                          >
+                                            Confirm delete
+                                          </button>
+                                          <button onClick={() => setDeleteConfirmId(null)} disabled={busy}>
+                                            Cancel
+                                          </button>
+                                        </>
+                                      ) : (
+                                        <button
+                                          className="btn-danger-outline"
+                                          onClick={() => setDeleteConfirmId(item.questionEventId)}
+                                          disabled={busy}
+                                        >
+                                          Delete
+                                        </button>
+                                      )}
+                                    </div>
+                                  </>
+                                )}
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
                   </tbody>
                 </table>
-              </div>
-
-              <div className="button-row">
-                <select aria-label="Queue reason" value={queueReason} onChange={(event) => setQueueReason(event.target.value as QueueReason)}>
-                  <option value="LOW_CONFIDENCE">low confidence</option>
-                  <option value="CITATION_GAP">citation gap</option>
-                  <option value="POLICY_REVIEW">policy review</option>
-                  <option value="USER_ESCALATION">user escalation</option>
-                </select>
-                <button onClick={() => onQueueEditorial(selectedQuestionEventId)} disabled={busy || !token || !canQueueSelectedQuestion}>Send Selected for Review</button>
               </div>
 
             </section>
 
             <section className="panel step-5-board">
               <div className="panel-title-row">
-                <h2>Review Queue</h2>
+                <h2>
+                  Questions in Review
+                  {boardResult && inReviewBoardItems.length > 0 && (
+                    <span className="heading-count">{inReviewBoardItems.length}</span>
+                  )}
+                </h2>
                 <p className="muted">Review questions in the editorial queue and apply workflow transitions.</p>
               </div>
 
               <div className="button-row">
-                <select aria-label="Status filter" value={boardStatus} onChange={(event) => setBoardStatus(event.target.value as BoardStatus | "")}>
-                  <option value="">any status</option>
-                  {BOARD_STATUSES.map((value) => (
-                    <option key={value} value={value}>{value}</option>
-                  ))}
-                </select>
-                <button onClick={onLoadEditorialBoard} disabled={busy || !token}>Load Queue</button>
+                <button onClick={onLoadEditorialBoard} disabled={busy || !token}>Load queue</button>
               </div>
 
-              {boardResult && inReviewBoardItems.length === 0 && <p className="muted">No in-review items for current filter.</p>}
+              {boardResult && inReviewBoardItems.length === 0 && <p className="muted">No questions in review.</p>}
               {boardResult && inReviewBoardItems.length > 0 && (
                 <div className="table-wrap">
                   <table className="board-table">
                     <thead>
                       <tr>
                         <th>Status</th>
-                        <th>Priority</th>
-                        <th>Reason</th>
+                        <SortTh col="priority" sort={reviewSort} onSort={(c) => setReviewSort((prev) => toggleSortState(prev, c))}>Priority</SortTh>
                         <th>Question</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {inReviewBoardItems.map((item) => (
-                        <tr key={item.queueItemId}>
-                          <td>{item.status}</td>
-                          <td>{item.priority}</td>
-                          <td>{formatReason(item.reason)}</td>
-                          <td>
-                            <div>{item.question}</div>
-                            <div className="muted tiny">{item.requestId}</div>
-                            <div className="muted tiny">{item.queueItemId}</div>
-                          </td>
-                          <td>
-                            <div className="button-column">
-                              {item.allowedActions.length === 0 && <span className="muted tiny">No allowed actions</span>}
-                              {item.allowedActions.map((action) => (
-                                <button key={`${item.queueItemId}-${action}`} onClick={() => onQuickTransition(item, action)} disabled={busy || !token}>
-                                  {formatAction(action)}
-                                </button>
-                              ))}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                      {sortedReviewItems.map((item) => {
+                        const isOpen = reviewOpenId === item.queueItemId;
+                        const detail = detailCache[item.questionEventId];
+                        const loading = detailLoading.has(item.questionEventId);
+                        return (
+                          <React.Fragment key={item.queueItemId}>
+                            <tr>
+                              <td>{item.status}</td>
+                              <td>{item.priority}</td>
+                              <td>
+                                <div>{item.question}</div>
+                                <div className="muted tiny">{item.requestId}</div>
+                              </td>
+                              <td>
+                                <div className="button-column">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (isOpen && detail) {
+                                        setReviewOpenId(null);
+                                      } else {
+                                        setReviewOpenId(item.queueItemId);
+                                        if (!detail && !loading) {
+                                          setDetailErrors((prev) => { const n = { ...prev }; delete n[item.questionEventId]; return n; });
+                                          setDetailLoading((prev) => { const s = new Set(prev); s.add(item.questionEventId); return s; });
+                                          void onLoadQuestionEventDetail(item.questionEventId)
+                                            .then((d) => setDetailCache((prev) => ({ ...prev, [item.questionEventId]: d })))
+                                            .catch((err: unknown) => setDetailErrors((prev) => ({ ...prev, [item.questionEventId]: err instanceof Error ? err.message : String(err) })))
+                                            .finally(() => setDetailLoading((prev) => { const s = new Set(prev); s.delete(item.questionEventId); return s; }));
+                                        }
+                                      }
+                                    }}
+                                    disabled={loading}
+                                  >
+                                    {loading ? "Loading…" : isOpen && detail ? "Hide" : "Show"}
+                                  </button>
+                                  {item.allowedActions.length === 0 && <span className="muted tiny">No actions</span>}
+                                  {item.allowedActions.map((action) => (
+                                    <button key={`${item.queueItemId}-${action}`} onClick={() => onQuickTransition(item, action)} disabled={busy || !token}>
+                                      {formatAction(action)}
+                                    </button>
+                                  ))}
+                                </div>
+                              </td>
+                            </tr>
+                            {isOpen && (
+                              <tr>
+                                <td colSpan={4} className="detail-row">
+                                  {loading && <p className="muted tiny">Loading answer…</p>}
+                                  {!loading && !detail && detailErrors[item.questionEventId] && (
+                                    <p className="muted tiny">Failed to load: {detailErrors[item.questionEventId]}</p>
+                                  )}
+                                  {detail && (
+                                    <div className="faq-card-body">
+                                      <AnswerMarkdown text={detail.answer} />
+                                      {detail.citations.length > 0 && (
+                                        <>
+                                          <p className="tiny"><strong>Evidence</strong></p>
+                                          <ul>
+                                            {detail.citations.map((c, i) => (
+                                              <li key={`${item.queueItemId}-c${i}`}>
+                                                <strong>[E{i + 1}]</strong>{" "}
+                                                <a href={c.repositoryUrl} target="_blank" rel="noreferrer">{c.label ?? c.sourcePath}</a>
+                                                <span className="muted"> · {c.sourcePath}</span>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        </>
+                                      )}
+                                    </div>
+                                  )}
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
               )}
-            </section>
-
-            <section className="panel step-6-promotion">
-              <div className="panel-title-row">
-                <h2>FAQ</h2>
-                <p className="muted">Approved and published questions.</p>
-              </div>
-
-              <div className="button-row">
-                <button onClick={onLoadFaq} disabled={busy || !token}>Load FAQs</button>
-              </div>
-
-              {faqItems.length === 0 && <p className="muted">No approved or published questions found.</p>}
-              {faqItems.length > 0 && (
-                <div className="table-wrap">
-                  <table className="board-table">
-                    <thead>
-                      <tr>
-                        <th>Status</th>
-                        <th>Reason</th>
-                        <th>Question</th>
-                        <th>Updated</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {faqItems.map((item) => (
-                        <tr key={item.queueItemId}>
-                          <td>{item.status}</td>
-                          <td>{formatReason(item.reason)}</td>
-                          <td>
-                            <div>{item.question}</div>
-                            <div className="muted tiny">{item.requestId}</div>
-                            <div className="muted tiny">{item.queueItemId}</div>
-                          </td>
-                          <td>{item.updatedAt}</td>
-                          <td>
-                            <div className="button-column">
-                              {item.allowedActions.length === 0 && <span className="muted tiny">—</span>}
-                              {item.allowedActions.map((action) => (
-                                <button key={`${item.queueItemId}-${action}`} onClick={() => onQuickTransition(item, action)} disabled={busy || !token}>
-                                  {formatAction(action)}
-                                </button>
-                              ))}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
             </section>
           </>
+        )}
+
+        {activeTab === "faq" && (
+          <section className="panel step-6-faq">
+            <div className="panel-title-row">
+              <h2>
+                FAQs
+                {faqItems.length > 0 && (
+                  <span className="heading-count">
+                    {faqTotalPages > 1
+                      ? `${faqPageItems.length} / ${faqItems.length}`
+                      : faqItems.length}
+                  </span>
+                )}
+              </h2>
+              <p className="muted">Approved answers ready for reference.</p>
+            </div>
+            <div className="button-row">
+              <button onClick={onLoadFaq} disabled={busy || !token}>Load FAQs</button>
+            </div>
+            {faqItems.length === 0 && <p className="muted">No approved questions found.</p>}
+            {faqItems.length > 0 && (
+              <>
+                <div className="faq-card-list">
+                  {faqPageItems.map((item) => {
+                    const isOpen = openCardId === item.queueItemId;
+                    const detail = detailCache[item.questionEventId];
+                    const loading = detailLoading.has(item.questionEventId);
+                    return (
+                      <article key={item.queueItemId} className="faq-card">
+                        <div className="faq-card-question">
+                          <span>{item.question}</span>
+                          <span className="faq-status-pill">{item.status}</span>
+                        </div>
+                        <div className="button-row">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (isOpen && detail) {
+                                setOpenCardId(null);
+                              } else {
+                                setOpenCardId(item.queueItemId);
+                                if (!detail && !loading) {
+                                  setDetailErrors((prev) => { const n = { ...prev }; delete n[item.questionEventId]; return n; });
+                                  setDetailLoading((prev) => { const s = new Set(prev); s.add(item.questionEventId); return s; });
+                                  void onLoadQuestionEventDetail(item.questionEventId)
+                                    .then((d) => setDetailCache((prev) => ({ ...prev, [item.questionEventId]: d })))
+                                    .catch((err: unknown) => setDetailErrors((prev) => ({ ...prev, [item.questionEventId]: err instanceof Error ? err.message : String(err) })))
+                                    .finally(() => setDetailLoading((prev) => { const s = new Set(prev); s.delete(item.questionEventId); return s; }));
+                                }
+                              }
+                            }}
+                            disabled={loading}
+                          >
+                            {loading ? "Loading…" : isOpen && detail ? "Hide" : "Show"}
+                          </button>
+                          {item.allowedActions.map((action) => (
+                            <button key={`${item.queueItemId}-${action}`} onClick={() => onQuickTransition(item, action as TransitionAction)} disabled={busy || !token}>
+                              {formatAction(action)}
+                            </button>
+                          ))}
+                        </div>
+                        {isOpen && loading && <p className="muted tiny">Loading answer…</p>}
+                        {isOpen && !loading && !detail && detailErrors[item.questionEventId] && (
+                          <p className="muted tiny">Failed to load: {detailErrors[item.questionEventId]}</p>
+                        )}
+                        {isOpen && detail && (
+                          <div className="faq-card-body">
+                            <AnswerMarkdown text={detail.answer} />
+                            {detail.citations.length > 0 && (
+                              <>
+                                <p className="tiny"><strong>Evidence</strong></p>
+                                <ul>
+                                  {detail.citations.map((c, i) => (
+                                    <li key={`${item.queueItemId}-c${i}`}>
+                                      <strong>[E{i + 1}]</strong>{" "}
+                                      <a href={c.repositoryUrl} target="_blank" rel="noreferrer">{c.label ?? c.sourcePath}</a>
+                                      <span className="muted"> · {c.sourcePath}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </article>
+                    );
+                  })}
+                </div>
+                {faqTotalPages > 1 && (
+                  <div className="button-row">
+                    <button onClick={() => setFaqPage((p) => Math.max(1, p - 1))} disabled={faqPage === 1}>Prev</button>
+                    <span className="muted tiny">{faqPage} / {faqTotalPages}</span>
+                    <button onClick={() => setFaqPage((p) => Math.min(faqTotalPages, p + 1))} disabled={faqPage === faqTotalPages}>Next</button>
+                  </div>
+                )}
+              </>
+            )}
+          </section>
         )}
 
         {activeTab === "indexing" && (

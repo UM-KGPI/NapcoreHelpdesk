@@ -359,16 +359,16 @@ class EditorialQueueItem(TimestampedModel):
         (PRIORITY_HIGH, "High"),
     ]
 
-    STATUS_DRAFT = "draft"
-    STATUS_REVIEW = "review"
+    STATUS_IN_REVIEW = "in_review"
     STATUS_APPROVED = "approved"
     STATUS_REJECTED = "rejected"
+    STATUS_REVOKED = "revoked"
     STATUS_PUBLISHED = "published"
     STATUS_CHOICES = [
-        (STATUS_DRAFT, "Draft"),
-        (STATUS_REVIEW, "Review"),
+        (STATUS_IN_REVIEW, "In Review"),
         (STATUS_APPROVED, "Approved"),
         (STATUS_REJECTED, "Rejected"),
+        (STATUS_REVOKED, "Revoked"),
         (STATUS_PUBLISHED, "Published"),
     ]
 
@@ -385,7 +385,7 @@ class EditorialQueueItem(TimestampedModel):
     # Editorial routing metadata.
     reason = models.CharField(max_length=32, choices=REASON_CHOICES)
     priority = models.CharField(max_length=8, choices=PRIORITY_CHOICES, default=PRIORITY_NORMAL)
-    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=STATUS_DRAFT)
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=STATUS_IN_REVIEW)
 
     class Meta:
         ordering = ["-created_at"]
@@ -397,17 +397,17 @@ class EditorialQueueItem(TimestampedModel):
 class EditorialQueueTransition(TimestampedModel):
     """Audit record for state transitions performed on editorial queue items."""
 
-    ACTION_SUBMIT_FOR_REVIEW = "submit_for_review"
     ACTION_REQUEST_CHANGES = "request_changes"
     ACTION_APPROVE = "approve"
     ACTION_REJECT = "reject"
+    ACTION_REVOKE = "revoke"
     ACTION_PUBLISH = "publish"
     ACTION_REOPEN = "reopen"
     ACTION_CHOICES = [
-        (ACTION_SUBMIT_FOR_REVIEW, "Submit for review"),
         (ACTION_REQUEST_CHANGES, "Request changes"),
         (ACTION_APPROVE, "Approve"),
         (ACTION_REJECT, "Reject"),
+        (ACTION_REVOKE, "Revoke"),
         (ACTION_PUBLISH, "Publish"),
         (ACTION_REOPEN, "Reopen"),
     ]

@@ -32,21 +32,19 @@ describe("Editorial Board flows", () => {
     vi.restoreAllMocks();
   });
 
-  it("loads board using selected filters", async () => {
+  it("loads board and displays in_review items", async () => {
     const fetchMock = vi.mocked(globalThis.fetch);
-    fetchMock.mockResolvedValueOnce(
-      mockJsonResponse([])
-    );
+    fetchMock.mockResolvedValueOnce(mockJsonResponse([]));
     fetchMock.mockResolvedValueOnce(
       mockJsonResponse({
         page: 1,
-        pageSize: 10,
+        pageSize: 50,
         total: 1,
         actorRoles: ["reviewer"],
         items: [
           {
             queueItemId: "0f8fad5b-d9cb-469f-a165-70867728950e",
-            status: "review",
+            status: "in_review",
             reason: "POLICY_REVIEW",
             priority: "high",
             questionEventId: "42",
@@ -66,33 +64,9 @@ describe("Editorial Board flows", () => {
     await openConnectionPanel(user);
     await user.type(screen.getByPlaceholderText("Paste token"), "jwt-token");
     await goToEditorialTab(user);
-    await user.selectOptions(screen.getByLabelText("Status"), "review");
-    const [, boardReasonSelect] = screen.getAllByLabelText("Reason");
-    await user.selectOptions(boardReasonSelect, "POLICY_REVIEW");
-    const [, boardPrioritySelect] = screen.getAllByLabelText("Priority");
-    await user.selectOptions(boardPrioritySelect, "high");
-    await user.type(screen.getByPlaceholderText("search text"), "policy");
-
-    await user.click(screen.getByRole("button", { name: "Load Queue" }));
-
-    let calledUrl = "";
-    await waitFor(() => {
-      calledUrl = fetchMock.mock.calls
-        .map(([url]) => String(url))
-        .find((url) => url.includes("/editorial/queue?")) ?? "";
-      expect(calledUrl).toBeTruthy();
-    });
-
-    expect(calledUrl).toContain("/editorial/queue?");
-    expect(calledUrl).toContain("status=review");
-    expect(calledUrl).toContain("reason=POLICY_REVIEW");
-    expect(calledUrl).toContain("priority=high");
-    expect(calledUrl).toContain("search=policy");
-    expect(calledUrl).toContain("page=1");
-    expect(calledUrl).toContain("pageSize=10");
+    await user.click(screen.getByRole("button", { name: "Load queue" }));
 
     expect(await screen.findByText("Need policy check")).toBeInTheDocument();
-    expect(screen.getByText("roles: reviewer")).toBeInTheDocument();
   });
 
   it("renders only allowed actions and refreshes board after transition", async () => {
@@ -106,7 +80,7 @@ describe("Editorial Board flows", () => {
       items: [
         {
           queueItemId: "0f8fad5b-d9cb-469f-a165-70867728950e",
-          status: "review",
+          status: "in_review",
           reason: "POLICY_REVIEW",
           priority: "high",
           questionEventId: "42",
@@ -128,7 +102,7 @@ describe("Editorial Board flows", () => {
           status: "approved",
           transition: {
             action: "approve",
-            fromStatus: "review",
+            fromStatus: "in_review",
             toStatus: "approved",
             actorId: "test-user",
             actorRoles: ["reviewer"],

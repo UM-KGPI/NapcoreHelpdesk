@@ -1266,7 +1266,7 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assert_matches_schema("EditorialQueueResponse", response.data)
         self.assertTrue(response.data["queued"])
-        self.assertEqual(response.data["status"], "review")
+        self.assertEqual(response.data["status"], "in_review")
         self.assertTrue(response.data["queueItemId"])
 
     def test_editorial_transition_rejects_missing_role(self):
@@ -1284,7 +1284,6 @@ class HelpdeskApiTests(APITestCase):
             reverse("editorial-queue"),
             {
                 "questionEventId": question_event_id,
-                "reason": "LOW_CONFIDENCE",
                 "priority": "normal",
             },
             format="json",
@@ -1295,7 +1294,7 @@ class HelpdeskApiTests(APITestCase):
             reverse("editorial-queue-transition"),
             {
                 "queueItemId": queue_response.data["queueItemId"],
-                "action": "submit_for_review",
+                "action": "approve",
             },
             format="json",
             HTTP_X_REQUEST_ID="req-transition-forbidden",
@@ -1321,26 +1320,11 @@ class HelpdeskApiTests(APITestCase):
             reverse("editorial-queue"),
             {
                 "questionEventId": question_event_id,
-                "reason": "LOW_CONFIDENCE",
                 "priority": "normal",
             },
             format="json",
             **self.auth_headers(),
         )
-
-        submit_response = self.client.post(
-            reverse("editorial-queue-transition"),
-            {
-                "queueItemId": queue_response.data["queueItemId"],
-                "action": "submit_for_review",
-                "comment": "Ready for reviewer pass",
-            },
-            format="json",
-            HTTP_X_REQUEST_ID="req-transition-submit",
-            **self.auth_headers(roles=["editor"]),
-        )
-        self.assertEqual(submit_response.status_code, status.HTTP_200_OK)
-        self.assertEqual(submit_response.data["status"], "review")
 
         approve_response = self.client.post(
             reverse("editorial-queue-transition"),
@@ -1372,7 +1356,7 @@ class HelpdeskApiTests(APITestCase):
             EditorialQueueTransition.objects.filter(
                 queue_item__queue_item_id=queue_response.data["queueItemId"]
             ).count(),
-            3,
+            2,
         )
 
     def test_editorial_publish_persists_faq_for_future_reuse(self):
@@ -1391,23 +1375,12 @@ class HelpdeskApiTests(APITestCase):
             reverse("editorial-queue"),
             {
                 "questionEventId": question_event_id,
-                "reason": "LOW_CONFIDENCE",
                 "priority": "normal",
             },
             format="json",
             **self.auth_headers(),
         )
 
-        self.client.post(
-            reverse("editorial-queue-transition"),
-            {
-                "queueItemId": queue_response.data["queueItemId"],
-                "action": "submit_for_review",
-            },
-            format="json",
-            HTTP_X_REQUEST_ID="req-transition-faq-submit",
-            **self.auth_headers(roles=["editor"]),
-        )
         self.client.post(
             reverse("editorial-queue-transition"),
             {
@@ -1512,7 +1485,7 @@ class HelpdeskApiTests(APITestCase):
         response = self.client.get(
             reverse("editorial-queue"),
             {
-                "status": "review",
+                "status": "in_review",
                 "priority": "high",
                 "search": "operational exchange",
                 "page": 1,
@@ -1528,7 +1501,7 @@ class HelpdeskApiTests(APITestCase):
         self.assertGreaterEqual(response.data["total"], 1)
         self.assertGreaterEqual(len(response.data["items"]), 1)
         first = response.data["items"][0]
-        self.assertEqual(first["status"], "review")
+        self.assertEqual(first["status"], "in_review")
         self.assertEqual(first["priority"], "high")
         self.assertIn("question", first)
         self.assertIn("queueItemId", first)
@@ -1548,30 +1521,29 @@ class HelpdeskApiTests(APITestCase):
             reverse("editorial-queue"),
             {
                 "questionEventId": question_event_id,
-                "reason": "LOW_CONFIDENCE",
                 "priority": "normal",
             },
             format="json",
             **self.auth_headers(),
         )
 
-        editor_response = self.client.get(
+        reviewer_response = self.client.get(
             reverse("editorial-queue"),
-            {"status": "draft", "page": 1, "pageSize": 10},
+            {"status": "in_review", "page": 1, "pageSize": 10},
             format="json",
-            **self.auth_headers(roles=["editor"]),
+            **self.auth_headers(roles=["reviewer"]),
         )
-        self.assertEqual(editor_response.status_code, status.HTTP_200_OK)
-        self.assertIn("editor", editor_response.data["actorRoles"])
-        self.assertGreaterEqual(len(editor_response.data["items"]), 1)
-        self.assertEqual(
-            editor_response.data["items"][0]["allowedActions"],
-            ["submit_for_review"],
+        self.assertEqual(reviewer_response.status_code, status.HTTP_200_OK)
+        self.assertIn("reviewer", reviewer_response.data["actorRoles"])
+        self.assertGreaterEqual(len(reviewer_response.data["items"]), 1)
+        self.assertCountEqual(
+            reviewer_response.data["items"][0]["allowedActions"],
+            ["approve", "reject"],
         )
 
         viewer_response = self.client.get(
             reverse("editorial-queue"),
-            {"status": "draft", "page": 1, "pageSize": 10},
+            {"status": "in_review", "page": 1, "pageSize": 10},
             format="json",
             **self.auth_headers(roles=["viewer"]),
         )
@@ -1589,18 +1561,17 @@ class HelpdeskApiTests(APITestCase):
         )
         question_event_id = answer_response.data["trace"]["questionEventId"]
 
-        draft_response = self.client.post(
+        first_response = self.client.post(
             reverse("editorial-queue"),
             {
                 "questionEventId": question_event_id,
-                "reason": "LOW_CONFIDENCE",
                 "priority": "normal",
             },
             format="json",
             **self.auth_headers(),
         )
 
-        review_response = self.client.post(
+        second_response = self.client.post(
             reverse("editorial-queue"),
             {
                 "questionEventId": question_event_id,
@@ -1612,10 +1583,10 @@ class HelpdeskApiTests(APITestCase):
         )
 
         # Force one item older than SLA threshold to validate overdue and aging counts.
-        EditorialQueueItem.objects.filter(queue_item_id=draft_response.data["queueItemId"]).update(
+        EditorialQueueItem.objects.filter(queue_item_id=first_response.data["queueItemId"]).update(
             created_at=timezone.now() - dt.timedelta(hours=80)
         )
-        EditorialQueueItem.objects.filter(queue_item_id=review_response.data["queueItemId"]).update(
+        EditorialQueueItem.objects.filter(queue_item_id=second_response.data["queueItemId"]).update(
             created_at=timezone.now() - dt.timedelta(hours=10)
         )
 
@@ -1632,8 +1603,7 @@ class HelpdeskApiTests(APITestCase):
         self.assertGreaterEqual(response.data["totalItems"], 2)
         self.assertGreaterEqual(response.data["unresolvedItems"], 2)
         self.assertGreaterEqual(response.data["overdueItems"], 1)
-        self.assertGreaterEqual(response.data["byStatus"]["draft"], 1)
-        self.assertGreaterEqual(response.data["byStatus"]["review"], 1)
+        self.assertGreaterEqual(response.data["byStatus"]["in_review"], 2)
         self.assertGreaterEqual(response.data["byPriority"]["high"], 1)
         self.assertGreaterEqual(response.data["byReason"]["POLICY_REVIEW"], 1)
         self.assertGreaterEqual(response.data["agingBuckets"]["gt72h"], 1)

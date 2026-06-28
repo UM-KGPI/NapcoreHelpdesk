@@ -24,9 +24,6 @@ def _normalize_standard(value: str) -> str:
         "netex": "netex",
         "opra": "opra",
         "siri": "siri",
-        "datex": "datex",
-        "datex ii": "datex",
-        "datexii": "datex",
     }
     return aliases.get(lowered, lowered)
 

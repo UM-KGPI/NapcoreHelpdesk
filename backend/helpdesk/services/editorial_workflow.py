@@ -15,60 +15,32 @@ class TransitionRule:
 
 TRANSITION_RULES: dict[tuple[str, str], TransitionRule] = {
     (
-        EditorialQueueItem.STATUS_DRAFT,
-        EditorialQueueTransition.ACTION_SUBMIT_FOR_REVIEW,
-    ): TransitionRule(
-        to_status=EditorialQueueItem.STATUS_REVIEW,
-        allowed_roles=frozenset({"editor", "admin"}),
-    ),
-    (
-        EditorialQueueItem.STATUS_REVIEW,
-        EditorialQueueTransition.ACTION_REQUEST_CHANGES,
-    ): TransitionRule(
-        to_status=EditorialQueueItem.STATUS_DRAFT,
-        allowed_roles=frozenset({"reviewer", "admin"}),
-    ),
-    (
-        EditorialQueueItem.STATUS_REVIEW,
+        EditorialQueueItem.STATUS_IN_REVIEW,
         EditorialQueueTransition.ACTION_APPROVE,
     ): TransitionRule(
         to_status=EditorialQueueItem.STATUS_APPROVED,
         allowed_roles=frozenset({"reviewer", "admin"}),
     ),
     (
-        EditorialQueueItem.STATUS_REVIEW,
+        EditorialQueueItem.STATUS_IN_REVIEW,
         EditorialQueueTransition.ACTION_REJECT,
     ): TransitionRule(
         to_status=EditorialQueueItem.STATUS_REJECTED,
         allowed_roles=frozenset({"reviewer", "admin"}),
     ),
     (
-        EditorialQueueItem.STATUS_APPROVED,
-        EditorialQueueTransition.ACTION_PUBLISH,
-    ): TransitionRule(
-        to_status=EditorialQueueItem.STATUS_PUBLISHED,
-        allowed_roles=frozenset({"publisher", "admin"}),
-    ),
-    (
         EditorialQueueItem.STATUS_REJECTED,
         EditorialQueueTransition.ACTION_REOPEN,
     ): TransitionRule(
-        to_status=EditorialQueueItem.STATUS_REVIEW,
+        to_status=EditorialQueueItem.STATUS_IN_REVIEW,
         allowed_roles=frozenset({"editor", "reviewer", "admin"}),
     ),
     (
         EditorialQueueItem.STATUS_APPROVED,
-        EditorialQueueTransition.ACTION_REOPEN,
+        EditorialQueueTransition.ACTION_REVOKE,
     ): TransitionRule(
-        to_status=EditorialQueueItem.STATUS_REVIEW,
-        allowed_roles=frozenset({"editor", "reviewer", "admin"}),
-    ),
-    (
-        EditorialQueueItem.STATUS_PUBLISHED,
-        EditorialQueueTransition.ACTION_REOPEN,
-    ): TransitionRule(
-        to_status=EditorialQueueItem.STATUS_REVIEW,
-        allowed_roles=frozenset({"admin"}),
+        to_status=EditorialQueueItem.STATUS_REVOKED,
+        allowed_roles=frozenset({"reviewer", "admin"}),
     ),
 }
 

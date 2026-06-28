@@ -490,17 +490,12 @@ STANDARD_HINTS = {
     "SIRI": {"siri"},
     "Transmodel": {"transmodel"},
     "OpRa": {"opra"},
-    "DATEX II": {"datex", "datexii", "datex2"},
 }
 
 _STANDARD_SCOPE_ALIASES = {
     "netex": "netex",
     "siri": "siri",
     "opra": "opra",
-    "datex ii": "datex",
-    "datex": "datex",
-    "datex2": "datex",
-    "datexii": "datex",
 }
 
 

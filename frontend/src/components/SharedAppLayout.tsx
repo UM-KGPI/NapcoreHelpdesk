@@ -33,7 +33,7 @@ export default function SharedAppLayout({ appVersion }: SharedAppLayoutProps) {
             Q&amp;A Asisstant
           </NavLink>
           <NavLink to="/editor" className={({ isActive }) => `route-link ${isActive ? "route-link-active" : ""}`}>
-            Editor Console
+            Editorial Console
           </NavLink>
         </nav>
       </section>

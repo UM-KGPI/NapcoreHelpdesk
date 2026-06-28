@@ -31,7 +31,6 @@ from helpdesk.services.editorial_workflow import (
 from helpdesk.services.controller_llm import ControllerLLMError, decide_route_with_controller_llm
 from helpdesk.services.evidence_mapper import map_evidence
 from helpdesk.services.event_logger import log_question_event
-from helpdesk.services.faq_publication import publish_queue_item_to_faq
 from helpdesk.services.faq_matcher import match_faq
 from helpdesk.services.grounded_generator import generate_answer
 from helpdesk.services.llm_generator import LLMGenerationError, generate_answer_llm, stream_answer_llm
@@ -543,7 +542,6 @@ def _infer_standard_from_chunk(chunk: dict, effective_scope: list[str]) -> str |
         "NeTEx": ["netex"],
         "OpRa": ["opra"],
         "SIRI": ["siri"],
-        "DATEX II": ["datex"],
         "Transmodel": ["transmodel"],
     }
     for standard in effective_scope:
@@ -1636,6 +1634,18 @@ class QuestionEventsView(APIView):
         if review_required is not None:
             queryset = queryset.filter(review_required=review_required)
 
+        user_likes = data.get("userLikes", None)
+        if user_likes is not None:
+            queryset = queryset.filter(user_likes=user_likes)
+
+        user_dislikes = data.get("userDislikes", None)
+        if user_dislikes is not None:
+            queryset = queryset.filter(user_dislikes=user_dislikes)
+
+        answer_success = data.get("answerSuccess", None)
+        if answer_success is not None:
+            queryset = queryset.filter(answer_success=answer_success)
+
         search = data.get("search", "").strip()
         if search:
             queryset = queryset.filter(
@@ -1664,12 +1674,62 @@ class QuestionEventsView(APIView):
                         "mode": item.mode,
                         "confidence": float(item.confidence),
                         "reviewRequired": bool(item.review_required),
+                        "userLikes": bool(item.user_likes),
+                        "userDislikes": bool(item.user_dislikes),
+                        "answerSuccess": item.answer_success,
                     }
                     for item in items
                 ],
             },
             status=status.HTTP_200_OK,
         )
+
+
+class QuestionEventDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, question_event_id):
+        try:
+            event = QuestionEvent.objects.get(id=question_event_id)
+        except QuestionEvent.DoesNotExist:
+            return Response(
+                {"error": {"code": "NOT_FOUND", "message": "Question event not found."}},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        citations = []
+        for link in event.answer_evidence_links.all():
+            citations.append({
+                "label": link.label or None,
+                "sourcePath": link.source_path,
+                "repositoryUrl": _build_file_url(link.repository_url, link.commit_sha, link.source_path),
+                "chunkId": link.chunk_id,
+            })
+
+        return Response(
+            {
+                "questionEventId": str(event.id),
+                "requestId": event.request_id,
+                "question": event.question,
+                "answer": event.answer,
+                "mode": event.mode,
+                "confidence": float(event.confidence),
+                "citations": citations,
+                "createdAt": event.created_at.isoformat().replace("+00:00", "Z"),
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def delete(self, request, question_event_id):
+        try:
+            event = QuestionEvent.objects.get(id=question_event_id)
+        except QuestionEvent.DoesNotExist:
+            return Response(
+                {"error": {"code": "NOT_FOUND", "message": "Question event not found."}},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        event.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class PromotionCandidatesView(APIView):
@@ -1842,17 +1902,10 @@ class EditorialQueueView(APIView):
                 http_status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if data["reason"] in {EditorialQueueItem.REASON_POLICY_REVIEW, EditorialQueueItem.REASON_USER_ESCALATION}:
-            # High-risk reasons go directly to review state.
-            status_value = EditorialQueueItem.STATUS_REVIEW
-        else:
-            status_value = EditorialQueueItem.STATUS_DRAFT
-
         item = route_to_editorial_queue({
             "question_event": question_event,
             "reason": data["reason"],
             "priority": data.get("priority", EditorialQueueItem.PRIORITY_NORMAL),
-            "status": status_value,
         })
 
         return Response(
@@ -1897,8 +1950,6 @@ class EditorialQueueTransitionView(APIView):
                     actor_roles=actor_roles,
                     comment=data.get("comment", ""),
                 )
-                if data["action"] == "publish":
-                    publish_queue_item_to_faq(queue_item=item)
         except WorkflowTransitionNotAllowed as exc:
             return _error_response(
                 code="INVALID_STATE_TRANSITION",
@@ -1912,13 +1963,6 @@ class EditorialQueueTransitionView(APIView):
                 message=str(exc),
                 request_id=request_id,
                 http_status=status.HTTP_403_FORBIDDEN,
-            )
-        except ValueError as exc:
-            return _error_response(
-                code="FAQ_PUBLISH_FAILED",
-                message=str(exc),
-                request_id=request_id,
-                http_status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
         return Response(

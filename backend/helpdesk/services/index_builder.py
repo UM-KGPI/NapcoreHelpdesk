@@ -122,8 +122,6 @@ def infer_scope(source_path: str, chunk_text: str, repo_url: str = "") -> list[s
         scope.add("SIRI")
     if "opra" in repo_lower:
         scope.add("OpRa")
-    if "datex" in repo_lower:
-        scope.add("DATEX II")
     if "profile_documentation" in repo_lower or "hfjelstad" in repo_lower:
         scope.add("Profile Documentation")
 
@@ -136,9 +134,6 @@ def infer_scope(source_path: str, chunk_text: str, repo_url: str = "") -> list[s
         scope.add("Transmodel")
     if "opra" in blob and "OpRa" not in scope:
         scope.add("OpRa")
-    if "datex" in blob and "DATEX II" not in scope:
-        scope.add("DATEX II")
-
     return sorted(scope)
 
 
