@@ -20,6 +20,7 @@ class ControllerLLMServiceTests(SimpleTestCase):
 
     @override_settings(
         CONTROLLER_LLM_ENABLED=True,
+        CONTROLLER_LLM_PROVIDER="subprocess",
         CONTROLLER_LLM_EXECUTABLE="/bin/echo",
         CONTROLLER_LLM_MODEL_PATH="/tmp/model.gguf",
         CONTROLLER_LLM_DEVICE="none",

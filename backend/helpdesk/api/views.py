@@ -50,6 +50,7 @@ from helpdesk.services.controller_llm import ControllerLLMError, decide_route_wi
 from helpdesk.services.evidence_mapper import map_evidence
 from helpdesk.services.event_logger import log_question_event
 from helpdesk.services.faq_matcher import match_faq
+from helpdesk.services.faq_publication import publish_queue_item_to_faq
 from helpdesk.services.grounded_generator import generate_answer
 from helpdesk.services.llm_generator import LLMGenerationError, generate_answer_llm, stream_answer_llm
 from helpdesk.services.ontology_registry import current_ontology_version_payload
@@ -1968,6 +1969,8 @@ class EditorialQueueTransitionView(APIView):
                     actor_roles=actor_roles,
                     comment=data.get("comment", ""),
                 )
+                if item.status == EditorialQueueItem.STATUS_PUBLISHED:
+                    publish_queue_item_to_faq(queue_item=item)
         except WorkflowTransitionNotAllowed as exc:
             return _error_response(
                 code="INVALID_STATE_TRANSITION",

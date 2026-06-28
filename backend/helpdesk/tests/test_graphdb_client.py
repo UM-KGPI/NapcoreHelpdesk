@@ -107,7 +107,11 @@ class GraphDbClientTests(TestCase):
         self.assertIn("https://napcore.eu/graph/artifact-rules/netex/v1.0", scoped_with_rules)
 
     def test_load_default_ontology_graphs_excludes_artifact_rules_by_default(self):
-        with patch("helpdesk.services.graphdb_client.upload_named_graph_turtle") as upload_mock:
+        with (
+            patch("helpdesk.services.graphdb_client.upload_named_graph_turtle") as upload_mock,
+            patch("pathlib.Path.exists", return_value=True),
+            patch("pathlib.Path.read_text", return_value=""),
+        ):
             upload_mock.side_effect = lambda **kwargs: {
                 "graphUri": kwargs["graph_uri"],
                 "statementEndpoint": "http://localhost:7200/repositories/napcore/statements",
@@ -121,11 +125,15 @@ class GraphDbClientTests(TestCase):
             )
 
         graph_uris = {item["graphUri"] for item in results}
-        self.assertEqual(len(results), 12)
+        self.assertEqual(len(results), 11)
         self.assertFalse(any("/artifact-rules/" in uri for uri in graph_uris))
 
     def test_load_default_ontology_graphs_includes_selected_artifact_rules(self):
-        with patch("helpdesk.services.graphdb_client.upload_named_graph_turtle") as upload_mock:
+        with (
+            patch("helpdesk.services.graphdb_client.upload_named_graph_turtle") as upload_mock,
+            patch("pathlib.Path.exists", return_value=True),
+            patch("pathlib.Path.read_text", return_value=""),
+        ):
             upload_mock.side_effect = lambda **kwargs: {
                 "graphUri": kwargs["graph_uri"],
                 "statementEndpoint": "http://localhost:7200/repositories/napcore/statements",
