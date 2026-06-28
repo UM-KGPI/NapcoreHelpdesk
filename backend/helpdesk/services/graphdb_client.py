@@ -358,11 +358,6 @@ def load_default_ontology_graphs(
         ("siri", ontology_dir / "standards" / "siri.ttl", "https://napcore.eu/graph/standards/siri"),
         ("datex", ontology_dir / "standards" / "datex.ttl", "https://napcore.eu/graph/standards/datex"),
         (
-            "netex-examples",
-            ontology_dir / "examples" / "netex-examples.ttl",
-            "https://napcore.eu/graph/examples/netex",
-        ),
-        (
             "nits-transmodel-align",
             ontology_dir / "alignments" / "nits-transmodel-align.ttl",
             "https://napcore.eu/graph/alignments/transmodel",

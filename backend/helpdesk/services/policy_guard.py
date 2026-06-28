@@ -32,6 +32,10 @@ _REPOSITORY_ALIASES = {
     # NeTEx canonical mirror aliases used by citation URL fallback logic.
     "https://github.com/transmodelecosystem/netex": "https://github.com/TransmodelEcosystem/NeTEx",
     "https://github.com/netex-cen/netex": "https://github.com/TransmodelEcosystem/NeTEx",
+    # SIRI: chunks indexed from the TransmodelEcosystem mirror normalise to the
+    # canonical SIRI-CEN URL that appears in ALLOWED_SOURCE_REPOSITORIES.
+    "https://github.com/transmodelecosystem/siri": "https://github.com/SIRI-CEN/SIRI",
+    "https://github.com/siri-cen/siri": "https://github.com/SIRI-CEN/SIRI",
 }
 
 

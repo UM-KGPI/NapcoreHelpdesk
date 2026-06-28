@@ -37,7 +37,6 @@ from helpdesk.services.semantic_graph import (
     expand_graph_concepts,
     extract_graph_concepts,
     get_concept_canonical_terms,
-    get_concept_example_paths,
 )
 
 try:
@@ -203,7 +202,10 @@ def _source_path_intent_adjustment(hinted_doc_types: set[str], source_path: str)
         if lower_path.startswith("issues/"):
             adjustment -= 0.25
         if lower_path.endswith(".xsd"):
-            adjustment -= 0.08
+            # Hard penalty: quality-score-heavy XSD chunks (quality_score ~0.97
+            # → legacy_score ~0.78) survived the 0.62 min_score threshold with
+            # only -0.08 here.  -0.20 pushes them to ~0.52 → filtered out.
+            adjustment -= 0.20
 
     return adjustment
 
@@ -430,6 +432,11 @@ DOC_TYPE_HINTS = {
 }
 
 
+_DEFINITIONAL_QUESTION_RE = re.compile(
+    r"\b(what\s+is|what\s+are|define|definition\s+of|what\s+does|explain|describe|meaning\s+of)\b"
+)
+
+
 def _question_doc_type_hints(question: str) -> set[str]:
     lower_question = question.lower()
     hinted: set[str] = set()
@@ -443,6 +450,11 @@ def _question_doc_type_hints(question: str) -> set[str]:
     if asks_example_xml and not asks_schema_definition:
         hinted.add("example")
         hinted.discard("schema")
+
+    # Definitional questions ("what is X", "define X") prefer schema chunks that carry
+    # formal concept definitions, not example instances.
+    if _DEFINITIONAL_QUESTION_RE.search(lower_question) and "example" not in hinted:
+        hinted.add("schema")
 
     return hinted
 
@@ -509,6 +521,16 @@ _STANDARD_SCOPE_ALIASES = {
     "siri": "siri",
     "opra": "opra",
 }
+
+# Namespace-root and structural predicate concepts that are so broad they appear in virtually
+# every document and should not trigger the graph score boost on their own.
+_GENERIC_GRAPH_CONCEPTS: frozenset[str] = frozenset({
+    "netex:NeTEx",
+    "siri:SIRI",
+    "transmodel:when",
+    "transmodel:usedIn",
+    "transmodel:NeTEx",
+})
 
 
 def _is_normative_constraint_question(question: str) -> bool:
@@ -589,7 +611,6 @@ def _graph_score_adjustment(
     graph_enabled: bool,
     question_concepts: set[str],
     expanded_concepts: set[str],
-    concept_example_paths: set[str],
     chunk_text: str,
     source_path: str,
     label: str,
@@ -611,28 +632,25 @@ def _graph_score_adjustment(
         return 0.0, False, set()
 
     lowered_path = (source_path or "").lower().strip()
-    has_example_path_match = bool(
-        lowered_path
-        and any(lowered_path.endswith(path.lower()) for path in concept_example_paths)
-    )
 
-    direct_overlap = chunk_concepts.intersection(question_concepts)
+    # Filter out namespace-root and structural predicate concepts that are too broad to
+    # indicate genuine relevance — they appear in virtually every document of the standard.
+    specific_chunk_concepts = chunk_concepts - _GENERIC_GRAPH_CONCEPTS
+    specific_question_concepts = question_concepts - _GENERIC_GRAPH_CONCEPTS
+    specific_expanded_concepts = expanded_concepts - _GENERIC_GRAPH_CONCEPTS
+
+    direct_overlap = specific_chunk_concepts.intersection(specific_question_concepts)
     if direct_overlap:
         bonus = 0.0
         if "example" in (hinted_doc_types or set()) and lowered_path.startswith("examples/"):
             bonus += 0.06
-        if has_example_path_match:
-            bonus += 0.24
         return 0.20 + bonus, True, direct_overlap
 
-    expanded_overlap = chunk_concepts.intersection(expanded_concepts)
+    expanded_overlap = specific_chunk_concepts.intersection(specific_expanded_concepts)
     if expanded_overlap:
         bonus = 0.0
         if lowered_path.startswith("examples/"):
-            # Generic preference for concept-relevant example artifacts.
             bonus += 0.08
-        if has_example_path_match:
-            bonus += 0.05
         return 0.10 + bonus, True, expanded_overlap
 
     return 0.0, False, set()
@@ -682,7 +700,6 @@ def _graph_candidate_rank_score(
     aliases: set[str],
     question: str,
     hinted_doc_types: set[str],
-    concept_example_paths: set[str],
 ) -> float:
     source_path = chunk.source_path or ""
     label = chunk.label or ""
@@ -733,9 +750,6 @@ def _graph_candidate_rank_score(
     if lowered_path.startswith("examples/"):
         score += 0.15
 
-    if lowered_path and any(lowered_path.endswith(path.lower()) for path in concept_example_paths):
-        score += 1.40
-
     return score
 
 
@@ -746,7 +760,6 @@ def _graph_concept_candidates(
     scope: list[str] | None = None,
     question: str = "",
     hinted_doc_types: set[str] | None = None,
-    concept_example_paths: set[str] | None = None,
 ):
     """Return DB chunks whose text mentions any alias of the expanded concept set.
 
@@ -825,7 +838,6 @@ def _graph_concept_candidates(
             aliases=candidate_aliases,
             question=question,
             hinted_doc_types=hinted_doc_types or set(),
-            concept_example_paths=concept_example_paths or set(),
         )
         ranked_candidates.append((rank_score, float(chunk.quality_score), int(chunk.id), chunk))
         seen_chunk_ids.add(int(chunk.id))
@@ -844,7 +856,6 @@ def _graph_concept_candidates(
                 aliases=candidate_aliases,
                 question=question,
                 hinted_doc_types=hinted_doc_types or set(),
-                concept_example_paths=concept_example_paths or set(),
             )
             ranked_candidates.append((rank_score, float(chunk.quality_score), int(chunk.id), chunk))
 
@@ -1020,8 +1031,6 @@ def retrieve_chunks_with_trace(
         stage_timing_ms["graphExpandMs"] = 0.0
 
     stage_start = time.perf_counter()
-    concept_example_paths = get_concept_example_paths(expanded_concepts) if expanded_concepts else set()
-
     canonical_concept_terms = get_concept_canonical_terms(expanded_concepts) if expanded_concepts else []
     _record_stage("conceptMetadataMs", stage_start)
 
@@ -1062,18 +1071,21 @@ def retrieve_chunks_with_trace(
     graph_candidates_added = 0
     graph_candidate_ids: list[int] = []
     stage_start = time.perf_counter()
-    if graph_rag_enabled and expanded_concepts:
+    # Exclude namespace-root and structural predicate concepts from candidate lookup:
+    # their aliases (e.g. "netex", "when") match thousands of documents and flood
+    # the candidate pool with irrelevant chunks before specific concepts get a slot.
+    specific_expanded_concepts = expanded_concepts - _GENERIC_GRAPH_CONCEPTS
+    if graph_rag_enabled and specific_expanded_concepts:
         if not isinstance(chunk_iterable, list):
             chunk_iterable = list(chunk_iterable)
             existing_ids = {chunk.id for chunk in chunk_iterable}
         for graph_chunk in _graph_concept_candidates(
-            expanded_concepts=expanded_concepts,
+            expanded_concepts=specific_expanded_concepts,
             top_k=top_k,
             max_candidates=graph_expansion_max_candidates,
             scope=scope,
             question=question,
             hinted_doc_types=hinted_doc_types,
-            concept_example_paths=concept_example_paths,
         ):
             if graph_chunk.id not in existing_ids:
                 chunk_iterable.append(graph_chunk)
@@ -1178,7 +1190,6 @@ def retrieve_chunks_with_trace(
             graph_enabled=graph_rag_enabled,
             question_concepts=question_concepts,
             expanded_concepts=expanded_concepts,
-            concept_example_paths=concept_example_paths,
             chunk_text=chunk.text,
             source_path=chunk.source_path,
             label=chunk.label,
@@ -1192,7 +1203,10 @@ def retrieve_chunks_with_trace(
         # cosine similarity is low (vector < 0.35), we treat it as a false positive and
         # discount its rank.  The published `score` is unchanged (for audit), only the
         # internal rank_score used for selection is reduced.
-        keyword_trap = lexical_score > 0.5 and vector_score < 0.35
+        # Exception: if graph evidence confirms the chunk is relevant (graph_hit=True),
+        # suppress the penalty — the graph provides orthogonal confirmation that the
+        # lexical match is genuine rather than spurious.
+        keyword_trap = lexical_score > 0.5 and vector_score < 0.35 and not graph_hit
 
         score = min(1.0, max(0.0, raw_score))
         if score < min_score:
