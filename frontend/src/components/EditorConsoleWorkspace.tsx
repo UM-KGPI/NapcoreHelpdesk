@@ -111,6 +111,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
   const [detailLoading, setDetailLoading] = useState<Set<string>>(new Set());
   const [detailErrors, setDetailErrors] = useState<Record<string, string>>({});
   const [askedSort, setAskedSort] = useState<SortState>(null);
+  const [reviewSort, setReviewSort] = useState<SortState>(null);
   const answerResultRef = useRef<HTMLElement | null>(null);
   const lastAnswerRequestIdRef = useRef<string | null>(null);
   const {
@@ -219,6 +220,16 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
 
   const boardItems = boardResult?.items ?? [];
   const inReviewBoardItems = boardItems.filter((item) => item.status === "in_review");
+
+  const sortedReviewItems = useMemo(() => {
+    if (!reviewSort) return inReviewBoardItems;
+    const { col, dir } = reviewSort;
+    return [...inReviewBoardItems].sort((a, b) => {
+      const cmp = col === "status" ? a.status.localeCompare(b.status) : 0;
+      return dir === "asc" ? cmp : -cmp;
+    });
+  }, [inReviewBoardItems, reviewSort]);
+
   const faqTotalPages = Math.max(1, Math.ceil(faqItems.length / FAQ_PAGE_SIZE));
   const faqPageItems = faqItems.slice((faqPage - 1) * FAQ_PAGE_SIZE, faqPage * FAQ_PAGE_SIZE);
 
@@ -509,12 +520,12 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                     <thead>
                       <tr>
                         <th>Question</th>
-                        <th>Status</th>
+                        <SortTh col="status" sort={reviewSort} onSort={(c) => setReviewSort((prev) => toggleSortState(prev, c))}>Status</SortTh>
                         <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {inReviewBoardItems.map((item) => {
+                      {sortedReviewItems.map((item) => {
                         const isOpen = reviewOpenId === item.queueItemId;
                         const detail = detailCache[item.questionEventId];
                         const loading = detailLoading.has(item.questionEventId);
@@ -525,7 +536,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                                 <div>{item.question}</div>
                                 <div className="muted tiny">{item.requestId}</div>
                               </td>
-                              <td>{item.status}</td>
+                              <td><span className={`faq-status-pill status-${item.status}`}>{item.status}</span></td>
                               <td>
                                 <div className="button-column">
                                   <button
