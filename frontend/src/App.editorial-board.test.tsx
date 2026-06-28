@@ -1,3 +1,14 @@
+/**
+ * Vitest integration tests for the editorial board UI components.
+ *
+ * Renders App with mocked API responses to exercise board loading, status
+ * display, and workflow transition flows without a live backend.
+ *
+ * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+ * Crafted by: AI coding agents
+ * Created: 2026-03-28  |  Modified: 2026-06-28
+ */
+
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";

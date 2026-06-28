@@ -1,3 +1,15 @@
+"""
+Runtime dependency checks for optional infrastructure services.
+
+Verifies that GraphDB is reachable and required named graphs are loaded
+before semantic operations are attempted. Used by the health-ready probe
+and as a guard in the answer orchestration path.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-04-26  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 from django.conf import settings

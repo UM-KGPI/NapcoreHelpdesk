@@ -1,3 +1,15 @@
+"""
+Django system checks for required helpdesk configuration.
+
+Validates that all mandatory settings (JWT_SECRET, embedding endpoint, etc.)
+are present at startup, failing loudly with descriptive errors rather than
+silently misbehaving at request time.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-03-28  |  Modified: 2026-06-28
+"""
+
 from django.conf import settings
 from django.core.checks import Error, register
 

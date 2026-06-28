@@ -1,3 +1,15 @@
+"""
+Semantic graph construction and SPARQL pattern matching over ontology data.
+
+Builds in-memory concept graphs from loaded ontology triples and executes
+graph traversal queries to find related concepts, hierarchies, and
+cross-standard alignments used during answer generation and rule evaluation.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-04-15  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 import hashlib

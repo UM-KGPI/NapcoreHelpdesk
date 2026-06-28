@@ -1,3 +1,21 @@
+"""
+DRF API views for the NapcoreHelpdesk service.
+
+Implements the full REST surface: answer orchestration (synchronous and
+streaming SSE), user feedback, question event listing and detail, editorial
+queue management, FAQ promotion candidates, semantic clustering, repository
+index ingestion, and health probes.
+
+Answer orchestration follows a tiered path: FAQ match → semantic rule
+evaluation → RAG retrieval → LLM generation. Orchestration logic is
+delegated to the service layer; views handle HTTP translation and error
+mapping only.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-03-28  |  Modified: 2026-06-28
+"""
+
 from collections import defaultdict
 import datetime as dt
 from datetime import timedelta

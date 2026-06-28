@@ -1,3 +1,16 @@
+"""
+URL routing for all helpdesk REST API endpoints.
+
+Registered under the single application prefix defined in the project root
+URL conf. Ordering matters where paths share a prefix: the more specific
+editorial/queue/metrics and editorial/queue/transition patterns must be listed
+before editorial/queue to prevent the shorter path shadowing them.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-03-28  |  Modified: 2026-06-28
+"""
+
 from django.urls import path
 
 from .views import (

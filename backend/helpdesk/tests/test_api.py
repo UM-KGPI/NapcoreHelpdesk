@@ -1,3 +1,16 @@
+"""
+Integration tests for all REST API endpoints.
+
+Covers the full editorial workflow (queue → approve/reject → revoke/reopen),
+role-based authorization, feedback recording, question event listing, and
+metrics aggregation. Each test runs inside a transaction that is rolled back
+on teardown, so tests start from a clean database state.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-03-28  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 import datetime as dt

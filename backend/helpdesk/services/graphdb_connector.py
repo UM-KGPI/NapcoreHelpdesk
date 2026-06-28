@@ -1,3 +1,15 @@
+"""
+GraphDB SPARQL query execution for semantic concept and rule retrieval.
+
+Provides query methods used by the rule engine and semantic graph services.
+Connectivity is optional: the system degrades gracefully when GraphDB is
+unreachable, falling back to the RAG retrieval path without semantic scoring.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-04-16  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 import json

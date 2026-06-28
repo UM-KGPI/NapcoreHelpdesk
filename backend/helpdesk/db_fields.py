@@ -1,3 +1,15 @@
+"""
+Custom Django model fields for the helpdesk application.
+
+PortableVectorField wraps pgvector's ArrayField to normalize embedding
+values on assignment, centralizing dimension validation and preventing
+shape mismatches across different model assignments.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-03-28  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 from django.db import models

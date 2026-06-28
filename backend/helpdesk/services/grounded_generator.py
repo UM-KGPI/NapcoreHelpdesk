@@ -1,3 +1,15 @@
+"""
+Deterministic answer generation from retrieved evidence chunks.
+
+Assembles grounded answers by ranking and synthesizing retrieved source
+chunks without LLM involvement. Used when the controller routes to the
+deterministic-grounded generation profile.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-03-28  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 

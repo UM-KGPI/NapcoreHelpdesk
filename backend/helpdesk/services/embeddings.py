@@ -1,3 +1,15 @@
+"""
+Batch embedding computation for source index chunks.
+
+Generates vector embeddings for text chunks during index builds. Content
+is hashed before the API call so unchanged chunks are skipped on incremental
+runs, reducing embedding API cost.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-03-28  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 import hashlib

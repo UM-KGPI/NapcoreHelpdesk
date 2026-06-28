@@ -1,3 +1,15 @@
+"""
+Vector similarity search gateway over indexed source chunks.
+
+Executes pgvector cosine similarity queries against SourceChunk records,
+applies standards scope and quality score filters, and returns ranked
+chunks with retrieval trace metadata for evidence attribution.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-03-28  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 import re

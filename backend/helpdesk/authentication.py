@@ -1,3 +1,15 @@
+"""
+JWT bearer token authentication for DRF API views.
+
+Tokens are verified against the configured JWT_SECRET and must carry a
+'roles' claim. Role values are attached to the request object and checked
+downstream by the editorial workflow for transition authorization.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-03-28  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 import jwt

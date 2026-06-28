@@ -1,3 +1,15 @@
+"""
+Persists per-chunk retrieval telemetry as RetrievalEvent records.
+
+Called after each RAG retrieval pass to record which source chunks were
+scored, their similarity values, and the originating question event. Used
+for analytics and downstream evidence auditability.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-03-28  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 from helpdesk.models import QuestionEvent, RetrievalEvent

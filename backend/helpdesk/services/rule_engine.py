@@ -1,3 +1,15 @@
+"""
+SPARQL-backed semantic rule evaluation for standards-domain compliance.
+
+Queries the GraphDB knowledge graph to evaluate whether retrieved evidence
+satisfies domain rules derived from Transmodel, NeTEx, SIRI, and OpRa
+ontologies. Rule conclusions are included in the answer trace for auditability.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-04-26  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 import json

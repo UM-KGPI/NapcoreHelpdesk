@@ -1,3 +1,21 @@
+"""
+State machine for the editorial review workflow.
+
+TRANSITION_RULES is the single source of truth for the transition graph. It is
+keyed by (from_status, action) tuples so that a validity check is a pure dict
+lookup and action enumeration for any status requires a single linear scan
+without branching on status strings.
+
+Role assignment rationale:
+  approve / reject  — reviewer and admin only; editors initiate, reviewers decide.
+  reopen            — editor may also reopen (they queued the question and own the retry).
+  revoke            — reviewer and admin only; mirrors the authority level that approved.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-03-28  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

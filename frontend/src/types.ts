@@ -1,3 +1,15 @@
+/**
+ * TypeScript type definitions for all API request and response shapes.
+ *
+ * Shared across the API client (api.ts) and UI components. Types mirror the
+ * backend serializers so the compiler enforces contract alignment without a
+ * generated client.
+ *
+ * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+ * Crafted by: AI coding agents
+ * Created: 2026-03-28  |  Modified: 2026-06-28
+ */
+
 export type StandardsScope = "Transmodel" | "NeTEx" | "SIRI" | "OpRa" | "Profile Documentation";
 
 export type AnswerMode = "faq" | "rag" | "abstain";

@@ -1,3 +1,14 @@
+"""
+Django admin registrations for helpdesk domain models.
+
+All models are registered in the default admin site to support manual
+data inspection and correction during development and operations.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-03-28  |  Modified: 2026-06-28
+"""
+
 from django.contrib import admin
 from .models import (
 	AnswerEvidenceLink,

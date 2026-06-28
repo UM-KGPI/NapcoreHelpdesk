@@ -1,3 +1,16 @@
+"""
+DRF serializers for all public API endpoints.
+
+Each serializer validates only its own boundary: request payloads are validated
+here, while business-rule enforcement (role checks, workflow transitions) is
+delegated to the service layer. Serializers deliberately do not reach into the
+ORM; they return plain validated dicts.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-03-28  |  Modified: 2026-06-28
+"""
+
 from rest_framework import serializers
 
 

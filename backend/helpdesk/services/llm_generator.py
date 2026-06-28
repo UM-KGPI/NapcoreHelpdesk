@@ -1,3 +1,15 @@
+"""
+LLM-based answer generation with synchronous and SSE streaming support.
+
+Calls an OpenAI-compatible chat completion endpoint to synthesize answers
+grounded in retrieved evidence chunks. Streaming delegates token deltas via
+Server-Sent Events written directly into the Django response.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-03-29  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 import json

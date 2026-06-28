@@ -1,3 +1,15 @@
+"""
+Publishes approved editorial queue items as canonical FAQ entries.
+
+Converts an approved EditorialQueueItem into a persistent FAQEntry and
+FAQVersion for use by the FAQ-first answer path. Re-publishing the same
+question event is idempotent — existing entries are updated in place.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-05-15  |  Modified: 2026-06-28
+"""
+
 from __future__ import annotations
 
 from hashlib import sha1
