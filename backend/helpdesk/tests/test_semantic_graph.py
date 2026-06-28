@@ -6,7 +6,6 @@ from django.test import SimpleTestCase
 
 import helpdesk.services.semantic_graph as semantic_graph
 from helpdesk.services.semantic_graph import (
-    _build_concept_example_paths_from_ontology,
     _build_concept_nits_mapping,
     _build_nits_relations,
     _validate_ontology_payload,
@@ -160,7 +159,6 @@ class SemanticGraphMappingTests(SimpleTestCase):
                     "nits:journey": {
                         "labels": "not-a-list",
                         "related_to": ["nits:line", 42],
-                        "example_sources": ["examples/a.xml", 1],
                         "maps_to_nits": 123,
                         "maps_to_nch": ["nch:journey"],
                         "synonym_of": {"bad": "type"},
@@ -174,7 +172,6 @@ class SemanticGraphMappingTests(SimpleTestCase):
         concept = validated["concepts"]["nits:journey"]
         self.assertEqual(concept["labels"], [])
         self.assertEqual(concept["related_to"], [])
-        self.assertEqual(concept["example_sources"], [])
         self.assertNotIn("maps_to_nits", concept)
         self.assertNotIn("maps_to_nch", concept)
         self.assertNotIn("synonym_of", concept)
@@ -190,27 +187,6 @@ class SemanticGraphMappingTests(SimpleTestCase):
                 required_namespace="nits",
             )
 
-    def test_build_concept_example_paths_collects_line_example_sources(self):
-        paths = _build_concept_example_paths_from_ontology(
-            {
-                "concepts": {
-                    "netex:Line": {
-                        "example_sources": [
-                            "examples/functions/line/NeTEx_01_simple_line.xml",
-                            "examples/functions/line",
-                        ]
-                    }
-                }
-            }
-        )
-
-        self.assertEqual(
-            paths["netex:Line"],
-            {
-                "examples/functions/line/NeTEx_01_simple_line.xml",
-                "examples/functions/line",
-            },
-        )
 
     def test_extract_graph_concepts_can_match_example_alias_on_standard_concept(self):
         with patch.object(

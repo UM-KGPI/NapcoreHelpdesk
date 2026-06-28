@@ -133,12 +133,10 @@ class RetrievalGatewayTests(TestCase):
     @patch("helpdesk.services.retrieval_gateway._postgres_hybrid_candidates")
     @patch("helpdesk.services.retrieval_gateway.query_graphdb_concept_expansion")
     @patch("helpdesk.services.retrieval_gateway.get_concept_canonical_terms")
-    @patch("helpdesk.services.retrieval_gateway.get_concept_example_paths")
     @patch("helpdesk.services.retrieval_gateway.extract_graph_concepts")
     def test_graph_candidate_ranking_keeps_specific_example_before_cap(
         self,
         extract_graph_concepts_mock,
-        get_concept_example_paths_mock,
         get_concept_canonical_terms_mock,
         expand_mock,
         postgres_candidates_mock,
@@ -150,7 +148,6 @@ class RetrievalGatewayTests(TestCase):
         postgres_candidates_mock.return_value = SourceChunk.objects.none()
         expand_mock.return_value = {"netex:Line"}
         get_concept_canonical_terms_mock.return_value = ["simple line"]
-        get_concept_example_paths_mock.return_value = {"examples/functions/line/NeTEx_01_simple_line.xml"}
 
         def extract_graph_concepts_side_effect(text: str) -> set[str]:
             return {"netex:Line"} if "line" in text.lower() else set()
@@ -221,7 +218,6 @@ class RetrievalGatewayTests(TestCase):
             graph_enabled=True,
             question_concepts={"netex:Line"},
             expanded_concepts={"netex:Line"},
-            concept_example_paths={"examples/functions/line/NeTEx_01_simple_line.xml"},
             chunk_text="Simple line XML example",
             source_path="examples/functions/line/NeTEx_01_simple_line.xml",
             label="NeTEx simple line",
@@ -231,4 +227,4 @@ class RetrievalGatewayTests(TestCase):
 
         self.assertTrue(graph_hit)
         self.assertEqual(matching_concepts, {"netex:Line"})
-        self.assertGreaterEqual(adjustment, 0.50)
+        self.assertGreaterEqual(adjustment, 0.20)
