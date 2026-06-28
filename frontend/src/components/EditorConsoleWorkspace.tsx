@@ -677,23 +677,26 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                           <p className="muted tiny">Failed to load: {detailErrors[item.questionEventId]}</p>
                         )}
                         {isOpen && detail && (
-                          <div className="faq-card-body">
-                            <AnswerMarkdown text={detail.answer} />
-                            {detail.citations.length > 0 && (
-                              <>
-                                <p className="tiny"><strong>Evidence</strong></p>
-                                <ul>
-                                  {detail.citations.map((c, i) => (
-                                    <li key={`${item.queueItemId}-c${i}`}>
-                                      <strong>[E{i + 1}]</strong>{" "}
-                                      <a href={c.repositoryUrl} target="_blank" rel="noreferrer">{c.label ?? c.sourcePath}</a>
-                                      <span className="muted"> · {c.sourcePath}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </>
-                            )}
-                          </div>
+                          <>
+                            <div className="faq-card-body">
+                              <AnswerMarkdown text={detail.answer} />
+                              {detail.citations.length > 0 && (
+                                <>
+                                  <p className="tiny"><strong>Evidence</strong></p>
+                                  <ul>
+                                    {detail.citations.map((c, i) => (
+                                      <li key={`${item.queueItemId}-c${i}`}>
+                                        <strong>[E{i + 1}]</strong>{" "}
+                                        <a href={c.repositoryUrl} target="_blank" rel="noreferrer">{c.label ?? c.sourcePath}</a>
+                                        <span className="muted"> · {c.sourcePath}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </>
+                              )}
+                            </div>
+                            <p className="muted tiny">{item.requestId}</p>
+                          </>
                         )}
                       </article>
                     );
