@@ -12,23 +12,21 @@ import type {
   EditorialBoardItem,
   EditorialBoardResponse,
   IndexRepositoryResponse,
+  QuestionEventDetail,
   StandardsScope,
 } from "./types";
 
 const TRANSITION_ACTIONS = [
-  "submit_for_review",
   "request_changes",
   "approve",
   "reject",
-  "publish",
+  "revoke",
   "reopen",
 ] as const;
-const BOARD_STATUSES = ["draft", "review", "approved", "rejected", "published"] as const;
 const TOKEN_STORAGE_KEY = "napcore.helpdesk.jwt";
 const AUTO_TOKEN_STORAGE_KEY = "napcore.helpdesk.autoToken";
 
 type TransitionAction = (typeof TRANSITION_ACTIONS)[number];
-type BoardStatus = (typeof BOARD_STATUSES)[number];
 
 type IndexRepoPreset = {
   id: string;
@@ -102,6 +100,7 @@ export default function App() {
   const [selectedQuestionEventId, setSelectedQuestionEventId] = useState("");
   const [boardResult, setBoardResult] = useState<EditorialBoardResponse | null>(null);
   const [faqItems, setFaqItems] = useState<EditorialBoardItem[]>([]);
+  const [boardStatusMap, setBoardStatusMap] = useState<Map<string, string>>(new Map());
 
   const [indexRepoPresets, setIndexRepoPresets] = useState<IndexRepoPreset[]>(DEFAULT_INDEX_REPO_PRESETS);
   const [indexPresetId, setIndexPresetId] = useState(DEFAULT_INDEX_REPO_PRESETS[0].id);
@@ -115,8 +114,6 @@ export default function App() {
   const [indexResult, setIndexResult] = useState<IndexRepositoryResponse | null>(null);
   const [indexBusy, setIndexBusy] = useState(false);
 
-  const [queueReason, setQueueReason] = useState<"LOW_CONFIDENCE" | "CITATION_GAP" | "POLICY_REVIEW" | "USER_ESCALATION">("LOW_CONFIDENCE");
-  const [boardStatus, setBoardStatus] = useState<BoardStatus | ("")>("");
   const [chatPrompt, setChatPrompt] = useState("How is a journey departure time represented in NeTEx XML?");
   const [chatTurns, setChatTurns] = useState<ChatTurn[]>([]);
 
@@ -203,11 +200,40 @@ export default function App() {
     };
   }, [apiBaseUrl, autoTokenEnabled]);
 
+  async function refreshBoardStatusMap(): Promise<void> {
+    try {
+      const result = await client.listEditorialBoard({ page: 1, pageSize: 100 });
+      const map = new Map<string, string>();
+      for (const item of result.items) map.set(item.requestId, item.status);
+      setBoardStatusMap(map);
+    } catch {
+      // best-effort: status column may be stale but should not block question loading
+    }
+  }
+
+  async function onDeleteQuestionEvent(questionEventIds: string[]): Promise<void> {
+    setBusy(true);
+    setError(null);
+    try {
+      await Promise.all(questionEventIds.map((id) => client.deleteQuestionEvent(id)));
+      const deletedSet = new Set(questionEventIds);
+      setAskedQuestions((prev) => prev.filter((q) => !deletedSet.has(q.questionEventId)));
+      setBoardResult((prev) => prev ? { ...prev, items: prev.items.filter((b) => !deletedSet.has(b.questionEventId)) } : prev);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function onLoadAskedQuestions(): Promise<void> {
     setBusy(true);
     setError(null);
     try {
-      const result = await client.listQuestionEvents({ page: 1, pageSize: 100 });
+      const [result] = await Promise.all([
+        client.listQuestionEvents({ page: 1, pageSize: 100 }),
+        refreshBoardStatusMap(),
+      ]);
       setAskedQuestions(result.items);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
@@ -472,6 +498,9 @@ export default function App() {
             mode: result.mode,
             confidence: result.confidence,
             reviewRequired: result.reviewRequired,
+            userLikes: false,
+            userDislikes: false,
+            answerSuccess: null,
           };
           const next = [row, ...prev.filter((item) => item.requestId !== row.requestId)];
           return next.slice(0, 200);
@@ -490,6 +519,9 @@ export default function App() {
           mode: result.mode,
           confidence: result.confidence,
           reviewRequired: result.reviewRequired,
+          userLikes: false,
+          userDislikes: false,
+          answerSuccess: null,
         };
         const next = [row, ...prev.filter((item) => item.requestId !== row.requestId)];
         return next.slice(0, 200);
@@ -560,6 +592,9 @@ export default function App() {
                 mode: result.mode,
                 confidence: result.confidence,
                 reviewRequired: result.reviewRequired,
+                userLikes: false,
+                userDislikes: false,
+                answerSuccess: null,
               };
               const next = [row, ...prev.filter((item) => item.requestId !== row.requestId)];
               return next.slice(0, 200);
@@ -578,6 +613,9 @@ export default function App() {
               mode: result.mode,
               confidence: result.confidence,
               reviewRequired: result.reviewRequired,
+              userLikes: false,
+              userDislikes: false,
+              answerSuccess: null,
             };
             const next = [row, ...prev.filter((item) => item.requestId !== row.requestId)];
             return next.slice(0, 200);
@@ -664,11 +702,8 @@ export default function App() {
     setBusy(true);
     setError(null);
     try {
-      await client.routeToEditorialQueue({
-        questionEventId,
-        reason: queueReason,
-        priority: "normal",
-      });
+      await client.routeToEditorialQueue({ questionEventId, priority: "normal" });
+      await Promise.all([onLoadEditorialBoard(), refreshBoardStatusMap()]);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
     } finally {
@@ -680,11 +715,7 @@ export default function App() {
     setBusy(true);
     setError(null);
     try {
-      const result = await client.listEditorialBoard({
-        status: boardStatus || undefined,
-        page: 1,
-        pageSize: 50,
-      });
+      const result = await client.listEditorialBoard({ page: 1, pageSize: 50 });
       setBoardResult(result);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
@@ -697,15 +728,21 @@ export default function App() {
     setBusy(true);
     setError(null);
     try {
-      const [approved, published] = await Promise.all([
-        client.listEditorialBoard({ status: "approved", page: 1, pageSize: 100 }),
-        client.listEditorialBoard({ status: "published", page: 1, pageSize: 100 }),
-      ]);
-      setFaqItems([...approved.items, ...published.items]);
+      const approved = await client.listEditorialBoard({ status: "approved", page: 1, pageSize: 100 });
+      setFaqItems(approved.items);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function onLoadQuestionEventDetail(questionEventId: string): Promise<QuestionEventDetail> {
+    try {
+      return await client.getQuestionEventDetail(questionEventId);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+      throw caught;
     }
   }
 
@@ -718,7 +755,9 @@ export default function App() {
         action,
         comment: `board action: ${action}`,
       });
-      await onLoadEditorialBoard();
+      const refreshes: Promise<void>[] = [onLoadEditorialBoard(), refreshBoardStatusMap(), onLoadFaq()];
+      if (action === "revoke") refreshes.push(onLoadAskedQuestions());
+      await Promise.all(refreshes);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
     } finally {
@@ -788,19 +827,18 @@ export default function App() {
                   selectedQuestionEventId={selectedQuestionEventId}
                   boardResult={boardResult}
                   faqItems={faqItems}
-                  queueReason={queueReason}
-                  boardStatus={boardStatus}
+                  boardStatusMap={boardStatusMap}
                   busy={busy}
                   token={token}
                   setQuestion={setQuestion}
-                  setQueueReason={setQueueReason}
                   setSelectedQuestionEventId={setSelectedQuestionEventId}
-                  setBoardStatus={setBoardStatus}
                   onAskQuestion={onAskQuestion}
                   onLoadAskedQuestions={onLoadAskedQuestions}
                   onQueueEditorial={onQueueEditorial}
+                  onDeleteQuestionEvent={onDeleteQuestionEvent}
                   onLoadEditorialBoard={onLoadEditorialBoard}
                   onLoadFaq={onLoadFaq}
+                  onLoadQuestionEventDetail={onLoadQuestionEventDetail}
                   onQuickTransition={onQuickTransition}
                   indexRepoUrl={indexRepoUrl}
                   indexRepoPath={indexRepoPath}

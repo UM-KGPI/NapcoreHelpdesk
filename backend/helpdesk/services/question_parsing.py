@@ -38,7 +38,6 @@ _STANDARD_BY_NAMESPACE = {
     "netex": "NeTEx",
     "opra": "OpRa",
     "siri": "SIRI",
-    "datex": "DATEX II",
     "transmodel": "Transmodel",
 }
 

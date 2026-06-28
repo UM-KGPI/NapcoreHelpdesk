@@ -1,4 +1,4 @@
-export type StandardsScope = "Transmodel" | "NeTEx" | "SIRI" | "OpRa" | "DATEX II" | "Profile Documentation";
+export type StandardsScope = "Transmodel" | "NeTEx" | "SIRI" | "OpRa" | "Profile Documentation";
 
 export type AnswerMode = "faq" | "rag" | "abstain";
 
@@ -88,6 +88,9 @@ export interface AskedQuestionRow {
   mode: AnswerMode;
   confidence: number;
   reviewRequired: boolean;
+  userLikes: boolean;
+  userDislikes: boolean;
+  answerSuccess: boolean | null;
 }
 
 export interface QuestionEventsResponse {
@@ -119,7 +122,7 @@ export interface EditorialQueueResponse {
 }
 
 export interface EditorialTransition {
-  action: "submit_for_review" | "request_changes" | "approve" | "reject" | "publish" | "reopen";
+  action: "request_changes" | "approve" | "reject" | "revoke" | "publish" | "reopen";
   fromStatus: string;
   toStatus: string;
   actorId: string;
@@ -134,7 +137,7 @@ export interface EditorialQueueTransitionResponse {
 
 export interface EditorialBoardItem {
   queueItemId: string;
-  status: "draft" | "review" | "approved" | "rejected" | "published";
+  status: "in_review" | "approved" | "rejected" | "revoked" | "published";
   reason: "LOW_CONFIDENCE" | "CITATION_GAP" | "POLICY_REVIEW" | "USER_ESCALATION";
   priority: "low" | "normal" | "high";
   questionEventId: string;
@@ -142,9 +145,7 @@ export interface EditorialBoardItem {
   question: string;
   createdAt: string;
   updatedAt: string;
-  allowedActions: Array<
-    "submit_for_review" | "request_changes" | "approve" | "reject" | "publish" | "reopen"
-  >;
+  allowedActions: Array<"approve" | "reject" | "revoke" | "reopen">;
 }
 
 export interface EditorialBoardResponse {
@@ -162,7 +163,7 @@ export interface EditorialBoardMetricsResponse {
   totalItems: number;
   unresolvedItems: number;
   overdueItems: number;
-  byStatus: Record<"draft" | "review" | "approved" | "rejected" | "published", number>;
+  byStatus: Record<"in_review" | "approved" | "rejected" | "revoked" | "published", number>;
   byPriority: Record<"low" | "normal" | "high", number>;
   byReason: Record<"LOW_CONFIDENCE" | "CITATION_GAP" | "POLICY_REVIEW" | "USER_ESCALATION", number>;
   agingBuckets: {
@@ -233,6 +234,24 @@ export interface EditorialSemanticClustersResponse {
   clusteredEvents: number;
   singletonEvents: number;
   clusters: EditorialSemanticCluster[];
+}
+
+export interface QuestionEventCitation {
+  label: string | null;
+  sourcePath: string;
+  repositoryUrl: string;
+  chunkId: string;
+}
+
+export interface QuestionEventDetail {
+  questionEventId: string;
+  requestId: string;
+  question: string;
+  answer: string;
+  mode: AnswerMode;
+  confidence: number;
+  citations: QuestionEventCitation[];
+  createdAt: string;
 }
 
 export interface IndexRepositoryResponse {

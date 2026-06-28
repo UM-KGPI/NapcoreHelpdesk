@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 
-STANDARDS_SCOPE_CHOICES = ["Transmodel", "NeTEx", "SIRI", "OpRa", "DATEX II"]
+STANDARDS_SCOPE_CHOICES = ["Transmodel", "NeTEx", "SIRI", "OpRa"]
 
 
 class AnswerOptionsSerializer(serializers.Serializer):
@@ -71,6 +71,9 @@ class QuestionEventsListQuerySerializer(serializers.Serializer):
     pageSize = serializers.IntegerField(required=False, min_value=1, max_value=200, default=100)
     mode = serializers.ChoiceField(choices=["faq", "rag", "abstain"], required=False)
     reviewRequired = serializers.BooleanField(required=False, allow_null=True, default=None)
+    userLikes = serializers.BooleanField(required=False, allow_null=True, default=None)
+    userDislikes = serializers.BooleanField(required=False, allow_null=True, default=None)
+    answerSuccess = serializers.BooleanField(required=False, allow_null=True, default=None)
     search = serializers.CharField(required=False, allow_blank=True, default="")
 
 
@@ -96,7 +99,9 @@ class EditorialQueueRequestSerializer(serializers.Serializer):
 
     questionEventId = serializers.CharField()
     reason = serializers.ChoiceField(
-        choices=["LOW_CONFIDENCE", "CITATION_GAP", "POLICY_REVIEW", "USER_ESCALATION"]
+        choices=["LOW_CONFIDENCE", "CITATION_GAP", "POLICY_REVIEW", "USER_ESCALATION"],
+        required=False,
+        default="USER_ESCALATION",
     )
     priority = serializers.ChoiceField(
         choices=["low", "normal", "high"], required=False, default="normal"
@@ -107,7 +112,7 @@ class EditorialQueueListQuerySerializer(serializers.Serializer):
     """Query params for listing editorial queue board items with paging and filters."""
 
     status = serializers.ChoiceField(
-        choices=["draft", "review", "approved", "rejected", "published"],
+        choices=["in_review", "approved", "rejected", "revoked", "published"],
         required=False,
     )
     reason = serializers.ChoiceField(
@@ -136,10 +141,10 @@ class EditorialQueueTransitionRequestSerializer(serializers.Serializer):
     queueItemId = serializers.UUIDField()
     action = serializers.ChoiceField(
         choices=[
-            "submit_for_review",
             "request_changes",
             "approve",
             "reject",
+            "revoke",
             "publish",
             "reopen",
         ]

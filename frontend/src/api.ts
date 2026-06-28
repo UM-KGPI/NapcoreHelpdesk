@@ -9,6 +9,7 @@ import type {
   HealthResponse,
   IndexRepositoryResponse,
   PromotionCandidatesResponse,
+  QuestionEventDetail,
   QuestionEventsResponse,
   StandardsScope,
 } from "./types";
@@ -32,7 +33,6 @@ export interface AnswerRequest {
 
 export interface EditorialQueueRequest {
   questionEventId: string;
-  reason: "LOW_CONFIDENCE" | "CITATION_GAP" | "POLICY_REVIEW" | "USER_ESCALATION";
   priority?: "low" | "normal" | "high";
 }
 
@@ -62,12 +62,12 @@ export interface SemanticClustersQuery {
 
 export interface EditorialQueueTransitionRequest {
   queueItemId: string;
-  action: "submit_for_review" | "request_changes" | "approve" | "reject" | "publish" | "reopen";
+  action: "request_changes" | "approve" | "reject" | "revoke" | "publish" | "reopen";
   comment?: string;
 }
 
 export interface EditorialBoardQuery {
-  status?: "draft" | "review" | "approved" | "rejected" | "published";
+  status?: "in_review" | "approved" | "rejected" | "revoked" | "published";
   reason?: "LOW_CONFIDENCE" | "CITATION_GAP" | "POLICY_REVIEW" | "USER_ESCALATION";
   priority?: "low" | "normal" | "high";
   search?: string;
@@ -85,6 +85,9 @@ export interface QuestionEventsQuery {
   pageSize?: number;
   mode?: "faq" | "rag" | "abstain";
   reviewRequired?: boolean;
+  userLikes?: boolean;
+  userDislikes?: boolean;
+  answerSuccess?: boolean;
   search?: string;
 }
 
@@ -148,9 +151,18 @@ export class HelpdeskApiClient {
     params.set("pageSize", String(query.pageSize ?? 100));
     if (query.mode) params.set("mode", query.mode);
     if (query.reviewRequired != null) params.set("reviewRequired", String(query.reviewRequired));
+    if (query.userLikes != null) params.set("userLikes", String(query.userLikes));
+    if (query.userDislikes != null) params.set("userDislikes", String(query.userDislikes));
+    if (query.answerSuccess != null) params.set("answerSuccess", String(query.answerSuccess));
     if (query.search && query.search.trim()) params.set("search", query.search.trim());
     return this.request<QuestionEventsResponse>(`/questions/events?${params.toString()}`, {
       method: "GET",
+    });
+  }
+
+  async deleteQuestionEvent(questionEventId: string): Promise<void> {
+    await this.request<void>(`/questions/events/${encodeURIComponent(questionEventId)}`, {
+      method: "DELETE",
     });
   }
 
@@ -294,6 +306,12 @@ export class HelpdeskApiClient {
     params.set("similarityThreshold", String(query.similarityThreshold ?? 0.82));
     params.set("maxEvents", String(query.maxEvents ?? 500));
     return this.request<EditorialSemanticClustersResponse>(`/editorial/semantic-clusters?${params.toString()}`, {
+      method: "GET",
+    });
+  }
+
+  async getQuestionEventDetail(questionEventId: string): Promise<QuestionEventDetail> {
+    return this.request<QuestionEventDetail>(`/questions/events/${encodeURIComponent(questionEventId)}`, {
       method: "GET",
     });
   }
