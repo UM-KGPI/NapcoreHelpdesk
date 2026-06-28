@@ -33,7 +33,6 @@ export interface AnswerRequest {
 
 export interface EditorialQueueRequest {
   questionEventId: string;
-  priority?: "low" | "normal" | "high";
 }
 
 export interface AnswerFeedbackRequest {

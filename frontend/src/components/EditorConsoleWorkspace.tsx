@@ -29,8 +29,6 @@ type EditorTab = "assist" | "editorial" | "faq" | "indexing";
 type SortDir = "asc" | "desc";
 type SortState = { col: string; dir: SortDir } | null;
 
-const PRIORITY_ORDER: Record<string, number> = { high: 0, normal: 1, low: 2 };
-
 function toggleSortState(current: SortState, col: string): SortState {
   if (!current || current.col !== col) return { col, dir: "asc" };
   if (current.dir === "asc") return { col, dir: "desc" };
@@ -113,7 +111,6 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
   const [detailLoading, setDetailLoading] = useState<Set<string>>(new Set());
   const [detailErrors, setDetailErrors] = useState<Record<string, string>>({});
   const [askedSort, setAskedSort] = useState<SortState>(null);
-  const [reviewSort, setReviewSort] = useState<SortState>(null);
   const answerResultRef = useRef<HTMLElement | null>(null);
   const lastAnswerRequestIdRef = useRef<string | null>(null);
   const {
@@ -222,15 +219,6 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
 
   const boardItems = boardResult?.items ?? [];
   const inReviewBoardItems = boardItems.filter((item) => item.status === "in_review");
-
-  const sortedReviewItems = useMemo(() => {
-    if (!reviewSort) return inReviewBoardItems;
-    const { col, dir } = reviewSort;
-    return [...inReviewBoardItems].sort((a, b) => {
-      const cmp = col === "priority" ? (PRIORITY_ORDER[a.priority] ?? 1) - (PRIORITY_ORDER[b.priority] ?? 1) : 0;
-      return dir === "asc" ? cmp : -cmp;
-    });
-  }, [inReviewBoardItems, reviewSort]);
   const faqTotalPages = Math.max(1, Math.ceil(faqItems.length / FAQ_PAGE_SIZE));
   const faqPageItems = faqItems.slice((faqPage - 1) * FAQ_PAGE_SIZE, faqPage * FAQ_PAGE_SIZE);
 
@@ -520,26 +508,24 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                   <table className="board-table">
                     <thead>
                       <tr>
-                        <th>Status</th>
-                        <SortTh col="priority" sort={reviewSort} onSort={(c) => setReviewSort((prev) => toggleSortState(prev, c))}>Priority</SortTh>
                         <th>Question</th>
+                        <th>Status</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {sortedReviewItems.map((item) => {
+                      {inReviewBoardItems.map((item) => {
                         const isOpen = reviewOpenId === item.queueItemId;
                         const detail = detailCache[item.questionEventId];
                         const loading = detailLoading.has(item.questionEventId);
                         return (
                           <React.Fragment key={item.queueItemId}>
                             <tr>
-                              <td>{item.status}</td>
-                              <td>{item.priority}</td>
                               <td>
                                 <div>{item.question}</div>
                                 <div className="muted tiny">{item.requestId}</div>
                               </td>
+                              <td>{item.status}</td>
                               <td>
                                 <div className="button-column">
                                   <button
@@ -574,7 +560,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                             </tr>
                             {isOpen && (
                               <tr>
-                                <td colSpan={4} className="detail-row">
+                                <td colSpan={3} className="detail-row">
                                   {loading && <p className="muted tiny">Loading answer…</p>}
                                   {!loading && !detail && detailErrors[item.questionEventId] && (
                                     <p className="muted tiny">Failed to load: {detailErrors[item.questionEventId]}</p>
