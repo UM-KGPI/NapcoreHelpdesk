@@ -702,7 +702,7 @@ export default function App() {
     setBusy(true);
     setError(null);
     try {
-      await client.routeToEditorialQueue({ questionEventId, priority: "normal" });
+      await client.routeToEditorialQueue({ questionEventId });
       await Promise.all([onLoadEditorialBoard(), refreshBoardStatusMap()]);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
