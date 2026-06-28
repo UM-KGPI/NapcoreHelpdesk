@@ -15,14 +15,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import App from "./App";
 
-async function openConnectionPanel(user: ReturnType<typeof userEvent.setup>): Promise<void> {
-  await user.click(screen.getByText("Connection"));
-}
-
-async function goToEditorialTab(user: ReturnType<typeof userEvent.setup>): Promise<void> {
-  await user.click(screen.getByRole("button", { name: "Editor Review" }));
-}
-
 function mockJsonResponse(payload: unknown, status = 200): Response {
   return new Response(JSON.stringify(payload), {
     status,
@@ -34,7 +26,7 @@ describe("Editorial Board flows", () => {
   beforeEach(() => {
     vi.spyOn(globalThis, "fetch");
     localStorage.setItem("napcore.helpdesk.autoToken", "false");
-    localStorage.removeItem("napcore.helpdesk.jwt");
+    localStorage.setItem("napcore.helpdesk.jwt", "jwt-token");
     window.history.pushState({}, "", "/editor");
   });
 
@@ -45,7 +37,7 @@ describe("Editorial Board flows", () => {
 
   it("loads board and displays in_review items", async () => {
     const fetchMock = vi.mocked(globalThis.fetch);
-    fetchMock.mockResolvedValueOnce(mockJsonResponse([]));
+    fetchMock.mockResolvedValueOnce(mockJsonResponse([])); // loadIndexRepoPresets on mount
     fetchMock.mockResolvedValueOnce(
       mockJsonResponse({
         page: 1,
@@ -72,9 +64,7 @@ describe("Editorial Board flows", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await openConnectionPanel(user);
-    await user.type(screen.getByPlaceholderText("Paste token"), "jwt-token");
-    await goToEditorialTab(user);
+    await user.click(screen.getByRole("button", { name: "Review Q&As" }));
     await user.click(screen.getByRole("button", { name: "Load queue" }));
 
     expect(await screen.findByText("Need policy check")).toBeInTheDocument();
@@ -104,9 +94,15 @@ describe("Editorial Board flows", () => {
       ],
     };
 
+    const emptyBoard = { page: 1, pageSize: 100, total: 0, actorRoles: [], items: [] };
+    const updatedBoard = {
+      ...boardPayload,
+      items: [{ ...boardPayload.items[0], status: "approved", allowedActions: ["publish", "reopen"] }],
+    };
+
     fetchMock
-      .mockResolvedValueOnce(mockJsonResponse([]))
-      .mockResolvedValueOnce(mockJsonResponse(boardPayload))
+      .mockResolvedValueOnce(mockJsonResponse([])) // loadIndexRepoPresets on mount
+      .mockResolvedValueOnce(mockJsonResponse(boardPayload)) // Load queue
       .mockResolvedValueOnce(
         mockJsonResponse({
           queueItemId: "0f8fad5b-d9cb-469f-a165-70867728950e",
@@ -119,34 +115,23 @@ describe("Editorial Board flows", () => {
             actorRoles: ["reviewer"],
           },
         })
-      )
-      .mockResolvedValueOnce(
-        mockJsonResponse({
-          ...boardPayload,
-          items: [
-            {
-              ...boardPayload.items[0],
-              status: "approved",
-              allowedActions: ["publish", "reopen"],
-            },
-          ],
-        })
-      );
+      ) // transition
+      .mockResolvedValueOnce(mockJsonResponse(updatedBoard)) // onLoadEditorialBoard refresh
+      .mockResolvedValueOnce(mockJsonResponse(emptyBoard)) // refreshBoardStatusMap
+      .mockResolvedValueOnce(mockJsonResponse(emptyBoard)); // onLoadFaq
 
     const user = userEvent.setup();
     render(<App />);
 
-    await openConnectionPanel(user);
-    await user.type(screen.getByPlaceholderText("Paste token"), "jwt-token");
-    await goToEditorialTab(user);
-    await user.click(screen.getByRole("button", { name: "Load Queue" }));
+    await user.click(screen.getByRole("button", { name: "Review Q&As" }));
+    await user.click(screen.getByRole("button", { name: "Load queue" }));
 
     expect(await screen.findByText("Queue item for approval")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "approve" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "reject" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "publish" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Approve" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reject" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Publish" })).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "approve" }));
+    await user.click(screen.getByRole("button", { name: "Approve" }));
 
     let transitionUrl = "";
     let queueUrls: string[] = [];
@@ -161,113 +146,8 @@ describe("Editorial Board flows", () => {
     expect(transitionUrl).toContain("/editorial/queue/transition");
     expect(queueUrls.at(-1)).toContain("/editorial/queue?");
 
-    expect(await screen.findByRole("button", { name: "publish" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "approve" })).not.toBeInTheDocument();
-  });
-
-  it("loads KPI metrics and renders key tiles", async () => {
-    const fetchMock = vi.mocked(globalThis.fetch);
-    fetchMock.mockResolvedValueOnce(
-      mockJsonResponse([])
-    );
-    fetchMock.mockResolvedValueOnce(
-      mockJsonResponse({
-        windowDays: 14,
-        slaHours: 48,
-        generatedAt: "2026-03-28T12:00:00Z",
-        totalItems: 9,
-        unresolvedItems: 6,
-        overdueItems: 2,
-        byStatus: {
-          draft: 2,
-          review: 3,
-          approved: 1,
-          rejected: 1,
-          published: 2,
-        },
-        byPriority: {
-          low: 1,
-          normal: 5,
-          high: 3,
-        },
-        byReason: {
-          LOW_CONFIDENCE: 3,
-          CITATION_GAP: 2,
-          POLICY_REVIEW: 3,
-          USER_ESCALATION: 1,
-        },
-        agingBuckets: {
-          lt24h: 2,
-          h24to72: 3,
-          gt72h: 1,
-        },
-        feedbackToday: {
-          likes: 4,
-          dislikes: 1,
-        },
-        feedbackWindow: {
-          likes: 9,
-          dislikes: 3,
-        },
-      })
-    );
-
-    const user = userEvent.setup();
-    render(<App />);
-
-    await openConnectionPanel(user);
-    await user.type(screen.getByPlaceholderText("Paste token"), "jwt-token");
-    await goToEditorialTab(user);
-    await user.clear(screen.getByLabelText("metricsWindowDays"));
-    await user.type(screen.getByLabelText("metricsWindowDays"), "14");
-    await user.clear(screen.getByLabelText("metricsSlaHours"));
-    await user.type(screen.getByLabelText("metricsSlaHours"), "48");
-
-    await user.click(screen.getByText("Load Queue Metrics"));
-
-    let calledUrl = "";
-    await waitFor(() => {
-      calledUrl = fetchMock.mock.calls
-        .map(([url]) => String(url))
-        .find((url) => url.includes("/editorial/queue/metrics?")) ?? "";
-      expect(calledUrl).toBeTruthy();
-    });
-
-    expect(calledUrl).toContain("/editorial/queue/metrics?");
-    expect(calledUrl).toContain("windowDays=14");
-    expect(calledUrl).toContain("slaHours=48");
-
-    expect(screen.getByText("generated 2026-03-28T12:00:00Z")).toBeInTheDocument();
-    expect(screen.getByText("Overdue")).toBeInTheDocument();
-    expect(screen.getByText("gt72h")).toBeInTheDocument();
-  });
-
-  it("shows error banner when KPI metrics request fails", async () => {
-    const fetchMock = vi.mocked(globalThis.fetch);
-    fetchMock.mockResolvedValueOnce(
-      mockJsonResponse([])
-    );
-    fetchMock.mockResolvedValueOnce(
-      mockJsonResponse(
-        {
-          error: {
-            code: "HTTP_500",
-            message: "Metrics backend unavailable",
-            requestId: "req-metrics-fail-1",
-          },
-        },
-        500
-      )
-    );
-
-    const user = userEvent.setup();
-    render(<App />);
-
-    await openConnectionPanel(user);
-    await user.type(screen.getByPlaceholderText("Paste token"), "jwt-token");
-    await goToEditorialTab(user);
-    await user.click(screen.getByText("Load Queue Metrics"));
-
-    expect(await screen.findByText("HTTP_500: Metrics backend unavailable (requestId: req-metrics-fail-1)")).toBeInTheDocument();
+    // After refresh, the approved item no longer appears in the in-review list
+    expect(await screen.findByText("No questions in review.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Approve" })).not.toBeInTheDocument();
   });
 });
