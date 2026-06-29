@@ -8,9 +8,10 @@ This public repository keeps only essential documentation.
 2. [API description](api-description.md)
 3. [Database architecture](database-architecture.md)
 4. [Installation (local and Docker)](installation.md)
-5. [Semantic store](semantic-store.md)
-6. [LLM usage](llm-usage.md)
-7. [Ontology enrichment](ontology-enrichment.md)
+5. [Production deployment (Fedora VM + Docker Compose)](production-deployment.md)
+6. [Semantic store](semantic-store.md)
+7. [LLM usage](llm-usage.md)
+8. [Ontology enrichment](ontology-enrichment.md)
 
 ## Full internal documentation
 
