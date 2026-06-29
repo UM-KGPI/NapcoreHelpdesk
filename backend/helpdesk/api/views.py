@@ -105,6 +105,11 @@ def _build_file_url(repo_url: str, commit_sha: str, source_path: str) -> str:
     if repo_url.endswith(".git"):
         repo_url = repo_url[:-4]
 
+    # Prevent double /blob/ construction if source_path is malformed
+    if "/blob/" in source_path:
+        # sourcePath should not contain /blob/; this indicates corrupted data
+        source_path = source_path.split("/blob/")[-1]
+
     if source_path.startswith("issues/") and source_path.endswith(".md"):
         issue_number = Path(source_path).stem
         if issue_number.isdigit():
