@@ -692,9 +692,9 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                           >
                             {loading ? "Loading…" : isOpen && detail ? "Hide" : "Show"}
                           </button>
-                          {item.allowedActions.map((action) => (
+                          {item.allowedActions.map((action: any) => (
                             action !== "publish" && (
-                              <button key={`${item.queueItemId}-${action}`} onClick={() => onQuickTransition(item, action as TransitionAction)} disabled={busy || !token}>
+                              <button key={`${item.queueItemId}-${action}`} onClick={() => onQuickTransition(item, action)} disabled={busy || !token}>
                                 {formatAction(action)}
                               </button>
                             )
