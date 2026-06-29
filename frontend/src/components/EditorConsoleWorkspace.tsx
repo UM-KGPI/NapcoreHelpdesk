@@ -1,11 +1,10 @@
 /**
  * Editorial Console UI — the main editor-facing workspace.
  *
- * Renders four editorial sub-views inside the "Review Q&As" tab:
- *   Questions Asked         — grouped, deduped question list with status badges and sort
- *   Questions in Review     — in_review items only, with approve/reject actions
- *   Approved for Publishing — approved items only, with publish action
- *   FAQs                    — published items with full answer, evidence (no actions)
+ * Renders three editorial sub-views inside the "Review Q&As" tab:
+ *   Questions Asked     — grouped, deduped question list with status badges and sort
+ *   Questions in Review — in_review items only, with approve/reject actions
+ *   FAQs                — approved items with full answer, evidence, and revoke (no publish)
  *
  * Design notes:
  *   Questions in Review shows only in_review items. Rejected/revoked items are
@@ -36,7 +35,7 @@ import type {
   IndexRepositoryResponse,
   QuestionEventDetail,
 } from "../types";
-const TRANSITION_ACTIONS = ["approve", "reject", "revoke", "reopen"] as const;
+const TRANSITION_ACTIONS = ["approve", "reject", "publish", "revoke", "reopen"] as const;
 const BOARD_STATUSES = ["in_review", "approved", "rejected", "revoked"] as const;
 
 function formatDate(iso: string): string {
@@ -247,7 +246,6 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
 
   const boardItems = boardResult?.items ?? [];
   const inReviewBoardItems = boardItems.filter((item) => item.status === "in_review");
-  const approvedBoardItems = boardItems.filter((item) => item.status === "approved");
 
   const sortedReviewItems = useMemo(() => {
     if (!reviewSort) return inReviewBoardItems;
@@ -637,48 +635,6 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                 </div>
               )}
             </section>
-
-            <section className="panel step-5b-approved">
-              <div className="panel-title-row">
-                <h2>
-                  Approved for Publishing
-                  {approvedBoardItems.length > 0 && (
-                    <span className="heading-count">{approvedBoardItems.length}</span>
-                  )}
-                </h2>
-                <p className="muted">Publish approved answers to make them available as FAQs.</p>
-              </div>
-
-              {boardResult && approvedBoardItems.length === 0 && <p className="muted">No approved questions waiting for publishing.</p>}
-              {boardResult && approvedBoardItems.length > 0 && (
-                <div className="table-wrap">
-                  <table className="board-table">
-                    <thead>
-                      <tr>
-                        <th>Question</th>
-                        <th className="col-actions">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {approvedBoardItems.map((item) => (
-                        <tr key={item.queueItemId}>
-                          <td>{item.question}</td>
-                          <td>
-                            <div className="button-column">
-                              {item.allowedActions.map((action) => (
-                                <button key={`${item.queueItemId}-${action}`} onClick={() => onQuickTransition(item, action as TransitionAction)} disabled={busy || !token}>
-                                  {formatAction(action)}
-                                </button>
-                              ))}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </section>
           </>
         )}
 
@@ -737,9 +693,11 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                             {loading ? "Loading…" : isOpen && detail ? "Hide" : "Show"}
                           </button>
                           {item.allowedActions.map((action) => (
-                            <button key={`${item.queueItemId}-${action}`} onClick={() => onQuickTransition(item, action as TransitionAction)} disabled={busy || !token}>
-                              {formatAction(action)}
-                            </button>
+                            action !== "publish" && (
+                              <button key={`${item.queueItemId}-${action}`} onClick={() => onQuickTransition(item, action as TransitionAction)} disabled={busy || !token}>
+                                {formatAction(action)}
+                              </button>
+                            )
                           ))}
                         </div>
                         {isOpen && loading && <p className="muted tiny">Loading answer…</p>}

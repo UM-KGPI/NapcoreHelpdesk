@@ -46,6 +46,7 @@ const TRANSITION_ACTIONS = [
   "request_changes",
   "approve",
   "reject",
+  "publish",
   "revoke",
   "reopen",
 ] as const;
@@ -775,8 +776,8 @@ export default function App() {
     setBusy(true);
     setError(null);
     try {
-      const published = await client.listEditorialBoard({ status: "published", page: 1, pageSize: 100 });
-      setFaqItems(published.items);
+      const approved = await client.listEditorialBoard({ status: "approved", page: 1, pageSize: 100 });
+      setFaqItems(approved.items);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
     } finally {
