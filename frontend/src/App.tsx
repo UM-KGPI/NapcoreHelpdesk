@@ -145,6 +145,7 @@ export default function App() {
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [backendBuildRef, setBackendBuildRef] = useState("");
   const client = useMemo(() => new HelpdeskApiClient({ baseUrl: apiBaseUrl, token }), [apiBaseUrl, token]);
   const authValue = useMemo(
     () => ({
@@ -165,6 +166,26 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(AUTO_TOKEN_STORAGE_KEY, String(autoTokenEnabled));
   }, [autoTokenEnabled]);
+
+  useEffect(() => {
+    async function fetchBuildRef(): Promise<void> {
+      try {
+        const response = await fetch(`${apiBaseUrl}/health/live`, { cache: "no-store" });
+        if (!response.ok) return;
+        const data: unknown = await response.json();
+        if (typeof data === "object" && data !== null && "buildRef" in data) {
+          const buildRef = (data as Record<string, unknown>).buildRef;
+          if (typeof buildRef === "string") {
+            setBackendBuildRef(buildRef);
+          }
+        }
+      } catch {
+        // Health endpoint unavailable; continue without build ref
+      }
+    }
+
+    void fetchBuildRef();
+  }, [apiBaseUrl]);
 
   useEffect(() => {
     let cancelled = false;
@@ -824,6 +845,7 @@ export default function App() {
             element={
               <SharedAppLayout
                 appVersion={frontendVersion}
+                backendBuildRef={backendBuildRef}
               />
             }
           >

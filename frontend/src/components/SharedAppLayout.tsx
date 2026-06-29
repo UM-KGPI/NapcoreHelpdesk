@@ -15,6 +15,7 @@ import { useAuth } from "../auth-context";
 
 interface SharedAppLayoutProps {
   appVersion: string;
+  backendBuildRef: string;
 }
 
 function formatAppVersion(appVersion: string): string {
@@ -25,7 +26,7 @@ function formatAppVersion(appVersion: string): string {
   return `${baseVersion} (${buildMetadata})`;
 }
 
-export default function SharedAppLayout({ appVersion }: SharedAppLayoutProps) {
+export default function SharedAppLayout({ appVersion, backendBuildRef }: SharedAppLayoutProps) {
   useAuth();
 
   return (
@@ -33,7 +34,10 @@ export default function SharedAppLayout({ appVersion }: SharedAppLayoutProps) {
       <header className="app-title-header">
         <h1>NAPCORE Helpdesk</h1>
         <p className="app-subtitle">Source-Grounded Q&A Assistant with Editorial knowledge building for Transmodel ecosystem</p>
-        <p className="app-version-line">Version {formatAppVersion(appVersion)}</p>
+        <p className="app-version-line">
+          Frontend {formatAppVersion(appVersion)}
+          {backendBuildRef && ` · Backend ${backendBuildRef}`}
+        </p>
       </header>
       <section className="panel route-switcher-panel">
         <div className="route-switcher-copy">
