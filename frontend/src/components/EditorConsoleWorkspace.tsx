@@ -341,10 +341,28 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                     </ul>
                   )}
 
-                  <h4>Citations (raw JSON)</h4>
-                  <pre style={{ fontSize: "0.75rem", maxHeight: "200px", overflow: "auto" }}>
-                    {JSON.stringify(answerResult.citations, null, 2)}
-                  </pre>
+                  <h4>Debug: Citations</h4>
+                  <p className="muted tiny">
+                    {answerResult.citations.length > 0 && (
+                      <>
+                        E1 repositoryUrl: <code>{answerResult.citations[0].repositoryUrl}</code>
+                        <br />
+                        E1 commitSha: <code>{answerResult.citations[0].commitSha}</code>
+                        <br />
+                        E1 sourcePath: <code>{answerResult.citations[0].sourcePath}</code>
+                        <br />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const url = answerResult.citations[0].repositoryUrl;
+                            window.open(url, "_blank");
+                          }}
+                        >
+                          Open E1 URL
+                        </button>
+                      </>
+                    )}
+                  </p>
 
                   <h4>Trace</h4>
                   <pre>{JSON.stringify(answerResult.trace, null, 2)}</pre>
