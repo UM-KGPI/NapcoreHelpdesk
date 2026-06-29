@@ -61,11 +61,6 @@ function toggleSortState(current: SortState, col: string): SortState {
   return null;
 }
 
-function buildGitHubFileUrl(repositoryUrl: string, commitSha: string, sourcePath: string): string {
-  const cleanUrl = repositoryUrl.replace(/\/$/, "").replace(/\.git$/, "");
-  return `${cleanUrl}/blob/${commitSha}/${sourcePath}`;
-}
-
 function SortTh({ col, sort, onSort, children }: { col: string; sort: SortState; onSort: (col: string) => void; children: React.ReactNode }) {
   const active = sort?.col === col;
   const indicator = active ? (sort.dir === "asc" ? "▲" : "▼") : "⇅";
@@ -339,7 +334,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                       {answerResult.citations.map((citation, index) => (
                         <li key={`${citation.chunkId}-${citation.sourcePath}`}>
                           <strong>{`[E${index + 1}]`}</strong>{" "}
-                          <a href={buildGitHubFileUrl(citation.repositoryUrl, citation.commitSha, citation.sourcePath)} target="_blank" rel="noreferrer">{citation.label ?? citation.sourcePath}</a>
+                          <a href={citation.repositoryUrl} target="_blank" rel="noreferrer">{citation.label ?? citation.sourcePath}</a>
                           <span className="muted"> · {citation.sourcePath}</span>
                         </li>
                       ))}
