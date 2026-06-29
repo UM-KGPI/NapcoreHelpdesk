@@ -1728,7 +1728,7 @@ class QuestionEventDetailView(APIView):
             )
 
         citations = []
-        for link in event.answer_evidence_links.all():
+        for link in event.answer_evidence_links.all().order_by("created_at"):
             citations.append({
                 "label": link.label or None,
                 "sourcePath": link.source_path,
