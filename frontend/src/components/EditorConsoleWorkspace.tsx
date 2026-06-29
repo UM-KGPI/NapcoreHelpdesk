@@ -341,6 +341,11 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                     </ul>
                   )}
 
+                  <h4>Citations (raw JSON)</h4>
+                  <pre style={{ fontSize: "0.75rem", maxHeight: "200px", overflow: "auto" }}>
+                    {JSON.stringify(answerResult.citations, null, 2)}
+                  </pre>
+
                   <h4>Trace</h4>
                   <pre>{JSON.stringify(answerResult.trace, null, 2)}</pre>
                 </article>
