@@ -76,11 +76,17 @@ def _build_faq_entry_id(*, normalized_intent: str, standards_scope: list[str]) -
 
 
 def _build_citations(queue_item: EditorialQueueItem) -> list[dict]:
+    from helpdesk.api.views import _build_file_url
+
     citations: list[dict] = []
     for link in queue_item.question_event.answer_evidence_links.all().order_by("created_at"):
         citations.append(
             {
-                "repositoryUrl": link.repository_url,
+                "repositoryUrl": _build_file_url(
+                    repo_url=link.repository_url,
+                    commit_sha=link.commit_sha,
+                    source_path=link.source_path,
+                ),
                 "commitSha": link.commit_sha,
                 "sourcePath": link.source_path,
                 "chunkId": link.chunk_id,
