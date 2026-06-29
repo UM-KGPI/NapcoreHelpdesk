@@ -107,8 +107,10 @@ def _build_file_url(repo_url: str, commit_sha: str, source_path: str) -> str:
 
     # Prevent double /blob/ construction if source_path is malformed
     if "/blob/" in source_path:
-        # sourcePath should not contain /blob/; this indicates corrupted data
-        source_path = source_path.split("/blob/")[-1]
+        # sourcePath should not contain /blob/; extract actual relative file path
+        # If path is like "examples/file.xml/blob/main/examples/file.xml", take the first part
+        parts = source_path.split("/blob/")
+        source_path = parts[0] if parts[0] and not parts[0].startswith("/") else parts[-1]
 
     if source_path.startswith("issues/") and source_path.endswith(".md"):
         issue_number = Path(source_path).stem
