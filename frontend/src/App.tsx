@@ -775,8 +775,8 @@ export default function App() {
     setBusy(true);
     setError(null);
     try {
-      const approved = await client.listEditorialBoard({ status: "approved", page: 1, pageSize: 100 });
-      setFaqItems(approved.items);
+      const published = await client.listEditorialBoard({ status: "published", page: 1, pageSize: 100 });
+      setFaqItems(published.items);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
     } finally {
