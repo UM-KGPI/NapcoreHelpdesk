@@ -142,16 +142,21 @@ function EditorWithQueryParams(props: React.ComponentProps<typeof EditorConsoleW
   useEffect(() => {
     const questionId = searchParams.get("questionId");
     if (questionId) {
-      // Set the selected question ID
-      props.setSelectedQuestionEventId(questionId);
-      // Refresh the asked questions list so it displays
-      void props.onLoadAskedQuestions();
       // Load the full question details from the backend
-      props.onLoadQuestionEventDetail(questionId).catch((error) => {
-        console.error(`Failed to load question ${questionId}:`, error);
-      });
+      props.onLoadQuestionEventDetail(questionId)
+        .then((detail) => {
+          // Populate the Q&A Assistant with the historical question
+          props.setQuestion(detail.question);
+          // Set selected ID so it's highlighted in the list
+          props.setSelectedQuestionEventId(questionId);
+          // Also refresh the asked questions list
+          void props.onLoadAskedQuestions();
+        })
+        .catch((error) => {
+          console.error(`Failed to load question ${questionId}:`, error);
+        });
     }
-  }, [searchParams, props.setSelectedQuestionEventId, props.onLoadAskedQuestions, props.onLoadQuestionEventDetail]);
+  }, [searchParams, props.setQuestion, props.setSelectedQuestionEventId, props.onLoadAskedQuestions, props.onLoadQuestionEventDetail]);
 
   return <EditorConsoleWorkspace {...props} />;
 }
