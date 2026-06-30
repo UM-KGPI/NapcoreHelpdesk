@@ -339,8 +339,9 @@ def load_default_ontology_graphs(
     active for standard-specific, normative constraint reasoning.
     """
 
-    base_dir = Path(__file__).resolve().parents[3]
-    ontology_dir = base_dir / "docs" / "ontology"
+    import os as _os
+    _override = _os.environ.get("NAPCORE_ONTOLOGY_DIR")
+    ontology_dir = Path(_override) if _override else Path(__file__).resolve().parents[3] / "docs" / "ontology"
 
     graph_specs = [
         (
