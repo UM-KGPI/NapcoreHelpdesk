@@ -36,17 +36,40 @@ def _build_minimal_grounded_answer(chunks: list[dict]) -> str:
 
 
 def _build_example_list_answer(chunks: list[dict]) -> str:
-    """Build answer listing example files found in retrieved evidence."""
+    """Build answer listing example files with actual snippet content."""
     if not chunks:
         return "No examples found in available evidence."
 
-    examples = []
-    for i, chunk in enumerate(chunks[:5], 1):
+    answer_parts = ["Yes, the following examples are available:\n"]
+
+    for i, chunk in enumerate(chunks[:3], 1):  # Show up to 3 examples with snippets
         source_path = chunk.get("sourcePath", "").split("/")[-1]
         repo_url = chunk.get("repositoryUrl", "").split("/")[-1] if chunk.get("repositoryUrl") else "source"
-        examples.append(f"[E{i}] {source_path} ({repo_url})")
 
-    return f"Yes, the following examples are available:\n" + "\n".join(examples)
+        # Add file reference with citation
+        answer_parts.append(f"[E{i}] {source_path} ({repo_url})")
+
+        # Extract and include snippet if available
+        text = str(chunk.get("text", "")).strip()
+        if text:
+            # For XML/code-like content, show first ~300 chars
+            is_xml = text.startswith("<?xml") or text.startswith("<")
+            is_code = any(text.startswith(marker) for marker in ["```", "{", "[", "class ", "def "])
+
+            if is_xml or is_code:
+                # Take first meaningful chunk, trim to reasonable length
+                snippet = text[:300]
+                if len(text) > 300:
+                    snippet += "..."
+                answer_parts.append(f"```\n{snippet}\n```")
+            else:
+                # For prose, show first sentence/summary
+                first_line = text.split("\n")[0][:150]
+                answer_parts.append(f"> {first_line}")
+
+        answer_parts.append("")  # Blank line between examples
+
+    return "\n".join(answer_parts)
 
 
 def _is_asking_for_examples(question: str) -> bool:
