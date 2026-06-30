@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: help diagrams-c4 diagrams-erd diagrams-bpmn diagrams-sequence openapi-validate backend-check backend-migrate backend-run backend-run-controller-local backend-run-controller-local-all backend-llm-server-local backend-run-narration-server-local backend-run-full-local dev-up dev-down backend-index backend-controller-smoke-local frontend-install frontend-dev frontend-build frontend-test graphdb-up graphdb-down graphdb-logs graphdb-init graphdb-load graphdb-verify graphdb-bootstrap ontology-scan-examples ontology-alignment-gap docker-dev-build docker-dev-up docker-dev-up-local-db docker-dev-up-graphdb docker-dev-up-external-postgres docker-dev-init-once docker-dev-down docker-dev-logs docker-dev-backup docker-dev-doctor docker-dev-safe-prune docker-dev-restore pre-commit-install pre-commit-run pre-commit-update hooks-install version-print version-bump-patch version-bump-minor version-bump-major shared-postgres-up shared-postgres-down shared-postgres-logs shared-postgres-bootstrap-app shared-postgres-audit up down status status-external health
+.PHONY: help diagrams-c4 diagrams-erd diagrams-bpmn diagrams-sequence openapi-validate backend-check backend-migrate backend-run backend-run-controller-local backend-run-controller-local-all backend-llm-server-local backend-run-narration-server-local backend-run-full-local dev-up dev-down backend-index backend-controller-smoke-local frontend-install frontend-dev frontend-build frontend-test graphdb-up graphdb-down graphdb-logs graphdb-init graphdb-load graphdb-verify graphdb-bootstrap ontology-scan-examples ontology-alignment-gap docker-dev-build docker-dev-up docker-dev-up-local-db docker-dev-up-graphdb docker-dev-up-external-postgres docker-dev-init-once docker-dev-down docker-dev-logs docker-dev-backup docker-dev-doctor docker-dev-safe-prune docker-dev-restore pre-commit-install pre-commit-run pre-commit-update hooks-install version-print version-bump-patch version-bump-minor version-bump-major shared-postgres-up shared-postgres-down shared-postgres-logs shared-postgres-bootstrap-app shared-postgres-audit up down status status-external health deploy-verify deploy-build
 
 ## ─── Shortcut ────────────────────────────────────────────────────────────────
 help: ## Show this help message
@@ -307,3 +307,32 @@ shared-postgres-audit: ## List databases and login roles in shared PostgreSQL
 	docker compose -f docker-compose.shared-postgres.yml exec -T postgres \
 		psql -U "$$ADMIN_USER" -d postgres \
 		-c "SELECT rolname AS role_name FROM pg_roles WHERE rolcanlogin = true ORDER BY rolname;"
+
+## ─── Deployment verification ─────────────────────────────────────────────
+deploy-verify: ## Verify code is deployment-ready (all checks before push)
+	@echo "=== Deployment Verification ===" && echo
+	@echo "[1/6] Checking git status..."
+	@git status --short | grep -q . && (echo "ERROR: Uncommitted changes found:" && git status --short && exit 1) || echo "✓ Working tree clean"
+	@echo
+	@echo "[2/6] Checking for pending migrations..."
+	@cd backend && ../.venv/bin/python manage.py makemigrations --dry-run 2>&1 | grep -q "No changes detected" || (echo "ERROR: Pending migrations found!" && exit 1) && echo "✓ No pending migrations"
+	@echo
+	@echo "[3/6] Running Django system checks..."
+	@$(MAKE) backend-check > /dev/null && echo "✓ Django checks passed" || exit 1
+	@echo
+	@echo "[4/6] Building frontend..."
+	@$(MAKE) frontend-build > /dev/null && echo "✓ Frontend built successfully" || exit 1
+	@echo
+	@echo "[5/6] Checking git log (last 3 commits)..."
+	@git log --oneline -3
+	@echo
+	@echo "[6/6] Pre-commit hooks check..."
+	@pre-commit run --all-files 2>&1 | tail -5
+	@echo
+	@echo "✅ ALL CHECKS PASSED - Ready to push to GitHub"
+	@echo "   Next: git push origin main"
+
+deploy-build: ## Build production Docker images locally (docker-compose.prod.yml)
+	@echo "Building production images with docker-compose.prod.yml..."
+	@docker compose -f docker-compose.prod.yml build --pull
+	@echo "✓ Production images built successfully"
