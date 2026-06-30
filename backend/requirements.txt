@@ -10,3 +10,4 @@ PyJWT>=2.8,<3.0
 jsonschema>=4.22,<5.0
 PyYAML>=6.0,<7.0
 certifi>=2024.8.30,<2027.0.0
+pyspellchecker>=0.8,<1.0
