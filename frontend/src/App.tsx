@@ -140,6 +140,15 @@ function UserChatWithQueryParams(props: React.ComponentProps<typeof UserChatWork
   const [searchParams] = useSearchParams();
   const [enhancedTurns, setEnhancedTurns] = useState<typeof props.chatTurns>(props.chatTurns);
 
+  // Sync with parent chatTurns when no query parameter
+  useEffect(() => {
+    const questionId = searchParams.get("questionId");
+    if (!questionId) {
+      setEnhancedTurns(props.chatTurns);
+    }
+  }, [props.chatTurns, searchParams]);
+
+  // Load historical question when query parameter present
   useEffect(() => {
     const questionId = searchParams.get("questionId");
     if (!questionId || !props.token) return;
