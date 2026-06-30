@@ -142,10 +142,16 @@ function EditorWithQueryParams(props: React.ComponentProps<typeof EditorConsoleW
   useEffect(() => {
     const questionId = searchParams.get("questionId");
     if (questionId) {
+      // Set the selected question ID
       props.setSelectedQuestionEventId(questionId);
-      void props.onLoadQuestionEventDetail(questionId);
+      // Refresh the asked questions list so it displays
+      void props.onLoadAskedQuestions();
+      // Load the full question details from the backend
+      props.onLoadQuestionEventDetail(questionId).catch((error) => {
+        console.error(`Failed to load question ${questionId}:`, error);
+      });
     }
-  }, [searchParams, props.setSelectedQuestionEventId, props.onLoadQuestionEventDetail]);
+  }, [searchParams, props.setSelectedQuestionEventId, props.onLoadAskedQuestions, props.onLoadQuestionEventDetail]);
 
   return <EditorConsoleWorkspace {...props} />;
 }
