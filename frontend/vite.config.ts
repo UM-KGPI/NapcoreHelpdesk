@@ -6,5 +6,8 @@ export default defineConfig({
   base: '/napcore-helpdesk/',
   server: {
     port: 5173,
+    fs: {
+      allow: ['..'],
+    },
   },
 })
