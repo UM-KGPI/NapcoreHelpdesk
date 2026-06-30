@@ -157,10 +157,18 @@ function UserChatWithQueryParams(props: React.ComponentProps<typeof UserChatWork
         return res.json();
       })
       .then((detail) => {
-        const newTurn: ChatTurn = {
-          id: detail.requestId,
-          role: "assistant",
+        // Create two turns: one for the question, one for the answer
+        const questionTurn: ChatTurn = {
+          id: `${detail.requestId}-q`,
+          role: "user",
           text: detail.question,
+          createdAt: detail.createdAt,
+        };
+
+        const answerTurn: ChatTurn = {
+          id: `${detail.requestId}-a`,
+          role: "assistant",
+          text: "", // Empty text, answer will be shown via answer field
           createdAt: detail.createdAt,
           answer: {
             answerId: detail.questionEventId,
@@ -180,7 +188,8 @@ function UserChatWithQueryParams(props: React.ComponentProps<typeof UserChatWork
           },
           requestId: detail.requestId,
         };
-        setEnhancedTurns([newTurn]);
+
+        setEnhancedTurns([questionTurn, answerTurn]);
       })
       .catch((error) => {
         console.error(`Failed to load question ${questionId}:`, error);
