@@ -119,10 +119,26 @@ def _faq_score(question: str, entry: FAQEntry) -> float:
     return hits / len(base_tokens)
 
 
+def _is_example_seeking_query(question: str) -> bool:
+    """Detect if question is asking for examples, implementations, or demonstrations."""
+    example_keywords = [
+        "example", "examples", "show", "demonstrate", "demonstration",
+        "sample", "instance", "xml", "code", "snippet", "template",
+        "implementation", "implementation example", "how is", "how are",
+        "provide", "give me", "get me", "find", "list", "any", "do you have"
+    ]
+    lower_q = question.lower()
+    return any(keyword in lower_q for keyword in example_keywords)
+
+
 def match_faq(question: str, scope: list[str] | None = None) -> dict | None:
     """Return highest-scoring published canonical FAQ candidate for the question."""
 
     _seed_default_faqs()
+
+    # Reject FAQ matching for example-seeking or implementation queries
+    if _is_example_seeking_query(question):
+        return None
 
     normalized_scope = set(scope or [])
 
