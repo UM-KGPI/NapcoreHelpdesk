@@ -23,6 +23,7 @@ import json
 import logging
 from pathlib import Path
 import subprocess
+from urllib.parse import quote
 from uuid import uuid4
 
 import jwt
@@ -117,6 +118,9 @@ def _build_file_url(repo_url: str, commit_sha: str, source_path: str) -> str:
         if issue_number.isdigit():
             return f"{repo_url}/issues/{issue_number}"
 
+    # Encode unsafe characters (e.g. spaces) in path segments while keeping / separators.
+    encoded_path = quote(source_path, safe="/")
+
     resolved_commit_sha = _resolve_commit_sha(repo_url=repo_url, commit_sha=commit_sha)
     # When commit SHA is unavailable, prefer a stable repository ref instead of a broken blob URL.
     normalized_ref = (resolved_commit_sha or "").strip()
@@ -124,7 +128,7 @@ def _build_file_url(repo_url: str, commit_sha: str, source_path: str) -> str:
     if normalized_ref.lower() in unresolved_refs:
         resolved_repo_ref = _resolve_repository_ref(repo_url=repo_url)
         if resolved_repo_ref:
-            return f"{repo_url}/blob/{resolved_repo_ref}/{source_path}"
+            return f"{repo_url}/blob/{resolved_repo_ref}/{encoded_path}"
 
         default_ref_by_repo = {
             "https://github.com/transmodelecosystem/netex": (
@@ -152,13 +156,13 @@ def _build_file_url(repo_url: str, commit_sha: str, source_path: str) -> str:
         fallback = default_ref_by_repo.get(repo_key)
         if fallback:
             canonical_repo_url, fallback_ref = fallback
-            return f"{canonical_repo_url}/blob/{fallback_ref}/{source_path}"
+            return f"{canonical_repo_url}/blob/{fallback_ref}/{encoded_path}"
 
         # Last-resort fallback: default to main to avoid emitting broken blob/unknown links.
-        return f"{repo_url}/blob/main/{source_path}"
+        return f"{repo_url}/blob/main/{encoded_path}"
 
     # Build the GitHub blob URL: https://github.com/OWNER/REPO/blob/COMMIT/PATH
-    return f"{repo_url}/blob/{normalized_ref}/{source_path}"
+    return f"{repo_url}/blob/{normalized_ref}/{encoded_path}"
 
 
 def _resolve_commit_sha(repo_url: str, commit_sha: str) -> str:
