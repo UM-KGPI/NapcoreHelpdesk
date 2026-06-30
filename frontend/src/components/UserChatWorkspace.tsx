@@ -317,9 +317,11 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                                 void onSetAnswerFeedback(requestId, { citationClicksDelta: 1 });
                               }}
                             >
-                              {citation.label ?? citation.sourcePath}
+                              {citation.label ?? citation.sourcePath.split("/").pop()}
                             </a>
-                            <span className="muted"> · {citation.sourcePath}</span>
+                            {citation.label && citation.label !== citation.sourcePath && (
+                              <span className="muted"> · {citation.sourcePath}</span>
+                            )}
                           </li>
                         ))}
                       </ul>
