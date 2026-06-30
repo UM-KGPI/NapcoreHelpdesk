@@ -298,7 +298,7 @@ def generate_answer_llm(
         raise LLMGenerationError("LLM response has no choices.")
 
     message = choices[0].get("message", {})
-    answer = (message.get("content") or message.get("reasoning_content") or "").strip()
+    answer = (message.get("content") or "").strip()
     if not answer:
         raise LLMGenerationError("LLM response was empty.")
 
@@ -358,8 +358,7 @@ def _stream_request_chat_completion(
             choices = chunk.get("choices") or []
             if not choices:
                 continue
-            d = choices[0].get("delta", {})
-            delta = d.get("content") or d.get("reasoning_content") or ""
+            delta = choices[0].get("delta", {}).get("content") or ""
             if delta:
                 yield delta
 
