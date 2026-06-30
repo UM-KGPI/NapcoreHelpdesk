@@ -53,6 +53,13 @@ _STANDARD_BY_NAMESPACE = {
     "transmodel": "Transmodel",
 }
 
+_STANDARD_KEYWORD_PATTERNS: dict[str, re.Pattern] = {
+    "NeTEx": re.compile(r"\bnetex\b", re.IGNORECASE),
+    "SIRI": re.compile(r"\bsiri\b", re.IGNORECASE),
+    "OpRa": re.compile(r"\bopra\b", re.IGNORECASE),
+    "Transmodel": re.compile(r"\btransmodel\b", re.IGNORECASE),
+}
+
 _INTENT_PATTERNS = {
     "normative_status": [r"\bshall\b", r"\bmust\b", r"\bshould\b", r"\bmay\b"],
     "definition": [r"\bwhat is\b", r"\bdefine\b", r"\bmeaning of\b"],
@@ -114,6 +121,11 @@ class QuestionParsingService:
             requested_scope=requested_scope,
             core_concepts=core_concepts,
         )
+
+        # Keyword fallback: when graph and GraphDB both fail to infer a standard,
+        # scan the question text directly for standard names that are literally present.
+        if not candidate_standards and not requested_scope:
+            candidate_standards = self._scan_standard_keywords(normalized)
 
         concept_confidence = self._concept_confidence(core_concepts)
         intent_confidence = self._intent_confidence(intent=intent, requested_scope=requested_scope)
@@ -273,6 +285,14 @@ class QuestionParsingService:
                 if len(discovered) >= _MAX_CORE_CONCEPT_CANDIDATES:
                     return discovered
         return discovered
+
+    def _scan_standard_keywords(self, text: str) -> list[str]:
+        """Return standards whose name appears verbatim in the question text."""
+        found: list[str] = []
+        for standard, pattern in _STANDARD_KEYWORD_PATTERNS.items():
+            if pattern.search(text):
+                found.append(standard)
+        return found
 
     def _discover_standards_with_graphdb(self, core_concepts: list[str]) -> list[str]:
         connector = self._graphdb_connector()

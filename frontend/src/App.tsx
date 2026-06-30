@@ -108,14 +108,47 @@ function createRequestId(): string {
   return `req-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+const BROWSER_LANGUAGE_NAMES: Record<string, string> = {
+  en: "English", nb: "Norwegian", no: "Norwegian", nn: "Norwegian Nynorsk",
+  sl: "Slovenian", de: "German", fr: "French", es: "Spanish", it: "Italian",
+  nl: "Dutch", pl: "Polish", pt: "Portuguese", sv: "Swedish", da: "Danish",
+  fi: "Finnish", cs: "Czech", sk: "Slovak", hu: "Hungarian", ro: "Romanian",
+  hr: "Croatian", bg: "Bulgarian", el: "Greek", lt: "Lithuanian", lv: "Latvian",
+  et: "Estonian", mt: "Maltese", ga: "Irish",
+};
+
+function detectBrowserLanguage(): string {
+  const tag = (navigator.languages?.[0] ?? navigator.language ?? "en").split("-")[0].toLowerCase();
+  return BROWSER_LANGUAGE_NAMES[tag] ?? "English";
+}
+
+function isJwtExpired(token: string): boolean {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return false;
+    const payload = JSON.parse(atob(parts[1])) as Record<string, unknown>;
+    const exp = typeof payload.exp === "number" ? payload.exp : null;
+    if (exp === null) return false;
+    return Date.now() / 1000 > exp;
+  } catch {
+    return false;
+  }
+}
+
 export default function App() {
   const frontendVersion = import.meta.env.VITE_APP_VERSION ?? '0.6.1';
   const [apiBaseUrl, setApiBaseUrl] = useState(() => {
-    // Use backend at localhost:8000 in dev, or same host in production
     const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    return isDev ? 'http://localhost:8000/api/v1' : `${window.location.origin}/api/v1`;
+    return isDev ? 'http://localhost:8000/api/v1' : `${window.location.origin}${import.meta.env.BASE_URL}api/v1`;
   });
-  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_STORAGE_KEY) ?? "");
+  const [token, setToken] = useState(() => {
+    const stored = localStorage.getItem(TOKEN_STORAGE_KEY) ?? "";
+    if (stored && isJwtExpired(stored)) {
+      localStorage.removeItem(TOKEN_STORAGE_KEY);
+      return "";
+    }
+    return stored;
+  });
   const [autoTokenEnabled, setAutoTokenEnabled] = useState(() => {
     const saved = localStorage.getItem(AUTO_TOKEN_STORAGE_KEY);
     return saved ? saved === "true" : true;
@@ -353,7 +386,7 @@ export default function App() {
       sessionId,
       userId,
       standardsScope: standardsScope.length > 0 ? standardsScope : undefined,
-      language: "en",
+      language: detectBrowserLanguage(),
       generationProfile: "llm-ready" as const,
       controllerProfile: "llm-ready" as const,
       options: {
@@ -495,7 +528,7 @@ export default function App() {
         sessionId,
         userId,
         standardsScope,
-        language: "en",
+        language: detectBrowserLanguage(),
         generationProfile: "llm-ready" as const,
         controllerProfile: "llm-ready" as const,
         options: {
@@ -589,7 +622,7 @@ export default function App() {
             sessionId,
             userId,
             standardsScope,
-            language: "en",
+            language: detectBrowserLanguage(),
             generationProfile: "llm-ready" as const,
             controllerProfile: "llm-ready" as const,
             options: {

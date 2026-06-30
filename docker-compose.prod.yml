@@ -15,8 +15,6 @@ x-backend-base: &backend-base
     GRAPHDB_SPARQL_ENDPOINT: http://graphdb:7200/repositories/napcore-helpdesk
     GRAPHDB_REPOSITORY: napcore-helpdesk
     GRAPHDB_TIMEOUT_SECONDS: "30"
-    # Disable dev-only auto-issued JWT tokens
-    DEV_JWT_AUTO_ISSUE: "False"
   depends_on:
     db:
       condition: service_healthy
@@ -95,7 +93,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "8080:80"
     depends_on:
       backend:
         condition: service_healthy
