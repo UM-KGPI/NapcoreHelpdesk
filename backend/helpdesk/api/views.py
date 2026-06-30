@@ -690,7 +690,7 @@ class DevTokenView(APIView):
 
     def post(self, request):
         # Dev convenience endpoint to avoid manual token copy/paste after page reload.
-        if not settings.DEBUG or not settings.DEV_JWT_AUTO_ISSUE:
+        if not settings.DEV_JWT_AUTO_ISSUE:
             return Response(
                 {
                     "error": {
@@ -747,6 +747,7 @@ class QuestionAnswerView(APIView):
 
         options = data.get("options", {})
         question = data["question"].strip()
+        language = data.get("language", "en")
         scope = data.get("standardsScope", [])
         semantic_query = parse_question_to_semantic_query(text=question, requested_scope=scope)
         semantic_query_dict = semantic_query.as_dict() if hasattr(semantic_query, "as_dict") else {}
@@ -857,6 +858,7 @@ class QuestionAnswerView(APIView):
                         chunks=chunks,
                         scope=effective_scope,
                         faq_hint=faq_match["answer"],
+                        language=language,
                     )
                     answer_text = generated["answer"]
                     confidence = generated["confidence"]
@@ -886,7 +888,9 @@ class QuestionAnswerView(APIView):
                 confidence = faq_match["confidence"]
                 review_required = faq_match["review_required"]
                 citations = faq_match["citations"][:max_citations]
-        elif semantic_query.core_concept == "nits:unknown-concept" and allow_abstain and not effective_scope:
+        elif semantic_query.core_concept == "nits:unknown-concept" and allow_abstain and not effective_scope and not any(
+            any(c.isupper() for c in term[1:]) for term in semantic_query.original_terms
+        ):
             mode = QuestionEvent.MODE_ABSTAIN
             confidence = 0.0
             abstained = True
@@ -903,6 +907,8 @@ class QuestionAnswerView(APIView):
             and float(concept_confidence) < semantic_low_confidence_threshold
             and allow_abstain
             and not scope
+            and not effective_scope
+            and not any(any(c.isupper() for c in term[1:]) for term in semantic_query.original_terms)
         ):
             mode = QuestionEvent.MODE_ABSTAIN
             confidence = 0.0
@@ -980,7 +986,7 @@ class QuestionAnswerView(APIView):
                 use_llm = generation_profile == "llm-ready" and settings.LLM_ENABLED
                 if use_llm:
                     try:
-                        generated = generate_answer_llm(question=question, chunks=chunks, scope=effective_scope)
+                        generated = generate_answer_llm(question=question, chunks=chunks, scope=effective_scope, language=language)
                     except LLMGenerationError:
                         logger.warning(
                             "LLM generation failed; falling back to deterministic answer",
@@ -1200,6 +1206,7 @@ class QuestionAnswerStreamView(APIView):
     def _event_stream(self, request, data, request_id):  # noqa: C901
         options = data.get("options", {})
         question = data["question"].strip()
+        language = data.get("language", "en")
         scope = data.get("standardsScope", [])
         semantic_query = parse_question_to_semantic_query(text=question, requested_scope=scope)
         semantic_query_dict = semantic_query.as_dict() if hasattr(semantic_query, "as_dict") else {}
@@ -1308,6 +1315,7 @@ class QuestionAnswerStreamView(APIView):
                         chunks=chunks,
                         scope=effective_scope,
                         faq_hint=faq_match["answer"],
+                        language=language,
                     ):
                         if event_type == "token":
                             yield self._sse({"type": "token", "delta": payload})
@@ -1342,7 +1350,9 @@ class QuestionAnswerStreamView(APIView):
                 confidence = faq_match["confidence"]
                 review_required = faq_match["review_required"]
                 citations = faq_match["citations"][:max_citations]
-        elif semantic_query.core_concept == "nits:unknown-concept" and allow_abstain and not effective_scope:
+        elif semantic_query.core_concept == "nits:unknown-concept" and allow_abstain and not effective_scope and not any(
+            any(c.isupper() for c in term[1:]) for term in semantic_query.original_terms
+        ):
             mode = QuestionEvent.MODE_ABSTAIN
             confidence = 0.0
             abstained = True
@@ -1359,6 +1369,8 @@ class QuestionAnswerStreamView(APIView):
             and float(concept_confidence) < semantic_low_confidence_threshold
             and allow_abstain
             and not scope
+            and not effective_scope
+            and not any(any(c.isupper() for c in term[1:]) for term in semantic_query.original_terms)
         ):
             mode = QuestionEvent.MODE_ABSTAIN
             confidence = 0.0
@@ -1432,6 +1444,7 @@ class QuestionAnswerStreamView(APIView):
                             question=question,
                             chunks=chunks,
                             scope=effective_scope,
+                            language=language,
                         ):
                             if event_type == "token":
                                 yield self._sse({"type": "token", "delta": payload})

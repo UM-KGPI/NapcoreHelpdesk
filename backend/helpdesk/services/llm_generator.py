@@ -116,6 +116,7 @@ def _build_messages(
     max_chunks: int = 6,
     max_chars_per_chunk: int = 1800,
     faq_hint: str | None = None,
+    language: str | None = None,
 ) -> list[dict]:
     context_lines = []
     for index, chunk in enumerate(chunks[:max_chunks], start=1):
@@ -135,11 +136,21 @@ def _build_messages(
     context = "\n\n".join(context_lines)
     scope_text = ", ".join(scope) if scope else "all approved standards"
 
+    _lang = (language or "").strip().lower()
+    if _lang and _lang not in ("en", "english"):
+        language_instruction = (
+            f" Respond in {language}. Keep technical terms, class names, XML tags, and identifiers in English."
+        )
+    else:
+        language_instruction = (
+            " Detect the language of the question and respond in that same language."
+            " Keep technical terms, class names, XML tags, and identifiers in English."
+        )
     system_prompt = (
         "You are a standards helpdesk assistant. Prioritize provided evidence blocks and stay within the requested standards scope. "
         "Do not add external or uncited knowledge. Do not contradict evidence. "
         "If evidence is insufficient for claims that require citation, say that you cannot answer safely. "
-        "Respond in 4-7 concise sentences and include citation markers like [E1], [E2] for evidence-grounded statements."
+        f"Respond in 4-7 concise sentences and include citation markers like [E1], [E2] for evidence-grounded statements.{language_instruction}"
     )
     if _question_requests_verbatim_example(question):
         system_prompt = (
@@ -216,6 +227,7 @@ def generate_answer_llm(
     chunks: list[dict],
     scope: list[str] | None = None,
     faq_hint: str | None = None,
+    language: str | None = None,
 ) -> dict:
     """Generate a grounded answer through a configurable OpenAI-compatible API."""
 
@@ -233,6 +245,7 @@ def generate_answer_llm(
         max_chunks=max_chunks,
         max_chars_per_chunk=max_chars_per_chunk,
         faq_hint=faq_hint,
+        language=language,
     )
 
     primary_base_url = (settings.LLM_API_BASE_URL or "").strip()
@@ -371,6 +384,7 @@ def stream_answer_llm(
     chunks: list[dict],
     scope: list[str] | None = None,
     faq_hint: str | None = None,
+    language: str | None = None,
 ) -> Generator[tuple[str, object], None, None]:
     """
     Generator yielding (event_type, payload) tuples for streaming narration.
@@ -403,6 +417,7 @@ def stream_answer_llm(
         max_chunks=max_chunks,
         max_chars_per_chunk=max_chars_per_chunk,
         faq_hint=faq_hint,
+        language=language,
     )
 
     deltas: list[str] = []
