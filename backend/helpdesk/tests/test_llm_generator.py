@@ -43,7 +43,7 @@ class LLMGeneratorTests(SimpleTestCase):
         )
 
         self.assertEqual(messages[0]["role"], "system")
-        self.assertIn("include one fenced block", messages[0]["content"])
+        self.assertIn("fenced code block", messages[0]["content"])
         self.assertIn("single evidence block", messages[0]["content"])
 
     @patch("helpdesk.services.llm_generator.request.urlopen")
@@ -198,7 +198,9 @@ class LLMGeneratorTests(SimpleTestCase):
             ],
         )
 
-        self.assertIn("Based on retrieved approved-source evidence", result["answer"])
+        # Should list available examples instead of inventing XML
+        self.assertIn("Yes, the following examples are available", result["answer"])
         self.assertIn("[E1]", result["answer"])
-        self.assertNotIn("NeTEx_01_simple_line.xml", result["answer"])
-        self.assertIn("validate implementation", result["answer"])
+        self.assertIn("NeTEx_01_simple_line.xml", result["answer"])
+        # Should not invent/fabricate XML structures
+        self.assertNotIn("<", result["answer"])

@@ -690,7 +690,7 @@ class DevTokenView(APIView):
 
     def post(self, request):
         # Dev convenience endpoint to avoid manual token copy/paste after page reload.
-        if not settings.DEV_JWT_AUTO_ISSUE:
+        if not settings.DEBUG or not settings.DEV_JWT_AUTO_ISSUE:
             return Response(
                 {
                     "error": {
