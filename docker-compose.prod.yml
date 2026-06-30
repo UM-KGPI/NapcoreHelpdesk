@@ -28,6 +28,7 @@ services:
       GRAPHDB_SPARQL_ENDPOINT: http://graphdb:7200/repositories/napcore-helpdesk
       GRAPHDB_TIMEOUT_SECONDS: '30'
       ALLOWED_SOURCE_REPOSITORIES: https://github.com/TransmodelEcosystem/NeTEx,https://github.com/TransmodelEcosystem/SIRI,https://github.com/OpRa-CEN/OpRa
+      LLM_MAX_TOKENS: '2000'
       NAPCORE_ONTOLOGY_DIR: /app/ontology
       POSTGRES_HOST: db
       POSTGRES_PORT: '5432'
