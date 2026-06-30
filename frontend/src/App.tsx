@@ -25,7 +25,7 @@
  */
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useSearchParams } from "react-router-dom";
 
 import { HelpdeskApiClient } from "./api";
 import { AuthProvider } from "./auth-context";
@@ -133,6 +133,21 @@ function isJwtExpired(token: string): boolean {
   } catch {
     return false;
   }
+}
+
+// Wrapper component to handle ?questionId= query parameter and auto-load questions
+function EditorWithQueryParams(props: React.ComponentProps<typeof EditorConsoleWorkspace>) {
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const questionId = searchParams.get("questionId");
+    if (questionId) {
+      props.setSelectedQuestionEventId(questionId);
+      void props.onLoadQuestionEventDetail(questionId);
+    }
+  }, [searchParams]);
+
+  return <EditorConsoleWorkspace {...props} />;
 }
 
 export default function App() {
@@ -906,7 +921,7 @@ export default function App() {
             <Route
               path="editor"
               element={
-                <EditorConsoleWorkspace
+                <EditorWithQueryParams
                   question={question}
                   answerResult={answerResult}
                   askedQuestions={askedQuestions}
