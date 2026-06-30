@@ -48,6 +48,7 @@ from helpdesk.services.editorial_workflow import (
     apply_transition,
 )
 from helpdesk.services.controller_llm import ControllerLLMError, decide_route_with_controller_llm
+from helpdesk.services.question_preprocessor import preprocess_question
 from helpdesk.services.evidence_mapper import map_evidence
 from helpdesk.services.event_logger import log_question_event
 from helpdesk.services.faq_matcher import match_faq
@@ -748,6 +749,7 @@ class QuestionAnswerView(APIView):
         options = data.get("options", {})
         question = data["question"].strip()
         language = data.get("language", "en")
+        question = preprocess_question(question, language)
         scope = data.get("standardsScope", [])
         semantic_query = parse_question_to_semantic_query(text=question, requested_scope=scope)
         semantic_query_dict = semantic_query.as_dict() if hasattr(semantic_query, "as_dict") else {}
@@ -1207,6 +1209,7 @@ class QuestionAnswerStreamView(APIView):
         options = data.get("options", {})
         question = data["question"].strip()
         language = data.get("language", "en")
+        question = preprocess_question(question, language)
         scope = data.get("standardsScope", [])
         semantic_query = parse_question_to_semantic_query(text=question, requested_scope=scope)
         semantic_query_dict = semantic_query.as_dict() if hasattr(semantic_query, "as_dict") else {}
