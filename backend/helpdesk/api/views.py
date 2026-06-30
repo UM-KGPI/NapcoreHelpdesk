@@ -1738,11 +1738,15 @@ class QuestionEventDetailView(APIView):
 
     def get(self, request, question_event_id):
         event = None
-        # Try numeric ID first
-        try:
-            event = QuestionEvent.objects.get(id=question_event_id)
-        except QuestionEvent.DoesNotExist:
-            # Try by request_id (req-...)
+        # Try numeric ID first if it looks numeric
+        if question_event_id.isdigit():
+            try:
+                event = QuestionEvent.objects.get(id=question_event_id)
+            except QuestionEvent.DoesNotExist:
+                pass
+
+        # Try by request_id (req-...) if not found
+        if not event:
             try:
                 event = QuestionEvent.objects.get(request_id=question_event_id)
             except QuestionEvent.DoesNotExist:
