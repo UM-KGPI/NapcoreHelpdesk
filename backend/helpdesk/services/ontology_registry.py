@@ -105,6 +105,10 @@ ONTOLOGY_SPECS = [
 
 
 def _ontology_dir() -> Path:
+    import os
+    override = os.environ.get("NAPCORE_ONTOLOGY_DIR")
+    if override:
+        return Path(override)
     return Path(__file__).resolve().parents[3] / "docs" / "ontology"
 
 

@@ -26,6 +26,7 @@ services:
       GRAPHDB_REPOSITORY: napcore-helpdesk
       GRAPHDB_SPARQL_ENDPOINT: http://graphdb:7200/repositories/napcore-helpdesk
       GRAPHDB_TIMEOUT_SECONDS: '30'
+      NAPCORE_ONTOLOGY_DIR: /app/ontology
       POSTGRES_HOST: db
       POSTGRES_PORT: '5432'
     healthcheck:
