@@ -43,6 +43,22 @@ if [ -z "$SERVER_HOST" ]; then
     exit 1
 fi
 
+read -p "Frontend URL for CORS (e.g., https://kgpi.fgpa.um.si/napcore-helpdesk or leave empty to use server host): " FRONTEND_URL
+if [ -z "$FRONTEND_URL" ]; then
+    # Infer frontend URL from server host
+    if [[ "$SERVER_HOST" == *"://"* ]]; then
+        FRONTEND_URL="$SERVER_HOST/napcore-helpdesk"
+    else
+        # Assume HTTPS for non-IP domains
+        if [[ "$SERVER_HOST" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            FRONTEND_URL="http://$SERVER_HOST/napcore-helpdesk"
+        else
+            FRONTEND_URL="https://$SERVER_HOST/napcore-helpdesk"
+        fi
+    fi
+    echo "Using inferred frontend URL: $FRONTEND_URL"
+fi
+
 read -p "GitHub API Token (leave empty to skip): " GITHUB_TOKEN
 
 read -p "Enable LLM? (y/n) [default: n]: " -n 1 -r
@@ -86,6 +102,7 @@ cat > "$ENV_FILE" <<EOF
 DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY
 DJANGO_DEBUG=False
 DJANGO_ALLOWED_HOSTS=$SERVER_HOST
+CORS_ALLOWED_ORIGINS=$FRONTEND_URL
 SERVICE_NAME=napcore-helpdesk
 
 # --- JWT Configuration ---

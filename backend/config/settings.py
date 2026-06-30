@@ -135,10 +135,15 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-# CORS configuration for development
+# CORS configuration: allow frontend to call backend API
+# Environment variable format: comma-separated list (e.g., "http://localhost:5173,https://example.com")
+# Defaults to localhost for development
+_cors_origins_env = env(
+    "CORS_ALLOWED_ORIGINS",
+    default="http://localhost:5173,http://127.0.0.1:5173"
+)
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
+    origin.strip() for origin in _cors_origins_env.split(",") if origin.strip()
 ]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
