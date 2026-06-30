@@ -826,7 +826,8 @@ class QuestionAnswerView(APIView):
 
         faq_match = match_faq(question=question, scope=effective_scope)
         if (
-            faq_match
+            controller_route != "rag"
+            and faq_match
             and faq_match["confidence"] >= faq_min_confidence
             and faq_match.get("scope_match", True)
         ):
@@ -1275,7 +1276,8 @@ class QuestionAnswerStreamView(APIView):
         answer_text = ""
 
         if (
-            faq_match
+            controller_route != "rag"
+            and faq_match
             and faq_match["confidence"] >= faq_min_confidence
             and faq_match.get("scope_match", True)
         ):
