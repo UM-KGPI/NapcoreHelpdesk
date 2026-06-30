@@ -36,6 +36,14 @@ frontend/*.tsbuildinfo
 docs/ontology
 docs/testing
 
+# Docs symlinks / local-only testing output (root-level variants)
+ontology/
+repos/
+
+# Production setup scripts with embedded credentials
+scripts/
+
 # Secrets (license files, credentials - never commit)
 secrets/
 graphdb.license
+.git-credentials
