@@ -145,7 +145,7 @@ function EditorWithQueryParams(props: React.ComponentProps<typeof EditorConsoleW
       props.setSelectedQuestionEventId(questionId);
       void props.onLoadQuestionEventDetail(questionId);
     }
-  }, [searchParams]);
+  }, [searchParams, props.setSelectedQuestionEventId, props.onLoadQuestionEventDetail]);
 
   return <EditorConsoleWorkspace {...props} />;
 }
