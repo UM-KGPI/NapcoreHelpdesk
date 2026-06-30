@@ -6,12 +6,13 @@ This public repository keeps only essential documentation.
 
 1. [Architecture overview](architecture-overview.md)
 2. [API description](api-description.md)
-3. [Database architecture](database-architecture.md)
-4. [Installation (local and Docker)](installation.md)
-5. [Production deployment (Fedora VM + Docker Compose)](production-deployment.md)
-6. [Semantic store](semantic-store.md)
-7. [LLM usage](llm-usage.md)
-8. [Ontology enrichment](ontology-enrichment.md)
+3. [Recent updates & features](recent-updates.md) ← **Start here for 2026-06-30 changes**
+4. [Database architecture](database-architecture.md)
+5. [Installation (local and Docker)](installation.md)
+6. [Production deployment (Fedora VM + Docker Compose)](production-deployment.md)
+7. [Semantic store](semantic-store.md)
+8. [LLM usage](llm-usage.md)
+9. [Ontology enrichment](ontology-enrichment.md)
 
 ## Full internal documentation
 
