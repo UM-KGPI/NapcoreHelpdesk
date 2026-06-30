@@ -86,7 +86,7 @@ const DEFAULT_INDEX_REPO_PRESETS: IndexRepoPreset[] = [
   },
 ];
 
-const INDEX_REPO_PRESETS_CONFIG_PATH = "/index-repo-presets.json";
+const INDEX_REPO_PRESETS_CONFIG_PATH = `${import.meta.env.BASE_URL}index-repo-presets.json`;
 
 function isIndexRepoPreset(value: unknown): value is IndexRepoPreset {
   if (!value || typeof value !== "object") {
@@ -108,8 +108,8 @@ function createRequestId(): string {
 }
 
 export default function App() {
-  const frontendVersion = import.meta.env.VITE_APP_VERSION ?? __APP_VERSION__;
-  const [apiBaseUrl, setApiBaseUrl] = useState("/api/v1");
+  const frontendVersion = import.meta.env.VITE_APP_VERSION ?? '0.6.1';
+  const [apiBaseUrl, setApiBaseUrl] = useState(`${import.meta.env.BASE_URL}api/v1`);
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_STORAGE_KEY) ?? "");
   const [autoTokenEnabled, setAutoTokenEnabled] = useState(() => {
     const saved = localStorage.getItem(AUTO_TOKEN_STORAGE_KEY);
@@ -838,7 +838,7 @@ export default function App() {
 
   return (
     <AuthProvider value={authValue}>
-      <BrowserRouter>
+      <BrowserRouter basename="/napcore-helpdesk">
         <Routes>
           <Route
             path="/"
@@ -849,7 +849,7 @@ export default function App() {
               />
             }
           >
-            <Route index element={<Navigate to="/user" replace />} />
+            <Route index element={<Navigate to="user" replace />} />
             <Route
               path="user"
               element={
