@@ -144,10 +144,10 @@ def _build_messages(
     if _question_requests_verbatim_example(question):
         system_prompt = (
             f"{system_prompt} "
-            "For XML, JSON, YAML, or code-example requests, only quote verbatim or lightly trimmed excerpts that are directly present in the evidence blocks. "
-            "When a usable snippet exists, include one fenced block (for example ```xml) of 6-20 lines copied from a single evidence block and cite that same block in nearby prose. "
-            "Never synthesize a new example by combining structures across sources. "
-            "If the evidence does not contain an exact usable snippet, say that you cannot provide an embedded example safely and point to the closest cited source file instead."
+            "For questions asking for examples or code: First, directly answer 'yes' or 'no' about availability. Then list the examples found in evidence with citations [E#]. "
+            "When showing XML/JSON/YAML, include one fenced code block (```xml) of 6-20 lines from a single evidence block. "
+            "Quote only verbatim excerpts from evidence blocks. Never synthesize or combine structures across sources. "
+            "If asking for availability ('Is there any...?'), list all matching examples found in the evidence with their source paths and brief descriptions."
         )
 
     faq_section = ""
@@ -162,8 +162,11 @@ def _build_messages(
         f"{faq_section}"
         f"Evidence blocks:\n{context}\n\n"
         "Write a scoped answer with explicit [E#] markers tied to evidence blocks only. "
-        "If the evidence does not support the requested detail, explicitly say what is missing."
+        "If the evidence does not support the requested detail, explicitly say what is missing. "
     )
+
+    if _question_requests_verbatim_example(question) and "?" in question and any(w in question.lower() for w in ["is there", "do you have", "any", "list"]):
+        user_prompt += "(This question asks for examples: list ALL matching examples found in evidence with their source paths, then provide sample code if available.)"
 
     return [
         {"role": "system", "content": system_prompt},
