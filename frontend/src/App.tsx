@@ -168,14 +168,20 @@ function UserChatWithQueryParams(props: React.ComponentProps<typeof UserChatWork
         const answerTurn: ChatTurn = {
           id: `${detail.requestId}-a`,
           role: "assistant",
-          text: "", // Empty text, answer will be shown via answer field
+          text: detail.answer, // Show answer as text
           createdAt: detail.createdAt,
           answer: {
             answerId: detail.questionEventId,
             mode: "rag" as const,
             confidence: detail.confidence,
             answer: detail.answer,
-            citations: detail.citations || [],
+            citations: (detail.citations || []).map((c: any) => ({
+              repositoryUrl: c.repositoryUrl,
+              commitSha: "", // Will be populated from detail if available
+              sourcePath: c.sourcePath,
+              chunkId: c.chunkId,
+              label: c.label,
+            })),
             abstained: false,
             abstentionReason: null,
             reviewRequired: false,
@@ -184,7 +190,9 @@ function UserChatWithQueryParams(props: React.ComponentProps<typeof UserChatWork
               questionEventId: detail.questionEventId,
               matchedFaqEntryId: null,
               retrievalEventIds: [],
-            },
+              userLikes: false,
+              userDislikes: false,
+            } as any,
           },
           requestId: detail.requestId,
         };
