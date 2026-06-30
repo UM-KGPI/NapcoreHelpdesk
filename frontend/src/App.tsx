@@ -138,49 +138,56 @@ function isJwtExpired(token: string): boolean {
 // Wrapper for user chat to handle ?questionId= query parameter
 function UserChatWithQueryParams(props: React.ComponentProps<typeof UserChatWorkspace>) {
   const [searchParams] = useSearchParams();
-  const [chatTurns, setChatTurns] = useState(props.chatTurns);
+  const [enhancedTurns, setEnhancedTurns] = useState<typeof props.chatTurns>(props.chatTurns);
 
   useEffect(() => {
     const questionId = searchParams.get("questionId");
-    if (questionId && props.chatTurns.length === 0) {
-      // Fetch and display the historical question
-      fetch(`${window.location.origin}${import.meta.env.BASE_URL}api/v1/questions/events/${questionId}`, {
-        headers: { Authorization: `Bearer ${props.token}` },
+    if (!questionId || !props.token) return;
+
+    // Fetch and display the historical question
+    const baseUrl = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+      ? "http://localhost:8000/api/v1"
+      : `${window.location.origin}${import.meta.env.BASE_URL}api/v1`;
+
+    fetch(`${baseUrl}/questions/events/${questionId}`, {
+      headers: { Authorization: `Bearer ${props.token}` },
+    })
+      .then(res => {
+        if (!res.ok) throw new Error(`API error: ${res.status}`);
+        return res.json();
       })
-        .then(res => res.json())
-        .then((detail) => {
-          const newTurn: ChatTurn = {
-            id: questionId,
-            role: "assistant",
-            text: detail.question,
-            createdAt: detail.createdAt,
-            answer: {
-              answerId: detail.questionEventId,
-              mode: "rag",
-              confidence: detail.confidence,
-              answer: detail.answer,
-              citations: detail.citations || [],
-              abstained: false,
-              abstentionReason: null,
-              reviewRequired: false,
-              trace: {
-                requestId: detail.requestId,
-                questionEventId: detail.questionEventId,
-                matchedFaqEntryId: null,
-                retrievalEventIds: [],
-              },
+      .then((detail) => {
+        const newTurn: ChatTurn = {
+          id: detail.requestId,
+          role: "assistant",
+          text: detail.question,
+          createdAt: detail.createdAt,
+          answer: {
+            answerId: detail.questionEventId,
+            mode: "rag" as const,
+            confidence: detail.confidence,
+            answer: detail.answer,
+            citations: detail.citations || [],
+            abstained: false,
+            abstentionReason: null,
+            reviewRequired: false,
+            trace: {
+              requestId: detail.requestId,
+              questionEventId: detail.questionEventId,
+              matchedFaqEntryId: null,
+              retrievalEventIds: [],
             },
-            requestId: detail.requestId,
-          };
-          setChatTurns([newTurn]);
-        })
-        .catch((error) => {
-          console.error(`Failed to load question ${questionId}:`, error);
-        });
-    }
+          },
+          requestId: detail.requestId,
+        };
+        setEnhancedTurns([newTurn]);
+      })
+      .catch((error) => {
+        console.error(`Failed to load question ${questionId}:`, error);
+      });
   }, [searchParams, props.token]);
 
-  return <UserChatWorkspace {...props} chatTurns={chatTurns} />;
+  return <UserChatWorkspace {...props} chatTurns={enhancedTurns} />;
 }
 
 // Wrapper component to handle ?questionId= query parameter in editor
