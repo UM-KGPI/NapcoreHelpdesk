@@ -35,13 +35,34 @@ def _build_minimal_grounded_answer(chunks: list[dict]) -> str:
     return answer
 
 
+def _build_example_list_answer(chunks: list[dict]) -> str:
+    """Build answer listing example files found in retrieved evidence."""
+    if not chunks:
+        return "No examples found in available evidence."
+
+    examples = []
+    for i, chunk in enumerate(chunks[:5], 1):
+        source_path = chunk.get("sourcePath", "").split("/")[-1]
+        repo_url = chunk.get("repositoryUrl", "").split("/")[-1] if chunk.get("repositoryUrl") else "source"
+        examples.append(f"[E{i}] {source_path} ({repo_url})")
+
+    return f"Yes, the following examples are available:\n" + "\n".join(examples)
+
+
+def _is_asking_for_examples(question: str) -> bool:
+    """Detect if question asks for examples or availability."""
+    q_lower = question.lower()
+    return any(phrase in q_lower for phrase in ["example", "any", "is there", "do you have", "sample", "list"])
+
+
 def _build_adaptive_answer(question: str, chunks: list[dict]) -> str:
     """
     Build a minimal deterministic fallback answer grounded in retrieved evidence.
     The primary generation path is expected to be LLM-first; this function exists
     as a resilient fallback when LLM generation is unavailable.
     """
-    _ = question  # Keep signature stable for callers and future evolution.
+    if _is_asking_for_examples(question):
+        return _build_example_list_answer(chunks)
     return _build_minimal_grounded_answer(chunks)
 
 
