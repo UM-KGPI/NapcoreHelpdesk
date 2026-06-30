@@ -135,28 +135,64 @@ function isJwtExpired(token: string): boolean {
   }
 }
 
-// Wrapper component to handle ?questionId= query parameter and auto-load questions
+// Wrapper for user chat to handle ?questionId= query parameter
+function UserChatWithQueryParams(props: React.ComponentProps<typeof UserChatWorkspace>) {
+  const [searchParams] = useSearchParams();
+  const [chatTurns, setChatTurns] = useState(props.chatTurns);
+
+  useEffect(() => {
+    const questionId = searchParams.get("questionId");
+    if (questionId && props.chatTurns.length === 0) {
+      // Fetch and display the historical question
+      fetch(`${window.location.origin}${import.meta.env.BASE_URL}api/v1/questions/events/${questionId}`, {
+        headers: { Authorization: `Bearer ${props.token}` },
+      })
+        .then(res => res.json())
+        .then((detail) => {
+          const newTurn: ChatTurn = {
+            id: questionId,
+            role: "assistant",
+            text: detail.question,
+            createdAt: detail.createdAt,
+            answer: {
+              answerId: detail.questionEventId,
+              mode: "rag",
+              confidence: detail.confidence,
+              answer: detail.answer,
+              citations: detail.citations || [],
+              abstained: false,
+              abstentionReason: null,
+              reviewRequired: false,
+              trace: {
+                requestId: detail.requestId,
+                questionEventId: detail.questionEventId,
+                matchedFaqEntryId: null,
+                retrievalEventIds: [],
+              },
+            },
+            requestId: detail.requestId,
+          };
+          setChatTurns([newTurn]);
+        })
+        .catch((error) => {
+          console.error(`Failed to load question ${questionId}:`, error);
+        });
+    }
+  }, [searchParams, props.token]);
+
+  return <UserChatWorkspace {...props} chatTurns={chatTurns} />;
+}
+
+// Wrapper component to handle ?questionId= query parameter in editor
 function EditorWithQueryParams(props: React.ComponentProps<typeof EditorConsoleWorkspace>) {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const questionId = searchParams.get("questionId");
     if (questionId) {
-      // Load the full question details from the backend
-      props.onLoadQuestionEventDetail(questionId)
-        .then((detail) => {
-          // Populate the Q&A Assistant with the historical question
-          props.setQuestion(detail.question);
-          // Set selected ID so it's highlighted in the list
-          props.setSelectedQuestionEventId(questionId);
-          // Also refresh the asked questions list
-          void props.onLoadAskedQuestions();
-        })
-        .catch((error) => {
-          console.error(`Failed to load question ${questionId}:`, error);
-        });
+      props.setSelectedQuestionEventId(questionId);
     }
-  }, [searchParams, props.setQuestion, props.setSelectedQuestionEventId, props.onLoadAskedQuestions, props.onLoadQuestionEventDetail]);
+  }, [searchParams, props.setSelectedQuestionEventId]);
 
   return <EditorConsoleWorkspace {...props} />;
 }
@@ -917,7 +953,7 @@ export default function App() {
             <Route
               path="user"
               element={
-                <UserChatWorkspace
+                <UserChatWithQueryParams
                   chatPrompt={chatPrompt}
                   chatTurns={chatTurns}
                   token={token}
