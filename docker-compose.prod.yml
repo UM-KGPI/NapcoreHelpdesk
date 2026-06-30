@@ -21,7 +21,7 @@ services:
     environment: &id003
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/1
-      DEV_JWT_AUTO_ISSUE: 'False'
+      DEV_JWT_AUTO_ISSUE: 'True'
       DJANGO_DEBUG: 'False'
       GRAPHDB_REPOSITORY: napcore-helpdesk
       GRAPHDB_SPARQL_ENDPOINT: http://graphdb:7200/repositories/napcore-helpdesk
