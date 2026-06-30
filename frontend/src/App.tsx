@@ -153,6 +153,9 @@ function UserChatWithQueryParams(props: React.ComponentProps<typeof UserChatWork
     const questionId = searchParams.get("questionId");
     if (!questionId || !props.token) return;
 
+    // Clear the input field when showing historical Q&A
+    props.setChatPrompt("");
+
     // Fetch and display the historical question
     const baseUrl = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
       ? "http://localhost:8000/api/v1"
