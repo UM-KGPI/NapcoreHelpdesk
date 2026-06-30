@@ -102,8 +102,8 @@ def _build_prompt(question: str, requested_scope: list[str], semantic_query: dic
 
     return (
         "You are a controller for a standards helpdesk pipeline. "
-        "Choose route='faq' only when the question likely matches a stable canonical FAQ intent. "
-        "Choose route='rag' for specific, novel, cross-standard, implementation-detail, or ambiguous requests. "
+        "Choose route='faq' only when the question likely matches a stable canonical FAQ intent (general guidance, best practices, definitions). "
+        "Choose route='rag' for: specific implementation details, code/XML examples, demonstration requests, novel questions, cross-standard queries, or any request asking to 'show', 'demonstrate', 'provide example', or referencing concrete artifacts. "
         "Return ONLY strict JSON with this schema: "
         '{"route":"faq|rag","intent":"short_intent_label","confidence":0.0}. '\
         "Do not include markdown, explanations, or extra keys.\n\n"
