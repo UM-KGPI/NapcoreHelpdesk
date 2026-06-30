@@ -1734,13 +1734,19 @@ class QuestionEventDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, question_event_id):
+        event = None
+        # Try numeric ID first
         try:
             event = QuestionEvent.objects.get(id=question_event_id)
         except QuestionEvent.DoesNotExist:
-            return Response(
-                {"error": {"code": "NOT_FOUND", "message": "Question event not found."}},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+            # Try by request_id (req-...)
+            try:
+                event = QuestionEvent.objects.get(request_id=question_event_id)
+            except QuestionEvent.DoesNotExist:
+                return Response(
+                    {"error": {"code": "NOT_FOUND", "message": "Question event not found."}},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
 
         citations = []
         for link in event.answer_evidence_links.all().order_by("created_at"):
