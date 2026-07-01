@@ -1150,10 +1150,11 @@ def retrieve_chunks_with_trace(
     # Provides authoritative semantic definitions from ontology
     stage_start = time.perf_counter()
     ontology_definitions_added = 0
+    logger.info(f"Ontology retrieval check: graph_rag_enabled={graph_rag_enabled}, question_concepts={bool(question_concepts)}")
     if graph_rag_enabled and question_concepts:
         try:
             graphdb_enabled = getattr(settings, "GRAPHDB_ENABLED", False)
-            logger.debug(f"Attempting to retrieve ontology definitions for {len(question_concepts)} concepts: {question_concepts}")
+            logger.info(f"Retrieving ontology definitions for {len(question_concepts)} concepts: {question_concepts}")
             if graphdb_enabled:
                 definitions = retrieve_concept_definitions(
                     concept_ids=question_concepts,
