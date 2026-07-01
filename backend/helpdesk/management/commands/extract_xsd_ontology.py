@@ -981,8 +981,10 @@ class Command(BaseCommand):
         lines.append("#################################################################")
         lines.append("")
 
+        from urllib.parse import quote
         for example_path, concept_ids in sorted(example_to_concepts.items()):
-            example_iri = f"https://napcore.eu/examples/{example_path.replace('/', '-').replace('.xml', '')}"
+            safe_path = quote(example_path, safe='')
+            example_iri = f"https://napcore.eu/examples/{safe_path}"
             lines.append(f"<{example_iri}>")
             lines.append('    a dct:Dataset ;')
             lines.append(f'    rdfs:label "{example_path}"@en ;')
@@ -1068,9 +1070,11 @@ class Command(BaseCommand):
             # Example sources (linked XML files)
             example_sources = concept.get("example_sources", [])
             if example_sources:
+                from urllib.parse import quote
                 for example_path in example_sources:
-                    # Convert relative path to example IRI
-                    example_iri = f"https://napcore.eu/examples/{standard}/{example_path.replace('/', '-').replace('.xml', '')}"
+                    # URL-encode the path to create valid IRIs for GraphDB/RDF4J
+                    safe_path = quote(example_path, safe='')
+                    example_iri = f"https://napcore.eu/examples/{standard}/{safe_path}"
                     lines.append(f"    skos:seeAlso <{example_iri}> ;")
 
             # Source
