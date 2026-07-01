@@ -152,9 +152,10 @@ def retrieve_concept_examples_with_fallback(
             [f"<{_ensure_uri(cid)}>" if cid.startswith("http") else cid for cid in sorted(concept_ids)]
         )
 
-        # Build mode-agnostic SPARQL query
+        # Build mode-agnostic SPARQL query with template-to-concrete inference
         # All transport modes are semantically equivalent for NeTEx structural concepts
         # Examples from any mode (bus, ferry, rail) are directly applicable to any other mode
+        # Additionally: examples of concrete types (ServiceJourney) also demonstrate templates (TemplateServiceJourney)
         sparql_query = f"""
         PREFIX netex: <https://netex.org.uk/netex/2.0#>
         PREFIX nits: <https://napcore.eu/ontology/nits#>
@@ -164,30 +165,49 @@ def retrieve_concept_examples_with_fallback(
 
         SELECT ?example ?concept ?label ?source ?matchType ?reason
         WHERE {{
-          VALUES ?concept {{ {concept_uris} }}
-          {{
-            ?example skos:seeAlso ?concept .
-          }} UNION {{
-            ?example skos:isRelatedTo ?concept .
-          }}
-          ?example rdfs:label ?label ;
-                   dct:source ?source .
+          VALUES ?requestConcept {{ {concept_uris} }}
 
-          # Check if this concept is mode-agnostic (works for all transport modes)
-          OPTIONAL {{
-            ?concept nits:applicableToAllModes true .
+          # Tier 1: Direct examples linked to requested concept
+          {{
+            ?example skos:seeAlso ?requestConcept .
+            ?requestConcept nits:applicableToAllModes true .
             BIND("mode_agnostic" AS ?matchType)
             BIND("Transport mode agnostic—applies to all modes (bus, ferry, rail)" AS ?reason)
+            BIND(?requestConcept AS ?concept)
+          }} UNION {{
+            ?example skos:isRelatedTo ?requestConcept .
+            ?requestConcept nits:applicableToAllModes true .
+            BIND("mode_agnostic" AS ?matchType)
+            BIND("Transport mode agnostic—applies to all modes (bus, ferry, rail)" AS ?reason)
+            BIND(?requestConcept AS ?concept)
           }}
 
-          # Fallback: any example linked to the concept is applicable
-          BIND(COALESCE(?matchType, "applicable") AS ?finalMatchType)
-          BIND(COALESCE(?reason, "Example linked to requested concept") AS ?finalReason)
+          # Tier 2: Examples of concrete implementations that demonstrate the template
+          # e.g., ServiceJourney examples also demonstrate TemplateServiceJourney
+          UNION {{
+            ?example skos:isRelatedTo ?concrete .
+            {{
+              VALUES (?template ?concrete) {{
+                (netex:TemplateServiceJourney netex:ServiceJourney)
+                (netex:TemplateServiceJourney netex:DatedServiceJourney)
+                (netex:TemplateServiceJourney netex:JourneyPattern)
+                (netex:TemplateServiceJourney netex:ServiceJourneyPattern)
+              }}
+            }}
+            FILTER(?requestConcept = ?template)
+            BIND("template_realization" AS ?matchType)
+            BIND(CONCAT("Example of ", STRAFTER(STR(?concrete), "#"), " demonstrates the TemplateServiceJourney pattern") AS ?reason)
+            BIND(?template AS ?concept)
+          }}
+
+          ?example rdfs:label ?label ;
+                   dct:source ?source .
         }}
         ORDER BY
-          CASE ?finalMatchType
+          CASE ?matchType
             WHEN "mode_agnostic" THEN 1
-            ELSE 2
+            WHEN "template_realization" THEN 2
+            ELSE 3
           END
           ?concept ?example
         LIMIT 20
@@ -256,12 +276,10 @@ def format_examples_as_chunks(examples: list[dict]) -> list[dict]:
 
         # Quality scores: all examples of mode-agnostic concepts are equally valid
         quality_score = 0.85
-        if match_type == "mode_agnostic":
-            quality_score = 0.85  # Full quality—mode-agnostic concepts work for all modes
-        elif match_type == "applicable":
-            quality_score = 0.85  # Example is directly applicable
-        elif match_type == "exact":
-            quality_score = 0.85  # Direct match
+        if match_type in ("mode_agnostic", "applicable", "exact", "template_realization"):
+            quality_score = 0.85  # Full quality for all applicable examples
+        else:
+            quality_score = 0.75
 
         # Include match context in text for LLM understanding
         match_context = f"[{match_type.upper()}] {similarity_reason}\n" if match_type not in ("exact", "applicable") else ""
