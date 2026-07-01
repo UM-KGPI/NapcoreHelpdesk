@@ -481,6 +481,27 @@ def _doc_type_score_adjustment(hinted_doc_types: set[str], doc_type: str) -> flo
     return adjustment
 
 
+def _example_chunk_boost(doc_type: str, query_concepts: set[str]) -> float:
+    """Boost example chunks so they rank high enough to be included in context.
+
+    Examples provide concrete evidence for understanding schema concepts.
+    This boost ensures example chunks aren't crowded out by other documents
+    when the retrieval context window fills up.
+
+    Args:
+        doc_type: The document type (e.g., "xml-example")
+        query_concepts: Set of ontology concepts in the question
+
+    Returns:
+        Score boost to add to ranking (0.0 if not an example)
+    """
+    if doc_type == "xml-example":
+        # Strong boost for examples when concepts are identified
+        boost = 0.15 if query_concepts else 0.10
+        return boost
+    return 0.0
+
+
 def _build_query_embedding_input(
     question: str,
     hinted_standards: set[str],
@@ -1237,6 +1258,7 @@ def retrieve_chunks_with_trace(
                 label=chunk.label,
                 chunk_text=chunk.text,
             )
+            + _example_chunk_boost(doc_type=doc_type, query_concepts=question_concepts)
         )
         graph_adjustment, graph_hit, matching_concepts = _graph_score_adjustment(
             graph_enabled=graph_rag_enabled,
