@@ -2,8 +2,9 @@
 Question preprocessing: spell-check and normalization before RAG.
 
 Implements hybrid approach:
-1. Fast library-based spell-check for 14 supported languages (50-100ms)
-2. LLM-based fallback for unsupported languages (500-800ms, optional)
+1. Detect question language from text (not browser locale!)
+2. Fast library-based spell-check for 14 supported languages (50-100ms)
+3. Skip spell-check if confidence is low or language mismatches
 
 Supported languages: English, Norwegian, Spanish, French, German, Dutch,
 Portuguese, Italian, Russian, Ukrainian, Polish, Turkish, Czech, Danish, Swedish
@@ -11,6 +12,8 @@ Portuguese, Italian, Russian, Ukrainian, Polish, Turkish, Czech, Danish, Swedish
 
 import logging
 from typing import Optional
+
+from langdetect import detect_langs, LangDetectException
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +34,25 @@ SPELLCHECKER_SUPPORTED_LANGS = {
     "Czech": "cs",
     "Danish": "da",
     "Swedish": "sv",
+}
+
+# Map langdetect language codes to spellchecker language names
+LANGDETECT_TO_SPELLCHECKER = {
+    "en": "English",
+    "no": "Norwegian",
+    "es": "Spanish",
+    "fr": "French",
+    "de": "German",
+    "nl": "Dutch",
+    "pt": "Portuguese",
+    "it": "Italian",
+    "ru": "Russian",
+    "uk": "Ukrainian",
+    "pl": "Polish",
+    "tr": "Turkish",
+    "cs": "Czech",
+    "da": "Danish",
+    "sv": "Swedish",
 }
 
 # Technical terms to skip (XML tags, class names, standards)
@@ -118,6 +140,27 @@ def _correct_with_library(question: str, language: str) -> Optional[str]:
     return " ".join(corrected) if has_changes else None
 
 
+def _detect_question_language(question: str) -> Optional[str]:
+    """
+    Detect the actual language of the question text using langdetect.
+    Returns language name (e.g., "Norwegian") or None if detection fails.
+    """
+    try:
+        # langdetect returns list of LangDetect objects with probabilities
+        detections = detect_langs(question)
+        if detections:
+            detected_code = detections[0].lang  # Best match
+            detected_name = LANGDETECT_TO_SPELLCHECKER.get(detected_code)
+            if detected_name:
+                confidence = detections[0].prob
+                logger.debug(f"Detected question language: {detected_name} (code={detected_code}, confidence={confidence:.2f})")
+                return detected_name
+    except LangDetectException as e:
+        logger.debug(f"Language detection failed: {e}")
+
+    return None
+
+
 def _correct_with_llm(question: str, language: str) -> Optional[str]:
     """
     LLM-based spell correction for unsupported languages (optional, not yet implemented).
@@ -132,23 +175,32 @@ def preprocess_question(question: str, language: str) -> str:
     """
     Preprocess question: spell-check before RAG retrieval.
 
-    Hybrid approach:
-    1. Fast library-based spell-check for 14 supported languages (50-100ms)
-    2. LLM fallback for unsupported languages (optional, not yet implemented)
+    Strategy:
+    1. Detect actual question language from text (not browser locale!)
+    2. Only apply spell-check if detected language matches spellchecker support
+    3. Skip spell-check if detection fails or confidence is low
 
     Args:
         question: Raw user question
-        language: Language name (e.g., "Norwegian", "English")
+        language: Browser locale language (unreliable, used as fallback only)
 
     Returns:
         Corrected question (or original if correction fails/unnecessary)
     """
-    # Try fast library-based correction first (covers 14 languages)
-    corrected = _correct_with_library(question, language)
-    if corrected:
-        logger.info(f"Spell-check: '{question}' → '{corrected}'")
-        return corrected
+    # Detect the actual language of the question from its text
+    detected_language = _detect_question_language(question)
 
-    # TODO: LLM fallback for unsupported languages (Slovenian, etc.)
-    # Would add ~500-800ms latency for those cases
+    if detected_language and detected_language in SPELLCHECKER_SUPPORTED_LANGS:
+        # Use detected language for spell-checking, not browser locale
+        corrected = _correct_with_library(question, detected_language)
+        if corrected:
+            logger.info(f"Spell-check [{detected_language}]: '{question}' → '{corrected}'")
+            return corrected
+    elif detected_language:
+        # Language detected but not supported by spellchecker
+        logger.debug(f"Detected language {detected_language} not supported for spell-check")
+    else:
+        # Language detection failed; skip spell-check to avoid mangling
+        logger.debug(f"Could not detect question language; skipping spell-check")
+
     return question
