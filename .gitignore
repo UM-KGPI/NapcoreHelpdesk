@@ -18,6 +18,7 @@ venv/
 # Local environment files
 .env
 .env.*
+!.env.*.example
 
 # Django / local DB
 backend/celerybeat-schedule
