@@ -47,6 +47,11 @@ ONTOLOGY_SPECS = [
         "graph_uri": "https://napcore.eu/graph/standards/siri",
     },
     {
+        "ontology_key": "examples-catalog",
+        "file_path": "standards/examples.ttl",
+        "graph_uri": "https://napcore.eu/graph/examples/catalog",
+    },
+    {
         "ontology_key": "netex-examples",
         "file_path": "examples/netex-examples.ttl",
         "graph_uri": "https://napcore.eu/graph/examples/netex",

@@ -692,6 +692,16 @@ class Command(BaseCommand):
         if "concepts" not in ontology:
             ontology["concepts"] = {}
 
+        # Ensure namespaces dict exists for TTL generation (excludes already-hardcoded prefixes)
+        if "namespaces" not in ontology:
+            ontology["namespaces"] = {
+                "netex": "https://netex.org.uk/netex/2.0#",
+                "opra": "https://transmodel-cen.eu/opra/1.0#",
+                "siri": "https://siri.org.uk/siri/1.3#",
+                "transmodel": "https://transmodel-cen.eu/6.2/",
+                "nits": "https://napcore.eu/ontology/nits#",
+            }
+
         if refresh_auto:
             removed_auto = 0
             for concept_id in list(ontology["concepts"].keys()):
@@ -931,6 +941,67 @@ class Command(BaseCommand):
                 self.style.SUCCESS(f"  ✓ {standard}.ttl: {len(concepts)} concepts with full relationships")
             )
 
+        # Generate examples graph that links examples to concepts
+        self._generate_examples_graph(ontology, output_dir)
+
+    def _generate_examples_graph(self, ontology: dict, output_dir: Path) -> None:
+        """Generate examples.ttl mapping example files to concepts."""
+        concepts = ontology.get("concepts", {})
+        namespaces = ontology.get("namespaces", {})
+
+        # Collect all example mappings
+        example_to_concepts: dict[str, set[str]] = {}
+        for concept_id, concept_data in concepts.items():
+            for example_path in concept_data.get("example_sources", []):
+                example_to_concepts.setdefault(example_path, set()).add(concept_id)
+
+        if not example_to_concepts:
+            return
+
+        lines = []
+        lines.append("@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .")
+        lines.append("@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .")
+        lines.append("@prefix owl:  <http://www.w3.org/2002/07/owl#> .")
+        lines.append("@prefix dct:  <http://purl.org/dc/terms/> .")
+        lines.append("@prefix skos: <http://www.w3.org/2004/02/skos/core#> .")
+        lines.append("")
+
+        for prefix, namespace in namespaces.items():
+            lines.append(f"@prefix {prefix}: <{namespace}> .")
+        lines.append("")
+
+        lines.append("<https://napcore.eu/ontology/examples>")
+        lines.append("    a owl:Ontology ;")
+        lines.append('    dct:title "NAPCORE Example Files Catalog"@en ;')
+        lines.append('    dct:description "Index linking XML example files to schema concepts"@en ;')
+        lines.append('    owl:versionInfo "0.1-examples" .')
+        lines.append("")
+        lines.append("#################################################################")
+        lines.append("# Example File References")
+        lines.append("#################################################################")
+        lines.append("")
+
+        for example_path, concept_ids in sorted(example_to_concepts.items()):
+            example_iri = f"https://napcore.eu/examples/{example_path.replace('/', '-').replace('.xml', '')}"
+            lines.append(f"<{example_iri}>")
+            lines.append('    a dct:Dataset ;')
+            lines.append(f'    rdfs:label "{example_path}"@en ;')
+            lines.append(f'    dct:source "{example_path}"@en ;')
+
+            for concept_id in sorted(concept_ids):
+                lines.append(f"    skos:isRelatedTo {concept_id} ;")
+
+            lines.append('    dct:license <https://creativecommons.org/licenses/by/4.0/> .')
+            lines.append("")
+
+        output_file = output_dir / "examples.ttl"
+        with open(output_file, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines))
+
+        self.stdout.write(
+            self.style.SUCCESS(f"  ✓ examples.ttl: {len(example_to_concepts)} example files indexed")
+        )
+
     def _build_ttl_content(self, standard: str, concepts: dict, namespaces: dict) -> list[str]:
         """Build Turtle TTL content with rdfs:subClassOf and skos:definition."""
         lines = []
@@ -993,6 +1064,14 @@ class Command(BaseCommand):
             if related_to:
                 for related_id in related_to:
                     lines.append(f"    rdfs:subClassOf {related_id} ;")
+
+            # Example sources (linked XML files)
+            example_sources = concept.get("example_sources", [])
+            if example_sources:
+                for example_path in example_sources:
+                    # Convert relative path to example IRI
+                    example_iri = f"https://napcore.eu/examples/{standard}/{example_path.replace('/', '-').replace('.xml', '')}"
+                    lines.append(f"    skos:seeAlso <{example_iri}> ;")
 
             # Source
             source = concept.get("source", "")
