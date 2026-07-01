@@ -308,7 +308,9 @@ def _concept_id_from_ref(ref_value: str, default_prefix: str) -> str | None:
     if not local_name or _is_noisy_name(local_name):
         return None
 
-    if any(token in local_name for token in ["Group", "Structure", "Version", "Frame", "DataManagedObject"]):
+    # Filter out structural patterns (but not base concepts like DataManagedObject)
+    # Only filter combinations that are obviously structural noise
+    if any(token in local_name for token in ["Group", "Structure", "Version", "Frame"]):
         return None
 
     if concept_prefix not in PREFIX_TO_STANDARD:
