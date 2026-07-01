@@ -39,6 +39,11 @@ netex:Journey
 netex:ServiceJourney
     rdfs:subClassOf nits:Journey .
 
+netex:DatedServiceJourney
+    rdfs:subClassOf netex:ServiceJourney ;
+    rdfs:comment "A particular SERVICE JOURNEY of a vehicle on a particular OPERATING DAY. Extends ServiceJourney with operational and execution details for a specific date."@en ;
+    skos:definition "Realized instance of ServiceJourney for a specific operating date, including modifications decided by control staff"@en .
+
 netex:ServiceJourneyPattern
     rdfs:subClassOf nits:JourneyPattern .
 
