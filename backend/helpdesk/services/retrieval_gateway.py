@@ -21,6 +21,20 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
+
+class ChunkDict:
+    """Wrapper for dict-based chunks to provide attribute access."""
+    def __init__(self, data: dict):
+        self._data = data
+
+    def __getattr__(self, name):
+        if name.startswith('_'):
+            return super().__getattribute__(name)
+        return self._data.get(name)
+
+    def get(self, key, default=None):
+        return self._data.get(key, default)
+
 try:
     from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
 except Exception:  # pragma: no cover - unavailable when postgres search extras are missing
@@ -502,6 +516,28 @@ def _example_chunk_boost(doc_type: str, query_concepts: set[str]) -> float:
     if doc_type == "xml-example":
         # Strong boost for examples when concepts are identified
         boost = 0.15 if query_concepts else 0.10
+        return boost
+    return 0.0
+
+
+def _semantic_definition_boost(doc_type: str, query_concepts: set[str]) -> float:
+    """Boost semantic definitions from ontology so they rank high in context.
+
+    Semantic definitions provide authoritative definitions directly from the
+    ontology, and should be prioritized over other sources for definition-seeking
+    queries. This boost ensures definitions appear in the final context window.
+
+    Args:
+        doc_type: The document type (e.g., "ontology-definition")
+        query_concepts: Set of ontology concepts in the question
+
+    Returns:
+        Score boost to add to ranking (0.0 if not a definition)
+    """
+    if doc_type == "ontology-definition":
+        # Highest priority: definitions are authoritative
+        # Stronger boost than examples since definitions directly answer "what is X?" queries
+        boost = 0.25 if query_concepts else 0.20
         return boost
     return 0.0
 
@@ -1146,7 +1182,7 @@ def retrieve_chunks_with_trace(
                     if not isinstance(chunk_iterable, list):
                         chunk_iterable = list(chunk_iterable)
                     for example_chunk in example_chunks:
-                        chunk_iterable.append(type('ExampleChunk', (), example_chunk)())
+                        chunk_iterable.append(ChunkDict(example_chunk))
         except Exception as e:
             logger.debug(f"Failed to retrieve examples: {e}")
     _record_stage("exampleRetrievalMs", stage_start)
@@ -1175,7 +1211,7 @@ def retrieve_chunks_with_trace(
                     if not isinstance(chunk_iterable, list):
                         chunk_iterable = list(chunk_iterable)
                     for def_chunk in definition_chunks:
-                        chunk_iterable.append(type('OntologyDefinition', (), def_chunk)())
+                        chunk_iterable.append(ChunkDict(def_chunk))
         except Exception as e:
             logger.debug(f"Failed to retrieve ontology definitions: {e}")
     _record_stage("ontologyDefinitionRetrievalMs", stage_start)
@@ -1215,7 +1251,18 @@ def retrieve_chunks_with_trace(
         )
         selected_graph_ids = set(graph_candidate_ids[:graph_preselect_limit])
 
-        base_candidates = [chunk for chunk in chunk_iterable if int(chunk.id) not in selected_graph_ids]
+        # Separate definition chunks - always include them as they're authoritative
+        definition_ids: set[int] = set()
+        base_candidates = []
+        for chunk in chunk_iterable:
+            if int(chunk.id) in selected_graph_ids:
+                continue
+            doc_type = (getattr(chunk, "doc_type", "guide") or "guide").lower()
+            if doc_type == "ontology-definition":
+                definition_ids.add(int(chunk.id))
+            else:
+                base_candidates.append(chunk)
+
         base_candidates.sort(
             key=lambda chunk: (
                 float(getattr(chunk, "vector_similarity", 0.0) or 0.0),
@@ -1225,13 +1272,13 @@ def retrieve_chunks_with_trace(
             reverse=True,
         )
 
-        base_limit = max(0, retrieval_scoring_candidate_cap - len(selected_graph_ids))
+        base_limit = max(0, retrieval_scoring_candidate_cap - len(selected_graph_ids) - len(definition_ids))
         selected_base_ids = {int(chunk.id) for chunk in base_candidates[:base_limit]}
 
         chunk_iterable = [
             chunk
             for chunk in chunk_iterable
-            if int(chunk.id) in selected_base_ids or int(chunk.id) in selected_graph_ids
+            if int(chunk.id) in selected_base_ids or int(chunk.id) in selected_graph_ids or int(chunk.id) in definition_ids
         ]
     _record_stage("candidatePreselectMs", stage_start)
 
@@ -1242,7 +1289,8 @@ def retrieve_chunks_with_trace(
             continue
 
 
-        lexical_score = float(getattr(chunk, "lexical_rank", 0.0))
+        lexical_rank = getattr(chunk, "lexical_rank", None)
+        lexical_score = float(lexical_rank) if lexical_rank is not None else 0.0
         if lexical_score <= 0.0:
             # Augment the question with canonical concept terms so the lexical
             # path benefits from the same expanded vocabulary as the embedding.
@@ -1297,6 +1345,7 @@ def retrieve_chunks_with_trace(
                 label=chunk.label,
                 chunk_text=chunk.text,
             )
+            + _semantic_definition_boost(doc_type=doc_type, query_concepts=question_concepts)
             + _example_chunk_boost(doc_type=doc_type, query_concepts=question_concepts)
         )
         graph_adjustment, graph_hit, matching_concepts = _graph_score_adjustment(
