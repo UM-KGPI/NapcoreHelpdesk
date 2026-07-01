@@ -272,23 +272,23 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                       type="button"
                       className="chat-icon-button"
                       onClick={() => {
-                        void copyAnswerToClipboard(turn);
-                      }}
-                      title="Copy answer to clipboard"
-                      aria-label="Copy answer to clipboard"
-                    >
-                      📋
-                    </button>
-                    <button
-                      type="button"
-                      className="chat-icon-button"
-                      onClick={() => {
                         void copyDeepLinkToClipboard(turn);
                       }}
                       title="Copy deep link to share this Q&A"
                       aria-label="Copy deep link to share this Q&A"
                     >
                       🔗
+                    </button>
+                    <button
+                      type="button"
+                      className="chat-icon-button"
+                      onClick={() => {
+                        void copyAnswerToClipboard(turn);
+                      }}
+                      title="Copy answer to clipboard"
+                      aria-label="Copy answer to clipboard"
+                    >
+                      📋
                     </button>
                     <button
                       type="button"
