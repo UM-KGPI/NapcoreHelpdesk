@@ -29,6 +29,16 @@ export interface AnswerTrace {
   retrievalEventIds: string[];
   evidenceLinkIds?: string[];
   provenanceIds?: string[];
+  graphExpansionHops?: number;
+  graphConceptIds?: string[];
+  graphEvidenceCount?: number;
+  graphScoreContribution?: number;
+  graphCandidatesAdded?: number;
+  graphProvenanceChainCount?: number;
+  exampleChunksAdded?: number;
+  repositoryCoverageCount?: number;
+  conceptCoverageCount?: number;
+  semanticAlignmentScore?: number;
   ruleHitsCount?: number;
   ruleConclusions?: Array<Record<string, unknown>>;
   ontologyVersions?: Array<{

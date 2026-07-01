@@ -45,7 +45,7 @@ def retrieve_concept_examples(
 
         # Build SPARQL query for examples linked to concepts
         concept_uris = " ".join(
-            [f"<{_ensure_uri(cid)}>" if cid.startswith("http") else cid for cid in sorted(concept_ids)]
+            [f"<{_ensure_uri(cid)}>" for cid in sorted(concept_ids)]
         )
 
         sparql_query = f"""
@@ -81,7 +81,7 @@ def retrieve_concept_examples(
             return []
 
         examples = []
-        for binding in results.get("bindings", []):
+        for binding in results.get("results", {}).get("bindings", []):
             example_iri = binding.get("example", {}).get("value", "")
             source_path = binding.get("source", {}).get("value", "")
 
@@ -149,7 +149,7 @@ def retrieve_concept_examples_with_fallback(
 
         # No exact matches - use semantic reasoning for fallback
         concept_uris = " ".join(
-            [f"<{_ensure_uri(cid)}>" if cid.startswith("http") else cid for cid in sorted(concept_ids)]
+            [f"<{_ensure_uri(cid)}>" for cid in sorted(concept_ids)]
         )
 
         # Build mode-agnostic SPARQL query with template-to-concrete inference
@@ -228,7 +228,7 @@ def retrieve_concept_examples_with_fallback(
 
         examples = []
         seen = set()
-        for binding in results.get("bindings", []):
+        for binding in results.get("results", {}).get("bindings", []):
             example_iri = binding.get("example", {}).get("value", "")
             if example_iri in seen:
                 continue
@@ -284,8 +284,10 @@ def format_examples_as_chunks(examples: list[dict]) -> list[dict]:
         # Include match context in text for LLM understanding
         match_context = f"[{match_type.upper()}] {similarity_reason}\n" if match_type not in ("exact", "applicable") else ""
 
+        chunk_id_str = f"example-{example['iri'].replace('/', '-')[-32:]}"
         chunk = {
-            "chunk_id": f"example-{example['iri'].replace('/', '-')[-32:]}",
+            "id": hash(chunk_id_str) % (10 ** 8),  # Numeric ID based on chunk_id hash
+            "chunk_id": chunk_id_str,
             "source_path": example["file_path"],
             "label": f"Example: {example['file_path'].split('/')[-1]}",
             "text": (

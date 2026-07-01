@@ -1105,6 +1105,46 @@ class QuestionAnswerView(APIView):
         if partial_evidence["semanticProvisional"] and semantic_fallback is None:
             semantic_fallback = "PARTIAL_EVIDENCE"
 
+        trace_response = {
+            "requestId": request_id,
+            "questionEventId": str(event.id),
+            "matchedFaqEntryId": matched_faq_entry_id,
+            "retrievalEventIds": persisted_retrieval_ids,
+            "evidenceLinkIds": evidence_link_ids,
+            "graphExpansionHops": graph_trace["graphExpansionHops"],
+            "graphConceptIds": graph_trace["graphConceptIds"],
+            "graphEvidenceCount": graph_trace["graphEvidenceCount"],
+            "graphScoreContribution": graph_trace["graphScoreContribution"],
+            "exampleChunksAdded": graph_trace.get("exampleChunksAdded", 0),
+            "repositoryCoverageCount": graph_trace.get("repositoryCoverageCount", 0),
+            "conceptCoverageCount": graph_trace.get("conceptCoverageCount", 0),
+            "semanticAlignmentScore": graph_trace.get("semanticAlignmentScore", 0.0),
+            "provenanceIds": provenance_ids,
+            "ruleHitsCount": rule_result["matchedRuleCount"],
+            "ruleConclusions": rule_result["conclusions"],
+            "ontologyVersions": ontology_versions,
+            "semanticQuery": semantic_query_dict,
+            "semanticDisambiguationRequired": semantic_disambiguation_required,
+            "semanticDisambiguationPrompt": semantic_disambiguation_prompt,
+            "semanticFallback": semantic_fallback,
+            "semanticProvisional": partial_evidence["semanticProvisional"],
+            "semanticProvisionalReason": partial_evidence["semanticProvisionalReason"],
+            "evidenceCoverageLevel": partial_evidence["evidenceCoverageLevel"],
+            "crossStandardConflict": cross_standard_analysis["crossStandardConflict"],
+            "crossStandardConflictType": cross_standard_analysis["crossStandardConflictType"],
+            "crossStandardEvidencePartitions": cross_standard_analysis[
+                "crossStandardEvidencePartitions"
+            ],
+            "userLikes": event.user_likes,
+            "userDislikes": event.user_dislikes,
+            "answerSuccess": event.answer_success,
+            "citationClickCount": event.citation_click_count,
+        }
+
+        # Persist trace to event for later retrieval
+        event.trace = trace_response
+        event.save(update_fields=["trace", "updated_at"])
+
         return Response(
             {
                 "answerId": answer_id,
@@ -1115,40 +1155,7 @@ class QuestionAnswerView(APIView):
                 "abstained": abstained,
                 "abstentionReason": abstention_reason,
                 "reviewRequired": review_required,
-                "trace": {
-                    "requestId": request_id,
-                    "questionEventId": str(event.id),
-                    "matchedFaqEntryId": matched_faq_entry_id,
-                    "retrievalEventIds": persisted_retrieval_ids,
-                    "evidenceLinkIds": evidence_link_ids,
-                    "graphExpansionHops": graph_trace["graphExpansionHops"],
-                    "graphConceptIds": graph_trace["graphConceptIds"],
-                    "graphEvidenceCount": graph_trace["graphEvidenceCount"],
-                    "graphScoreContribution": graph_trace["graphScoreContribution"],
-                    "repositoryCoverageCount": graph_trace.get("repositoryCoverageCount", 0),
-                    "conceptCoverageCount": graph_trace.get("conceptCoverageCount", 0),
-                    "semanticAlignmentScore": graph_trace.get("semanticAlignmentScore", 0.0),
-                    "provenanceIds": provenance_ids,
-                    "ruleHitsCount": rule_result["matchedRuleCount"],
-                    "ruleConclusions": rule_result["conclusions"],
-                    "ontologyVersions": ontology_versions,
-                    "semanticQuery": semantic_query_dict,
-                    "semanticDisambiguationRequired": semantic_disambiguation_required,
-                    "semanticDisambiguationPrompt": semantic_disambiguation_prompt,
-                    "semanticFallback": semantic_fallback,
-                    "semanticProvisional": partial_evidence["semanticProvisional"],
-                    "semanticProvisionalReason": partial_evidence["semanticProvisionalReason"],
-                    "evidenceCoverageLevel": partial_evidence["evidenceCoverageLevel"],
-                    "crossStandardConflict": cross_standard_analysis["crossStandardConflict"],
-                    "crossStandardConflictType": cross_standard_analysis["crossStandardConflictType"],
-                    "crossStandardEvidencePartitions": cross_standard_analysis[
-                        "crossStandardEvidencePartitions"
-                    ],
-                    "userLikes": event.user_likes,
-                    "userDislikes": event.user_dislikes,
-                    "answerSuccess": event.answer_success,
-                    "citationClickCount": event.citation_click_count,
-                }
+                "trace": trace_response,
             },
             status=status.HTTP_200_OK,
         )
@@ -1773,6 +1780,7 @@ class QuestionEventDetailView(APIView):
                 "mode": event.mode,
                 "confidence": float(event.confidence),
                 "citations": citations,
+                "trace": event.trace or {},
                 "createdAt": event.created_at.isoformat().replace("+00:00", "Z"),
             },
             status=status.HTTP_200_OK,
