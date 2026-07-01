@@ -903,3 +903,105 @@ class Command(BaseCommand):
             self.style.SUCCESS(f"\n✓ Ontology updated at {output_path}")
         )
         self.stdout.write(f"  Total concepts: {len(ontology.get('concepts', {}))}")
+
+        # Also generate TTL files with full semantic relationships
+        self._generate_ttl_files(ontology, output_path.parent.parent / "standards")
+
+    def _generate_ttl_files(self, ontology: dict, output_dir: Path) -> None:
+        """Generate TTL files for each standard with full semantic relationships."""
+        output_dir.mkdir(parents=True, exist_ok=True)
+        namespaces = ontology.get("namespaces", {})
+
+        for standard in ["netex", "opra", "siri", "datex", "transmodel"]:
+            concepts = {
+                cid: cdata
+                for cid, cdata in ontology.get("concepts", {}).items()
+                if cid.startswith(f"{standard}:")
+            }
+
+            if not concepts:
+                continue
+
+            ttl_lines = self._build_ttl_content(standard, concepts, namespaces)
+            output_file = output_dir / f"{standard}.ttl"
+
+            with open(output_file, "w", encoding="utf-8") as f:
+                f.write("\n".join(ttl_lines))
+
+            self.stdout.write(
+                self.style.SUCCESS(f"  ✓ {standard}.ttl: {len(concepts)} concepts with full relationships")
+            )
+
+    def _build_ttl_content(self, standard: str, concepts: dict, namespaces: dict) -> list[str]:
+        """Build Turtle TTL content with rdfs:subClassOf and skos:definition."""
+        lines = []
+
+        # Prefixes
+        lines.append("@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .")
+        lines.append("@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .")
+        lines.append("@prefix owl:  <http://www.w3.org/2002/07/owl#> .")
+        lines.append("@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .")
+        lines.append("@prefix skos: <http://www.w3.org/2004/02/skos/core#> .")
+        lines.append("@prefix dct:  <http://purl.org/dc/terms/> .")
+        lines.append("")
+
+        for prefix, namespace in namespaces.items():
+            lines.append(f"@prefix {prefix}: <{namespace}> .")
+        lines.append("")
+
+        # Ontology header
+        std_ns = namespaces.get(standard, f"https://napcore.eu/ontology/{standard}#")
+        lines.append(f"<{std_ns[:-1]}>")
+        lines.append("    a owl:Ontology ;")
+        lines.append(f'    dct:title "{standard.upper()} Ontology with Schema Relationships"@en ;')
+        lines.append(
+            f'    dct:description "OWL ontology with extracted inheritance and composition relationships from XSD."@en ;'
+        )
+        lines.append('    owl:versionInfo "0.2-xsd-rebuild-with-relationships" ;')
+        lines.append('    dct:license <https://creativecommons.org/licenses/by/4.0/> .')
+        lines.append("")
+        lines.append("#################################################################")
+        lines.append("# Concepts with Semantic Relationships")
+        lines.append("#################################################################")
+        lines.append("")
+
+        # Concept definitions
+        for concept_id in sorted(concepts.keys()):
+            concept = concepts[concept_id]
+            lines.append(f"{concept_id}")
+            lines.append("    a owl:Class ;")
+
+            # Label
+            name = concept.get("name", "")
+            if name:
+                lines.append(f'    rdfs:label "{name}"@en ;')
+
+            # Definition from description (xsd:annotation/xsd:documentation)
+            description = concept.get("description", "").strip()
+            if description:
+                escaped = description.replace('"', '\\"').replace("\n", " ")
+                lines.append(f'    skos:definition "{escaped}"@en ;')
+
+            # Preferred labels
+            labels = concept.get("labels", [])
+            if labels:
+                lines.append(f'    skos:prefLabel "{labels[0]}"@en ;')
+                for alt_label in labels[1:]:
+                    lines.append(f'    skos:altLabel "{alt_label}"@en ;')
+
+            # Relationships extracted from substitutionGroup and xsd:group refs
+            related_to = concept.get("related_to", [])
+            if related_to:
+                for related_id in related_to:
+                    lines.append(f"    rdfs:subClassOf {related_id} ;")
+
+            # Source
+            source = concept.get("source", "")
+            if source:
+                lines.append(f'    rdfs:comment "Extracted from: {source}"@en .')
+            else:
+                lines.append('    rdfs:comment "Extracted from XSD schema"@en .')
+
+            lines.append("")
+
+        return lines
