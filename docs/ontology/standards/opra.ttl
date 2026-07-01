@@ -1,0 +1,3129 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+
+@prefix netex: <https://netex.org.uk/netex/2.0#> .
+@prefix opra: <https://transmodel-cen.eu/opra/1.0#> .
+@prefix siri: <https://siri.org.uk/siri/1.3#> .
+@prefix transmodel: <https://transmodel-cen.eu/6.2/> .
+@prefix nits: <https://napcore.eu/ontology/nits#> .
+
+<https://transmodel-cen.eu/opra/1.0>
+    a owl:Ontology ;
+    dct:title "OPRA Ontology with Schema Relationships"@en ;
+    dct:description "OWL ontology with extracted inheritance and composition relationships from XSD."@en ;
+    owl:versionInfo "0.2-xsd-rebuild-with-relationships" ;
+    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+
+#################################################################
+# Concepts with Semantic Relationships
+#################################################################
+
+opra:AbstractCtxIndicator
+    a owl:Class ;
+    skos:definition "Dummy Supertype for a CONTEXTUAL INDICATOR."@en ;
+    skos:prefLabel "abstract ctx indicator"@en ;
+    skos:altLabel "abstractctxindicator"@en ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:AbstractLogEntry
+    a owl:Class ;
+    skos:definition "Dummy Supertype for LOG ENTRY."@en ;
+    skos:prefLabel "abstract log entry"@en ;
+    skos:altLabel "abstractlogentry"@en ;
+    skos:altLabel "dummy supertype for log entry"@en ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:AbstractLoggableObject
+    a owl:Class ;
+    skos:definition "Dummy Supertype for LOGGABLE OBJECT."@en ;
+    skos:prefLabel "abstract loggable object"@en ;
+    skos:altLabel "abstractloggableobject"@en ;
+    skos:altLabel "dummy supertype for loggable object"@en ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ActualCapacity
+    a owl:Class ;
+    skos:definition "Implementation of LOGGABLE OBJECT designed for recording ACTUAL CAPACITY information."@en ;
+    skos:prefLabel "actual capacity"@en ;
+    skos:altLabel "actualcapacity"@en ;
+    rdfs:subClassOf netex:AcceptedDriverPermit ;
+    rdfs:subClassOf netex:Access ;
+    rdfs:subClassOf netex:AccessEquipment ;
+    rdfs:subClassOf netex:AccessFacility ;
+    rdfs:subClassOf netex:AccessFacilityList ;
+    rdfs:subClassOf netex:AccessMode ;
+    rdfs:subClassOf netex:AccessRightInProduct ;
+    rdfs:subClassOf netex:AccessRightParameterAssignment ;
+    rdfs:subClassOf netex:AccessSpace ;
+    rdfs:subClassOf netex:AccessSummary ;
+    rdfs:subClassOf netex:AccessVehicleEquipment ;
+    rdfs:subClassOf netex:AccessZone ;
+    rdfs:subClassOf netex:AccessibilityAssessment ;
+    rdfs:subClassOf netex:AccessibilityLimitation ;
+    rdfs:subClassOf netex:Accommodation ;
+    rdfs:subClassOf netex:AccommodationAccess ;
+    rdfs:subClassOf netex:AccommodationAccessList ;
+    rdfs:subClassOf netex:AccommodationFacility ;
+    rdfs:subClassOf netex:AccommodationFacilityList ;
+    rdfs:subClassOf netex:ActivationAssignment ;
+    rdfs:subClassOf netex:ActivationLink ;
+    rdfs:subClassOf netex:ActivationPoint ;
+    rdfs:subClassOf netex:ActualVehicleEquipment ;
+    rdfs:subClassOf netex:AllVehicleModes ;
+    rdfs:subClassOf netex:Assignment ;
+    rdfs:subClassOf netex:AssistanceFacility ;
+    rdfs:subClassOf netex:AssistanceFacilityList ;
+    rdfs:subClassOf netex:AssistanceService ;
+    rdfs:subClassOf netex:AudibleSignalsAvailable ;
+    rdfs:subClassOf netex:AvailabilityCondition ;
+    rdfs:subClassOf netex:BatteryEquipment ;
+    rdfs:subClassOf netex:BeaconPoint ;
+    rdfs:subClassOf netex:BedEquipment ;
+    rdfs:subClassOf netex:BerthFacility ;
+    rdfs:subClassOf netex:Block ;
+    rdfs:subClassOf netex:BoardingPermission ;
+    rdfs:subClassOf netex:BoardingPosition ;
+    rdfs:subClassOf netex:BookingPolicy ;
+    rdfs:subClassOf netex:Branding ;
+    rdfs:subClassOf netex:Call ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_bus.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train_simple.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarClubExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CycleSharingExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Fvdv452%2Ftimetable%2FNeTEx%20VDV%20Example.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ActualCapacityDiscoveryDelivery
+    a owl:Class ;
+    skos:definition "A discovery delivery element to get ACTUAL CAPACITIes."@en ;
+    skos:prefLabel "actual capacity discovery delivery"@en ;
+    skos:altLabel "actualcapacitydiscoverydelivery"@en ;
+    skos:altLabel "discovery delivery element to"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryDelivery ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ActualCapacityDiscoveryRequest
+    a owl:Class ;
+    skos:definition "A discovery request element to get ACTUAL CAPACITIes."@en ;
+    skos:prefLabel "actual capacity discovery request"@en ;
+    skos:altLabel "actualcapacitydiscoveryrequest"@en ;
+    skos:altLabel "discovery request element to"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ActualCapacityRequest
+    a owl:Class ;
+    skos:definition "A request element to get ACTUAL CAPACITIes."@en ;
+    skos:prefLabel "actual capacity request"@en ;
+    skos:altLabel "actualcapacityrequest"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:subClassOf netex:AcceptedDriverPermit ;
+    rdfs:subClassOf netex:Access ;
+    rdfs:subClassOf netex:AccessEquipment ;
+    rdfs:subClassOf netex:AccessFacility ;
+    rdfs:subClassOf netex:AccessFacilityList ;
+    rdfs:subClassOf netex:AccessMode ;
+    rdfs:subClassOf netex:AccessRightInProduct ;
+    rdfs:subClassOf netex:AccessRightParameterAssignment ;
+    rdfs:subClassOf netex:AccessSpace ;
+    rdfs:subClassOf netex:AccessSummary ;
+    rdfs:subClassOf netex:AccessVehicleEquipment ;
+    rdfs:subClassOf netex:AccessZone ;
+    rdfs:subClassOf netex:AccessibilityAssessment ;
+    rdfs:subClassOf netex:AccessibilityLimitation ;
+    rdfs:subClassOf netex:Accommodation ;
+    rdfs:subClassOf netex:AccommodationAccess ;
+    rdfs:subClassOf netex:AccommodationAccessList ;
+    rdfs:subClassOf netex:AccommodationFacility ;
+    rdfs:subClassOf netex:AccommodationFacilityList ;
+    rdfs:subClassOf netex:ActivationAssignment ;
+    rdfs:subClassOf netex:ActivationLink ;
+    rdfs:subClassOf netex:ActualVehicleEquipment ;
+    rdfs:subClassOf netex:AllVehicleModes ;
+    rdfs:subClassOf netex:Assignment ;
+    rdfs:subClassOf netex:AssistanceFacility ;
+    rdfs:subClassOf netex:AssistanceFacilityList ;
+    rdfs:subClassOf netex:AssistanceService ;
+    rdfs:subClassOf netex:AudibleSignalsAvailable ;
+    rdfs:subClassOf netex:AvailabilityCondition ;
+    rdfs:subClassOf netex:BatteryEquipment ;
+    rdfs:subClassOf netex:BedEquipment ;
+    rdfs:subClassOf netex:BerthFacility ;
+    rdfs:subClassOf netex:BoardingPermission ;
+    rdfs:subClassOf netex:BoardingPosition ;
+    rdfs:subClassOf netex:BookingPolicy ;
+    rdfs:subClassOf netex:Branding ;
+    rdfs:subClassOf netex:Call ;
+    rdfs:subClassOf netex:CarModelProfile ;
+    rdfs:subClassOf netex:CarServiceFacility ;
+    rdfs:subClassOf netex:CarServiceFacilityList ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_bus.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train_simple.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarClubExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CycleSharingExample.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ActualFleetDimensions
+    a owl:Class ;
+    skos:definition "Implementation of LOGGABLE OBJECT designed for recording ACTUAL FLEET DIMENSIONS information."@en ;
+    skos:prefLabel "actual fleet dimensions"@en ;
+    skos:altLabel "actualfleetdimensions"@en ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ActualFleetDimensionsDiscoveryDelivery
+    a owl:Class ;
+    skos:definition "A discovery delivery element to get ACTUAL FLEET DIMENSIONS."@en ;
+    skos:prefLabel "actual fleet dimensions discovery delivery"@en ;
+    skos:altLabel "actualfleetdimensionsdiscoverydelivery"@en ;
+    skos:altLabel "discovery delivery element to"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryDelivery ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ActualFleetDimensionsDiscoveryRequest
+    a owl:Class ;
+    skos:definition "A discovery request element to get ACTUAL FLEET DIMENSIONS."@en ;
+    skos:prefLabel "actual fleet dimensions discovery request"@en ;
+    skos:altLabel "actualfleetdimensionsdiscoveryrequest"@en ;
+    skos:altLabel "discovery request element to"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ActualFleetDimensionsRequest
+    a owl:Class ;
+    skos:definition "A request element to get ACTUAL FLEET DIMENSIONS."@en ;
+    skos:prefLabel "actual fleet dimensions request"@en ;
+    skos:altLabel "actualfleetdimensionsrequest"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:subClassOf opra:OpraFunctionalRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ActualFrame
+    a owl:Class ;
+    skos:definition "The container element for the actual service within the VALIDITY CONDITIONs."@en ;
+    skos:prefLabel "actual frame"@en ;
+    skos:altLabel "actualframe"@en ;
+    rdfs:subClassOf netex:AcceptedDriverPermit ;
+    rdfs:subClassOf netex:Access ;
+    rdfs:subClassOf netex:AccessEquipment ;
+    rdfs:subClassOf netex:AccessFacility ;
+    rdfs:subClassOf netex:AccessFacilityList ;
+    rdfs:subClassOf netex:AccessMode ;
+    rdfs:subClassOf netex:AccessRightInProduct ;
+    rdfs:subClassOf netex:AccessRightParameterAssignment ;
+    rdfs:subClassOf netex:AccessSpace ;
+    rdfs:subClassOf netex:AccessSummary ;
+    rdfs:subClassOf netex:AccessVehicleEquipment ;
+    rdfs:subClassOf netex:AccessZone ;
+    rdfs:subClassOf netex:AccessibilityAssessment ;
+    rdfs:subClassOf netex:AccessibilityLimitation ;
+    rdfs:subClassOf netex:Accommodation ;
+    rdfs:subClassOf netex:AccommodationAccess ;
+    rdfs:subClassOf netex:AccommodationAccessList ;
+    rdfs:subClassOf netex:AccommodationFacility ;
+    rdfs:subClassOf netex:AccommodationFacilityList ;
+    rdfs:subClassOf netex:ActivationAssignment ;
+    rdfs:subClassOf netex:ActivationLink ;
+    rdfs:subClassOf netex:ActivationPoint ;
+    rdfs:subClassOf netex:ActualVehicleEquipment ;
+    rdfs:subClassOf netex:AllVehicleModes ;
+    rdfs:subClassOf netex:Assignment ;
+    rdfs:subClassOf netex:AssistanceFacility ;
+    rdfs:subClassOf netex:AssistanceFacilityList ;
+    rdfs:subClassOf netex:AssistanceService ;
+    rdfs:subClassOf netex:AudibleSignalsAvailable ;
+    rdfs:subClassOf netex:AvailabilityCondition ;
+    rdfs:subClassOf netex:BatteryEquipment ;
+    rdfs:subClassOf netex:BeaconPoint ;
+    rdfs:subClassOf netex:BedEquipment ;
+    rdfs:subClassOf netex:BerthFacility ;
+    rdfs:subClassOf netex:Block ;
+    rdfs:subClassOf netex:BoardingPermission ;
+    rdfs:subClassOf netex:BoardingPosition ;
+    rdfs:subClassOf netex:BookingPolicy ;
+    rdfs:subClassOf netex:Branding ;
+    rdfs:subClassOf netex:Call ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FActualServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_bus.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train_simple.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarClubExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CycleSharingExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_response.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_response_complex.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_VM%2Fexv_vehicleMonitoring_response.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Fnorway%2Fvehicles%2Fsubmodel-Vehicle.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Fvdv452%2Ftimetable%2FNeTEx%20VDV%20Example.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ActualFrameRequest
+    a owl:Class ;
+    skos:definition "A request element to get ACTUAL FRAMEs."@en ;
+    skos:prefLabel "actual frame request"@en ;
+    skos:altLabel "actualframerequest"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:subClassOf netex:AcceptedDriverPermit ;
+    rdfs:subClassOf netex:Access ;
+    rdfs:subClassOf netex:AccessEquipment ;
+    rdfs:subClassOf netex:AccessFacility ;
+    rdfs:subClassOf netex:AccessFacilityList ;
+    rdfs:subClassOf netex:AccessMode ;
+    rdfs:subClassOf netex:AccessRightInProduct ;
+    rdfs:subClassOf netex:AccessRightParameterAssignment ;
+    rdfs:subClassOf netex:AccessSpace ;
+    rdfs:subClassOf netex:AccessSummary ;
+    rdfs:subClassOf netex:AccessVehicleEquipment ;
+    rdfs:subClassOf netex:AccessZone ;
+    rdfs:subClassOf netex:AccessibilityAssessment ;
+    rdfs:subClassOf netex:AccessibilityLimitation ;
+    rdfs:subClassOf netex:Accommodation ;
+    rdfs:subClassOf netex:AccommodationAccess ;
+    rdfs:subClassOf netex:AccommodationAccessList ;
+    rdfs:subClassOf netex:AccommodationFacility ;
+    rdfs:subClassOf netex:AccommodationFacilityList ;
+    rdfs:subClassOf netex:ActivationAssignment ;
+    rdfs:subClassOf netex:ActivationLink ;
+    rdfs:subClassOf netex:ActualVehicleEquipment ;
+    rdfs:subClassOf netex:AllVehicleModes ;
+    rdfs:subClassOf netex:Assignment ;
+    rdfs:subClassOf netex:AssistanceFacility ;
+    rdfs:subClassOf netex:AssistanceFacilityList ;
+    rdfs:subClassOf netex:AssistanceService ;
+    rdfs:subClassOf netex:AudibleSignalsAvailable ;
+    rdfs:subClassOf netex:AvailabilityCondition ;
+    rdfs:subClassOf netex:BatteryEquipment ;
+    rdfs:subClassOf netex:BedEquipment ;
+    rdfs:subClassOf netex:BerthFacility ;
+    rdfs:subClassOf netex:BoardingPermission ;
+    rdfs:subClassOf netex:BoardingPosition ;
+    rdfs:subClassOf netex:BookingPolicy ;
+    rdfs:subClassOf netex:Branding ;
+    rdfs:subClassOf netex:Call ;
+    rdfs:subClassOf netex:CarModelProfile ;
+    rdfs:subClassOf netex:CarServiceFacility ;
+    rdfs:subClassOf netex:CarServiceFacilityList ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_bus.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train_simple.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarClubExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CycleSharingExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Fnorway%2Fvehicles%2Fsubmodel-Vehicle.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ActualServiceDimensions
+    a owl:Class ;
+    skos:definition "Implementation of LOGGABLE OBJECT designed for recording ACTUAL SERVICE DIMENSIONS information."@en ;
+    skos:prefLabel "actual service dimensions"@en ;
+    skos:altLabel "actualservicedimensions"@en ;
+    rdfs:subClassOf netex:Journey ;
+    rdfs:subClassOf netex:JourneyPattern ;
+    rdfs:subClassOf netex:Level ;
+    rdfs:subClassOf netex:Line ;
+    rdfs:subClassOf netex:OperatingDay ;
+    rdfs:subClassOf netex:Point ;
+    rdfs:subClassOf netex:Route ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:ServiceJourney ;
+    rdfs:subClassOf netex:ServiceJourneyPattern ;
+    rdfs:subClassOf netex:ServicePattern ;
+    rdfs:subClassOf netex:Timeband ;
+    rdfs:subClassOf netex:Train ;
+    rdfs:subClassOf netex:TrainNumber ;
+    rdfs:subClassOf netex:TypeOfFrame ;
+    rdfs:subClassOf netex:TypeOfJourneyPattern ;
+    rdfs:subClassOf netex:TypeOfLine ;
+    rdfs:subClassOf netex:TypeOfService ;
+    rdfs:subClassOf netex:Vehicle ;
+    rdfs:subClassOf netex:VehicleJourney ;
+    rdfs:subClassOf netex:VehicleService ;
+    rdfs:subClassOf opra:ActualFrame ;
+    rdfs:subClassOf opra:IndicatorFrame ;
+    rdfs:subClassOf opra:Opra ;
+    rdfs:subClassOf opra:OpraFunctionalDelivery ;
+    rdfs:subClassOf opra:OpraPayloadDelivery ;
+    rdfs:subClassOf opra:PreparednessLevel ;
+    rdfs:subClassOf opra:ServiceDelivery ;
+    rdfs:subClassOf opra:opraFunctionalDeliveries ;
+    rdfs:subClassOf siri:LinesDelivery ;
+    rdfs:subClassOf siri:ResponseTimestamp ;
+    rdfs:subClassOf siri:ServiceDelivery ;
+    rdfs:subClassOf siri:StopPointsDelivery ;
+    rdfs:subClassOf siri:Train ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FActualServiceDimensions.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ActualServiceDimensionsDiscoveryDelivery
+    a owl:Class ;
+    skos:definition "A discovery delivery element to get ACTUAL SERVICE DIMENSIONS."@en ;
+    skos:prefLabel "actual service dimensions discovery delivery"@en ;
+    skos:altLabel "actualservicedimensionsdiscoverydelivery"@en ;
+    skos:altLabel "discovery delivery element to"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryDelivery ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ActualServiceDimensionsDiscoveryRequest
+    a owl:Class ;
+    skos:definition "A discovery request element to get ACTUAL SERVICE DIMENSIONS."@en ;
+    skos:prefLabel "actual service dimensions discovery request"@en ;
+    skos:altLabel "actualservicedimensionsdiscoveryrequest"@en ;
+    skos:altLabel "discovery request element to"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ActualServiceDimensionsRequest
+    a owl:Class ;
+    skos:definition "A request element to get ACTUAL SERVICE DIMENSIONS."@en ;
+    skos:prefLabel "actual service dimensions request"@en ;
+    skos:altLabel "actualservicedimensionsrequest"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:subClassOf opra:OpraFunctionalRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ActualServiceIntensity
+    a owl:Class ;
+    skos:definition "Implementation of LOGGABLE OBJECT designed for recording ACTUAL SERVICE INTENSITY information."@en ;
+    skos:prefLabel "actual service intensity"@en ;
+    skos:altLabel "actualserviceintensity"@en ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ActualServiceIntensityDiscoveryDelivery
+    a owl:Class ;
+    skos:definition "A discovery delivery element to get ACTUAL SERVICE INTENSITIes."@en ;
+    skos:prefLabel "actual service intensity discovery delivery"@en ;
+    skos:altLabel "actualserviceintensitydiscoverydelivery"@en ;
+    skos:altLabel "discovery delivery element to"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryDelivery ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ActualServiceIntensityDiscoveryRequest
+    a owl:Class ;
+    skos:definition "A discovery request element to get ACTUAL SERVICE INTENSITIes."@en ;
+    skos:prefLabel "actual service intensity discovery request"@en ;
+    skos:altLabel "actualserviceintensitydiscoveryrequest"@en ;
+    skos:altLabel "discovery request element to"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ActualServiceIntensityRequest
+    a owl:Class ;
+    skos:definition "A request element to get ACTUAL SERVICE INTENSITIes."@en ;
+    skos:prefLabel "actual service intensity request"@en ;
+    skos:altLabel "actualserviceintensityrequest"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:subClassOf opra:OpraFunctionalRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:AverageCommercialSpeed
+    a owl:Class ;
+    skos:definition "Speed value calculated from difference between arrival and departure time at terminals and ROUTE length, including stop waiting times."@en ;
+    skos:prefLabel "average commercial speed"@en ;
+    skos:altLabel "averagecommercialspeed"@en ;
+    skos:altLabel "speed value calculated from difference"@en ;
+    rdfs:subClassOf netex:Authority ;
+    rdfs:subClassOf netex:DatedServiceJourney ;
+    rdfs:subClassOf netex:DatedSpecialService ;
+    rdfs:subClassOf netex:DatedVehicleJourney ;
+    rdfs:subClassOf netex:FareClass ;
+    rdfs:subClassOf netex:FareFrame ;
+    rdfs:subClassOf netex:FareScheduledStopPoint ;
+    rdfs:subClassOf netex:Garage ;
+    rdfs:subClassOf netex:GaragePoint ;
+    rdfs:subClassOf netex:Journey ;
+    rdfs:subClassOf netex:JourneyPattern ;
+    rdfs:subClassOf netex:Level ;
+    rdfs:subClassOf netex:Line ;
+    rdfs:subClassOf netex:LineNetwork ;
+    rdfs:subClassOf netex:Network ;
+    rdfs:subClassOf netex:OperatingDay ;
+    rdfs:subClassOf netex:Operator ;
+    rdfs:subClassOf netex:Place ;
+    rdfs:subClassOf netex:Point ;
+    rdfs:subClassOf netex:Route ;
+    rdfs:subClassOf netex:RoutePoint ;
+    rdfs:subClassOf netex:ScheduledStopPoint ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:ServiceJourney ;
+    rdfs:subClassOf netex:ServiceJourneyPattern ;
+    rdfs:subClassOf netex:ServicePattern ;
+    rdfs:subClassOf netex:ServiceSite ;
+    rdfs:subClassOf netex:Site ;
+    rdfs:subClassOf netex:SiteFrame ;
+    rdfs:subClassOf netex:SpecialService ;
+    rdfs:subClassOf netex:StopPlace ;
+    rdfs:subClassOf netex:Timeband ;
+    rdfs:subClassOf netex:Vehicle ;
+    rdfs:subClassOf netex:VehicleJourney ;
+    rdfs:subClassOf netex:VehicleMode ;
+    rdfs:subClassOf netex:VehicleService ;
+    rdfs:subClassOf opra:ExpectedServiceIntensity ;
+    rdfs:subClassOf opra:IndicatorFrame ;
+    rdfs:subClassOf opra:LoadOverJourneyDistance ;
+    rdfs:subClassOf opra:MeanCapacityOverJourneyDistance ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:CancelledDatedVehicleJourneyCount
+    a owl:Class ;
+    skos:definition "Implementation of a CANCELLED DATED VEHICLE JOURNEY COUNT."@en ;
+    skos:prefLabel "cancelled dated vehicle journey count"@en ;
+    skos:altLabel "cancelleddatedvehiclejourneycount"@en ;
+    rdfs:subClassOf netex:Cell ;
+    rdfs:subClassOf netex:DatedServiceJourney ;
+    rdfs:subClassOf netex:DatedVehicleJourney ;
+    rdfs:subClassOf netex:Journey ;
+    rdfs:subClassOf netex:JourneyPattern ;
+    rdfs:subClassOf netex:Level ;
+    rdfs:subClassOf netex:Log ;
+    rdfs:subClassOf netex:LogEntry ;
+    rdfs:subClassOf netex:Place ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:ServiceJourney ;
+    rdfs:subClassOf netex:ServiceJourneyPattern ;
+    rdfs:subClassOf netex:ServicePattern ;
+    rdfs:subClassOf netex:TypeOfFrame ;
+    rdfs:subClassOf netex:TypeOfJourneyPattern ;
+    rdfs:subClassOf netex:TypeOfService ;
+    rdfs:subClassOf netex:ValidBetween ;
+    rdfs:subClassOf netex:Vehicle ;
+    rdfs:subClassOf netex:VehicleJourney ;
+    rdfs:subClassOf netex:VehicleService ;
+    rdfs:subClassOf opra:DurationInterval ;
+    rdfs:subClassOf opra:IndicatorFrame ;
+    rdfs:subClassOf opra:LateDatedVehicleJourneyCount ;
+    rdfs:subClassOf opra:Opra ;
+    rdfs:subClassOf opra:OpraFunctionalDelivery ;
+    rdfs:subClassOf opra:OpraPayloadDelivery ;
+    rdfs:subClassOf opra:PreparednessLevel ;
+    rdfs:subClassOf opra:ServiceDelivery ;
+    rdfs:subClassOf opra:TypeOfDelay ;
+    rdfs:subClassOf opra:opraFunctionalDeliveries ;
+    rdfs:subClassOf siri:ControlActionDelivery ;
+    rdfs:subClassOf siri:DatedVehicleJourney ;
+    rdfs:subClassOf siri:ResponseTimestamp ;
+    rdfs:subClassOf siri:ServiceDelivery ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FCancelledAndLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FDelayedAndCancelledJourneysWithEvents.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:CancelledDatedVehicleJourneyDiscoveryDelivery
+    a owl:Class ;
+    skos:definition "A discovery delivery element to get CANCELLED DATED VEHICLE JOURNEYs."@en ;
+    skos:prefLabel "cancelled dated vehicle journey discovery delivery"@en ;
+    skos:altLabel "cancelleddatedvehiclejourneydiscoverydelivery"@en ;
+    skos:altLabel "discovery delivery element to"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryDelivery ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:CancelledDatedVehicleJourneyDiscoveryRequest
+    a owl:Class ;
+    skos:definition "A discovery request element to get CANCELLED DATED VEHICLE JOURNEYs."@en ;
+    skos:prefLabel "cancelled dated vehicle journey discovery request"@en ;
+    skos:altLabel "cancelleddatedvehiclejourneydiscoveryrequest"@en ;
+    skos:altLabel "discovery request element to"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:CancelledDatedVehicleJourneysRequest
+    a owl:Class ;
+    skos:definition "A request element to get CANCELLED DATED VEHICLE JOURNEYs."@en ;
+    skos:prefLabel "cancelled dated vehicle journeys request"@en ;
+    skos:altLabel "cancelleddatedvehiclejourneysrequest"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:subClassOf opra:OpraFunctionalRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:CapabilitiesRequest
+    a owl:Class ;
+    skos:definition "Requests a the current capabilities of the server. Answered with a CapabilitiesResponse. Reserved for future use."@en ;
+    skos:prefLabel "capabilities request"@en ;
+    skos:altLabel "capabilitiesrequest"@en ;
+    skos:altLabel "requests a the current capabilities"@en ;
+    rdfs:subClassOf netex:Access ;
+    rdfs:subClassOf netex:AccessFacility ;
+    rdfs:subClassOf netex:Call ;
+    rdfs:subClassOf netex:Connection ;
+    rdfs:subClassOf netex:DefaultConnection ;
+    rdfs:subClassOf netex:DefaultInterchange ;
+    rdfs:subClassOf netex:Direction ;
+    rdfs:subClassOf netex:Extensions ;
+    rdfs:subClassOf netex:InfoLink ;
+    rdfs:subClassOf netex:Interchange ;
+    rdfs:subClassOf netex:Journey ;
+    rdfs:subClassOf netex:Level ;
+    rdfs:subClassOf netex:Line ;
+    rdfs:subClassOf netex:Link ;
+    rdfs:subClassOf netex:Notice ;
+    rdfs:subClassOf netex:Operator ;
+    rdfs:subClassOf netex:Point ;
+    rdfs:subClassOf netex:PreviousCall ;
+    rdfs:subClassOf netex:Review ;
+    rdfs:subClassOf netex:ServiceJourney ;
+    rdfs:subClassOf netex:ServiceJourneyInterchange ;
+    rdfs:subClassOf netex:ServiceLink ;
+    rdfs:subClassOf netex:TimeInterval ;
+    rdfs:subClassOf netex:TypeOfFacility ;
+    rdfs:subClassOf netex:TypeOfLine ;
+    rdfs:subClassOf netex:TypeOfLink ;
+    rdfs:subClassOf netex:TypeOfPoint ;
+    rdfs:subClassOf netex:TypeOfService ;
+    rdfs:subClassOf netex:TypeOfValidity ;
+    rdfs:subClassOf netex:TypeOfVersion ;
+    rdfs:subClassOf netex:ValidityCondition ;
+    rdfs:subClassOf netex:Vehicle ;
+    rdfs:subClassOf netex:VehicleAccessFacility ;
+    rdfs:subClassOf netex:VehicleJourney ;
+    rdfs:subClassOf netex:VehicleService ;
+    rdfs:subClassOf netex:Version ;
+    rdfs:subClassOf opra:CapabilitiesResponse ;
+    rdfs:subClassOf opra:ServiceDelivery ;
+    rdfs:subClassOf opra:ServiceRequest ;
+    rdfs:subClassOf opra:SubscriptionRequest ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_CM%2Fexc_connectionMonitoring_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_CT%2Fexc_connectionTimetable_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_ET%2Fext_estimatedTimetable_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_FM%2Fexf_facilityMonitoring_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_GM%2Fexm_generalMessage_capabilityResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_PT%2Fext_productionTimetable_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_SM%2Fexp_stopMonitoring_permissions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_ST%2Fexs_stopTimetable_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_SX%2Fexx_situationExchange_capabilityResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_VM%2Fexv_vehicleMonitoring_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exu_capability%2Fexd_allServices_capabilitiesRequest.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exu_capability%2Fexd_allServices_capabilitiesResponse.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:CapabilitiesResponse
+    a owl:Class ;
+    skos:definition "Responses with the capabilities of an implementation.  Reserved for future use."@en ;
+    skos:prefLabel "capabilities response"@en ;
+    skos:altLabel "capabilitiesresponse"@en ;
+    skos:altLabel "responses with the capabilities of"@en ;
+    rdfs:subClassOf netex:Access ;
+    rdfs:subClassOf netex:AccessFacility ;
+    rdfs:subClassOf netex:Call ;
+    rdfs:subClassOf netex:Connection ;
+    rdfs:subClassOf netex:DefaultConnection ;
+    rdfs:subClassOf netex:DefaultInterchange ;
+    rdfs:subClassOf netex:Direction ;
+    rdfs:subClassOf netex:Extensions ;
+    rdfs:subClassOf netex:InfoLink ;
+    rdfs:subClassOf netex:Interchange ;
+    rdfs:subClassOf netex:Journey ;
+    rdfs:subClassOf netex:Level ;
+    rdfs:subClassOf netex:Line ;
+    rdfs:subClassOf netex:Link ;
+    rdfs:subClassOf netex:Notice ;
+    rdfs:subClassOf netex:Operator ;
+    rdfs:subClassOf netex:Point ;
+    rdfs:subClassOf netex:PreviousCall ;
+    rdfs:subClassOf netex:Review ;
+    rdfs:subClassOf netex:ServiceJourney ;
+    rdfs:subClassOf netex:ServiceJourneyInterchange ;
+    rdfs:subClassOf netex:ServiceLink ;
+    rdfs:subClassOf netex:TimeInterval ;
+    rdfs:subClassOf netex:TypeOfFacility ;
+    rdfs:subClassOf netex:TypeOfLine ;
+    rdfs:subClassOf netex:TypeOfLink ;
+    rdfs:subClassOf netex:TypeOfPoint ;
+    rdfs:subClassOf netex:TypeOfService ;
+    rdfs:subClassOf netex:TypeOfValidity ;
+    rdfs:subClassOf netex:TypeOfVersion ;
+    rdfs:subClassOf netex:ValidityCondition ;
+    rdfs:subClassOf netex:Vehicle ;
+    rdfs:subClassOf netex:VehicleAccessFacility ;
+    rdfs:subClassOf netex:VehicleJourney ;
+    rdfs:subClassOf netex:VehicleService ;
+    rdfs:subClassOf netex:Version ;
+    rdfs:subClassOf opra:CapabilitiesRequest ;
+    rdfs:subClassOf opra:ServiceDelivery ;
+    rdfs:subClassOf opra:ServiceRequest ;
+    rdfs:subClassOf opra:SubscriptionRequest ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_CM%2Fexc_connectionMonitoring_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_CT%2Fexc_connectionTimetable_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_ET%2Fext_estimatedTimetable_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_FM%2Fexf_facilityMonitoring_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_GM%2Fexm_generalMessage_capabilityResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_PT%2Fext_productionTimetable_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_SM%2Fexp_stopMonitoring_permissions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_ST%2Fexs_stopTimetable_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_SX%2Fexx_situationExchange_capabilityResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_VM%2Fexv_vehicleMonitoring_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exu_capability%2Fexd_allServices_capabilitiesResponse.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:CapacitySpecification
+    a owl:Class ;
+    skos:definition "Element providing capability to specify methods and capacity values for VEHICLE TYPEs."@en ;
+    skos:prefLabel "capacity specification"@en ;
+    skos:altLabel "capacityspecification"@en ;
+    rdfs:subClassOf netex:AcceptedDriverPermit ;
+    rdfs:subClassOf netex:Access ;
+    rdfs:subClassOf netex:AccessEquipment ;
+    rdfs:subClassOf netex:AccessFacility ;
+    rdfs:subClassOf netex:AccessFacilityList ;
+    rdfs:subClassOf netex:AccessMode ;
+    rdfs:subClassOf netex:AccessRightInProduct ;
+    rdfs:subClassOf netex:AccessRightParameterAssignment ;
+    rdfs:subClassOf netex:AccessSpace ;
+    rdfs:subClassOf netex:AccessSummary ;
+    rdfs:subClassOf netex:AccessVehicleEquipment ;
+    rdfs:subClassOf netex:AccessZone ;
+    rdfs:subClassOf netex:Accommodation ;
+    rdfs:subClassOf netex:AccommodationAccess ;
+    rdfs:subClassOf netex:AccommodationAccessList ;
+    rdfs:subClassOf netex:AccommodationFacility ;
+    rdfs:subClassOf netex:AccommodationFacilityList ;
+    rdfs:subClassOf netex:ActivationAssignment ;
+    rdfs:subClassOf netex:ActivationLink ;
+    rdfs:subClassOf netex:ActualVehicleEquipment ;
+    rdfs:subClassOf netex:AddressablePlace ;
+    rdfs:subClassOf netex:AllVehicleModes ;
+    rdfs:subClassOf netex:AllowedLineDirection ;
+    rdfs:subClassOf netex:AmountOfPriceUnitProduct ;
+    rdfs:subClassOf netex:Assignment ;
+    rdfs:subClassOf netex:AvailabilityCondition ;
+    rdfs:subClassOf netex:BatteryEquipment ;
+    rdfs:subClassOf netex:Blacklist ;
+    rdfs:subClassOf netex:BoardingPosition ;
+    rdfs:subClassOf netex:BookingArrangement ;
+    rdfs:subClassOf netex:BookingPolicy ;
+    rdfs:subClassOf netex:BookingProcessFacility ;
+    rdfs:subClassOf netex:BookingProcessFacilityList ;
+    rdfs:subClassOf netex:Branding ;
+    rdfs:subClassOf netex:Cancelling ;
+    rdfs:subClassOf netex:CarModelProfile ;
+    rdfs:subClassOf netex:CarPoolingService ;
+    rdfs:subClassOf netex:CarServiceFacility ;
+    rdfs:subClassOf netex:CarServiceFacilityList ;
+    rdfs:subClassOf netex:CateringFacility ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedCapacity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2Frail%2FNetex_era_distance_ro.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarClubExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarPoolingExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-ChauffeuredServiceExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CycleSharingExample.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ContextualIndicatorDiscoveryDelivery
+    a owl:Class ;
+    skos:definition "A request element to get CONTEXTUAL INDICATORs."@en ;
+    skos:prefLabel "contextual indicator discovery delivery"@en ;
+    skos:altLabel "contextualindicatordiscoverydelivery"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryDelivery ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ContextualIndicatorDiscoveryRequest
+    a owl:Class ;
+    skos:definition "A request element to get CONTEXTUAL INDICATORs."@en ;
+    skos:prefLabel "contextual indicator discovery request"@en ;
+    skos:altLabel "contextualindicatordiscoveryrequest"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ContextualIndicatorFrame
+    a owl:Class ;
+    skos:definition "A coherent set of CONTEXTUAL INDICATORs to which the same frame VALIDITY CONDITIONs have been assigned."@en ;
+    skos:prefLabel "coherent set of contextual"@en ;
+    skos:altLabel "contextual indicator frame"@en ;
+    skos:altLabel "contextualindicatorframe"@en ;
+    rdfs:subClassOf netex:Authority ;
+    rdfs:subClassOf netex:Network ;
+    rdfs:subClassOf netex:Operator ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:Vehicle ;
+    rdfs:subClassOf netex:VehicleMode ;
+    rdfs:subClassOf netex:VehicleService ;
+    rdfs:subClassOf netex:Version ;
+    rdfs:subClassOf netex:VersionFrame ;
+    rdfs:subClassOf netex:keyList ;
+    rdfs:subClassOf opra:GenericContextualIndicator ;
+    rdfs:subClassOf opra:IndicatorFrame ;
+    rdfs:subClassOf opra:Opra ;
+    rdfs:subClassOf opra:OpraFunctionalDelivery ;
+    rdfs:subClassOf opra:OpraPayloadDelivery ;
+    rdfs:subClassOf opra:ServiceDelivery ;
+    rdfs:subClassOf opra:opraFunctionalDeliveries ;
+    rdfs:subClassOf siri:KeyList ;
+    rdfs:subClassOf siri:ResponseTimestamp ;
+    rdfs:subClassOf siri:ServiceDelivery ;
+    rdfs:subClassOf siri:VehicleMode ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FContextualIndicatorFrame.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ContextualIndicatorRequest
+    a owl:Class ;
+    skos:definition "A request element to get CONTEXTUAL INDICATORs."@en ;
+    skos:prefLabel "contextual indicator request"@en ;
+    skos:altLabel "contextualindicatorrequest"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:subClassOf opra:OpraFunctionalRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:DurationInterval
+    a owl:Class ;
+    skos:definition "Element for basic occurrence statistics of a DURATION INTERVAL."@en ;
+    skos:prefLabel "duration interval"@en ;
+    skos:altLabel "durationinterval"@en ;
+    rdfs:subClassOf netex:AcceptedDriverPermit ;
+    rdfs:subClassOf netex:Access ;
+    rdfs:subClassOf netex:AccessEquipment ;
+    rdfs:subClassOf netex:AccessFacility ;
+    rdfs:subClassOf netex:AccessFacilityList ;
+    rdfs:subClassOf netex:AccessMode ;
+    rdfs:subClassOf netex:AccessRightInProduct ;
+    rdfs:subClassOf netex:AccessRightParameterAssignment ;
+    rdfs:subClassOf netex:AccessSpace ;
+    rdfs:subClassOf netex:AccessSummary ;
+    rdfs:subClassOf netex:AccessVehicleEquipment ;
+    rdfs:subClassOf netex:AccessZone ;
+    rdfs:subClassOf netex:AccessibilityAssessment ;
+    rdfs:subClassOf netex:AccessibilityInfoFacility ;
+    rdfs:subClassOf netex:AccessibilityInfoFacilityList ;
+    rdfs:subClassOf netex:AccessibilityLimitation ;
+    rdfs:subClassOf netex:AccessibilityTool ;
+    rdfs:subClassOf netex:AccessibilityToolList ;
+    rdfs:subClassOf netex:Accommodation ;
+    rdfs:subClassOf netex:AccommodationAccess ;
+    rdfs:subClassOf netex:AccommodationAccessList ;
+    rdfs:subClassOf netex:AccommodationFacility ;
+    rdfs:subClassOf netex:AccommodationFacilityList ;
+    rdfs:subClassOf netex:ActivationAssignment ;
+    rdfs:subClassOf netex:ActivationLink ;
+    rdfs:subClassOf netex:ActivationPoint ;
+    rdfs:subClassOf netex:ActualVehicleEquipment ;
+    rdfs:subClassOf netex:AddressablePlace ;
+    rdfs:subClassOf netex:AdministrativeZone ;
+    rdfs:subClassOf netex:AllVehicleModes ;
+    rdfs:subClassOf netex:AllowedLineDirection ;
+    rdfs:subClassOf netex:AlternativeQuayDescriptor ;
+    rdfs:subClassOf netex:AmountOfPriceUnitProduct ;
+    rdfs:subClassOf netex:Assignment ;
+    rdfs:subClassOf netex:AssistanceBookingService ;
+    rdfs:subClassOf netex:AssistanceFacility ;
+    rdfs:subClassOf netex:AssistanceFacilityList ;
+    rdfs:subClassOf netex:AssistanceService ;
+    rdfs:subClassOf netex:AudibleSignalsAvailable ;
+    rdfs:subClassOf netex:Authority ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FCancelledAndLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FDelayedAndCancelledJourneysWithEvents.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FResponseLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FENTUR-SchoolTwiceADayTripCarnet_2020120.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_71.1_Bus_TimeIntervalFares_Zonal_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_71.2_Bus_ZonalFares_MultipleSalesPackages.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_91.1_Rail_RailCard_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2Frail%2FNetex_era_crossborder_de.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2Frail%2FNetex_era_distance_ro.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2Frail%2FNetex_era_toc_uk.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarClubExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarPoolingExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-ChauffeuredServiceExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CycleSharingExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_01_Sites_SimpleStadium_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_10_Sites_OlympicPark_2_basic.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_11_Sites_OlympicPark_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_12_Sites_OlympicPark_3_nav.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_21_Sites_Parking_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_21_Sites_Parking_2.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_Address_Example_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FFX-PI-01_UK_TBD_STOP-OFFER_910GWIMBLDN-accessibility_20140601.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FNetex_04_Stops_SimpleStation_1.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ExpectedPassengerCount
+    a owl:Class ;
+    skos:definition "Implementation of LOGGABLE OBJECT designed for recording EXPECTED PASSENGER COUNT information."@en ;
+    skos:prefLabel "expected passenger count"@en ;
+    skos:altLabel "expectedpassengercount"@en ;
+    rdfs:subClassOf netex:Journey ;
+    rdfs:subClassOf netex:JourneyPattern ;
+    rdfs:subClassOf netex:Level ;
+    rdfs:subClassOf netex:Point ;
+    rdfs:subClassOf netex:ScheduledStopPoint ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:ServiceJourney ;
+    rdfs:subClassOf netex:ServiceJourneyPattern ;
+    rdfs:subClassOf netex:ServicePattern ;
+    rdfs:subClassOf netex:Timeband ;
+    rdfs:subClassOf opra:IndicatorFrame ;
+    rdfs:subClassOf opra:Opra ;
+    rdfs:subClassOf opra:OpraFunctionalDelivery ;
+    rdfs:subClassOf opra:OpraPayloadDelivery ;
+    rdfs:subClassOf opra:PreparednessLevel ;
+    rdfs:subClassOf opra:ServiceDelivery ;
+    rdfs:subClassOf opra:opraFunctionalDeliveries ;
+    rdfs:subClassOf siri:ResponseTimestamp ;
+    rdfs:subClassOf siri:ServiceDelivery ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedPassengerCount.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ExpectedPassengerCountDiscoveryDelivery
+    a owl:Class ;
+    skos:definition "A discovery delivery element to get EXPECTED PASSENGER COUNTs."@en ;
+    skos:prefLabel "discovery delivery element to"@en ;
+    skos:altLabel "expected passenger count discovery delivery"@en ;
+    skos:altLabel "expectedpassengercountdiscoverydelivery"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryDelivery ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ExpectedPassengerCountDiscoveryRequest
+    a owl:Class ;
+    skos:definition "A discovery request element to get EXPECTED PASSENGER COUNTs."@en ;
+    skos:prefLabel "discovery request element to"@en ;
+    skos:altLabel "expected passenger count discovery request"@en ;
+    skos:altLabel "expectedpassengercountdiscoveryrequest"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ExpectedPassengerCountRequest
+    a owl:Class ;
+    skos:definition "A request element to get EXPECTED PASSENGER COUNTs."@en ;
+    skos:prefLabel "expected passenger count request"@en ;
+    skos:altLabel "expectedpassengercountrequest"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:subClassOf opra:OpraFunctionalRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ExpectedServiceIntensity
+    a owl:Class ;
+    skos:definition "Implementation of LOGGABLE OBJECT designed for recording EXPECTED SERVICE INTENSITY information."@en ;
+    skos:prefLabel "expected service intensity"@en ;
+    skos:altLabel "expectedserviceintensity"@en ;
+    rdfs:subClassOf netex:Authority ;
+    rdfs:subClassOf netex:DatedServiceJourney ;
+    rdfs:subClassOf netex:DatedSpecialService ;
+    rdfs:subClassOf netex:DatedVehicleJourney ;
+    rdfs:subClassOf netex:FareClass ;
+    rdfs:subClassOf netex:FareFrame ;
+    rdfs:subClassOf netex:FareScheduledStopPoint ;
+    rdfs:subClassOf netex:Garage ;
+    rdfs:subClassOf netex:GaragePoint ;
+    rdfs:subClassOf netex:Journey ;
+    rdfs:subClassOf netex:JourneyPattern ;
+    rdfs:subClassOf netex:Level ;
+    rdfs:subClassOf netex:Line ;
+    rdfs:subClassOf netex:LineNetwork ;
+    rdfs:subClassOf netex:Network ;
+    rdfs:subClassOf netex:OperatingDay ;
+    rdfs:subClassOf netex:Operator ;
+    rdfs:subClassOf netex:Place ;
+    rdfs:subClassOf netex:Point ;
+    rdfs:subClassOf netex:Route ;
+    rdfs:subClassOf netex:RoutePoint ;
+    rdfs:subClassOf netex:ScheduledStopPoint ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:ServiceJourney ;
+    rdfs:subClassOf netex:ServiceJourneyPattern ;
+    rdfs:subClassOf netex:ServicePattern ;
+    rdfs:subClassOf netex:ServiceSite ;
+    rdfs:subClassOf netex:Site ;
+    rdfs:subClassOf netex:SiteFrame ;
+    rdfs:subClassOf netex:SpecialService ;
+    rdfs:subClassOf netex:StopPlace ;
+    rdfs:subClassOf netex:Timeband ;
+    rdfs:subClassOf netex:Vehicle ;
+    rdfs:subClassOf netex:VehicleJourney ;
+    rdfs:subClassOf netex:VehicleMode ;
+    rdfs:subClassOf netex:VehicleService ;
+    rdfs:subClassOf opra:AverageCommercialSpeed ;
+    rdfs:subClassOf opra:IndicatorFrame ;
+    rdfs:subClassOf opra:LoadOverJourneyDistance ;
+    rdfs:subClassOf opra:MeanCapacityOverJourneyDistance ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ExternalPassengerCount
+    a owl:Class ;
+    skos:definition "Implementation of LOGGABLE OBJECT designed for recording EXTERNAL PASSENGER COUNT information."@en ;
+    skos:prefLabel "external passenger count"@en ;
+    skos:altLabel "externalpassengercount"@en ;
+    rdfs:subClassOf netex:Access ;
+    rdfs:subClassOf netex:AccessEquipment ;
+    rdfs:subClassOf netex:AccessFacility ;
+    rdfs:subClassOf netex:AccessFacilityList ;
+    rdfs:subClassOf netex:AccessMode ;
+    rdfs:subClassOf netex:AccessSpace ;
+    rdfs:subClassOf netex:AccessSummary ;
+    rdfs:subClassOf netex:AccessVehicleEquipment ;
+    rdfs:subClassOf netex:AccessZone ;
+    rdfs:subClassOf netex:AccessibilityAssessment ;
+    rdfs:subClassOf netex:AccessibilityInfoFacility ;
+    rdfs:subClassOf netex:AccessibilityInfoFacilityList ;
+    rdfs:subClassOf netex:AccessibilityLimitation ;
+    rdfs:subClassOf netex:Accommodation ;
+    rdfs:subClassOf netex:AccommodationAccess ;
+    rdfs:subClassOf netex:AccommodationAccessList ;
+    rdfs:subClassOf netex:AccommodationFacility ;
+    rdfs:subClassOf netex:AccommodationFacilityList ;
+    rdfs:subClassOf netex:ActualVehicleEquipment ;
+    rdfs:subClassOf netex:AdministrativeZone ;
+    rdfs:subClassOf netex:AllVehicleModes ;
+    rdfs:subClassOf netex:AlternativeQuayDescriptor ;
+    rdfs:subClassOf netex:Assignment ;
+    rdfs:subClassOf netex:AssistanceBookingService ;
+    rdfs:subClassOf netex:AssistanceFacility ;
+    rdfs:subClassOf netex:AssistanceFacilityList ;
+    rdfs:subClassOf netex:AssistanceService ;
+    rdfs:subClassOf netex:AudibleSignalsAvailable ;
+    rdfs:subClassOf netex:Authority ;
+    rdfs:subClassOf netex:AvailabilityCondition ;
+    rdfs:subClassOf netex:BedEquipment ;
+    rdfs:subClassOf netex:BerthFacility ;
+    rdfs:subClassOf netex:BoardingPermission ;
+    rdfs:subClassOf netex:BoardingPosition ;
+    rdfs:subClassOf netex:BookingArrangement ;
+    rdfs:subClassOf netex:BookingProcessFacility ;
+    rdfs:subClassOf netex:BookingProcessFacilityList ;
+    rdfs:subClassOf netex:Call ;
+    rdfs:subClassOf netex:CarServiceFacility ;
+    rdfs:subClassOf netex:CarServiceFacilityList ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FFX-PI-01_UK_TBD_STOP-OFFER_910GWIMBLDN-accessibility_20140601.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FNetex_04_Stops_SimpleStation_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FNetex_10_StopPlace_uk_ComplexStation_Wimbledon_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FNetex_10_StopPlace_withParking_1.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ExternalPassengerCountDiscoveryDelivery
+    a owl:Class ;
+    skos:definition "A discovery delivery element to get EXTERNAL PASSENGER COUNTs."@en ;
+    skos:prefLabel "discovery delivery element to"@en ;
+    skos:altLabel "external passenger count discovery delivery"@en ;
+    skos:altLabel "externalpassengercountdiscoverydelivery"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryDelivery ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ExternalPassengerCountDiscoveryRequest
+    a owl:Class ;
+    skos:definition "A discovery request element to get EXTERNAL PASSENGER COUNTs."@en ;
+    skos:prefLabel "discovery request element to"@en ;
+    skos:altLabel "external passenger count discovery request"@en ;
+    skos:altLabel "externalpassengercountdiscoveryrequest"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ExternalPassengerCountRequest
+    a owl:Class ;
+    skos:definition "A request element to get EXTERNAL PASSENGER COUNTs."@en ;
+    skos:prefLabel "external passenger count request"@en ;
+    skos:altLabel "externalpassengercountrequest"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:subClassOf netex:Access ;
+    rdfs:subClassOf netex:AccessEquipment ;
+    rdfs:subClassOf netex:AccessFacility ;
+    rdfs:subClassOf netex:AccessFacilityList ;
+    rdfs:subClassOf netex:AccessMode ;
+    rdfs:subClassOf netex:AccessSpace ;
+    rdfs:subClassOf netex:AccessSummary ;
+    rdfs:subClassOf netex:AccessVehicleEquipment ;
+    rdfs:subClassOf netex:AccessZone ;
+    rdfs:subClassOf netex:AccessibilityAssessment ;
+    rdfs:subClassOf netex:AccessibilityInfoFacility ;
+    rdfs:subClassOf netex:AccessibilityInfoFacilityList ;
+    rdfs:subClassOf netex:AccessibilityLimitation ;
+    rdfs:subClassOf netex:Accommodation ;
+    rdfs:subClassOf netex:AccommodationAccess ;
+    rdfs:subClassOf netex:AccommodationAccessList ;
+    rdfs:subClassOf netex:AccommodationFacility ;
+    rdfs:subClassOf netex:AccommodationFacilityList ;
+    rdfs:subClassOf netex:ActualVehicleEquipment ;
+    rdfs:subClassOf netex:AdministrativeZone ;
+    rdfs:subClassOf netex:AllVehicleModes ;
+    rdfs:subClassOf netex:AlternativeQuayDescriptor ;
+    rdfs:subClassOf netex:Assignment ;
+    rdfs:subClassOf netex:AssistanceBookingService ;
+    rdfs:subClassOf netex:AssistanceFacility ;
+    rdfs:subClassOf netex:AssistanceFacilityList ;
+    rdfs:subClassOf netex:AssistanceService ;
+    rdfs:subClassOf netex:AudibleSignalsAvailable ;
+    rdfs:subClassOf netex:Authority ;
+    rdfs:subClassOf netex:AvailabilityCondition ;
+    rdfs:subClassOf netex:BedEquipment ;
+    rdfs:subClassOf netex:BerthFacility ;
+    rdfs:subClassOf netex:BoardingPermission ;
+    rdfs:subClassOf netex:BoardingPosition ;
+    rdfs:subClassOf netex:BookingArrangement ;
+    rdfs:subClassOf netex:BookingProcessFacility ;
+    rdfs:subClassOf netex:BookingProcessFacilityList ;
+    rdfs:subClassOf netex:Call ;
+    rdfs:subClassOf netex:CarServiceFacility ;
+    rdfs:subClassOf netex:CarServiceFacilityList ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FFX-PI-01_UK_TBD_STOP-OFFER_910GWIMBLDN-accessibility_20140601.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FNetex_04_Stops_SimpleStation_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FNetex_10_StopPlace_uk_ComplexStation_Wimbledon_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FNetex_10_StopPlace_withParking_1.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:GeneralLogEntry
+    a owl:Class ;
+    skos:definition "A time-stamped record of an event or change of state."@en ;
+    skos:prefLabel "general log entry"@en ;
+    skos:altLabel "generallogentry"@en ;
+    rdfs:subClassOf opra:AbstractLogEntry ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:GenericContextualIndicator
+    a owl:Class ;
+    skos:definition "Representation of a generic CONTEXTUAL INDICATOR."@en ;
+    skos:prefLabel "generic contextual indicator"@en ;
+    skos:altLabel "genericcontextualindicator"@en ;
+    rdfs:subClassOf netex:Authority ;
+    rdfs:subClassOf netex:Network ;
+    rdfs:subClassOf netex:Operator ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:Vehicle ;
+    rdfs:subClassOf netex:VehicleMode ;
+    rdfs:subClassOf netex:VehicleService ;
+    rdfs:subClassOf netex:Version ;
+    rdfs:subClassOf netex:VersionFrame ;
+    rdfs:subClassOf netex:keyList ;
+    rdfs:subClassOf opra:AbstractCtxIndicator ;
+    rdfs:subClassOf opra:ContextualIndicatorFrame ;
+    rdfs:subClassOf opra:IndicatorFrame ;
+    rdfs:subClassOf opra:Opra ;
+    rdfs:subClassOf opra:OpraFunctionalDelivery ;
+    rdfs:subClassOf opra:OpraPayloadDelivery ;
+    rdfs:subClassOf opra:ServiceDelivery ;
+    rdfs:subClassOf opra:opraFunctionalDeliveries ;
+    rdfs:subClassOf siri:KeyList ;
+    rdfs:subClassOf siri:ResponseTimestamp ;
+    rdfs:subClassOf siri:ServiceDelivery ;
+    rdfs:subClassOf siri:VehicleMode ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FContextualIndicatorFrame.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:IndicatorFrame
+    a owl:Class ;
+    skos:definition "A coherent set of OpRa indicators to which the same frame VALIDITY CONDITIONs have been assigned."@en ;
+    skos:prefLabel "indicator frame"@en ;
+    skos:altLabel "indicatorframe"@en ;
+    rdfs:subClassOf netex:Access ;
+    rdfs:subClassOf netex:AccessEquipment ;
+    rdfs:subClassOf netex:AccessFacility ;
+    rdfs:subClassOf netex:AccessFacilityList ;
+    rdfs:subClassOf netex:AccessMode ;
+    rdfs:subClassOf netex:AccessSpace ;
+    rdfs:subClassOf netex:AccessSummary ;
+    rdfs:subClassOf netex:AccessVehicleEquipment ;
+    rdfs:subClassOf netex:AccessZone ;
+    rdfs:subClassOf netex:AccessibilityAssessment ;
+    rdfs:subClassOf netex:AccessibilityLimitation ;
+    rdfs:subClassOf netex:Accommodation ;
+    rdfs:subClassOf netex:AccommodationAccess ;
+    rdfs:subClassOf netex:AccommodationAccessList ;
+    rdfs:subClassOf netex:AccommodationFacility ;
+    rdfs:subClassOf netex:AccommodationFacilityList ;
+    rdfs:subClassOf netex:ActualVehicleEquipment ;
+    rdfs:subClassOf netex:AllVehicleModes ;
+    rdfs:subClassOf netex:Assignment ;
+    rdfs:subClassOf netex:AssistanceFacility ;
+    rdfs:subClassOf netex:AssistanceFacilityList ;
+    rdfs:subClassOf netex:AssistanceService ;
+    rdfs:subClassOf netex:AudibleSignalsAvailable ;
+    rdfs:subClassOf netex:Authority ;
+    rdfs:subClassOf netex:AvailabilityCondition ;
+    rdfs:subClassOf netex:BedEquipment ;
+    rdfs:subClassOf netex:BerthFacility ;
+    rdfs:subClassOf netex:BoardingPermission ;
+    rdfs:subClassOf netex:BoardingPosition ;
+    rdfs:subClassOf netex:Call ;
+    rdfs:subClassOf netex:CarServiceFacility ;
+    rdfs:subClassOf netex:CarServiceFacilityList ;
+    rdfs:subClassOf netex:CateringFacility ;
+    rdfs:subClassOf netex:CateringFacilityList ;
+    rdfs:subClassOf netex:CateringService ;
+    rdfs:subClassOf netex:Cell ;
+    rdfs:subClassOf netex:CheckConstraint ;
+    rdfs:subClassOf netex:CheckConstraintDelay ;
+    rdfs:subClassOf netex:ClassOfUse ;
+    rdfs:subClassOf netex:ClimateControl ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FActualServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FCancelledAndLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FContextualIndicatorFrame.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FDelayedAndCancelledJourneysWithEvents.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedCapacity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedFleetDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FResponseLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FTicketingBasedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fplaceholder.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:LateDatedVehicleJourneyCount
+    a owl:Class ;
+    skos:definition "Implementation of a LATE DATED VEHICLE JOURNEY COUNT."@en ;
+    skos:prefLabel "late dated vehicle journey count"@en ;
+    skos:altLabel "latedatedvehiclejourneycount"@en ;
+    rdfs:subClassOf netex:Cell ;
+    rdfs:subClassOf netex:DatedServiceJourney ;
+    rdfs:subClassOf netex:DatedVehicleJourney ;
+    rdfs:subClassOf netex:Journey ;
+    rdfs:subClassOf netex:JourneyPattern ;
+    rdfs:subClassOf netex:Level ;
+    rdfs:subClassOf netex:Log ;
+    rdfs:subClassOf netex:LogEntry ;
+    rdfs:subClassOf netex:Place ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:ServiceJourney ;
+    rdfs:subClassOf netex:ServiceJourneyPattern ;
+    rdfs:subClassOf netex:ServicePattern ;
+    rdfs:subClassOf netex:TypeOfFrame ;
+    rdfs:subClassOf netex:TypeOfJourneyPattern ;
+    rdfs:subClassOf netex:TypeOfService ;
+    rdfs:subClassOf netex:ValidBetween ;
+    rdfs:subClassOf netex:Vehicle ;
+    rdfs:subClassOf netex:VehicleJourney ;
+    rdfs:subClassOf netex:VehicleService ;
+    rdfs:subClassOf opra:CancelledDatedVehicleJourneyCount ;
+    rdfs:subClassOf opra:DurationInterval ;
+    rdfs:subClassOf opra:IndicatorFrame ;
+    rdfs:subClassOf opra:Opra ;
+    rdfs:subClassOf opra:OpraFunctionalDelivery ;
+    rdfs:subClassOf opra:OpraPayloadDelivery ;
+    rdfs:subClassOf opra:PreparednessLevel ;
+    rdfs:subClassOf opra:ServiceDelivery ;
+    rdfs:subClassOf opra:TypeOfDelay ;
+    rdfs:subClassOf opra:opraFunctionalDeliveries ;
+    rdfs:subClassOf siri:ControlActionDelivery ;
+    rdfs:subClassOf siri:DatedVehicleJourney ;
+    rdfs:subClassOf siri:ResponseTimestamp ;
+    rdfs:subClassOf siri:ServiceDelivery ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FCancelledAndLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FDelayedAndCancelledJourneysWithEvents.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FResponseLateDatedVehicleJourneys.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:LateDatedVehicleJourneyDiscoveryDelivery
+    a owl:Class ;
+    skos:definition "A discovery delivery element to get LATE DATED VEHICLE JOURNEYs."@en ;
+    skos:prefLabel "discovery delivery element to"@en ;
+    skos:altLabel "late dated vehicle journey discovery delivery"@en ;
+    skos:altLabel "latedatedvehiclejourneydiscoverydelivery"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryDelivery ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:LateDatedVehicleJourneyDiscoveryRequest
+    a owl:Class ;
+    skos:definition "A discovery request element to get LATE DATED VEHICLE JOURNEYs."@en ;
+    skos:prefLabel "discovery request element to"@en ;
+    skos:altLabel "late dated vehicle journey discovery request"@en ;
+    skos:altLabel "latedatedvehiclejourneydiscoveryrequest"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:LateDatedVehicleJourneysRequest
+    a owl:Class ;
+    skos:definition "A request element to get LATE DATED VEHICLE JOURNEYs."@en ;
+    skos:prefLabel "late dated vehicle journeys request"@en ;
+    skos:altLabel "latedatedvehiclejourneysrequest"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:subClassOf netex:DatedServiceJourney ;
+    rdfs:subClassOf netex:DatedVehicleJourney ;
+    rdfs:subClassOf netex:Journey ;
+    rdfs:subClassOf netex:JourneyPattern ;
+    rdfs:subClassOf netex:Network ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:ServiceJourney ;
+    rdfs:subClassOf netex:ServiceJourneyPattern ;
+    rdfs:subClassOf netex:ServicePattern ;
+    rdfs:subClassOf netex:ValidBetween ;
+    rdfs:subClassOf netex:Vehicle ;
+    rdfs:subClassOf netex:VehicleJourney ;
+    rdfs:subClassOf netex:VehicleService ;
+    rdfs:subClassOf opra:IndicatorFrame ;
+    rdfs:subClassOf opra:Opra ;
+    rdfs:subClassOf opra:OpraFunctionalRequest ;
+    rdfs:subClassOf opra:ServiceRequest ;
+    rdfs:subClassOf opra:opraFunctionalRequests ;
+    rdfs:subClassOf siri:DatedVehicleJourney ;
+    rdfs:subClassOf siri:ServiceRequest ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestLateDatedVehicleJourneys.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:LoadOverJourneyDistance
+    a owl:Class ;
+    skos:definition "Mean passenger (and other transported unit) count per total journey distance unit [capita/m] or [capita/km] depending on DefaultSystemOfUnits for the FRAME."@en ;
+    skos:prefLabel "load over journey distance"@en ;
+    skos:altLabel "loadoverjourneydistance"@en ;
+    rdfs:subClassOf netex:Authority ;
+    rdfs:subClassOf netex:DatedServiceJourney ;
+    rdfs:subClassOf netex:DatedSpecialService ;
+    rdfs:subClassOf netex:DatedVehicleJourney ;
+    rdfs:subClassOf netex:FareClass ;
+    rdfs:subClassOf netex:FareFrame ;
+    rdfs:subClassOf netex:FareScheduledStopPoint ;
+    rdfs:subClassOf netex:Garage ;
+    rdfs:subClassOf netex:GaragePoint ;
+    rdfs:subClassOf netex:Journey ;
+    rdfs:subClassOf netex:JourneyPattern ;
+    rdfs:subClassOf netex:Level ;
+    rdfs:subClassOf netex:Line ;
+    rdfs:subClassOf netex:LineNetwork ;
+    rdfs:subClassOf netex:Network ;
+    rdfs:subClassOf netex:OperatingDay ;
+    rdfs:subClassOf netex:Operator ;
+    rdfs:subClassOf netex:Place ;
+    rdfs:subClassOf netex:Point ;
+    rdfs:subClassOf netex:Route ;
+    rdfs:subClassOf netex:RoutePoint ;
+    rdfs:subClassOf netex:ScheduledStopPoint ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:ServiceJourney ;
+    rdfs:subClassOf netex:ServiceJourneyPattern ;
+    rdfs:subClassOf netex:ServicePattern ;
+    rdfs:subClassOf netex:ServiceSite ;
+    rdfs:subClassOf netex:Site ;
+    rdfs:subClassOf netex:SiteFrame ;
+    rdfs:subClassOf netex:SpecialService ;
+    rdfs:subClassOf netex:StopPlace ;
+    rdfs:subClassOf netex:Timeband ;
+    rdfs:subClassOf netex:Vehicle ;
+    rdfs:subClassOf netex:VehicleJourney ;
+    rdfs:subClassOf netex:VehicleMode ;
+    rdfs:subClassOf netex:VehicleService ;
+    rdfs:subClassOf opra:AverageCommercialSpeed ;
+    rdfs:subClassOf opra:ExpectedServiceIntensity ;
+    rdfs:subClassOf opra:IndicatorFrame ;
+    rdfs:subClassOf opra:MeanCapacityOverJourneyDistance ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:LogEntryValue
+    a owl:Class ;
+    skos:definition "A time-stamped record of an event or change of state - new values/state."@en ;
+    skos:prefLabel "log entry value"@en ;
+    skos:altLabel "logentryvalue"@en ;
+    rdfs:subClassOf netex:AcceptedDriverPermit ;
+    rdfs:subClassOf netex:Access ;
+    rdfs:subClassOf netex:AccessEquipment ;
+    rdfs:subClassOf netex:AccessFacility ;
+    rdfs:subClassOf netex:AccessFacilityList ;
+    rdfs:subClassOf netex:AccessMode ;
+    rdfs:subClassOf netex:AccessRightInProduct ;
+    rdfs:subClassOf netex:AccessRightParameterAssignment ;
+    rdfs:subClassOf netex:AccessSummary ;
+    rdfs:subClassOf netex:AccessVehicleEquipment ;
+    rdfs:subClassOf netex:AccessZone ;
+    rdfs:subClassOf netex:ActivationAssignment ;
+    rdfs:subClassOf netex:ActivationLink ;
+    rdfs:subClassOf netex:ActualVehicleEquipment ;
+    rdfs:subClassOf netex:Assignment ;
+    rdfs:subClassOf netex:AvailabilityCondition ;
+    rdfs:subClassOf netex:BatteryEquipment ;
+    rdfs:subClassOf netex:BookingPolicy ;
+    rdfs:subClassOf netex:Branding ;
+    rdfs:subClassOf netex:CarModelProfile ;
+    rdfs:subClassOf netex:CarServiceFacility ;
+    rdfs:subClassOf netex:CarServiceFacilityList ;
+    rdfs:subClassOf netex:ChargingMoment ;
+    rdfs:subClassOf netex:ChargingPolicy ;
+    rdfs:subClassOf netex:ClassOfUse ;
+    rdfs:subClassOf netex:CommonVehicleService ;
+    rdfs:subClassOf netex:CompositeFrame ;
+    rdfs:subClassOf netex:ConditionSummary ;
+    rdfs:subClassOf netex:Contact ;
+    rdfs:subClassOf netex:Contract ;
+    rdfs:subClassOf netex:Country ;
+    rdfs:subClassOf netex:Customer ;
+    rdfs:subClassOf netex:CustomerAccount ;
+    rdfs:subClassOf netex:CustomerAccountStatus ;
+    rdfs:subClassOf netex:CustomerPaymentMeans ;
+    rdfs:subClassOf netex:CustomerPurchasePackage ;
+    rdfs:subClassOf netex:CustomerPurchasePackageElement ;
+    rdfs:subClassOf netex:CustomerPurchasePackageElementAccess ;
+    rdfs:subClassOf netex:CustomerPurchasePackagePrice ;
+    rdfs:subClassOf netex:CustomerPurchaseParameterAssignment ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarClubExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CycleSharingExample.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:LoggableObject
+    a owl:Class ;
+    skos:definition "An entity for which LOG ENTRies may be made."@en ;
+    skos:prefLabel "loggable object"@en ;
+    skos:altLabel "loggableobject"@en ;
+    rdfs:subClassOf opra:AbstractLoggableObject ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:MeanCapacityOverJourneyDistance
+    a owl:Class ;
+    skos:definition "Average passenger (and other transported unit) capacity values provided per VEHICLE JOURNEY distance unit (see DefaultSystemOfUnits for the FRAME)"@en ;
+    skos:prefLabel "mean capacity over journey distance"@en ;
+    skos:altLabel "meancapacityoverjourneydistance"@en ;
+    rdfs:subClassOf netex:Authority ;
+    rdfs:subClassOf netex:DatedServiceJourney ;
+    rdfs:subClassOf netex:DatedSpecialService ;
+    rdfs:subClassOf netex:DatedVehicleJourney ;
+    rdfs:subClassOf netex:FareClass ;
+    rdfs:subClassOf netex:FareFrame ;
+    rdfs:subClassOf netex:FareScheduledStopPoint ;
+    rdfs:subClassOf netex:Garage ;
+    rdfs:subClassOf netex:GaragePoint ;
+    rdfs:subClassOf netex:Journey ;
+    rdfs:subClassOf netex:JourneyPattern ;
+    rdfs:subClassOf netex:Level ;
+    rdfs:subClassOf netex:Line ;
+    rdfs:subClassOf netex:LineNetwork ;
+    rdfs:subClassOf netex:Network ;
+    rdfs:subClassOf netex:OperatingDay ;
+    rdfs:subClassOf netex:Operator ;
+    rdfs:subClassOf netex:Place ;
+    rdfs:subClassOf netex:Point ;
+    rdfs:subClassOf netex:Route ;
+    rdfs:subClassOf netex:RoutePoint ;
+    rdfs:subClassOf netex:ScheduledStopPoint ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:ServiceJourney ;
+    rdfs:subClassOf netex:ServiceJourneyPattern ;
+    rdfs:subClassOf netex:ServicePattern ;
+    rdfs:subClassOf netex:ServiceSite ;
+    rdfs:subClassOf netex:Site ;
+    rdfs:subClassOf netex:SiteFrame ;
+    rdfs:subClassOf netex:SpecialService ;
+    rdfs:subClassOf netex:StopPlace ;
+    rdfs:subClassOf netex:Timeband ;
+    rdfs:subClassOf netex:Vehicle ;
+    rdfs:subClassOf netex:VehicleJourney ;
+    rdfs:subClassOf netex:VehicleMode ;
+    rdfs:subClassOf netex:VehicleService ;
+    rdfs:subClassOf opra:AverageCommercialSpeed ;
+    rdfs:subClassOf opra:ExpectedServiceIntensity ;
+    rdfs:subClassOf opra:IndicatorFrame ;
+    rdfs:subClassOf opra:LoadOverJourneyDistance ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:MeanCapacityOverNetworkDistance
+    a owl:Class ;
+    skos:definition "Average passenger (and other transported unit) capacity values provided for a distance unit (see DefaultSystemOfUnits for the FRAME) of a NETWORK."@en ;
+    skos:prefLabel "mean capacity over network distance"@en ;
+    skos:altLabel "meancapacityovernetworkdistance"@en ;
+    rdfs:subClassOf netex:Authority ;
+    rdfs:subClassOf netex:DatedServiceJourney ;
+    rdfs:subClassOf netex:DatedSpecialService ;
+    rdfs:subClassOf netex:DatedVehicleJourney ;
+    rdfs:subClassOf netex:FareClass ;
+    rdfs:subClassOf netex:FareFrame ;
+    rdfs:subClassOf netex:FareScheduledStopPoint ;
+    rdfs:subClassOf netex:Garage ;
+    rdfs:subClassOf netex:GaragePoint ;
+    rdfs:subClassOf netex:Journey ;
+    rdfs:subClassOf netex:JourneyPattern ;
+    rdfs:subClassOf netex:Level ;
+    rdfs:subClassOf netex:Line ;
+    rdfs:subClassOf netex:LineNetwork ;
+    rdfs:subClassOf netex:Network ;
+    rdfs:subClassOf netex:OperatingDay ;
+    rdfs:subClassOf netex:Operator ;
+    rdfs:subClassOf netex:Place ;
+    rdfs:subClassOf netex:Point ;
+    rdfs:subClassOf netex:Route ;
+    rdfs:subClassOf netex:RoutePoint ;
+    rdfs:subClassOf netex:ScheduledStopPoint ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:ServiceJourney ;
+    rdfs:subClassOf netex:ServiceJourneyPattern ;
+    rdfs:subClassOf netex:ServicePattern ;
+    rdfs:subClassOf netex:ServiceSite ;
+    rdfs:subClassOf netex:Site ;
+    rdfs:subClassOf netex:SiteFrame ;
+    rdfs:subClassOf netex:SpecialService ;
+    rdfs:subClassOf netex:StopPlace ;
+    rdfs:subClassOf netex:Timeband ;
+    rdfs:subClassOf netex:Vehicle ;
+    rdfs:subClassOf netex:VehicleJourney ;
+    rdfs:subClassOf netex:VehicleMode ;
+    rdfs:subClassOf netex:VehicleService ;
+    rdfs:subClassOf opra:AverageCommercialSpeed ;
+    rdfs:subClassOf opra:ExpectedServiceIntensity ;
+    rdfs:subClassOf opra:IndicatorFrame ;
+    rdfs:subClassOf opra:LoadOverJourneyDistance ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:MeanCapacityOverRouteDistance
+    a owl:Class ;
+    skos:definition "Average passenger (and other transported unit) capacity values provided for a distance unit (see DefaultSystemOfUnits for the FRAME) of all ROUTEs considered."@en ;
+    skos:prefLabel "mean capacity over route distance"@en ;
+    skos:altLabel "meancapacityoverroutedistance"@en ;
+    rdfs:subClassOf netex:Authority ;
+    rdfs:subClassOf netex:DatedServiceJourney ;
+    rdfs:subClassOf netex:DatedSpecialService ;
+    rdfs:subClassOf netex:DatedVehicleJourney ;
+    rdfs:subClassOf netex:FareClass ;
+    rdfs:subClassOf netex:FareFrame ;
+    rdfs:subClassOf netex:FareScheduledStopPoint ;
+    rdfs:subClassOf netex:Garage ;
+    rdfs:subClassOf netex:GaragePoint ;
+    rdfs:subClassOf netex:Journey ;
+    rdfs:subClassOf netex:JourneyPattern ;
+    rdfs:subClassOf netex:Level ;
+    rdfs:subClassOf netex:Line ;
+    rdfs:subClassOf netex:LineNetwork ;
+    rdfs:subClassOf netex:Network ;
+    rdfs:subClassOf netex:OperatingDay ;
+    rdfs:subClassOf netex:Operator ;
+    rdfs:subClassOf netex:Place ;
+    rdfs:subClassOf netex:Point ;
+    rdfs:subClassOf netex:Route ;
+    rdfs:subClassOf netex:RoutePoint ;
+    rdfs:subClassOf netex:ScheduledStopPoint ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:ServiceJourney ;
+    rdfs:subClassOf netex:ServiceJourneyPattern ;
+    rdfs:subClassOf netex:ServicePattern ;
+    rdfs:subClassOf netex:ServiceSite ;
+    rdfs:subClassOf netex:Site ;
+    rdfs:subClassOf netex:SiteFrame ;
+    rdfs:subClassOf netex:SpecialService ;
+    rdfs:subClassOf netex:StopPlace ;
+    rdfs:subClassOf netex:Timeband ;
+    rdfs:subClassOf netex:Vehicle ;
+    rdfs:subClassOf netex:VehicleJourney ;
+    rdfs:subClassOf netex:VehicleMode ;
+    rdfs:subClassOf netex:VehicleService ;
+    rdfs:subClassOf opra:AverageCommercialSpeed ;
+    rdfs:subClassOf opra:ExpectedServiceIntensity ;
+    rdfs:subClassOf opra:IndicatorFrame ;
+    rdfs:subClassOf opra:LoadOverJourneyDistance ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:OnboardDeviceBasedPassengerCount
+    a owl:Class ;
+    skos:definition "Implementation of LOGGABLE OBJECT designed for recording ONBOARD DEVICE BASED PASSENGER COUNT information."@en ;
+    skos:prefLabel "onboard device based passenger count"@en ;
+    skos:altLabel "onboarddevicebasedpassengercount"@en ;
+    rdfs:subClassOf netex:Network ;
+    rdfs:subClassOf netex:TicketingService ;
+    rdfs:subClassOf opra:OnboardDeviceBasedPassengerCountRequest ;
+    rdfs:subClassOf opra:Opra ;
+    rdfs:subClassOf opra:OpraFunctionalRequest ;
+    rdfs:subClassOf opra:ServiceRequest ;
+    rdfs:subClassOf opra:TicketingBasedPassengerCount ;
+    rdfs:subClassOf opra:TicketingBasedPassengerCountRequest ;
+    rdfs:subClassOf opra:opraFunctionalRequests ;
+    rdfs:subClassOf siri:ServiceRequest ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestAllPassengerCounts.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:OnboardDeviceBasedPassengerCountDiscoveryDelivery
+    a owl:Class ;
+    skos:definition "A discovery delivery element to get ONBOARD DEVICE BASED PASSENGER COUNTs."@en ;
+    skos:prefLabel "discovery delivery element to"@en ;
+    skos:altLabel "onboard device based passenger count discovery delivery"@en ;
+    skos:altLabel "onboarddevicebasedpassengercountdiscoverydelivery"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryDelivery ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:OnboardDeviceBasedPassengerCountDiscoveryRequest
+    a owl:Class ;
+    skos:definition "A discovery request element to get ONBOARD DEVICE BASED PASSENGER COUNTs."@en ;
+    skos:prefLabel "discovery request element to"@en ;
+    skos:altLabel "onboard device based passenger count discovery request"@en ;
+    skos:altLabel "onboarddevicebasedpassengercountdiscoveryrequest"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:OnboardDeviceBasedPassengerCountRequest
+    a owl:Class ;
+    skos:definition "A request element to get ONBOARD DEVICE BASED PASSENGER COUNTs."@en ;
+    skos:prefLabel "onboard device based passenger count request"@en ;
+    skos:altLabel "onboarddevicebasedpassengercountrequest"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:subClassOf netex:Network ;
+    rdfs:subClassOf netex:TicketingService ;
+    rdfs:subClassOf opra:OnboardDeviceBasedPassengerCount ;
+    rdfs:subClassOf opra:Opra ;
+    rdfs:subClassOf opra:OpraFunctionalRequest ;
+    rdfs:subClassOf opra:ServiceRequest ;
+    rdfs:subClassOf opra:TicketingBasedPassengerCount ;
+    rdfs:subClassOf opra:TicketingBasedPassengerCountRequest ;
+    rdfs:subClassOf opra:opraFunctionalRequests ;
+    rdfs:subClassOf siri:ServiceRequest ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestAllPassengerCounts.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:Opra
+    a owl:Class ;
+    skos:definition "Operational Raw Data Root Element."@en ;
+    skos:prefLabel "opra"@en ;
+    rdfs:subClassOf netex:Authority ;
+    rdfs:subClassOf netex:Cell ;
+    rdfs:subClassOf netex:DatedServiceJourney ;
+    rdfs:subClassOf netex:DatedSpecialService ;
+    rdfs:subClassOf netex:DatedVehicleJourney ;
+    rdfs:subClassOf netex:FareClass ;
+    rdfs:subClassOf netex:FareFrame ;
+    rdfs:subClassOf netex:FareScheduledStopPoint ;
+    rdfs:subClassOf netex:Fleet ;
+    rdfs:subClassOf netex:Garage ;
+    rdfs:subClassOf netex:GaragePoint ;
+    rdfs:subClassOf netex:Journey ;
+    rdfs:subClassOf netex:JourneyPattern ;
+    rdfs:subClassOf netex:Level ;
+    rdfs:subClassOf netex:Line ;
+    rdfs:subClassOf netex:LineNetwork ;
+    rdfs:subClassOf netex:Log ;
+    rdfs:subClassOf netex:LogEntry ;
+    rdfs:subClassOf netex:Network ;
+    rdfs:subClassOf netex:OperatingDay ;
+    rdfs:subClassOf netex:Operator ;
+    rdfs:subClassOf netex:Place ;
+    rdfs:subClassOf netex:Point ;
+    rdfs:subClassOf netex:Route ;
+    rdfs:subClassOf netex:RoutePoint ;
+    rdfs:subClassOf netex:ScheduledStopPoint ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:ServiceJourney ;
+    rdfs:subClassOf netex:ServiceJourneyPattern ;
+    rdfs:subClassOf netex:ServicePattern ;
+    rdfs:subClassOf netex:ServiceSite ;
+    rdfs:subClassOf netex:Site ;
+    rdfs:subClassOf netex:SiteFrame ;
+    rdfs:subClassOf netex:SpecialService ;
+    rdfs:subClassOf netex:StopPlace ;
+    rdfs:subClassOf netex:TicketingService ;
+    rdfs:subClassOf netex:Timeband ;
+    rdfs:subClassOf netex:Train ;
+    rdfs:subClassOf netex:TrainNumber ;
+    rdfs:subClassOf netex:TypeOfFrame ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FActualServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FCancelledAndLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FContextualIndicatorFrame.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FDelayedAndCancelledJourneysWithEvents.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedCapacity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedFleetDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestAllPassengerCounts.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FResponseLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FTicketingBasedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fplaceholder.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:OpraDiscoveryDelivery
+    a owl:Class ;
+    skos:definition "Abstract element to return Discovery results. Specialisations shall include the reference data structures."@en ;
+    skos:prefLabel "abstract element to return discovery"@en ;
+    skos:altLabel "opra discovery delivery"@en ;
+    skos:altLabel "opradiscoverydelivery"@en ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:OpraDiscoveryRequest
+    a owl:Class ;
+    skos:definition "Abstract OpRa Discovery Request element."@en ;
+    skos:prefLabel "abstract opra discovery request element"@en ;
+    skos:altLabel "opra discovery request"@en ;
+    skos:altLabel "opradiscoveryrequest"@en ;
+    rdfs:subClassOf siri:AbstractDiscoveryRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:OpraError
+    a owl:Class ;
+    skos:definition "Element for Opra related errors."@en ;
+    skos:prefLabel "opra error"@en ;
+    skos:altLabel "opraerror"@en ;
+    rdfs:subClassOf siri:OtherError ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:OpraFunctionalDelivery
+    a owl:Class ;
+    skos:definition "Abstract delivery element, responding for OpraRequest elements."@en ;
+    skos:prefLabel "abstract delivery element responding for"@en ;
+    skos:altLabel "opra functional delivery"@en ;
+    skos:altLabel "oprafunctionaldelivery"@en ;
+    rdfs:subClassOf netex:Authority ;
+    rdfs:subClassOf netex:Cell ;
+    rdfs:subClassOf netex:DatedServiceJourney ;
+    rdfs:subClassOf netex:DatedSpecialService ;
+    rdfs:subClassOf netex:DatedVehicleJourney ;
+    rdfs:subClassOf netex:FareClass ;
+    rdfs:subClassOf netex:FareFrame ;
+    rdfs:subClassOf netex:FareScheduledStopPoint ;
+    rdfs:subClassOf netex:Fleet ;
+    rdfs:subClassOf netex:Garage ;
+    rdfs:subClassOf netex:GaragePoint ;
+    rdfs:subClassOf netex:Journey ;
+    rdfs:subClassOf netex:JourneyPattern ;
+    rdfs:subClassOf netex:Level ;
+    rdfs:subClassOf netex:Line ;
+    rdfs:subClassOf netex:LineNetwork ;
+    rdfs:subClassOf netex:Log ;
+    rdfs:subClassOf netex:LogEntry ;
+    rdfs:subClassOf netex:Network ;
+    rdfs:subClassOf netex:OperatingDay ;
+    rdfs:subClassOf netex:Operator ;
+    rdfs:subClassOf netex:Place ;
+    rdfs:subClassOf netex:Point ;
+    rdfs:subClassOf netex:Route ;
+    rdfs:subClassOf netex:RoutePoint ;
+    rdfs:subClassOf netex:ScheduledStopPoint ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:ServiceJourney ;
+    rdfs:subClassOf netex:ServiceJourneyPattern ;
+    rdfs:subClassOf netex:ServicePattern ;
+    rdfs:subClassOf netex:ServiceSite ;
+    rdfs:subClassOf netex:Site ;
+    rdfs:subClassOf netex:SiteFrame ;
+    rdfs:subClassOf netex:SpecialService ;
+    rdfs:subClassOf netex:StopPlace ;
+    rdfs:subClassOf netex:TicketingService ;
+    rdfs:subClassOf netex:Timeband ;
+    rdfs:subClassOf netex:Train ;
+    rdfs:subClassOf netex:TrainNumber ;
+    rdfs:subClassOf netex:TypeOfFrame ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FActualServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FCancelledAndLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FContextualIndicatorFrame.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FDelayedAndCancelledJourneysWithEvents.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedCapacity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedFleetDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FResponseLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FTicketingBasedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fplaceholder.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:OpraFunctionalRequest
+    a owl:Class ;
+    skos:definition "Generic abstract OpRa request element. Substitute this element with topic-specific request elements."@en ;
+    skos:prefLabel "generic abstract opra request element"@en ;
+    skos:altLabel "opra functional request"@en ;
+    skos:altLabel "oprafunctionalrequest"@en ;
+    rdfs:subClassOf netex:DatedServiceJourney ;
+    rdfs:subClassOf netex:DatedVehicleJourney ;
+    rdfs:subClassOf netex:Journey ;
+    rdfs:subClassOf netex:JourneyPattern ;
+    rdfs:subClassOf netex:Network ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:ServiceJourney ;
+    rdfs:subClassOf netex:ServiceJourneyPattern ;
+    rdfs:subClassOf netex:ServicePattern ;
+    rdfs:subClassOf netex:TicketingService ;
+    rdfs:subClassOf netex:ValidBetween ;
+    rdfs:subClassOf netex:Vehicle ;
+    rdfs:subClassOf netex:VehicleJourney ;
+    rdfs:subClassOf netex:VehicleService ;
+    rdfs:subClassOf opra:IndicatorFrame ;
+    rdfs:subClassOf opra:LateDatedVehicleJourneysRequest ;
+    rdfs:subClassOf opra:OnboardDeviceBasedPassengerCount ;
+    rdfs:subClassOf opra:OnboardDeviceBasedPassengerCountRequest ;
+    rdfs:subClassOf opra:Opra ;
+    rdfs:subClassOf opra:ServiceRequest ;
+    rdfs:subClassOf opra:TicketingBasedPassengerCount ;
+    rdfs:subClassOf opra:TicketingBasedPassengerCountRequest ;
+    rdfs:subClassOf opra:opraFunctionalRequests ;
+    rdfs:subClassOf siri:AbstractFunctionalServiceRequest ;
+    rdfs:subClassOf siri:DatedVehicleJourney ;
+    rdfs:subClassOf siri:ServiceRequest ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestAllPassengerCounts.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestLateDatedVehicleJourneys.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:OpraPayloadDelivery
+    a owl:Class ;
+    skos:definition "Common delivery element, responding to OpraFunctionalRequests."@en ;
+    skos:prefLabel "common delivery element responding to"@en ;
+    skos:altLabel "opra payload delivery"@en ;
+    skos:altLabel "oprapayloaddelivery"@en ;
+    rdfs:subClassOf netex:Authority ;
+    rdfs:subClassOf netex:Cell ;
+    rdfs:subClassOf netex:DatedServiceJourney ;
+    rdfs:subClassOf netex:DatedSpecialService ;
+    rdfs:subClassOf netex:DatedVehicleJourney ;
+    rdfs:subClassOf netex:FareClass ;
+    rdfs:subClassOf netex:FareFrame ;
+    rdfs:subClassOf netex:FareScheduledStopPoint ;
+    rdfs:subClassOf netex:Fleet ;
+    rdfs:subClassOf netex:Garage ;
+    rdfs:subClassOf netex:GaragePoint ;
+    rdfs:subClassOf netex:Journey ;
+    rdfs:subClassOf netex:JourneyPattern ;
+    rdfs:subClassOf netex:Level ;
+    rdfs:subClassOf netex:Line ;
+    rdfs:subClassOf netex:LineNetwork ;
+    rdfs:subClassOf netex:Log ;
+    rdfs:subClassOf netex:LogEntry ;
+    rdfs:subClassOf netex:Network ;
+    rdfs:subClassOf netex:OperatingDay ;
+    rdfs:subClassOf netex:Operator ;
+    rdfs:subClassOf netex:Place ;
+    rdfs:subClassOf netex:Point ;
+    rdfs:subClassOf netex:Route ;
+    rdfs:subClassOf netex:RoutePoint ;
+    rdfs:subClassOf netex:ScheduledStopPoint ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:ServiceJourney ;
+    rdfs:subClassOf netex:ServiceJourneyPattern ;
+    rdfs:subClassOf netex:ServicePattern ;
+    rdfs:subClassOf netex:ServiceSite ;
+    rdfs:subClassOf netex:Site ;
+    rdfs:subClassOf netex:SiteFrame ;
+    rdfs:subClassOf netex:SpecialService ;
+    rdfs:subClassOf netex:StopPlace ;
+    rdfs:subClassOf netex:TicketingService ;
+    rdfs:subClassOf netex:Timeband ;
+    rdfs:subClassOf netex:Train ;
+    rdfs:subClassOf netex:TrainNumber ;
+    rdfs:subClassOf netex:TypeOfFrame ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FActualServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FCancelledAndLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FContextualIndicatorFrame.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FDelayedAndCancelledJourneysWithEvents.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedCapacity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedFleetDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FResponseLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FTicketingBasedPassengerCount.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:OpraSubscriptionRequest
+    a owl:Class ;
+    skos:definition "General OpRa Subscription Request that subscribes to PublicationDelivery responses."@en ;
+    skos:prefLabel "opra subscription request"@en ;
+    skos:altLabel "oprasubscriptionrequest"@en ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:PlannedCapacity
+    a owl:Class ;
+    skos:definition "Implementation of LOGGABLE OBJECT designed for recording PLANNED CAPACITY information."@en ;
+    skos:prefLabel "planned capacity"@en ;
+    skos:altLabel "plannedcapacity"@en ;
+    rdfs:subClassOf netex:Access ;
+    rdfs:subClassOf netex:AccessEquipment ;
+    rdfs:subClassOf netex:AccessFacility ;
+    rdfs:subClassOf netex:AccessFacilityList ;
+    rdfs:subClassOf netex:AccessMode ;
+    rdfs:subClassOf netex:AccessVehicleEquipment ;
+    rdfs:subClassOf netex:AccessZone ;
+    rdfs:subClassOf netex:AccessibilityAssessment ;
+    rdfs:subClassOf netex:AccessibilityLimitation ;
+    rdfs:subClassOf netex:Accommodation ;
+    rdfs:subClassOf netex:AccommodationAccess ;
+    rdfs:subClassOf netex:AccommodationAccessList ;
+    rdfs:subClassOf netex:AccommodationFacility ;
+    rdfs:subClassOf netex:AccommodationFacilityList ;
+    rdfs:subClassOf netex:Assignment ;
+    rdfs:subClassOf netex:AssistanceFacility ;
+    rdfs:subClassOf netex:AssistanceFacilityList ;
+    rdfs:subClassOf netex:AssistanceService ;
+    rdfs:subClassOf netex:AudibleSignalsAvailable ;
+    rdfs:subClassOf netex:Authority ;
+    rdfs:subClassOf netex:AvailabilityCondition ;
+    rdfs:subClassOf netex:BoardingPosition ;
+    rdfs:subClassOf netex:Call ;
+    rdfs:subClassOf netex:CateringFacility ;
+    rdfs:subClassOf netex:CateringFacilityList ;
+    rdfs:subClassOf netex:CateringService ;
+    rdfs:subClassOf netex:CheckConstraint ;
+    rdfs:subClassOf netex:CheckConstraintDelay ;
+    rdfs:subClassOf netex:ClassOfUse ;
+    rdfs:subClassOf netex:CompositeFrame ;
+    rdfs:subClassOf netex:Connection ;
+    rdfs:subClassOf netex:Contact ;
+    rdfs:subClassOf netex:Country ;
+    rdfs:subClassOf netex:CrossingEquipment ;
+    rdfs:subClassOf netex:DataSource ;
+    rdfs:subClassOf netex:DayTypeAssignment ;
+    rdfs:subClassOf netex:DefaultConnection ;
+    rdfs:subClassOf netex:DefaultInterchange ;
+    rdfs:subClassOf netex:DefaultServiceJourneyRunTime ;
+    rdfs:subClassOf netex:DeliveryVariant ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedCapacity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_01.4_Bus_SimpleTimetable_WithConnection.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_21_Rail_NetworkTimetable_eurostar.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:PlannedCapacityDiscoveryDelivery
+    a owl:Class ;
+    skos:definition "A discovery delivery element to get PLANNED CAPACITIes."@en ;
+    skos:prefLabel "discovery delivery element to"@en ;
+    skos:altLabel "planned capacity discovery delivery"@en ;
+    skos:altLabel "plannedcapacitydiscoverydelivery"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryDelivery ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:PlannedCapacityDiscoveryRequest
+    a owl:Class ;
+    skos:definition "A discovery request element to get PLANNED CAPACITIes."@en ;
+    skos:prefLabel "discovery request element to"@en ;
+    skos:altLabel "planned capacity discovery request"@en ;
+    skos:altLabel "plannedcapacitydiscoveryrequest"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:PlannedCapacityRequest
+    a owl:Class ;
+    skos:definition "A request element to get PLANNED CAPACITIes."@en ;
+    skos:prefLabel "planned capacity request"@en ;
+    skos:altLabel "plannedcapacityrequest"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:subClassOf netex:Access ;
+    rdfs:subClassOf netex:AccessEquipment ;
+    rdfs:subClassOf netex:AccessFacility ;
+    rdfs:subClassOf netex:AccessFacilityList ;
+    rdfs:subClassOf netex:AccessMode ;
+    rdfs:subClassOf netex:AccessVehicleEquipment ;
+    rdfs:subClassOf netex:AccessZone ;
+    rdfs:subClassOf netex:AccessibilityAssessment ;
+    rdfs:subClassOf netex:AccessibilityLimitation ;
+    rdfs:subClassOf netex:Accommodation ;
+    rdfs:subClassOf netex:AccommodationAccess ;
+    rdfs:subClassOf netex:AccommodationAccessList ;
+    rdfs:subClassOf netex:AccommodationFacility ;
+    rdfs:subClassOf netex:AccommodationFacilityList ;
+    rdfs:subClassOf netex:Assignment ;
+    rdfs:subClassOf netex:AssistanceFacility ;
+    rdfs:subClassOf netex:AssistanceFacilityList ;
+    rdfs:subClassOf netex:AssistanceService ;
+    rdfs:subClassOf netex:AudibleSignalsAvailable ;
+    rdfs:subClassOf netex:AvailabilityCondition ;
+    rdfs:subClassOf netex:BoardingPosition ;
+    rdfs:subClassOf netex:Call ;
+    rdfs:subClassOf netex:CateringFacility ;
+    rdfs:subClassOf netex:CateringFacilityList ;
+    rdfs:subClassOf netex:CateringService ;
+    rdfs:subClassOf netex:CheckConstraint ;
+    rdfs:subClassOf netex:CheckConstraintDelay ;
+    rdfs:subClassOf netex:ClassOfUse ;
+    rdfs:subClassOf netex:CompositeFrame ;
+    rdfs:subClassOf netex:Connection ;
+    rdfs:subClassOf netex:Contact ;
+    rdfs:subClassOf netex:Country ;
+    rdfs:subClassOf netex:CrossingEquipment ;
+    rdfs:subClassOf netex:DataSource ;
+    rdfs:subClassOf netex:DayTypeAssignment ;
+    rdfs:subClassOf netex:DefaultConnection ;
+    rdfs:subClassOf netex:DefaultInterchange ;
+    rdfs:subClassOf netex:DefaultServiceJourneyRunTime ;
+    rdfs:subClassOf netex:DeliveryVariant ;
+    rdfs:subClassOf netex:DestinationDisplay ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_01.4_Bus_SimpleTimetable_WithConnection.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_21_Rail_NetworkTimetable_eurostar.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:PlannedFleetDimensions
+    a owl:Class ;
+    skos:definition "Implementation of LOGGABLE OBJECT designed for recording PLANNED FLEET DIMENSIONS information."@en ;
+    skos:prefLabel "planned fleet dimensions"@en ;
+    skos:altLabel "plannedfleetdimensions"@en ;
+    rdfs:subClassOf netex:Fleet ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:Vehicle ;
+    rdfs:subClassOf netex:VehicleMode ;
+    rdfs:subClassOf netex:VehicleService ;
+    rdfs:subClassOf opra:IndicatorFrame ;
+    rdfs:subClassOf opra:Opra ;
+    rdfs:subClassOf opra:OpraFunctionalDelivery ;
+    rdfs:subClassOf opra:OpraPayloadDelivery ;
+    rdfs:subClassOf opra:PlannedFrame ;
+    rdfs:subClassOf opra:PlannedServiceDimensions ;
+    rdfs:subClassOf opra:ServiceDelivery ;
+    rdfs:subClassOf opra:opraFunctionalDeliveries ;
+    rdfs:subClassOf siri:ResponseTimestamp ;
+    rdfs:subClassOf siri:ServiceDelivery ;
+    rdfs:subClassOf siri:VehicleMode ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedFleetDimensions.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:PlannedFleetDimensionsDiscoveryDelivery
+    a owl:Class ;
+    skos:definition "A discovery delivery element to get PLANNED FLEET DIMENSIONS."@en ;
+    skos:prefLabel "discovery delivery element to"@en ;
+    skos:altLabel "planned fleet dimensions discovery delivery"@en ;
+    skos:altLabel "plannedfleetdimensionsdiscoverydelivery"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryDelivery ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:PlannedFleetDimensionsDiscoveryRequest
+    a owl:Class ;
+    skos:definition "A discovery request element to get PLANNED FLEET DIMENSIONS."@en ;
+    skos:prefLabel "discovery request element to"@en ;
+    skos:altLabel "planned fleet dimensions discovery request"@en ;
+    skos:altLabel "plannedfleetdimensionsdiscoveryrequest"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:PlannedFleetDimensionsRequest
+    a owl:Class ;
+    skos:definition "A request element to get PLANNED FLEET DIMENSIONS."@en ;
+    skos:prefLabel "planned fleet dimensions request"@en ;
+    skos:altLabel "plannedfleetdimensionsrequest"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:subClassOf opra:OpraFunctionalRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:PlannedFrame
+    a owl:Class ;
+    skos:definition "The planned service within the frame VALIDITY CONDITIONs."@en ;
+    skos:prefLabel "planned frame"@en ;
+    skos:altLabel "planned service within the"@en ;
+    skos:altLabel "plannedframe"@en ;
+    rdfs:subClassOf netex:Access ;
+    rdfs:subClassOf netex:AccessEquipment ;
+    rdfs:subClassOf netex:AccessFacility ;
+    rdfs:subClassOf netex:AccessFacilityList ;
+    rdfs:subClassOf netex:AccessMode ;
+    rdfs:subClassOf netex:AccessVehicleEquipment ;
+    rdfs:subClassOf netex:AccessZone ;
+    rdfs:subClassOf netex:AccessibilityAssessment ;
+    rdfs:subClassOf netex:AccessibilityLimitation ;
+    rdfs:subClassOf netex:Accommodation ;
+    rdfs:subClassOf netex:AccommodationAccess ;
+    rdfs:subClassOf netex:AccommodationAccessList ;
+    rdfs:subClassOf netex:AccommodationFacility ;
+    rdfs:subClassOf netex:AccommodationFacilityList ;
+    rdfs:subClassOf netex:AllVehicleModes ;
+    rdfs:subClassOf netex:AlternativeQuayDescriptor ;
+    rdfs:subClassOf netex:Assignment ;
+    rdfs:subClassOf netex:AssistanceFacility ;
+    rdfs:subClassOf netex:AssistanceFacilityList ;
+    rdfs:subClassOf netex:AssistanceService ;
+    rdfs:subClassOf netex:AudibleSignalsAvailable ;
+    rdfs:subClassOf netex:Authority ;
+    rdfs:subClassOf netex:AvailabilityCondition ;
+    rdfs:subClassOf netex:BerthFacility ;
+    rdfs:subClassOf netex:Block ;
+    rdfs:subClassOf netex:BoardingPermission ;
+    rdfs:subClassOf netex:BoardingPosition ;
+    rdfs:subClassOf netex:Call ;
+    rdfs:subClassOf netex:CateringFacility ;
+    rdfs:subClassOf netex:CateringFacilityList ;
+    rdfs:subClassOf netex:CateringService ;
+    rdfs:subClassOf netex:CheckConstraint ;
+    rdfs:subClassOf netex:CheckConstraintDelay ;
+    rdfs:subClassOf netex:ClassOfUse ;
+    rdfs:subClassOf netex:CompositeFrame ;
+    rdfs:subClassOf netex:CompoundBlock ;
+    rdfs:subClassOf netex:CompoundTrain ;
+    rdfs:subClassOf netex:Connection ;
+    rdfs:subClassOf netex:Contact ;
+    rdfs:subClassOf netex:ControlCentre ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedCapacity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedFleetDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_01.4_Bus_SimpleTimetable_WithConnection.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_02.1_Bus_CircularRoute_Timetable.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_03.1_Bus_BranchedRouteTimetable_SimplePatterns.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_03.2_Bus_BranchedRouteTimetable_SharedPatterns.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_09.1_Bus_InterchangeRule.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_10_Rail_SplittingJoiningTimetable.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_11_Rail_CompoundTrain.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_21_Rail_NetworkTimetable_eurostar.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_52_planned_delay.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Fnorway%2Fnetwork%2FFlexibleLine863-with-connection.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Ftap_tsi%2FTAP-TSDUPD-example2.3-Piedmont.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Ftap_tsi%2FTAP-TSDUPD-example2.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:PlannedFrameRequest
+    a owl:Class ;
+    skos:definition "A request element to get PLANNED FRAMEs."@en ;
+    skos:prefLabel "planned frame request"@en ;
+    skos:altLabel "plannedframerequest"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:subClassOf netex:Access ;
+    rdfs:subClassOf netex:AccessEquipment ;
+    rdfs:subClassOf netex:AccessFacility ;
+    rdfs:subClassOf netex:AccessFacilityList ;
+    rdfs:subClassOf netex:AccessMode ;
+    rdfs:subClassOf netex:AccessVehicleEquipment ;
+    rdfs:subClassOf netex:AccessZone ;
+    rdfs:subClassOf netex:AccessibilityAssessment ;
+    rdfs:subClassOf netex:AccessibilityLimitation ;
+    rdfs:subClassOf netex:Accommodation ;
+    rdfs:subClassOf netex:AccommodationAccess ;
+    rdfs:subClassOf netex:AccommodationAccessList ;
+    rdfs:subClassOf netex:AccommodationFacility ;
+    rdfs:subClassOf netex:AccommodationFacilityList ;
+    rdfs:subClassOf netex:AllVehicleModes ;
+    rdfs:subClassOf netex:AlternativeQuayDescriptor ;
+    rdfs:subClassOf netex:Assignment ;
+    rdfs:subClassOf netex:AssistanceFacility ;
+    rdfs:subClassOf netex:AssistanceFacilityList ;
+    rdfs:subClassOf netex:AssistanceService ;
+    rdfs:subClassOf netex:AudibleSignalsAvailable ;
+    rdfs:subClassOf netex:Authority ;
+    rdfs:subClassOf netex:AvailabilityCondition ;
+    rdfs:subClassOf netex:BerthFacility ;
+    rdfs:subClassOf netex:Block ;
+    rdfs:subClassOf netex:BoardingPermission ;
+    rdfs:subClassOf netex:BoardingPosition ;
+    rdfs:subClassOf netex:Call ;
+    rdfs:subClassOf netex:CateringFacility ;
+    rdfs:subClassOf netex:CateringFacilityList ;
+    rdfs:subClassOf netex:CateringService ;
+    rdfs:subClassOf netex:CheckConstraint ;
+    rdfs:subClassOf netex:CheckConstraintDelay ;
+    rdfs:subClassOf netex:ClassOfUse ;
+    rdfs:subClassOf netex:CompositeFrame ;
+    rdfs:subClassOf netex:CompoundBlock ;
+    rdfs:subClassOf netex:CompoundTrain ;
+    rdfs:subClassOf netex:Connection ;
+    rdfs:subClassOf netex:Contact ;
+    rdfs:subClassOf netex:ControlCentre ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_01.4_Bus_SimpleTimetable_WithConnection.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_02.1_Bus_CircularRoute_Timetable.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_03.1_Bus_BranchedRouteTimetable_SimplePatterns.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_03.2_Bus_BranchedRouteTimetable_SharedPatterns.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_09.1_Bus_InterchangeRule.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_10_Rail_SplittingJoiningTimetable.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_11_Rail_CompoundTrain.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_21_Rail_NetworkTimetable_eurostar.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Ftap_tsi%2FTAP-TSDUPD-example2.3-Piedmont.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Ftap_tsi%2FTAP-TSDUPD-example2.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:PlannedServiceDimensions
+    a owl:Class ;
+    skos:definition "Implementation of LOGGABLE OBJECT designed for recording PLANNED SERVICE DIMENSIONS information."@en ;
+    skos:prefLabel "planned service dimensions"@en ;
+    skos:altLabel "plannedservicedimensions"@en ;
+    rdfs:subClassOf netex:Fleet ;
+    rdfs:subClassOf netex:Journey ;
+    rdfs:subClassOf netex:JourneyPattern ;
+    rdfs:subClassOf netex:Line ;
+    rdfs:subClassOf netex:Point ;
+    rdfs:subClassOf netex:Route ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:ServiceJourney ;
+    rdfs:subClassOf netex:ServiceJourneyPattern ;
+    rdfs:subClassOf netex:ServicePattern ;
+    rdfs:subClassOf netex:Vehicle ;
+    rdfs:subClassOf netex:VehicleMode ;
+    rdfs:subClassOf netex:VehicleService ;
+    rdfs:subClassOf opra:IndicatorFrame ;
+    rdfs:subClassOf opra:Opra ;
+    rdfs:subClassOf opra:OpraFunctionalDelivery ;
+    rdfs:subClassOf opra:OpraPayloadDelivery ;
+    rdfs:subClassOf opra:PlannedFleetDimensions ;
+    rdfs:subClassOf opra:PlannedFrame ;
+    rdfs:subClassOf opra:ServiceDelivery ;
+    rdfs:subClassOf opra:opraFunctionalDeliveries ;
+    rdfs:subClassOf siri:ResponseTimestamp ;
+    rdfs:subClassOf siri:ServiceDelivery ;
+    rdfs:subClassOf siri:StopPointsDelivery ;
+    rdfs:subClassOf siri:VehicleMode ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedFleetDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceDimensions.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:PlannedServiceDimensionsDiscoveryDelivery
+    a owl:Class ;
+    skos:definition "A discovery delivery element to get PLANNED SERVICE DIMENSIONS."@en ;
+    skos:prefLabel "discovery delivery element to"@en ;
+    skos:altLabel "planned service dimensions discovery delivery"@en ;
+    skos:altLabel "plannedservicedimensionsdiscoverydelivery"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryDelivery ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:PlannedServiceDimensionsDiscoveryRequest
+    a owl:Class ;
+    skos:definition "A discovery request element to get PLANNED SERVICE DIMENSIONS."@en ;
+    skos:prefLabel "discovery request element to"@en ;
+    skos:altLabel "planned service dimensions discovery request"@en ;
+    skos:altLabel "plannedservicedimensionsdiscoveryrequest"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:PlannedServiceDimensionsRequest
+    a owl:Class ;
+    skos:definition "A request element to get PLANNED SERVICE DIMENSIONS."@en ;
+    skos:prefLabel "planned service dimensions request"@en ;
+    skos:altLabel "plannedservicedimensionsrequest"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:subClassOf opra:OpraFunctionalRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:PlannedServiceIntensity
+    a owl:Class ;
+    skos:definition "Implementation of LOGGABLE OBJECT designed for recording PLANNED SERVICE INTENSITY information."@en ;
+    skos:prefLabel "planned service intensity"@en ;
+    skos:altLabel "plannedserviceintensity"@en ;
+    rdfs:subClassOf netex:Authority ;
+    rdfs:subClassOf netex:FareClass ;
+    rdfs:subClassOf netex:FareFrame ;
+    rdfs:subClassOf netex:Level ;
+    rdfs:subClassOf netex:Network ;
+    rdfs:subClassOf netex:Operator ;
+    rdfs:subClassOf netex:Place ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:SpecialService ;
+    rdfs:subClassOf netex:Timeband ;
+    rdfs:subClassOf netex:Vehicle ;
+    rdfs:subClassOf netex:VehicleMode ;
+    rdfs:subClassOf netex:VehicleService ;
+    rdfs:subClassOf opra:AverageCommercialSpeed ;
+    rdfs:subClassOf opra:IndicatorFrame ;
+    rdfs:subClassOf opra:MeanCapacityOverNetworkDistance ;
+    rdfs:subClassOf opra:Opra ;
+    rdfs:subClassOf opra:OpraFunctionalDelivery ;
+    rdfs:subClassOf opra:OpraPayloadDelivery ;
+    rdfs:subClassOf opra:PlannedCapacity ;
+    rdfs:subClassOf opra:PlannedFrame ;
+    rdfs:subClassOf opra:PreparednessLevel ;
+    rdfs:subClassOf opra:ServiceDelivery ;
+    rdfs:subClassOf opra:TransportPerformance ;
+    rdfs:subClassOf opra:VehicleTypeCapacity ;
+    rdfs:subClassOf opra:opraFunctionalDeliveries ;
+    rdfs:subClassOf siri:FareClass ;
+    rdfs:subClassOf siri:ResponseTimestamp ;
+    rdfs:subClassOf siri:ServiceDelivery ;
+    rdfs:subClassOf siri:VehicleMode ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:PlannedServiceIntensityDiscoveryDelivery
+    a owl:Class ;
+    skos:definition "A discovery delivery element to get PLANNED SERVICE INTENSITIes."@en ;
+    skos:prefLabel "discovery delivery element to"@en ;
+    skos:altLabel "planned service intensity discovery delivery"@en ;
+    skos:altLabel "plannedserviceintensitydiscoverydelivery"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryDelivery ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:PlannedServiceIntensityDiscoveryRequest
+    a owl:Class ;
+    skos:definition "A discovery request element to get PLANNED SERVICE INTENSITIes."@en ;
+    skos:prefLabel "discovery request element to"@en ;
+    skos:altLabel "planned service intensity discovery request"@en ;
+    skos:altLabel "plannedserviceintensitydiscoveryrequest"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:PlannedServiceIntensityRequest
+    a owl:Class ;
+    skos:definition "A request element to get PLANNED SERVICE INTENSITIes."@en ;
+    skos:prefLabel "planned service intensity request"@en ;
+    skos:altLabel "plannedserviceintensityrequest"@en ;
+    skos:altLabel "request element to get"@en ;
+    rdfs:subClassOf opra:OpraFunctionalRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:PreparednessLevel
+    a owl:Class ;
+    skos:definition "Preparedness level to state reliability by the data producer."@en ;
+    skos:prefLabel "preparedness level"@en ;
+    skos:altLabel "preparedness level to state reliability"@en ;
+    skos:altLabel "preparednesslevel"@en ;
+    rdfs:subClassOf netex:Authority ;
+    rdfs:subClassOf netex:Cell ;
+    rdfs:subClassOf netex:DatedServiceJourney ;
+    rdfs:subClassOf netex:DatedSpecialService ;
+    rdfs:subClassOf netex:DatedVehicleJourney ;
+    rdfs:subClassOf netex:FareClass ;
+    rdfs:subClassOf netex:FareFrame ;
+    rdfs:subClassOf netex:FareScheduledStopPoint ;
+    rdfs:subClassOf netex:Garage ;
+    rdfs:subClassOf netex:GaragePoint ;
+    rdfs:subClassOf netex:Journey ;
+    rdfs:subClassOf netex:JourneyPattern ;
+    rdfs:subClassOf netex:Level ;
+    rdfs:subClassOf netex:Line ;
+    rdfs:subClassOf netex:LineNetwork ;
+    rdfs:subClassOf netex:Log ;
+    rdfs:subClassOf netex:LogEntry ;
+    rdfs:subClassOf netex:Network ;
+    rdfs:subClassOf netex:OperatingDay ;
+    rdfs:subClassOf netex:Operator ;
+    rdfs:subClassOf netex:Place ;
+    rdfs:subClassOf netex:Point ;
+    rdfs:subClassOf netex:Route ;
+    rdfs:subClassOf netex:RoutePoint ;
+    rdfs:subClassOf netex:ScheduledStopPoint ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:ServiceJourney ;
+    rdfs:subClassOf netex:ServiceJourneyPattern ;
+    rdfs:subClassOf netex:ServicePattern ;
+    rdfs:subClassOf netex:ServiceSite ;
+    rdfs:subClassOf netex:Site ;
+    rdfs:subClassOf netex:SiteFrame ;
+    rdfs:subClassOf netex:SpecialService ;
+    rdfs:subClassOf netex:StopPlace ;
+    rdfs:subClassOf netex:TicketingService ;
+    rdfs:subClassOf netex:Timeband ;
+    rdfs:subClassOf netex:Train ;
+    rdfs:subClassOf netex:TrainNumber ;
+    rdfs:subClassOf netex:TypeOfFrame ;
+    rdfs:subClassOf netex:TypeOfJourneyPattern ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FActualServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FCancelledAndLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FDelayedAndCancelledJourneysWithEvents.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedCapacity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FResponseLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FTicketingBasedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fplaceholder.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:PublicationDelivery
+    a owl:Class ;
+    skos:definition "OpRa publication delivery that contains a payload and refreshes in the specified interval."@en ;
+    skos:prefLabel "opra publication delivery that contains"@en ;
+    skos:altLabel "publication delivery"@en ;
+    skos:altLabel "publicationdelivery"@en ;
+    rdfs:subClassOf netex:AcceptedDriverPermit ;
+    rdfs:subClassOf netex:Access ;
+    rdfs:subClassOf netex:AccessEquipment ;
+    rdfs:subClassOf netex:AccessFacility ;
+    rdfs:subClassOf netex:AccessFacilityList ;
+    rdfs:subClassOf netex:AccessMode ;
+    rdfs:subClassOf netex:AccessRightInProduct ;
+    rdfs:subClassOf netex:AccessRightParameterAssignment ;
+    rdfs:subClassOf netex:AccessSpace ;
+    rdfs:subClassOf netex:AccessSummary ;
+    rdfs:subClassOf netex:AccessVehicleEquipment ;
+    rdfs:subClassOf netex:AccessZone ;
+    rdfs:subClassOf netex:AccessibilityAssessment ;
+    rdfs:subClassOf netex:AccessibilityInfoFacility ;
+    rdfs:subClassOf netex:AccessibilityInfoFacilityList ;
+    rdfs:subClassOf netex:AccessibilityLimitation ;
+    rdfs:subClassOf netex:AccessibilityTool ;
+    rdfs:subClassOf netex:AccessibilityToolList ;
+    rdfs:subClassOf netex:Accommodation ;
+    rdfs:subClassOf netex:AccommodationAccess ;
+    rdfs:subClassOf netex:AccommodationAccessList ;
+    rdfs:subClassOf netex:AccommodationFacility ;
+    rdfs:subClassOf netex:AccommodationFacilityList ;
+    rdfs:subClassOf netex:ActivatedEquipment ;
+    rdfs:subClassOf netex:ActivationAssignment ;
+    rdfs:subClassOf netex:ActivationLink ;
+    rdfs:subClassOf netex:ActivationPoint ;
+    rdfs:subClassOf netex:ActualVehicleEquipment ;
+    rdfs:subClassOf netex:AddressablePlace ;
+    rdfs:subClassOf netex:AdministrativeZone ;
+    rdfs:subClassOf netex:AllVehicleModes ;
+    rdfs:subClassOf netex:AllowedLineDirection ;
+    rdfs:subClassOf netex:AlternativeQuayDescriptor ;
+    rdfs:subClassOf netex:AmountOfPriceUnitProduct ;
+    rdfs:subClassOf netex:Assignment ;
+    rdfs:subClassOf netex:AssistanceBookingService ;
+    rdfs:subClassOf netex:AssistanceFacility ;
+    rdfs:subClassOf netex:AssistanceFacilityList ;
+    rdfs:subClassOf netex:AssistanceService ;
+    rdfs:subClassOf netex:AudibleSignalsAvailable ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FbookingArrangements%2Fgeneralframe.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fcalendar%2FNeTEx_Calendar_se_PA1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fcalendar%2FNetex_calendarCodeing_02.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fcalendar%2FNetex_calendarExample_01_BHN01.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_bus.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train_simple.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fdeprecation%2Forganisationref.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FENTUR-SchoolTwiceADayTripCarnet_2020120.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.1_Bus_SimpleFares_PointToPoint_SingleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.2_Bus_SimpleFares_PointToPoint_MultipleOffers.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.3_Bus_SimpleFares_ZoneToZone_AdultChildProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.4_Bus_SimpleFares_ZoneToZone_OffPeakProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_61.1_Bus_GeographicFares_UnitDistance_SingleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_61.2_Bus_GeographicFares_UnitZone_AdultChildProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_61.3_Bus_GeographicFares_UnitFareStage_SingleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_61.4_Bus_GeographicFares_HierarchicalZone_MultipleOffers.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_71.1_Bus_TimeIntervalFares_Zonal_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_71.2_Bus_ZonalFares_MultipleSalesPackages.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_81.1_Metro_FlatFare_GroupProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_91.1_Rail_RailCard_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2Frail%2FNetex_era_crossborder_de.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2Frail%2FNetex_era_distance_ro.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:PublicationRequest
+    a owl:Class ;
+    skos:definition "A bulk publication request for OpRa objects specifying which elements should be returned. Can be echoed back in a publication response."@en ;
+    skos:prefLabel "bulk publication request for"@en ;
+    skos:altLabel "publication request"@en ;
+    skos:altLabel "publicationrequest"@en ;
+    rdfs:subClassOf netex:AcceptedDriverPermit ;
+    rdfs:subClassOf netex:Access ;
+    rdfs:subClassOf netex:AccessEquipment ;
+    rdfs:subClassOf netex:AccessFacility ;
+    rdfs:subClassOf netex:AccessFacilityList ;
+    rdfs:subClassOf netex:AccessMode ;
+    rdfs:subClassOf netex:AccessRightInProduct ;
+    rdfs:subClassOf netex:AccessRightParameterAssignment ;
+    rdfs:subClassOf netex:AccessSpace ;
+    rdfs:subClassOf netex:AccessSummary ;
+    rdfs:subClassOf netex:AccessVehicleEquipment ;
+    rdfs:subClassOf netex:AccessZone ;
+    rdfs:subClassOf netex:AccessibilityAssessment ;
+    rdfs:subClassOf netex:AccessibilityInfoFacility ;
+    rdfs:subClassOf netex:AccessibilityInfoFacilityList ;
+    rdfs:subClassOf netex:AccessibilityLimitation ;
+    rdfs:subClassOf netex:AccessibilityTool ;
+    rdfs:subClassOf netex:AccessibilityToolList ;
+    rdfs:subClassOf netex:Accommodation ;
+    rdfs:subClassOf netex:AccommodationAccess ;
+    rdfs:subClassOf netex:AccommodationAccessList ;
+    rdfs:subClassOf netex:AccommodationFacility ;
+    rdfs:subClassOf netex:AccommodationFacilityList ;
+    rdfs:subClassOf netex:ActivatedEquipment ;
+    rdfs:subClassOf netex:ActivationAssignment ;
+    rdfs:subClassOf netex:ActivationLink ;
+    rdfs:subClassOf netex:ActivationPoint ;
+    rdfs:subClassOf netex:ActualVehicleEquipment ;
+    rdfs:subClassOf netex:AddressablePlace ;
+    rdfs:subClassOf netex:AdministrativeZone ;
+    rdfs:subClassOf netex:AllVehicleModes ;
+    rdfs:subClassOf netex:AllowedLineDirection ;
+    rdfs:subClassOf netex:AlternativeQuayDescriptor ;
+    rdfs:subClassOf netex:AmountOfPriceUnitProduct ;
+    rdfs:subClassOf netex:Assignment ;
+    rdfs:subClassOf netex:AssistanceBookingService ;
+    rdfs:subClassOf netex:AssistanceFacility ;
+    rdfs:subClassOf netex:AssistanceFacilityList ;
+    rdfs:subClassOf netex:AssistanceService ;
+    rdfs:subClassOf netex:AudibleSignalsAvailable ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fcalendar%2FNeTEx_Calendar_se_PA1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fcalendar%2FNetex_calendarCodeing_02.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fcalendar%2FNetex_calendarExample_01_BHN01.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_bus.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train_simple.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.1_Bus_SimpleFares_PointToPoint_SingleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.2_Bus_SimpleFares_PointToPoint_MultipleOffers.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.3_Bus_SimpleFares_ZoneToZone_AdultChildProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.4_Bus_SimpleFares_ZoneToZone_OffPeakProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_61.1_Bus_GeographicFares_UnitDistance_SingleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_61.2_Bus_GeographicFares_UnitZone_AdultChildProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_61.3_Bus_GeographicFares_UnitFareStage_SingleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_61.4_Bus_GeographicFares_HierarchicalZone_MultipleOffers.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_71.1_Bus_TimeIntervalFares_Zonal_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_71.2_Bus_ZonalFares_MultipleSalesPackages.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_81.1_Metro_FlatFare_GroupProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_91.1_Rail_RailCard_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fgrouping%2FNetex_GroupingExample_General_01.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fline%2FLine_with_facilities.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fline%2FNeTEx_01_simple_line.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarClubExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarPoolingExample.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ServiceDelivery
+    a owl:Class ;
+    skos:definition "Response from Producer to Consumer to deliver payload data. Either answers a direct ServiceRequest, or asynchronously satisfies a subscription. May be sent directly in one step, or fetched in response to a DataSupply Request."@en ;
+    skos:prefLabel "service delivery"@en ;
+    skos:altLabel "servicedelivery"@en ;
+    rdfs:subClassOf netex:AcceptedDriverPermit ;
+    rdfs:subClassOf netex:Access ;
+    rdfs:subClassOf netex:AccessEquipment ;
+    rdfs:subClassOf netex:AccessFacility ;
+    rdfs:subClassOf netex:AccessFacilityList ;
+    rdfs:subClassOf netex:AccessMode ;
+    rdfs:subClassOf netex:AccessRightInProduct ;
+    rdfs:subClassOf netex:AccessRightParameterAssignment ;
+    rdfs:subClassOf netex:AccessSpace ;
+    rdfs:subClassOf netex:AccessSummary ;
+    rdfs:subClassOf netex:AccessVehicleEquipment ;
+    rdfs:subClassOf netex:AccessZone ;
+    rdfs:subClassOf netex:AccessibilityAssessment ;
+    rdfs:subClassOf netex:AccessibilityInfoFacility ;
+    rdfs:subClassOf netex:AccessibilityInfoFacilityList ;
+    rdfs:subClassOf netex:AccessibilityLimitation ;
+    rdfs:subClassOf netex:AccessibilityTool ;
+    rdfs:subClassOf netex:AccessibilityToolList ;
+    rdfs:subClassOf netex:Accommodation ;
+    rdfs:subClassOf netex:AccommodationAccess ;
+    rdfs:subClassOf netex:AccommodationAccessList ;
+    rdfs:subClassOf netex:AccommodationFacility ;
+    rdfs:subClassOf netex:AccommodationFacilityList ;
+    rdfs:subClassOf netex:ActivatedEquipment ;
+    rdfs:subClassOf netex:ActivationAssignment ;
+    rdfs:subClassOf netex:ActivationLink ;
+    rdfs:subClassOf netex:ActivationPoint ;
+    rdfs:subClassOf netex:ActualVehicleEquipment ;
+    rdfs:subClassOf netex:AddressablePlace ;
+    rdfs:subClassOf netex:AdministrativeZone ;
+    rdfs:subClassOf netex:AllVehicleModes ;
+    rdfs:subClassOf netex:AllowedLineDirection ;
+    rdfs:subClassOf netex:AlternativeQuayDescriptor ;
+    rdfs:subClassOf netex:AmountOfPriceUnitProduct ;
+    rdfs:subClassOf netex:Assignment ;
+    rdfs:subClassOf netex:AssistanceBookingService ;
+    rdfs:subClassOf netex:AssistanceFacility ;
+    rdfs:subClassOf netex:AssistanceFacilityList ;
+    rdfs:subClassOf netex:AssistanceService ;
+    rdfs:subClassOf netex:AudibleSignalsAvailable ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FActualServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FCancelledAndLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FContextualIndicatorFrame.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FDelayedAndCancelledJourneysWithEvents.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedCapacity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedFleetDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FResponseLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FTicketingBasedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fcalendar%2FNeTEx_Calendar_se_PA1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fcalendar%2FNetex_calendarCodeing_02.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fcalendar%2FNetex_calendarExample_01_BHN01.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_bus.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train_simple.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FENTUR-SchoolTwiceADayTripCarnet_2020120.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.1_Bus_SimpleFares_PointToPoint_SingleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.2_Bus_SimpleFares_PointToPoint_MultipleOffers.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.3_Bus_SimpleFares_ZoneToZone_AdultChildProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.4_Bus_SimpleFares_ZoneToZone_OffPeakProduct.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:ServiceRequest
+    a owl:Class ;
+    skos:definition "Request from Consumer to Producer for immediate delivery of data. Answered with a ServiceDelivery (or a DataReadyRequest)"@en ;
+    skos:prefLabel "request from consumer to producer"@en ;
+    skos:altLabel "service request"@en ;
+    skos:altLabel "servicerequest"@en ;
+    rdfs:subClassOf netex:AcceptedDriverPermit ;
+    rdfs:subClassOf netex:Access ;
+    rdfs:subClassOf netex:AccessEquipment ;
+    rdfs:subClassOf netex:AccessFacility ;
+    rdfs:subClassOf netex:AccessFacilityList ;
+    rdfs:subClassOf netex:AccessMode ;
+    rdfs:subClassOf netex:AccessRightInProduct ;
+    rdfs:subClassOf netex:AccessRightParameterAssignment ;
+    rdfs:subClassOf netex:AccessSpace ;
+    rdfs:subClassOf netex:AccessSummary ;
+    rdfs:subClassOf netex:AccessVehicleEquipment ;
+    rdfs:subClassOf netex:AccessZone ;
+    rdfs:subClassOf netex:AccessibilityAssessment ;
+    rdfs:subClassOf netex:AccessibilityInfoFacility ;
+    rdfs:subClassOf netex:AccessibilityInfoFacilityList ;
+    rdfs:subClassOf netex:AccessibilityLimitation ;
+    rdfs:subClassOf netex:AccessibilityTool ;
+    rdfs:subClassOf netex:AccessibilityToolList ;
+    rdfs:subClassOf netex:Accommodation ;
+    rdfs:subClassOf netex:AccommodationAccess ;
+    rdfs:subClassOf netex:AccommodationAccessList ;
+    rdfs:subClassOf netex:AccommodationFacility ;
+    rdfs:subClassOf netex:AccommodationFacilityList ;
+    rdfs:subClassOf netex:ActivatedEquipment ;
+    rdfs:subClassOf netex:ActivationAssignment ;
+    rdfs:subClassOf netex:ActivationLink ;
+    rdfs:subClassOf netex:ActivationPoint ;
+    rdfs:subClassOf netex:ActualVehicleEquipment ;
+    rdfs:subClassOf netex:AddressablePlace ;
+    rdfs:subClassOf netex:AdministrativeZone ;
+    rdfs:subClassOf netex:AllVehicleModes ;
+    rdfs:subClassOf netex:AllowedLineDirection ;
+    rdfs:subClassOf netex:AlternativeQuayDescriptor ;
+    rdfs:subClassOf netex:AmountOfPriceUnitProduct ;
+    rdfs:subClassOf netex:Assignment ;
+    rdfs:subClassOf netex:AssistanceBookingService ;
+    rdfs:subClassOf netex:AssistanceFacility ;
+    rdfs:subClassOf netex:AssistanceFacilityList ;
+    rdfs:subClassOf netex:AssistanceService ;
+    rdfs:subClassOf netex:AudibleSignalsAvailable ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestAllPassengerCounts.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fcalendar%2FNeTEx_Calendar_se_PA1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fcalendar%2FNetex_calendarCodeing_02.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fcalendar%2FNetex_calendarExample_01_BHN01.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_bus.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train_simple.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.1_Bus_SimpleFares_PointToPoint_SingleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.2_Bus_SimpleFares_PointToPoint_MultipleOffers.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.3_Bus_SimpleFares_ZoneToZone_AdultChildProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.4_Bus_SimpleFares_ZoneToZone_OffPeakProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_61.1_Bus_GeographicFares_UnitDistance_SingleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_61.2_Bus_GeographicFares_UnitZone_AdultChildProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_61.3_Bus_GeographicFares_UnitFareStage_SingleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_61.4_Bus_GeographicFares_HierarchicalZone_MultipleOffers.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_71.1_Bus_TimeIntervalFares_Zonal_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_71.2_Bus_ZonalFares_MultipleSalesPackages.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fgrouping%2FNetex_GroupingExample_General_01.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fline%2FLine_with_facilities.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fline%2FNeTEx_01_simple_line.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarClubExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarPoolingExample.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:SubscriptionRequest
+    a owl:Class ;
+    skos:definition "Request from Subscriber to Producer for a subscription. Answered with a SubscriptionResponse."@en ;
+    skos:prefLabel "request from subscriber to producer"@en ;
+    skos:altLabel "subscription request"@en ;
+    skos:altLabel "subscriptionrequest"@en ;
+    rdfs:subClassOf netex:Access ;
+    rdfs:subClassOf netex:AccessFacility ;
+    rdfs:subClassOf netex:AccessFacilityList ;
+    rdfs:subClassOf netex:AccessMode ;
+    rdfs:subClassOf netex:AccessRightInProduct ;
+    rdfs:subClassOf netex:AccessRightParameterAssignment ;
+    rdfs:subClassOf netex:AccessZone ;
+    rdfs:subClassOf netex:ActivationAssignment ;
+    rdfs:subClassOf netex:ActivationLink ;
+    rdfs:subClassOf netex:ActivationPoint ;
+    rdfs:subClassOf netex:AmountOfPriceUnitProduct ;
+    rdfs:subClassOf netex:Assignment ;
+    rdfs:subClassOf netex:AvailabilityCondition ;
+    rdfs:subClassOf netex:BookingPolicy ;
+    rdfs:subClassOf netex:Branding ;
+    rdfs:subClassOf netex:Call ;
+    rdfs:subClassOf netex:Cell ;
+    rdfs:subClassOf netex:ChargingMoment ;
+    rdfs:subClassOf netex:ChargingPolicy ;
+    rdfs:subClassOf netex:ClassOfUse ;
+    rdfs:subClassOf netex:CompanionProfile ;
+    rdfs:subClassOf netex:CompositeFrame ;
+    rdfs:subClassOf netex:Connection ;
+    rdfs:subClassOf netex:Contact ;
+    rdfs:subClassOf netex:Contract ;
+    rdfs:subClassOf netex:Country ;
+    rdfs:subClassOf netex:DataObjectDelivery ;
+    rdfs:subClassOf netex:DataObjectRequest ;
+    rdfs:subClassOf netex:DataObjectSubscriptionRequest ;
+    rdfs:subClassOf netex:DataSource ;
+    rdfs:subClassOf netex:DatedServiceJourney ;
+    rdfs:subClassOf netex:DatedVehicleJourney ;
+    rdfs:subClassOf netex:DayTypeAssignment ;
+    rdfs:subClassOf netex:DefaultConnection ;
+    rdfs:subClassOf netex:DefaultInterchange ;
+    rdfs:subClassOf netex:DestinationDisplay ;
+    rdfs:subClassOf netex:Direction ;
+    rdfs:subClassOf netex:DiscountingRule ;
+    rdfs:subClassOf netex:DistributionAssignment ;
+    rdfs:subClassOf netex:DistributionChannel ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_91.1_Rail_RailCard_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exa_framework%2Fexa_terminateSubscription_request.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_CM%2Fexc_connectionMonitoring_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_CM%2Fexc_connectionMonitoring_subscriptionRequest.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_CT%2Fexc_connectionTimetable_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_CT%2Fexc_connectionTimetable_subscriptionRequest.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_ET%2Fext_estimatedTimetable_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_ET%2Fext_estimatedTimetable_response.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_ET%2Fext_estimatedTimetable_subscriptionRequest.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_FM%2Fexf_facilityMonitoring_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_FM%2Fexf_facilityMonitoring_subscriptionRequest.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_GM%2Fexm_generalMessage_subscriptionRequest.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_PT%2Fext_productionTimetable_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_PT%2Fext_productionTimetable_response.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_PT%2Fext_productionTimetable_subscriptionRequest.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_subscriptionRequest.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_subscriptionRequest_simple.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_ST%2Fexs_stopTimetable_subscriptionRequest.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_SX%2Fexx_situationExchange_subscriptionRequest.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_VM%2Fexv_vehicleMonitoring_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_VM%2Fexv_vehicleMonitoring_subscriptionRequest.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exu_capability%2Fexd_allServices_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_FSYO_NETWORK_FARE_FirstSheffield-pass-by-period_20200310.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_FSYO_NETWORK_FARE_FirstSheffield-pass-by-user_20200310.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:TicketingBasedPassengerCount
+    a owl:Class ;
+    skos:definition "Implementation of LOGGABLE OBJECT designed for recording TICKETING BASED PASSENGER COUNT information."@en ;
+    skos:prefLabel "ticketing based passenger count"@en ;
+    skos:altLabel "ticketingbasedpassengercount"@en ;
+    rdfs:subClassOf netex:Level ;
+    rdfs:subClassOf netex:Line ;
+    rdfs:subClassOf netex:Log ;
+    rdfs:subClassOf netex:LogEntry ;
+    rdfs:subClassOf netex:Network ;
+    rdfs:subClassOf netex:Point ;
+    rdfs:subClassOf netex:ScheduledStopPoint ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:ServiceSite ;
+    rdfs:subClassOf netex:Site ;
+    rdfs:subClassOf netex:SiteFrame ;
+    rdfs:subClassOf netex:TicketingService ;
+    rdfs:subClassOf opra:IndicatorFrame ;
+    rdfs:subClassOf opra:OnboardDeviceBasedPassengerCount ;
+    rdfs:subClassOf opra:OnboardDeviceBasedPassengerCountRequest ;
+    rdfs:subClassOf opra:Opra ;
+    rdfs:subClassOf opra:OpraFunctionalDelivery ;
+    rdfs:subClassOf opra:OpraFunctionalRequest ;
+    rdfs:subClassOf opra:OpraPayloadDelivery ;
+    rdfs:subClassOf opra:PreparednessLevel ;
+    rdfs:subClassOf opra:ServiceDelivery ;
+    rdfs:subClassOf opra:ServiceRequest ;
+    rdfs:subClassOf opra:TicketingBasedPassengerCountRequest ;
+    rdfs:subClassOf opra:opraFunctionalDeliveries ;
+    rdfs:subClassOf opra:opraFunctionalRequests ;
+    rdfs:subClassOf siri:ResponseTimestamp ;
+    rdfs:subClassOf siri:ServiceDelivery ;
+    rdfs:subClassOf siri:ServiceRequest ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestAllPassengerCounts.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FTicketingBasedPassengerCount.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:TicketingBasedPassengerCountDiscoveryDelivery
+    a owl:Class ;
+    skos:definition "A discovery delivery element to get TICKETING BASED PASSENGER COUNTs."@en ;
+    skos:prefLabel "discovery delivery element to"@en ;
+    skos:altLabel "ticketing based passenger count discovery delivery"@en ;
+    skos:altLabel "ticketingbasedpassengercountdiscoverydelivery"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryDelivery ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:TicketingBasedPassengerCountDiscoveryRequest
+    a owl:Class ;
+    skos:definition "A discovery request element to get TICKETING BASED PASSENGER COUNTs."@en ;
+    skos:prefLabel "discovery request element to"@en ;
+    skos:altLabel "ticketing based passenger count discovery request"@en ;
+    skos:altLabel "ticketingbasedpassengercountdiscoveryrequest"@en ;
+    rdfs:subClassOf opra:OpraDiscoveryRequest ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:TicketingBasedPassengerCountRequest
+    a owl:Class ;
+    skos:definition "A request element to get TICKETING BASED PASSENGER COUNTs."@en ;
+    skos:prefLabel "request element to get"@en ;
+    skos:altLabel "ticketing based passenger count request"@en ;
+    skos:altLabel "ticketingbasedpassengercountrequest"@en ;
+    rdfs:subClassOf netex:Network ;
+    rdfs:subClassOf netex:TicketingService ;
+    rdfs:subClassOf opra:OnboardDeviceBasedPassengerCount ;
+    rdfs:subClassOf opra:OnboardDeviceBasedPassengerCountRequest ;
+    rdfs:subClassOf opra:Opra ;
+    rdfs:subClassOf opra:OpraFunctionalRequest ;
+    rdfs:subClassOf opra:ServiceRequest ;
+    rdfs:subClassOf opra:TicketingBasedPassengerCount ;
+    rdfs:subClassOf opra:opraFunctionalRequests ;
+    rdfs:subClassOf siri:ServiceRequest ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestAllPassengerCounts.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:TransportPerformance
+    a owl:Class ;
+    skos:definition "Total loaded transport performance within the scope, measured in [passenger-meter] or [passenger-km] depending on DefaultSystemOfUnits for the FRAME."@en ;
+    skos:prefLabel "total loaded transport performance within"@en ;
+    skos:altLabel "transport performance"@en ;
+    skos:altLabel "transportperformance"@en ;
+    rdfs:subClassOf netex:Authority ;
+    rdfs:subClassOf netex:DatedServiceJourney ;
+    rdfs:subClassOf netex:DatedSpecialService ;
+    rdfs:subClassOf netex:DatedVehicleJourney ;
+    rdfs:subClassOf netex:FareClass ;
+    rdfs:subClassOf netex:FareFrame ;
+    rdfs:subClassOf netex:FareScheduledStopPoint ;
+    rdfs:subClassOf netex:Garage ;
+    rdfs:subClassOf netex:GaragePoint ;
+    rdfs:subClassOf netex:Journey ;
+    rdfs:subClassOf netex:JourneyPattern ;
+    rdfs:subClassOf netex:Level ;
+    rdfs:subClassOf netex:Line ;
+    rdfs:subClassOf netex:LineNetwork ;
+    rdfs:subClassOf netex:Network ;
+    rdfs:subClassOf netex:OperatingDay ;
+    rdfs:subClassOf netex:Operator ;
+    rdfs:subClassOf netex:Place ;
+    rdfs:subClassOf netex:Point ;
+    rdfs:subClassOf netex:Route ;
+    rdfs:subClassOf netex:RoutePoint ;
+    rdfs:subClassOf netex:ScheduledStopPoint ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:ServiceJourney ;
+    rdfs:subClassOf netex:ServiceJourneyPattern ;
+    rdfs:subClassOf netex:ServicePattern ;
+    rdfs:subClassOf netex:ServiceSite ;
+    rdfs:subClassOf netex:Site ;
+    rdfs:subClassOf netex:SiteFrame ;
+    rdfs:subClassOf netex:SpecialService ;
+    rdfs:subClassOf netex:StopPlace ;
+    rdfs:subClassOf netex:Timeband ;
+    rdfs:subClassOf netex:Vehicle ;
+    rdfs:subClassOf netex:VehicleJourney ;
+    rdfs:subClassOf netex:VehicleMode ;
+    rdfs:subClassOf netex:VehicleService ;
+    rdfs:subClassOf opra:AverageCommercialSpeed ;
+    rdfs:subClassOf opra:ExpectedServiceIntensity ;
+    rdfs:subClassOf opra:IndicatorFrame ;
+    rdfs:subClassOf opra:LoadOverJourneyDistance ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:TransportPerformancePerVehicle
+    a owl:Class ;
+    skos:definition "Average loaded transport performance measured in [passenger-meter/vehicle] or [passenger-km/vehicle] depending on DefaultSystemOfUnits for the FRAME."@en ;
+    skos:prefLabel "average loaded transport performance measured"@en ;
+    skos:altLabel "transport performance per vehicle"@en ;
+    skos:altLabel "transportperformancepervehicle"@en ;
+    rdfs:subClassOf netex:Authority ;
+    rdfs:subClassOf netex:DatedServiceJourney ;
+    rdfs:subClassOf netex:DatedSpecialService ;
+    rdfs:subClassOf netex:DatedVehicleJourney ;
+    rdfs:subClassOf netex:FareClass ;
+    rdfs:subClassOf netex:FareFrame ;
+    rdfs:subClassOf netex:FareScheduledStopPoint ;
+    rdfs:subClassOf netex:Garage ;
+    rdfs:subClassOf netex:GaragePoint ;
+    rdfs:subClassOf netex:Journey ;
+    rdfs:subClassOf netex:JourneyPattern ;
+    rdfs:subClassOf netex:Level ;
+    rdfs:subClassOf netex:Line ;
+    rdfs:subClassOf netex:LineNetwork ;
+    rdfs:subClassOf netex:Network ;
+    rdfs:subClassOf netex:OperatingDay ;
+    rdfs:subClassOf netex:Operator ;
+    rdfs:subClassOf netex:Place ;
+    rdfs:subClassOf netex:Point ;
+    rdfs:subClassOf netex:Route ;
+    rdfs:subClassOf netex:RoutePoint ;
+    rdfs:subClassOf netex:ScheduledStopPoint ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:ServiceJourney ;
+    rdfs:subClassOf netex:ServiceJourneyPattern ;
+    rdfs:subClassOf netex:ServicePattern ;
+    rdfs:subClassOf netex:ServiceSite ;
+    rdfs:subClassOf netex:Site ;
+    rdfs:subClassOf netex:SiteFrame ;
+    rdfs:subClassOf netex:SpecialService ;
+    rdfs:subClassOf netex:StopPlace ;
+    rdfs:subClassOf netex:Timeband ;
+    rdfs:subClassOf netex:Vehicle ;
+    rdfs:subClassOf netex:VehicleJourney ;
+    rdfs:subClassOf netex:VehicleMode ;
+    rdfs:subClassOf netex:VehicleService ;
+    rdfs:subClassOf opra:AverageCommercialSpeed ;
+    rdfs:subClassOf opra:ExpectedServiceIntensity ;
+    rdfs:subClassOf opra:IndicatorFrame ;
+    rdfs:subClassOf opra:LoadOverJourneyDistance ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:TypeOfDelay
+    a owl:Class ;
+    skos:definition "Element for a TYPE OF DELAY classifying DELAYs, e.g. for implementing regulations that differentiate between DELAYs."@en ;
+    skos:prefLabel "type of delay"@en ;
+    skos:altLabel "typeofdelay"@en ;
+    rdfs:subClassOf netex:Access ;
+    rdfs:subClassOf netex:AccessEquipment ;
+    rdfs:subClassOf netex:AccessFacility ;
+    rdfs:subClassOf netex:AccessFacilityList ;
+    rdfs:subClassOf netex:AccessMode ;
+    rdfs:subClassOf netex:AccessSpace ;
+    rdfs:subClassOf netex:AccessSummary ;
+    rdfs:subClassOf netex:AccessVehicleEquipment ;
+    rdfs:subClassOf netex:AccessZone ;
+    rdfs:subClassOf netex:AccessibilityAssessment ;
+    rdfs:subClassOf netex:AccessibilityInfoFacility ;
+    rdfs:subClassOf netex:AccessibilityInfoFacilityList ;
+    rdfs:subClassOf netex:AccessibilityLimitation ;
+    rdfs:subClassOf netex:AccessibilityTool ;
+    rdfs:subClassOf netex:AccessibilityToolList ;
+    rdfs:subClassOf netex:Accommodation ;
+    rdfs:subClassOf netex:AccommodationAccess ;
+    rdfs:subClassOf netex:AccommodationAccessList ;
+    rdfs:subClassOf netex:AccommodationFacility ;
+    rdfs:subClassOf netex:AccommodationFacilityList ;
+    rdfs:subClassOf netex:ActualVehicleEquipment ;
+    rdfs:subClassOf netex:AdministrativeZone ;
+    rdfs:subClassOf netex:AllVehicleModes ;
+    rdfs:subClassOf netex:AlternativeQuayDescriptor ;
+    rdfs:subClassOf netex:Assignment ;
+    rdfs:subClassOf netex:AssistanceBookingService ;
+    rdfs:subClassOf netex:AssistanceFacility ;
+    rdfs:subClassOf netex:AssistanceFacilityList ;
+    rdfs:subClassOf netex:AssistanceService ;
+    rdfs:subClassOf netex:AudibleSignalsAvailable ;
+    rdfs:subClassOf netex:Authority ;
+    rdfs:subClassOf netex:AvailabilityCondition ;
+    rdfs:subClassOf netex:BedEquipment ;
+    rdfs:subClassOf netex:BerthFacility ;
+    rdfs:subClassOf netex:BoardingPermission ;
+    rdfs:subClassOf netex:BoardingPosition ;
+    rdfs:subClassOf netex:BookingArrangement ;
+    rdfs:subClassOf netex:BookingProcessFacility ;
+    rdfs:subClassOf netex:BookingProcessFacilityList ;
+    rdfs:subClassOf netex:Call ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FDelayedAndCancelledJourneysWithEvents.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_01_Sites_SimpleStadium_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_10_Sites_OlympicPark_2_basic.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_11_Sites_OlympicPark_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_12_Sites_OlympicPark_3_nav.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_14_Olympic%20Venues%201.1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_21_Sites_Parking_2.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FFX-PI-01_UK_TBD_STOP-OFFER_910GWIMBLDN-accessibility_20140601.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FNetex_04_Stops_SimpleStation_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FNetex_10_StopPlace_uk_ComplexStation_Wimbledon_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FNetex_10_StopPlace_withParking_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_21_Rail_NetworkTimetable_eurostar.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Fnorway%2Fstops%2FPointOfInterest.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example1-basic.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example2.6-Check_In.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:VehicleLoadEntry
+    a owl:Class ;
+    skos:definition "Element for a VEHICLE LOAD ENTRY recording a state or summary."@en ;
+    skos:prefLabel "vehicle load entry"@en ;
+    skos:altLabel "vehicleloadentry"@en ;
+    rdfs:subClassOf netex:Access ;
+    rdfs:subClassOf netex:AccessEquipment ;
+    rdfs:subClassOf netex:AccessFacility ;
+    rdfs:subClassOf netex:AccessFacilityList ;
+    rdfs:subClassOf netex:AccessMode ;
+    rdfs:subClassOf netex:AccessSpace ;
+    rdfs:subClassOf netex:AccessSummary ;
+    rdfs:subClassOf netex:AccessVehicleEquipment ;
+    rdfs:subClassOf netex:AccessZone ;
+    rdfs:subClassOf netex:AccessibilityAssessment ;
+    rdfs:subClassOf netex:AccessibilityLimitation ;
+    rdfs:subClassOf netex:Accommodation ;
+    rdfs:subClassOf netex:AccommodationAccess ;
+    rdfs:subClassOf netex:AccommodationAccessList ;
+    rdfs:subClassOf netex:AccommodationFacility ;
+    rdfs:subClassOf netex:AccommodationFacilityList ;
+    rdfs:subClassOf netex:ActualVehicleEquipment ;
+    rdfs:subClassOf netex:AllVehicleModes ;
+    rdfs:subClassOf netex:Assignment ;
+    rdfs:subClassOf netex:AssistanceFacility ;
+    rdfs:subClassOf netex:AssistanceFacilityList ;
+    rdfs:subClassOf netex:AssistanceService ;
+    rdfs:subClassOf netex:AudibleSignalsAvailable ;
+    rdfs:subClassOf netex:AvailabilityCondition ;
+    rdfs:subClassOf netex:BedEquipment ;
+    rdfs:subClassOf netex:BerthFacility ;
+    rdfs:subClassOf netex:BoardingPermission ;
+    rdfs:subClassOf netex:BoardingPosition ;
+    rdfs:subClassOf netex:Call ;
+    rdfs:subClassOf netex:CarServiceFacility ;
+    rdfs:subClassOf netex:CarServiceFacilityList ;
+    rdfs:subClassOf netex:CateringFacility ;
+    rdfs:subClassOf netex:CateringFacilityList ;
+    rdfs:subClassOf netex:CateringService ;
+    rdfs:subClassOf netex:CheckConstraint ;
+    rdfs:subClassOf netex:CheckConstraintDelay ;
+    rdfs:subClassOf netex:ClassOfUse ;
+    rdfs:subClassOf netex:ClimateControl ;
+    rdfs:subClassOf netex:ClimateControlList ;
+    rdfs:subClassOf netex:CommunicationService ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:VehicleTypeCapacity
+    a owl:Class ;
+    skos:definition "Element to represent capacity values for a VEHICLE TYPE."@en ;
+    skos:prefLabel "element to represent capacity values"@en ;
+    skos:altLabel "vehicle type capacity"@en ;
+    skos:altLabel "vehicletypecapacity"@en ;
+    rdfs:subClassOf netex:AcceptedDriverPermit ;
+    rdfs:subClassOf netex:Access ;
+    rdfs:subClassOf netex:AccessEquipment ;
+    rdfs:subClassOf netex:AccessFacility ;
+    rdfs:subClassOf netex:AccessFacilityList ;
+    rdfs:subClassOf netex:AccessMode ;
+    rdfs:subClassOf netex:AccessRightInProduct ;
+    rdfs:subClassOf netex:AccessRightParameterAssignment ;
+    rdfs:subClassOf netex:AccessSpace ;
+    rdfs:subClassOf netex:AccessSummary ;
+    rdfs:subClassOf netex:AccessVehicleEquipment ;
+    rdfs:subClassOf netex:AccessZone ;
+    rdfs:subClassOf netex:AccessibilityAssessment ;
+    rdfs:subClassOf netex:AccessibilityInfoFacility ;
+    rdfs:subClassOf netex:AccessibilityInfoFacilityList ;
+    rdfs:subClassOf netex:AccessibilityLimitation ;
+    rdfs:subClassOf netex:AccessibilityTool ;
+    rdfs:subClassOf netex:AccessibilityToolList ;
+    rdfs:subClassOf netex:Accommodation ;
+    rdfs:subClassOf netex:AccommodationAccess ;
+    rdfs:subClassOf netex:AccommodationAccessList ;
+    rdfs:subClassOf netex:AccommodationFacility ;
+    rdfs:subClassOf netex:AccommodationFacilityList ;
+    rdfs:subClassOf netex:ActivationAssignment ;
+    rdfs:subClassOf netex:ActivationLink ;
+    rdfs:subClassOf netex:ActivationPoint ;
+    rdfs:subClassOf netex:ActualVehicleEquipment ;
+    rdfs:subClassOf netex:AddressablePlace ;
+    rdfs:subClassOf netex:AdministrativeZone ;
+    rdfs:subClassOf netex:AllVehicleModes ;
+    rdfs:subClassOf netex:AllowedLineDirection ;
+    rdfs:subClassOf netex:AlternativeQuayDescriptor ;
+    rdfs:subClassOf netex:AmountOfPriceUnitProduct ;
+    rdfs:subClassOf netex:Assignment ;
+    rdfs:subClassOf netex:AssistanceBookingService ;
+    rdfs:subClassOf netex:AssistanceFacility ;
+    rdfs:subClassOf netex:AssistanceFacilityList ;
+    rdfs:subClassOf netex:AssistanceService ;
+    rdfs:subClassOf netex:AudibleSignalsAvailable ;
+    rdfs:subClassOf netex:Authority ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedCapacity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_bus.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train_simple.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2Frail%2FNetex_era_distance_ro.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FIXSI%20Service%201%20-%20Static%20Data.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarClubExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarPoolingExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-ChauffeuredServiceExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CycleSharingExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FsimpleNetwork%2FNetex_SimpleNetwork_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_21_Sites_Parking_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_21_Sites_Parking_2.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_Address_Example_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FFX-PI-01_UK_TBD_STOP-OFFER_910GWIMBLDN-accessibility_20140601.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FNetex_10_StopPlace_uk_ComplexStation_Wimbledon_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FNetex_10_StopPlace_withParking_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_01.4_Bus_SimpleTimetable_WithConnection.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_21_Rail_NetworkTimetable_eurostar.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fvehicle%2FNetex_simpleVehicle_01.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FvehicleSchedule%2FNetex_simpleVehicleSchedule_01.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fversioning%2FNetex_Uniqueness_01.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:opraDiscoveryDeliveries
+    a owl:Class ;
+    skos:definition "Collection element for OpraDiscoveryDelivery elements."@en ;
+    skos:prefLabel "opra discovery deliveries"@en ;
+    skos:altLabel "opradiscoverydeliveries"@en ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:opraDiscoveryRequests
+    a owl:Class ;
+    skos:definition "Collection element for OpraDiscoveryRequest elements."@en ;
+    skos:prefLabel "opra discovery requests"@en ;
+    skos:altLabel "opradiscoveryrequests"@en ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:opraFunctionalDeliveries
+    a owl:Class ;
+    skos:definition "Collection element for OpraFunctionDelivery elements."@en ;
+    skos:prefLabel "opra functional deliveries"@en ;
+    skos:altLabel "oprafunctionaldeliveries"@en ;
+    rdfs:subClassOf netex:Authority ;
+    rdfs:subClassOf netex:Cell ;
+    rdfs:subClassOf netex:DatedServiceJourney ;
+    rdfs:subClassOf netex:DatedSpecialService ;
+    rdfs:subClassOf netex:DatedVehicleJourney ;
+    rdfs:subClassOf netex:FareClass ;
+    rdfs:subClassOf netex:FareFrame ;
+    rdfs:subClassOf netex:FareScheduledStopPoint ;
+    rdfs:subClassOf netex:Fleet ;
+    rdfs:subClassOf netex:Garage ;
+    rdfs:subClassOf netex:GaragePoint ;
+    rdfs:subClassOf netex:Journey ;
+    rdfs:subClassOf netex:JourneyPattern ;
+    rdfs:subClassOf netex:Level ;
+    rdfs:subClassOf netex:Line ;
+    rdfs:subClassOf netex:LineNetwork ;
+    rdfs:subClassOf netex:Log ;
+    rdfs:subClassOf netex:LogEntry ;
+    rdfs:subClassOf netex:Network ;
+    rdfs:subClassOf netex:OperatingDay ;
+    rdfs:subClassOf netex:Operator ;
+    rdfs:subClassOf netex:Place ;
+    rdfs:subClassOf netex:Point ;
+    rdfs:subClassOf netex:Route ;
+    rdfs:subClassOf netex:RoutePoint ;
+    rdfs:subClassOf netex:ScheduledStopPoint ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:ServiceJourney ;
+    rdfs:subClassOf netex:ServiceJourneyPattern ;
+    rdfs:subClassOf netex:ServicePattern ;
+    rdfs:subClassOf netex:ServiceSite ;
+    rdfs:subClassOf netex:Site ;
+    rdfs:subClassOf netex:SiteFrame ;
+    rdfs:subClassOf netex:SpecialService ;
+    rdfs:subClassOf netex:StopPlace ;
+    rdfs:subClassOf netex:TicketingService ;
+    rdfs:subClassOf netex:Timeband ;
+    rdfs:subClassOf netex:Train ;
+    rdfs:subClassOf netex:TrainNumber ;
+    rdfs:subClassOf netex:TypeOfFrame ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FActualServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FCancelledAndLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FContextualIndicatorFrame.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FDelayedAndCancelledJourneysWithEvents.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedCapacity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedFleetDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FResponseLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FTicketingBasedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fplaceholder.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:opraFunctionalRequests
+    a owl:Class ;
+    skos:definition "Main collection element for an OpRa (bulk) request."@en ;
+    skos:prefLabel "opra functional requests"@en ;
+    skos:altLabel "oprafunctionalrequests"@en ;
+    rdfs:subClassOf netex:DatedServiceJourney ;
+    rdfs:subClassOf netex:DatedVehicleJourney ;
+    rdfs:subClassOf netex:Journey ;
+    rdfs:subClassOf netex:JourneyPattern ;
+    rdfs:subClassOf netex:Network ;
+    rdfs:subClassOf netex:ServiceFrame ;
+    rdfs:subClassOf netex:ServiceJourney ;
+    rdfs:subClassOf netex:ServiceJourneyPattern ;
+    rdfs:subClassOf netex:ServicePattern ;
+    rdfs:subClassOf netex:TicketingService ;
+    rdfs:subClassOf netex:ValidBetween ;
+    rdfs:subClassOf netex:Vehicle ;
+    rdfs:subClassOf netex:VehicleJourney ;
+    rdfs:subClassOf netex:VehicleService ;
+    rdfs:subClassOf opra:IndicatorFrame ;
+    rdfs:subClassOf opra:LateDatedVehicleJourneysRequest ;
+    rdfs:subClassOf opra:OnboardDeviceBasedPassengerCount ;
+    rdfs:subClassOf opra:OnboardDeviceBasedPassengerCountRequest ;
+    rdfs:subClassOf opra:Opra ;
+    rdfs:subClassOf opra:OpraFunctionalRequest ;
+    rdfs:subClassOf opra:ServiceRequest ;
+    rdfs:subClassOf opra:TicketingBasedPassengerCount ;
+    rdfs:subClassOf opra:TicketingBasedPassengerCountRequest ;
+    rdfs:subClassOf siri:DatedVehicleJourney ;
+    rdfs:subClassOf siri:ServiceRequest ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestAllPassengerCounts.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestLateDatedVehicleJourneys.xml> ;
+    rdfs:comment "Extracted from XSD schema"@en .
+
+opra:opraSubscriptionRequests
+    a owl:Class ;
+    skos:definition "Collection element for OpraSubscriptionRequest elements."@en ;
+    skos:prefLabel "opra subscription requests"@en ;
+    skos:altLabel "oprasubscriptionrequests"@en ;
+    rdfs:comment "Extracted from XSD schema"@en .

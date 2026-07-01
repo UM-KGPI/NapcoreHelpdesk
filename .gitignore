@@ -34,7 +34,6 @@ frontend/*.tsbuildinfo
 
 
 # Docs symlinks / local-only testing output
-docs/ontology
 docs/testing
 
 # Docs symlinks / local-only testing output (root-level variants)
