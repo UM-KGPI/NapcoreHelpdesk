@@ -293,3 +293,34 @@ nits:exampleSourceEquivalentTo
     rdfs:label "example source equivalent to"@en ;
     rdfs:range nits:TransportMode ;
     rdfs:comment "Indicates that examples from one transport mode are directly reusable/adaptable for another mode (they share the same NeTEx structural patterns)." .
+
+#################################################################
+# Template-to-Concrete Implementation Relationships
+# (For example discovery: concrete examples demonstrate templates)
+#################################################################
+
+netex:TemplateServiceJourney
+    skos:definition "Reusable template for any service journey. ServiceJourney and other concrete journey types ARE implementations of this template. Examples showing ServiceJourney patterns ALSO demonstrate TemplateServiceJourney." ;
+    rdfs:comment "The TemplateServiceJourney is realized by concrete implementations: ServiceJourney, DatedServiceJourney, VehicleJourney, etc. Examples of these concrete types demonstrate how to use TemplateServiceJourney." .
+
+netex:ServiceJourney
+    rdfs:comment "A concrete implementation of TemplateServiceJourney pattern. Examples showing ServiceJourney patterns are directly applicable to TemplateServiceJourney modeling." .
+
+netex:DatedServiceJourney
+    rdfs:comment "A dated instance of TemplateServiceJourney. Examples showing dated journeys demonstrate TemplateServiceJourney patterns." .
+
+netex:JourneyPattern
+    rdfs:comment "A reusable pattern used by TemplateServiceJourney. Examples of JourneyPattern demonstrate TemplateServiceJourney structure." .
+
+netex:ServiceJourneyPattern
+    rdfs:comment "Concrete pattern for service journeys, demonstrating TemplateServiceJourney principles." .
+
+#################################################################
+# Example Inference: Concrete Types Applicable to Templates
+#################################################################
+
+nits:demonstratesTemplate
+    a owl:ObjectProperty ;
+    rdfs:label "demonstrates template"@en ;
+    rdfs:comment "A concrete concept/example demonstrates usage of its abstract template. Used for example inference: if an example shows ServiceJourney, it also demonstrates TemplateServiceJourney." ;
+    skos:definition "Relationship indicating that a concrete implementation example can be used to understand and model its abstract template." .
