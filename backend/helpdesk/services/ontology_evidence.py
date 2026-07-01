@@ -158,6 +158,7 @@ Definition:
             "match_type": "semantic_definition",
             "similarity_reason": "Authoritative ontology definition",
             "repository_url": f"https://github.com/TransmodelEcosystem/{standard}",
+            "commit_sha": "ontology-graph",  # Source is GraphDB, not a commit
             "embedding_vector": None,
             "heading": f"{concept_name} - {standard} Definition",
         }
