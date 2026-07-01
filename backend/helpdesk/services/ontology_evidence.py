@@ -144,21 +144,24 @@ Definition:
         chunk_id_str = f"ontology-def-{concept_name.lower()}"
         chunk_id_int = hash(chunk_id_str) % (10 ** 8)
 
+        # Use main branch as reference since definitions are from current ontology
+        branch_or_commit = "main"
+
         chunk = {
             "id": chunk_id_int,
             "chunkId": chunk_id_str,
             "chunk_id": chunk_id_str,
             "retrievalEventId": f"ontology-{chunk_id_int}",
-            "source_path": f"ontology/{standard}/{concept_name}",
+            "source_path": f"docs/ontology/standards/definitions#{concept_name}",
             "label": f"Definition: {concept_name}",
             "text": chunk_text.strip(),
             "doc_type": "ontology-definition",
             "quality_score": 0.98,  # Highest quality - authoritative ontology source
             "standards_scope": [standard] if standard else [],
             "match_type": "semantic_definition",
-            "similarity_reason": "Authoritative ontology definition",
+            "similarity_reason": "Authoritative ontology definition from GraphDB",
             "repository_url": f"https://github.com/TransmodelEcosystem/{standard}",
-            "commit_sha": "ontology-graph",  # Source is GraphDB, not a commit
+            "commit_sha": branch_or_commit,  # Reference current main branch
             "embedding_vector": None,
             "heading": f"{concept_name} - {standard} Definition",
         }
