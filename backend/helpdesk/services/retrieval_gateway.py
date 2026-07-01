@@ -1156,13 +1156,8 @@ def retrieve_chunks_with_trace(
     stage_start = time.perf_counter()
     ontology_definitions_added = 0
     if graph_rag_enabled and question_concepts:
-        # DEBUG: Verify this code path is reached
-        import sys
-        sys.stderr.write(f"STDERR_DEBUG: Ontology retrieval starting with {len(question_concepts)} concepts\n")
-        sys.stderr.flush()
         try:
             graphdb_enabled = getattr(settings, "GRAPHDB_ENABLED", False)
-            logger.info(f"Retrieving ontology definitions for {len(question_concepts)} concepts: {question_concepts}")
             if graphdb_enabled:
                 definitions = retrieve_concept_definitions(
                     concept_ids=question_concepts,
@@ -1175,6 +1170,7 @@ def retrieve_chunks_with_trace(
                 if definitions:
                     definition_chunks = format_definitions_as_chunks(definitions)
                     ontology_definitions_added = len(definition_chunks)
+                    logger.info(f"Retrieved {ontology_definitions_added} ontology definitions for {len(question_concepts)} concepts")
                     # Add definitions to the retrieval results (highest quality evidence)
                     if not isinstance(chunk_iterable, list):
                         chunk_iterable = list(chunk_iterable)
