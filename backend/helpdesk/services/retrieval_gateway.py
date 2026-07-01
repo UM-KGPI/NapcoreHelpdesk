@@ -35,6 +35,10 @@ from helpdesk.services.example_retrieval import (
     format_examples_as_chunks,
     retrieve_concept_examples_with_fallback,
 )
+from helpdesk.services.ontology_evidence import (
+    format_definitions_as_chunks,
+    retrieve_concept_definitions,
+)
 from helpdesk.services.graphdb_client import (
     build_graph_scope_for_standards,
     query_graphdb_concept_expansion,
@@ -1075,6 +1079,7 @@ def retrieve_chunks_with_trace(
 
     # Placeholder for example retrieval (moved after chunk_iterable initialization)
     example_chunks_added = 0
+    ontology_definitions_added = 0
 
     stage_start = time.perf_counter()
     canonical_concept_terms = get_concept_canonical_terms(expanded_concepts) if expanded_concepts else []
@@ -1140,6 +1145,34 @@ def retrieve_chunks_with_trace(
         except Exception as e:
             logger.debug(f"Failed to retrieve examples: {e}")
     _record_stage("exampleRetrievalMs", stage_start)
+
+    # Retrieve ontology definitions for identified concepts
+    # Provides authoritative semantic definitions from ontology
+    stage_start = time.perf_counter()
+    ontology_definitions_added = 0
+    if graph_rag_enabled and question_concepts:
+        try:
+            graphdb_enabled = getattr(settings, "GRAPHDB_ENABLED", False)
+            if graphdb_enabled:
+                definitions = retrieve_concept_definitions(
+                    concept_ids=question_concepts,
+                    endpoint=settings.GRAPHDB_SPARQL_ENDPOINT,
+                    repository=settings.GRAPHDB_REPOSITORY,
+                    timeout_seconds=max(1, settings.GRAPHDB_TIMEOUT_SECONDS - 1),
+                    username=getattr(settings, "GRAPHDB_USER", ""),
+                    password=getattr(settings, "GRAPHDB_PASSWORD", ""),
+                )
+                if definitions:
+                    definition_chunks = format_definitions_as_chunks(definitions)
+                    ontology_definitions_added = len(definition_chunks)
+                    # Add definitions to the retrieval results (highest quality evidence)
+                    if not isinstance(chunk_iterable, list):
+                        chunk_iterable = list(chunk_iterable)
+                    for def_chunk in definition_chunks:
+                        chunk_iterable.append(type('OntologyDefinition', (), def_chunk)())
+        except Exception as e:
+            logger.debug(f"Failed to retrieve ontology definitions: {e}")
+    _record_stage("ontologyDefinitionRetrievalMs", stage_start)
 
     graph_candidates_added = 0
     graph_candidate_ids: list[int] = []
@@ -1382,6 +1415,7 @@ def retrieve_chunks_with_trace(
         "graphScoreContribution": round(graph_total / len(trimmed), 4) if graph_rag_enabled and trimmed else 0.0,
         "graphProvenanceChainCount": len(provenance_chains) if graph_rag_enabled else 0,
         "exampleChunksAdded": example_chunks_added,
+        "ontologyDefinitionsAdded": ontology_definitions_added,
         "repositoryCoverageCount": repository_coverage_count,
         "conceptCoverageCount": len(graph_concepts_in_trimmed),
         "semanticAlignmentScore": round(sum(vector_scores_trimmed) / len(vector_scores_trimmed), 4) if vector_scores_trimmed else 0.0,
