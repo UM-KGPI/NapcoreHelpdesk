@@ -47,11 +47,6 @@ ONTOLOGY_SPECS = [
         "graph_uri": "https://napcore.eu/graph/standards/siri",
     },
     {
-        "ontology_key": "datex",
-        "file_path": "standards/datex.ttl",
-        "graph_uri": "https://napcore.eu/graph/standards/datex",
-    },
-    {
         "ontology_key": "netex-examples",
         "file_path": "examples/netex-examples.ttl",
         "graph_uri": "https://napcore.eu/graph/examples/netex",
@@ -77,11 +72,6 @@ ONTOLOGY_SPECS = [
         "graph_uri": "https://napcore.eu/graph/alignments/siri",
     },
     {
-        "ontology_key": "nits-datex-align",
-        "file_path": "alignments/nits-datex-align.ttl",
-        "graph_uri": "https://napcore.eu/graph/alignments/datex",
-    },
-    {
         "ontology_key": "netex-artifact-rules-v1.0",
         "file_path": "artifact-rules/netex-artifact-rules-v1.0.ttl",
         "graph_uri": "https://napcore.eu/graph/artifact-rules/netex/v1.0",
@@ -95,11 +85,6 @@ ONTOLOGY_SPECS = [
         "ontology_key": "siri-artifact-rules-v1.0",
         "file_path": "artifact-rules/siri-artifact-rules-v1.0.ttl",
         "graph_uri": "https://napcore.eu/graph/artifact-rules/siri/v1.0",
-    },
-    {
-        "ontology_key": "datex-artifact-rules-v1.0",
-        "file_path": "artifact-rules/datex-artifact-rules-v1.0.ttl",
-        "graph_uri": "https://napcore.eu/graph/artifact-rules/datex/v1.0",
     },
 ]
 

@@ -66,7 +66,6 @@ MANUAL_CORE_CONCEPT_IDS = {
     "siri:VehicleMonitoring",
     "siri:StopMonitoring",
     "siri:EstimatedTimetable",
-    "datex:TrafficEvent",
 }
 
 # Known noisy/technical concepts that should never be in glossary.
@@ -83,7 +82,6 @@ PREFIX_TO_STANDARD = {
     "netex": "netex",
     "siri": "siri",
     "transmodel": "transmodel",
-    "datex": "datex",
 }
 
 # Keep defaults in code; prefer external YAML config for expert curation.
@@ -913,7 +911,7 @@ class Command(BaseCommand):
         output_dir.mkdir(parents=True, exist_ok=True)
         namespaces = ontology.get("namespaces", {})
 
-        for standard in ["netex", "opra", "siri", "datex", "transmodel"]:
+        for standard in ["netex", "opra", "siri", "transmodel"]:
             concepts = {
                 cid: cdata
                 for cid, cdata in ontology.get("concepts", {}).items()
