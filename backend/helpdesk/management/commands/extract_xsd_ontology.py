@@ -324,10 +324,12 @@ def _extract_related_concepts(element: ET.Element, default_prefix: str, self_con
     Nested xsd:element[@ref] are field/composition references, not inheritance,
     so they should NOT be treated as rdfs:subClassOf.
 
+    Also filters out structural/template elements (those ending in Structure, Group, Type, Dummy, View)
+    since they cannot be instantiated and shouldn't appear in domain ontology.
+
     Rationale: DatedServiceJourney has nested group refs to EntityInVersionGroup,
     DataManagedObjectGroup, etc., but these are structural composition fields,
-    not parent classes. The spurious subClassOf relationships to dozens of
-    unrelated concepts (Access, Accommodation, etc.) break reasoning.
+    not parent classes. The spurious subClassOf relationships break reasoning.
     """
 
     related: Set[str] = set()
@@ -336,7 +338,10 @@ def _extract_related_concepts(element: ET.Element, default_prefix: str, self_con
     if substitution_group:
         concept_id = _concept_id_from_ref(substitution_group, default_prefix)
         if concept_id and concept_id != self_concept_id:
-            related.add(concept_id)
+            # Skip structural/template elements as parents
+            local_name = concept_id.split(":", 1)[-1] if ":" in concept_id else concept_id
+            if not any(local_name.endswith(x) for x in ["Structure", "Group", "Type", "Dummy", "View"]):
+                related.add(concept_id)
 
     return sorted(related)
 
@@ -578,12 +583,19 @@ def extract_concept_links_from_examples(
         for concept_id in matched_concepts:
             concept_sources.setdefault(concept_id, set()).add(relative_path)
 
-        if len(matched_concepts) > 1:
-            sorted_ids = sorted(matched_concepts)
-            for concept_id in sorted_ids:
-                concept_relations.setdefault(concept_id, set()).update(
-                    {other for other in sorted_ids if other != concept_id}
-                )
+        # Note: Co-occurrence in XML examples does NOT indicate parent-child relationships.
+        # Concepts that appear in the same file are merely mentioned together, not necessarily
+        # related semantically. We skip creating relations from example co-occurrence because:
+        # 1. XSD substitutionGroup is the authoritative source for type hierarchy
+        # 2. Co-occurrence relations create noise (40+ spurious rdfs:subClassOf per concept)
+        # 3. skos:seeAlso (example links) already captures relevance without false hierarchy claims
+        #
+        # if len(matched_concepts) > 1:
+        #     sorted_ids = sorted(matched_concepts)
+        #     for concept_id in sorted_ids:
+        #         concept_relations.setdefault(concept_id, set()).update(
+        #             {other for other in sorted_ids if other != concept_id}
+        #         )
 
     return concept_sources, concept_relations, scanned
 
@@ -897,7 +909,12 @@ class Command(BaseCommand):
                     for other in related
                     if other in known_concept_ids and other != concept_id
                 )
-                concept_data["related_to"] = sorted(existing_related)[:40]
+                # Keep all relationships (no arbitrary cap).
+                # Co-occurrence relationships are now disabled, so only legitimate
+                # XSD-based relationships remain. Cross-standard relationships
+                # (e.g., siri:X → netex:Y, opra:X → netex:Y) are intentional
+                # due to XSD imports and should be preserved.
+                concept_data["related_to"] = sorted(existing_related)
 
             self.stdout.write(
                 f"Linked XML examples: scanned {netex_scanned + opra_scanned + siri_scanned} files, "
