@@ -584,14 +584,29 @@ def _is_explanation_question(question: str) -> bool:
 
 
 def _is_example_driven_question(question: str) -> bool:
-    """Detect questions requesting examples, use cases, or illustrations."""
+    """Detect questions requesting examples, use cases, or illustrations.
+
+    Also includes definition/explanation questions about schema concepts,
+    as examples provide concrete evidence for what things ARE.
+    """
     lower_question = (question or "").lower()
-    return bool(
-        re.search(
-            r"\b(example|instance|use\s+case|sample|illustration|concrete|demonstrate|show|list|enumerate|snippet|xml|code|pattern|template|model|structure|how\s+to)\b",
-            lower_question,
-        )
-    )
+
+    # Explicit example-seeking keywords
+    if re.search(
+        r"\b(example|instance|use\s+case|sample|illustration|concrete|demonstrate|show|list|enumerate|snippet|xml|code|pattern|template|model|structure|how\s+to)\b",
+        lower_question,
+    ):
+        return True
+
+    # Definition questions about schema elements should also retrieve examples
+    # Examples are powerful for understanding "what is X" for schema concepts
+    if re.search(
+        r"\b(what\s+is|what\s+are|define|definition|explain|describe|tell\s+me|information\s+about)\b",
+        lower_question,
+    ):
+        return True
+
+    return False
 
 
 def _active_graphdb_standards(

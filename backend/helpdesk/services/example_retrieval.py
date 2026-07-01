@@ -24,7 +24,10 @@ def retrieve_concept_examples(
     username: str = "",
     password: str = "",
 ) -> list[dict]:
-    """Retrieve example files linked to concepts via skos:seeAlso.
+    """Retrieve example files linked to concepts via skos:isRelatedTo.
+
+    Examples are stored in centralized examples.ttl using skos:isRelatedTo
+    triples that link example files to domain concepts.
 
     Args:
         concept_ids: Set of concept URIs (e.g., {"netex:TemplateServiceJourney"})
@@ -56,11 +59,7 @@ def retrieve_concept_examples(
         SELECT ?concept ?example ?label ?source
         WHERE {{
           VALUES ?concept {{ {concept_uris} }}
-          {{
-            ?example skos:seeAlso ?concept .
-          }} UNION {{
-            ?example skos:isRelatedTo ?concept .
-          }}
+          ?example skos:isRelatedTo ?concept .
           ?example rdfs:label ?label ;
                    dct:source ?source .
         }}
@@ -167,18 +166,12 @@ def retrieve_concept_examples_with_fallback(
         WHERE {{
           VALUES ?requestConcept {{ {concept_uris} }}
 
-          # Tier 1: Direct examples linked to requested concept
+          # Tier 1: Direct examples linked to requested concept via skos:isRelatedTo
+          # Examples are centralized in examples.ttl with skos:isRelatedTo relationships
           {{
-            ?example skos:seeAlso ?requestConcept .
-            ?requestConcept nits:applicableToAllModes true .
-            BIND("mode_agnostic" AS ?matchType)
-            BIND("Transport mode agnostic—applies to all modes (bus, ferry, rail)" AS ?reason)
-            BIND(?requestConcept AS ?concept)
-          }} UNION {{
             ?example skos:isRelatedTo ?requestConcept .
-            ?requestConcept nits:applicableToAllModes true .
-            BIND("mode_agnostic" AS ?matchType)
-            BIND("Transport mode agnostic—applies to all modes (bus, ferry, rail)" AS ?reason)
+            BIND("direct_example" AS ?matchType)
+            BIND("Example file linked to requested concept" AS ?reason)
             BIND(?requestConcept AS ?concept)
           }}
 
@@ -205,7 +198,7 @@ def retrieve_concept_examples_with_fallback(
         }}
         ORDER BY
           CASE ?matchType
-            WHEN "mode_agnostic" THEN 1
+            WHEN "direct_example" THEN 1
             WHEN "template_realization" THEN 2
             ELSE 3
           END
@@ -268,6 +261,7 @@ def format_examples_as_chunks(examples: list[dict]) -> list[dict]:
 
     Each chunk represents one example file with metadata for attribution.
     Includes match type and mode-agnostic reasoning for cross-mode examples.
+    Attempts to load actual XML content to provide concrete evidence.
     """
     chunks = []
     for example in examples:
@@ -275,19 +269,38 @@ def format_examples_as_chunks(examples: list[dict]) -> list[dict]:
         similarity_reason = example.get("similarity_reason", "Direct match")
 
         # Quality scores: examples of requested concepts should rank highly
-        # Mode-agnostic examples get maximum score since they're directly requested
-        if match_type in ("mode_agnostic", "applicable", "exact"):
-            quality_score = 0.95  # Maximum quality for direct matches
+        # Direct examples get maximum score since they're explicitly linked to concepts
+        if match_type in ("direct_example", "mode_agnostic", "applicable", "exact"):
+            quality_score = 0.95  # Maximum quality for directly linked examples
         elif match_type == "template_realization":
             quality_score = 0.90  # High quality for template demonstrations
         else:
             quality_score = 0.85  # Good quality for other semantic matches
 
         # Include match context in text for LLM understanding
-        match_context = f"[{match_type.upper()}] {similarity_reason}\n" if match_type not in ("exact", "applicable") else ""
+        match_context = f"[{match_type.upper()}] {similarity_reason}\n" if match_type not in ("exact", "applicable", "direct_example") else ""
 
         chunk_id_str = f"example-{example['iri'].replace('/', '-')[-32:]}"
         chunk_id_int = hash(chunk_id_str) % (10 ** 8)
+
+        # Try to load actual XML content
+        file_content = _load_example_file_content(example["file_path"])
+
+        # Build chunk text with actual content if available, fallback to metadata
+        if file_content:
+            chunk_text = (
+                f"{match_context}"
+                f"Example XML file: {example['file_path']}\n"
+                f"Related concept: {example['concept']}\n\n"
+                f"Content excerpt:\n{file_content[:2000]}"
+            )
+        else:
+            chunk_text = (
+                f"{match_context}"
+                f"XML example file: {example['file_path']}\n"
+                f"Related concept: {example['concept']}"
+            )
+
         chunk = {
             "id": chunk_id_int,
             "chunkId": chunk_id_str,
@@ -295,11 +308,7 @@ def format_examples_as_chunks(examples: list[dict]) -> list[dict]:
             "retrievalEventId": f"example-{chunk_id_int}",
             "source_path": example["file_path"],
             "label": f"Example: {example['file_path'].split('/')[-1]}",
-            "text": (
-                f"{match_context}"
-                f"XML example file: {example['file_path']}\n"
-                f"Related concept: {example['concept']}"
-            ),
+            "text": chunk_text,
             "doc_type": "xml-example",
             "quality_score": quality_score,
             "standards_scope": _extract_standard_from_concept(example["concept"]),
@@ -312,6 +321,59 @@ def format_examples_as_chunks(examples: list[dict]) -> list[dict]:
         chunks.append(chunk)
 
     return chunks
+
+
+def _load_example_file_content(file_path: str) -> str:
+    """Load and extract text content from example XML files.
+
+    Attempts to load from known repository locations (environment-configured or defaults).
+    Returns first 2000 chars of readable XML content, or empty string if file not found.
+
+    Args:
+        file_path: Relative path like "examples/path/to/file.xml"
+
+    Returns:
+        Text content from XML file, or empty string if not found
+    """
+    if not file_path:
+        return ""
+
+    try:
+        from pathlib import Path
+        from django.conf import settings
+
+        # Get repository paths from environment or use defaults
+        netex_root = getattr(settings, "NETEX_REPO_PATH", "/workspace/NeTEx")
+        opra_root = getattr(settings, "OPRA_REPO_PATH", "/workspace/OpRa")
+        siri_root = getattr(settings, "SIRI_REPO_PATH", "/workspace/SIRI")
+
+        # Try each standard repository, with fallback to host paths
+        possible_roots = [
+            Path(netex_root),
+            Path(opra_root),
+            Path(siri_root),
+            Path("/Users/andrejt/Research/repositories/git/NeTEx"),
+            Path("/Users/andrejt/Research/repositories/git/OpRa"),
+            Path("/Users/andrejt/Research/repositories/git/SIRI"),
+        ]
+
+        for root in possible_roots:
+            full_path = root / file_path
+            if full_path.exists() and full_path.is_file():
+                try:
+                    with open(full_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        content = f.read()
+                        # Return first 2000 chars - enough for LLM context without bloat
+                        return content[:2000]
+                except Exception:
+                    continue
+
+        logger.debug(f"Example file not found at any path: {file_path}")
+        return ""
+
+    except Exception as e:
+        logger.debug(f"Failed to load example file {file_path}: {e}")
+        return ""
 
 
 def _ensure_uri(concept_id: str) -> str:
