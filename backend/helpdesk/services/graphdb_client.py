@@ -173,6 +173,44 @@ def _iri_to_concept_id(iri: str) -> str | None:
     return None
 
 
+def execute_sparql_query(
+    *,
+    sparql_query: str,
+    endpoint: str,
+    repository: str = "",
+    username: str = "",
+    password: str = "",
+    timeout_seconds: int = 10,
+) -> dict | None:
+    """Execute a SPARQL query and return raw results dict with 'bindings' key."""
+
+    if not sparql_query or not sparql_query.strip():
+        return None
+
+    query_endpoint = _normalize_repository_endpoint(endpoint=endpoint, repository=repository)
+    auth_header = _build_auth_header(username=username, password=password)
+    headers = {
+        "Accept": "application/sparql-results+json",
+        "Content-Type": "application/sparql-query; charset=utf-8",
+    }
+    if auth_header:
+        headers["Authorization"] = auth_header
+
+    request = Request(
+        query_endpoint,
+        data=sparql_query.encode("utf-8"),
+        headers=headers,
+        method="POST",
+    )
+
+    try:
+        with urlopen(request, timeout=timeout_seconds) as response:
+            body = response.read().decode("utf-8")
+        return json.loads(body)
+    except Exception:
+        return None
+
+
 def query_graphdb_concept_expansion(
     *,
     concept_ids: set[str],
