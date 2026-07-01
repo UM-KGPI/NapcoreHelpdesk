@@ -318,21 +318,23 @@ def _concept_id_from_ref(ref_value: str, default_prefix: str) -> str | None:
 
 
 def _extract_related_concepts(element: ET.Element, default_prefix: str, self_concept_id: str) -> list[str]:
-    """Extract candidate relationships from nested xsd:element[@ref] and substitutionGroup."""
+    """Extract inheritance relationships from substitutionGroup only.
+
+    Only substitutionGroup indicates true parent-child (is-a) relationships in XSD.
+    Nested xsd:element[@ref] are field/composition references, not inheritance,
+    so they should NOT be treated as rdfs:subClassOf.
+
+    Rationale: DatedServiceJourney has nested group refs to EntityInVersionGroup,
+    DataManagedObjectGroup, etc., but these are structural composition fields,
+    not parent classes. The spurious subClassOf relationships to dozens of
+    unrelated concepts (Access, Accommodation, etc.) break reasoning.
+    """
 
     related: Set[str] = set()
 
     substitution_group = element.get("substitutionGroup")
     if substitution_group:
         concept_id = _concept_id_from_ref(substitution_group, default_prefix)
-        if concept_id and concept_id != self_concept_id:
-            related.add(concept_id)
-
-    for nested in element.findall(".//xsd:element", XSD_NS):
-        ref_value = nested.get("ref")
-        if not ref_value:
-            continue
-        concept_id = _concept_id_from_ref(ref_value, default_prefix)
         if concept_id and concept_id != self_concept_id:
             related.add(concept_id)
 
