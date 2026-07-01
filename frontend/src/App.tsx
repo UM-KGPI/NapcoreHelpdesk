@@ -197,14 +197,14 @@ function UserChatWithQueryParams(props: React.ComponentProps<typeof UserChatWork
             abstained: false,
             abstentionReason: null,
             reviewRequired: false,
-            trace: {
+            trace: detail.trace || {
               requestId: detail.requestId,
               questionEventId: detail.questionEventId,
               matchedFaqEntryId: null,
               retrievalEventIds: [],
               userLikes: false,
               userDislikes: false,
-            } as any,
+            },
           },
           requestId: detail.requestId,
         };
