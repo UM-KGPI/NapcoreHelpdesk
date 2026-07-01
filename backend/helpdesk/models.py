@@ -182,6 +182,7 @@ class QuestionEvent(TimestampedModel):
     matched_faq_entry_id = models.CharField(max_length=128, null=True, blank=True)
     retrieval_event_ids = models.JSONField(default=list, blank=True)
     evidence_link_ids = models.JSONField(default=list, blank=True)
+    trace = models.JSONField(default=dict, blank=True)
 
     class Meta:
         ordering = ["-created_at"]

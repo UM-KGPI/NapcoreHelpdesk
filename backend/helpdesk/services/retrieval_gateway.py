@@ -12,11 +12,14 @@ Created: 2026-03-28  |  Modified: 2026-06-28
 
 from __future__ import annotations
 
+import logging
 import re
 import time
 from uuid import uuid4
 from django.db import connection, models
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 try:
     from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
@@ -1034,31 +1037,8 @@ def retrieve_chunks_with_trace(
         graph_expansion_hops = 0
         stage_timing_ms["graphExpandMs"] = 0.0
 
-    # Retrieve XML examples linked to concepts when appropriate (with semantic fallback)
+    # Placeholder for example retrieval (moved after chunk_iterable initialization)
     example_chunks_added = 0
-    stage_start = time.perf_counter()
-    if graph_rag_enabled and _is_example_driven_question(question) and question_concepts:
-        try:
-            graphdb_enabled = getattr(settings, "GRAPHDB_ENABLED", False)
-            if graphdb_enabled:
-                example_files = retrieve_concept_examples_with_fallback(
-                    concept_ids=question_concepts,
-                    requested_mode=None,
-                    endpoint=settings.GRAPHDB_SPARQL_ENDPOINT,
-                    repository=settings.GRAPHDB_REPOSITORY,
-                    timeout_seconds=max(1, settings.GRAPHDB_TIMEOUT_SECONDS - 1),
-                    username=getattr(settings, "GRAPHDB_USER", ""),
-                    password=getattr(settings, "GRAPHDB_PASSWORD", ""),
-                )
-                if example_files:
-                    example_chunks = format_examples_as_chunks(example_files)
-                    example_chunks_added = len(example_chunks)
-                    # Add examples to the retrieval results (will be scored like other chunks)
-                    for example_chunk in example_chunks:
-                        chunk_iterable.append(type('ExampleChunk', (), example_chunk)())
-        except Exception as e:
-            logger.debug(f"Failed to retrieve examples: {e}")
-    _record_stage("exampleRetrievalMs", stage_start)
 
     stage_start = time.perf_counter()
     canonical_concept_terms = get_concept_canonical_terms(expanded_concepts) if expanded_concepts else []
@@ -1097,6 +1077,33 @@ def retrieve_chunks_with_trace(
         chunk_iterable = list(SourceChunk.objects.all())
         existing_ids = {chunk.id for chunk in chunk_iterable}
     _record_stage("pathHintMergeMs", stage_start)
+
+    # Retrieve XML examples linked to concepts when appropriate (with semantic fallback)
+    stage_start = time.perf_counter()
+    if graph_rag_enabled and _is_example_driven_question(question) and question_concepts:
+        try:
+            graphdb_enabled = getattr(settings, "GRAPHDB_ENABLED", False)
+            if graphdb_enabled:
+                example_files = retrieve_concept_examples_with_fallback(
+                    concept_ids=question_concepts,
+                    requested_mode=None,
+                    endpoint=settings.GRAPHDB_SPARQL_ENDPOINT,
+                    repository=settings.GRAPHDB_REPOSITORY,
+                    timeout_seconds=max(1, settings.GRAPHDB_TIMEOUT_SECONDS - 1),
+                    username=getattr(settings, "GRAPHDB_USER", ""),
+                    password=getattr(settings, "GRAPHDB_PASSWORD", ""),
+                )
+                if example_files:
+                    example_chunks = format_examples_as_chunks(example_files)
+                    example_chunks_added = len(example_chunks)
+                    # Add examples to the retrieval results (will be scored like other chunks)
+                    if not isinstance(chunk_iterable, list):
+                        chunk_iterable = list(chunk_iterable)
+                    for example_chunk in example_chunks:
+                        chunk_iterable.append(type('ExampleChunk', (), example_chunk)())
+        except Exception as e:
+            logger.debug(f"Failed to retrieve examples: {e}")
+    _record_stage("exampleRetrievalMs", stage_start)
 
     graph_candidates_added = 0
     graph_candidate_ids: list[int] = []

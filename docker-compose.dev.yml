@@ -83,7 +83,6 @@ services:
     volumes:
       - ./backend:/app/backend
       - ./docs:/app/docs:ro
-      - ./.mylocal/docs/ontology:/app/docs/ontology:ro
       - ./scripts:/app/scripts:ro
       - ../NeTEx:/app/repos/NeTEx:ro
       - ../OpRa:/app/repos/OpRa:ro
@@ -106,7 +105,6 @@ services:
     volumes:
       - ./backend:/app/backend
       - ./docs:/app/docs:ro
-      - ./.mylocal/docs/ontology:/app/docs/ontology:ro
     depends_on:
       backend:
         condition: service_started
@@ -119,7 +117,6 @@ services:
     volumes:
       - ./backend:/app/backend
       - ./docs:/app/docs:ro
-      - ./.mylocal/docs/ontology:/app/docs/ontology:ro
     depends_on:
       backend:
         condition: service_started
