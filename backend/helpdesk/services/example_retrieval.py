@@ -56,7 +56,11 @@ def retrieve_concept_examples(
         SELECT ?concept ?example ?label ?source
         WHERE {{
           VALUES ?concept {{ {concept_uris} }}
-          ?concept skos:seeAlso ?example .
+          {{
+            ?example skos:seeAlso ?concept .
+          }} UNION {{
+            ?example skos:isRelatedTo ?concept .
+          }}
           ?example rdfs:label ?label ;
                    dct:source ?source .
         }}
@@ -161,7 +165,11 @@ def retrieve_concept_examples_with_fallback(
         SELECT ?example ?concept ?label ?source ?matchType ?reason
         WHERE {{
           VALUES ?concept {{ {concept_uris} }}
-          ?example skos:seeAlso ?concept .
+          {{
+            ?example skos:seeAlso ?concept .
+          }} UNION {{
+            ?example skos:isRelatedTo ?concept .
+          }}
           ?example rdfs:label ?label ;
                    dct:source ?source .
 
