@@ -144,25 +144,21 @@ Definition:
         chunk_id_str = f"ontology-def-{concept_name.lower()}"
         chunk_id_int = hash(chunk_id_str) % (10 ** 8)
 
-        # Map standard to TTL filename where definitions are stored
-        ttl_filename = _standard_to_ttl_file(standard)
-        branch_or_commit = "main"
-
         chunk = {
             "id": chunk_id_int,
             "chunkId": chunk_id_str,
             "chunk_id": chunk_id_str,
             "retrievalEventId": f"ontology-{chunk_id_int}",
-            "source_path": f"docs/ontology/standards/{ttl_filename}",
+            "source_path": f"ontology/{standard}/{concept_name}",
             "label": f"Definition: {concept_name}",
             "text": chunk_text.strip(),
             "doc_type": "ontology-definition",
             "quality_score": 0.98,  # Highest quality - authoritative ontology source
             "standards_scope": [standard] if standard else [],
             "match_type": "semantic_definition",
-            "similarity_reason": "Authoritative ontology definition from GraphDB",
-            "repository_url": f"https://github.com/UM-KGPI/NapcoreHelpdesk",
-            "commit_sha": "main",  # Reference main branch where ontology files are stored
+            "similarity_reason": "Authoritative ontology definition",
+            "repository_url": f"https://github.com/TransmodelEcosystem/{standard}",
+            "commit_sha": "ontology-graph",  # Source is GraphDB, not a commit
             "embedding_vector": None,
             "heading": f"{concept_name} - {standard} Definition",
         }
@@ -170,24 +166,6 @@ Definition:
         chunks.append(chunk)
 
     return chunks
-
-
-def _standard_to_ttl_file(standard: str) -> str:
-    """Map standard name to TTL filename in docs/ontology/standards/.
-
-    Args:
-        standard: Standard name (e.g., "NeTEx", "OpRa", "SIRI")
-
-    Returns:
-        TTL filename (e.g., "netex.ttl")
-    """
-    mapping = {
-        "NeTEx": "netex.ttl",
-        "OpRa": "opra.ttl",
-        "SIRI": "siri.ttl",
-        "Transmodel": "transmodel.ttl",
-    }
-    return mapping.get(standard, "ontology.ttl")
 
 
 def _extract_concept_info(concept_iri: str) -> tuple[str, str]:
