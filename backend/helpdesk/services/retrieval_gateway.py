@@ -982,7 +982,9 @@ def retrieve_chunks_with_trace(
     retrieval_start_time = time.time()
     retrieval_start_perf = time.perf_counter()
     stage_timing_ms: dict[str, float] = {}
-    print(f"DEBUG: retrieve_chunks_with_trace called, graph_rag={graph_rag_enabled}", flush=True)
+    import sys
+    sys.stderr.write(f"STDERR_FUNC: retrieve_chunks_with_trace entered, graph_rag={graph_rag_enabled}\n")
+    sys.stderr.flush()
 
     def _record_stage(stage_key: str, stage_start: float) -> None:
         elapsed_ms = (time.perf_counter() - stage_start) * 1000
@@ -1152,8 +1154,11 @@ def retrieve_chunks_with_trace(
     # Provides authoritative semantic definitions from ontology
     stage_start = time.perf_counter()
     ontology_definitions_added = 0
-    print(f"DEBUG: Ontology check - graph_rag={graph_rag_enabled}, concepts={question_concepts}", flush=True)
     if graph_rag_enabled and question_concepts:
+        # DEBUG: Verify this code path is reached
+        import sys
+        sys.stderr.write(f"STDERR_DEBUG: Ontology retrieval starting with {len(question_concepts)} concepts\n")
+        sys.stderr.flush()
         try:
             graphdb_enabled = getattr(settings, "GRAPHDB_ENABLED", False)
             logger.info(f"Retrieving ontology definitions for {len(question_concepts)} concepts: {question_concepts}")
