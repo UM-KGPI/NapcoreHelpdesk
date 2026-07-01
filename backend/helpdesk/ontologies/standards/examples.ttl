@@ -20,7 +20,7 @@
 # Example File References
 #################################################################
 
-<https://napcore.eu/examples/examples-ActualServiceDimensions>
+<https://napcore.eu/examples/examples%2FActualServiceDimensions.xml>
     a dct:Dataset ;
     rdfs:label "examples/ActualServiceDimensions.xml"@en ;
     dct:source "examples/ActualServiceDimensions.xml"@en ;
@@ -61,7 +61,7 @@
     skos:isRelatedTo siri:Train ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-CancelledAndLateDatedVehicleJourneys>
+<https://napcore.eu/examples/examples%2FCancelledAndLateDatedVehicleJourneys.xml>
     a dct:Dataset ;
     rdfs:label "examples/CancelledAndLateDatedVehicleJourneys.xml"@en ;
     dct:source "examples/CancelledAndLateDatedVehicleJourneys.xml"@en ;
@@ -97,7 +97,7 @@
     skos:isRelatedTo siri:ServiceDelivery ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-ContextualIndicatorFrame>
+<https://napcore.eu/examples/examples%2FContextualIndicatorFrame.xml>
     a dct:Dataset ;
     rdfs:label "examples/ContextualIndicatorFrame.xml"@en ;
     dct:source "examples/ContextualIndicatorFrame.xml"@en ;
@@ -125,7 +125,7 @@
     skos:isRelatedTo siri:VehicleMode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-DelayedAndCancelledJourneysWithEvents>
+<https://napcore.eu/examples/examples%2FDelayedAndCancelledJourneysWithEvents.xml>
     a dct:Dataset ;
     rdfs:label "examples/DelayedAndCancelledJourneysWithEvents.xml"@en ;
     dct:source "examples/DelayedAndCancelledJourneysWithEvents.xml"@en ;
@@ -166,7 +166,7 @@
     skos:isRelatedTo siri:ServiceDelivery ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-ExpectedPassengerCount>
+<https://napcore.eu/examples/examples%2FExpectedPassengerCount.xml>
     a dct:Dataset ;
     rdfs:label "examples/ExpectedPassengerCount.xml"@en ;
     dct:source "examples/ExpectedPassengerCount.xml"@en ;
@@ -192,7 +192,7 @@
     skos:isRelatedTo siri:ServiceDelivery ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-ExpectedServiceIntensity>
+<https://napcore.eu/examples/examples%2FExpectedServiceIntensity.xml>
     a dct:Dataset ;
     rdfs:label "examples/ExpectedServiceIntensity.xml"@en ;
     dct:source "examples/ExpectedServiceIntensity.xml"@en ;
@@ -255,7 +255,7 @@
     skos:isRelatedTo siri:VehicleMode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-PlannedCapacity>
+<https://napcore.eu/examples/examples%2FPlannedCapacity.xml>
     a dct:Dataset ;
     rdfs:label "examples/PlannedCapacity.xml"@en ;
     dct:source "examples/PlannedCapacity.xml"@en ;
@@ -286,7 +286,7 @@
     skos:isRelatedTo siri:ServiceDelivery ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-PlannedFleetDimensions>
+<https://napcore.eu/examples/examples%2FPlannedFleetDimensions.xml>
     a dct:Dataset ;
     rdfs:label "examples/PlannedFleetDimensions.xml"@en ;
     dct:source "examples/PlannedFleetDimensions.xml"@en ;
@@ -309,7 +309,7 @@
     skos:isRelatedTo siri:VehicleMode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-PlannedServiceDimensions>
+<https://napcore.eu/examples/examples%2FPlannedServiceDimensions.xml>
     a dct:Dataset ;
     rdfs:label "examples/PlannedServiceDimensions.xml"@en ;
     dct:source "examples/PlannedServiceDimensions.xml"@en ;
@@ -335,7 +335,7 @@
     skos:isRelatedTo siri:StopPointsDelivery ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-PlannedServiceIntensity>
+<https://napcore.eu/examples/examples%2FPlannedServiceIntensity.xml>
     a dct:Dataset ;
     rdfs:label "examples/PlannedServiceIntensity.xml"@en ;
     dct:source "examples/PlannedServiceIntensity.xml"@en ;
@@ -372,7 +372,7 @@
     skos:isRelatedTo siri:VehicleMode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-RequestAllPassengerCounts>
+<https://napcore.eu/examples/examples%2FRequestAllPassengerCounts.xml>
     a dct:Dataset ;
     rdfs:label "examples/RequestAllPassengerCounts.xml"@en ;
     dct:source "examples/RequestAllPassengerCounts.xml"@en ;
@@ -389,7 +389,7 @@
     skos:isRelatedTo siri:ServiceRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-RequestLateDatedVehicleJourneys>
+<https://napcore.eu/examples/examples%2FRequestLateDatedVehicleJourneys.xml>
     a dct:Dataset ;
     rdfs:label "examples/RequestLateDatedVehicleJourneys.xml"@en ;
     dct:source "examples/RequestLateDatedVehicleJourneys.xml"@en ;
@@ -416,7 +416,7 @@
     skos:isRelatedTo siri:ServiceRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-ResponseLateDatedVehicleJourneys>
+<https://napcore.eu/examples/examples%2FResponseLateDatedVehicleJourneys.xml>
     a dct:Dataset ;
     rdfs:label "examples/ResponseLateDatedVehicleJourneys.xml"@en ;
     dct:source "examples/ResponseLateDatedVehicleJourneys.xml"@en ;
@@ -449,7 +449,7 @@
     skos:isRelatedTo siri:ServiceDelivery ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-TicketingBasedPassengerCount>
+<https://napcore.eu/examples/examples%2FTicketingBasedPassengerCount.xml>
     a dct:Dataset ;
     rdfs:label "examples/TicketingBasedPassengerCount.xml"@en ;
     dct:source "examples/TicketingBasedPassengerCount.xml"@en ;
@@ -476,7 +476,7 @@
     skos:isRelatedTo siri:ServiceDelivery ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-bookingArrangements-generalframe>
+<https://napcore.eu/examples/examples%2Ffunctions%2FbookingArrangements%2Fgeneralframe.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/bookingArrangements/generalframe.xml"@en ;
     dct:source "examples/functions/bookingArrangements/generalframe.xml"@en ;
@@ -488,7 +488,7 @@
     skos:isRelatedTo opra:PublicationDelivery ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-calendar-NeTEx_Calendar_se_PA1>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fcalendar%2FNeTEx_Calendar_se_PA1.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/calendar/NeTEx_Calendar_se_PA1.xml"@en ;
     dct:source "examples/functions/calendar/NeTEx_Calendar_se_PA1.xml"@en ;
@@ -511,7 +511,7 @@
     skos:isRelatedTo siri:ServiceRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-calendar-Netex_calendarCodeing_02>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fcalendar%2FNetex_calendarCodeing_02.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/calendar/Netex_calendarCodeing_02.xml"@en ;
     dct:source "examples/functions/calendar/Netex_calendarCodeing_02.xml"@en ;
@@ -543,7 +543,7 @@
     skos:isRelatedTo siri:ServiceRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-calendar-Netex_calendarExample_01_BHN01>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fcalendar%2FNetex_calendarExample_01_BHN01.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/calendar/Netex_calendarExample_01_BHN01.xml"@en ;
     dct:source "examples/functions/calendar/Netex_calendarExample_01_BHN01.xml"@en ;
@@ -568,7 +568,7 @@
     skos:isRelatedTo siri:ServiceRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-deckPlans-DeckPlans-Example>
+<https://napcore.eu/examples/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/deckPlans/DeckPlans-Example.xml"@en ;
     dct:source "examples/functions/deckPlans/DeckPlans-Example.xml"@en ;
@@ -785,7 +785,7 @@
     skos:isRelatedTo siri:VehicleMode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-deckPlans-DeckPlans-Example_bus>
+<https://napcore.eu/examples/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_bus.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/deckPlans/DeckPlans-Example_bus.xml"@en ;
     dct:source "examples/functions/deckPlans/DeckPlans-Example_bus.xml"@en ;
@@ -1021,7 +1021,7 @@
     skos:isRelatedTo siri:VehicleMode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-deckPlans-DeckPlans-Example_train>
+<https://napcore.eu/examples/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/deckPlans/DeckPlans-Example_train.xml"@en ;
     dct:source "examples/functions/deckPlans/DeckPlans-Example_train.xml"@en ;
@@ -1412,7 +1412,7 @@
     skos:isRelatedTo siri:ViaName ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-deckPlans-DeckPlans-Example_train_simple>
+<https://napcore.eu/examples/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train_simple.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/deckPlans/DeckPlans-Example_train_simple.xml"@en ;
     dct:source "examples/functions/deckPlans/DeckPlans-Example_train_simple.xml"@en ;
@@ -1558,7 +1558,7 @@
     skos:isRelatedTo siri:VehicleMode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-deprecation-organisationref>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fdeprecation%2Forganisationref.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/deprecation/organisationref.xml"@en ;
     dct:source "examples/functions/deprecation/organisationref.xml"@en ;
@@ -1574,7 +1574,7 @@
     skos:isRelatedTo opra:PublicationDelivery ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-fares-ENTUR-SchoolTwiceADayTripCarnet_2020120>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FENTUR-SchoolTwiceADayTripCarnet_2020120.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/fares/ENTUR-SchoolTwiceADayTripCarnet_2020120.xml"@en ;
     dct:source "examples/functions/fares/ENTUR-SchoolTwiceADayTripCarnet_2020120.xml"@en ;
@@ -1707,7 +1707,7 @@
     skos:isRelatedTo siri:TypesOfValue ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-fares-Netex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/fares/Netex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct.xml"@en ;
     dct:source "examples/functions/fares/Netex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct.xml"@en ;
@@ -2019,7 +2019,7 @@
     skos:isRelatedTo siri:WaterSubmode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-fares-Netex_51.1_Bus_SimpleFares_PointToPoint_SingleProduct>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_51.1_Bus_SimpleFares_PointToPoint_SingleProduct.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/fares/Netex_51.1_Bus_SimpleFares_PointToPoint_SingleProduct.xml"@en ;
     dct:source "examples/functions/fares/Netex_51.1_Bus_SimpleFares_PointToPoint_SingleProduct.xml"@en ;
@@ -2127,7 +2127,7 @@
     skos:isRelatedTo siri:VehicleMode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-fares-Netex_51.2_Bus_SimpleFares_PointToPoint_MultipleOffers>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_51.2_Bus_SimpleFares_PointToPoint_MultipleOffers.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/fares/Netex_51.2_Bus_SimpleFares_PointToPoint_MultipleOffers.xml"@en ;
     dct:source "examples/functions/fares/Netex_51.2_Bus_SimpleFares_PointToPoint_MultipleOffers.xml"@en ;
@@ -2259,7 +2259,7 @@
     skos:isRelatedTo siri:ValueSet ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-fares-Netex_51.3_Bus_SimpleFares_ZoneToZone_AdultChildProduct>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_51.3_Bus_SimpleFares_ZoneToZone_AdultChildProduct.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/fares/Netex_51.3_Bus_SimpleFares_ZoneToZone_AdultChildProduct.xml"@en ;
     dct:source "examples/functions/fares/Netex_51.3_Bus_SimpleFares_ZoneToZone_AdultChildProduct.xml"@en ;
@@ -2405,7 +2405,7 @@
     skos:isRelatedTo siri:VehicleMode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-fares-Netex_51.4_Bus_SimpleFares_ZoneToZone_OffPeakProduct>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_51.4_Bus_SimpleFares_ZoneToZone_OffPeakProduct.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/fares/Netex_51.4_Bus_SimpleFares_ZoneToZone_OffPeakProduct.xml"@en ;
     dct:source "examples/functions/fares/Netex_51.4_Bus_SimpleFares_ZoneToZone_OffPeakProduct.xml"@en ;
@@ -2565,7 +2565,7 @@
     skos:isRelatedTo siri:VehicleMode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-fares-Netex_61.1_Bus_GeographicFares_UnitDistance_SingleProduct>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_61.1_Bus_GeographicFares_UnitDistance_SingleProduct.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/fares/Netex_61.1_Bus_GeographicFares_UnitDistance_SingleProduct.xml"@en ;
     dct:source "examples/functions/fares/Netex_61.1_Bus_GeographicFares_UnitDistance_SingleProduct.xml"@en ;
@@ -2667,7 +2667,7 @@
     skos:isRelatedTo siri:VehicleMode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-fares-Netex_61.2_Bus_GeographicFares_UnitZone_AdultChildProduct>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_61.2_Bus_GeographicFares_UnitZone_AdultChildProduct.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/fares/Netex_61.2_Bus_GeographicFares_UnitZone_AdultChildProduct.xml"@en ;
     dct:source "examples/functions/fares/Netex_61.2_Bus_GeographicFares_UnitZone_AdultChildProduct.xml"@en ;
@@ -2768,7 +2768,7 @@
     skos:isRelatedTo siri:ValueSet ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-fares-Netex_61.3_Bus_GeographicFares_UnitFareStage_SingleProduct>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_61.3_Bus_GeographicFares_UnitFareStage_SingleProduct.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/fares/Netex_61.3_Bus_GeographicFares_UnitFareStage_SingleProduct.xml"@en ;
     dct:source "examples/functions/fares/Netex_61.3_Bus_GeographicFares_UnitFareStage_SingleProduct.xml"@en ;
@@ -2869,7 +2869,7 @@
     skos:isRelatedTo siri:VehicleMode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-fares-Netex_61.4_Bus_GeographicFares_HierarchicalZone_MultipleOffers>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_61.4_Bus_GeographicFares_HierarchicalZone_MultipleOffers.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/fares/Netex_61.4_Bus_GeographicFares_HierarchicalZone_MultipleOffers.xml"@en ;
     dct:source "examples/functions/fares/Netex_61.4_Bus_GeographicFares_HierarchicalZone_MultipleOffers.xml"@en ;
@@ -2963,7 +2963,7 @@
     skos:isRelatedTo siri:ValueSet ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-fares-Netex_71.1_Bus_TimeIntervalFares_Zonal_MultipleProduct>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_71.1_Bus_TimeIntervalFares_Zonal_MultipleProduct.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/fares/Netex_71.1_Bus_TimeIntervalFares_Zonal_MultipleProduct.xml"@en ;
     dct:source "examples/functions/fares/Netex_71.1_Bus_TimeIntervalFares_Zonal_MultipleProduct.xml"@en ;
@@ -3077,7 +3077,7 @@
     skos:isRelatedTo siri:ValueSet ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-fares-Netex_71.2_Bus_ZonalFares_MultipleSalesPackages>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_71.2_Bus_ZonalFares_MultipleSalesPackages.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/fares/Netex_71.2_Bus_ZonalFares_MultipleSalesPackages.xml"@en ;
     dct:source "examples/functions/fares/Netex_71.2_Bus_ZonalFares_MultipleSalesPackages.xml"@en ;
@@ -3186,7 +3186,7 @@
     skos:isRelatedTo siri:ValueSet ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-fares-Netex_81.1_Metro_FlatFare_GroupProduct>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_81.1_Metro_FlatFare_GroupProduct.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/fares/Netex_81.1_Metro_FlatFare_GroupProduct.xml"@en ;
     dct:source "examples/functions/fares/Netex_81.1_Metro_FlatFare_GroupProduct.xml"@en ;
@@ -3269,7 +3269,7 @@
     skos:isRelatedTo siri:VehicleMode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-fares-Netex_91.1_Rail_RailCard_MultipleProduct>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_91.1_Rail_RailCard_MultipleProduct.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/fares/Netex_91.1_Rail_RailCard_MultipleProduct.xml"@en ;
     dct:source "examples/functions/fares/Netex_91.1_Rail_RailCard_MultipleProduct.xml"@en ;
@@ -3372,7 +3372,7 @@
     skos:isRelatedTo siri:VehicleMode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-fares-rail-Netex_era_crossborder_de>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2Frail%2FNetex_era_crossborder_de.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/fares/rail/Netex_era_crossborder_de.xml"@en ;
     dct:source "examples/functions/fares/rail/Netex_era_crossborder_de.xml"@en ;
@@ -3581,7 +3581,7 @@
     skos:isRelatedTo siri:VehicleMode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-fares-rail-Netex_era_distance_ro>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2Frail%2FNetex_era_distance_ro.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/fares/rail/Netex_era_distance_ro.xml"@en ;
     dct:source "examples/functions/fares/rail/Netex_era_distance_ro.xml"@en ;
@@ -3959,7 +3959,7 @@
     skos:isRelatedTo siri:ViaName ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-fares-rail-Netex_era_toc_uk>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2Frail%2FNetex_era_toc_uk.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/fares/rail/Netex_era_toc_uk.xml"@en ;
     dct:source "examples/functions/fares/rail/Netex_era_toc_uk.xml"@en ;
@@ -4270,7 +4270,7 @@
     skos:isRelatedTo siri:VehicleMode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-grouping-Netex_GroupingExample_General_01>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fgrouping%2FNetex_GroupingExample_General_01.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/grouping/Netex_GroupingExample_General_01.xml"@en ;
     dct:source "examples/functions/grouping/Netex_GroupingExample_General_01.xml"@en ;
@@ -4300,7 +4300,7 @@
     skos:isRelatedTo siri:ValueSet ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-line-Line_with_facilities>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fline%2FLine_with_facilities.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/line/Line_with_facilities.xml"@en ;
     dct:source "examples/functions/line/Line_with_facilities.xml"@en ;
@@ -4359,7 +4359,7 @@
     skos:isRelatedTo siri:ServiceRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-line-NeTEx_01_simple_line>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fline%2FNeTEx_01_simple_line.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/line/NeTEx_01_simple_line.xml"@en ;
     dct:source "examples/functions/line/NeTEx_01_simple_line.xml"@en ;
@@ -4391,7 +4391,7 @@
     skos:isRelatedTo siri:TelecabinSubmode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-newModes-IXSI Service 1 - Static Data>
+<https://napcore.eu/examples/examples%2Ffunctions%2FnewModes%2FIXSI%20Service%201%20-%20Static%20Data.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/newModes/IXSI Service 1 - Static Data.xml"@en ;
     dct:source "examples/functions/newModes/IXSI Service 1 - Static Data.xml"@en ;
@@ -4429,7 +4429,7 @@
     skos:isRelatedTo siri:VehicleMode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-newModes-NewModes-CarClubExample>
+<https://napcore.eu/examples/examples%2Ffunctions%2FnewModes%2FNewModes-CarClubExample.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/newModes/NewModes-CarClubExample.xml"@en ;
     dct:source "examples/functions/newModes/NewModes-CarClubExample.xml"@en ;
@@ -4717,7 +4717,7 @@
     skos:isRelatedTo siri:VehicleMode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-newModes-NewModes-CarPoolingExample>
+<https://napcore.eu/examples/examples%2Ffunctions%2FnewModes%2FNewModes-CarPoolingExample.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/newModes/NewModes-CarPoolingExample.xml"@en ;
     dct:source "examples/functions/newModes/NewModes-CarPoolingExample.xml"@en ;
@@ -5073,7 +5073,7 @@
     skos:isRelatedTo siri:VehicleMode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-newModes-NewModes-ChauffeuredServiceExample>
+<https://napcore.eu/examples/examples%2Ffunctions%2FnewModes%2FNewModes-ChauffeuredServiceExample.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/newModes/NewModes-ChauffeuredServiceExample.xml"@en ;
     dct:source "examples/functions/newModes/NewModes-ChauffeuredServiceExample.xml"@en ;
@@ -5342,7 +5342,7 @@
     skos:isRelatedTo siri:VehicleMode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-newModes-NewModes-CycleSharingExample>
+<https://napcore.eu/examples/examples%2Ffunctions%2FnewModes%2FNewModes-CycleSharingExample.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/newModes/NewModes-CycleSharingExample.xml"@en ;
     dct:source "examples/functions/newModes/NewModes-CycleSharingExample.xml"@en ;
@@ -5634,7 +5634,7 @@
     skos:isRelatedTo siri:VehicleMode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-patterns-Netex_KBIC_ParisNetwork_1>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fpatterns%2FNetex_KBIC_ParisNetwork_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/patterns/Netex_KBIC_ParisNetwork_1.xml"@en ;
     dct:source "examples/functions/patterns/Netex_KBIC_ParisNetwork_1.xml"@en ;
@@ -5719,7 +5719,7 @@
     skos:isRelatedTo siri:TimingPoint ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-patterns-Netex_KBIC_ParisNetwork_with_bookingArrangements>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fpatterns%2FNetex_KBIC_ParisNetwork_with_bookingArrangements.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/patterns/Netex_KBIC_ParisNetwork_with_bookingArrangements.xml"@en ;
     dct:source "examples/functions/patterns/Netex_KBIC_ParisNetwork_with_bookingArrangements.xml"@en ;
@@ -5805,7 +5805,7 @@
     skos:isRelatedTo siri:TimingPoint ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-pointOfInterest-Netex_Sites_PoiClassification_1>
+<https://napcore.eu/examples/examples%2Ffunctions%2FpointOfInterest%2FNetex_Sites_PoiClassification_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/pointOfInterest/Netex_Sites_PoiClassification_1.xml"@en ;
     dct:source "examples/functions/pointOfInterest/Netex_Sites_PoiClassification_1.xml"@en ;
@@ -5815,7 +5815,7 @@
     skos:isRelatedTo netex:ResponsibilitySet ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-relations-test-01-main>
+<https://napcore.eu/examples/examples%2Ffunctions%2Frelations%2Ftest-01-main.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/relations/test-01-main.xml"@en ;
     dct:source "examples/functions/relations/test-01-main.xml"@en ;
@@ -5839,7 +5839,7 @@
     skos:isRelatedTo siri:LinesRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-relations-test-01-timetable>
+<https://napcore.eu/examples/examples%2Ffunctions%2Frelations%2Ftest-01-timetable.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/relations/test-01-timetable.xml"@en ;
     dct:source "examples/functions/relations/test-01-timetable.xml"@en ;
@@ -5862,7 +5862,7 @@
     skos:isRelatedTo siri:LinesRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-simpleNetwork-Netex_LineClassification_1>
+<https://napcore.eu/examples/examples%2Ffunctions%2FsimpleNetwork%2FNetex_LineClassification_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/simpleNetwork/Netex_LineClassification_1.xml"@en ;
     dct:source "examples/functions/simpleNetwork/Netex_LineClassification_1.xml"@en ;
@@ -5886,7 +5886,7 @@
     skos:isRelatedTo siri:RailSubmode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-simpleNetwork-Netex_SimpleNetwork_1>
+<https://napcore.eu/examples/examples%2Ffunctions%2FsimpleNetwork%2FNetex_SimpleNetwork_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/simpleNetwork/Netex_SimpleNetwork_1.xml"@en ;
     dct:source "examples/functions/simpleNetwork/Netex_SimpleNetwork_1.xml"@en ;
@@ -5996,7 +5996,7 @@
     skos:isRelatedTo siri:VehicleMode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-simpleNetwork-Netex_uk_underground_1>
+<https://napcore.eu/examples/examples%2Ffunctions%2FsimpleNetwork%2FNetex_uk_underground_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/simpleNetwork/Netex_uk_underground_1.xml"@en ;
     dct:source "examples/functions/simpleNetwork/Netex_uk_underground_1.xml"@en ;
@@ -6060,7 +6060,7 @@
     skos:isRelatedTo siri:VehicleAtStop ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-site-Netex_01_Sites_SimpleStadium_1>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fsite%2FNetex_01_Sites_SimpleStadium_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/site/Netex_01_Sites_SimpleStadium_1.xml"@en ;
     dct:source "examples/functions/site/Netex_01_Sites_SimpleStadium_1.xml"@en ;
@@ -6143,7 +6143,7 @@
     skos:isRelatedTo siri:Train ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-site-Netex_10_Sites_OlympicPark_2_basic>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fsite%2FNetex_10_Sites_OlympicPark_2_basic.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/site/Netex_10_Sites_OlympicPark_2_basic.xml"@en ;
     dct:source "examples/functions/site/Netex_10_Sites_OlympicPark_2_basic.xml"@en ;
@@ -6205,7 +6205,7 @@
     skos:isRelatedTo siri:Train ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-site-Netex_11_Sites_OlympicPark_1>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fsite%2FNetex_11_Sites_OlympicPark_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/site/Netex_11_Sites_OlympicPark_1.xml"@en ;
     dct:source "examples/functions/site/Netex_11_Sites_OlympicPark_1.xml"@en ;
@@ -6327,7 +6327,7 @@
     skos:isRelatedTo siri:Train ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-site-Netex_12_Sites_OlympicPark_3_nav>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fsite%2FNetex_12_Sites_OlympicPark_3_nav.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/site/Netex_12_Sites_OlympicPark_3_nav.xml"@en ;
     dct:source "examples/functions/site/Netex_12_Sites_OlympicPark_3_nav.xml"@en ;
@@ -6376,7 +6376,7 @@
     skos:isRelatedTo siri:Train ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-site-Netex_13_Sites_OlympicPark_4_delayOnly>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fsite%2FNetex_13_Sites_OlympicPark_4_delayOnly.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/site/Netex_13_Sites_OlympicPark_4_delayOnly.xml"@en ;
     dct:source "examples/functions/site/Netex_13_Sites_OlympicPark_4_delayOnly.xml"@en ;
@@ -6386,7 +6386,7 @@
     skos:isRelatedTo siri:Train ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-site-Netex_14_Olympic Venues 1.1>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fsite%2FNetex_14_Olympic%20Venues%201.1.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/site/Netex_14_Olympic Venues 1.1.xml"@en ;
     dct:source "examples/functions/site/Netex_14_Olympic Venues 1.1.xml"@en ;
@@ -6415,7 +6415,7 @@
     skos:isRelatedTo siri:Train ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-site-Netex_21_Sites_Parking_1>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fsite%2FNetex_21_Sites_Parking_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/site/Netex_21_Sites_Parking_1.xml"@en ;
     dct:source "examples/functions/site/Netex_21_Sites_Parking_1.xml"@en ;
@@ -6471,7 +6471,7 @@
     skos:isRelatedTo siri:SrsName ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-site-Netex_21_Sites_Parking_2>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fsite%2FNetex_21_Sites_Parking_2.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/site/Netex_21_Sites_Parking_2.xml"@en ;
     dct:source "examples/functions/site/Netex_21_Sites_Parking_2.xml"@en ;
@@ -6614,7 +6614,7 @@
     skos:isRelatedTo siri:VehicleFeature ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-site-Netex_Address_Example_1>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fsite%2FNetex_Address_Example_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/site/Netex_Address_Example_1.xml"@en ;
     dct:source "examples/functions/site/Netex_Address_Example_1.xml"@en ;
@@ -6670,7 +6670,7 @@
     skos:isRelatedTo siri:SrsName ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-stopPlace-FX-PI-01_UK_TBD_STOP-OFFER_910GWIMBLDN-accessibility_20140601>
+<https://napcore.eu/examples/examples%2Ffunctions%2FstopPlace%2FFX-PI-01_UK_TBD_STOP-OFFER_910GWIMBLDN-accessibility_20140601.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/stopPlace/FX-PI-01_UK_TBD_STOP-OFFER_910GWIMBLDN-accessibility_20140601.xml"@en ;
     dct:source "examples/functions/stopPlace/FX-PI-01_UK_TBD_STOP-OFFER_910GWIMBLDN-accessibility_20140601.xml"@en ;
@@ -6904,7 +6904,7 @@
     skos:isRelatedTo siri:VehicleFeature ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-stopPlace-Netex_01_StopPoints_NoFrills_1>
+<https://napcore.eu/examples/examples%2Ffunctions%2FstopPlace%2FNetex_01_StopPoints_NoFrills_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/stopPlace/Netex_01_StopPoints_NoFrills_1.xml"@en ;
     dct:source "examples/functions/stopPlace/Netex_01_StopPoints_NoFrills_1.xml"@en ;
@@ -6914,7 +6914,7 @@
     skos:isRelatedTo siri:StopPointsDelivery ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-stopPlace-Netex_01_Stops_SingleStopOnStreet_1>
+<https://napcore.eu/examples/examples%2Ffunctions%2FstopPlace%2FNetex_01_Stops_SingleStopOnStreet_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/stopPlace/Netex_01_Stops_SingleStopOnStreet_1.xml"@en ;
     dct:source "examples/functions/stopPlace/Netex_01_Stops_SingleStopOnStreet_1.xml"@en ;
@@ -6984,7 +6984,7 @@
     skos:isRelatedTo siri:StopPointsRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-stopPlace-Netex_02_Stops_StopPairOnStreet_1>
+<https://napcore.eu/examples/examples%2Ffunctions%2FstopPlace%2FNetex_02_Stops_StopPairOnStreet_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/stopPlace/Netex_02_Stops_StopPairOnStreet_1.xml"@en ;
     dct:source "examples/functions/stopPlace/Netex_02_Stops_StopPairOnStreet_1.xml"@en ;
@@ -7036,7 +7036,7 @@
     skos:isRelatedTo siri:StopPointsRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-stopPlace-Netex_04_Stops_SimpleStation_1>
+<https://napcore.eu/examples/examples%2Ffunctions%2FstopPlace%2FNetex_04_Stops_SimpleStation_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/stopPlace/Netex_04_Stops_SimpleStation_1.xml"@en ;
     dct:source "examples/functions/stopPlace/Netex_04_Stops_SimpleStation_1.xml"@en ;
@@ -7189,7 +7189,7 @@
     skos:isRelatedTo siri:VehicleFeature ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-stopPlace-Netex_10_StopPlace_uk_ComplexStation_Wimbledon_1>
+<https://napcore.eu/examples/examples%2Ffunctions%2FstopPlace%2FNetex_10_StopPlace_uk_ComplexStation_Wimbledon_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/stopPlace/Netex_10_StopPlace_uk_ComplexStation_Wimbledon_1.xml"@en ;
     dct:source "examples/functions/stopPlace/Netex_10_StopPlace_uk_ComplexStation_Wimbledon_1.xml"@en ;
@@ -7409,7 +7409,7 @@
     skos:isRelatedTo siri:VehicleFeature ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-stopPlace-Netex_10_StopPlace_withParking_1>
+<https://napcore.eu/examples/examples%2Ffunctions%2FstopPlace%2FNetex_10_StopPlace_withParking_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/stopPlace/Netex_10_StopPlace_withParking_1.xml"@en ;
     dct:source "examples/functions/stopPlace/Netex_10_StopPlace_withParking_1.xml"@en ;
@@ -7615,7 +7615,7 @@
     skos:isRelatedTo siri:VehicleFeature ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-NeTEx_50_JourneyFrequencyGroup>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNeTEx_50_JourneyFrequencyGroup.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/NeTEx_50_JourneyFrequencyGroup.xml"@en ;
     dct:source "examples/functions/timetable/NeTEx_50_JourneyFrequencyGroup.xml"@en ;
@@ -7657,7 +7657,7 @@
     skos:isRelatedTo siri:TimingPoint ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_01.1_Bus_SimpleTimetable_JourneysOnly>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_01.1_Bus_SimpleTimetable_JourneysOnly.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_01.1_Bus_SimpleTimetable_JourneysOnly.xml"@en ;
     dct:source "examples/functions/timetable/Netex_01.1_Bus_SimpleTimetable_JourneysOnly.xml"@en ;
@@ -7757,7 +7757,7 @@
     skos:isRelatedTo siri:ViaName ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_01.2_Bus_SimpleTimetable_WithTimings>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_01.2_Bus_SimpleTimetable_WithTimings.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_01.2_Bus_SimpleTimetable_WithTimings.xml"@en ;
     dct:source "examples/functions/timetable/Netex_01.2_Bus_SimpleTimetable_WithTimings.xml"@en ;
@@ -7883,7 +7883,7 @@
     skos:isRelatedTo siri:ViaName ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_01.3_Bus_SimpleTimetable_WithMultiplePatterns>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_01.3_Bus_SimpleTimetable_WithMultiplePatterns.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_01.3_Bus_SimpleTimetable_WithMultiplePatterns.xml"@en ;
     dct:source "examples/functions/timetable/Netex_01.3_Bus_SimpleTimetable_WithMultiplePatterns.xml"@en ;
@@ -7955,7 +7955,7 @@
     skos:isRelatedTo siri:ViaName ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_01.4_Bus_SimpleTimetable_WithConnection>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_01.4_Bus_SimpleTimetable_WithConnection.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_01.4_Bus_SimpleTimetable_WithConnection.xml"@en ;
     dct:source "examples/functions/timetable/Netex_01.4_Bus_SimpleTimetable_WithConnection.xml"@en ;
@@ -8079,7 +8079,7 @@
     skos:isRelatedTo siri:ViaName ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_01.5_Bus_SimpleTimetable_StopAssignment>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_01.5_Bus_SimpleTimetable_StopAssignment.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_01.5_Bus_SimpleTimetable_StopAssignment.xml"@en ;
     dct:source "examples/functions/timetable/Netex_01.5_Bus_SimpleTimetable_StopAssignment.xml"@en ;
@@ -8153,7 +8153,7 @@
     skos:isRelatedTo siri:TimingPoint ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_01.6_Bus_SimpleTimetable_RouteProjection>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_01.6_Bus_SimpleTimetable_RouteProjection.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_01.6_Bus_SimpleTimetable_RouteProjection.xml"@en ;
     dct:source "examples/functions/timetable/Netex_01.6_Bus_SimpleTimetable_RouteProjection.xml"@en ;
@@ -8228,7 +8228,7 @@
     skos:isRelatedTo siri:TimingPoint ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_01.7_Bus_SimpleTimetable_RoutingConstraints>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_01.7_Bus_SimpleTimetable_RoutingConstraints.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_01.7_Bus_SimpleTimetable_RoutingConstraints.xml"@en ;
     dct:source "examples/functions/timetable/Netex_01.7_Bus_SimpleTimetable_RoutingConstraints.xml"@en ;
@@ -8281,7 +8281,7 @@
     skos:isRelatedTo siri:TimingPoint ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_02.1_Bus_CircularRoute_Timetable>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_02.1_Bus_CircularRoute_Timetable.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_02.1_Bus_CircularRoute_Timetable.xml"@en ;
     dct:source "examples/functions/timetable/Netex_02.1_Bus_CircularRoute_Timetable.xml"@en ;
@@ -8363,7 +8363,7 @@
     skos:isRelatedTo siri:VisitNumber ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_03.1_Bus_BranchedRouteTimetable_SimplePatterns>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_03.1_Bus_BranchedRouteTimetable_SimplePatterns.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_03.1_Bus_BranchedRouteTimetable_SimplePatterns.xml"@en ;
     dct:source "examples/functions/timetable/Netex_03.1_Bus_BranchedRouteTimetable_SimplePatterns.xml"@en ;
@@ -8440,7 +8440,7 @@
     skos:isRelatedTo siri:ViaName ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_03.2_Bus_BranchedRouteTimetable_SharedPatterns>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_03.2_Bus_BranchedRouteTimetable_SharedPatterns.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_03.2_Bus_BranchedRouteTimetable_SharedPatterns.xml"@en ;
     dct:source "examples/functions/timetable/Netex_03.2_Bus_BranchedRouteTimetable_SharedPatterns.xml"@en ;
@@ -8516,7 +8516,7 @@
     skos:isRelatedTo siri:ViaName ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_05.1_Bus_TemplateTimetable_HeadwayFrequency>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_05.1_Bus_TemplateTimetable_HeadwayFrequency.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_05.1_Bus_TemplateTimetable_HeadwayFrequency.xml"@en ;
     dct:source "examples/functions/timetable/Netex_05.1_Bus_TemplateTimetable_HeadwayFrequency.xml"@en ;
@@ -8544,7 +8544,7 @@
     skos:isRelatedTo siri:TimingPoint ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_05.2_Bus_TemplateTimetable_RhythmicalFrequency>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_05.2_Bus_TemplateTimetable_RhythmicalFrequency.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_05.2_Bus_TemplateTimetable_RhythmicalFrequency.xml"@en ;
     dct:source "examples/functions/timetable/Netex_05.2_Bus_TemplateTimetable_RhythmicalFrequency.xml"@en ;
@@ -8574,7 +8574,7 @@
     skos:isRelatedTo siri:TimingPoint ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_06.1_Bus_FrequencyJourneyTimetable_HeadwayInterval>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_06.1_Bus_FrequencyJourneyTimetable_HeadwayInterval.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_06.1_Bus_FrequencyJourneyTimetable_HeadwayInterval.xml"@en ;
     dct:source "examples/functions/timetable/Netex_06.1_Bus_FrequencyJourneyTimetable_HeadwayInterval.xml"@en ;
@@ -8604,7 +8604,7 @@
     skos:isRelatedTo siri:TimingPoint ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_06.2_Bus_FrequencyJourneyTimetable_RhythmicalInterval>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_06.2_Bus_FrequencyJourneyTimetable_RhythmicalInterval.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_06.2_Bus_FrequencyJourneyTimetable_RhythmicalInterval.xml"@en ;
     dct:source "examples/functions/timetable/Netex_06.2_Bus_FrequencyJourneyTimetable_RhythmicalInterval.xml"@en ;
@@ -8632,7 +8632,7 @@
     skos:isRelatedTo siri:TimingPoint ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_07.1_Bus_FlexibleTimetable_ZonesOnly>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_07.1_Bus_FlexibleTimetable_ZonesOnly.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_07.1_Bus_FlexibleTimetable_ZonesOnly.xml"@en ;
     dct:source "examples/functions/timetable/Netex_07.1_Bus_FlexibleTimetable_ZonesOnly.xml"@en ;
@@ -8651,7 +8651,7 @@
     skos:isRelatedTo siri:StopTimetableRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_07.2_Bus_FlexibleTimetable_WithPattern>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_07.2_Bus_FlexibleTimetable_WithPattern.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_07.2_Bus_FlexibleTimetable_WithPattern.xml"@en ;
     dct:source "examples/functions/timetable/Netex_07.2_Bus_FlexibleTimetable_WithPattern.xml"@en ;
@@ -8728,7 +8728,7 @@
     skos:isRelatedTo siri:ViaName ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_08.1_BusTram_Timetable_AmbiguousLinks>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_08.1_BusTram_Timetable_AmbiguousLinks.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_08.1_BusTram_Timetable_AmbiguousLinks.xml"@en ;
     dct:source "examples/functions/timetable/Netex_08.1_BusTram_Timetable_AmbiguousLinks.xml"@en ;
@@ -8783,7 +8783,7 @@
     skos:isRelatedTo siri:TimingPoint ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_08.2_Bus_SimpleTimetable_Cancellation>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_08.2_Bus_SimpleTimetable_Cancellation.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_08.2_Bus_SimpleTimetable_Cancellation.xml"@en ;
     dct:source "examples/functions/timetable/Netex_08.2_Bus_SimpleTimetable_Cancellation.xml"@en ;
@@ -8845,7 +8845,7 @@
     skos:isRelatedTo siri:ViaName ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_09.1_Bus_InterchangeRule>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_09.1_Bus_InterchangeRule.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_09.1_Bus_InterchangeRule.xml"@en ;
     dct:source "examples/functions/timetable/Netex_09.1_Bus_InterchangeRule.xml"@en ;
@@ -8868,7 +8868,7 @@
     skos:isRelatedTo siri:StopTimetableRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_09.2_Bus_SimpleTimetable_Slovenia>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_09.2_Bus_SimpleTimetable_Slovenia.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_09.2_Bus_SimpleTimetable_Slovenia.xml"@en ;
     dct:source "examples/functions/timetable/Netex_09.2_Bus_SimpleTimetable_Slovenia.xml"@en ;
@@ -8945,7 +8945,7 @@
     skos:isRelatedTo siri:ViaName ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_10_Rail_SplittingJoiningTimetable>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_10_Rail_SplittingJoiningTimetable.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_10_Rail_SplittingJoiningTimetable.xml"@en ;
     dct:source "examples/functions/timetable/Netex_10_Rail_SplittingJoiningTimetable.xml"@en ;
@@ -9072,7 +9072,7 @@
     skos:isRelatedTo siri:VehicleAtStop ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_11_Rail_CompoundTrain>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_11_Rail_CompoundTrain.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_11_Rail_CompoundTrain.xml"@en ;
     dct:source "examples/functions/timetable/Netex_11_Rail_CompoundTrain.xml"@en ;
@@ -9196,7 +9196,7 @@
     skos:isRelatedTo siri:VehicleAtStop ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_21_Rail_NetworkTimetable_eurostar>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_21_Rail_NetworkTimetable_eurostar.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_21_Rail_NetworkTimetable_eurostar.xml"@en ;
     dct:source "examples/functions/timetable/Netex_21_Rail_NetworkTimetable_eurostar.xml"@en ;
@@ -9402,7 +9402,7 @@
     skos:isRelatedTo siri:VehicleAtStop ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_32_Multimodal_PassengerInformationEquipment>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_32_Multimodal_PassengerInformationEquipment.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_32_Multimodal_PassengerInformationEquipment.xml"@en ;
     dct:source "examples/functions/timetable/Netex_32_Multimodal_PassengerInformationEquipment.xml"@en ;
@@ -9442,7 +9442,7 @@
     skos:isRelatedTo siri:SrsName ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_51.1_Occupancy>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_51.1_Occupancy.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_51.1_Occupancy.xml"@en ;
     dct:source "examples/functions/timetable/Netex_51.1_Occupancy.xml"@en ;
@@ -9512,7 +9512,7 @@
     skos:isRelatedTo siri:ViaName ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-timetable-Netex_52_planned_delay>
+<https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_52_planned_delay.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/timetable/Netex_52_planned_delay.xml"@en ;
     dct:source "examples/functions/timetable/Netex_52_planned_delay.xml"@en ;
@@ -9525,7 +9525,7 @@
     skos:isRelatedTo siri:DepartureStatus ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-validityCondition-NeTEx_trigger-01>
+<https://napcore.eu/examples/examples%2Ffunctions%2FvalidityCondition%2FNeTEx_trigger-01.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/validityCondition/NeTEx_trigger-01.xml"@en ;
     dct:source "examples/functions/validityCondition/NeTEx_trigger-01.xml"@en ;
@@ -9535,7 +9535,7 @@
     skos:isRelatedTo netex:ValidityTrigger ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-variant-Netex_VariantExample_Step_05>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fvariant%2FNetex_VariantExample_Step_05.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/variant/Netex_VariantExample_Step_05.xml"@en ;
     dct:source "examples/functions/variant/Netex_VariantExample_Step_05.xml"@en ;
@@ -9549,7 +9549,7 @@
     skos:isRelatedTo netex:ValidityRuleParameter ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-vehicle-Netex_simpleVehicle_01>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fvehicle%2FNetex_simpleVehicle_01.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/vehicle/Netex_simpleVehicle_01.xml"@en ;
     dct:source "examples/functions/vehicle/Netex_simpleVehicle_01.xml"@en ;
@@ -9559,7 +9559,7 @@
     skos:isRelatedTo opra:VehicleTypeCapacity ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-vehicleSchedule-Netex_simpleVehicleSchedule_01>
+<https://napcore.eu/examples/examples%2Ffunctions%2FvehicleSchedule%2FNetex_simpleVehicleSchedule_01.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/vehicleSchedule/Netex_simpleVehicleSchedule_01.xml"@en ;
     dct:source "examples/functions/vehicleSchedule/Netex_simpleVehicleSchedule_01.xml"@en ;
@@ -9612,7 +9612,7 @@
     skos:isRelatedTo siri:TargetedVehicleJourney ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-versioning-Netex_Uniqueness_01>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fversioning%2FNetex_Uniqueness_01.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/versioning/Netex_Uniqueness_01.xml"@en ;
     dct:source "examples/functions/versioning/Netex_Uniqueness_01.xml"@en ;
@@ -9779,7 +9779,7 @@
     skos:isRelatedTo siri:TrainInCompoundTrain ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-versioning-Netex_VersioningExample_Step_04>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fversioning%2FNetex_VersioningExample_Step_04.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/versioning/Netex_VersioningExample_Step_04.xml"@en ;
     dct:source "examples/functions/versioning/Netex_VersioningExample_Step_04.xml"@en ;
@@ -9789,7 +9789,7 @@
     skos:isRelatedTo netex:ServiceLinkInJourneyPattern ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-versioning-Netex_VersioningExample_Step_05_ByRef>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fversioning%2FNetex_VersioningExample_Step_05_ByRef.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/versioning/Netex_VersioningExample_Step_05_ByRef.xml"@en ;
     dct:source "examples/functions/versioning/Netex_VersioningExample_Step_05_ByRef.xml"@en ;
@@ -9797,14 +9797,14 @@
     skos:isRelatedTo netex:GeneralFrameMember ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-versioning-Netex_VersioningExample_Step_05_GeneralFrame>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fversioning%2FNetex_VersioningExample_Step_05_GeneralFrame.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/versioning/Netex_VersioningExample_Step_05_GeneralFrame.xml"@en ;
     dct:source "examples/functions/versioning/Netex_VersioningExample_Step_05_GeneralFrame.xml"@en ;
     skos:isRelatedTo netex:GeneralFrame ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-versioning-Netex_VersioningExample_VersionHistories_01>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fversioning%2FNetex_VersioningExample_VersionHistories_01.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/versioning/Netex_VersioningExample_VersionHistories_01.xml"@en ;
     dct:source "examples/functions/versioning/Netex_VersioningExample_VersionHistories_01.xml"@en ;
@@ -9812,7 +9812,7 @@
     skos:isRelatedTo netex:DataObjectRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-functions-versioning-Netex_VersioningExample_VersionHistories_02>
+<https://napcore.eu/examples/examples%2Ffunctions%2Fversioning%2FNetex_VersioningExample_VersionHistories_02.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/versioning/Netex_VersioningExample_VersionHistories_02.xml"@en ;
     dct:source "examples/functions/versioning/Netex_VersioningExample_VersionHistories_02.xml"@en ;
@@ -9825,7 +9825,7 @@
     skos:isRelatedTo netex:TypeOfEntity ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-occupancy-ext_estimatedTimetable_response>
+<https://napcore.eu/examples/examples%2Foccupancy%2Fext_estimatedTimetable_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/occupancy/ext_estimatedTimetable_response.xml"@en ;
     dct:source "examples/occupancy/ext_estimatedTimetable_response.xml"@en ;
@@ -9851,7 +9851,7 @@
     skos:isRelatedTo siri:VisitNumber ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-occupancy-exv_vehicleMonitoring_response>
+<https://napcore.eu/examples/examples%2Foccupancy%2Fexv_vehicleMonitoring_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/occupancy/exv_vehicleMonitoring_response.xml"@en ;
     dct:source "examples/occupancy/exv_vehicleMonitoring_response.xml"@en ;
@@ -9877,7 +9877,7 @@
     skos:isRelatedTo siri:VisitNumber ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-placeholder>
+<https://napcore.eu/examples/examples%2Fplaceholder.xml>
     a dct:Dataset ;
     rdfs:label "examples/placeholder.xml"@en ;
     dct:source "examples/placeholder.xml"@en ;
@@ -9889,7 +9889,7 @@
     skos:isRelatedTo siri:ResponseTimestamp ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exa_framework-exa_checkStatus_request>
+<https://napcore.eu/examples/examples%2Fsiri_exa_framework%2Fexa_checkStatus_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exa_framework/exa_checkStatus_request.xml"@en ;
     dct:source "examples/siri_exa_framework/exa_checkStatus_request.xml"@en ;
@@ -9897,7 +9897,7 @@
     skos:isRelatedTo siri:Siri ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exa_framework-exa_checkStatus_response>
+<https://napcore.eu/examples/examples%2Fsiri_exa_framework%2Fexa_checkStatus_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exa_framework/exa_checkStatus_response.xml"@en ;
     dct:source "examples/siri_exa_framework/exa_checkStatus_response.xml"@en ;
@@ -9907,7 +9907,7 @@
     skos:isRelatedTo siri:Siri ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exa_framework-exa_dataReady_request>
+<https://napcore.eu/examples/examples%2Fsiri_exa_framework%2Fexa_dataReady_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exa_framework/exa_dataReady_request.xml"@en ;
     dct:source "examples/siri_exa_framework/exa_dataReady_request.xml"@en ;
@@ -9915,7 +9915,7 @@
     skos:isRelatedTo siri:Siri ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exa_framework-exa_dataReady_response>
+<https://napcore.eu/examples/examples%2Fsiri_exa_framework%2Fexa_dataReady_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exa_framework/exa_dataReady_response.xml"@en ;
     dct:source "examples/siri_exa_framework/exa_dataReady_response.xml"@en ;
@@ -9925,7 +9925,7 @@
     skos:isRelatedTo siri:Siri ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exa_framework-exa_dataReceived_response>
+<https://napcore.eu/examples/examples%2Fsiri_exa_framework%2Fexa_dataReceived_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exa_framework/exa_dataReceived_response.xml"@en ;
     dct:source "examples/siri_exa_framework/exa_dataReceived_response.xml"@en ;
@@ -9935,7 +9935,7 @@
     skos:isRelatedTo siri:Siri ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exa_framework-exa_dataSupply_request>
+<https://napcore.eu/examples/examples%2Fsiri_exa_framework%2Fexa_dataSupply_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exa_framework/exa_dataSupply_request.xml"@en ;
     dct:source "examples/siri_exa_framework/exa_dataSupply_request.xml"@en ;
@@ -9943,7 +9943,7 @@
     skos:isRelatedTo siri:Siri ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exa_framework-exa_heartbeat_request>
+<https://napcore.eu/examples/examples%2Fsiri_exa_framework%2Fexa_heartbeat_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exa_framework/exa_heartbeat_request.xml"@en ;
     dct:source "examples/siri_exa_framework/exa_heartbeat_request.xml"@en ;
@@ -9951,7 +9951,7 @@
     skos:isRelatedTo siri:Siri ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exa_framework-exa_requestSubscription_response>
+<https://napcore.eu/examples/examples%2Fsiri_exa_framework%2Fexa_requestSubscription_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exa_framework/exa_requestSubscription_response.xml"@en ;
     dct:source "examples/siri_exa_framework/exa_requestSubscription_response.xml"@en ;
@@ -9963,7 +9963,7 @@
     skos:isRelatedTo siri:SubscriptionResponse ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exa_framework-exa_subscriptionTerminated_notification>
+<https://napcore.eu/examples/examples%2Fsiri_exa_framework%2Fexa_subscriptionTerminated_notification.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exa_framework/exa_subscriptionTerminated_notification.xml"@en ;
     dct:source "examples/siri_exa_framework/exa_subscriptionTerminated_notification.xml"@en ;
@@ -9975,7 +9975,7 @@
     skos:isRelatedTo siri:SubscriptionTerminatedNotification ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exa_framework-exa_terminateSubscription_request>
+<https://napcore.eu/examples/examples%2Fsiri_exa_framework%2Fexa_terminateSubscription_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exa_framework/exa_terminateSubscription_request.xml"@en ;
     dct:source "examples/siri_exa_framework/exa_terminateSubscription_request.xml"@en ;
@@ -9985,7 +9985,7 @@
     skos:isRelatedTo siri:TerminateSubscriptionRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exa_framework-exa_terminateSubscription_response>
+<https://napcore.eu/examples/examples%2Fsiri_exa_framework%2Fexa_terminateSubscription_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exa_framework/exa_terminateSubscription_response.xml"@en ;
     dct:source "examples/siri_exa_framework/exa_terminateSubscription_response.xml"@en ;
@@ -9996,7 +9996,7 @@
     skos:isRelatedTo siri:TerminateSubscriptionResponse ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exa_framework-exa_terminateSubscription_response_err>
+<https://napcore.eu/examples/examples%2Fsiri_exa_framework%2Fexa_terminateSubscription_response_err.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exa_framework/exa_terminateSubscription_response_err.xml"@en ;
     dct:source "examples/siri_exa_framework/exa_terminateSubscription_response_err.xml"@en ;
@@ -10010,7 +10010,7 @@
     skos:isRelatedTo siri:UnknownSubscriptionError ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_CM-exc_connectionMonitoringDistributor_response>
+<https://napcore.eu/examples/examples%2Fsiri_exm_CM%2Fexc_connectionMonitoringDistributor_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_CM/exc_connectionMonitoringDistributor_response.xml"@en ;
     dct:source "examples/siri_exm_CM/exc_connectionMonitoringDistributor_response.xml"@en ;
@@ -10053,7 +10053,7 @@
     skos:isRelatedTo siri:VisitNumber ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_CM-exc_connectionMonitoringFeeder_response>
+<https://napcore.eu/examples/examples%2Fsiri_exm_CM%2Fexc_connectionMonitoringFeeder_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_CM/exc_connectionMonitoringFeeder_response.xml"@en ;
     dct:source "examples/siri_exm_CM/exc_connectionMonitoringFeeder_response.xml"@en ;
@@ -10093,7 +10093,7 @@
     skos:isRelatedTo siri:VisitNumber ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_CM-exc_connectionMonitoring_capabilitiesResponse>
+<https://napcore.eu/examples/examples%2Fsiri_exm_CM%2Fexc_connectionMonitoring_capabilitiesResponse.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_CM/exc_connectionMonitoring_capabilitiesResponse.xml"@en ;
     dct:source "examples/siri_exm_CM/exc_connectionMonitoring_capabilitiesResponse.xml"@en ;
@@ -10135,7 +10135,7 @@
     skos:isRelatedTo siri:SubscriptionResponse ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_CM-exc_connectionMonitoring_request>
+<https://napcore.eu/examples/examples%2Fsiri_exm_CM%2Fexc_connectionMonitoring_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_CM/exc_connectionMonitoring_request.xml"@en ;
     dct:source "examples/siri_exm_CM/exc_connectionMonitoring_request.xml"@en ;
@@ -10150,7 +10150,7 @@
     skos:isRelatedTo siri:VehicleMonitoringRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_CM-exc_connectionMonitoring_subscriptionRequest>
+<https://napcore.eu/examples/examples%2Fsiri_exm_CM%2Fexc_connectionMonitoring_subscriptionRequest.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_CM/exc_connectionMonitoring_subscriptionRequest.xml"@en ;
     dct:source "examples/siri_exm_CM/exc_connectionMonitoring_subscriptionRequest.xml"@en ;
@@ -10167,7 +10167,7 @@
     skos:isRelatedTo siri:VehicleMonitoringSubscriptionRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_CT-exc_connectionTimetable_capabilitiesResponse>
+<https://napcore.eu/examples/examples%2Fsiri_exm_CT%2Fexc_connectionTimetable_capabilitiesResponse.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_CT/exc_connectionTimetable_capabilitiesResponse.xml"@en ;
     dct:source "examples/siri_exm_CT/exc_connectionTimetable_capabilitiesResponse.xml"@en ;
@@ -10206,7 +10206,7 @@
     skos:isRelatedTo siri:SubscriptionResponse ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_CT-exc_connectionTimetable_request>
+<https://napcore.eu/examples/examples%2Fsiri_exm_CT%2Fexc_connectionTimetable_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_CT/exc_connectionTimetable_request.xml"@en ;
     dct:source "examples/siri_exm_CT/exc_connectionTimetable_request.xml"@en ;
@@ -10215,7 +10215,7 @@
     skos:isRelatedTo siri:Siri ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_CT-exc_connectionTimetable_response>
+<https://napcore.eu/examples/examples%2Fsiri_exm_CT%2Fexc_connectionTimetable_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_CT/exc_connectionTimetable_response.xml"@en ;
     dct:source "examples/siri_exm_CT/exc_connectionTimetable_response.xml"@en ;
@@ -10254,7 +10254,7 @@
     skos:isRelatedTo siri:VisitNumber ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_CT-exc_connectionTimetable_subscriptionRequest>
+<https://napcore.eu/examples/examples%2Fsiri_exm_CT%2Fexc_connectionTimetable_subscriptionRequest.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_CT/exc_connectionTimetable_subscriptionRequest.xml"@en ;
     dct:source "examples/siri_exm_CT/exc_connectionTimetable_subscriptionRequest.xml"@en ;
@@ -10266,7 +10266,7 @@
     skos:isRelatedTo siri:SubscriptionRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_ET-ext_estimatedTimetable_capabilitiesResponse>
+<https://napcore.eu/examples/examples%2Fsiri_exm_ET%2Fext_estimatedTimetable_capabilitiesResponse.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_ET/ext_estimatedTimetable_capabilitiesResponse.xml"@en ;
     dct:source "examples/siri_exm_ET/ext_estimatedTimetable_capabilitiesResponse.xml"@en ;
@@ -10312,7 +10312,7 @@
     skos:isRelatedTo siri:SubscriptionResponse ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_ET-ext_estimatedTimetable_request>
+<https://napcore.eu/examples/examples%2Fsiri_exm_ET%2Fext_estimatedTimetable_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_ET/ext_estimatedTimetable_request.xml"@en ;
     dct:source "examples/siri_exm_ET/ext_estimatedTimetable_request.xml"@en ;
@@ -10321,7 +10321,7 @@
     skos:isRelatedTo siri:Siri ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_ET-ext_estimatedTimetable_response>
+<https://napcore.eu/examples/examples%2Fsiri_exm_ET%2Fext_estimatedTimetable_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_ET/ext_estimatedTimetable_response.xml"@en ;
     dct:source "examples/siri_exm_ET/ext_estimatedTimetable_response.xml"@en ;
@@ -10367,7 +10367,7 @@
     skos:isRelatedTo siri:VehicleFeature ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_ET-ext_estimatedTimetable_subscriptionRequest>
+<https://napcore.eu/examples/examples%2Fsiri_exm_ET%2Fext_estimatedTimetable_subscriptionRequest.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_ET/ext_estimatedTimetable_subscriptionRequest.xml"@en ;
     dct:source "examples/siri_exm_ET/ext_estimatedTimetable_subscriptionRequest.xml"@en ;
@@ -10378,7 +10378,7 @@
     skos:isRelatedTo siri:SubscriptionRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_FM-exf_facilityMonitoring_capabilitiesResponse>
+<https://napcore.eu/examples/examples%2Fsiri_exm_FM%2Fexf_facilityMonitoring_capabilitiesResponse.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_FM/exf_facilityMonitoring_capabilitiesResponse.xml"@en ;
     dct:source "examples/siri_exm_FM/exf_facilityMonitoring_capabilitiesResponse.xml"@en ;
@@ -10424,7 +10424,7 @@
     skos:isRelatedTo siri:SubscriptionResponse ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_FM-exf_facilityMonitoring_request>
+<https://napcore.eu/examples/examples%2Fsiri_exm_FM%2Fexf_facilityMonitoring_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_FM/exf_facilityMonitoring_request.xml"@en ;
     dct:source "examples/siri_exm_FM/exf_facilityMonitoring_request.xml"@en ;
@@ -10435,7 +10435,7 @@
     skos:isRelatedTo siri:StopMonitoringRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_FM-exf_facilityMonitoring_response>
+<https://napcore.eu/examples/examples%2Fsiri_exm_FM%2Fexf_facilityMonitoring_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_FM/exf_facilityMonitoring_response.xml"@en ;
     dct:source "examples/siri_exm_FM/exf_facilityMonitoring_response.xml"@en ;
@@ -10459,7 +10459,7 @@
     skos:isRelatedTo siri:SubscriptionResponse ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_FM-exf_facilityMonitoring_subscriptionRequest>
+<https://napcore.eu/examples/examples%2Fsiri_exm_FM%2Fexf_facilityMonitoring_subscriptionRequest.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_FM/exf_facilityMonitoring_subscriptionRequest.xml"@en ;
     dct:source "examples/siri_exm_FM/exf_facilityMonitoring_subscriptionRequest.xml"@en ;
@@ -10473,7 +10473,7 @@
     skos:isRelatedTo siri:SubscriptionRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_GM-exm_generalMessage_capabilityResponse>
+<https://napcore.eu/examples/examples%2Fsiri_exm_GM%2Fexm_generalMessage_capabilityResponse.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_GM/exm_generalMessage_capabilityResponse.xml"@en ;
     dct:source "examples/siri_exm_GM/exm_generalMessage_capabilityResponse.xml"@en ;
@@ -10501,7 +10501,7 @@
     skos:isRelatedTo siri:ResponseStatus ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_GM-exm_generalMessage_request>
+<https://napcore.eu/examples/examples%2Fsiri_exm_GM%2Fexm_generalMessage_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_GM/exm_generalMessage_request.xml"@en ;
     dct:source "examples/siri_exm_GM/exm_generalMessage_request.xml"@en ;
@@ -10512,7 +10512,7 @@
     skos:isRelatedTo siri:InfoChannelRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_GM-exm_generalMessage_response>
+<https://napcore.eu/examples/examples%2Fsiri_exm_GM%2Fexm_generalMessage_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_GM/exm_generalMessage_response.xml"@en ;
     dct:source "examples/siri_exm_GM/exm_generalMessage_response.xml"@en ;
@@ -10526,7 +10526,7 @@
     skos:isRelatedTo siri:ResponseStatus ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_GM-exm_generalMessage_response_embed>
+<https://napcore.eu/examples/examples%2Fsiri_exm_GM%2Fexm_generalMessage_response_embed.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_GM/exm_generalMessage_response_embed.xml"@en ;
     dct:source "examples/siri_exm_GM/exm_generalMessage_response_embed.xml"@en ;
@@ -10542,7 +10542,7 @@
     skos:isRelatedTo siri:VerificationStatus ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_GM-exm_generalMessage_subscriptionRequest>
+<https://napcore.eu/examples/examples%2Fsiri_exm_GM%2Fexm_generalMessage_subscriptionRequest.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_GM/exm_generalMessage_subscriptionRequest.xml"@en ;
     dct:source "examples/siri_exm_GM/exm_generalMessage_subscriptionRequest.xml"@en ;
@@ -10552,7 +10552,7 @@
     skos:isRelatedTo siri:SubscriptionRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_PT-ext_productionTimetable_capabilitiesResponse>
+<https://napcore.eu/examples/examples%2Fsiri_exm_PT%2Fext_productionTimetable_capabilitiesResponse.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_PT/ext_productionTimetable_capabilitiesResponse.xml"@en ;
     dct:source "examples/siri_exm_PT/ext_productionTimetable_capabilitiesResponse.xml"@en ;
@@ -10597,14 +10597,14 @@
     skos:isRelatedTo siri:SubscriptionResponse ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_PT-ext_productionTimetable_request>
+<https://napcore.eu/examples/examples%2Fsiri_exm_PT%2Fext_productionTimetable_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_PT/ext_productionTimetable_request.xml"@en ;
     dct:source "examples/siri_exm_PT/ext_productionTimetable_request.xml"@en ;
     skos:isRelatedTo siri:ProductionTimetableRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_PT-ext_productionTimetable_response>
+<https://napcore.eu/examples/examples%2Fsiri_exm_PT%2Fext_productionTimetable_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_PT/ext_productionTimetable_response.xml"@en ;
     dct:source "examples/siri_exm_PT/ext_productionTimetable_response.xml"@en ;
@@ -10655,7 +10655,7 @@
     skos:isRelatedTo siri:VisitNumber ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_PT-ext_productionTimetable_subscriptionRequest>
+<https://napcore.eu/examples/examples%2Fsiri_exm_PT%2Fext_productionTimetable_subscriptionRequest.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_PT/ext_productionTimetable_subscriptionRequest.xml"@en ;
     dct:source "examples/siri_exm_PT/ext_productionTimetable_subscriptionRequest.xml"@en ;
@@ -10665,7 +10665,7 @@
     skos:isRelatedTo siri:SubscriptionRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_SM-exp_stopMonitoring_permissions>
+<https://napcore.eu/examples/examples%2Fsiri_exm_SM%2Fexp_stopMonitoring_permissions.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SM/exp_stopMonitoring_permissions.xml"@en ;
     dct:source "examples/siri_exm_SM/exp_stopMonitoring_permissions.xml"@en ;
@@ -10682,7 +10682,7 @@
     skos:isRelatedTo siri:StopMonitoringRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_SM-exs_stopMonitoring_capabilitiesResponse>
+<https://napcore.eu/examples/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_capabilitiesResponse.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SM/exs_stopMonitoring_capabilitiesResponse.xml"@en ;
     dct:source "examples/siri_exm_SM/exs_stopMonitoring_capabilitiesResponse.xml"@en ;
@@ -10723,7 +10723,7 @@
     skos:isRelatedTo siri:VisitNumber ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_SM-exs_stopMonitoring_request>
+<https://napcore.eu/examples/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SM/exs_stopMonitoring_request.xml"@en ;
     dct:source "examples/siri_exm_SM/exs_stopMonitoring_request.xml"@en ;
@@ -10733,14 +10733,14 @@
     skos:isRelatedTo siri:StopMonitoringRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_SM-exs_stopMonitoring_request_simple>
+<https://napcore.eu/examples/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_request_simple.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SM/exs_stopMonitoring_request_simple.xml"@en ;
     dct:source "examples/siri_exm_SM/exs_stopMonitoring_request_simple.xml"@en ;
     skos:isRelatedTo siri:StopMonitoringRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_SM-exs_stopMonitoring_response>
+<https://napcore.eu/examples/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SM/exs_stopMonitoring_response.xml"@en ;
     dct:source "examples/siri_exm_SM/exs_stopMonitoring_response.xml"@en ;
@@ -10796,7 +10796,7 @@
     skos:isRelatedTo siri:VisitNumber ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_SM-exs_stopMonitoring_response_complex>
+<https://napcore.eu/examples/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_response_complex.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SM/exs_stopMonitoring_response_complex.xml"@en ;
     dct:source "examples/siri_exm_SM/exs_stopMonitoring_response_complex.xml"@en ;
@@ -10881,7 +10881,7 @@
     skos:isRelatedTo siri:VisitNumber ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_SM-exs_stopMonitoring_response_simple>
+<https://napcore.eu/examples/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_response_simple.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SM/exs_stopMonitoring_response_simple.xml"@en ;
     dct:source "examples/siri_exm_SM/exs_stopMonitoring_response_simple.xml"@en ;
@@ -10901,7 +10901,7 @@
     skos:isRelatedTo siri:VehicleMonitoringDelivery ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_SM-exs_stopMonitoring_subscriptionRequest>
+<https://napcore.eu/examples/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_subscriptionRequest.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SM/exs_stopMonitoring_subscriptionRequest.xml"@en ;
     dct:source "examples/siri_exm_SM/exs_stopMonitoring_subscriptionRequest.xml"@en ;
@@ -10912,7 +10912,7 @@
     skos:isRelatedTo siri:SubscriptionRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_SM-exs_stopMonitoring_subscriptionRequest_simple>
+<https://napcore.eu/examples/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_subscriptionRequest_simple.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SM/exs_stopMonitoring_subscriptionRequest_simple.xml"@en ;
     dct:source "examples/siri_exm_SM/exs_stopMonitoring_subscriptionRequest_simple.xml"@en ;
@@ -10922,7 +10922,7 @@
     skos:isRelatedTo siri:SubscriptionRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_ST-exs_stopTimetable_capabilitiesResponse>
+<https://napcore.eu/examples/examples%2Fsiri_exm_ST%2Fexs_stopTimetable_capabilitiesResponse.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_ST/exs_stopTimetable_capabilitiesResponse.xml"@en ;
     dct:source "examples/siri_exm_ST/exs_stopTimetable_capabilitiesResponse.xml"@en ;
@@ -10955,14 +10955,14 @@
     skos:isRelatedTo siri:StopTimetableServiceCapabilities ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_ST-exs_stopTimetable_request>
+<https://napcore.eu/examples/examples%2Fsiri_exm_ST%2Fexs_stopTimetable_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_ST/exs_stopTimetable_request.xml"@en ;
     dct:source "examples/siri_exm_ST/exs_stopTimetable_request.xml"@en ;
     skos:isRelatedTo siri:StopMonitoringRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_ST-exs_stopTimetable_response>
+<https://napcore.eu/examples/examples%2Fsiri_exm_ST%2Fexs_stopTimetable_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_ST/exs_stopTimetable_response.xml"@en ;
     dct:source "examples/siri_exm_ST/exs_stopTimetable_response.xml"@en ;
@@ -10986,7 +10986,7 @@
     skos:isRelatedTo siri:VisitNumber ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_ST-exs_stopTimetable_subscriptionRequest>
+<https://napcore.eu/examples/examples%2Fsiri_exm_ST%2Fexs_stopTimetable_subscriptionRequest.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_ST/exs_stopTimetable_subscriptionRequest.xml"@en ;
     dct:source "examples/siri_exm_ST/exs_stopTimetable_subscriptionRequest.xml"@en ;
@@ -10997,7 +10997,7 @@
     skos:isRelatedTo siri:SubscriptionRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_SX-VDV736_exm-SX_1010_first_message>
+<https://napcore.eu/examples/examples%2Fsiri_exm_SX%2FVDV736_exm%2FSX_1010_first_message.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SX/VDV736_exm/SX_1010_first_message.xml"@en ;
     dct:source "examples/siri_exm_SX/VDV736_exm/SX_1010_first_message.xml"@en ;
@@ -11012,7 +11012,7 @@
     skos:isRelatedTo siri:SubscriptionResponse ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_SX-VDV736_exm-SX_1022_main_message>
+<https://napcore.eu/examples/examples%2Fsiri_exm_SX%2FVDV736_exm%2FSX_1022_main_message.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SX/VDV736_exm/SX_1022_main_message.xml"@en ;
     dct:source "examples/siri_exm_SX/VDV736_exm/SX_1022_main_message.xml"@en ;
@@ -11029,7 +11029,7 @@
     skos:isRelatedTo siri:SubscriptionResponse ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_SX-VDV736_exm-SX_1135_main_message_update>
+<https://napcore.eu/examples/examples%2Fsiri_exm_SX%2FVDV736_exm%2FSX_1135_main_message_update.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SX/VDV736_exm/SX_1135_main_message_update.xml"@en ;
     dct:source "examples/siri_exm_SX/VDV736_exm/SX_1135_main_message_update.xml"@en ;
@@ -11046,7 +11046,7 @@
     skos:isRelatedTo siri:SubscriptionResponse ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_SX-VDV736_exm-SX_1247_end_message>
+<https://napcore.eu/examples/examples%2Fsiri_exm_SX%2FVDV736_exm%2FSX_1247_end_message.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SX/VDV736_exm/SX_1247_end_message.xml"@en ;
     dct:source "examples/siri_exm_SX/VDV736_exm/SX_1247_end_message.xml"@en ;
@@ -11060,7 +11060,7 @@
     skos:isRelatedTo siri:SubscriptionResponse ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_SX-exx_situationExchangeResponse>
+<https://napcore.eu/examples/examples%2Fsiri_exm_SX%2Fexx_situationExchangeResponse.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SX/exx_situationExchangeResponse.xml"@en ;
     dct:source "examples/siri_exm_SX/exx_situationExchangeResponse.xml"@en ;
@@ -11087,7 +11087,7 @@
     skos:isRelatedTo siri:VerificationStatus ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_SX-exx_situationExchange_ATOC>
+<https://napcore.eu/examples/examples%2Fsiri_exm_SX%2Fexx_situationExchange_ATOC.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SX/exx_situationExchange_ATOC.xml"@en ;
     dct:source "examples/siri_exm_SX/exx_situationExchange_ATOC.xml"@en ;
@@ -11108,7 +11108,7 @@
     skos:isRelatedTo siri:SituationNumber ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_SX-exx_situationExchange_Pt>
+<https://napcore.eu/examples/examples%2Fsiri_exm_SX%2Fexx_situationExchange_Pt.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SX/exx_situationExchange_Pt.xml"@en ;
     dct:source "examples/siri_exm_SX/exx_situationExchange_Pt.xml"@en ;
@@ -11129,7 +11129,7 @@
     skos:isRelatedTo siri:SituationNumber ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_SX-exx_situationExchange_capabilityResponse>
+<https://napcore.eu/examples/examples%2Fsiri_exm_SX%2Fexx_situationExchange_capabilityResponse.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SX/exx_situationExchange_capabilityResponse.xml"@en ;
     dct:source "examples/siri_exm_SX/exx_situationExchange_capabilityResponse.xml"@en ;
@@ -11159,7 +11159,7 @@
     skos:isRelatedTo siri:SituationExchangeServiceCapabilities ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_SX-exx_situationExchange_request>
+<https://napcore.eu/examples/examples%2Fsiri_exm_SX%2Fexx_situationExchange_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SX/exx_situationExchange_request.xml"@en ;
     dct:source "examples/siri_exm_SX/exx_situationExchange_request.xml"@en ;
@@ -11167,14 +11167,14 @@
     skos:isRelatedTo siri:SituationExchangeRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_SX-exx_situationExchange_request_simple>
+<https://napcore.eu/examples/examples%2Fsiri_exm_SX%2Fexx_situationExchange_request_simple.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SX/exx_situationExchange_request_simple.xml"@en ;
     dct:source "examples/siri_exm_SX/exx_situationExchange_request_simple.xml"@en ;
     skos:isRelatedTo siri:SituationExchangeRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_SX-exx_situationExchange_response>
+<https://napcore.eu/examples/examples%2Fsiri_exm_SX%2Fexx_situationExchange_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SX/exx_situationExchange_response.xml"@en ;
     dct:source "examples/siri_exm_SX/exx_situationExchange_response.xml"@en ;
@@ -11201,7 +11201,7 @@
     skos:isRelatedTo siri:VerificationStatus ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_SX-exx_situationExchange_road>
+<https://napcore.eu/examples/examples%2Fsiri_exm_SX%2Fexx_situationExchange_road.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SX/exx_situationExchange_road.xml"@en ;
     dct:source "examples/siri_exm_SX/exx_situationExchange_road.xml"@en ;
@@ -11219,7 +11219,7 @@
     skos:isRelatedTo siri:SituationNumber ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_SX-exx_situationExchange_subscriptionRequest>
+<https://napcore.eu/examples/examples%2Fsiri_exm_SX%2Fexx_situationExchange_subscriptionRequest.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SX/exx_situationExchange_subscriptionRequest.xml"@en ;
     dct:source "examples/siri_exm_SX/exx_situationExchange_subscriptionRequest.xml"@en ;
@@ -11230,7 +11230,7 @@
     skos:isRelatedTo siri:SubscriptionRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_VM-exv_vehicleMonitoring_capabilitiesResponse>
+<https://napcore.eu/examples/examples%2Fsiri_exm_VM%2Fexv_vehicleMonitoring_capabilitiesResponse.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_VM/exv_vehicleMonitoring_capabilitiesResponse.xml"@en ;
     dct:source "examples/siri_exm_VM/exv_vehicleMonitoring_capabilitiesResponse.xml"@en ;
@@ -11273,7 +11273,7 @@
     skos:isRelatedTo siri:VehicleMonitoringSubscriptionRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_VM-exv_vehicleMonitoring_request>
+<https://napcore.eu/examples/examples%2Fsiri_exm_VM%2Fexv_vehicleMonitoring_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_VM/exv_vehicleMonitoring_request.xml"@en ;
     dct:source "examples/siri_exm_VM/exv_vehicleMonitoring_request.xml"@en ;
@@ -11281,14 +11281,14 @@
     skos:isRelatedTo siri:VehicleMonitoringRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_VM-exv_vehicleMonitoring_request_simple>
+<https://napcore.eu/examples/examples%2Fsiri_exm_VM%2Fexv_vehicleMonitoring_request_simple.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_VM/exv_vehicleMonitoring_request_simple.xml"@en ;
     dct:source "examples/siri_exm_VM/exv_vehicleMonitoring_request_simple.xml"@en ;
     skos:isRelatedTo siri:VehicleMonitoringRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_VM-exv_vehicleMonitoring_response>
+<https://napcore.eu/examples/examples%2Fsiri_exm_VM%2Fexv_vehicleMonitoring_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_VM/exv_vehicleMonitoring_response.xml"@en ;
     dct:source "examples/siri_exm_VM/exv_vehicleMonitoring_response.xml"@en ;
@@ -11333,7 +11333,7 @@
     skos:isRelatedTo siri:VisitNumber ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_VM-exv_vehicleMonitoring_response_simple>
+<https://napcore.eu/examples/examples%2Fsiri_exm_VM%2Fexv_vehicleMonitoring_response_simple.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_VM/exv_vehicleMonitoring_response_simple.xml"@en ;
     dct:source "examples/siri_exm_VM/exv_vehicleMonitoring_response_simple.xml"@en ;
@@ -11345,7 +11345,7 @@
     skos:isRelatedTo siri:VehicleMonitoringDelivery ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_VM-exv_vehicleMonitoring_responsex_simple>
+<https://napcore.eu/examples/examples%2Fsiri_exm_VM%2Fexv_vehicleMonitoring_responsex_simple.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_VM/exv_vehicleMonitoring_responsex_simple.xml"@en ;
     dct:source "examples/siri_exm_VM/exv_vehicleMonitoring_responsex_simple.xml"@en ;
@@ -11357,7 +11357,7 @@
     skos:isRelatedTo siri:VehicleMonitoringDelivery ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exm_VM-exv_vehicleMonitoring_subscriptionRequest>
+<https://napcore.eu/examples/examples%2Fsiri_exm_VM%2Fexv_vehicleMonitoring_subscriptionRequest.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_VM/exv_vehicleMonitoring_subscriptionRequest.xml"@en ;
     dct:source "examples/siri_exm_VM/exv_vehicleMonitoring_subscriptionRequest.xml"@en ;
@@ -11367,7 +11367,7 @@
     skos:isRelatedTo siri:VehicleMonitoringSubscriptionRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exu_capability-exd_allServices_capabilitiesRequest>
+<https://napcore.eu/examples/examples%2Fsiri_exu_capability%2Fexd_allServices_capabilitiesRequest.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exu_capability/exd_allServices_capabilitiesRequest.xml"@en ;
     dct:source "examples/siri_exu_capability/exd_allServices_capabilitiesRequest.xml"@en ;
@@ -11394,7 +11394,7 @@
     skos:isRelatedTo siri:VehicleMonitoringRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exu_capability-exd_allServices_capabilitiesResponse>
+<https://napcore.eu/examples/examples%2Fsiri_exu_capability%2Fexd_allServices_capabilitiesResponse.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exu_capability/exd_allServices_capabilitiesResponse.xml"@en ;
     dct:source "examples/siri_exu_capability/exd_allServices_capabilitiesResponse.xml"@en ;
@@ -11488,14 +11488,14 @@
     skos:isRelatedTo siri:VisitNumber ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exu_discovery-exd_productCategories_discoveryRequest>
+<https://napcore.eu/examples/examples%2Fsiri_exu_discovery%2Fexd_productCategories_discoveryRequest.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exu_discovery/exd_productCategories_discoveryRequest.xml"@en ;
     dct:source "examples/siri_exu_discovery/exd_productCategories_discoveryRequest.xml"@en ;
     skos:isRelatedTo siri:ProductCategoriesRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exu_discovery-exd_productCategories_discoveryResponse>
+<https://napcore.eu/examples/examples%2Fsiri_exu_discovery%2Fexd_productCategories_discoveryResponse.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exu_discovery/exd_productCategories_discoveryResponse.xml"@en ;
     dct:source "examples/siri_exu_discovery/exd_productCategories_discoveryResponse.xml"@en ;
@@ -11503,7 +11503,7 @@
     skos:isRelatedTo siri:ProductCategory ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exu_discovery-exd_serviceFeatures_discoveryRequest>
+<https://napcore.eu/examples/examples%2Fsiri_exu_discovery%2Fexd_serviceFeatures_discoveryRequest.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exu_discovery/exd_serviceFeatures_discoveryRequest.xml"@en ;
     dct:source "examples/siri_exu_discovery/exd_serviceFeatures_discoveryRequest.xml"@en ;
@@ -11511,7 +11511,7 @@
     skos:isRelatedTo siri:ServiceFeaturesRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exu_discovery-exd_serviceFeatures_discoveryResponse>
+<https://napcore.eu/examples/examples%2Fsiri_exu_discovery%2Fexd_serviceFeatures_discoveryResponse.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exu_discovery/exd_serviceFeatures_discoveryResponse.xml"@en ;
     dct:source "examples/siri_exu_discovery/exd_serviceFeatures_discoveryResponse.xml"@en ;
@@ -11519,7 +11519,7 @@
     skos:isRelatedTo siri:ServiceFeaturesDelivery ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exu_discovery-exd_stopPoints_discoveryResponse>
+<https://napcore.eu/examples/examples%2Fsiri_exu_discovery%2Fexd_stopPoints_discoveryResponse.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exu_discovery/exd_stopPoints_discoveryResponse.xml"@en ;
     dct:source "examples/siri_exu_discovery/exd_stopPoints_discoveryResponse.xml"@en ;
@@ -11527,7 +11527,7 @@
     skos:isRelatedTo siri:ServiceFeaturesDelivery ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exu_discovery-exd_vehicleFeatures_discoveryRequest>
+<https://napcore.eu/examples/examples%2Fsiri_exu_discovery%2Fexd_vehicleFeatures_discoveryRequest.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exu_discovery/exd_vehicleFeatures_discoveryRequest.xml"@en ;
     dct:source "examples/siri_exu_discovery/exd_vehicleFeatures_discoveryRequest.xml"@en ;
@@ -11535,7 +11535,7 @@
     skos:isRelatedTo siri:VehicleFeaturesRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-siri_exu_discovery-exd_vehicleFeatures_discoveryResponse>
+<https://napcore.eu/examples/examples%2Fsiri_exu_discovery%2Fexd_vehicleFeatures_discoveryResponse.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exu_discovery/exd_vehicleFeatures_discoveryResponse.xml"@en ;
     dct:source "examples/siri_exu_discovery/exd_vehicleFeatures_discoveryResponse.xml"@en ;
@@ -11543,7 +11543,7 @@
     skos:isRelatedTo siri:VehicleFeaturesDelivery ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-efp-FX-PI-01_ParisExample CD1-nk1>
+<https://napcore.eu/examples/examples%2Fstandards%2Fefp%2FFX-PI-01_ParisExample%20CD1-nk1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/efp/FX-PI-01_ParisExample CD1-nk1.xml"@en ;
     dct:source "examples/standards/efp/FX-PI-01_ParisExample CD1-nk1.xml"@en ;
@@ -11663,7 +11663,7 @@
     skos:isRelatedTo siri:TramSubmode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-efp-FX-PI-01_ParisExample CD1>
+<https://napcore.eu/examples/examples%2Fstandards%2Fefp%2FFX-PI-01_ParisExample%20CD1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/efp/FX-PI-01_ParisExample CD1.xml"@en ;
     dct:source "examples/standards/efp/FX-PI-01_ParisExample CD1.xml"@en ;
@@ -11779,7 +11779,7 @@
     skos:isRelatedTo siri:TramSubmode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-efp-FX-PI-01_ParisExample>
+<https://napcore.eu/examples/examples%2Fstandards%2Fefp%2FFX-PI-01_ParisExample.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/efp/FX-PI-01_ParisExample.xml"@en ;
     dct:source "examples/standards/efp/FX-PI-01_ParisExample.xml"@en ;
@@ -11907,7 +11907,7 @@
     skos:isRelatedTo siri:TramSubmode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-efp-NO_RailExample>
+<https://napcore.eu/examples/examples%2Fstandards%2Fefp%2FNO_RailExample.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/efp/NO_RailExample.xml"@en ;
     dct:source "examples/standards/efp/NO_RailExample.xml"@en ;
@@ -11989,7 +11989,7 @@
     skos:isRelatedTo netex:ValidityTrigger ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-efp-VVS_Fares_V1-ZoneSeries-nk3>
+<https://napcore.eu/examples/examples%2Fstandards%2Fefp%2FVVS_Fares_V1-ZoneSeries-nk3.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/efp/VVS_Fares_V1-ZoneSeries-nk3.xml"@en ;
     dct:source "examples/standards/efp/VVS_Fares_V1-ZoneSeries-nk3.xml"@en ;
@@ -12082,7 +12082,7 @@
     skos:isRelatedTo siri:TrainElement ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-efp-VVS_Fares_V1-nk1>
+<https://napcore.eu/examples/examples%2Fstandards%2Fefp%2FVVS_Fares_V1-nk1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/efp/VVS_Fares_V1-nk1.xml"@en ;
     dct:source "examples/standards/efp/VVS_Fares_V1-nk1.xml"@en ;
@@ -12153,7 +12153,7 @@
     skos:isRelatedTo siri:RailSubmode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-efp-VVS_Fares_V1-nk2>
+<https://napcore.eu/examples/examples%2Fstandards%2Fefp%2FVVS_Fares_V1-nk2.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/efp/VVS_Fares_V1-nk2.xml"@en ;
     dct:source "examples/standards/efp/VVS_Fares_V1-nk2.xml"@en ;
@@ -12234,7 +12234,7 @@
     skos:isRelatedTo siri:TrainElement ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-efp-VVS_Fares_V1>
+<https://napcore.eu/examples/examples%2Fstandards%2Fefp%2FVVS_Fares_V1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/efp/VVS_Fares_V1.xml"@en ;
     dct:source "examples/standards/efp/VVS_Fares_V1.xml"@en ;
@@ -12267,7 +12267,7 @@
     skos:isRelatedTo siri:FareClassFacility ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-epiap-Chur_Equipment_Pathlink_V1.0>
+<https://napcore.eu/examples/examples%2Fstandards%2Fepiap%2FChur_Equipment_Pathlink_V1.0.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/epiap/Chur_Equipment_Pathlink_V1.0.xml"@en ;
     dct:source "examples/standards/epiap/Chur_Equipment_Pathlink_V1.0.xml"@en ;
@@ -12318,7 +12318,7 @@
     skos:isRelatedTo siri:VehicleFeature ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-epiap-EPIAP_Accessibility_Chur_V08_vehicletypes>
+<https://napcore.eu/examples/examples%2Fstandards%2Fepiap%2FEPIAP_Accessibility_Chur_V08_vehicletypes.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/epiap/EPIAP_Accessibility_Chur_V08_vehicletypes.xml"@en ;
     dct:source "examples/standards/epiap/EPIAP_Accessibility_Chur_V08_vehicletypes.xml"@en ;
@@ -12415,7 +12415,7 @@
     skos:isRelatedTo siri:VehicleFeature ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-epiap-eiap_test1_ramp>
+<https://napcore.eu/examples/examples%2Fstandards%2Fepiap%2Feiap_test1_ramp.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/epiap/eiap_test1_ramp.xml"@en ;
     dct:source "examples/standards/epiap/eiap_test1_ramp.xml"@en ;
@@ -12507,7 +12507,7 @@
     skos:isRelatedTo siri:VehicleFeature ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-epiap-epiap_test_Crossing_Equipment>
+<https://napcore.eu/examples/examples%2Fstandards%2Fepiap%2Fepiap_test_Crossing_Equipment.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/epiap/epiap_test_Crossing_Equipment.xml"@en ;
     dct:source "examples/standards/epiap/epiap_test_Crossing_Equipment.xml"@en ;
@@ -12517,7 +12517,7 @@
     skos:isRelatedTo netex:TypeOfEquipment ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-epip-epip_common_profile>
+<https://napcore.eu/examples/examples%2Fstandards%2Fepip%2Fepip_common_profile.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/epip/epip_common_profile.xml"@en ;
     dct:source "examples/standards/epip/epip_common_profile.xml"@en ;
@@ -12532,14 +12532,14 @@
     skos:isRelatedTo netex:TypeOfOrganisationPart ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-era_uic-Netex_Eurostar mapping_era_2>
+<https://napcore.eu/examples/examples%2Fstandards%2Fera_uic%2FNetex_Eurostar%20mapping_era_2.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/era_uic/Netex_Eurostar mapping_era_2.xml"@en ;
     dct:source "examples/standards/era_uic/Netex_Eurostar mapping_era_2.xml"@en ;
     skos:isRelatedTo netex:Quay ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-era_uic-Netex_Eurostar_stations>
+<https://napcore.eu/examples/examples%2Fstandards%2Fera_uic%2FNetex_Eurostar_stations.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/era_uic/Netex_Eurostar_stations.xml"@en ;
     dct:source "examples/standards/era_uic/Netex_Eurostar_stations.xml"@en ;
@@ -12548,7 +12548,7 @@
     skos:isRelatedTo netex:SiteConnection ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-era_uic-Netex_era_uic_Stations_SSP_Se_1>
+<https://napcore.eu/examples/examples%2Fstandards%2Fera_uic%2FNetex_era_uic_Stations_SSP_Se_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/era_uic/Netex_era_uic_Stations_SSP_Se_1.xml"@en ;
     dct:source "examples/standards/era_uic/Netex_era_uic_Stations_SSP_Se_1.xml"@en ;
@@ -12556,7 +12556,7 @@
     skos:isRelatedTo netex:GeneralOrganisation ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-era_uic-Netex_era_uic_Stations_Se_1>
+<https://napcore.eu/examples/examples%2Fstandards%2Fera_uic%2FNetex_era_uic_Stations_Se_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/era_uic/Netex_era_uic_Stations_Se_1.xml"@en ;
     dct:source "examples/standards/era_uic/Netex_era_uic_Stations_Se_1.xml"@en ;
@@ -12566,7 +12566,7 @@
     skos:isRelatedTo netex:Locale ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-era_uic-Netex_era_uic_complexsite>
+<https://napcore.eu/examples/examples%2Fstandards%2Fera_uic%2FNetex_era_uic_complexsite.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/era_uic/Netex_era_uic_complexsite.xml"@en ;
     dct:source "examples/standards/era_uic/Netex_era_uic_complexsite.xml"@en ;
@@ -12575,7 +12575,7 @@
     skos:isRelatedTo netex:SiteConnection ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-era_uic-Netex_era_uic_joiningsplitting>
+<https://napcore.eu/examples/examples%2Fstandards%2Fera_uic%2FNetex_era_uic_joiningsplitting.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/era_uic/Netex_era_uic_joiningsplitting.xml"@en ;
     dct:source "examples/standards/era_uic/Netex_era_uic_joiningsplitting.xml"@en ;
@@ -12606,14 +12606,14 @@
     skos:isRelatedTo siri:VehicleAtStop ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-era_uic-Netex_era_uic_scheduledstoppointsforaregion>
+<https://napcore.eu/examples/examples%2Fstandards%2Fera_uic%2FNetex_era_uic_scheduledstoppointsforaregion.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/era_uic/Netex_era_uic_scheduledstoppointsforaregion.xml"@en ;
     dct:source "examples/standards/era_uic/Netex_era_uic_scheduledstoppointsforaregion.xml"@en ;
     skos:isRelatedTo netex:Locale ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-era_uic-Netex_era_uic_simplepark(Disneyland)>
+<https://napcore.eu/examples/examples%2Fstandards%2Fera_uic%2FNetex_era_uic_simplepark%28Disneyland%29.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/era_uic/Netex_era_uic_simplepark(Disneyland).xml"@en ;
     dct:source "examples/standards/era_uic/Netex_era_uic_simplepark(Disneyland).xml"@en ;
@@ -12623,7 +12623,7 @@
     skos:isRelatedTo netex:SitePathLink ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-era_uic-Netex_era_uic_simpletimetable>
+<https://napcore.eu/examples/examples%2Fstandards%2Fera_uic%2FNetex_era_uic_simpletimetable.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/era_uic/Netex_era_uic_simpletimetable.xml"@en ;
     dct:source "examples/standards/era_uic/Netex_era_uic_simpletimetable.xml"@en ;
@@ -12633,7 +12633,7 @@
     skos:isRelatedTo siri:FareClasses ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-era_uic-Netex_era_uic_timetable_hack_01>
+<https://napcore.eu/examples/examples%2Fstandards%2Fera_uic%2FNetex_era_uic_timetable_hack_01.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/era_uic/Netex_era_uic_timetable_hack_01.xml"@en ;
     dct:source "examples/standards/era_uic/Netex_era_uic_timetable_hack_01.xml"@en ;
@@ -12642,7 +12642,7 @@
     skos:isRelatedTo netex:TypeOfNotice ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-fxc-FX-PI-01_ParisExample>
+<https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_ParisExample.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/fxc/FX-PI-01_ParisExample.xml"@en ;
     dct:source "examples/standards/fxc/FX-PI-01_ParisExample.xml"@en ;
@@ -12743,7 +12743,7 @@
     skos:isRelatedTo siri:TramSubmode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-fxc-FX-PI-01_UK_AMSY_NETWORK_FARE_Arriva-pass_20200417>
+<https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_AMSY_NETWORK_FARE_Arriva-pass_20200417.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/fxc/FX-PI-01_UK_AMSY_NETWORK_FARE_Arriva-pass_20200417.xml"@en ;
     dct:source "examples/standards/fxc/FX-PI-01_UK_AMSY_NETWORK_FARE_Arriva-pass_20200417.xml"@en ;
@@ -12845,7 +12845,7 @@
     skos:isRelatedTo siri:ProductCategory ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-fxc-FX-PI-01_UK_AMSY_NETWORK_FARE_Arriva-trip_20200417>
+<https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_AMSY_NETWORK_FARE_Arriva-trip_20200417.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/fxc/FX-PI-01_UK_AMSY_NETWORK_FARE_Arriva-trip_20200417.xml"@en ;
     dct:source "examples/standards/fxc/FX-PI-01_UK_AMSY_NETWORK_FARE_Arriva-trip_20200417.xml"@en ;
@@ -12932,7 +12932,7 @@
     skos:isRelatedTo siri:ProductCategory ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-fxc-FX-PI-01_UK_FBRI_LINE-FARE_WOE-Bristol-Line-48-trip-(stage)_2017-01-01>
+<https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_FBRI_LINE-FARE_WOE-Bristol-Line-48-trip-%28stage%29_2017-01-01.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/fxc/FX-PI-01_UK_FBRI_LINE-FARE_WOE-Bristol-Line-48-trip-(stage)_2017-01-01.xml"@en ;
     dct:source "examples/standards/fxc/FX-PI-01_UK_FBRI_LINE-FARE_WOE-Bristol-Line-48-trip-(stage)_2017-01-01.xml"@en ;
@@ -13042,7 +13042,7 @@
     skos:isRelatedTo siri:ProductCategory ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-fxc-FX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-(mixed)_2017-01-01 (5)>
+<https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-%28mixed%29_2017-01-01%20%285%29.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/fxc/FX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-(mixed)_2017-01-01 (5).xml"@en ;
     dct:source "examples/standards/fxc/FX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-(mixed)_2017-01-01 (5).xml"@en ;
@@ -13152,7 +13152,7 @@
     skos:isRelatedTo siri:InfoChannelRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-fxc-FX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-pass-(Z2Z)_2017-01-01>
+<https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-pass-%28Z2Z%29_2017-01-01.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/fxc/FX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-pass-(Z2Z)_2017-01-01.xml"@en ;
     dct:source "examples/standards/fxc/FX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-pass-(Z2Z)_2017-01-01.xml"@en ;
@@ -13272,7 +13272,7 @@
     skos:isRelatedTo siri:InfoChannelRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-fxc-FX-PI-01_UK_FSYO_NETWORK_FARE_FirstSheffield-pass-by-period_20200310>
+<https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_FSYO_NETWORK_FARE_FirstSheffield-pass-by-period_20200310.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/fxc/FX-PI-01_UK_FSYO_NETWORK_FARE_FirstSheffield-pass-by-period_20200310.xml"@en ;
     dct:source "examples/standards/fxc/FX-PI-01_UK_FSYO_NETWORK_FARE_FirstSheffield-pass-by-period_20200310.xml"@en ;
@@ -13349,7 +13349,7 @@
     skos:isRelatedTo siri:SubscriptionRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-fxc-FX-PI-01_UK_FSYO_NETWORK_FARE_FirstSheffield-pass-by-user_20200310>
+<https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_FSYO_NETWORK_FARE_FirstSheffield-pass-by-user_20200310.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/fxc/FX-PI-01_UK_FSYO_NETWORK_FARE_FirstSheffield-pass-by-user_20200310.xml"@en ;
     dct:source "examples/standards/fxc/FX-PI-01_UK_FSYO_NETWORK_FARE_FirstSheffield-pass-by-user_20200310.xml"@en ;
@@ -13422,7 +13422,7 @@
     skos:isRelatedTo siri:SubscriptionRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-fxc-FX-PI-01_UK_FSYO_NETWORK_FARE_FirstSheffield-pass-simple_20200310>
+<https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_FSYO_NETWORK_FARE_FirstSheffield-pass-simple_20200310.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/fxc/FX-PI-01_UK_FSYO_NETWORK_FARE_FirstSheffield-pass-simple_20200310.xml"@en ;
     dct:source "examples/standards/fxc/FX-PI-01_UK_FSYO_NETWORK_FARE_FirstSheffield-pass-simple_20200310.xml"@en ;
@@ -13487,7 +13487,7 @@
     skos:isRelatedTo siri:ParkingFacility ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-fxc-FX-PI-01_UK_FYOR_LINE-FARE_FYOR-Line-10-trip-(gtfs)_2018-11-01>
+<https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_FYOR_LINE-FARE_FYOR-Line-10-trip-%28gtfs%29_2018-11-01.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/fxc/FX-PI-01_UK_FYOR_LINE-FARE_FYOR-Line-10-trip-(gtfs)_2018-11-01.xml"@en ;
     dct:source "examples/standards/fxc/FX-PI-01_UK_FYOR_LINE-FARE_FYOR-Line-10-trip-(gtfs)_2018-11-01.xml"@en ;
@@ -13525,7 +13525,7 @@
     skos:isRelatedTo siri:FilterByVehicleMode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-fxc-FX-PI-01_UK_FYOR_LINE-FARE_FYOR-Line-26-trip-(stages-Z2Z)-20181101>
+<https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_FYOR_LINE-FARE_FYOR-Line-26-trip-%28stages-Z2Z%29-20181101.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/fxc/FX-PI-01_UK_FYOR_LINE-FARE_FYOR-Line-26-trip-(stages-Z2Z)-20181101.xml"@en ;
     dct:source "examples/standards/fxc/FX-PI-01_UK_FYOR_LINE-FARE_FYOR-Line-26-trip-(stages-Z2Z)-20181101.xml"@en ;
@@ -13563,7 +13563,7 @@
     skos:isRelatedTo siri:InfoChannelRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-fxc-FX-PI-01_UK_HCTY_LINE_FARE_Line-016-trip_2020-03-11T22_19_20.696Z>
+<https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_HCTY_LINE_FARE_Line-016-trip_2020-03-11T22_19_20.696Z.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/fxc/FX-PI-01_UK_HCTY_LINE_FARE_Line-016-trip_2020-03-11T22_19_20.696Z.xml"@en ;
     dct:source "examples/standards/fxc/FX-PI-01_UK_HCTY_LINE_FARE_Line-016-trip_2020-03-11T22_19_20.696Z.xml"@en ;
@@ -13612,7 +13612,7 @@
     skos:isRelatedTo siri:ParkingFacility ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-fxc-FX-PI-01_UK_MB_LINE_FARE_MB-Line-1-trip-(Z2Z)_20170101>
+<https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_MB_LINE_FARE_MB-Line-1-trip-%28Z2Z%29_20170101.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/fxc/FX-PI-01_UK_MB_LINE_FARE_MB-Line-1-trip-(Z2Z)_20170101.xml"@en ;
     dct:source "examples/standards/fxc/FX-PI-01_UK_MB_LINE_FARE_MB-Line-1-trip-(Z2Z)_20170101.xml"@en ;
@@ -13666,7 +13666,7 @@
     skos:isRelatedTo siri:ParkingFacility ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-fxc-FX-PI-01_UK_MB_LINE_FARE_MB-Line-1-trip-(Z2Z-basic)_20170101>
+<https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_MB_LINE_FARE_MB-Line-1-trip-%28Z2Z-basic%29_20170101.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/fxc/FX-PI-01_UK_MB_LINE_FARE_MB-Line-1-trip-(Z2Z-basic)_20170101.xml"@en ;
     dct:source "examples/standards/fxc/FX-PI-01_UK_MB_LINE_FARE_MB-Line-1-trip-(Z2Z-basic)_20170101.xml"@en ;
@@ -13720,7 +13720,7 @@
     skos:isRelatedTo siri:ParkingFacility ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-fxc-FX-PI-01_UK_MB_NETWORK_FARE_Metrorider-pass+others_20170101>
+<https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_MB_NETWORK_FARE_Metrorider-pass%2Bothers_20170101.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/fxc/FX-PI-01_UK_MB_NETWORK_FARE_Metrorider-pass+others_20170101.xml"@en ;
     dct:source "examples/standards/fxc/FX-PI-01_UK_MB_NETWORK_FARE_Metrorider-pass+others_20170101.xml"@en ;
@@ -13805,7 +13805,7 @@
     skos:isRelatedTo siri:OriginName ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-fxc-FX-PI-01_UK_MB_NETWORK_FARE_Metrorider-pass_20170101>
+<https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_MB_NETWORK_FARE_Metrorider-pass_20170101.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/fxc/FX-PI-01_UK_MB_NETWORK_FARE_Metrorider-pass_20170101.xml"@en ;
     dct:source "examples/standards/fxc/FX-PI-01_UK_MB_NETWORK_FARE_Metrorider-pass_20170101.xml"@en ;
@@ -13869,7 +13869,7 @@
     skos:isRelatedTo siri:OriginName ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-fxc-FX-PI-01_UK_MB_NETWORK_FARE_Metrorider-pass_basic_20170101>
+<https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_MB_NETWORK_FARE_Metrorider-pass_basic_20170101.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/fxc/FX-PI-01_UK_MB_NETWORK_FARE_Metrorider-pass_basic_20170101.xml"@en ;
     dct:source "examples/standards/fxc/FX-PI-01_UK_MB_NETWORK_FARE_Metrorider-pass_basic_20170101.xml"@en ;
@@ -13903,7 +13903,7 @@
     skos:isRelatedTo siri:FareClasses ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-fxc-FX-PI-01_UK_MYBUS_LINE_FARE_Line-3-trip-(p2p)_20190101>
+<https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_MYBUS_LINE_FARE_Line-3-trip-%28p2p%29_20190101.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/fxc/FX-PI-01_UK_MYBUS_LINE_FARE_Line-3-trip-(p2p)_20190101.xml"@en ;
     dct:source "examples/standards/fxc/FX-PI-01_UK_MYBUS_LINE_FARE_Line-3-trip-(p2p)_20190101.xml"@en ;
@@ -13911,7 +13911,7 @@
     skos:isRelatedTo netex:Layer ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-fxc-FX-PI-01_UK_TMSTR_NETWORK_FARE_Travelmaster-pass_20200315>
+<https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_TMSTR_NETWORK_FARE_Travelmaster-pass_20200315.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/fxc/FX-PI-01_UK_TMSTR_NETWORK_FARE_Travelmaster-pass_20200315.xml"@en ;
     dct:source "examples/standards/fxc/FX-PI-01_UK_TMSTR_NETWORK_FARE_Travelmaster-pass_20200315.xml"@en ;
@@ -13956,7 +13956,7 @@
     skos:isRelatedTo siri:FilterByVehicleMode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-fxc-uk_fxc_addon_HSP_plusbus>
+<https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2Fuk_fxc_addon_HSP_plusbus.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/fxc/uk_fxc_addon_HSP_plusbus.xml"@en ;
     dct:source "examples/standards/fxc/uk_fxc_addon_HSP_plusbus.xml"@en ;
@@ -14007,7 +14007,7 @@
     skos:isRelatedTo siri:RetailFacility ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-fxc-uk_fxc_common_profile>
+<https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2Fuk_fxc_common_profile.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/fxc/uk_fxc_common_profile.xml"@en ;
     dct:source "examples/standards/fxc/uk_fxc_common_profile.xml"@en ;
@@ -14025,7 +14025,7 @@
     skos:isRelatedTo netex:ZoneProjection ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-gbfs-Netex_gbfs_exm1>
+<https://napcore.eu/examples/examples%2Fstandards%2Fgbfs%2FNetex_gbfs_exm1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gbfs/Netex_gbfs_exm1.xml"@en ;
     dct:source "examples/standards/gbfs/Netex_gbfs_exm1.xml"@en ;
@@ -14047,14 +14047,14 @@
     skos:isRelatedTo siri:ParkingFacility ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-gtfs-Netex_gtfs_exm1_Agency_1>
+<https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_exm1_Agency_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_exm1_Agency_1.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_exm1_Agency_1.xml"@en ;
     skos:isRelatedTo netex:Authority ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-gtfs-Netex_gtfs_exm1_FareAttributes_1>
+<https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_exm1_FareAttributes_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_exm1_FareAttributes_1.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_exm1_FareAttributes_1.xml"@en ;
@@ -14062,7 +14062,7 @@
     skos:isRelatedTo netex:PurchaseWindow ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-gtfs-Netex_gtfs_exm1_FareRules_1>
+<https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_exm1_FareRules_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_exm1_FareRules_1.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_exm1_FareRules_1.xml"@en ;
@@ -14070,7 +14070,7 @@
     skos:isRelatedTo netex:PurchaseWindow ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-gtfs-Netex_gtfs_exm1_Frequencies_1>
+<https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_exm1_Frequencies_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_exm1_Frequencies_1.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_exm1_Frequencies_1.xml"@en ;
@@ -14080,7 +14080,7 @@
     skos:isRelatedTo netex:VehicleJourneyHeadway ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-gtfs-Netex_gtfs_exm1_Shapes_1>
+<https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_exm1_Shapes_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_exm1_Shapes_1.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_exm1_Shapes_1.xml"@en ;
@@ -14088,7 +14088,7 @@
     skos:isRelatedTo netex:LinkSequenceProjection ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-gtfs-Netex_gtfs_exm1_Transfers_1>
+<https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_exm1_Transfers_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_exm1_Transfers_1.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_exm1_Transfers_1.xml"@en ;
@@ -14098,7 +14098,7 @@
     skos:isRelatedTo siri:ConnectionTimetableRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-gtfs-Netex_gtfs_exm1_Trips_1>
+<https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_exm1_Trips_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_exm1_Trips_1.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_exm1_Trips_1.xml"@en ;
@@ -14108,7 +14108,7 @@
     skos:isRelatedTo netex:RouteLink ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-gtfs-Netex_gtfs_exm1_zz_Composite>
+<https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_exm1_zz_Composite.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_exm1_zz_Composite.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_exm1_zz_Composite.xml"@en ;
@@ -14131,70 +14131,70 @@
     skos:isRelatedTo siri:ConnectionTimetableDelivery ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-gtfs-Netex_gtfs_fares_Example_1_flatFare_unlimitedTransfer>
+<https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_fares_Example_1_flatFare_unlimitedTransfer.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_fares_Example_1_flatFare_unlimitedTransfer.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_fares_Example_1_flatFare_unlimitedTransfer.xml"@en ;
     skos:isRelatedTo netex:PurchaseWindow ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-gtfs-Netex_gtfs_fares_Example_2_flatFare_noTransfer>
+<https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_fares_Example_2_flatFare_noTransfer.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_fares_Example_2_flatFare_noTransfer.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_fares_Example_2_flatFare_noTransfer.xml"@en ;
     skos:isRelatedTo netex:PurchaseWindow ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-gtfs-Netex_gtfs_fares_Example_3_flatFare_90mTransfer>
+<https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_fares_Example_3_flatFare_90mTransfer.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_fares_Example_3_flatFare_90mTransfer.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_fares_Example_3_flatFare_90mTransfer.xml"@en ;
     skos:isRelatedTo netex:PurchaseWindow ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-gtfs-Netex_gtfs_fares_Example_4_flatFare_byLineGroup>
+<https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_fares_Example_4_flatFare_byLineGroup.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_fares_Example_4_flatFare_byLineGroup.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_fares_Example_4_flatFare_byLineGroup.xml"@en ;
     skos:isRelatedTo netex:PurchaseWindow ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-gtfs-Netex_gtfs_fares_Example_5_flatFare_feeToTransfer>
+<https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_fares_Example_5_flatFare_feeToTransfer.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_fares_Example_5_flatFare_feeToTransfer.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_fares_Example_5_flatFare_feeToTransfer.xml"@en ;
     skos:isRelatedTo netex:PurchaseWindow ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-gtfs-Netex_gtfs_fares_Example_6_pointToPointFare_anyRoute>
+<https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_fares_Example_6_pointToPointFare_anyRoute.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_fares_Example_6_pointToPointFare_anyRoute.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_fares_Example_6_pointToPointFare_anyRoute.xml"@en ;
     skos:isRelatedTo netex:PurchaseWindow ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-gtfs-Netex_gtfs_fares_Example_7_zoneSequenceFare>
+<https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_fares_Example_7_zoneSequenceFare.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_fares_Example_7_zoneSequenceFare.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_fares_Example_7_zoneSequenceFare.xml"@en ;
     skos:isRelatedTo netex:PurchaseWindow ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-neptune-Le Corbusier - SQYBUS-NeTEx-Profil Arret - External Quays>
+<https://napcore.eu/examples/examples%2Fstandards%2Fneptune%2FLe%20Corbusier%20-%20SQYBUS-NeTEx-Profil%20Arret%20-%20External%20Quays.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/neptune/Le Corbusier - SQYBUS-NeTEx-Profil Arret - External Quays.xml"@en ;
     dct:source "examples/standards/neptune/Le Corbusier - SQYBUS-NeTEx-Profil Arret - External Quays.xml"@en ;
     skos:isRelatedTo netex:RoadAddress ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-neptune-Le Corbusier - SQYBUS-NeTEx-Profil Arret>
+<https://napcore.eu/examples/examples%2Fstandards%2Fneptune%2FLe%20Corbusier%20-%20SQYBUS-NeTEx-Profil%20Arret.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/neptune/Le Corbusier - SQYBUS-NeTEx-Profil Arret.xml"@en ;
     dct:source "examples/standards/neptune/Le Corbusier - SQYBUS-NeTEx-Profil Arret.xml"@en ;
     skos:isRelatedTo netex:RoadAddress ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-neptune-RATP_Line7bis-extract-2009-NeTEx>
+<https://napcore.eu/examples/examples%2Fstandards%2Fneptune%2FRATP_Line7bis-extract-2009-NeTEx.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/neptune/RATP_Line7bis-extract-2009-NeTEx.xml"@en ;
     dct:source "examples/standards/neptune/RATP_Line7bis-extract-2009-NeTEx.xml"@en ;
@@ -14207,7 +14207,7 @@
     skos:isRelatedTo netex:TopographicProjection ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-noptis-NeTEx_Calendar_TimetableAndVehicleSchedule_PB2>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnoptis%2FNeTEx_Calendar_TimetableAndVehicleSchedule_PB2.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/noptis/NeTEx_Calendar_TimetableAndVehicleSchedule_PB2.xml"@en ;
     dct:source "examples/standards/noptis/NeTEx_Calendar_TimetableAndVehicleSchedule_PB2.xml"@en ;
@@ -14250,7 +14250,7 @@
     skos:isRelatedTo siri:OriginName ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-noptis-Netex_StopPlace_se_NOPTIS_Example_TEH_PA1>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnoptis%2FNetex_StopPlace_se_NOPTIS_Example_TEH_PA1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/noptis/Netex_StopPlace_se_NOPTIS_Example_TEH_PA1.xml"@en ;
     dct:source "examples/standards/noptis/Netex_StopPlace_se_NOPTIS_Example_TEH_PA1.xml"@en ;
@@ -14262,7 +14262,7 @@
     skos:isRelatedTo netex:TopographicProjection ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-noptis-Netex_StopPlace_se_NOPTIS_TEH_Style1_PB1>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnoptis%2FNetex_StopPlace_se_NOPTIS_TEH_Style1_PB1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/noptis/Netex_StopPlace_se_NOPTIS_TEH_Style1_PB1.xml"@en ;
     dct:source "examples/standards/noptis/Netex_StopPlace_se_NOPTIS_TEH_Style1_PB1.xml"@en ;
@@ -14273,14 +14273,14 @@
     skos:isRelatedTo netex:StopPlaceEntrance ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-frames-publicationDelivery>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fframes%2FpublicationDelivery.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/frames/publicationDelivery.xml"@en ;
     dct:source "examples/standards/norway/frames/publicationDelivery.xml"@en ;
     skos:isRelatedTo netex:PointOnRoute ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-network-FlexibleLine863-with-connection>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fnetwork%2FFlexibleLine863-with-connection.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/network/FlexibleLine863-with-connection.xml"@en ;
     dct:source "examples/standards/norway/network/FlexibleLine863-with-connection.xml"@en ;
@@ -14306,7 +14306,7 @@
     skos:isRelatedTo siri:TargetedVehicleJourney ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-network-Line61A>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fnetwork%2FLine61A.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/network/Line61A.xml"@en ;
     dct:source "examples/standards/norway/network/Line61A.xml"@en ;
@@ -14321,21 +14321,21 @@
     skos:isRelatedTo siri:TargetedVehicleJourney ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-other_resources-submodel-Branding>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fother_resources%2Fsubmodel-Branding.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/other_resources/submodel-Branding.xml"@en ;
     dct:source "examples/standards/norway/other_resources/submodel-Branding.xml"@en ;
     skos:isRelatedTo netex:Submode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-other_resources-submodel-DestinationDisplay>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fother_resources%2Fsubmodel-DestinationDisplay.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/other_resources/submodel-DestinationDisplay.xml"@en ;
     dct:source "examples/standards/norway/other_resources/submodel-DestinationDisplay.xml"@en ;
     skos:isRelatedTo netex:DestinationDisplayVariant ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-other_resources-submodel-PathLinkWithProjection-DEPRECATED>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fother_resources%2Fsubmodel-PathLinkWithProjection-DEPRECATED.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/other_resources/submodel-PathLinkWithProjection-DEPRECATED.xml"@en ;
     dct:source "examples/standards/norway/other_resources/submodel-PathLinkWithProjection-DEPRECATED.xml"@en ;
@@ -14345,7 +14345,7 @@
     skos:isRelatedTo netex:SitePathLink ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-other_resources-submodel-ServiceFacilitySet>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fother_resources%2Fsubmodel-ServiceFacilitySet.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/other_resources/submodel-ServiceFacilitySet.xml"@en ;
     dct:source "examples/standards/norway/other_resources/submodel-ServiceFacilitySet.xml"@en ;
@@ -14380,56 +14380,56 @@
     skos:isRelatedTo siri:PassengerCommsFacility ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-schedule-ServiceCalendar-DayType-AvailabilityCondition>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fschedule%2FServiceCalendar-DayType-AvailabilityCondition.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/schedule/ServiceCalendar-DayType-AvailabilityCondition.xml"@en ;
     dct:source "examples/standards/norway/schedule/ServiceCalendar-DayType-AvailabilityCondition.xml"@en ;
     skos:isRelatedTo netex:VehicleScheduleFrame ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-schedule-ServiceCalendar-DayTypeAssignments>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fschedule%2FServiceCalendar-DayTypeAssignments.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/schedule/ServiceCalendar-DayTypeAssignments.xml"@en ;
     dct:source "examples/standards/norway/schedule/ServiceCalendar-DayTypeAssignments.xml"@en ;
     skos:isRelatedTo netex:VehicleScheduleFrame ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-schedule-ServiceCalendar-OperatingPeriods-with-exceptions>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fschedule%2FServiceCalendar-OperatingPeriods-with-exceptions.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/schedule/ServiceCalendar-OperatingPeriods-with-exceptions.xml"@en ;
     dct:source "examples/standards/norway/schedule/ServiceCalendar-OperatingPeriods-with-exceptions.xml"@en ;
     skos:isRelatedTo netex:VehicleScheduleFrame ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-schedule-ServiceCalendar-OperatingPeriods>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fschedule%2FServiceCalendar-OperatingPeriods.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/schedule/ServiceCalendar-OperatingPeriods.xml"@en ;
     dct:source "examples/standards/norway/schedule/ServiceCalendar-OperatingPeriods.xml"@en ;
     skos:isRelatedTo netex:VehicleScheduleFrame ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-schedule-ServiceCalendar-calendar-ref>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fschedule%2FServiceCalendar-calendar-ref.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/schedule/ServiceCalendar-calendar-ref.xml"@en ;
     dct:source "examples/standards/norway/schedule/ServiceCalendar-calendar-ref.xml"@en ;
     skos:isRelatedTo netex:VehicleScheduleFrame ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-schedule-ServiceCalendar-example>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fschedule%2FServiceCalendar-example.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/schedule/ServiceCalendar-example.xml"@en ;
     dct:source "examples/standards/norway/schedule/ServiceCalendar-example.xml"@en ;
     skos:isRelatedTo netex:VehicleScheduleFrame ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-schedule-ServiceCalendar-test>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fschedule%2FServiceCalendar-test.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/schedule/ServiceCalendar-test.xml"@en ;
     dct:source "examples/standards/norway/schedule/ServiceCalendar-test.xml"@en ;
     skos:isRelatedTo netex:VehicleScheduleFrame ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-stops-BasicIndoorStopPlace_example>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fstops%2FBasicIndoorStopPlace_example.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/stops/BasicIndoorStopPlace_example.xml"@en ;
     dct:source "examples/standards/norway/stops/BasicIndoorStopPlace_example.xml"@en ;
@@ -14472,7 +14472,7 @@
     skos:isRelatedTo siri:SanitaryFacility ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-stops-BasicStopPlace-two-quays_example>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fstops%2FBasicStopPlace-two-quays_example.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/stops/BasicStopPlace-two-quays_example.xml"@en ;
     dct:source "examples/standards/norway/stops/BasicStopPlace-two-quays_example.xml"@en ;
@@ -14495,7 +14495,7 @@
     skos:isRelatedTo siri:PassengerInformationFacility ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-stops-BasicStopPlace_example>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fstops%2FBasicStopPlace_example.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/stops/BasicStopPlace_example.xml"@en ;
     dct:source "examples/standards/norway/stops/BasicStopPlace_example.xml"@en ;
@@ -14517,7 +14517,7 @@
     skos:isRelatedTo siri:PassengerInformationFacility ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-stops-OsloS_station_example>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fstops%2FOsloS_station_example.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/stops/OsloS_station_example.xml"@en ;
     dct:source "examples/standards/norway/stops/OsloS_station_example.xml"@en ;
@@ -14568,7 +14568,7 @@
     skos:isRelatedTo siri:VehicleFeature ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-stops-PointOfInterest>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fstops%2FPointOfInterest.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/stops/PointOfInterest.xml"@en ;
     dct:source "examples/standards/norway/stops/PointOfInterest.xml"@en ;
@@ -14608,7 +14608,7 @@
     skos:isRelatedTo opra:TypeOfDelay ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-stops-StopPlace-with-equipment-and-parking_example>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fstops%2FStopPlace-with-equipment-and-parking_example.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/stops/StopPlace-with-equipment-and-parking_example.xml"@en ;
     dct:source "examples/standards/norway/stops/StopPlace-with-equipment-and-parking_example.xml"@en ;
@@ -14660,7 +14660,7 @@
     skos:isRelatedTo siri:SanitaryFacility ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-stops-submodel-MonomodalStopPlace>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fstops%2Fsubmodel-MonomodalStopPlace.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/stops/submodel-MonomodalStopPlace.xml"@en ;
     dct:source "examples/standards/norway/stops/submodel-MonomodalStopPlace.xml"@en ;
@@ -14681,7 +14681,7 @@
     skos:isRelatedTo siri:PassengerInformationFacility ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-stops-submodel-StationWithEquipment>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fstops%2Fsubmodel-StationWithEquipment.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/stops/submodel-StationWithEquipment.xml"@en ;
     dct:source "examples/standards/norway/stops/submodel-StationWithEquipment.xml"@en ;
@@ -14719,7 +14719,7 @@
     skos:isRelatedTo siri:AirSubmode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-vehicles-submodel-CompoundTrain>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fvehicles%2Fsubmodel-CompoundTrain.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/vehicles/submodel-CompoundTrain.xml"@en ;
     dct:source "examples/standards/norway/vehicles/submodel-CompoundTrain.xml"@en ;
@@ -14728,7 +14728,7 @@
     skos:isRelatedTo siri:TrainInCompoundTrain ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-vehicles-submodel-Train>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fvehicles%2Fsubmodel-Train.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/vehicles/submodel-Train.xml"@en ;
     dct:source "examples/standards/norway/vehicles/submodel-Train.xml"@en ;
@@ -14741,7 +14741,7 @@
     skos:isRelatedTo siri:TrainElement ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-vehicles-submodel-Vehicle>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fvehicles%2Fsubmodel-Vehicle.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/vehicles/submodel-Vehicle.xml"@en ;
     dct:source "examples/standards/norway/vehicles/submodel-Vehicle.xml"@en ;
@@ -14751,7 +14751,7 @@
     skos:isRelatedTo opra:ActualFrameRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-norway-vehicles-submodel-VehicleType>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fvehicles%2Fsubmodel-VehicleType.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/vehicles/submodel-VehicleType.xml"@en ;
     dct:source "examples/standards/norway/vehicles/submodel-VehicleType.xml"@en ;
@@ -14759,7 +14759,7 @@
     skos:isRelatedTo netex:PassengerVehicleCapacity ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-nta-NTA-PI-01_EI_IR_LINE_OFFER__Journey00122_20200801>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnta%2FNTA-PI-01_EI_IR_LINE_OFFER__Journey00122_20200801.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/nta/NTA-PI-01_EI_IR_LINE_OFFER__Journey00122_20200801.xml"@en ;
     dct:source "examples/standards/nta/NTA-PI-01_EI_IR_LINE_OFFER__Journey00122_20200801.xml"@en ;
@@ -14779,7 +14779,7 @@
     skos:isRelatedTo siri:TargetedVehicleJourney ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-nta-NTA-PI-01_EI_LUAS_LINE_OFFER_LUAS_Line93Calls_20200701>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnta%2FNTA-PI-01_EI_LUAS_LINE_OFFER_LUAS_Line93Calls_20200701.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/nta/NTA-PI-01_EI_LUAS_LINE_OFFER_LUAS_Line93Calls_20200701.xml"@en ;
     dct:source "examples/standards/nta/NTA-PI-01_EI_LUAS_LINE_OFFER_LUAS_Line93Calls_20200701.xml"@en ;
@@ -14792,7 +14792,7 @@
     skos:isRelatedTo siri:KeyList ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-nta-NTA-PI-01_EI_LUAS_LINE_OFFER_LUAS_Line93_20200701>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnta%2FNTA-PI-01_EI_LUAS_LINE_OFFER_LUAS_Line93_20200701.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/nta/NTA-PI-01_EI_LUAS_LINE_OFFER_LUAS_Line93_20200701.xml"@en ;
     dct:source "examples/standards/nta/NTA-PI-01_EI_LUAS_LINE_OFFER_LUAS_Line93_20200701.xml"@en ;
@@ -14807,7 +14807,7 @@
     skos:isRelatedTo siri:TargetedVehicleJourney ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-nta-NTA-PI-01_EI_NOC_Operator_20200601>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnta%2FNTA-PI-01_EI_NOC_Operator_20200601.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/nta/NTA-PI-01_EI_NOC_Operator_20200601.xml"@en ;
     dct:source "examples/standards/nta/NTA-PI-01_EI_NOC_Operator_20200601.xml"@en ;
@@ -14815,7 +14815,7 @@
     skos:isRelatedTo netex:CustomerService ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-nta-NTA-PI-01_EI_NOC_Operator_LUAS_20200601>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnta%2FNTA-PI-01_EI_NOC_Operator_LUAS_20200601.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/nta/NTA-PI-01_EI_NOC_Operator_LUAS_20200601.xml"@en ;
     dct:source "examples/standards/nta/NTA-PI-01_EI_NOC_Operator_LUAS_20200601.xml"@en ;
@@ -14823,7 +14823,7 @@
     skos:isRelatedTo netex:CustomerService ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-nta-NTA-PI-01_EI_NTA_Luas_20200715>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnta%2FNTA-PI-01_EI_NTA_Luas_20200715.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/nta/NTA-PI-01_EI_NTA_Luas_20200715.xml"@en ;
     dct:source "examples/standards/nta/NTA-PI-01_EI_NTA_Luas_20200715.xml"@en ;
@@ -14833,7 +14833,7 @@
     skos:isRelatedTo siri:KeyList ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-nta-NTA-PI-01_EI_NTA_NptgLocalitiesMinimal_20200730>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnta%2FNTA-PI-01_EI_NTA_NptgLocalitiesMinimal_20200730.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/nta/NTA-PI-01_EI_NTA_NptgLocalitiesMinimal_20200730.xml"@en ;
     dct:source "examples/standards/nta/NTA-PI-01_EI_NTA_NptgLocalitiesMinimal_20200730.xml"@en ;
@@ -14844,7 +14844,7 @@
     skos:isRelatedTo netex:TypeOfOrganisationPart ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-nta-NTA-PI-01_EI_NTA_NptgLocalities_20200730>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnta%2FNTA-PI-01_EI_NTA_NptgLocalities_20200730.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/nta/NTA-PI-01_EI_NTA_NptgLocalities_20200730.xml"@en ;
     dct:source "examples/standards/nta/NTA-PI-01_EI_NTA_NptgLocalities_20200730.xml"@en ;
@@ -14855,7 +14855,7 @@
     skos:isRelatedTo netex:TypeOfOrganisationPart ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-nta-NTA-PI-01_EI_NTA_Operators_COMMON_20200601>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnta%2FNTA-PI-01_EI_NTA_Operators_COMMON_20200601.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/nta/NTA-PI-01_EI_NTA_Operators_COMMON_20200601.xml"@en ;
     dct:source "examples/standards/nta/NTA-PI-01_EI_NTA_Operators_COMMON_20200601.xml"@en ;
@@ -14864,7 +14864,7 @@
     skos:isRelatedTo netex:Entity_Entity ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-nta-NTA-PI-01_EI_NTA_STOP_NaPTAN-XXMinimal_2020801>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnta%2FNTA-PI-01_EI_NTA_STOP_NaPTAN-XXMinimal_2020801.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/nta/NTA-PI-01_EI_NTA_STOP_NaPTAN-XXMinimal_2020801.xml"@en ;
     dct:source "examples/standards/nta/NTA-PI-01_EI_NTA_STOP_NaPTAN-XXMinimal_2020801.xml"@en ;
@@ -14873,7 +14873,7 @@
     skos:isRelatedTo netex:TransportAdministrativeZone ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-nta-NTA-PI-01_EI_NTA_STOP_NaPTAN-XX_2020801>
+<https://napcore.eu/examples/examples%2Fstandards%2Fnta%2FNTA-PI-01_EI_NTA_STOP_NaPTAN-XX_2020801.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/nta/NTA-PI-01_EI_NTA_STOP_NaPTAN-XX_2020801.xml"@en ;
     dct:source "examples/standards/nta/NTA-PI-01_EI_NTA_STOP_NaPTAN-XX_2020801.xml"@en ;
@@ -14884,7 +14884,7 @@
     skos:isRelatedTo siri:KeyList ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-B1_NRT-Netex_sncf_b1_1>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB1_NRT%2FNetex_sncf_b1_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/B1_NRT/Netex_sncf_b1_1.xml"@en ;
     dct:source "examples/standards/tap_tsi/B1_NRT/Netex_sncf_b1_1.xml"@en ;
@@ -14895,7 +14895,7 @@
     skos:isRelatedTo netex:StandardFareTable ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-B1_NRT-Netex_tap_tsi_B1-1080-full>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB1_NRT%2FNetex_tap_tsi_B1-1080-full.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/B1_NRT/Netex_tap_tsi_B1-1080-full.xml"@en ;
     dct:source "examples/standards/tap_tsi/B1_NRT/Netex_tap_tsi_B1-1080-full.xml"@en ;
@@ -14916,7 +14916,7 @@
     skos:isRelatedTo siri:KeyList ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-B1_NRT-Netex_tap_tsi_B1-1080>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB1_NRT%2FNetex_tap_tsi_B1-1080.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/B1_NRT/Netex_tap_tsi_B1-1080.xml"@en ;
     dct:source "examples/standards/tap_tsi/B1_NRT/Netex_tap_tsi_B1-1080.xml"@en ;
@@ -14933,7 +14933,7 @@
     skos:isRelatedTo siri:KeyList ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-B1_NRT-Netex_tap_tsi_B1>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB1_NRT%2FNetex_tap_tsi_B1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/B1_NRT/Netex_tap_tsi_B1.xml"@en ;
     dct:source "examples/standards/tap_tsi/B1_NRT/Netex_tap_tsi_B1.xml"@en ;
@@ -14970,7 +14970,7 @@
     skos:isRelatedTo siri:TrainElement ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-B1_NRT-Netex_tap_tsi_tcvc_carrier_1>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB1_NRT%2FNetex_tap_tsi_tcvc_carrier_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/B1_NRT/Netex_tap_tsi_tcvc_carrier_1.xml"@en ;
     dct:source "examples/standards/tap_tsi/B1_NRT/Netex_tap_tsi_tcvc_carrier_1.xml"@en ;
@@ -14981,7 +14981,7 @@
     skos:isRelatedTo netex:Trace ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-B1_NRT-Netex_tap_tsi_tcvg_stations_1>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB1_NRT%2FNetex_tap_tsi_tcvg_stations_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/B1_NRT/Netex_tap_tsi_tcvg_stations_1.xml"@en ;
     dct:source "examples/standards/tap_tsi/B1_NRT/Netex_tap_tsi_tcvg_stations_1.xml"@en ;
@@ -14991,7 +14991,7 @@
     skos:isRelatedTo siri:KeyList ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-B1_NRT-Netex_tap_tsi_tcvs_series_1>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB1_NRT%2FNetex_tap_tsi_tcvs_series_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/B1_NRT/Netex_tap_tsi_tcvs_series_1.xml"@en ;
     dct:source "examples/standards/tap_tsi/B1_NRT/Netex_tap_tsi_tcvs_series_1.xml"@en ;
@@ -15001,7 +15001,7 @@
     skos:isRelatedTo netex:TypeOfDeliveryVariant ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-B2_IRT-Netex_tap_tsi_B2-1180>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB2_IRT%2FNetex_tap_tsi_B2-1180.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/B2_IRT/Netex_tap_tsi_B2-1180.xml"@en ;
     dct:source "examples/standards/tap_tsi/B2_IRT/Netex_tap_tsi_B2-1180.xml"@en ;
@@ -15025,7 +15025,7 @@
     skos:isRelatedTo siri:TrainElement ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-B2_IRT-Netex_tap_tsi_B2-1181>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB2_IRT%2FNetex_tap_tsi_B2-1181.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/B2_IRT/Netex_tap_tsi_B2-1181.xml"@en ;
     dct:source "examples/standards/tap_tsi/B2_IRT/Netex_tap_tsi_B2-1181.xml"@en ;
@@ -15046,7 +15046,7 @@
     skos:isRelatedTo siri:TrainElement ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-B2_IRT-Netex_tap_tsi_B2-71>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB2_IRT%2FNetex_tap_tsi_B2-71.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/B2_IRT/Netex_tap_tsi_B2-71.xml"@en ;
     dct:source "examples/standards/tap_tsi/B2_IRT/Netex_tap_tsi_B2-71.xml"@en ;
@@ -15070,7 +15070,7 @@
     skos:isRelatedTo siri:TrainElement ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-B2_IRT-Netex_tap_tsi_B2>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB2_IRT%2FNetex_tap_tsi_B2.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/B2_IRT/Netex_tap_tsi_B2.xml"@en ;
     dct:source "examples/standards/tap_tsi/B2_IRT/Netex_tap_tsi_B2.xml"@en ;
@@ -15089,7 +15089,7 @@
     skos:isRelatedTo siri:TrainElement ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-B2_IRT-Netex_tap_tsi_tcvs_irt_1>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB2_IRT%2FNetex_tap_tsi_tcvs_irt_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/B2_IRT/Netex_tap_tsi_tcvs_irt_1.xml"@en ;
     dct:source "examples/standards/tap_tsi/B2_IRT/Netex_tap_tsi_tcvs_irt_1.xml"@en ;
@@ -15118,7 +15118,7 @@
     skos:isRelatedTo siri:TrainElement ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-B3_Special-Netex_tap_tsi_B3+more>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB3_Special%2FNetex_tap_tsi_B3%2Bmore.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/B3_Special/Netex_tap_tsi_B3+more.xml"@en ;
     dct:source "examples/standards/tap_tsi/B3_Special/Netex_tap_tsi_B3+more.xml"@en ;
@@ -15141,7 +15141,7 @@
     skos:isRelatedTo siri:TrainElement ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-B3_Special-Netex_tap_tsi_B3>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB3_Special%2FNetex_tap_tsi_B3.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/B3_Special/Netex_tap_tsi_B3.xml"@en ;
     dct:source "examples/standards/tap_tsi/B3_Special/Netex_tap_tsi_B3.xml"@en ;
@@ -15163,7 +15163,7 @@
     skos:isRelatedTo siri:TrainElement ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-Other-Netex_tap_trainhotel_SalesPackage_2>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FOther%2FNetex_tap_trainhotel_SalesPackage_2.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/Other/Netex_tap_trainhotel_SalesPackage_2.xml"@en ;
     dct:source "examples/standards/tap_tsi/Other/Netex_tap_trainhotel_SalesPackage_2.xml"@en ;
@@ -15202,7 +15202,7 @@
     skos:isRelatedTo siri:TrainElement ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-TAP-SKDUPD-example1-basic>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example1-basic.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/TAP-SKDUPD-example1-basic.xml"@en ;
     dct:source "examples/standards/tap_tsi/TAP-SKDUPD-example1-basic.xml"@en ;
@@ -15243,7 +15243,7 @@
     skos:isRelatedTo siri:ProductionTimetableRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-TAP-SKDUPD-example1>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/TAP-SKDUPD-example1.xml"@en ;
     dct:source "examples/standards/tap_tsi/TAP-SKDUPD-example1.xml"@en ;
@@ -15291,7 +15291,7 @@
     skos:isRelatedTo siri:ProductionTimetableRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-TAP-SKDUPD-example2.1-Classic_train>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example2.1-Classic_train.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/TAP-SKDUPD-example2.1-Classic_train.xml"@en ;
     dct:source "examples/standards/tap_tsi/TAP-SKDUPD-example2.1-Classic_train.xml"@en ;
@@ -15322,7 +15322,7 @@
     skos:isRelatedTo siri:RailSubmode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-TAP-SKDUPD-example2.2-Coach_group>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example2.2-Coach_group.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/TAP-SKDUPD-example2.2-Coach_group.xml"@en ;
     dct:source "examples/standards/tap_tsi/TAP-SKDUPD-example2.2-Coach_group.xml"@en ;
@@ -15356,7 +15356,7 @@
     skos:isRelatedTo siri:VisitNumber ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-TAP-SKDUPD-example2.3-Leo_Express>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example2.3-Leo_Express.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/TAP-SKDUPD-example2.3-Leo_Express.xml"@en ;
     dct:source "examples/standards/tap_tsi/TAP-SKDUPD-example2.3-Leo_Express.xml"@en ;
@@ -15377,7 +15377,7 @@
     skos:isRelatedTo siri:RailSubmode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-TAP-SKDUPD-example2.4-Load_and_Unload>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example2.4-Load_and_Unload.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/TAP-SKDUPD-example2.4-Load_and_Unload.xml"@en ;
     dct:source "examples/standards/tap_tsi/TAP-SKDUPD-example2.4-Load_and_Unload.xml"@en ;
@@ -15407,7 +15407,7 @@
     skos:isRelatedTo siri:RailSubmode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-TAP-SKDUPD-example2.5-Interchange>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example2.5-Interchange.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/TAP-SKDUPD-example2.5-Interchange.xml"@en ;
     dct:source "examples/standards/tap_tsi/TAP-SKDUPD-example2.5-Interchange.xml"@en ;
@@ -15440,7 +15440,7 @@
     skos:isRelatedTo siri:VisitNumber ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-TAP-SKDUPD-example2.6-Check_In>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example2.6-Check_In.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/TAP-SKDUPD-example2.6-Check_In.xml"@en ;
     dct:source "examples/standards/tap_tsi/TAP-SKDUPD-example2.6-Check_In.xml"@en ;
@@ -15458,7 +15458,7 @@
     skos:isRelatedTo siri:BusSubmode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-TAP-SKDUPD-example2.7-Tariff_and_Reservation>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example2.7-Tariff_and_Reservation.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/TAP-SKDUPD-example2.7-Tariff_and_Reservation.xml"@en ;
     dct:source "examples/standards/tap_tsi/TAP-SKDUPD-example2.7-Tariff_and_Reservation.xml"@en ;
@@ -15480,7 +15480,7 @@
     skos:isRelatedTo siri:RailSubmode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-TAP-SKDUPD-example2.7-Tarrif_and_Reservation>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example2.7-Tarrif_and_Reservation.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/TAP-SKDUPD-example2.7-Tarrif_and_Reservation.xml"@en ;
     dct:source "examples/standards/tap_tsi/TAP-SKDUPD-example2.7-Tarrif_and_Reservation.xml"@en ;
@@ -15503,7 +15503,7 @@
     skos:isRelatedTo siri:RailSubmode ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-TAP-SKDUPD-example2>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example2.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/TAP-SKDUPD-example2.xml"@en ;
     dct:source "examples/standards/tap_tsi/TAP-SKDUPD-example2.xml"@en ;
@@ -15569,7 +15569,7 @@
     skos:isRelatedTo siri:VisitNumber ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-TAP-TSDUPD-example1>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-TSDUPD-example1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/TAP-TSDUPD-example1.xml"@en ;
     dct:source "examples/standards/tap_tsi/TAP-TSDUPD-example1.xml"@en ;
@@ -15585,7 +15585,7 @@
     skos:isRelatedTo siri:FeederStopOrder ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-TAP-TSDUPD-example2.1-Hilleroed>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-TSDUPD-example2.1-Hilleroed.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/TAP-TSDUPD-example2.1-Hilleroed.xml"@en ;
     dct:source "examples/standards/tap_tsi/TAP-TSDUPD-example2.1-Hilleroed.xml"@en ;
@@ -15604,7 +15604,7 @@
     skos:isRelatedTo siri:FeederStopOrder ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-TAP-TSDUPD-example2.2-Milano>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-TSDUPD-example2.2-Milano.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/TAP-TSDUPD-example2.2-Milano.xml"@en ;
     dct:source "examples/standards/tap_tsi/TAP-TSDUPD-example2.2-Milano.xml"@en ;
@@ -15615,7 +15615,7 @@
     skos:isRelatedTo siri:VehicleAtStop ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-TAP-TSDUPD-example2.3-Piedmont>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-TSDUPD-example2.3-Piedmont.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/TAP-TSDUPD-example2.3-Piedmont.xml"@en ;
     dct:source "examples/standards/tap_tsi/TAP-TSDUPD-example2.3-Piedmont.xml"@en ;
@@ -15625,7 +15625,7 @@
     skos:isRelatedTo opra:PlannedFrameRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-tap_tsi-TAP-TSDUPD-example2>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-TSDUPD-example2.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/tap_tsi/TAP-TSDUPD-example2.xml"@en ;
     dct:source "examples/standards/tap_tsi/TAP-TSDUPD-example2.xml"@en ;
@@ -15646,7 +15646,7 @@
     skos:isRelatedTo siri:VehicleAtStop ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-txc-FX-PI-01_UK_DFT_STOP_NPTG-extract_20170101>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftxc%2FFX-PI-01_UK_DFT_STOP_NPTG-extract_20170101.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/txc/FX-PI-01_UK_DFT_STOP_NPTG-extract_20170101.xml"@en ;
     dct:source "examples/standards/txc/FX-PI-01_UK_DFT_STOP_NPTG-extract_20170101.xml"@en ;
@@ -15656,7 +15656,7 @@
     skos:isRelatedTo netex:TypeOfOrganisationPart ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-txc-FX-PI-01_UK_DFT_STOP_NaPTAN-060+086+110_20171217>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftxc%2FFX-PI-01_UK_DFT_STOP_NaPTAN-060%2B086%2B110_20171217.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/txc/FX-PI-01_UK_DFT_STOP_NaPTAN-060+086+110_20171217.xml"@en ;
     dct:source "examples/standards/txc/FX-PI-01_UK_DFT_STOP_NaPTAN-060+086+110_20171217.xml"@en ;
@@ -15665,7 +15665,7 @@
     skos:isRelatedTo netex:TransportAdministrativeZone ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-txc-FX-PI-01_UK_SCWW_LINE_SCWW-86-simplified_20190101>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftxc%2FFX-PI-01_UK_SCWW_LINE_SCWW-86-simplified_20190101.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/txc/FX-PI-01_UK_SCWW_LINE_SCWW-86-simplified_20190101.xml"@en ;
     dct:source "examples/standards/txc/FX-PI-01_UK_SCWW_LINE_SCWW-86-simplified_20190101.xml"@en ;
@@ -15704,7 +15704,7 @@
     skos:isRelatedTo siri:TargetedVehicleJourney ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-txc-uk_nap_extract1_minimal>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftxc%2Fuk_nap_extract1_minimal.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/txc/uk_nap_extract1_minimal.xml"@en ;
     dct:source "examples/standards/txc/uk_nap_extract1_minimal.xml"@en ;
@@ -15718,7 +15718,7 @@
     skos:isRelatedTo siri:VehicleAtStop ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-txc-uk_nap_naptan_stops_extract1>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftxc%2Fuk_nap_naptan_stops_extract1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/txc/uk_nap_naptan_stops_extract1.xml"@en ;
     dct:source "examples/standards/txc/uk_nap_naptan_stops_extract1.xml"@en ;
@@ -15735,7 +15735,7 @@
     skos:isRelatedTo siri:VehicleAtStop ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-txc-uk_nptg_localities_extract1>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftxc%2Fuk_nptg_localities_extract1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/txc/uk_nptg_localities_extract1.xml"@en ;
     dct:source "examples/standards/txc/uk_nptg_localities_extract1.xml"@en ;
@@ -15745,7 +15745,7 @@
     skos:isRelatedTo netex:TypeOfOrganisationPart ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-txc-uk_txc_SCWW-86_extract1-with-sections>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftxc%2Fuk_txc_SCWW-86_extract1-with-sections.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/txc/uk_txc_SCWW-86_extract1-with-sections.xml"@en ;
     dct:source "examples/standards/txc/uk_txc_SCWW-86_extract1-with-sections.xml"@en ;
@@ -15796,7 +15796,7 @@
     skos:isRelatedTo siri:ViaName ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-txc-uk_txc_SCWW-86_extract2-simplified>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftxc%2Fuk_txc_SCWW-86_extract2-simplified.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/txc/uk_txc_SCWW-86_extract2-simplified.xml"@en ;
     dct:source "examples/standards/txc/uk_txc_SCWW-86_extract2-simplified.xml"@en ;
@@ -15827,7 +15827,7 @@
     skos:isRelatedTo siri:OriginName ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-txc-uk_txc_extract1>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftxc%2Fuk_txc_extract1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/txc/uk_txc_extract1.xml"@en ;
     dct:source "examples/standards/txc/uk_txc_extract1.xml"@en ;
@@ -15864,7 +15864,7 @@
     skos:isRelatedTo netex:VehicleScheduleFrame ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-txc-uk_txc_extract1_simplified>
+<https://napcore.eu/examples/examples%2Fstandards%2Ftxc%2Fuk_txc_extract1_simplified.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/txc/uk_txc_extract1_simplified.xml"@en ;
     dct:source "examples/standards/txc/uk_txc_extract1_simplified.xml"@en ;
@@ -15885,7 +15885,7 @@
     skos:isRelatedTo netex:VehicleScheduleFrame ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-standards-vdv452-timetable-NeTEx VDV Example>
+<https://napcore.eu/examples/examples%2Fstandards%2Fvdv452%2Ftimetable%2FNeTEx%20VDV%20Example.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/vdv452/timetable/NeTEx VDV Example.xml"@en ;
     dct:source "examples/standards/vdv452/timetable/NeTEx VDV Example.xml"@en ;
@@ -15944,14 +15944,14 @@
     skos:isRelatedTo siri:OriginName ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-ws_siri_request-siri_generic-exa_checkStatus_request>
+<https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_generic%2Fexa_checkStatus_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_generic/exa_checkStatus_request.xml"@en ;
     dct:source "examples/ws_siri_request/siri_generic/exa_checkStatus_request.xml"@en ;
     skos:isRelatedTo siri:CheckStatusRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-ws_siri_request-siri_generic-exa_checkStatus_response>
+<https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_generic%2Fexa_checkStatus_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_generic/exa_checkStatus_response.xml"@en ;
     dct:source "examples/ws_siri_request/siri_generic/exa_checkStatus_response.xml"@en ;
@@ -15959,42 +15959,42 @@
     skos:isRelatedTo siri:CheckStatusResponse ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-ws_siri_request-siri_generic-exa_dataReady_request>
+<https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_generic%2Fexa_dataReady_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_generic/exa_dataReady_request.xml"@en ;
     dct:source "examples/ws_siri_request/siri_generic/exa_dataReady_request.xml"@en ;
     skos:isRelatedTo siri:DataReadyNotification ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-ws_siri_request-siri_generic-exa_dataReady_response>
+<https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_generic%2Fexa_dataReady_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_generic/exa_dataReady_response.xml"@en ;
     dct:source "examples/ws_siri_request/siri_generic/exa_dataReady_response.xml"@en ;
     skos:isRelatedTo siri:DataReadyAcknowledgement ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-ws_siri_request-siri_generic-exa_dataReceived_response>
+<https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_generic%2Fexa_dataReceived_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_generic/exa_dataReceived_response.xml"@en ;
     dct:source "examples/ws_siri_request/siri_generic/exa_dataReceived_response.xml"@en ;
     skos:isRelatedTo siri:DataReceivedAcknowledgement ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-ws_siri_request-siri_generic-exa_dataSupply_request>
+<https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_generic%2Fexa_dataSupply_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_generic/exa_dataSupply_request.xml"@en ;
     dct:source "examples/ws_siri_request/siri_generic/exa_dataSupply_request.xml"@en ;
     skos:isRelatedTo siri:DataSupplyRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-ws_siri_request-siri_generic-exa_heartbeat_request>
+<https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_generic%2Fexa_heartbeat_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_generic/exa_heartbeat_request.xml"@en ;
     dct:source "examples/ws_siri_request/siri_generic/exa_heartbeat_request.xml"@en ;
     skos:isRelatedTo siri:HeartbeatNotification ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-ws_siri_request-siri_generic-exa_requestSubscription_response>
+<https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_generic%2Fexa_requestSubscription_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_generic/exa_requestSubscription_response.xml"@en ;
     dct:source "examples/ws_siri_request/siri_generic/exa_requestSubscription_response.xml"@en ;
@@ -16002,14 +16002,14 @@
     skos:isRelatedTo siri:NoInfoForTopicError ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-ws_siri_request-siri_generic-exa_terminateSubscription_request>
+<https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_generic%2Fexa_terminateSubscription_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_generic/exa_terminateSubscription_request.xml"@en ;
     dct:source "examples/ws_siri_request/siri_generic/exa_terminateSubscription_request.xml"@en ;
     skos:isRelatedTo siri:TerminateSubscriptionRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-ws_siri_request-siri_generic-exa_terminateSubscription_response>
+<https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_generic%2Fexa_terminateSubscription_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_generic/exa_terminateSubscription_response.xml"@en ;
     dct:source "examples/ws_siri_request/siri_generic/exa_terminateSubscription_response.xml"@en ;
@@ -16017,7 +16017,7 @@
     skos:isRelatedTo siri:TerminateSubscriptionResponse ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-ws_siri_request-siri_generic-exa_terminateSubscription_response_err>
+<https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_generic%2Fexa_terminateSubscription_response_err.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_generic/exa_terminateSubscription_response_err.xml"@en ;
     dct:source "examples/ws_siri_request/siri_generic/exa_terminateSubscription_response_err.xml"@en ;
@@ -16028,7 +16028,7 @@
     skos:isRelatedTo siri:UnknownSubscriptionError ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-ws_siri_request-siri_netex-exu_dataObject_response>
+<https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_netex%2Fexu_dataObject_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_netex/exu_dataObject_response.xml"@en ;
     dct:source "examples/ws_siri_request/siri_netex/exu_dataObject_response.xml"@en ;
@@ -16042,14 +16042,14 @@
     skos:isRelatedTo siri:PassengerInformationFacility ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-ws_siri_request-siri_netex-exu_dataObject_subscriptionRequest-Nx>
+<https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_netex%2Fexu_dataObject_subscriptionRequest-Nx.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_netex/exu_dataObject_subscriptionRequest-Nx.xml"@en ;
     dct:source "examples/ws_siri_request/siri_netex/exu_dataObject_subscriptionRequest-Nx.xml"@en ;
     skos:isRelatedTo netex:DataObjectSubscriptionRequest ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
-<https://napcore.eu/examples/examples-ws_siri_request-siri_netex-exu_dataObject_subscriptionRequest>
+<https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_netex%2Fexu_dataObject_subscriptionRequest.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_netex/exu_dataObject_subscriptionRequest.xml"@en ;
     dct:source "examples/ws_siri_request/siri_netex/exu_dataObject_subscriptionRequest.xml"@en ;
