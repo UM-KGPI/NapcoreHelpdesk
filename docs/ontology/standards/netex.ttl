@@ -7410,51 +7410,11 @@ netex:DataSource
     rdfs:comment "Extracted from XSD schema"@en .
 
 netex:DatedServiceJourney
-    a owl:Class ;
     skos:definition "A particular SERVICE JOURNEY of a vehicle on a particular OPERATING DAY including all modifications possibly decided by the control staff.   The VIEW includes derived ancillary data from referenced entities."@en ;
     skos:prefLabel "dated service journey"@en ;
     skos:altLabel "datedservicejourney"@en ;
     skos:altLabel "particular service journey of"@en ;
-    rdfs:subClassOf netex:Access ;
-    rdfs:subClassOf netex:AccessEquipment ;
-    rdfs:subClassOf netex:AccessFacility ;
-    rdfs:subClassOf netex:AccessFacilityList ;
-    rdfs:subClassOf netex:AccessMode ;
-    rdfs:subClassOf netex:AccessRightInProduct ;
-    rdfs:subClassOf netex:AccessRightParameterAssignment ;
-    rdfs:subClassOf netex:AccessSpace ;
-    rdfs:subClassOf netex:AccessSummary ;
-    rdfs:subClassOf netex:AccessVehicleEquipment ;
-    rdfs:subClassOf netex:Accommodation ;
-    rdfs:subClassOf netex:AccommodationAccess ;
-    rdfs:subClassOf netex:AccommodationAccessList ;
-    rdfs:subClassOf netex:AccommodationFacility ;
-    rdfs:subClassOf netex:AccommodationFacilityList ;
-    rdfs:subClassOf netex:ActivationAssignment ;
-    rdfs:subClassOf netex:ActivationLink ;
-    rdfs:subClassOf netex:ActivationPoint ;
-    rdfs:subClassOf netex:ActualVehicleEquipment ;
-    rdfs:subClassOf netex:AddressablePlace ;
-    rdfs:subClassOf netex:AdministrativeZone ;
-    rdfs:subClassOf netex:AllVehicleModes ;
-    rdfs:subClassOf netex:AllowedLineDirection ;
-    rdfs:subClassOf netex:AlternativeQuayDescriptor ;
-    rdfs:subClassOf netex:AmountOfPriceUnitProduct ;
-    rdfs:subClassOf netex:Assignment ;
-    rdfs:subClassOf netex:Authority ;
-    rdfs:subClassOf netex:AvailabilityCondition ;
-    rdfs:subClassOf netex:BeaconPoint ;
-    rdfs:subClassOf netex:Blacklist ;
-    rdfs:subClassOf netex:Block ;
-    rdfs:subClassOf netex:BoardingPosition ;
-    rdfs:subClassOf netex:BookingArrangement ;
-    rdfs:subClassOf netex:BookingPolicy ;
-    rdfs:subClassOf netex:BookingProcessFacility ;
-    rdfs:subClassOf netex:BookingProcessFacilityList ;
-    rdfs:subClassOf netex:Branding ;
-    rdfs:subClassOf netex:Call ;
-    rdfs:subClassOf netex:Cancelling ;
-    rdfs:subClassOf netex:CarModelProfile ;
+    rdfs:subClassOf netex:ServiceJourney ;
     skos:seeAlso <https://napcore.eu/examples/netex/examples%2FCancelledAndLateDatedVehicleJourneys.xml> ;
     skos:seeAlso <https://napcore.eu/examples/netex/examples%2FDelayedAndCancelledJourneysWithEvents.xml> ;
     skos:seeAlso <https://napcore.eu/examples/netex/examples%2FExpectedServiceIntensity.xml> ;
@@ -7481,7 +7441,6 @@ netex:DatedServiceJourney
     skos:seeAlso <https://napcore.eu/examples/netex/examples%2Fstandards%2Fnta%2FNTA-PI-01_EI_IR_LINE_OFFER__Journey00122_20200801.xml> ;
     skos:seeAlso <https://napcore.eu/examples/netex/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example2.7-Tarrif_and_Reservation.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
-
 netex:DatedSpecialService
     a owl:Class ;
     skos:definition "A particular journey of a vehicle on a particular OPERATING DAY including all modifications possibly decided by the control staff."@en ;
