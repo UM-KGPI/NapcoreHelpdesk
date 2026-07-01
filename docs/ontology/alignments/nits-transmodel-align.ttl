@@ -204,3 +204,92 @@ nits:isDemandResponsive
     rdfs:domain nits:Service ;
     rdfs:range xsd:boolean ;
     rdfs:comment "Indicates whether a service operates on-demand rather than fixed schedule" .
+
+#################################################################
+# NeTEx Structural Concepts: Mode-Agnostic Across All Transports
+#################################################################
+
+nits:ModeAgnosticStructure
+    a owl:Class ;
+    rdfs:label "Mode-Agnostic NeTEx Structure"@en ;
+    skos:definition "NeTEx structural concepts that work identically across all transport modes (bus, ferry, rail, etc.). Transport mode is a semantic domain tag, not a structural differentiator."@en ;
+    rdfs:comment "Examples of mode-agnostic concepts: TemplateServiceJourney, Service, Line, Journey, ScheduledStopPoint, StopPlace. A bus timetable, ferry schedule, and rail timetable use identical TemplateServiceJourney patterns." .
+
+netex:TemplateServiceJourney
+    rdfs:subClassOf nits:ModeAgnosticStructure ;
+    skos:definition "Reusable service journey pattern applicable to ALL transport modes: bus, ferry, rail, etc. Mode does not affect the structure."@en ;
+    rdfs:comment "Examples from any mode (bus, ferry, rail) are directly applicable to any other mode. Structural semantics: regular frequency, stop sequence, time patterns—identical across modes." ;
+    nits:applicableToAllModes true .
+
+netex:Service
+    rdfs:subClassOf nits:ModeAgnosticStructure ;
+    skos:definition "Service definition pattern working for all transport modes. Mode is a domain classification, not a structural concern."@en ;
+    rdfs:comment "Bus service, ferry route, and rail line use the same Service structure. Examples are mutually reusable for modeling purposes." ;
+    nits:applicableToAllModes true .
+
+netex:Line
+    rdfs:subClassOf nits:ModeAgnosticStructure ;
+    skos:definition "Line definition (within a service) works for bus lines, ferry routes, rail lines identically."@en ;
+    rdfs:comment "Structural pattern: route, stops, operator—same for all modes." ;
+    nits:applicableToAllModes true .
+
+netex:Journey
+    rdfs:subClassOf nits:ModeAgnosticStructure ;
+    skos:definition "Individual journey instance pattern. Identical for all transport modes."@en ;
+    nits:applicableToAllModes true .
+
+netex:ScheduledStopPoint
+    rdfs:subClassOf nits:ModeAgnosticStructure ;
+    skos:definition "Stop point definition for any transport mode."@en ;
+    nits:applicableToAllModes true .
+
+netex:StopPlace
+    rdfs:subClassOf nits:ModeAgnosticStructure ;
+    skos:definition "Stop/station definition for any transport mode."@en ;
+    nits:applicableToAllModes true .
+
+#################################################################
+# Transport Mode Equivalence for Structural Modeling
+#################################################################
+
+nits:TransportMode
+    skos:scopeNote "Transport mode (Bus, Ferry, Rail) identifies the domain/context of a service. For structural/modeling purposes (TemplateServiceJourney, Service, Line), all modes are semantically equivalent. A bus example IS applicable to ferry modeling—same structure, different domain."@en .
+
+nits:Ferry
+    skos:scopeNote "Ferry is semantically equivalent to Bus and Rail for NeTEx structural patterns. Use any mode's example when modeling ferry services."@en ;
+    nits:semanticallyEquivalentFor nits:ModeAgnosticStructure ;
+    nits:exampleSourceEquivalentTo nits:Bus ;
+    nits:exampleSourceEquivalentTo nits:Rail .
+
+nits:Bus
+    skos:scopeNote "Bus is semantically equivalent to Ferry and Rail for NeTEx structural patterns."@en ;
+    nits:semanticallyEquivalentFor nits:ModeAgnosticStructure ;
+    nits:exampleSourceEquivalentTo nits:Ferry ;
+    nits:exampleSourceEquivalentTo nits:Rail .
+
+nits:Rail
+    skos:scopeNote "Rail is semantically equivalent to Ferry and Bus for NeTEx structural patterns."@en ;
+    nits:semanticallyEquivalentFor nits:ModeAgnosticStructure ;
+    nits:exampleSourceEquivalentTo nits:Ferry ;
+    nits:exampleSourceEquivalentTo nits:Bus .
+
+#################################################################
+# Semantic Properties for Mode Equivalence
+#################################################################
+
+nits:applicableToAllModes
+    a owl:DatatypeProperty ;
+    rdfs:label "applicable to all modes"@en ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "Indicates whether a NeTEx concept's structure is mode-agnostic and works identically for bus, ferry, rail, etc." .
+
+nits:semanticallyEquivalentFor
+    a owl:ObjectProperty ;
+    rdfs:label "semantically equivalent for"@en ;
+    rdfs:comment "Indicates that a transport mode is semantically equivalent to other modes for a given structural concept class." .
+
+nits:exampleSourceEquivalentTo
+    a owl:ObjectProperty ;
+    rdfs:label "example source equivalent to"@en ;
+    rdfs:range nits:TransportMode ;
+    rdfs:comment "Indicates that examples from one transport mode are directly reusable/adaptable for another mode (they share the same NeTEx structural patterns)." .
