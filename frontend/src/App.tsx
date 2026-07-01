@@ -169,6 +169,8 @@ function UserChatWithQueryParams(props: React.ComponentProps<typeof UserChatWork
         return res.json();
       })
       .then((detail) => {
+        console.log("Deep-link loaded question:", { requestId: detail.requestId, hasAnswer: !!detail.answer, traceFields: Object.keys(detail.trace || {}).length });
+
         // Create two turns: one for the question, one for the answer
         const questionTurn: ChatTurn = {
           id: `${detail.requestId}-q`,
@@ -184,12 +186,12 @@ function UserChatWithQueryParams(props: React.ComponentProps<typeof UserChatWork
           createdAt: detail.createdAt,
           answer: {
             answerId: detail.questionEventId,
-            mode: "rag" as const,
+            mode: detail.mode || "rag",
             confidence: detail.confidence,
             answer: detail.answer,
             citations: (detail.citations || []).map((c: any) => ({
               repositoryUrl: c.repositoryUrl,
-              commitSha: "", // Will be populated from detail if available
+              commitSha: "",
               sourcePath: c.sourcePath,
               chunkId: c.chunkId,
               label: c.label,
@@ -209,6 +211,7 @@ function UserChatWithQueryParams(props: React.ComponentProps<typeof UserChatWork
           requestId: detail.requestId,
         };
 
+        console.log("Setting enhanced turns with answer:", { trace: Object.keys(answerTurn.answer?.trace || {}).length });
         setEnhancedTurns([questionTurn, answerTurn]);
       })
       .catch((error) => {
