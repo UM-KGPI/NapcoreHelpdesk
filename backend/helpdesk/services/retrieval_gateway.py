@@ -585,7 +585,7 @@ def _is_example_driven_question(question: str) -> bool:
     lower_question = (question or "").lower()
     return bool(
         re.search(
-            r"\b(example|instance|use\s+case|sample|illustration|concrete|demonstrate|show|list|enumerate)\b",
+            r"\b(example|instance|use\s+case|sample|illustration|concrete|demonstrate|show|list|enumerate|snippet|xml|code|pattern|template|model|structure|how\s+to)\b",
             lower_question,
         )
     )
