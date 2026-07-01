@@ -1,0 +1,139 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+
+@prefix nits: <https://napcore.eu/ontology/nits#> .
+@prefix opra: <https://transmodel-cen.eu/opra/1.0#> .
+
+#################################################################
+# Ontology Header
+#################################################################
+
+<https://napcore.eu/ontology/nits/align/opra>
+    a owl:Ontology ;
+    dct:title "NITS–OpRa Alignment Ontology"@en ;
+    dct:description "Alignment ontology connecting OpRa journey planning concepts to abstract core concepts defined in the NAPCORE ITS Core Ontology. Enables cross-standard reasoning and journey planning discovery."@en ;
+    dct:creator "NAPCORE Working Group" ;
+    dct:created "2026-04-17"^^xsd:date ;
+    owl:versionIRI <https://napcore.eu/ontology/nits/align/opra/0.1> ;
+    owl:versionInfo "0.1-draft" ;
+    owl:imports <https://napcore.eu/ontology/nits/core> ;
+    owl:imports <https://transmodel-cen.eu/opra/1.0> ;
+    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+
+#################################################################
+# Journey Planning Concept Alignments
+#################################################################
+
+opra:JourneyPlan
+    owl:equivalentClass nits:Journey .
+
+opra:Trip
+    rdfs:subClassOf nits:Journey .
+
+opra:Leg
+    rdfs:subClassOf nits:JourneyComponent .
+
+opra:TimingLeg
+    rdfs:subClassOf opra:Leg ;
+    rdfs:subClassOf nits:JourneyComponent .
+
+opra:PublicTransportService
+    owl:equivalentClass nits:Service .
+
+opra:OperatedService
+    rdfs:subClassOf nits:Service .
+
+opra:ServiceIntensity
+    owl:equivalentClass nits:ServiceIntensity ;
+    rdfs:subClassOf nits:ServiceMetric .
+
+#################################################################
+# Location Concept Alignments
+#################################################################
+
+opra:Place
+    owl:equivalentClass nits:Location .
+
+opra:StopPoint
+    owl:equivalentClass nits:Stop .
+
+opra:Address
+    rdfs:subClassOf nits:Location .
+
+#################################################################
+# Vehicle & Service Alignments
+#################################################################
+
+opra:Vehicle
+    rdfs:subClassOf nits:System .
+
+opra:VehicleType
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:Operator
+    owl:equivalentClass nits:Actor ;
+    rdfs:subClassOf nits:Organisation .
+
+opra:Authority
+    owl:equivalentClass nits:Authority .
+
+#################################################################
+# Booking & Realtime Alignments
+#################################################################
+
+opra:BookingArrangement
+    rdfs:subClassOf nits:Process .
+
+opra:RealtimeStatus
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:Delay
+    rdfs:subClassOf nits:TemporalEntity .
+
+#################################################################
+# Passenger Information Alignments
+#################################################################
+
+opra:PassengerInformation
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:AccessibilityInfo
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:Facility
+    rdfs:subClassOf nits:DataArtifact .
+
+#################################################################
+# Property Alignments
+#################################################################
+
+opra:hasTrip
+    rdfs:subPropertyOf nits:involves .
+
+opra:hasLeg
+    rdfs:subPropertyOf nits:involves .
+
+opra:departFrom
+    rdfs:subPropertyOf nits:involves .
+
+opra:arriveAt
+    rdfs:subPropertyOf nits:involves .
+
+opra:usesService
+    rdfs:subPropertyOf nits:involves .
+
+opra:operatedBy
+    rdfs:subPropertyOf nits:involves .
+
+opra:hasServiceIntensity
+    rdfs:subPropertyOf nits:involves ;
+    rdfs:subPropertyOf nits:characterisesService .
+
+opra:hasAccessibility
+    rdfs:subPropertyOf nits:involves .
+
+opra:hasBookingArrangement
+    rdfs:subPropertyOf nits:involves .

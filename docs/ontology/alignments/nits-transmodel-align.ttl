@@ -1,0 +1,206 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+
+@prefix nits:  <https://napcore.eu/ontology/nits#> .
+@prefix tm:    <https://transmodel-cen.eu/6.2/> .
+@prefix netex: <https://netex.org.uk/netex/2.0#> .
+@prefix opra:  <https://transmodel-cen.eu/opra/1.0#> .
+@prefix siri:  <http://www.siri.org.uk/siri/2.1#> .
+
+#################################################################
+# Ontology Header
+#################################################################
+
+<https://napcore.eu/ontology/nits/align/transmodel>
+    a owl:Ontology ;
+    dct:title "NITS-Transmodel Alignment Ontology"@en ;
+    dct:description "Alignment ontology connecting Transmodel concepts to NITS core concepts and to corresponding concepts in NeTEx, OpRa, and SIRI."@en ;
+    dct:creator "NAPCORE Working Group" ;
+    dct:created "2026-05-06"^^xsd:date ;
+    owl:versionIRI <https://napcore.eu/ontology/nits/align/transmodel/0.1> ;
+    owl:versionInfo "0.1-draft" ;
+    owl:imports <https://napcore.eu/ontology/nits/core> ;
+    owl:imports <https://transmodel-cen.eu/6.2> ;
+    owl:imports <https://netex.org.uk/netex/2.0> ;
+    owl:imports <https://transmodel-cen.eu/opra/1.0> ;
+    owl:imports <http://www.siri.org.uk/siri/2.1> ;
+    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+
+#################################################################
+# Transmodel to NITS Core Alignments
+#################################################################
+
+tm:LINE
+    rdfs:subClassOf nits:Service .
+
+tm:NETWORK
+    rdfs:subClassOf nits:SpatialEntity .
+
+tm:JOURNEY
+    rdfs:subClassOf nits:DomainConcept .
+
+tm:STOP_PLACE
+    rdfs:subClassOf nits:SpatialEntity .
+
+tm:SCHEDULED_STOP_POINT
+    rdfs:subClassOf nits:SpatialEntity .
+
+tm:QUAY
+    rdfs:subClassOf nits:SpatialEntity .
+
+tm:OPERATOR
+    rdfs:subClassOf nits:Actor .
+
+tm:ORGANISATION
+    rdfs:subClassOf nits:Actor .
+
+#################################################################
+# Cross-Standard Concept Relations
+#################################################################
+
+tm:QUAY
+    skos:exactMatch netex:Quay .
+
+tm:SCHEDULED_STOP_POINT
+    skos:exactMatch netex:ScheduledStopPoint ;
+    skos:relatedMatch opra:StopPoint ;
+    skos:relatedMatch siri:Stop .
+
+tm:LINE
+    skos:exactMatch netex:Line ;
+    skos:relatedMatch opra:PublicTransportService .
+
+tm:JOURNEY
+    skos:relatedMatch netex:Journey ;
+    skos:relatedMatch opra:Trip ;
+    skos:relatedMatch siri:Journey .
+
+#################################################################
+# Transmodel Object Properties (Reasoning Support)
+#################################################################
+
+tm:servesStopPoint
+    a owl:ObjectProperty ;
+    rdfs:label "serves stop point"@en ;
+    rdfs:comment "Links a Transmodel line to a scheduled stop point it serves."@en ;
+    rdfs:domain tm:LINE ;
+    rdfs:range tm:SCHEDULED_STOP_POINT ;
+    rdfs:subPropertyOf nits:involves ;
+    skos:exactMatch netex:visitsStop .
+
+tm:operatedBy
+    a owl:ObjectProperty ;
+    rdfs:label "operated by"@en ;
+    rdfs:comment "Links a Transmodel line or journey to its operator."@en ;
+    rdfs:range tm:OPERATOR ;
+    rdfs:subPropertyOf nits:involves ;
+    skos:exactMatch netex:operatedBy .
+
+tm:partOfNetwork
+    a owl:ObjectProperty ;
+    rdfs:label "part of network"@en ;
+    rdfs:comment "Links a Transmodel line to a containing network."@en ;
+    rdfs:domain tm:LINE ;
+    rdfs:range tm:NETWORK ;
+    rdfs:subPropertyOf nits:involves ;
+    skos:exactMatch netex:inNetwork .
+
+#################################################################
+# Transport Mode Hierarchy
+#################################################################
+
+nits:TransportMode
+    a owl:Class ;
+    rdfs:label "Transport Mode"@en ;
+    rdfs:comment "Classification of public transport service type (bus, train, ferry, etc.)"@en ;
+    owl:equivalentClass tm:PUBLIC_TRANSPORT_MODE .
+
+nits:Ferry
+    a owl:Class ;
+    rdfs:label "Ferry"@en ;
+    skos:definition "Water-based public transport service operating between two shore locations, often on-demand or demand-responsive basis"@en ;
+    rdfs:subClassOf nits:TransportMode ;
+    skos:altLabel "Water Transport"@en ;
+    skos:altLabel "Maritime Service"@en ;
+    rdfs:comment "Covers river ferries, strait crossings, lake transport, and demand-responsive water services" .
+
+nits:Bus
+    a owl:Class ;
+    rdfs:label "Bus"@en ;
+    skos:definition "Road-based public transport service with scheduled stops along routes"@en ;
+    rdfs:subClassOf nits:TransportMode ;
+    rdfs:comment "Includes city buses, intercity coaches, shuttle services" .
+
+nits:Rail
+    a owl:Class ;
+    rdfs:label "Rail"@en ;
+    skos:definition "Track-based public transport service (train, metro, tram)"@en ;
+    rdfs:subClassOf nits:TransportMode ;
+    rdfs:comment "Includes heavy rail, light rail, metro, tram systems" .
+
+nits:DemandResponsiveService
+    a owl:Class ;
+    rdfs:label "Demand-Responsive Transport"@en ;
+    skos:definition "Public transport service that operates on-demand rather than fixed schedule, may combine multiple modes (ferry, bus, taxi, etc.)"@en ;
+    rdfs:subClassOf nits:TransportMode ;
+    rdfs:comment "Applies to services like ferries, shuttle buses, shared taxi services that operate when needed rather than on fixed timetables" .
+
+#################################################################
+# Ferry-Specific Service Patterns
+#################################################################
+
+nits:FerryService
+    a owl:Class ;
+    rdfs:label "Ferry Service"@en ;
+    skos:definition "A SERVICE implementing ferry-based transport between two or more stopping points"@en ;
+    rdfs:subClassOf nits:Service ;
+    owl:sameAs netex:Service ;
+    rdfs:comment "Ferry services are typically characterized by point-to-point water-based routes with limited stops (departure and arrival points)" .
+
+nits:QuickTransitService
+    a owl:Class ;
+    rdfs:label "Quick Transit Service"@en ;
+    skos:definition "High-frequency, short-duration transport service (e.g., river ferry with 3-min crossing, airport shuttle)"@en ;
+    rdfs:subClassOf nits:DemandResponsiveService ;
+    rdfs:comment "Characterizes services with crossing times measured in minutes rather than hours" .
+
+#################################################################
+# Alignment: NeTEx TemplateServiceJourney to Transport Modes
+#################################################################
+
+netex:TemplateServiceJourney
+    rdfs:comment "Can be used to model any public transport service journey template, including ferry services, bus routes, and rail journeys"@en ;
+    dct:relatedTo nits:TransportMode ;
+    dct:relatedTo nits:FerryService ;
+    dct:relatedTo nits:DemandResponsiveService .
+
+netex:Service
+    rdfs:comment "Concrete service implementing a transport mode (bus line, ferry route, rail service, etc.)"@en ;
+    dct:relatedTo nits:TransportMode .
+
+netex:Line
+    rdfs:comment "Line within a service, identifying the mode (bus line, ferry route, tram line, rail line)"@en ;
+    dct:relatedTo nits:TransportMode .
+
+#################################################################
+# Semantic Properties for Mode-Aware Retrieval
+#################################################################
+
+nits:hasTransportMode
+    a owl:ObjectProperty ;
+    rdfs:label "has transport mode"@en ;
+    rdfs:domain nits:Service ;
+    rdfs:domain nits:ModeAwareExample ;
+    rdfs:range nits:TransportMode ;
+    rdfs:comment "Links a service or example to its demonstrated transport mode(s)" .
+
+nits:isDemandResponsive
+    a owl:DatatypeProperty ;
+    rdfs:label "is demand responsive"@en ;
+    rdfs:domain nits:Service ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "Indicates whether a service operates on-demand rather than fixed schedule" .
