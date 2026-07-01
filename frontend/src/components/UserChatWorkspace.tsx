@@ -105,6 +105,31 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
     document.body.removeChild(temp);
   };
 
+  const copyDeepLinkToClipboard = async (turn: ChatTurn) => {
+    const questionId = turn.requestId ?? turn.answer?.trace.requestId;
+    if (!questionId) {
+      return;
+    }
+
+    const baseUrl = window.location.origin;
+    const deepLink = `${baseUrl}/napcore-helpdesk/user?questionId=${questionId}`;
+
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(deepLink);
+      return;
+    }
+
+    const temp = document.createElement("textarea");
+    temp.value = deepLink;
+    temp.setAttribute("readonly", "true");
+    temp.style.position = "absolute";
+    temp.style.left = "-9999px";
+    document.body.appendChild(temp);
+    temp.select();
+    document.execCommand("copy");
+    document.body.removeChild(temp);
+  };
+
   const exportChatAsTextMarkdown = () => {
     const lines: string[] = [];
     lines.push("# NAPCORE Helpdesk Chat Export");
@@ -253,6 +278,17 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                       aria-label="Copy answer to clipboard"
                     >
                       📋
+                    </button>
+                    <button
+                      type="button"
+                      className="chat-icon-button"
+                      onClick={() => {
+                        void copyDeepLinkToClipboard(turn);
+                      }}
+                      title="Copy deep link to share this Q&A"
+                      aria-label="Copy deep link to share this Q&A"
+                    >
+                      🔗
                     </button>
                     <button
                       type="button"
