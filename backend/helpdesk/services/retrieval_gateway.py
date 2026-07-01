@@ -30,7 +30,7 @@ from helpdesk.db_fields import HAS_NATIVE_PGVECTOR
 from helpdesk.services.embeddings import build_text_embedding, cosine_similarity, normalize_text_tokens
 from helpdesk.services.example_retrieval import (
     format_examples_as_chunks,
-    retrieve_concept_examples,
+    retrieve_concept_examples_with_fallback,
 )
 from helpdesk.services.graphdb_client import (
     build_graph_scope_for_standards,
@@ -1034,15 +1034,16 @@ def retrieve_chunks_with_trace(
         graph_expansion_hops = 0
         stage_timing_ms["graphExpandMs"] = 0.0
 
-    # Retrieve XML examples linked to concepts when appropriate
+    # Retrieve XML examples linked to concepts when appropriate (with semantic fallback)
     example_chunks_added = 0
     stage_start = time.perf_counter()
     if graph_rag_enabled and _is_example_driven_question(question) and question_concepts:
         try:
             graphdb_enabled = getattr(settings, "GRAPHDB_ENABLED", False)
             if graphdb_enabled:
-                example_files = retrieve_concept_examples(
+                example_files = retrieve_concept_examples_with_fallback(
                     concept_ids=question_concepts,
+                    requested_mode=None,
                     endpoint=settings.GRAPHDB_SPARQL_ENDPOINT,
                     repository=settings.GRAPHDB_REPOSITORY,
                     timeout_seconds=max(1, settings.GRAPHDB_TIMEOUT_SECONDS - 1),
