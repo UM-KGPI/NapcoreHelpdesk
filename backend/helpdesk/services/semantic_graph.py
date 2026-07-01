@@ -476,6 +476,13 @@ _FALLBACK_GRAPH_CONCEPT_ALIASES = {
     "netex:ScheduledStopPoint": {"scheduled stop point"},
     "netex:StopPlace": {"stop place"},
     "netex:ServiceJourneyPattern": {"service journey pattern"},
+    "netex:TemplateServiceJourney": {
+        "template service journey",
+        "templateservicejourney",
+        "template journey",
+    },
+    "netex:ServiceJourney": {"service journey"},
+    "netex:JourneyPattern": {"journey pattern"},
 }
 
 
