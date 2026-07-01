@@ -20,10 +20,10 @@ def load_baseline_report(report_path=None):
     if not report_path:
         repo_root = Path(settings.BASE_DIR).parent
         report_path = repo_root / 'docs/testing/benchmark-graphrag-ab-2026-05-11.json'
-    
+
     if not report_path.exists():
         return None
-    
+
     with report_path.open('r', encoding='utf-8') as f:
         return json.load(f)
 
@@ -33,10 +33,10 @@ def load_benchmark_questions():
     import yaml
     repo_root = Path(settings.BASE_DIR).parent
     questions_path = repo_root / 'docs/testing/benchmark-questions.yaml'
-    
+
     with questions_path.open('r', encoding='utf-8') as f:
         raw = yaml.safe_load(f)
-    
+
     return raw.get('questions', []) if isinstance(raw, dict) else []
 
 
@@ -44,7 +44,7 @@ def get_question_by_id(qid, all_questions=None):
     """Retrieve a single question by ID."""
     if not all_questions:
         all_questions = load_benchmark_questions()
-    
+
     for q in all_questions:
         if str(q.get('id', '')).lower() == str(qid).lower():
             return q
@@ -56,7 +56,7 @@ def infer_scope_from_question(question):
     scope = question.get('scope')
     if isinstance(scope, list) and scope:
         return scope
-    
+
     tags = question.get('tags', []) if isinstance(question.get('tags', []), list) else []
     inferred = []
     for t in tags:
@@ -78,10 +78,10 @@ def run_benchmark_question(question, graph_rag_enabled=True, timeout_ms=15000):
     Returns: (elapsed_ms, trace, error_str or None)
     """
     from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
-    
+
     q_text = str(question.get('question', '')).strip()
     scope = infer_scope_from_question(question)
-    
+
     start = time.time()
     try:
         chunks, trace = retrieve_chunks_with_trace(

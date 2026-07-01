@@ -29,7 +29,6 @@ DEFAULT_NAMESPACES = {
     "nits": "https://napcore.eu/ontology/nits#",
     "netex": "https://netex.org.uk/netex/2.0#",
     "opra": "https://transmodel-cen.eu/opra/1.0#",
-    "datex": "https://napcore.eu/ontology/datex#",
     "transmodel": "https://transmodel-cen.eu/6.2/",
     "nch": "https://napcore.eu/ontology/helpdesk#",
 }
@@ -71,10 +70,6 @@ STANDARD_ARTIFACT_RULE_SPECS = {
         "artifact-rules/siri-artifact-rules-v1.0.ttl",
         "https://napcore.eu/graph/artifact-rules/siri/v1.0",
     ),
-    "datex": (
-        "artifact-rules/datex-artifact-rules-v1.0.ttl",
-        "https://napcore.eu/graph/artifact-rules/datex/v1.0",
-    ),
 }
 
 STANDARD_GRAPH_SCOPE = {
@@ -90,10 +85,6 @@ STANDARD_GRAPH_SCOPE = {
         "https://napcore.eu/graph/standards/siri",
         "https://napcore.eu/graph/alignments/siri",
     ],
-    "datex": [
-        "https://napcore.eu/graph/standards/datex",
-        "https://napcore.eu/graph/alignments/datex",
-    ],
     "transmodel": [
         "https://napcore.eu/graph/standards/transmodel",
         "https://napcore.eu/graph/alignments/transmodel",
@@ -104,9 +95,6 @@ STANDARD_ALIASES = {
     "netex": "netex",
     "opra": "opra",
     "siri": "siri",
-    "datex": "datex",
-    "datexii": "datex",
-    "datex ii": "datex",
     "transmodel": "transmodel",
 }
 
@@ -357,7 +345,6 @@ def load_default_ontology_graphs(
         ("netex", ontology_dir / "standards" / "netex.ttl", "https://napcore.eu/graph/standards/netex"),
         ("opra", ontology_dir / "standards" / "opra.ttl", "https://napcore.eu/graph/standards/opra"),
         ("siri", ontology_dir / "standards" / "siri.ttl", "https://napcore.eu/graph/standards/siri"),
-        ("datex", ontology_dir / "standards" / "datex.ttl", "https://napcore.eu/graph/standards/datex"),
         (
             "nits-transmodel-align",
             ontology_dir / "alignments" / "nits-transmodel-align.ttl",
@@ -377,11 +364,6 @@ def load_default_ontology_graphs(
             "nits-siri-align",
             ontology_dir / "alignments" / "nits-siri-align.ttl",
             "https://napcore.eu/graph/alignments/siri",
-        ),
-        (
-            "nits-datex-align",
-            ontology_dir / "alignments" / "nits-datex-align.ttl",
-            "https://napcore.eu/graph/alignments/datex",
         ),
     ]
 
