@@ -27,6 +27,7 @@ opra:AbstractCtxIndicator
     skos:definition "Dummy Supertype for a CONTEXTUAL INDICATOR."@en ;
     skos:prefLabel "abstract ctx indicator"@en ;
     skos:altLabel "abstractctxindicator"@en ;
+    rdfs:subClassOf netex:DataManagedObject ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:AbstractLogEntry
@@ -35,6 +36,7 @@ opra:AbstractLogEntry
     skos:prefLabel "abstract log entry"@en ;
     skos:altLabel "abstractlogentry"@en ;
     skos:altLabel "dummy supertype for log entry"@en ;
+    rdfs:subClassOf netex:DataManagedObject ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:AbstractLoggableObject
@@ -43,6 +45,7 @@ opra:AbstractLoggableObject
     skos:prefLabel "abstract loggable object"@en ;
     skos:altLabel "abstractloggableobject"@en ;
     skos:altLabel "dummy supertype for loggable object"@en ;
+    rdfs:subClassOf netex:DataManagedObject ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:ActualCapacity
@@ -1188,6 +1191,7 @@ opra:TypeOfDelay
     skos:definition "Element for a TYPE OF DELAY classifying DELAYs, e.g. for implementing regulations that differentiate between DELAYs."@en ;
     skos:prefLabel "type of delay"@en ;
     skos:altLabel "typeofdelay"@en ;
+    rdfs:subClassOf netex:DataManagedObject ;
     skos:seeAlso <https://napcore.eu/examples/opra/examples%2FDelayedAndCancelledJourneysWithEvents.xml> ;
     skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
     skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_01_Sites_SimpleStadium_1.xml> ;
