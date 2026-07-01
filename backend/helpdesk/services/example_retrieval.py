@@ -148,7 +148,9 @@ def retrieve_concept_examples_with_fallback(
             [f"<{_ensure_uri(cid)}>" if cid.startswith("http") else cid for cid in sorted(concept_ids)]
         )
 
-        # Build mode-aware SPARQL query with semantic ranking
+        # Build mode-agnostic SPARQL query
+        # All transport modes are semantically equivalent for NeTEx structural concepts
+        # Examples from any mode (bus, ferry, rail) are directly applicable to any other mode
         sparql_query = f"""
         PREFIX netex: <https://netex.org.uk/netex/2.0#>
         PREFIX nits: <https://napcore.eu/ontology/nits#>
@@ -163,35 +165,24 @@ def retrieve_concept_examples_with_fallback(
           ?example rdfs:label ?label ;
                    dct:source ?source .
 
+          # Check if this concept is mode-agnostic (works for all transport modes)
           OPTIONAL {{
-            # Tier 1: Examples for demand-responsive services
-            nits:DemandResponsiveService rdfs:subClassOf* ?serviceType .
-            ?concept dct:relatedTo ?serviceType .
-            BIND("demand_responsive_pattern" AS ?matchType)
-            BIND("Demand-responsive service pattern (adaptable for ferries)" AS ?reason)
+            ?concept nits:applicableToAllModes true .
+            BIND("mode_agnostic" AS ?matchType)
+            BIND("Transport mode agnostic—applies to all modes (bus, ferry, rail)" AS ?reason)
           }}
 
-          OPTIONAL {{
-            # Tier 2: Examples of same concept class (any transport mode)
-            ?concept a ?baseClass .
-            FILTER(?baseClass IN (
-              netex:TemplateServiceJourney,
-              netex:Service,
-              netex:Line,
-              netex:Journey
-            ))
-            BIND("adaptable_class" AS ?matchType)
-            BIND(CONCAT("Same ", STRAFTER(STR(?baseClass), "#"), " pattern works across modes") AS ?reason)
-          }}
+          # Fallback: any example linked to the concept is applicable
+          BIND(COALESCE(?matchType, "applicable") AS ?finalMatchType)
+          BIND(COALESCE(?reason, "Example linked to requested concept") AS ?finalReason)
         }}
         ORDER BY
-          CASE ?matchType
-            WHEN "demand_responsive_pattern" THEN 1
-            WHEN "adaptable_class" THEN 2
-            ELSE 3
+          CASE ?finalMatchType
+            WHEN "mode_agnostic" THEN 1
+            ELSE 2
           END
           ?concept ?example
-        LIMIT 10
+        LIMIT 20
         """
 
         results = execute_sparql_query(
@@ -248,22 +239,24 @@ def format_examples_as_chunks(examples: list[dict]) -> list[dict]:
     """Convert example metadata to chunk format for LLM context.
 
     Each chunk represents one example file with metadata for attribution.
-    Includes match type and similarity reasoning for semantic fallback matches.
+    Includes match type and mode-agnostic reasoning for cross-mode examples.
     """
     chunks = []
     for example in examples:
         match_type = example.get("match_type", "exact")
         similarity_reason = example.get("similarity_reason", "Direct match")
 
-        # Adjust quality score based on match type
+        # Quality scores: all examples of mode-agnostic concepts are equally valid
         quality_score = 0.85
-        if match_type == "demand_responsive_pattern":
-            quality_score = 0.75  # High relevance for semantic patterns
-        elif match_type == "adaptable_class":
-            quality_score = 0.65  # Moderate relevance for class-level matches
+        if match_type == "mode_agnostic":
+            quality_score = 0.85  # Full quality—mode-agnostic concepts work for all modes
+        elif match_type == "applicable":
+            quality_score = 0.85  # Example is directly applicable
+        elif match_type == "exact":
+            quality_score = 0.85  # Direct match
 
         # Include match context in text for LLM understanding
-        match_context = f"[{match_type.upper()}] {similarity_reason}\n" if match_type != "exact" else ""
+        match_context = f"[{match_type.upper()}] {similarity_reason}\n" if match_type not in ("exact", "applicable") else ""
 
         chunk = {
             "chunk_id": f"example-{example['iri'].replace('/', '-')[-32:]}",
