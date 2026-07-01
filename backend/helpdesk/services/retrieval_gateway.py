@@ -28,6 +28,10 @@ except Exception:  # pragma: no cover - unavailable when postgres search extras 
 from helpdesk.models import SourceChunk
 from helpdesk.db_fields import HAS_NATIVE_PGVECTOR
 from helpdesk.services.embeddings import build_text_embedding, cosine_similarity, normalize_text_tokens
+from helpdesk.services.example_retrieval import (
+    format_examples_as_chunks,
+    retrieve_concept_examples,
+)
 from helpdesk.services.graphdb_client import (
     build_graph_scope_for_standards,
     query_graphdb_concept_expansion,
@@ -1030,6 +1034,31 @@ def retrieve_chunks_with_trace(
         graph_expansion_hops = 0
         stage_timing_ms["graphExpandMs"] = 0.0
 
+    # Retrieve XML examples linked to concepts when appropriate
+    example_chunks_added = 0
+    stage_start = time.perf_counter()
+    if graph_rag_enabled and _is_example_driven_question(question) and question_concepts:
+        try:
+            graphdb_enabled = getattr(settings, "GRAPHDB_ENABLED", False)
+            if graphdb_enabled:
+                example_files = retrieve_concept_examples(
+                    concept_ids=question_concepts,
+                    endpoint=settings.GRAPHDB_SPARQL_ENDPOINT,
+                    repository=settings.GRAPHDB_REPOSITORY,
+                    timeout_seconds=max(1, settings.GRAPHDB_TIMEOUT_SECONDS - 1),
+                    username=getattr(settings, "GRAPHDB_USER", ""),
+                    password=getattr(settings, "GRAPHDB_PASSWORD", ""),
+                )
+                if example_files:
+                    example_chunks = format_examples_as_chunks(example_files)
+                    example_chunks_added = len(example_chunks)
+                    # Add examples to the retrieval results (will be scored like other chunks)
+                    for example_chunk in example_chunks:
+                        chunk_iterable.append(type('ExampleChunk', (), example_chunk)())
+        except Exception as e:
+            logger.debug(f"Failed to retrieve examples: {e}")
+    _record_stage("exampleRetrievalMs", stage_start)
+
     stage_start = time.perf_counter()
     canonical_concept_terms = get_concept_canonical_terms(expanded_concepts) if expanded_concepts else []
     _record_stage("conceptMetadataMs", stage_start)
@@ -1307,6 +1336,7 @@ def retrieve_chunks_with_trace(
         "graphEvidenceCount": graph_hits if graph_rag_enabled else 0,
         "graphScoreContribution": round(graph_total / len(trimmed), 4) if graph_rag_enabled and trimmed else 0.0,
         "graphProvenanceChainCount": len(provenance_chains) if graph_rag_enabled else 0,
+        "exampleChunksAdded": example_chunks_added,
         "repositoryCoverageCount": repository_coverage_count,
         "conceptCoverageCount": len(graph_concepts_in_trimmed),
         "semanticAlignmentScore": round(sum(vector_scores_trimmed) / len(vector_scores_trimmed), 4) if vector_scores_trimmed else 0.0,

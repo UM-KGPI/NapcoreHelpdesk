@@ -90,13 +90,13 @@ opra:ActualCapacity
     rdfs:subClassOf netex:BookingPolicy ;
     rdfs:subClassOf netex:Branding ;
     rdfs:subClassOf netex:Call ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_bus> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_train> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_train_simple> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-CarClubExample> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-CycleSharingExample> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-standards-vdv452-timetable-NeTEx VDV Example> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_bus.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train_simple.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarClubExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CycleSharingExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Fvdv452%2Ftimetable%2FNeTEx%20VDV%20Example.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:ActualCapacityDiscoveryDelivery
@@ -163,12 +163,12 @@ opra:ActualCapacityRequest
     rdfs:subClassOf netex:CarModelProfile ;
     rdfs:subClassOf netex:CarServiceFacility ;
     rdfs:subClassOf netex:CarServiceFacilityList ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_bus> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_train> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_train_simple> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-CarClubExample> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-CycleSharingExample> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_bus.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train_simple.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarClubExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CycleSharingExample.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:ActualFleetDimensions
@@ -250,18 +250,18 @@ opra:ActualFrame
     rdfs:subClassOf netex:BookingPolicy ;
     rdfs:subClassOf netex:Branding ;
     rdfs:subClassOf netex:Call ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ActualServiceDimensions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_bus> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_train> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_train_simple> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-CarClubExample> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-CycleSharingExample> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_SM-exs_stopMonitoring_response> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_SM-exs_stopMonitoring_response_complex> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_VM-exv_vehicleMonitoring_response> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-standards-norway-vehicles-submodel-Vehicle> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-standards-vdv452-timetable-NeTEx VDV Example> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FActualServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_bus.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train_simple.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarClubExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CycleSharingExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_response.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_response_complex.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_VM%2Fexv_vehicleMonitoring_response.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Fnorway%2Fvehicles%2Fsubmodel-Vehicle.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Fvdv452%2Ftimetable%2FNeTEx%20VDV%20Example.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:ActualFrameRequest
@@ -310,13 +310,13 @@ opra:ActualFrameRequest
     rdfs:subClassOf netex:CarModelProfile ;
     rdfs:subClassOf netex:CarServiceFacility ;
     rdfs:subClassOf netex:CarServiceFacilityList ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_bus> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_train> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_train_simple> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-CarClubExample> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-CycleSharingExample> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-standards-norway-vehicles-submodel-Vehicle> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_bus.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train_simple.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarClubExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CycleSharingExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Fnorway%2Fvehicles%2Fsubmodel-Vehicle.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:ActualServiceDimensions
@@ -358,7 +358,7 @@ opra:ActualServiceDimensions
     rdfs:subClassOf siri:ServiceDelivery ;
     rdfs:subClassOf siri:StopPointsDelivery ;
     rdfs:subClassOf siri:Train ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ActualServiceDimensions> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FActualServiceDimensions.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:ActualServiceDimensionsDiscoveryDelivery
@@ -468,8 +468,8 @@ opra:AverageCommercialSpeed
     rdfs:subClassOf opra:IndicatorFrame ;
     rdfs:subClassOf opra:LoadOverJourneyDistance ;
     rdfs:subClassOf opra:MeanCapacityOverJourneyDistance ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ExpectedServiceIntensity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedServiceIntensity> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:CancelledDatedVehicleJourneyCount
@@ -511,8 +511,8 @@ opra:CancelledDatedVehicleJourneyCount
     rdfs:subClassOf siri:DatedVehicleJourney ;
     rdfs:subClassOf siri:ResponseTimestamp ;
     rdfs:subClassOf siri:ServiceDelivery ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-CancelledAndLateDatedVehicleJourneys> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-DelayedAndCancelledJourneysWithEvents> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FCancelledAndLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FDelayedAndCancelledJourneysWithEvents.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:CancelledDatedVehicleJourneyDiscoveryDelivery
@@ -588,19 +588,19 @@ opra:CapabilitiesRequest
     rdfs:subClassOf opra:ServiceDelivery ;
     rdfs:subClassOf opra:ServiceRequest ;
     rdfs:subClassOf opra:SubscriptionRequest ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_CM-exc_connectionMonitoring_capabilitiesResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_CT-exc_connectionTimetable_capabilitiesResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_ET-ext_estimatedTimetable_capabilitiesResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_FM-exf_facilityMonitoring_capabilitiesResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_GM-exm_generalMessage_capabilityResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_PT-ext_productionTimetable_capabilitiesResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_SM-exp_stopMonitoring_permissions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_SM-exs_stopMonitoring_capabilitiesResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_ST-exs_stopTimetable_capabilitiesResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_SX-exx_situationExchange_capabilityResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_VM-exv_vehicleMonitoring_capabilitiesResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exu_capability-exd_allServices_capabilitiesRequest> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exu_capability-exd_allServices_capabilitiesResponse> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_CM%2Fexc_connectionMonitoring_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_CT%2Fexc_connectionTimetable_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_ET%2Fext_estimatedTimetable_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_FM%2Fexf_facilityMonitoring_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_GM%2Fexm_generalMessage_capabilityResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_PT%2Fext_productionTimetable_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_SM%2Fexp_stopMonitoring_permissions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_ST%2Fexs_stopTimetable_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_SX%2Fexx_situationExchange_capabilityResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_VM%2Fexv_vehicleMonitoring_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exu_capability%2Fexd_allServices_capabilitiesRequest.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exu_capability%2Fexd_allServices_capabilitiesResponse.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:CapabilitiesResponse
@@ -649,18 +649,18 @@ opra:CapabilitiesResponse
     rdfs:subClassOf opra:ServiceDelivery ;
     rdfs:subClassOf opra:ServiceRequest ;
     rdfs:subClassOf opra:SubscriptionRequest ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_CM-exc_connectionMonitoring_capabilitiesResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_CT-exc_connectionTimetable_capabilitiesResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_ET-ext_estimatedTimetable_capabilitiesResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_FM-exf_facilityMonitoring_capabilitiesResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_GM-exm_generalMessage_capabilityResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_PT-ext_productionTimetable_capabilitiesResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_SM-exp_stopMonitoring_permissions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_SM-exs_stopMonitoring_capabilitiesResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_ST-exs_stopTimetable_capabilitiesResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_SX-exx_situationExchange_capabilityResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_VM-exv_vehicleMonitoring_capabilitiesResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exu_capability-exd_allServices_capabilitiesResponse> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_CM%2Fexc_connectionMonitoring_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_CT%2Fexc_connectionTimetable_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_ET%2Fext_estimatedTimetable_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_FM%2Fexf_facilityMonitoring_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_GM%2Fexm_generalMessage_capabilityResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_PT%2Fext_productionTimetable_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_SM%2Fexp_stopMonitoring_permissions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_ST%2Fexs_stopTimetable_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_SX%2Fexx_situationExchange_capabilityResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_VM%2Fexv_vehicleMonitoring_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exu_capability%2Fexd_allServices_capabilitiesResponse.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:CapacitySpecification
@@ -708,12 +708,12 @@ opra:CapacitySpecification
     rdfs:subClassOf netex:CarServiceFacility ;
     rdfs:subClassOf netex:CarServiceFacilityList ;
     rdfs:subClassOf netex:CateringFacility ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedCapacity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-rail-Netex_era_distance_ro> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-CarClubExample> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-CarPoolingExample> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-ChauffeuredServiceExample> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-CycleSharingExample> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedCapacity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2Frail%2FNetex_era_distance_ro.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarClubExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarPoolingExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-ChauffeuredServiceExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CycleSharingExample.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:ContextualIndicatorDiscoveryDelivery
@@ -760,7 +760,7 @@ opra:ContextualIndicatorFrame
     rdfs:subClassOf siri:ResponseTimestamp ;
     rdfs:subClassOf siri:ServiceDelivery ;
     rdfs:subClassOf siri:VehicleMode ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ContextualIndicatorFrame> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FContextualIndicatorFrame.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:ContextualIndicatorRequest
@@ -817,31 +817,31 @@ opra:DurationInterval
     rdfs:subClassOf netex:AssistanceService ;
     rdfs:subClassOf netex:AudibleSignalsAvailable ;
     rdfs:subClassOf netex:Authority ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-CancelledAndLateDatedVehicleJourneys> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-DelayedAndCancelledJourneysWithEvents> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ResponseLateDatedVehicleJourneys> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_train> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-ENTUR-SchoolTwiceADayTripCarnet_2020120> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_71.1_Bus_TimeIntervalFares_Zonal_MultipleProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_71.2_Bus_ZonalFares_MultipleSalesPackages> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_91.1_Rail_RailCard_MultipleProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-rail-Netex_era_crossborder_de> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-rail-Netex_era_distance_ro> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-rail-Netex_era_toc_uk> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-CarClubExample> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-CarPoolingExample> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-ChauffeuredServiceExample> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-CycleSharingExample> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-site-Netex_01_Sites_SimpleStadium_1> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-site-Netex_10_Sites_OlympicPark_2_basic> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-site-Netex_11_Sites_OlympicPark_1> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-site-Netex_12_Sites_OlympicPark_3_nav> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-site-Netex_21_Sites_Parking_1> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-site-Netex_21_Sites_Parking_2> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-site-Netex_Address_Example_1> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-stopPlace-FX-PI-01_UK_TBD_STOP-OFFER_910GWIMBLDN-accessibility_20140601> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-stopPlace-Netex_04_Stops_SimpleStation_1> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FCancelledAndLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FDelayedAndCancelledJourneysWithEvents.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FResponseLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FENTUR-SchoolTwiceADayTripCarnet_2020120.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_71.1_Bus_TimeIntervalFares_Zonal_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_71.2_Bus_ZonalFares_MultipleSalesPackages.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_91.1_Rail_RailCard_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2Frail%2FNetex_era_crossborder_de.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2Frail%2FNetex_era_distance_ro.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2Frail%2FNetex_era_toc_uk.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarClubExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarPoolingExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-ChauffeuredServiceExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CycleSharingExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_01_Sites_SimpleStadium_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_10_Sites_OlympicPark_2_basic.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_11_Sites_OlympicPark_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_12_Sites_OlympicPark_3_nav.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_21_Sites_Parking_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_21_Sites_Parking_2.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_Address_Example_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FFX-PI-01_UK_TBD_STOP-OFFER_910GWIMBLDN-accessibility_20140601.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FNetex_04_Stops_SimpleStation_1.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:ExpectedPassengerCount
@@ -868,7 +868,7 @@ opra:ExpectedPassengerCount
     rdfs:subClassOf opra:opraFunctionalDeliveries ;
     rdfs:subClassOf siri:ResponseTimestamp ;
     rdfs:subClassOf siri:ServiceDelivery ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ExpectedPassengerCount> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedPassengerCount.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:ExpectedPassengerCountDiscoveryDelivery
@@ -943,7 +943,7 @@ opra:ExpectedServiceIntensity
     rdfs:subClassOf opra:IndicatorFrame ;
     rdfs:subClassOf opra:LoadOverJourneyDistance ;
     rdfs:subClassOf opra:MeanCapacityOverJourneyDistance ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ExpectedServiceIntensity> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:ExternalPassengerCount
@@ -991,11 +991,11 @@ opra:ExternalPassengerCount
     rdfs:subClassOf netex:Call ;
     rdfs:subClassOf netex:CarServiceFacility ;
     rdfs:subClassOf netex:CarServiceFacilityList ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_train> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-stopPlace-FX-PI-01_UK_TBD_STOP-OFFER_910GWIMBLDN-accessibility_20140601> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-stopPlace-Netex_04_Stops_SimpleStation_1> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-stopPlace-Netex_10_StopPlace_uk_ComplexStation_Wimbledon_1> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-stopPlace-Netex_10_StopPlace_withParking_1> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FFX-PI-01_UK_TBD_STOP-OFFER_910GWIMBLDN-accessibility_20140601.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FNetex_04_Stops_SimpleStation_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FNetex_10_StopPlace_uk_ComplexStation_Wimbledon_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FNetex_10_StopPlace_withParking_1.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:ExternalPassengerCountDiscoveryDelivery
@@ -1062,11 +1062,11 @@ opra:ExternalPassengerCountRequest
     rdfs:subClassOf netex:Call ;
     rdfs:subClassOf netex:CarServiceFacility ;
     rdfs:subClassOf netex:CarServiceFacilityList ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_train> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-stopPlace-FX-PI-01_UK_TBD_STOP-OFFER_910GWIMBLDN-accessibility_20140601> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-stopPlace-Netex_04_Stops_SimpleStation_1> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-stopPlace-Netex_10_StopPlace_uk_ComplexStation_Wimbledon_1> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-stopPlace-Netex_10_StopPlace_withParking_1> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FFX-PI-01_UK_TBD_STOP-OFFER_910GWIMBLDN-accessibility_20140601.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FNetex_04_Stops_SimpleStation_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FNetex_10_StopPlace_uk_ComplexStation_Wimbledon_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FNetex_10_StopPlace_withParking_1.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:GeneralLogEntry
@@ -1104,7 +1104,7 @@ opra:GenericContextualIndicator
     rdfs:subClassOf siri:ResponseTimestamp ;
     rdfs:subClassOf siri:ServiceDelivery ;
     rdfs:subClassOf siri:VehicleMode ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ContextualIndicatorFrame> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FContextualIndicatorFrame.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:IndicatorFrame
@@ -1152,21 +1152,21 @@ opra:IndicatorFrame
     rdfs:subClassOf netex:CheckConstraintDelay ;
     rdfs:subClassOf netex:ClassOfUse ;
     rdfs:subClassOf netex:ClimateControl ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ActualServiceDimensions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-CancelledAndLateDatedVehicleJourneys> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ContextualIndicatorFrame> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-DelayedAndCancelledJourneysWithEvents> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ExpectedPassengerCount> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ExpectedServiceIntensity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedCapacity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedFleetDimensions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedServiceDimensions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedServiceIntensity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-RequestLateDatedVehicleJourneys> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ResponseLateDatedVehicleJourneys> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-TicketingBasedPassengerCount> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_train> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-placeholder> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FActualServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FCancelledAndLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FContextualIndicatorFrame.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FDelayedAndCancelledJourneysWithEvents.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedCapacity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedFleetDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FResponseLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FTicketingBasedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fplaceholder.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:LateDatedVehicleJourneyCount
@@ -1208,9 +1208,9 @@ opra:LateDatedVehicleJourneyCount
     rdfs:subClassOf siri:DatedVehicleJourney ;
     rdfs:subClassOf siri:ResponseTimestamp ;
     rdfs:subClassOf siri:ServiceDelivery ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-CancelledAndLateDatedVehicleJourneys> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-DelayedAndCancelledJourneysWithEvents> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ResponseLateDatedVehicleJourneys> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FCancelledAndLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FDelayedAndCancelledJourneysWithEvents.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FResponseLateDatedVehicleJourneys.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:LateDatedVehicleJourneyDiscoveryDelivery
@@ -1257,7 +1257,7 @@ opra:LateDatedVehicleJourneysRequest
     rdfs:subClassOf opra:opraFunctionalRequests ;
     rdfs:subClassOf siri:DatedVehicleJourney ;
     rdfs:subClassOf siri:ServiceRequest ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-RequestLateDatedVehicleJourneys> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestLateDatedVehicleJourneys.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:LoadOverJourneyDistance
@@ -1305,7 +1305,7 @@ opra:LoadOverJourneyDistance
     rdfs:subClassOf opra:ExpectedServiceIntensity ;
     rdfs:subClassOf opra:IndicatorFrame ;
     rdfs:subClassOf opra:MeanCapacityOverJourneyDistance ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ExpectedServiceIntensity> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:LogEntryValue
@@ -1353,8 +1353,8 @@ opra:LogEntryValue
     rdfs:subClassOf netex:CustomerPurchasePackageElementAccess ;
     rdfs:subClassOf netex:CustomerPurchasePackagePrice ;
     rdfs:subClassOf netex:CustomerPurchaseParameterAssignment ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-CarClubExample> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-CycleSharingExample> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarClubExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CycleSharingExample.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:LoggableObject
@@ -1410,7 +1410,7 @@ opra:MeanCapacityOverJourneyDistance
     rdfs:subClassOf opra:ExpectedServiceIntensity ;
     rdfs:subClassOf opra:IndicatorFrame ;
     rdfs:subClassOf opra:LoadOverJourneyDistance ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ExpectedServiceIntensity> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:MeanCapacityOverNetworkDistance
@@ -1458,8 +1458,8 @@ opra:MeanCapacityOverNetworkDistance
     rdfs:subClassOf opra:ExpectedServiceIntensity ;
     rdfs:subClassOf opra:IndicatorFrame ;
     rdfs:subClassOf opra:LoadOverJourneyDistance ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ExpectedServiceIntensity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedServiceIntensity> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:MeanCapacityOverRouteDistance
@@ -1507,7 +1507,7 @@ opra:MeanCapacityOverRouteDistance
     rdfs:subClassOf opra:ExpectedServiceIntensity ;
     rdfs:subClassOf opra:IndicatorFrame ;
     rdfs:subClassOf opra:LoadOverJourneyDistance ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ExpectedServiceIntensity> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:OnboardDeviceBasedPassengerCount
@@ -1525,7 +1525,7 @@ opra:OnboardDeviceBasedPassengerCount
     rdfs:subClassOf opra:TicketingBasedPassengerCountRequest ;
     rdfs:subClassOf opra:opraFunctionalRequests ;
     rdfs:subClassOf siri:ServiceRequest ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-RequestAllPassengerCounts> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestAllPassengerCounts.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:OnboardDeviceBasedPassengerCountDiscoveryDelivery
@@ -1562,7 +1562,7 @@ opra:OnboardDeviceBasedPassengerCountRequest
     rdfs:subClassOf opra:TicketingBasedPassengerCountRequest ;
     rdfs:subClassOf opra:opraFunctionalRequests ;
     rdfs:subClassOf siri:ServiceRequest ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-RequestAllPassengerCounts> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestAllPassengerCounts.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:Opra
@@ -1609,21 +1609,21 @@ opra:Opra
     rdfs:subClassOf netex:Train ;
     rdfs:subClassOf netex:TrainNumber ;
     rdfs:subClassOf netex:TypeOfFrame ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ActualServiceDimensions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-CancelledAndLateDatedVehicleJourneys> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ContextualIndicatorFrame> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-DelayedAndCancelledJourneysWithEvents> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ExpectedPassengerCount> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ExpectedServiceIntensity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedCapacity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedFleetDimensions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedServiceDimensions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedServiceIntensity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-RequestAllPassengerCounts> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-RequestLateDatedVehicleJourneys> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ResponseLateDatedVehicleJourneys> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-TicketingBasedPassengerCount> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-placeholder> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FActualServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FCancelledAndLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FContextualIndicatorFrame.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FDelayedAndCancelledJourneysWithEvents.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedCapacity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedFleetDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestAllPassengerCounts.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FResponseLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FTicketingBasedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fplaceholder.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:OpraDiscoveryDelivery
@@ -1697,19 +1697,19 @@ opra:OpraFunctionalDelivery
     rdfs:subClassOf netex:Train ;
     rdfs:subClassOf netex:TrainNumber ;
     rdfs:subClassOf netex:TypeOfFrame ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ActualServiceDimensions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-CancelledAndLateDatedVehicleJourneys> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ContextualIndicatorFrame> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-DelayedAndCancelledJourneysWithEvents> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ExpectedPassengerCount> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ExpectedServiceIntensity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedCapacity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedFleetDimensions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedServiceDimensions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedServiceIntensity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ResponseLateDatedVehicleJourneys> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-TicketingBasedPassengerCount> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-placeholder> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FActualServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FCancelledAndLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FContextualIndicatorFrame.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FDelayedAndCancelledJourneysWithEvents.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedCapacity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedFleetDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FResponseLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FTicketingBasedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fplaceholder.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:OpraFunctionalRequest
@@ -1744,8 +1744,8 @@ opra:OpraFunctionalRequest
     rdfs:subClassOf siri:AbstractFunctionalServiceRequest ;
     rdfs:subClassOf siri:DatedVehicleJourney ;
     rdfs:subClassOf siri:ServiceRequest ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-RequestAllPassengerCounts> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-RequestLateDatedVehicleJourneys> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestAllPassengerCounts.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestLateDatedVehicleJourneys.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:OpraPayloadDelivery
@@ -1794,18 +1794,18 @@ opra:OpraPayloadDelivery
     rdfs:subClassOf netex:Train ;
     rdfs:subClassOf netex:TrainNumber ;
     rdfs:subClassOf netex:TypeOfFrame ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ActualServiceDimensions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-CancelledAndLateDatedVehicleJourneys> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ContextualIndicatorFrame> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-DelayedAndCancelledJourneysWithEvents> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ExpectedPassengerCount> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ExpectedServiceIntensity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedCapacity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedFleetDimensions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedServiceDimensions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedServiceIntensity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ResponseLateDatedVehicleJourneys> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-TicketingBasedPassengerCount> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FActualServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FCancelledAndLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FContextualIndicatorFrame.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FDelayedAndCancelledJourneysWithEvents.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedCapacity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedFleetDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FResponseLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FTicketingBasedPassengerCount.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:OpraSubscriptionRequest
@@ -1860,10 +1860,10 @@ opra:PlannedCapacity
     rdfs:subClassOf netex:DefaultInterchange ;
     rdfs:subClassOf netex:DefaultServiceJourneyRunTime ;
     rdfs:subClassOf netex:DeliveryVariant ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedCapacity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedServiceIntensity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-timetable-Netex_01.4_Bus_SimpleTimetable_WithConnection> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-timetable-Netex_21_Rail_NetworkTimetable_eurostar> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedCapacity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_01.4_Bus_SimpleTimetable_WithConnection.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_21_Rail_NetworkTimetable_eurostar.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:PlannedCapacityDiscoveryDelivery
@@ -1930,8 +1930,8 @@ opra:PlannedCapacityRequest
     rdfs:subClassOf netex:DefaultServiceJourneyRunTime ;
     rdfs:subClassOf netex:DeliveryVariant ;
     rdfs:subClassOf netex:DestinationDisplay ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-timetable-Netex_01.4_Bus_SimpleTimetable_WithConnection> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-timetable-Netex_21_Rail_NetworkTimetable_eurostar> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_01.4_Bus_SimpleTimetable_WithConnection.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_21_Rail_NetworkTimetable_eurostar.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:PlannedFleetDimensions
@@ -1955,7 +1955,7 @@ opra:PlannedFleetDimensions
     rdfs:subClassOf siri:ResponseTimestamp ;
     rdfs:subClassOf siri:ServiceDelivery ;
     rdfs:subClassOf siri:VehicleMode ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedFleetDimensions> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedFleetDimensions.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:PlannedFleetDimensionsDiscoveryDelivery
@@ -2031,22 +2031,22 @@ opra:PlannedFrame
     rdfs:subClassOf netex:Connection ;
     rdfs:subClassOf netex:Contact ;
     rdfs:subClassOf netex:ControlCentre ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedCapacity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedFleetDimensions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedServiceDimensions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedServiceIntensity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-timetable-Netex_01.4_Bus_SimpleTimetable_WithConnection> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-timetable-Netex_02.1_Bus_CircularRoute_Timetable> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-timetable-Netex_03.1_Bus_BranchedRouteTimetable_SimplePatterns> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-timetable-Netex_03.2_Bus_BranchedRouteTimetable_SharedPatterns> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-timetable-Netex_09.1_Bus_InterchangeRule> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-timetable-Netex_10_Rail_SplittingJoiningTimetable> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-timetable-Netex_11_Rail_CompoundTrain> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-timetable-Netex_21_Rail_NetworkTimetable_eurostar> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-timetable-Netex_52_planned_delay> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-standards-norway-network-FlexibleLine863-with-connection> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-standards-tap_tsi-TAP-TSDUPD-example2.3-Piedmont> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-standards-tap_tsi-TAP-TSDUPD-example2> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedCapacity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedFleetDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_01.4_Bus_SimpleTimetable_WithConnection.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_02.1_Bus_CircularRoute_Timetable.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_03.1_Bus_BranchedRouteTimetable_SimplePatterns.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_03.2_Bus_BranchedRouteTimetable_SharedPatterns.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_09.1_Bus_InterchangeRule.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_10_Rail_SplittingJoiningTimetable.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_11_Rail_CompoundTrain.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_21_Rail_NetworkTimetable_eurostar.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_52_planned_delay.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Fnorway%2Fnetwork%2FFlexibleLine863-with-connection.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Ftap_tsi%2FTAP-TSDUPD-example2.3-Piedmont.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Ftap_tsi%2FTAP-TSDUPD-example2.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:PlannedFrameRequest
@@ -2095,16 +2095,16 @@ opra:PlannedFrameRequest
     rdfs:subClassOf netex:Connection ;
     rdfs:subClassOf netex:Contact ;
     rdfs:subClassOf netex:ControlCentre ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-timetable-Netex_01.4_Bus_SimpleTimetable_WithConnection> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-timetable-Netex_02.1_Bus_CircularRoute_Timetable> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-timetable-Netex_03.1_Bus_BranchedRouteTimetable_SimplePatterns> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-timetable-Netex_03.2_Bus_BranchedRouteTimetable_SharedPatterns> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-timetable-Netex_09.1_Bus_InterchangeRule> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-timetable-Netex_10_Rail_SplittingJoiningTimetable> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-timetable-Netex_11_Rail_CompoundTrain> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-timetable-Netex_21_Rail_NetworkTimetable_eurostar> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-standards-tap_tsi-TAP-TSDUPD-example2.3-Piedmont> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-standards-tap_tsi-TAP-TSDUPD-example2> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_01.4_Bus_SimpleTimetable_WithConnection.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_02.1_Bus_CircularRoute_Timetable.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_03.1_Bus_BranchedRouteTimetable_SimplePatterns.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_03.2_Bus_BranchedRouteTimetable_SharedPatterns.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_09.1_Bus_InterchangeRule.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_10_Rail_SplittingJoiningTimetable.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_11_Rail_CompoundTrain.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_21_Rail_NetworkTimetable_eurostar.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Ftap_tsi%2FTAP-TSDUPD-example2.3-Piedmont.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Ftap_tsi%2FTAP-TSDUPD-example2.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:PlannedServiceDimensions
@@ -2137,8 +2137,8 @@ opra:PlannedServiceDimensions
     rdfs:subClassOf siri:ServiceDelivery ;
     rdfs:subClassOf siri:StopPointsDelivery ;
     rdfs:subClassOf siri:VehicleMode ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedFleetDimensions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedServiceDimensions> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedFleetDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceDimensions.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:PlannedServiceDimensionsDiscoveryDelivery
@@ -2203,7 +2203,7 @@ opra:PlannedServiceIntensity
     rdfs:subClassOf siri:ResponseTimestamp ;
     rdfs:subClassOf siri:ServiceDelivery ;
     rdfs:subClassOf siri:VehicleMode ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedServiceIntensity> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:PlannedServiceIntensityDiscoveryDelivery
@@ -2279,16 +2279,16 @@ opra:PreparednessLevel
     rdfs:subClassOf netex:TrainNumber ;
     rdfs:subClassOf netex:TypeOfFrame ;
     rdfs:subClassOf netex:TypeOfJourneyPattern ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ActualServiceDimensions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-CancelledAndLateDatedVehicleJourneys> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-DelayedAndCancelledJourneysWithEvents> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ExpectedPassengerCount> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ExpectedServiceIntensity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedCapacity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedServiceIntensity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ResponseLateDatedVehicleJourneys> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-TicketingBasedPassengerCount> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-placeholder> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FActualServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FCancelledAndLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FDelayedAndCancelledJourneysWithEvents.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedCapacity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FResponseLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FTicketingBasedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fplaceholder.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:PublicationDelivery
@@ -2337,31 +2337,31 @@ opra:PublicationDelivery
     rdfs:subClassOf netex:AssistanceFacilityList ;
     rdfs:subClassOf netex:AssistanceService ;
     rdfs:subClassOf netex:AudibleSignalsAvailable ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-bookingArrangements-generalframe> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-calendar-NeTEx_Calendar_se_PA1> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-calendar-Netex_calendarCodeing_02> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-calendar-Netex_calendarExample_01_BHN01> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_bus> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_train> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_train_simple> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deprecation-organisationref> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-ENTUR-SchoolTwiceADayTripCarnet_2020120> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_51.1_Bus_SimpleFares_PointToPoint_SingleProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_51.2_Bus_SimpleFares_PointToPoint_MultipleOffers> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_51.3_Bus_SimpleFares_ZoneToZone_AdultChildProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_51.4_Bus_SimpleFares_ZoneToZone_OffPeakProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_61.1_Bus_GeographicFares_UnitDistance_SingleProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_61.2_Bus_GeographicFares_UnitZone_AdultChildProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_61.3_Bus_GeographicFares_UnitFareStage_SingleProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_61.4_Bus_GeographicFares_HierarchicalZone_MultipleOffers> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_71.1_Bus_TimeIntervalFares_Zonal_MultipleProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_71.2_Bus_ZonalFares_MultipleSalesPackages> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_81.1_Metro_FlatFare_GroupProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_91.1_Rail_RailCard_MultipleProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-rail-Netex_era_crossborder_de> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-rail-Netex_era_distance_ro> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FbookingArrangements%2Fgeneralframe.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fcalendar%2FNeTEx_Calendar_se_PA1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fcalendar%2FNetex_calendarCodeing_02.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fcalendar%2FNetex_calendarExample_01_BHN01.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_bus.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train_simple.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fdeprecation%2Forganisationref.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FENTUR-SchoolTwiceADayTripCarnet_2020120.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.1_Bus_SimpleFares_PointToPoint_SingleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.2_Bus_SimpleFares_PointToPoint_MultipleOffers.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.3_Bus_SimpleFares_ZoneToZone_AdultChildProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.4_Bus_SimpleFares_ZoneToZone_OffPeakProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_61.1_Bus_GeographicFares_UnitDistance_SingleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_61.2_Bus_GeographicFares_UnitZone_AdultChildProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_61.3_Bus_GeographicFares_UnitFareStage_SingleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_61.4_Bus_GeographicFares_HierarchicalZone_MultipleOffers.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_71.1_Bus_TimeIntervalFares_Zonal_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_71.2_Bus_ZonalFares_MultipleSalesPackages.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_81.1_Metro_FlatFare_GroupProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_91.1_Rail_RailCard_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2Frail%2FNetex_era_crossborder_de.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2Frail%2FNetex_era_distance_ro.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:PublicationRequest
@@ -2410,31 +2410,31 @@ opra:PublicationRequest
     rdfs:subClassOf netex:AssistanceFacilityList ;
     rdfs:subClassOf netex:AssistanceService ;
     rdfs:subClassOf netex:AudibleSignalsAvailable ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-calendar-NeTEx_Calendar_se_PA1> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-calendar-Netex_calendarCodeing_02> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-calendar-Netex_calendarExample_01_BHN01> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_bus> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_train> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_train_simple> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_51.1_Bus_SimpleFares_PointToPoint_SingleProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_51.2_Bus_SimpleFares_PointToPoint_MultipleOffers> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_51.3_Bus_SimpleFares_ZoneToZone_AdultChildProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_51.4_Bus_SimpleFares_ZoneToZone_OffPeakProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_61.1_Bus_GeographicFares_UnitDistance_SingleProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_61.2_Bus_GeographicFares_UnitZone_AdultChildProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_61.3_Bus_GeographicFares_UnitFareStage_SingleProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_61.4_Bus_GeographicFares_HierarchicalZone_MultipleOffers> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_71.1_Bus_TimeIntervalFares_Zonal_MultipleProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_71.2_Bus_ZonalFares_MultipleSalesPackages> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_81.1_Metro_FlatFare_GroupProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_91.1_Rail_RailCard_MultipleProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-grouping-Netex_GroupingExample_General_01> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-line-Line_with_facilities> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-line-NeTEx_01_simple_line> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-CarClubExample> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-CarPoolingExample> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fcalendar%2FNeTEx_Calendar_se_PA1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fcalendar%2FNetex_calendarCodeing_02.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fcalendar%2FNetex_calendarExample_01_BHN01.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_bus.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train_simple.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.1_Bus_SimpleFares_PointToPoint_SingleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.2_Bus_SimpleFares_PointToPoint_MultipleOffers.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.3_Bus_SimpleFares_ZoneToZone_AdultChildProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.4_Bus_SimpleFares_ZoneToZone_OffPeakProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_61.1_Bus_GeographicFares_UnitDistance_SingleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_61.2_Bus_GeographicFares_UnitZone_AdultChildProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_61.3_Bus_GeographicFares_UnitFareStage_SingleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_61.4_Bus_GeographicFares_HierarchicalZone_MultipleOffers.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_71.1_Bus_TimeIntervalFares_Zonal_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_71.2_Bus_ZonalFares_MultipleSalesPackages.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_81.1_Metro_FlatFare_GroupProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_91.1_Rail_RailCard_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fgrouping%2FNetex_GroupingExample_General_01.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fline%2FLine_with_facilities.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fline%2FNeTEx_01_simple_line.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarClubExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarPoolingExample.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:ServiceDelivery
@@ -2482,31 +2482,31 @@ opra:ServiceDelivery
     rdfs:subClassOf netex:AssistanceFacilityList ;
     rdfs:subClassOf netex:AssistanceService ;
     rdfs:subClassOf netex:AudibleSignalsAvailable ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ActualServiceDimensions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-CancelledAndLateDatedVehicleJourneys> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ContextualIndicatorFrame> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-DelayedAndCancelledJourneysWithEvents> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ExpectedPassengerCount> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ExpectedServiceIntensity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedCapacity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedFleetDimensions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedServiceDimensions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedServiceIntensity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ResponseLateDatedVehicleJourneys> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-TicketingBasedPassengerCount> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-calendar-NeTEx_Calendar_se_PA1> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-calendar-Netex_calendarCodeing_02> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-calendar-Netex_calendarExample_01_BHN01> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_bus> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_train> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_train_simple> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-ENTUR-SchoolTwiceADayTripCarnet_2020120> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_51.1_Bus_SimpleFares_PointToPoint_SingleProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_51.2_Bus_SimpleFares_PointToPoint_MultipleOffers> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_51.3_Bus_SimpleFares_ZoneToZone_AdultChildProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_51.4_Bus_SimpleFares_ZoneToZone_OffPeakProduct> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FActualServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FCancelledAndLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FContextualIndicatorFrame.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FDelayedAndCancelledJourneysWithEvents.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedCapacity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedFleetDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FResponseLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FTicketingBasedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fcalendar%2FNeTEx_Calendar_se_PA1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fcalendar%2FNetex_calendarCodeing_02.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fcalendar%2FNetex_calendarExample_01_BHN01.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_bus.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train_simple.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FENTUR-SchoolTwiceADayTripCarnet_2020120.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.1_Bus_SimpleFares_PointToPoint_SingleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.2_Bus_SimpleFares_PointToPoint_MultipleOffers.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.3_Bus_SimpleFares_ZoneToZone_AdultChildProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.4_Bus_SimpleFares_ZoneToZone_OffPeakProduct.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:ServiceRequest
@@ -2555,31 +2555,31 @@ opra:ServiceRequest
     rdfs:subClassOf netex:AssistanceFacilityList ;
     rdfs:subClassOf netex:AssistanceService ;
     rdfs:subClassOf netex:AudibleSignalsAvailable ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-RequestAllPassengerCounts> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-RequestLateDatedVehicleJourneys> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-calendar-NeTEx_Calendar_se_PA1> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-calendar-Netex_calendarCodeing_02> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-calendar-Netex_calendarExample_01_BHN01> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_bus> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_train> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_train_simple> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_51.1_Bus_SimpleFares_PointToPoint_SingleProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_51.2_Bus_SimpleFares_PointToPoint_MultipleOffers> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_51.3_Bus_SimpleFares_ZoneToZone_AdultChildProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_51.4_Bus_SimpleFares_ZoneToZone_OffPeakProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_61.1_Bus_GeographicFares_UnitDistance_SingleProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_61.2_Bus_GeographicFares_UnitZone_AdultChildProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_61.3_Bus_GeographicFares_UnitFareStage_SingleProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_61.4_Bus_GeographicFares_HierarchicalZone_MultipleOffers> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_71.1_Bus_TimeIntervalFares_Zonal_MultipleProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_71.2_Bus_ZonalFares_MultipleSalesPackages> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-grouping-Netex_GroupingExample_General_01> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-line-Line_with_facilities> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-line-NeTEx_01_simple_line> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-CarClubExample> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-CarPoolingExample> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestAllPassengerCounts.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fcalendar%2FNeTEx_Calendar_se_PA1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fcalendar%2FNetex_calendarCodeing_02.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fcalendar%2FNetex_calendarExample_01_BHN01.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_bus.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train_simple.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.1_Bus_SimpleFares_PointToPoint_SingleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.2_Bus_SimpleFares_PointToPoint_MultipleOffers.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.3_Bus_SimpleFares_ZoneToZone_AdultChildProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_51.4_Bus_SimpleFares_ZoneToZone_OffPeakProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_61.1_Bus_GeographicFares_UnitDistance_SingleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_61.2_Bus_GeographicFares_UnitZone_AdultChildProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_61.3_Bus_GeographicFares_UnitFareStage_SingleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_61.4_Bus_GeographicFares_HierarchicalZone_MultipleOffers.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_71.1_Bus_TimeIntervalFares_Zonal_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_71.2_Bus_ZonalFares_MultipleSalesPackages.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fgrouping%2FNetex_GroupingExample_General_01.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fline%2FLine_with_facilities.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fline%2FNeTEx_01_simple_line.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarClubExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarPoolingExample.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:SubscriptionRequest
@@ -2628,31 +2628,31 @@ opra:SubscriptionRequest
     rdfs:subClassOf netex:DiscountingRule ;
     rdfs:subClassOf netex:DistributionAssignment ;
     rdfs:subClassOf netex:DistributionChannel ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-Netex_91.1_Rail_RailCard_MultipleProduct> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exa_framework-exa_terminateSubscription_request> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_CM-exc_connectionMonitoring_capabilitiesResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_CM-exc_connectionMonitoring_subscriptionRequest> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_CT-exc_connectionTimetable_capabilitiesResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_CT-exc_connectionTimetable_subscriptionRequest> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_ET-ext_estimatedTimetable_capabilitiesResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_ET-ext_estimatedTimetable_response> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_ET-ext_estimatedTimetable_subscriptionRequest> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_FM-exf_facilityMonitoring_capabilitiesResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_FM-exf_facilityMonitoring_subscriptionRequest> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_GM-exm_generalMessage_subscriptionRequest> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_PT-ext_productionTimetable_capabilitiesResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_PT-ext_productionTimetable_response> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_PT-ext_productionTimetable_subscriptionRequest> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_SM-exs_stopMonitoring_capabilitiesResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_SM-exs_stopMonitoring_subscriptionRequest> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_SM-exs_stopMonitoring_subscriptionRequest_simple> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_ST-exs_stopTimetable_subscriptionRequest> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_SX-exx_situationExchange_subscriptionRequest> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_VM-exv_vehicleMonitoring_capabilitiesResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exm_VM-exv_vehicleMonitoring_subscriptionRequest> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-siri_exu_capability-exd_allServices_capabilitiesResponse> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-standards-fxc-FX-PI-01_UK_FSYO_NETWORK_FARE_FirstSheffield-pass-by-period_20200310> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-standards-fxc-FX-PI-01_UK_FSYO_NETWORK_FARE_FirstSheffield-pass-by-user_20200310> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2FNetex_91.1_Rail_RailCard_MultipleProduct.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exa_framework%2Fexa_terminateSubscription_request.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_CM%2Fexc_connectionMonitoring_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_CM%2Fexc_connectionMonitoring_subscriptionRequest.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_CT%2Fexc_connectionTimetable_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_CT%2Fexc_connectionTimetable_subscriptionRequest.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_ET%2Fext_estimatedTimetable_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_ET%2Fext_estimatedTimetable_response.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_ET%2Fext_estimatedTimetable_subscriptionRequest.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_FM%2Fexf_facilityMonitoring_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_FM%2Fexf_facilityMonitoring_subscriptionRequest.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_GM%2Fexm_generalMessage_subscriptionRequest.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_PT%2Fext_productionTimetable_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_PT%2Fext_productionTimetable_response.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_PT%2Fext_productionTimetable_subscriptionRequest.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_subscriptionRequest.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_subscriptionRequest_simple.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_ST%2Fexs_stopTimetable_subscriptionRequest.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_SX%2Fexx_situationExchange_subscriptionRequest.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_VM%2Fexv_vehicleMonitoring_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exm_VM%2Fexv_vehicleMonitoring_subscriptionRequest.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fsiri_exu_capability%2Fexd_allServices_capabilitiesResponse.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_FSYO_NETWORK_FARE_FirstSheffield-pass-by-period_20200310.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_FSYO_NETWORK_FARE_FirstSheffield-pass-by-user_20200310.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:TicketingBasedPassengerCount
@@ -2688,8 +2688,8 @@ opra:TicketingBasedPassengerCount
     rdfs:subClassOf siri:ResponseTimestamp ;
     rdfs:subClassOf siri:ServiceDelivery ;
     rdfs:subClassOf siri:ServiceRequest ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-RequestAllPassengerCounts> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-TicketingBasedPassengerCount> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestAllPassengerCounts.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FTicketingBasedPassengerCount.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:TicketingBasedPassengerCountDiscoveryDelivery
@@ -2726,7 +2726,7 @@ opra:TicketingBasedPassengerCountRequest
     rdfs:subClassOf opra:TicketingBasedPassengerCount ;
     rdfs:subClassOf opra:opraFunctionalRequests ;
     rdfs:subClassOf siri:ServiceRequest ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-RequestAllPassengerCounts> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestAllPassengerCounts.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:TransportPerformance
@@ -2775,8 +2775,8 @@ opra:TransportPerformance
     rdfs:subClassOf opra:ExpectedServiceIntensity ;
     rdfs:subClassOf opra:IndicatorFrame ;
     rdfs:subClassOf opra:LoadOverJourneyDistance ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ExpectedServiceIntensity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedServiceIntensity> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:TransportPerformancePerVehicle
@@ -2825,7 +2825,7 @@ opra:TransportPerformancePerVehicle
     rdfs:subClassOf opra:ExpectedServiceIntensity ;
     rdfs:subClassOf opra:IndicatorFrame ;
     rdfs:subClassOf opra:LoadOverJourneyDistance ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ExpectedServiceIntensity> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:TypeOfDelay
@@ -2873,23 +2873,23 @@ opra:TypeOfDelay
     rdfs:subClassOf netex:BookingProcessFacility ;
     rdfs:subClassOf netex:BookingProcessFacilityList ;
     rdfs:subClassOf netex:Call ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-DelayedAndCancelledJourneysWithEvents> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_train> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-site-Netex_01_Sites_SimpleStadium_1> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-site-Netex_10_Sites_OlympicPark_2_basic> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-site-Netex_11_Sites_OlympicPark_1> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-site-Netex_12_Sites_OlympicPark_3_nav> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-site-Netex_14_Olympic Venues 1.1> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-site-Netex_21_Sites_Parking_2> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-stopPlace-FX-PI-01_UK_TBD_STOP-OFFER_910GWIMBLDN-accessibility_20140601> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-stopPlace-Netex_04_Stops_SimpleStation_1> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-stopPlace-Netex_10_StopPlace_uk_ComplexStation_Wimbledon_1> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-stopPlace-Netex_10_StopPlace_withParking_1> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-timetable-Netex_21_Rail_NetworkTimetable_eurostar> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-standards-norway-stops-PointOfInterest> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-standards-tap_tsi-TAP-SKDUPD-example1-basic> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-standards-tap_tsi-TAP-SKDUPD-example1> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-standards-tap_tsi-TAP-SKDUPD-example2.6-Check_In> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FDelayedAndCancelledJourneysWithEvents.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_01_Sites_SimpleStadium_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_10_Sites_OlympicPark_2_basic.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_11_Sites_OlympicPark_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_12_Sites_OlympicPark_3_nav.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_14_Olympic%20Venues%201.1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_21_Sites_Parking_2.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FFX-PI-01_UK_TBD_STOP-OFFER_910GWIMBLDN-accessibility_20140601.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FNetex_04_Stops_SimpleStation_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FNetex_10_StopPlace_uk_ComplexStation_Wimbledon_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FNetex_10_StopPlace_withParking_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_21_Rail_NetworkTimetable_eurostar.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Fnorway%2Fstops%2FPointOfInterest.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example1-basic.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example2.6-Check_In.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:VehicleLoadEntry
@@ -2937,7 +2937,7 @@ opra:VehicleLoadEntry
     rdfs:subClassOf netex:ClimateControl ;
     rdfs:subClassOf netex:ClimateControlList ;
     rdfs:subClassOf netex:CommunicationService ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_train> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:VehicleTypeCapacity
@@ -2986,31 +2986,31 @@ opra:VehicleTypeCapacity
     rdfs:subClassOf netex:AssistanceService ;
     rdfs:subClassOf netex:AudibleSignalsAvailable ;
     rdfs:subClassOf netex:Authority ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ExpectedServiceIntensity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedCapacity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedServiceIntensity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_bus> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_train> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-deckPlans-DeckPlans-Example_train_simple> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-fares-rail-Netex_era_distance_ro> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-IXSI Service 1 - Static Data> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-CarClubExample> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-CarPoolingExample> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-ChauffeuredServiceExample> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-newModes-NewModes-CycleSharingExample> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-simpleNetwork-Netex_SimpleNetwork_1> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-site-Netex_21_Sites_Parking_1> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-site-Netex_21_Sites_Parking_2> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-site-Netex_Address_Example_1> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-stopPlace-FX-PI-01_UK_TBD_STOP-OFFER_910GWIMBLDN-accessibility_20140601> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-stopPlace-Netex_10_StopPlace_uk_ComplexStation_Wimbledon_1> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-stopPlace-Netex_10_StopPlace_withParking_1> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-timetable-Netex_01.4_Bus_SimpleTimetable_WithConnection> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-timetable-Netex_21_Rail_NetworkTimetable_eurostar> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-vehicle-Netex_simpleVehicle_01> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-vehicleSchedule-Netex_simpleVehicleSchedule_01> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-functions-versioning-Netex_Uniqueness_01> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedCapacity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_bus.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train_simple.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ffares%2Frail%2FNetex_era_distance_ro.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FIXSI%20Service%201%20-%20Static%20Data.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarClubExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CarPoolingExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-ChauffeuredServiceExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FnewModes%2FNewModes-CycleSharingExample.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FsimpleNetwork%2FNetex_SimpleNetwork_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_21_Sites_Parking_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_21_Sites_Parking_2.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fsite%2FNetex_Address_Example_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FFX-PI-01_UK_TBD_STOP-OFFER_910GWIMBLDN-accessibility_20140601.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FNetex_10_StopPlace_uk_ComplexStation_Wimbledon_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FstopPlace%2FNetex_10_StopPlace_withParking_1.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_01.4_Bus_SimpleTimetable_WithConnection.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Ftimetable%2FNetex_21_Rail_NetworkTimetable_eurostar.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fvehicle%2FNetex_simpleVehicle_01.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2FvehicleSchedule%2FNetex_simpleVehicleSchedule_01.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Ffunctions%2Fversioning%2FNetex_Uniqueness_01.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:opraDiscoveryDeliveries
@@ -3072,19 +3072,19 @@ opra:opraFunctionalDeliveries
     rdfs:subClassOf netex:Train ;
     rdfs:subClassOf netex:TrainNumber ;
     rdfs:subClassOf netex:TypeOfFrame ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ActualServiceDimensions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-CancelledAndLateDatedVehicleJourneys> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ContextualIndicatorFrame> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-DelayedAndCancelledJourneysWithEvents> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ExpectedPassengerCount> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ExpectedServiceIntensity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedCapacity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedFleetDimensions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedServiceDimensions> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-PlannedServiceIntensity> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-ResponseLateDatedVehicleJourneys> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-TicketingBasedPassengerCount> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-placeholder> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FActualServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FCancelledAndLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FContextualIndicatorFrame.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FDelayedAndCancelledJourneysWithEvents.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FExpectedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedCapacity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedFleetDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceDimensions.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FPlannedServiceIntensity.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FResponseLateDatedVehicleJourneys.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FTicketingBasedPassengerCount.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2Fplaceholder.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:opraFunctionalRequests
@@ -3117,8 +3117,8 @@ opra:opraFunctionalRequests
     rdfs:subClassOf opra:TicketingBasedPassengerCountRequest ;
     rdfs:subClassOf siri:DatedVehicleJourney ;
     rdfs:subClassOf siri:ServiceRequest ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-RequestAllPassengerCounts> ;
-    skos:seeAlso <https://napcore.eu/examples/opra/examples-RequestLateDatedVehicleJourneys> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestAllPassengerCounts.xml> ;
+    skos:seeAlso <https://napcore.eu/examples/opra/examples%2FRequestLateDatedVehicleJourneys.xml> ;
     rdfs:comment "Extracted from XSD schema"@en .
 
 opra:opraSubscriptionRequests
