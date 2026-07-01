@@ -1088,16 +1088,6 @@ class Command(BaseCommand):
                 for related_id in related_to:
                     lines.append(f"    rdfs:subClassOf {related_id} ;")
 
-            # Example sources (linked XML files)
-            example_sources = concept.get("example_sources", [])
-            if example_sources:
-                from urllib.parse import quote
-                for example_path in example_sources:
-                    # URL-encode the path to create valid IRIs for GraphDB/RDF4J
-                    safe_path = quote(example_path, safe='')
-                    example_iri = f"https://napcore.eu/examples/{standard}/{safe_path}"
-                    lines.append(f"    skos:seeAlso <{example_iri}> ;")
-
             # Source
             source = concept.get("source", "")
             if source:
