@@ -161,8 +161,8 @@ Definition:
             "standards_scope": [standard] if standard else [],
             "match_type": "semantic_definition",
             "similarity_reason": "Authoritative ontology definition from GraphDB",
-            "repository_url": f"https://github.com/TransmodelEcosystem/{standard}",
-            "commit_sha": branch_or_commit,  # Reference current main branch
+            "repository_url": "",  # Semantic definitions from GraphDB, not git repository
+            "commit_sha": "ontology",  # Marker: from ontology/GraphDB, not a commit
             "embedding_vector": None,
             "heading": f"{concept_name} - {standard} Definition",
         }
