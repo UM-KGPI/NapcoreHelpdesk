@@ -982,6 +982,7 @@ def retrieve_chunks_with_trace(
     retrieval_start_time = time.time()
     retrieval_start_perf = time.perf_counter()
     stage_timing_ms: dict[str, float] = {}
+    logger.warning(f"[RETRIEVAL_START] graph_rag_enabled={graph_rag_enabled}, question={question[:50]}...")
 
     def _record_stage(stage_key: str, stage_start: float) -> None:
         elapsed_ms = (time.perf_counter() - stage_start) * 1000
@@ -1031,6 +1032,7 @@ def retrieve_chunks_with_trace(
     # are present in the query vector and align with indexed document vocabulary.
     stage_start = time.perf_counter()
     question_concepts = extract_graph_concepts(question) if graph_rag_enabled else set()
+    logger.warning(f"[EXTRACT_CONCEPTS] concepts={question_concepts}")
     _record_stage("conceptExtractMs", stage_start)
 
     graph_expansion_source = "none"
