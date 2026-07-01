@@ -326,7 +326,10 @@ def format_examples_as_chunks(examples: list[dict]) -> list[dict]:
 def _load_example_file_content(file_path: str) -> str:
     """Load and extract text content from example XML files.
 
-    Attempts to load from known repository locations (environment-configured or defaults).
+    Attempts to load from known repository locations. File paths are stored as
+    relative paths (e.g., "examples/ActualServiceDimensions.xml") but the source
+    standard (NeTEx, OpRa, SIRI) isn't recorded, so we try all repositories.
+
     Returns first 2000 chars of readable XML content, or empty string if file not found.
 
     Args:
@@ -347,16 +350,19 @@ def _load_example_file_content(file_path: str) -> str:
         opra_root = getattr(settings, "OPRA_REPO_PATH", "/workspace/OpRa")
         siri_root = getattr(settings, "SIRI_REPO_PATH", "/workspace/SIRI")
 
-        # Try each standard repository, with fallback to host paths
+        # Try each standard repository
+        # Examples can come from any standard, so we check all
         possible_roots = [
             Path(netex_root),
             Path(opra_root),
             Path(siri_root),
+            # Host development paths
             Path("/Users/andrejt/Research/repositories/git/NeTEx"),
             Path("/Users/andrejt/Research/repositories/git/OpRa"),
             Path("/Users/andrejt/Research/repositories/git/SIRI"),
         ]
 
+        # Try direct path first
         for root in possible_roots:
             full_path = root / file_path
             if full_path.exists() and full_path.is_file():
@@ -368,7 +374,24 @@ def _load_example_file_content(file_path: str) -> str:
                 except Exception:
                     continue
 
-        logger.debug(f"Example file not found at any path: {file_path}")
+        # Try searching by filename if direct path failed
+        # (e.g., "examples/ActualServiceDimensions.xml" -> "ActualServiceDimensions.xml")
+        if "/" in file_path:
+            filename = Path(file_path).name
+            for root in possible_roots:
+                # Search root/examples/ directory for the filename
+                examples_dir = root / "examples"
+                if examples_dir.exists():
+                    for found_file in examples_dir.rglob(filename):
+                        if found_file.is_file():
+                            try:
+                                with open(found_file, 'r', encoding='utf-8', errors='ignore') as f:
+                                    content = f.read()
+                                    return content[:2000]
+                            except Exception:
+                                continue
+
+        logger.debug(f"Example file not found: {file_path}")
         return ""
 
     except Exception as e:
