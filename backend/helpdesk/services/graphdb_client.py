@@ -346,6 +346,11 @@ def load_default_ontology_graphs(
         ("opra", ontology_dir / "standards" / "opra.ttl", "https://napcore.eu/graph/standards/opra"),
         ("siri", ontology_dir / "standards" / "siri.ttl", "https://napcore.eu/graph/standards/siri"),
         (
+            "examples-catalog",
+            ontology_dir / "standards" / "examples.ttl",
+            "https://napcore.eu/graph/examples/catalog",
+        ),
+        (
             "nits-transmodel-align",
             ontology_dir / "alignments" / "nits-transmodel-align.ttl",
             "https://napcore.eu/graph/alignments/transmodel",
