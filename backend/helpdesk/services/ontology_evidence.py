@@ -96,11 +96,11 @@ def retrieve_concept_definitions(
             if alt_label:
                 concepts_data[concept]["altLabels"].append(alt_label)
 
-        logger.debug(f"Retrieved definitions for {len(concepts_data)} concepts")
+        logger.info(f"Retrieved definitions for {len(concepts_data)} concepts from {len(concept_ids)} requested")
         return list(concepts_data.values())
 
     except Exception as e:
-        logger.warning(f"Failed to retrieve concept definitions: {e}")
+        logger.error(f"Failed to retrieve concept definitions: {e}", exc_info=True)
         return []
 
 

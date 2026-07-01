@@ -1153,6 +1153,7 @@ def retrieve_chunks_with_trace(
     if graph_rag_enabled and question_concepts:
         try:
             graphdb_enabled = getattr(settings, "GRAPHDB_ENABLED", False)
+            logger.debug(f"Attempting to retrieve ontology definitions for {len(question_concepts)} concepts: {question_concepts}")
             if graphdb_enabled:
                 definitions = retrieve_concept_definitions(
                     concept_ids=question_concepts,
