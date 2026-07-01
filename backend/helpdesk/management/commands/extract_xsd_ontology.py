@@ -611,7 +611,7 @@ class Command(BaseCommand):
             "--output",
             type=Path,
             default=Path(__file__).parent.parent.parent / "ontologies" / "standards.json",
-            help="Output path for updated ontology JSON inventory",
+            help="(Deprecated) Kept for backward compatibility; TTL files are generated directly to docs/ontology/standards/",
         )
         parser.add_argument(
             "--merge",
@@ -894,18 +894,19 @@ class Command(BaseCommand):
                 f"concepts with example links: {len(merged_sources)}"
             )
 
-        # Write output
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(output_path, "w") as f:
-            json.dump(ontology, f, indent=2, ensure_ascii=False)
+        # Generate TTL files with full semantic relationships (single source of truth)
+        # Write to writable backend location; production deployment copies to docs/ontology/standards/
+        ttl_output_dir = Path(__file__).resolve().parents[2] / "ontologies" / "standards"
+        self._generate_ttl_files(ontology, ttl_output_dir)
 
         self.stdout.write(
-            self.style.SUCCESS(f"\n✓ Ontology updated at {output_path}")
+            self.style.SUCCESS(f"\n✓ Ontologies extracted and TTL files generated")
         )
         self.stdout.write(f"  Total concepts: {len(ontology.get('concepts', {}))}")
-
-        # Also generate TTL files with full semantic relationships
-        self._generate_ttl_files(ontology, output_path.parent.parent / "standards")
+        self.stdout.write(f"  TTL output: {ttl_output_dir}")
+        self.stdout.write(
+            f"  → To deploy: copy to docs/ontology/standards/ or load directly into GraphDB"
+        )
 
     def _generate_ttl_files(self, ontology: dict, output_dir: Path) -> None:
         """Generate TTL files for each standard with full semantic relationships."""
