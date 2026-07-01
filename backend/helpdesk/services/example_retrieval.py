@@ -274,20 +274,25 @@ def format_examples_as_chunks(examples: list[dict]) -> list[dict]:
         match_type = example.get("match_type", "exact")
         similarity_reason = example.get("similarity_reason", "Direct match")
 
-        # Quality scores: all examples of mode-agnostic concepts are equally valid
-        quality_score = 0.85
-        if match_type in ("mode_agnostic", "applicable", "exact", "template_realization"):
-            quality_score = 0.85  # Full quality for all applicable examples
+        # Quality scores: examples of requested concepts should rank highly
+        # Mode-agnostic examples get maximum score since they're directly requested
+        if match_type in ("mode_agnostic", "applicable", "exact"):
+            quality_score = 0.95  # Maximum quality for direct matches
+        elif match_type == "template_realization":
+            quality_score = 0.90  # High quality for template demonstrations
         else:
-            quality_score = 0.75
+            quality_score = 0.85  # Good quality for other semantic matches
 
         # Include match context in text for LLM understanding
         match_context = f"[{match_type.upper()}] {similarity_reason}\n" if match_type not in ("exact", "applicable") else ""
 
         chunk_id_str = f"example-{example['iri'].replace('/', '-')[-32:]}"
+        chunk_id_int = hash(chunk_id_str) % (10 ** 8)
         chunk = {
-            "id": hash(chunk_id_str) % (10 ** 8),  # Numeric ID based on chunk_id hash
+            "id": chunk_id_int,
+            "chunkId": chunk_id_str,
             "chunk_id": chunk_id_str,
+            "retrievalEventId": f"example-{chunk_id_int}",
             "source_path": example["file_path"],
             "label": f"Example: {example['file_path'].split('/')[-1]}",
             "text": (
@@ -300,6 +305,9 @@ def format_examples_as_chunks(examples: list[dict]) -> list[dict]:
             "standards_scope": _extract_standard_from_concept(example["concept"]),
             "match_type": match_type,
             "similarity_reason": similarity_reason,
+            "repository_url": "https://github.com/TransmodelEcosystem/NeTEx",
+            "embedding_vector": None,  # Will be computed on-demand during ranking
+            "heading": "",
         }
         chunks.append(chunk)
 
