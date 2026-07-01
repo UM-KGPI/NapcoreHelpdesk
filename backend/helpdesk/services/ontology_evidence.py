@@ -161,8 +161,8 @@ Definition:
             "standards_scope": [standard] if standard else [],
             "match_type": "semantic_definition",
             "similarity_reason": "Authoritative ontology definition from GraphDB",
-            "repository_url": "",  # Semantic definitions from GraphDB, not git repository
-            "commit_sha": "ontology",  # Marker: from ontology/GraphDB, not a commit
+            "repository_url": f"https://github.com/UM-KGPI/NapcoreHelpdesk",
+            "commit_sha": "main",  # Reference main branch where ontology files are stored
             "embedding_vector": None,
             "heading": f"{concept_name} - {standard} Definition",
         }
