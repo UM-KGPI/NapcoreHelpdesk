@@ -51,13 +51,14 @@ def retrieve_concept_definitions(
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
-        SELECT ?concept ?definition ?prefLabel ?altLabel ?type
+        SELECT ?concept ?definition ?prefLabel ?altLabel ?type ?source
         WHERE {{
           VALUES ?concept {{ {concept_uris} }}
           ?concept a ?type .
           OPTIONAL {{ ?concept skos:definition ?definition . }}
           OPTIONAL {{ ?concept skos:prefLabel ?prefLabel . }}
           OPTIONAL {{ ?concept skos:altLabel ?altLabel . }}
+          OPTIONAL {{ ?concept rdfs:comment ?source . FILTER(CONTAINS(?source, "Extracted from")) }}
         }}
         ORDER BY ?concept
         LIMIT 50
@@ -83,12 +84,22 @@ def retrieve_concept_definitions(
                 continue
 
             if concept not in concepts_data:
+                # Extract XSD source file from rdfs:comment
+                # Supports formats: "Extracted from: xsd/netex_part_1/..." or "Extracted from NeTEx XSD source: xsd/..."
+                source_comment = binding.get("source", {}).get("value", "")
+                xsd_source = ""
+                if source_comment and "Extracted from" in source_comment:
+                    # Handle both "Extracted from: path" and "Extracted from NeTEx XSD source: path"
+                    if ":" in source_comment:
+                        xsd_source = source_comment.split(":", 1)[1].strip()
+
                 concepts_data[concept] = {
                     "concept": concept,
                     "type": binding.get("type", {}).get("value", ""),
                     "definition": binding.get("definition", {}).get("value", ""),
                     "prefLabel": binding.get("prefLabel", {}).get("value", ""),
                     "altLabels": [],
+                    "xsd_source": xsd_source,  # Store XSD source file path
                 }
 
             # Collect alternative labels
@@ -117,6 +128,7 @@ def format_definitions_as_chunks(definitions: list[dict]) -> list[dict]:
         pref_label = definition.get("prefLabel", "")
         alt_labels = definition.get("altLabels", [])
         concept_type = definition.get("type", "")
+        xsd_source = definition.get("xsd_source", "")  # XSD file where definition came from
 
         # Skip if no definition available
         if not definition_text:
@@ -144,21 +156,28 @@ Definition:
         chunk_id_str = f"ontology-def-{concept_name.lower()}"
         chunk_id_int = hash(chunk_id_str) % (10 ** 8)
 
+        # Determine repository and commit based on standard
+        repo_name = standard
+        commit_sha = "main"  # Use main branch as reference for XSD source
+
+        # Use XSD source file if available, otherwise use standard-based path
+        source_path = xsd_source if xsd_source else f"xsd/{standard.lower()}/"
+
         chunk = {
             "id": chunk_id_int,
             "chunkId": chunk_id_str,
             "chunk_id": chunk_id_str,
             "retrievalEventId": f"ontology-{chunk_id_int}",
-            "source_path": f"ontology/{standard}/{concept_name}",
+            "source_path": source_path,
             "label": f"Definition: {concept_name}",
             "text": chunk_text.strip(),
             "doc_type": "ontology-definition",
             "quality_score": 0.98,  # Highest quality - authoritative ontology source
             "standards_scope": [standard] if standard else [],
             "match_type": "semantic_definition",
-            "similarity_reason": "Authoritative ontology definition",
-            "repository_url": f"https://github.com/TransmodelEcosystem/{standard}",
-            "commit_sha": "ontology-graph",  # Source is GraphDB, not a commit
+            "similarity_reason": "Authoritative definition from XSD schema",
+            "repository_url": f"https://github.com/TransmodelEcosystem/{repo_name}",
+            "commit_sha": commit_sha,
             "embedding_vector": None,
             "heading": f"{concept_name} - {standard} Definition",
         }

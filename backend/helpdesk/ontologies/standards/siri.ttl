@@ -29,7 +29,7 @@ siri:AbstractDiscoveryDelivery
     skos:altLabel "abstract type for a discovery"@en ;
     skos:altLabel "abstractdiscoverydelivery"@en ;
     rdfs:subClassOf siri:AbstractResponse ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_requests.xsd"@en .
 
 siri:AbstractDiscoveryRequest
     a owl:Class ;
@@ -37,7 +37,7 @@ siri:AbstractDiscoveryRequest
     skos:prefLabel "abstract discovery request"@en ;
     skos:altLabel "abstractdiscoveryrequest"@en ;
     rdfs:subClassOf siri:AuthenticatedRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_requests.xsd"@en .
 
 siri:AbstractFunctionalServiceCapabilitiesRequest
     a owl:Class ;
@@ -45,7 +45,7 @@ siri:AbstractFunctionalServiceCapabilitiesRequest
     skos:prefLabel "abstract functional service capabilities request"@en ;
     skos:altLabel "abstractfunctionalservicecapabilitiesrequest"@en ;
     rdfs:subClassOf siri:AbstractServiceRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_requests.xsd"@en .
 
 siri:AbstractFunctionalServiceCapabilitiesResponse
     a owl:Class ;
@@ -53,7 +53,7 @@ siri:AbstractFunctionalServiceCapabilitiesResponse
     skos:prefLabel "abstract functional service capabilities response"@en ;
     skos:altLabel "abstractfunctionalservicecapabilitiesresponse"@en ;
     rdfs:subClassOf siri:AbstractResponse ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_requests.xsd"@en .
 
 siri:AbstractFunctionalServiceDelivery
     a owl:Class ;
@@ -61,7 +61,7 @@ siri:AbstractFunctionalServiceDelivery
     skos:prefLabel "abstract functional service delivery"@en ;
     skos:altLabel "abstractfunctionalservicedelivery"@en ;
     rdfs:subClassOf siri:AbstractResponse ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_requests.xsd"@en .
 
 siri:AbstractFunctionalServiceRequest
     a owl:Class ;
@@ -69,28 +69,28 @@ siri:AbstractFunctionalServiceRequest
     skos:prefLabel "abstract functional service request"@en ;
     skos:altLabel "abstractfunctionalservicerequest"@en ;
     rdfs:subClassOf siri:AbstractServiceRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_requests.xsd"@en .
 
 siri:AbstractFunctionalServiceSubscriptionRequest
     a owl:Class ;
     skos:definition "Subsititutable type for a SIRI Functional Service subscription request."@en ;
     skos:prefLabel "abstract functional service subscription request"@en ;
     skos:altLabel "abstractfunctionalservicesubscriptionrequest"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_requests.xsd"@en .
 
 siri:AbstractRequest
     a owl:Class ;
     skos:definition "Subsititutable type for a timestamped SIRI request."@en ;
     skos:prefLabel "abstract request"@en ;
     skos:altLabel "abstractrequest"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_requests.xsd"@en .
 
 siri:AbstractResponse
     a owl:Class ;
     skos:definition "Subsititutable type for a SIRI response."@en ;
     skos:prefLabel "abstract response"@en ;
     skos:altLabel "abstractresponse"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_requests.xsd"@en .
 
 siri:AbstractServiceRequest
     a owl:Class ;
@@ -98,14 +98,14 @@ siri:AbstractServiceRequest
     skos:prefLabel "abstract service request"@en ;
     skos:altLabel "abstractservicerequest"@en ;
     rdfs:subClassOf siri:AbstractRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_requests.xsd"@en .
 
 siri:AbstractTrackedRequest
     a owl:Class ;
     skos:definition "Subsititutable type for a SIRI request with requestor dteials tracked."@en ;
     skos:prefLabel "abstract tracked request"@en ;
     skos:altLabel "abstracttrackedrequest"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_requests.xsd"@en .
 
 siri:AccessFacility
     a owl:Class ;
@@ -113,7 +113,7 @@ siri:AccessFacility
     skos:prefLabel "access facility"@en ;
     skos:altLabel "accessfacility"@en ;
     skos:altLabel "classification of access facility"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_facilities.xsd"@en .
 
 siri:AccessNotAllowedError
     a owl:Class ;
@@ -121,7 +121,7 @@ siri:AccessNotAllowedError
     skos:prefLabel "access not allowed error"@en ;
     skos:altLabel "accessnotallowederror"@en ;
     skos:altLabel "error requestor is not authorised"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_request_errorConditions.xsd"@en .
 
 siri:AccommodationFacility
     a owl:Class ;
@@ -129,7 +129,7 @@ siri:AccommodationFacility
     skos:prefLabel "accommodation facility"@en ;
     skos:altLabel "accommodationfacility"@en ;
     skos:altLabel "classification of accomodation facility type"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_facilities.xsd"@en .
 
 siri:ActualArrivalTime
     a owl:Class ;
@@ -137,7 +137,7 @@ siri:ActualArrivalTime
     skos:prefLabel "actual arrival time"@en ;
     skos:altLabel "actualarrivaltime"@en ;
     skos:altLabel "observed time of arrival of"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:ActualDepartureTime
     a owl:Class ;
@@ -145,14 +145,14 @@ siri:ActualDepartureTime
     skos:prefLabel "actual departure time"@en ;
     skos:altLabel "actualdeparturetime"@en ;
     skos:altLabel "observed time of departure of"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:ActualHeadwayInterval
     a owl:Class ;
     skos:definition "For frequency based services, observed interval between vehicles at stop."@en ;
     skos:prefLabel "actual headway interval"@en ;
     skos:altLabel "actualheadwayinterval"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:AimedArrivalTime
     a owl:Class ;
@@ -160,7 +160,7 @@ siri:AimedArrivalTime
     skos:prefLabel "aimed arrival time"@en ;
     skos:altLabel "aimedarrivaltime"@en ;
     skos:altLabel "target arrival time of vehicle"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:AimedArrivalTimeOfFeeder
     a owl:Class ;
@@ -168,7 +168,7 @@ siri:AimedArrivalTimeOfFeeder
     skos:prefLabel "aimed arrival time of feeder"@en ;
     skos:altLabel "aimedarrivaltimeoffeeder"@en ;
     skos:altLabel "planned time at which feeder"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_datedVehicleJourney.xsd"@en .
 
 siri:AimedDepartureTime
     a owl:Class ;
@@ -176,7 +176,7 @@ siri:AimedDepartureTime
     skos:prefLabel "aimed departure time"@en ;
     skos:altLabel "aimeddeparturetime"@en ;
     skos:altLabel "target departure time of vehicle"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:AimedDepartureTimeOfDistributor
     a owl:Class ;
@@ -184,7 +184,7 @@ siri:AimedDepartureTimeOfDistributor
     skos:prefLabel "aimed departure time of distributor"@en ;
     skos:altLabel "aimeddeparturetimeofdistributor"@en ;
     skos:altLabel "planned time at which distributor"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_datedVehicleJourney.xsd"@en .
 
 siri:AimedFlexibleArea
     a owl:Class ;
@@ -192,21 +192,21 @@ siri:AimedFlexibleArea
     skos:prefLabel "aimed flexible area"@en ;
     skos:altLabel "aimedflexiblearea"@en ;
     skos:altLabel "area that encompasses the scheduled"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:AimedHeadwayInterval
     a owl:Class ;
     skos:definition "For frequency based services, target interval between vehicles at stop."@en ;
     skos:prefLabel "aimed headway interval"@en ;
     skos:altLabel "aimedheadwayinterval"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:AimedLatestPassengerAccessTime
     a owl:Class ;
     skos:definition "Latest target time at which a PASSENGER should aim to arrive at the STOP PLACE containing the stop. This time may be earlier than the VEHICLE departure times and may include time for processes such as checkin, security, etc.(As specified by CHECK CONSTRAINT DELAYs in the underlying data). If absent assume to be the same as Earliest expected departure time. (since SIRI 2.0)"@en ;
     skos:prefLabel "aimed latest passenger access time"@en ;
     skos:altLabel "aimedlatestpassengeraccesstime"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:AimedLocationName
     a owl:Class ;
@@ -214,14 +214,14 @@ siri:AimedLocationName
     skos:prefLabel "aimed location name"@en ;
     skos:altLabel "aimedlocationname"@en ;
     skos:altLabel "name or description eg address"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:AirSubmode
     a owl:Class ;
     skos:definition "TPEG Pti08 and Pts108 \"AirService\" submodes."@en ;
     skos:prefLabel "air submode"@en ;
     skos:altLabel "airsubmode"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_modes.xsd"@en .
 
 siri:AllowAll
     a owl:Class ;
@@ -229,7 +229,7 @@ siri:AllowAll
     skos:prefLabel "allow access to all topics"@en ;
     skos:altLabel "allow all"@en ;
     skos:altLabel "allowall"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_utility/siri_permissions.xsd"@en .
 
 siri:AllowedResourceUsageExceededError
     a owl:Class ;
@@ -237,21 +237,21 @@ siri:AllowedResourceUsageExceededError
     skos:prefLabel "allowed resource usage exceeded error"@en ;
     skos:altLabel "allowedresourceusageexceedederror"@en ;
     skos:altLabel "error valid request was made"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_request_errorConditions.xsd"@en .
 
 siri:ArrivalBoardingActivity
     a owl:Class ;
     skos:definition "Type of alighting allowed at stop. Default is 'Alighting'."@en ;
     skos:prefLabel "arrival boarding activity"@en ;
     skos:altLabel "arrivalboardingactivity"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:ArrivalCancellationReason
     a owl:Class ;
     skos:definition "Text annotation to be used in cases where ArrivalStatus is set to 'cancelled'. (since SIRI 2.1)"@en ;
     skos:prefLabel "arrival cancellation reason"@en ;
     skos:altLabel "arrivalcancellationreason"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:ArrivalFormationAssignment
     a owl:Class ;
@@ -259,14 +259,14 @@ siri:ArrivalFormationAssignment
     skos:prefLabel "arrival formation assignment"@en ;
     skos:altLabel "arrivalformationassignment"@en ;
     skos:altLabel "assignment of a train formation"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:ArrivalOrientationRelativeToQuay
     a owl:Class ;
     skos:definition "Indication of the direction of travel of the vehicle (e.g. TRAIN formation) with respect to the platform, or more precisely the QUAY. Unbounded to allow multiple languages. (since SIRI 2.1) Examples: - \"towards A\" or \"towards sector A\" if the QUAY is separated into sub-QUAYs or so called sectors. This would be equivalent to the vehicle arriving at sector A first when approaching the QUAY with sectors A-B-C-D. If the arriving vehicle is represented as an arrow, \"towards A\" would be abstracted as \"=> A-B-C-D\". - \"towards 0\" or \"towards reference point 0\" if sectors are not available or the QUAY has a reference point, e.g. for measuring the length of the QUAY, identified by \"0\". This would be equivalent to the vehicle arriving at this reference point first when approaching the QUAY. If the arriving vehicle is represented as an arrow, \"towards 0\" would be abstracted as \"=> 0...100\". \"100\" (as in percent) could denote the opposite side of the QUAY (measured at the full length of the QUAY with respect to the reference point). It is advised to specify a reference point that is meaningful for passengers on location."@en ;
     skos:prefLabel "arrival orientation relative to quay"@en ;
     skos:altLabel "arrivalorientationrelativetoquay"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:ArrivalPlatformName
     a owl:Class ;
@@ -274,7 +274,7 @@ siri:ArrivalPlatformName
     skos:prefLabel "arrival platform name"@en ;
     skos:altLabel "arrivalplatformname"@en ;
     skos:altLabel "bay or platform quay name"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:ArrivalProximityText
     a owl:Class ;
@@ -282,14 +282,14 @@ siri:ArrivalProximityText
     skos:prefLabel "arbitrary text string to show"@en ;
     skos:altLabel "arrival proximity text"@en ;
     skos:altLabel "arrivalproximitytext"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:ArrivalStatus
     a owl:Class ;
     skos:definition "Classification of the timeliness of the visit according to a fixed list of values. If not specified, same as DepartureStatus."@en ;
     skos:prefLabel "arrival status"@en ;
     skos:altLabel "arrivalstatus"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:AssistanceFacility
     a owl:Class ;
@@ -297,7 +297,7 @@ siri:AssistanceFacility
     skos:prefLabel "assistance facility"@en ;
     skos:altLabel "assistancefacility"@en ;
     skos:altLabel "classification of assistance facility"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_facilities.xsd"@en .
 
 siri:AuthenticatedRequest
     a owl:Class ;
@@ -305,7 +305,7 @@ siri:AuthenticatedRequest
     skos:prefLabel "authenticated request"@en ;
     skos:altLabel "authenticatedrequest"@en ;
     skos:altLabel "subsititutable type for an authenticated"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_requests.xsd"@en .
 
 siri:BeyondDataHorizon
     a owl:Class ;
@@ -313,14 +313,14 @@ siri:BeyondDataHorizon
     skos:prefLabel "beyond data horizon"@en ;
     skos:altLabel "beyonddatahorizon"@en ;
     skos:altLabel "error data period or subscription"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_request_errorConditions.xsd"@en .
 
 siri:BusSubmode
     a owl:Class ;
     skos:definition "TPEG Pti05 and Pts105 \"BusService\" submodes."@en ;
     skos:prefLabel "bus submode"@en ;
     skos:altLabel "bussubmode"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_modes.xsd"@en .
 
 siri:CapabilitiesRequest
     a owl:Class ;
@@ -328,7 +328,7 @@ siri:CapabilitiesRequest
     skos:prefLabel "capabilities request"@en ;
     skos:altLabel "capabilitiesrequest"@en ;
     skos:altLabel "requests a the current capabilities"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri.xsd"@en .
 
 siri:CapabilitiesResponse
     a owl:Class ;
@@ -336,7 +336,7 @@ siri:CapabilitiesResponse
     skos:prefLabel "capabilities response"@en ;
     skos:altLabel "capabilitiesresponse"@en ;
     skos:altLabel "responses with the capabilities of"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri.xsd"@en .
 
 siri:CapabilityNotSupportedError
     a owl:Class ;
@@ -344,7 +344,7 @@ siri:CapabilityNotSupportedError
     skos:prefLabel "capability not supported error"@en ;
     skos:altLabel "capabilitynotsupportederror"@en ;
     skos:altLabel "error service does not support"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_request_errorConditions.xsd"@en .
 
 siri:CheckStatusRequest
     a owl:Class ;
@@ -353,7 +353,7 @@ siri:CheckStatusRequest
     skos:altLabel "checkstatusrequest"@en ;
     skos:altLabel "request from consumer to producer"@en ;
     rdfs:subClassOf siri:AbstractTrackedRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_common_services.xsd"@en .
 
 siri:CheckStatusResponse
     a owl:Class ;
@@ -362,27 +362,27 @@ siri:CheckStatusResponse
     skos:altLabel "checkstatusresponse"@en ;
     skos:altLabel "response from producer to consumer"@en ;
     rdfs:subClassOf siri:AbstractResponse ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_common_services.xsd"@en .
 
 siri:CoachSubmode
     a owl:Class ;
     skos:definition "TPEG Pti03 and Pts103 \"CoachService\" submodes."@en ;
     skos:prefLabel "coach submode"@en ;
     skos:altLabel "coachsubmode"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_modes.xsd"@en .
 
 siri:CompoundTrain
     a owl:Class ;
     skos:definition "Groups of carriages may be managed as sections by composing TRAINs into a COMPOUND TRAIN, for example if a TRAIN joins (or splits from) another TRAIN. (since SIRI 2.1) TRAINs within a COMPOUND TRAIN may have different origins and destinations due to joining/splitting. A COMPOUND TRAIN may be stable for one or multiple JOURNEY PARTs and change at a certain STOP POINT due to planned joining/splitting, despatching alterations or a situation."@en ;
     skos:prefLabel "compound train"@en ;
     skos:altLabel "compoundtrain"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:Condition
     a owl:Class ;
     skos:definition "Classification of effect on service. TPEG PTS043 ServiceStatus"@en ;
     skos:prefLabel "condition"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationClassifiers.xsd"@en .
 
 siri:ConnectionLinkPermissions
     a owl:Class ;
@@ -390,7 +390,7 @@ siri:ConnectionLinkPermissions
     skos:prefLabel "connection link permissions"@en ;
     skos:altLabel "connection links that the"@en ;
     skos:altLabel "connectionlinkpermissions"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_modelPermissions.xsd"@en .
 
 siri:ConnectionLinksDelivery
     a owl:Class ;
@@ -399,7 +399,7 @@ siri:ConnectionLinksDelivery
     skos:altLabel "connectionlinksdelivery"@en ;
     skos:altLabel "returns the connection links covered"@en ;
     rdfs:subClassOf siri:AbstractDiscoveryDelivery ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_discovery.xsd"@en .
 
 siri:ConnectionLinksRequest
     a owl:Class ;
@@ -407,7 +407,7 @@ siri:ConnectionLinksRequest
     skos:prefLabel "connection links request"@en ;
     skos:altLabel "connectionlinksrequest"@en ;
     rdfs:subClassOf siri:AbstractDiscoveryRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_discovery.xsd"@en .
 
 siri:ConnectionMonitoringCapabilitiesRequest
     a owl:Class ;
@@ -416,7 +416,7 @@ siri:ConnectionMonitoringCapabilitiesRequest
     skos:altLabel "connectionmonitoringcapabilitiesrequest"@en ;
     skos:altLabel "request for information about connection"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceCapabilitiesRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_connectionMonitoring_service.xsd"@en .
 
 siri:ConnectionMonitoringCapabilitiesResponse
     a owl:Class ;
@@ -425,7 +425,7 @@ siri:ConnectionMonitoringCapabilitiesResponse
     skos:altLabel "connection monitoring capabilities response"@en ;
     skos:altLabel "connectionmonitoringcapabilitiesresponse"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceCapabilitiesResponse ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_connectionMonitoring_service.xsd"@en .
 
 siri:ConnectionMonitoringDistributorDelivery
     a owl:Class ;
@@ -434,7 +434,7 @@ siri:ConnectionMonitoringDistributorDelivery
     skos:altLabel "connectionmonitoringdistributordelivery"@en ;
     skos:altLabel "distributor delivery for connection monitoring"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceDelivery ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_connectionMonitoring_service.xsd"@en .
 
 siri:ConnectionMonitoringFeederDelivery
     a owl:Class ;
@@ -443,7 +443,7 @@ siri:ConnectionMonitoringFeederDelivery
     skos:altLabel "connectionmonitoringfeederdelivery"@en ;
     skos:altLabel "feeder delivery for connection monitoring"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceDelivery ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_connectionMonitoring_service.xsd"@en .
 
 siri:ConnectionMonitoringPermissions
     a owl:Class ;
@@ -451,7 +451,7 @@ siri:ConnectionMonitoringPermissions
     skos:prefLabel "connection monitoring permissions"@en ;
     skos:altLabel "connectionmonitoringpermissions"@en ;
     skos:altLabel "participants permissions to use the"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_connectionMonitoring_service.xsd"@en .
 
 siri:ConnectionMonitoringRequest
     a owl:Class ;
@@ -460,7 +460,7 @@ siri:ConnectionMonitoringRequest
     skos:altLabel "connectionmonitoringrequest"@en ;
     skos:altLabel "request for information about changes"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_connectionMonitoring_service.xsd"@en .
 
 siri:ConnectionMonitoringServiceCapabilities
     a owl:Class ;
@@ -468,7 +468,7 @@ siri:ConnectionMonitoringServiceCapabilities
     skos:prefLabel "capabilities of connection monitoring service"@en ;
     skos:altLabel "connection monitoring service capabilities"@en ;
     skos:altLabel "connectionmonitoringservicecapabilities"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_connectionMonitoring_service.xsd"@en .
 
 siri:ConnectionMonitoringSubscriptionRequest
     a owl:Class ;
@@ -477,7 +477,7 @@ siri:ConnectionMonitoringSubscriptionRequest
     skos:altLabel "connectionmonitoringsubscriptionrequest"@en ;
     skos:altLabel "request for a subscription to"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceSubscriptionRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_connectionMonitoring_service.xsd"@en .
 
 siri:ConnectionTimetableCapabilitiesRequest
     a owl:Class ;
@@ -486,7 +486,7 @@ siri:ConnectionTimetableCapabilitiesRequest
     skos:altLabel "connectiontimetablecapabilitiesrequest"@en ;
     skos:altLabel "request for information about connection"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceCapabilitiesRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_connectionTimetable_service.xsd"@en .
 
 siri:ConnectionTimetableCapabilitiesResponse
     a owl:Class ;
@@ -495,7 +495,7 @@ siri:ConnectionTimetableCapabilitiesResponse
     skos:altLabel "connection timetable capabilities response"@en ;
     skos:altLabel "connectiontimetablecapabilitiesresponse"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceCapabilitiesResponse ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_connectionTimetable_service.xsd"@en .
 
 siri:ConnectionTimetableDelivery
     a owl:Class ;
@@ -504,7 +504,7 @@ siri:ConnectionTimetableDelivery
     skos:altLabel "connectiontimetabledelivery"@en ;
     skos:altLabel "delivery for connection timetable service"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceDelivery ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_connectionTimetable_service.xsd"@en .
 
 siri:ConnectionTimetableRequest
     a owl:Class ;
@@ -513,7 +513,7 @@ siri:ConnectionTimetableRequest
     skos:altLabel "connectiontimetablerequest"@en ;
     skos:altLabel "request for information about timetabled"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_connectionTimetable_service.xsd"@en .
 
 siri:ConnectionTimetableServiceCapabilities
     a owl:Class ;
@@ -521,7 +521,7 @@ siri:ConnectionTimetableServiceCapabilities
     skos:prefLabel "capabilities of connection timetable service"@en ;
     skos:altLabel "connection timetable service capabilities"@en ;
     skos:altLabel "connectiontimetableservicecapabilities"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_connectionTimetable_service.xsd"@en .
 
 siri:ConnectionTimetableSubscriptionRequest
     a owl:Class ;
@@ -530,7 +530,7 @@ siri:ConnectionTimetableSubscriptionRequest
     skos:altLabel "connectiontimetablesubscriptionrequest"@en ;
     skos:altLabel "subscription request for information about"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceSubscriptionRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_connectionTimetable_service.xsd"@en .
 
 siri:ControlActionCapabilitiesRequest
     a owl:Class ;
@@ -539,7 +539,7 @@ siri:ControlActionCapabilitiesRequest
     skos:altLabel "controlactioncapabilitiesrequest"@en ;
     skos:altLabel "request for information about control"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceCapabilitiesRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_controlAction_service.xsd"@en .
 
 siri:ControlActionCapabilitiesResponse
     a owl:Class ;
@@ -548,7 +548,7 @@ siri:ControlActionCapabilitiesResponse
     skos:altLabel "control action capabilities response"@en ;
     skos:altLabel "controlactioncapabilitiesresponse"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceCapabilitiesResponse ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_controlAction_service.xsd"@en .
 
 siri:ControlActionDelivery
     a owl:Class ;
@@ -557,7 +557,7 @@ siri:ControlActionDelivery
     skos:altLabel "controlactiondelivery"@en ;
     skos:altLabel "delivery for control action service"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceDelivery ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_controlAction_service.xsd"@en .
 
 siri:ControlActionMultipleRequest
     a owl:Class ;
@@ -566,7 +566,7 @@ siri:ControlActionMultipleRequest
     skos:altLabel "controlactionmultiplerequest"@en ;
     skos:altLabel "request for information about stop"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_controlAction_service.xsd"@en .
 
 siri:ControlActionPermissions
     a owl:Class ;
@@ -574,7 +574,7 @@ siri:ControlActionPermissions
     skos:prefLabel "control action permissions"@en ;
     skos:altLabel "controlactionpermissions"@en ;
     skos:altLabel "participants permissions to use the"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_controlAction_service.xsd"@en .
 
 siri:ControlActionRequest
     a owl:Class ;
@@ -583,7 +583,7 @@ siri:ControlActionRequest
     skos:altLabel "controlactionrequest"@en ;
     skos:altLabel "request for information about control"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_controlAction_service.xsd"@en .
 
 siri:ControlActionServiceCapabilities
     a owl:Class ;
@@ -591,7 +591,7 @@ siri:ControlActionServiceCapabilities
     skos:prefLabel "capabilities of controlaction service"@en ;
     skos:altLabel "control action service capabilities"@en ;
     skos:altLabel "controlactionservicecapabilities"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_controlAction_service.xsd"@en .
 
 siri:ControlActionSubscriptionRequest
     a owl:Class ;
@@ -600,7 +600,7 @@ siri:ControlActionSubscriptionRequest
     skos:altLabel "controlactionsubscriptionrequest"@en ;
     skos:altLabel "request for a subscription to"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceSubscriptionRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_controlAction_service.xsd"@en .
 
 siri:DataReadyAcknowledgement
     a owl:Class ;
@@ -608,14 +608,14 @@ siri:DataReadyAcknowledgement
     skos:prefLabel "data ready acknowledgement"@en ;
     skos:altLabel "datareadyacknowledgement"@en ;
     rdfs:subClassOf siri:AbstractResponse ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_common_services.xsd"@en .
 
 siri:DataReadyNotification
     a owl:Class ;
     skos:definition "Request from Producer to Consumer to notify that data update is ready to fetch. Answered with a DataReadyResponse."@en ;
     skos:prefLabel "data ready notification"@en ;
     skos:altLabel "datareadynotification"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_common_services.xsd"@en .
 
 siri:DataReceivedAcknowledgement
     a owl:Class ;
@@ -623,7 +623,7 @@ siri:DataReceivedAcknowledgement
     skos:prefLabel "data received acknowledgement"@en ;
     skos:altLabel "datareceivedacknowledgement"@en ;
     rdfs:subClassOf siri:AbstractResponse ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_common_services.xsd"@en .
 
 siri:DataSupplyRequest
     a owl:Class ;
@@ -632,14 +632,14 @@ siri:DataSupplyRequest
     skos:altLabel "datasupplyrequest"@en ;
     skos:altLabel "request from consumer to producer"@en ;
     rdfs:subClassOf siri:AbstractRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_common_services.xsd"@en .
 
 siri:DatedCall
     a owl:Class ;
     skos:definition "Complete sequence of stops along the route path, in calling order."@en ;
     skos:prefLabel "dated call"@en ;
     skos:altLabel "datedcall"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_datedVehicleJourney.xsd"@en .
 
 siri:DatedTimetableVersionFrame
     a owl:Class ;
@@ -647,7 +647,7 @@ siri:DatedTimetableVersionFrame
     skos:prefLabel "dated timetable version frame"@en ;
     skos:altLabel "datedtimetableversionframe"@en ;
     skos:altLabel "timetable frame to run"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_productionTimetable_service.xsd"@en .
 
 siri:DatedVehicleJourney
     a owl:Class ;
@@ -655,7 +655,7 @@ siri:DatedVehicleJourney
     skos:prefLabel "dated vehicle journey"@en ;
     skos:altLabel "datedvehiclejourney"@en ;
     skos:altLabel "planned vehicle journey taking"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_datedVehicleJourney.xsd"@en .
 
 siri:DepartureBoardingActivity
     a owl:Class ;
@@ -663,14 +663,14 @@ siri:DepartureBoardingActivity
     skos:prefLabel "departure boarding activity"@en ;
     skos:altLabel "departureboardingactivity"@en ;
     skos:altLabel "nature of boarding allowed at"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:DepartureCancellationReason
     a owl:Class ;
     skos:definition "Text annotation to be used in cases where DepartureStatus is set to 'cancelled'. (since SIRI 2.1)"@en ;
     skos:prefLabel "departure cancellation reason"@en ;
     skos:altLabel "departurecancellationreason"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:DepartureFormationAssignment
     a owl:Class ;
@@ -678,14 +678,14 @@ siri:DepartureFormationAssignment
     skos:prefLabel "assignment of a train formation"@en ;
     skos:altLabel "departure formation assignment"@en ;
     skos:altLabel "departureformationassignment"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:DepartureOrientationRelativeToQuay
     a owl:Class ;
     skos:definition "Indication of the direction of travel of the vehicle (e.g. TRAIN formation) with respect to the platform, or more precisely the QUAY. Unbounded to allow multiple languages. (since SIRI 2.1) Examples: - \"towards A\" or \"towards sector A\" if the QUAY is separated into sub-QUAYs or so called sectors. This would be equivalent to the vehicle departing in the direction of sector A on a QUAY with sectors A-B-C-D. If the departing vehicle is represented as an arrow, \"towards A\" would be abstracted as \"<= A-B-C-D\". - \"towards 0\" or \"towards reference point 0\" if sectors are not available or the QUAY has a reference point, e.g. for measuring the length of the QUAY, identified by \"0\". This would be equivalent to the vehicle departing in the direction of this reference point. If the departing vehicle is represented as an arrow, \"towards 0\" would be abstracted as \"<= 0...100\". \"100\" (as in percent) could denote the opposite side of the QUAY (measured at the full length of the QUAY with respect to the reference point). It is advised to specify a reference point that is meaningful for passengers on location."@en ;
     skos:prefLabel "departure orientation relative to quay"@en ;
     skos:altLabel "departureorientationrelativetoquay"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:DeparturePlatformName
     a owl:Class ;
@@ -693,7 +693,7 @@ siri:DeparturePlatformName
     skos:prefLabel "departure platform name"@en ;
     skos:altLabel "departure quay bay or platform"@en ;
     skos:altLabel "departureplatformname"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:DepartureProximityText
     a owl:Class ;
@@ -701,21 +701,21 @@ siri:DepartureProximityText
     skos:prefLabel "arbitrary text string to show"@en ;
     skos:altLabel "departure proximity text"@en ;
     skos:altLabel "departureproximitytext"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:DepartureStatus
     a owl:Class ;
     skos:definition "Classification of the timeliness of the departure part of the CALL, according to a fixed list of values. This may reflect a presentation policy, for example CALLs less than one minute behind target time are still classified as on-time. Applications may use this to guide their own presentation of times."@en ;
     skos:prefLabel "departure status"@en ;
     skos:altLabel "departurestatus"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:Destination
     a owl:Class ;
     skos:definition "Description of a DESTINATION."@en ;
     skos:prefLabel "description of a destination"@en ;
     skos:altLabel "destination"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model_discovery/siri_line.xsd"@en .
 
 siri:DestinationName
     a owl:Class ;
@@ -723,21 +723,21 @@ siri:DestinationName
     skos:prefLabel "destination name"@en ;
     skos:altLabel "destinationname"@en ;
     skos:altLabel "name of the destination"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:Direction
     a owl:Class ;
     skos:definition "Description of a DIRECTION."@en ;
     skos:prefLabel "description of a direction"@en ;
     skos:altLabel "direction"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:DistributorStopOrder
     a owl:Class ;
     skos:definition "For implementations in which the overall order is not defined by VISIT NUMBER, i.e. in case VisitNumberIsOrder is set to false, ORDER can be used to associate the stop order instead.  ORDER is also used together with VISIT NUMBER in scenarios where an extra CALL is inserted as a result of despatching alterations. Because such an extra CALL may have the same VisitNumber as another (cancelled) CALL, the STOP ORDER is needed. (since SIRI 2.1)"@en ;
     skos:prefLabel "distributor stop order"@en ;
     skos:altLabel "distributorstoporder"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_datedVehicleJourney.xsd"@en .
 
 siri:DistributorVisitNumber
     a owl:Class ;
@@ -745,49 +745,49 @@ siri:DistributorVisitNumber
     skos:prefLabel "distributor visit number"@en ;
     skos:altLabel "distributorvisitnumber"@en ;
     skos:altLabel "sequence of visit to distributor"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_datedVehicleJourney.xsd"@en .
 
 siri:EndpointDeniedAccessError
     a owl:Class ;
     skos:definition "Error:Endpoint to which a message is to be distributed did not allow access by the client. (since SIRI 2.0)"@en ;
     skos:prefLabel "endpoint denied access error"@en ;
     skos:altLabel "endpointdeniedaccesserror"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_request_errorConditions.xsd"@en .
 
 siri:EndpointNotAvailableAccessError
     a owl:Class ;
     skos:definition "Error:Recipient of a message to be distributed is not available. (since SIRI 2.0)"@en ;
     skos:prefLabel "endpoint not available access error"@en ;
     skos:altLabel "endpointnotavailableaccesserror"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_request_errorConditions.xsd"@en .
 
 siri:EnvironmentReason
     a owl:Class ;
     skos:definition "DEPRECATED and changed to nmtoken since SIRI 2.1 (TPEG Pti22 - Environment Event Reason)"@en ;
     skos:prefLabel "environment reason"@en ;
     skos:altLabel "environmentreason"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationReasons.xsd"@en .
 
 siri:EnvironmentSubReason
     a owl:Class ;
     skos:definition "DEPRECATED and changed to nmtoken since SIRI 2.1 (TPEG Pti22 - Environment Event Reason)"@en ;
     skos:prefLabel "environment sub reason"@en ;
     skos:altLabel "environmentsubreason"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationReasons.xsd"@en .
 
 siri:EquipmentReason
     a owl:Class ;
     skos:definition "DEPRECATED and changed to nmtoken since SIRI 2.1 (TPEG Pti21 - Equipment Event Reason)"@en ;
     skos:prefLabel "equipment reason"@en ;
     skos:altLabel "equipmentreason"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationReasons.xsd"@en .
 
 siri:EquipmentSubReason
     a owl:Class ;
     skos:definition "DEPRECATED and changed to nmtoken since SIRI 2.1 (TPEG Pti21 - Equipment Event Reason)"@en ;
     skos:prefLabel "equipment sub reason"@en ;
     skos:altLabel "equipmentsubreason"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationReasons.xsd"@en .
 
 siri:ErrorCondition
     a owl:Class ;
@@ -795,7 +795,7 @@ siri:ErrorCondition
     skos:prefLabel "description of error or warning"@en ;
     skos:altLabel "error condition"@en ;
     skos:altLabel "errorcondition"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_request_errorConditions.xsd"@en .
 
 siri:ErrorConditionElement
     a owl:Class ;
@@ -803,14 +803,14 @@ siri:ErrorConditionElement
     skos:prefLabel "element fror an error condition"@en ;
     skos:altLabel "error condition element"@en ;
     skos:altLabel "errorconditionelement"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_request_errorConditions.xsd"@en .
 
 siri:EstimatedCall
     a owl:Class ;
     skos:definition "Ordered sequence of SCHEDULED STOP POINTs called at by the VEHICLE JOURNEY. If IsCompleteStopSequence is false, may be just those stops that are altered."@en ;
     skos:prefLabel "estimated call"@en ;
     skos:altLabel "estimatedcall"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_estimatedVehicleJourney.xsd"@en .
 
 siri:EstimatedServiceJourneyInterchange
     a owl:Class ;
@@ -818,7 +818,7 @@ siri:EstimatedServiceJourneyInterchange
     skos:prefLabel "estimated service journey interchange"@en ;
     skos:altLabel "estimatedservicejourneyinterchange"@en ;
     skos:altLabel "realtime service journey interchange"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_estimatedVehicleJourney.xsd"@en .
 
 siri:EstimatedTimetableCapabilitiesRequest
     a owl:Class ;
@@ -827,7 +827,7 @@ siri:EstimatedTimetableCapabilitiesRequest
     skos:altLabel "estimatedtimetablecapabilitiesrequest"@en ;
     skos:altLabel "request for information about estimated"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceCapabilitiesRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_estimatedTimetable_service.xsd"@en .
 
 siri:EstimatedTimetableCapabilitiesResponse
     a owl:Class ;
@@ -836,7 +836,7 @@ siri:EstimatedTimetableCapabilitiesResponse
     skos:altLabel "estimated timetable capabilities response"@en ;
     skos:altLabel "estimatedtimetablecapabilitiesresponse"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceCapabilitiesResponse ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_estimatedTimetable_service.xsd"@en .
 
 siri:EstimatedTimetableDelivery
     a owl:Class ;
@@ -845,7 +845,7 @@ siri:EstimatedTimetableDelivery
     skos:altLabel "estimated timetable delivery"@en ;
     skos:altLabel "estimatedtimetabledelivery"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceDelivery ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_estimatedTimetable_service.xsd"@en .
 
 siri:EstimatedTimetablePermissions
     a owl:Class ;
@@ -853,7 +853,7 @@ siri:EstimatedTimetablePermissions
     skos:prefLabel "estimated timetable permissions"@en ;
     skos:altLabel "estimatedtimetablepermissions"@en ;
     skos:altLabel "participants permissions to use the"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_estimatedTimetable_service.xsd"@en .
 
 siri:EstimatedTimetableRequest
     a owl:Class ;
@@ -862,7 +862,7 @@ siri:EstimatedTimetableRequest
     skos:altLabel "estimatedtimetablerequest"@en ;
     skos:altLabel "request for information about the"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_estimatedTimetable_service.xsd"@en .
 
 siri:EstimatedTimetableServiceCapabilities
     a owl:Class ;
@@ -870,7 +870,7 @@ siri:EstimatedTimetableServiceCapabilities
     skos:prefLabel "capabilities of estimated timetableservice"@en ;
     skos:altLabel "estimated timetable service capabilities"@en ;
     skos:altLabel "estimatedtimetableservicecapabilities"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_estimatedTimetable_service.xsd"@en .
 
 siri:EstimatedTimetableSubscriptionRequest
     a owl:Class ;
@@ -879,7 +879,7 @@ siri:EstimatedTimetableSubscriptionRequest
     skos:altLabel "estimatedtimetablesubscriptionrequest"@en ;
     skos:altLabel "request for a subscription to"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceSubscriptionRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_estimatedTimetable_service.xsd"@en .
 
 siri:EstimatedVehicleJourney
     a owl:Class ;
@@ -887,7 +887,7 @@ siri:EstimatedVehicleJourney
     skos:prefLabel "estimated vehicle journey"@en ;
     skos:altLabel "estimatedvehiclejourney"@en ;
     skos:altLabel "vehicle journey taking place"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_estimatedVehicleJourney.xsd"@en .
 
 siri:ExpectedArrivalTime
     a owl:Class ;
@@ -895,7 +895,7 @@ siri:ExpectedArrivalTime
     skos:prefLabel "estimated time of arriival of"@en ;
     skos:altLabel "expected arrival time"@en ;
     skos:altLabel "expectedarrivaltime"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:ExpectedDepartureCapacities
     a owl:Class ;
@@ -903,14 +903,14 @@ siri:ExpectedDepartureCapacities
     skos:prefLabel "expected departure capacities"@en ;
     skos:altLabel "expecteddeparturecapacities"@en ;
     skos:altLabel "expectedpredicted realtime capacities number of"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:ExpectedDepartureOccupancy
     a owl:Class ;
     skos:definition "Expected/Predicted real-time occupancies of a VEHICLE and reservations after departing from a given stop. (since SIRI 2.1)"@en ;
     skos:prefLabel "expected departure occupancy"@en ;
     skos:altLabel "expecteddepartureoccupancy"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:ExpectedDepartureTime
     a owl:Class ;
@@ -918,7 +918,7 @@ siri:ExpectedDepartureTime
     skos:prefLabel "estimated time of departure of"@en ;
     skos:altLabel "expected departure time"@en ;
     skos:altLabel "expecteddeparturetime"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:ExpectedHeadwayInterval
     a owl:Class ;
@@ -926,21 +926,21 @@ siri:ExpectedHeadwayInterval
     skos:prefLabel "expected headway interval"@en ;
     skos:altLabel "expectedheadwayinterval"@en ;
     skos:altLabel "for frequency based services expected"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:ExpectedLatestPassengerAccessTime
     a owl:Class ;
     skos:definition "Latest expected time at which a PASSENGER should aim to arrive at the STOP PLACE containing the stop. This time may be earlier than the VEHICLE departure times and may include time for processes such as checkin, security, etc.(As specified by CHECK CONSTRAINT DELAYs in the underlying data). If absent assume to be the same as Earliest expected departure time. (since SIRI 2.0)"@en ;
     skos:prefLabel "expected latest passenger access time"@en ;
     skos:altLabel "expectedlatestpassengeraccesstime"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:Extensions
     a owl:Class ;
     skos:definition "Extensions to schema. (Wrapper tag used to avoid problems with handling of optional 'any' by some validators)."@en ;
     skos:prefLabel "extensions"@en ;
     skos:altLabel "extensions to schema wrapper tag"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_utility/siri_utility.xsd"@en .
 
 siri:ExtraCall
     a owl:Class ;
@@ -948,7 +948,7 @@ siri:ExtraCall
     skos:prefLabel "extra call"@en ;
     skos:altLabel "extracall"@en ;
     skos:altLabel "this call is an addition"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_estimatedVehicleJourney.xsd"@en .
 
 siri:ExtraInterchange
     a owl:Class ;
@@ -956,7 +956,7 @@ siri:ExtraInterchange
     skos:prefLabel "extra interchange"@en ;
     skos:altLabel "extrainterchange"@en ;
     skos:altLabel "whether this interchange is an"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_datedVehicleJourney.xsd"@en .
 
 siri:FacilityChangeElement
     a owl:Class ;
@@ -964,21 +964,21 @@ siri:FacilityChangeElement
     skos:prefLabel "change to the availaibility"@en ;
     skos:altLabel "facility change element"@en ;
     skos:altLabel "facilitychangeelement"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_facility.xsd"@en .
 
 siri:FacilityCondition
     a owl:Class ;
     skos:definition "Condition of a Facility that is being monitored."@en ;
     skos:prefLabel "facility condition"@en ;
     skos:altLabel "facilitycondition"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_facilityMonitoring_service.xsd"@en .
 
 siri:FacilityConditionElement
     a owl:Class ;
     skos:definition "Description of any change concerning a MONITORED FACILITY New structure defined in SIRI XSD 1.1 for Facilities Management."@en ;
     skos:prefLabel "facility condition element"@en ;
     skos:altLabel "facilityconditionelement"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_facility.xsd"@en .
 
 siri:FacilityDelivery
     a owl:Class ;
@@ -986,7 +986,7 @@ siri:FacilityDelivery
     skos:prefLabel "facility delivery"@en ;
     skos:altLabel "facilitydelivery"@en ;
     rdfs:subClassOf siri:AbstractDiscoveryDelivery ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_discovery.xsd"@en .
 
 siri:FacilityMonitoringCapabilitiesRequest
     a owl:Class ;
@@ -995,7 +995,7 @@ siri:FacilityMonitoringCapabilitiesRequest
     skos:altLabel "facilitymonitoringcapabilitiesrequest"@en ;
     skos:altLabel "request for information about vehicle"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceCapabilitiesRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_facilityMonitoring_service.xsd"@en .
 
 siri:FacilityMonitoringCapabilitiesResponse
     a owl:Class ;
@@ -1004,7 +1004,7 @@ siri:FacilityMonitoringCapabilitiesResponse
     skos:altLabel "facility monitoring capabilities response"@en ;
     skos:altLabel "facilitymonitoringcapabilitiesresponse"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceCapabilitiesResponse ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_facilityMonitoring_service.xsd"@en .
 
 siri:FacilityMonitoringDelivery
     a owl:Class ;
@@ -1013,7 +1013,7 @@ siri:FacilityMonitoringDelivery
     skos:altLabel "facility monitoring delivery"@en ;
     skos:altLabel "facilitymonitoringdelivery"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceDelivery ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_facilityMonitoring_service.xsd"@en .
 
 siri:FacilityMonitoringPermissions
     a owl:Class ;
@@ -1021,7 +1021,7 @@ siri:FacilityMonitoringPermissions
     skos:prefLabel "facility monitoring permissions"@en ;
     skos:altLabel "facilitymonitoringpermissions"@en ;
     skos:altLabel "participants permissions to use the"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_facilityMonitoring_service.xsd"@en .
 
 siri:FacilityMonitoringRequest
     a owl:Class ;
@@ -1030,7 +1030,7 @@ siri:FacilityMonitoringRequest
     skos:altLabel "facilitymonitoringrequest"@en ;
     skos:altLabel "request for information about facilities"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_facilityMonitoring_service.xsd"@en .
 
 siri:FacilityMonitoringServiceCapabilities
     a owl:Class ;
@@ -1038,7 +1038,7 @@ siri:FacilityMonitoringServiceCapabilities
     skos:prefLabel "capabilities of vehicle monitoring service"@en ;
     skos:altLabel "facility monitoring service capabilities"@en ;
     skos:altLabel "facilitymonitoringservicecapabilities"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_facilityMonitoring_service.xsd"@en .
 
 siri:FacilityMonitoringSubscriptionRequest
     a owl:Class ;
@@ -1047,7 +1047,7 @@ siri:FacilityMonitoringSubscriptionRequest
     skos:altLabel "facilitymonitoringsubscriptionrequest"@en ;
     skos:altLabel "request for a subscription to"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceSubscriptionRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_facilityMonitoring_service.xsd"@en .
 
 siri:FacilityRequest
     a owl:Class ;
@@ -1055,7 +1055,7 @@ siri:FacilityRequest
     skos:prefLabel "facility request"@en ;
     skos:altLabel "facilityrequest"@en ;
     rdfs:subClassOf siri:AbstractDiscoveryRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_discovery.xsd"@en .
 
 siri:FareClass
     a owl:Class ;
@@ -1063,7 +1063,7 @@ siri:FareClass
     skos:prefLabel "classification of fare classes since"@en ;
     skos:altLabel "fare class"@en ;
     skos:altLabel "fareclass"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey_support.xsd"@en .
 
 siri:FareClassFacility
     a owl:Class ;
@@ -1071,7 +1071,7 @@ siri:FareClassFacility
     skos:prefLabel "classification of fareclass facility type"@en ;
     skos:altLabel "fare class facility"@en ;
     skos:altLabel "fareclassfacility"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_facilities.xsd"@en .
 
 siri:FareClasses
     a owl:Class ;
@@ -1079,21 +1079,21 @@ siri:FareClasses
     skos:prefLabel "fare classes"@en ;
     skos:altLabel "fareclasses"@en ;
     skos:altLabel "list of fare classes since"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey_support.xsd"@en .
 
 siri:FeederItem
     a owl:Class ;
     skos:definition "Fedder/Fetcher SERVICE JOURNEY INTERCHANGE  Activity."@en ;
     skos:prefLabel "feeder item"@en ;
     skos:altLabel "feederitem"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_connectionTimetable_service.xsd"@en .
 
 siri:FeederStopOrder
     a owl:Class ;
     skos:definition "For implementations in which the overall order is not defined by VISIT NUMBER, i.e. in case VisitNumberIsOrder is set to false, ORDER can be used to associate the stop order instead.  ORDER is also used together with VISIT NUMBER in scenarios where an extra CALL is inserted as a result of despatching alterations. Because such an extra CALL may have the same VisitNumber as another (cancelled) CALL, the STOP ORDER is needed. (since SIRI 2.1)"@en ;
     skos:prefLabel "feeder stop order"@en ;
     skos:altLabel "feederstoporder"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_datedVehicleJourney.xsd"@en .
 
 siri:FeederVisitNumber
     a owl:Class ;
@@ -1101,21 +1101,21 @@ siri:FeederVisitNumber
     skos:prefLabel "feeder visit number"@en ;
     skos:altLabel "feedervisitnumber"@en ;
     skos:altLabel "sequence of visit to feeder"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_datedVehicleJourney.xsd"@en .
 
 siri:FilterByDestination
     a owl:Class ;
     skos:definition "Whether results can be filtered by DESTINATION. Default is 'false'."@en ;
     skos:prefLabel "filter by destination"@en ;
     skos:altLabel "filterbydestination"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_modelPermissions.xsd"@en .
 
 siri:FilterByVehicleMode
     a owl:Class ;
     skos:definition "Whether results can be filtered by VEHICLE MODE. Default is 'true'. (since SIRI 2.1)"@en ;
     skos:prefLabel "filter by vehicle mode"@en ;
     skos:altLabel "filterbyvehiclemode"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_modelPermissions.xsd"@en .
 
 siri:FirstOrLastJourney
     a owl:Class ;
@@ -1123,14 +1123,14 @@ siri:FirstOrLastJourney
     skos:prefLabel "first or last journey"@en ;
     skos:altLabel "firstorlastjourney"@en ;
     skos:altLabel "whether journey is first or"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:FormationCondition
     a owl:Class ;
     skos:definition "Information about a change of the formation (e.g. TRAIN composition) or changes of vehicles within the formation. (since SIRI 2.1)"@en ;
     skos:prefLabel "formation condition"@en ;
     skos:altLabel "formationcondition"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:FunicularSubmode
     a owl:Class ;
@@ -1138,14 +1138,14 @@ siri:FunicularSubmode
     skos:prefLabel "funicular submode"@en ;
     skos:altLabel "funicularsubmode"@en ;
     skos:altLabel "tpeg pti10 funicular submodes"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_modes.xsd"@en .
 
 siri:GeneralMessageCancellation
     a owl:Class ;
     skos:definition "A revocation of a previous message."@en ;
     skos:prefLabel "general message cancellation"@en ;
     skos:altLabel "generalmessagecancellation"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_generalMessage_service.xsd"@en .
 
 siri:GeneralMessageCapabilitiesRequest
     a owl:Class ;
@@ -1154,7 +1154,7 @@ siri:GeneralMessageCapabilitiesRequest
     skos:altLabel "generalmessagecapabilitiesrequest"@en ;
     skos:altLabel "request for information about general"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceCapabilitiesRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_generalMessage_service.xsd"@en .
 
 siri:GeneralMessageCapabilitiesResponse
     a owl:Class ;
@@ -1163,7 +1163,7 @@ siri:GeneralMessageCapabilitiesResponse
     skos:altLabel "general message capabilities response"@en ;
     skos:altLabel "generalmessagecapabilitiesresponse"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceCapabilitiesResponse ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_generalMessage_service.xsd"@en .
 
 siri:GeneralMessageDelivery
     a owl:Class ;
@@ -1172,7 +1172,7 @@ siri:GeneralMessageDelivery
     skos:altLabel "general message delivery"@en ;
     skos:altLabel "generalmessagedelivery"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceDelivery ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_generalMessage_service.xsd"@en .
 
 siri:GeneralMessagePermissions
     a owl:Class ;
@@ -1180,7 +1180,7 @@ siri:GeneralMessagePermissions
     skos:prefLabel "general message permissions"@en ;
     skos:altLabel "generalmessagepermissions"@en ;
     skos:altLabel "participants permissions to use the"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_generalMessage_service.xsd"@en .
 
 siri:GeneralMessageRequest
     a owl:Class ;
@@ -1189,7 +1189,7 @@ siri:GeneralMessageRequest
     skos:altLabel "generalmessagerequest"@en ;
     skos:altLabel "request for information about general"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_generalMessage_service.xsd"@en .
 
 siri:GeneralMessageServiceCapabilities
     a owl:Class ;
@@ -1197,7 +1197,7 @@ siri:GeneralMessageServiceCapabilities
     skos:prefLabel "capabilities of general message service"@en ;
     skos:altLabel "general message service capabilities"@en ;
     skos:altLabel "generalmessageservicecapabilities"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_generalMessage_service.xsd"@en .
 
 siri:GeneralMessageSubscriptionRequest
     a owl:Class ;
@@ -1206,7 +1206,7 @@ siri:GeneralMessageSubscriptionRequest
     skos:altLabel "generalmessagesubscriptionrequest"@en ;
     skos:altLabel "request for a subscription to"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceSubscriptionRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_generalMessage_service.xsd"@en .
 
 siri:HeartbeatNotification
     a owl:Class ;
@@ -1214,7 +1214,7 @@ siri:HeartbeatNotification
     skos:prefLabel "heartbeat notification"@en ;
     skos:altLabel "heartbeatnotification"@en ;
     skos:altLabel "notification from producer to consumer"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_common_services.xsd"@en .
 
 siri:HireFacility
     a owl:Class ;
@@ -1222,14 +1222,14 @@ siri:HireFacility
     skos:prefLabel "classification of hire facility"@en ;
     skos:altLabel "hire facility"@en ;
     skos:altLabel "hirefacility"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_facilities.xsd"@en .
 
 siri:IncludeInterchanges
     a owl:Class ;
     skos:definition "Whether SERVICE JOURNEY INTERCHANGE data is to be transmitted or not. Default is 'true'. (since SIRI 2.1)"@en ;
     skos:prefLabel "include interchanges"@en ;
     skos:altLabel "includeinterchanges"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_request_support.xsd"@en .
 
 siri:IncludeJourneyRelations
     a owl:Class ;
@@ -1237,7 +1237,7 @@ siri:IncludeJourneyRelations
     skos:prefLabel "include journey relations"@en ;
     skos:altLabel "includejourneyrelations"@en ;
     skos:altLabel "whether journey relation data is"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_request_support.xsd"@en .
 
 siri:IncludeTrainFormations
     a owl:Class ;
@@ -1245,7 +1245,7 @@ siri:IncludeTrainFormations
     skos:prefLabel "include train formations"@en ;
     skos:altLabel "includetrainformations"@en ;
     skos:altLabel "whether train element compound train"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_request_support.xsd"@en .
 
 siri:IncludeTranslations
     a owl:Class ;
@@ -1253,7 +1253,7 @@ siri:IncludeTranslations
     skos:prefLabel "include translations"@en ;
     skos:altLabel "includetranslations"@en ;
     skos:altLabel "whether additional translations of text"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_request_support.xsd"@en .
 
 siri:IncludedSituationExchangeDelivery
     a owl:Class ;
@@ -1262,7 +1262,7 @@ siri:IncludedSituationExchangeDelivery
     skos:altLabel "included situation exchange delivery"@en ;
     skos:altLabel "includedsituationexchangedelivery"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceDelivery ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_situationExchange_service.xsd"@en .
 
 siri:InfoChannel
     a owl:Class ;
@@ -1270,7 +1270,7 @@ siri:InfoChannel
     skos:prefLabel "info channel"@en ;
     skos:altLabel "info channel supported by producer"@en ;
     skos:altLabel "infochannel"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model_discovery/siri_infoChannel.xsd"@en .
 
 siri:InfoChannelDelivery
     a owl:Class ;
@@ -1279,7 +1279,7 @@ siri:InfoChannelDelivery
     skos:altLabel "infochanneldelivery"@en ;
     skos:altLabel "returns the info channels covered"@en ;
     rdfs:subClassOf siri:AbstractDiscoveryDelivery ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_discovery.xsd"@en .
 
 siri:InfoChannelRequest
     a owl:Class ;
@@ -1287,14 +1287,14 @@ siri:InfoChannelRequest
     skos:prefLabel "info channel request"@en ;
     skos:altLabel "infochannelrequest"@en ;
     rdfs:subClassOf siri:AbstractDiscoveryRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_discovery.xsd"@en .
 
 siri:JourneyNote
     a owl:Class ;
     skos:definition "Additional descriptive text associated with journey. Inherited property."@en ;
     skos:prefLabel "journey note"@en ;
     skos:altLabel "journeynote"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:KeyList
     a owl:Class ;
@@ -1302,14 +1302,14 @@ siri:KeyList
     skos:prefLabel "key list"@en ;
     skos:altLabel "keylist"@en ;
     skos:altLabel "list of alternative key"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_utility/siri_utility.xsd"@en .
 
 siri:LinePermissions
     a owl:Class ;
     skos:definition "The LINEs that the participant may access."@en ;
     skos:prefLabel "line permissions"@en ;
     skos:altLabel "linepermissions"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_modelPermissions.xsd"@en .
 
 siri:LinesDelivery
     a owl:Class ;
@@ -1318,7 +1318,7 @@ siri:LinesDelivery
     skos:altLabel "linesdelivery"@en ;
     skos:altLabel "returns the lines covered by"@en ;
     rdfs:subClassOf siri:AbstractDiscoveryDelivery ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_discovery.xsd"@en .
 
 siri:LinesRequest
     a owl:Class ;
@@ -1326,7 +1326,7 @@ siri:LinesRequest
     skos:prefLabel "lines request"@en ;
     skos:altLabel "linesrequest"@en ;
     rdfs:subClassOf siri:AbstractDiscoveryRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_discovery.xsd"@en .
 
 siri:LuggageFacility
     a owl:Class ;
@@ -1334,7 +1334,7 @@ siri:LuggageFacility
     skos:prefLabel "classification of luggage facility type"@en ;
     skos:altLabel "luggage facility"@en ;
     skos:altLabel "luggagefacility"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_facilities.xsd"@en .
 
 siri:ManualAction
     a owl:Class ;
@@ -1342,7 +1342,7 @@ siri:ManualAction
     skos:prefLabel "action publish situation to manual"@en ;
     skos:altLabel "manual action"@en ;
     skos:altLabel "manualaction"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationActions.xsd"@en .
 
 siri:MetroSubmode
     a owl:Class ;
@@ -1350,21 +1350,21 @@ siri:MetroSubmode
     skos:prefLabel "metro submode"@en ;
     skos:altLabel "metrosubmode"@en ;
     skos:altLabel "tpeg pti04 metro and pts104"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_modes.xsd"@en .
 
 siri:MiscellaneousReason
     a owl:Class ;
     skos:definition "DEPRECATED and changed to nmtoken since SIRI 2.1 (TPEG Pti19 - Miscellaneous Event Reason)"@en ;
     skos:prefLabel "miscellaneous reason"@en ;
     skos:altLabel "miscellaneousreason"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationReasons.xsd"@en .
 
 siri:MiscellaneousSubReason
     a owl:Class ;
     skos:definition "DEPRECATED and changed to nmtoken since SIRI 2.1 (TPEG Pti19 - Miscellaneous Event Reason)"@en ;
     skos:prefLabel "miscellaneous sub reason"@en ;
     skos:altLabel "miscellaneoussubreason"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationReasons.xsd"@en .
 
 siri:MobilityFacility
     a owl:Class ;
@@ -1372,7 +1372,7 @@ siri:MobilityFacility
     skos:prefLabel "classification of mobility facility type"@en ;
     skos:altLabel "mobility facility"@en ;
     skos:altLabel "mobilityfacility"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_facilities.xsd"@en .
 
 siri:MonitoredFeederArrival
     a owl:Class ;
@@ -1381,7 +1381,7 @@ siri:MonitoredFeederArrival
     skos:altLabel "monitored feeder arrival"@en ;
     skos:altLabel "monitoredfeederarrival"@en ;
     rdfs:subClassOf siri:FeederItem ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_connectionMonitoring_service.xsd"@en .
 
 siri:MonitoredFeederArrivalCancellation
     a owl:Class ;
@@ -1390,7 +1390,7 @@ siri:MonitoredFeederArrivalCancellation
     skos:altLabel "monitored feeder arrival cancellation"@en ;
     skos:altLabel "monitoredfeederarrivalcancellation"@en ;
     rdfs:subClassOf siri:FeederItem ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_connectionMonitoring_service.xsd"@en .
 
 siri:MonitoredStopVisit
     a owl:Class ;
@@ -1398,14 +1398,14 @@ siri:MonitoredStopVisit
     skos:prefLabel "monitored stop visit"@en ;
     skos:altLabel "monitoredstopvisit"@en ;
     skos:altLabel "visit to a stop"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_stopMonitoring_service.xsd"@en .
 
 siri:MonitoredStopVisitCancellation
     a owl:Class ;
     skos:definition "Reference to an previously communicated Stop Visit which should now be removed from the arrival/departure board for the stop."@en ;
     skos:prefLabel "monitored stop visit cancellation"@en ;
     skos:altLabel "monitoredstopvisitcancellation"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_stopMonitoring_service.xsd"@en .
 
 siri:NoInfoForTopicError
     a owl:Class ;
@@ -1413,7 +1413,7 @@ siri:NoInfoForTopicError
     skos:prefLabel "error valid request was made"@en ;
     skos:altLabel "no info for topic error"@en ;
     skos:altLabel "noinfofortopicerror"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_request_errorConditions.xsd"@en .
 
 siri:NotifyByEmailAction
     a owl:Class ;
@@ -1421,7 +1421,7 @@ siri:NotifyByEmailAction
     skos:prefLabel "action publish situation to a"@en ;
     skos:altLabel "notify by email action"@en ;
     skos:altLabel "notifybyemailaction"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationActions.xsd"@en .
 
 siri:NotifyByPagerAction
     a owl:Class ;
@@ -1429,7 +1429,7 @@ siri:NotifyByPagerAction
     skos:prefLabel "action publish situation to pager"@en ;
     skos:altLabel "notify by pager action"@en ;
     skos:altLabel "notifybypageraction"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationActions.xsd"@en .
 
 siri:NotifyBySmsAction
     a owl:Class ;
@@ -1437,7 +1437,7 @@ siri:NotifyBySmsAction
     skos:prefLabel "action publish situation to an"@en ;
     skos:altLabel "notify by sms action"@en ;
     skos:altLabel "notifybysmsaction"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationActions.xsd"@en .
 
 siri:NotifyUserAction
     a owl:Class ;
@@ -1445,7 +1445,7 @@ siri:NotifyUserAction
     skos:prefLabel "action publish situation to user"@en ;
     skos:altLabel "notify user action"@en ;
     skos:altLabel "notifyuseraction"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationActions.xsd"@en .
 
 siri:NuisanceFacility
     a owl:Class ;
@@ -1453,13 +1453,13 @@ siri:NuisanceFacility
     skos:prefLabel "classification of nuisance facility type"@en ;
     skos:altLabel "nuisance facility"@en ;
     skos:altLabel "nuisancefacility"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_facilities.xsd"@en .
 
 siri:Occupancy
     a owl:Class ;
     skos:definition "An approximate figure of how occupied the journey is after departing from a given stop, e.g. 'manySeatsAvailable' or 'standingRoomOnly'. If omitted: Passenger load is unknown. Occupancies and capacities for individual VEHICLEs, e.g. parts of a COMPOUND TRAIN, can also be specified in more detail for the departure on CALL level."@en ;
     skos:prefLabel "occupancy"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:OperatorPermissions
     a owl:Class ;
@@ -1467,13 +1467,13 @@ siri:OperatorPermissions
     skos:prefLabel "operator data that the"@en ;
     skos:altLabel "operator permissions"@en ;
     skos:altLabel "operatorpermissions"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_modelPermissions.xsd"@en .
 
 siri:Order
     a owl:Class ;
     skos:definition "For implementations for which the overall Order is not used for VisitNumber, (i.e. if VisitNumberIsOrder is false) then can be used to associate the stop Order as well if useful."@en ;
     skos:prefLabel "order"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_reference.xsd"@en .
 
 siri:OriginName
     a owl:Class ;
@@ -1481,7 +1481,7 @@ siri:OriginName
     skos:prefLabel "name of the origin"@en ;
     skos:altLabel "origin name"@en ;
     skos:altLabel "originname"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:OtherError
     a owl:Class ;
@@ -1489,14 +1489,14 @@ siri:OtherError
     skos:prefLabel "error error type other than"@en ;
     skos:altLabel "other error"@en ;
     skos:altLabel "othererror"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_request_errorConditions.xsd"@en .
 
 siri:ParametersIgnoredError
     a owl:Class ;
     skos:definition "Error: Request contained parameters that were not supported by the producer. A response has been provided but some parameters have been ignored. (since SIRI 2.0)."@en ;
     skos:prefLabel "parameters ignored error"@en ;
     skos:altLabel "parametersignorederror"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_request_errorConditions.xsd"@en .
 
 siri:ParkingFacility
     a owl:Class ;
@@ -1504,7 +1504,7 @@ siri:ParkingFacility
     skos:prefLabel "classification of access facility"@en ;
     skos:altLabel "parking facility"@en ;
     skos:altLabel "parkingfacility"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_facilities.xsd"@en .
 
 siri:PassengerCommsFacility
     a owl:Class ;
@@ -1512,7 +1512,7 @@ siri:PassengerCommsFacility
     skos:prefLabel "classification of passengercomms facility type"@en ;
     skos:altLabel "passenger comms facility"@en ;
     skos:altLabel "passengercommsfacility"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_facilities.xsd"@en .
 
 siri:PassengerInformationFacility
     a owl:Class ;
@@ -1520,28 +1520,28 @@ siri:PassengerInformationFacility
     skos:prefLabel "classification of passengerinfo facility type"@en ;
     skos:altLabel "passenger information facility"@en ;
     skos:altLabel "passengerinformationfacility"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_facilities.xsd"@en .
 
 siri:PersonnelReason
     a owl:Class ;
     skos:definition "DEPRECATED and changed to nmtoken since SIRI 2.1 (TPEG Pti20 - Personnel Event Reason)"@en ;
     skos:prefLabel "personnel reason"@en ;
     skos:altLabel "personnelreason"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationReasons.xsd"@en .
 
 siri:PersonnelSubReason
     a owl:Class ;
     skos:definition "DEPRECATED and changed to nmtoken since SIRI 2.1 (TPEG Pti20 - Personnel Event Reason)"@en ;
     skos:prefLabel "personnel sub reason"@en ;
     skos:altLabel "personnelsubreason"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationReasons.xsd"@en .
 
 siri:Predictability
     a owl:Class ;
     skos:definition "Classification of Predictability status."@en ;
     skos:prefLabel "classification of predictability status"@en ;
     skos:altLabel "predictability"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationClassifiers.xsd"@en .
 
 siri:PredictionInaccurate
     a owl:Class ;
@@ -1549,14 +1549,14 @@ siri:PredictionInaccurate
     skos:prefLabel "prediction inaccurate"@en ;
     skos:altLabel "predictioninaccurate"@en ;
     skos:altLabel "whether the prediction for a"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:PredictionInaccurateReason
     a owl:Class ;
     skos:definition "Can be used to inform the passenger about the reason for a change of the prediction (in)accuracy in case PredictionInaccurate is set to 'true'. (since SIRI 2.1)"@en ;
     skos:prefLabel "prediction inaccurate reason"@en ;
     skos:altLabel "predictioninaccuratereason"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:ProductCategoriesDelivery
     a owl:Class ;
@@ -1565,7 +1565,7 @@ siri:ProductCategoriesDelivery
     skos:altLabel "productcategoriesdelivery"@en ;
     skos:altLabel "returns the product categories covered"@en ;
     rdfs:subClassOf siri:AbstractDiscoveryDelivery ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_discovery.xsd"@en .
 
 siri:ProductCategoriesRequest
     a owl:Class ;
@@ -1573,14 +1573,14 @@ siri:ProductCategoriesRequest
     skos:prefLabel "product categories request"@en ;
     skos:altLabel "productcategoriesrequest"@en ;
     rdfs:subClassOf siri:AbstractDiscoveryRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_discovery.xsd"@en .
 
 siri:ProductCategory
     a owl:Class ;
     skos:definition "Category for classification of a journey as a Product"@en ;
     skos:prefLabel "product category"@en ;
     skos:altLabel "productcategory"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model_discovery/siri_feature.xsd"@en .
 
 siri:ProductionTimetableCapabilitiesRequest
     a owl:Class ;
@@ -1589,7 +1589,7 @@ siri:ProductionTimetableCapabilitiesRequest
     skos:altLabel "productiontimetablecapabilitiesrequest"@en ;
     skos:altLabel "request for information about productiontimetable"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceCapabilitiesRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_productionTimetable_service.xsd"@en .
 
 siri:ProductionTimetableCapabilitiesResponse
     a owl:Class ;
@@ -1598,7 +1598,7 @@ siri:ProductionTimetableCapabilitiesResponse
     skos:altLabel "production timetable capabilities response"@en ;
     skos:altLabel "productiontimetablecapabilitiesresponse"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceCapabilitiesResponse ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_productionTimetable_service.xsd"@en .
 
 siri:ProductionTimetableDelivery
     a owl:Class ;
@@ -1607,7 +1607,7 @@ siri:ProductionTimetableDelivery
     skos:altLabel "production timetable delivery"@en ;
     skos:altLabel "productiontimetabledelivery"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceDelivery ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_productionTimetable_service.xsd"@en .
 
 siri:ProductionTimetablePermission
     a owl:Class ;
@@ -1615,7 +1615,7 @@ siri:ProductionTimetablePermission
     skos:prefLabel "permission for a single participant"@en ;
     skos:altLabel "production timetable permission"@en ;
     skos:altLabel "productiontimetablepermission"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_modelPermissions.xsd"@en .
 
 siri:ProductionTimetablePermissions
     a owl:Class ;
@@ -1623,7 +1623,7 @@ siri:ProductionTimetablePermissions
     skos:prefLabel "participants permissions to use the"@en ;
     skos:altLabel "production timetable permissions"@en ;
     skos:altLabel "productiontimetablepermissions"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_productionTimetable_service.xsd"@en .
 
 siri:ProductionTimetableRequest
     a owl:Class ;
@@ -1632,7 +1632,7 @@ siri:ProductionTimetableRequest
     skos:altLabel "productiontimetablerequest"@en ;
     skos:altLabel "request for daily production timetables"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_productionTimetable_service.xsd"@en .
 
 siri:ProductionTimetableServiceCapabilities
     a owl:Class ;
@@ -1640,7 +1640,7 @@ siri:ProductionTimetableServiceCapabilities
     skos:prefLabel "capabilities of productiontimetableservice"@en ;
     skos:altLabel "production timetable service capabilities"@en ;
     skos:altLabel "productiontimetableservicecapabilities"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_productionTimetable_service.xsd"@en .
 
 siri:ProductionTimetableSubscriptionRequest
     a owl:Class ;
@@ -1649,14 +1649,14 @@ siri:ProductionTimetableSubscriptionRequest
     skos:altLabel "productiontimetablesubscriptionrequest"@en ;
     skos:altLabel "request for a subscription to"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceSubscriptionRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_productionTimetable_service.xsd"@en .
 
 siri:PtSituationElement
     a owl:Class ;
     skos:definition "Type for individual PT Incident."@en ;
     skos:prefLabel "pt situation element"@en ;
     skos:altLabel "ptsituationelement"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situation.xsd"@en .
 
 siri:PublishToAlertsAction
     a owl:Class ;
@@ -1664,7 +1664,7 @@ siri:PublishToAlertsAction
     skos:prefLabel "action publish situation to alert"@en ;
     skos:altLabel "publish to alerts action"@en ;
     skos:altLabel "publishtoalertsaction"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationActions.xsd"@en .
 
 siri:PublishToDisplayAction
     a owl:Class ;
@@ -1672,7 +1672,7 @@ siri:PublishToDisplayAction
     skos:prefLabel "action publish situation to display"@en ;
     skos:altLabel "publish to display action"@en ;
     skos:altLabel "publishtodisplayaction"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationActions.xsd"@en .
 
 siri:PublishToMobileAction
     a owl:Class ;
@@ -1680,7 +1680,7 @@ siri:PublishToMobileAction
     skos:prefLabel "action publish situation to mobile"@en ;
     skos:altLabel "publish to mobile action"@en ;
     skos:altLabel "publishtomobileaction"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationActions.xsd"@en .
 
 siri:PublishToTvAction
     a owl:Class ;
@@ -1688,7 +1688,7 @@ siri:PublishToTvAction
     skos:prefLabel "action publish situation to tv"@en ;
     skos:altLabel "publish to tv action"@en ;
     skos:altLabel "publishtotvaction"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationActions.xsd"@en .
 
 siri:PublishToWebAction
     a owl:Class ;
@@ -1696,49 +1696,49 @@ siri:PublishToWebAction
     skos:prefLabel "action publish situation to web"@en ;
     skos:altLabel "publish to web action"@en ;
     skos:altLabel "publishtowebaction"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationActions.xsd"@en .
 
 siri:PublishedLineName
     a owl:Class ;
     skos:definition "Name or Number by which the LINEis known to the public."@en ;
     skos:prefLabel "published line name"@en ;
     skos:altLabel "publishedlinename"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_reference.xsd"@en .
 
 siri:RailSubmode
     a owl:Class ;
     skos:definition "TPEG Pti02, Pts102 \"RailwayService\" and train link loc13 submodes."@en ;
     skos:prefLabel "rail submode"@en ;
     skos:altLabel "railsubmode"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_modes.xsd"@en .
 
 siri:ReasonForRemoval
     a owl:Class ;
     skos:definition "The data producer must provide a reason, e.g. type of error and description, in case he wants to silently remove (instead of cancel) a journey or an interchange from the plan. (since SIRI 2.1)"@en ;
     skos:prefLabel "reason for removal"@en ;
     skos:altLabel "reasonforremoval"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_datedVehicleJourney.xsd"@en .
 
 siri:RecordedCall
     a owl:Class ;
     skos:definition "Ordered sequence of SCHEDULED STOP POINTs called at by the VEHICLE JOURNEY. Only used if observed stop data is being recorded. (SIRI 2.0)"@en ;
     skos:prefLabel "recorded call"@en ;
     skos:altLabel "recordedcall"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_estimatedVehicleJourney.xsd"@en .
 
 siri:RecordedDepartureCapacities
     a owl:Class ;
     skos:definition "Actually recorded/counted capacities of a VEHICLE after departing from a given stop. Alternative way to communicate occupancy measurements. (since SIRI 2.1)"@en ;
     skos:prefLabel "recorded departure capacities"@en ;
     skos:altLabel "recordeddeparturecapacities"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:RecordedDepartureOccupancy
     a owl:Class ;
     skos:definition "Actually recorded/counted occupancies of a VEHICLE and reserved seats after departing from a given stop. (since SIRI 2.1)"@en ;
     skos:prefLabel "recorded departure occupancy"@en ;
     skos:altLabel "recordeddepartureoccupancy"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:RelatedJourney
     a owl:Class ;
@@ -1746,7 +1746,7 @@ siri:RelatedJourney
     skos:prefLabel "refers to the journey to"@en ;
     skos:altLabel "related journey"@en ;
     skos:altLabel "relatedjourney"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:ReservedSpaceFacility
     a owl:Class ;
@@ -1754,14 +1754,14 @@ siri:ReservedSpaceFacility
     skos:prefLabel "classification of reserved space facility"@en ;
     skos:altLabel "reserved space facility"@en ;
     skos:altLabel "reservedspacefacility"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_facilities.xsd"@en .
 
 siri:ResponseStatus
     a owl:Class ;
     skos:definition "Contains infromation about the processing of a an individual service subscription - either success info or an error condition. (VDV Acknowledgement)."@en ;
     skos:prefLabel "response status"@en ;
     skos:altLabel "responsestatus"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_common_services.xsd"@en .
 
 siri:ResponseTimestamp
     a owl:Class ;
@@ -1769,7 +1769,7 @@ siri:ResponseTimestamp
     skos:prefLabel "response timestamp"@en ;
     skos:altLabel "responsetimestamp"@en ;
     skos:altLabel "time individual response element was"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_request_support.xsd"@en .
 
 siri:RetailFacility
     a owl:Class ;
@@ -1777,21 +1777,21 @@ siri:RetailFacility
     skos:prefLabel "classification of retail facility"@en ;
     skos:altLabel "retail facility"@en ;
     skos:altLabel "retailfacility"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_facilities.xsd"@en .
 
 siri:RoadSituationElement
     a owl:Class ;
     skos:definition "Type for individual PT incident."@en ;
     skos:prefLabel "road situation element"@en ;
     skos:altLabel "roadsituationelement"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situation.xsd"@en .
 
 siri:RouteName
     a owl:Class ;
     skos:definition "Description of route by which it can be recogniozed."@en ;
     skos:prefLabel "route name"@en ;
     skos:altLabel "routename"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_reference.xsd"@en .
 
 siri:SanitaryFacility
     a owl:Class ;
@@ -1799,21 +1799,21 @@ siri:SanitaryFacility
     skos:prefLabel "classification of sanitary facility type"@en ;
     skos:altLabel "sanitary facility"@en ;
     skos:altLabel "sanitaryfacility"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_facilities.xsd"@en .
 
 siri:SelfDriveSubmode
     a owl:Class ;
     skos:definition "TPEG pti12 SelfDrive submodes."@en ;
     skos:prefLabel "self drive submode"@en ;
     skos:altLabel "selfdrivesubmode"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_modes.xsd"@en .
 
 siri:ServiceDelivery
     a owl:Class ;
     skos:definition "Response from Producer to Consumer to deliver payload data. Either answers a direct ServiceRequest, or asynchronously satisfies a subscription. May be sent directly in one step, or fetched in response to a DataSupply Request."@en ;
     skos:prefLabel "service delivery"@en ;
     skos:altLabel "servicedelivery"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri.xsd"@en .
 
 siri:ServiceDeliveryErrorConditionElement
     a owl:Class ;
@@ -1821,7 +1821,7 @@ siri:ServiceDeliveryErrorConditionElement
     skos:prefLabel "element from an error condition"@en ;
     skos:altLabel "service delivery error condition element"@en ;
     skos:altLabel "servicedeliveryerrorconditionelement"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_request_errorConditions.xsd"@en .
 
 siri:ServiceException
     a owl:Class ;
@@ -1829,7 +1829,7 @@ siri:ServiceException
     skos:prefLabel "exceptions to service availability for"@en ;
     skos:altLabel "service exception"@en ;
     skos:altLabel "serviceexception"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_stopMonitoring_service.xsd"@en .
 
 siri:ServiceFeature
     a owl:Class ;
@@ -1837,7 +1837,7 @@ siri:ServiceFeature
     skos:prefLabel "service feature"@en ;
     skos:altLabel "service feature description"@en ;
     skos:altLabel "servicefeature"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model_discovery/siri_feature.xsd"@en .
 
 siri:ServiceFeaturesDelivery
     a owl:Class ;
@@ -1846,7 +1846,7 @@ siri:ServiceFeaturesDelivery
     skos:altLabel "service features delivery"@en ;
     skos:altLabel "servicefeaturesdelivery"@en ;
     rdfs:subClassOf siri:AbstractDiscoveryDelivery ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_discovery.xsd"@en .
 
 siri:ServiceFeaturesRequest
     a owl:Class ;
@@ -1854,7 +1854,7 @@ siri:ServiceFeaturesRequest
     skos:prefLabel "service features request"@en ;
     skos:altLabel "servicefeaturesrequest"@en ;
     rdfs:subClassOf siri:AbstractDiscoveryRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_discovery.xsd"@en .
 
 siri:ServiceNotAvailableError
     a owl:Class ;
@@ -1862,7 +1862,7 @@ siri:ServiceNotAvailableError
     skos:prefLabel "error functional service is not"@en ;
     skos:altLabel "service not available error"@en ;
     skos:altLabel "servicenotavailableerror"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_request_errorConditions.xsd"@en .
 
 siri:ServiceRequest
     a owl:Class ;
@@ -1870,20 +1870,20 @@ siri:ServiceRequest
     skos:prefLabel "request from consumer to producer"@en ;
     skos:altLabel "service request"@en ;
     skos:altLabel "servicerequest"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri.xsd"@en .
 
 siri:Severity
     a owl:Class ;
     skos:definition "Severity of Incident - TPEG Pti26. Default is 'normal'."@en ;
     skos:prefLabel "severity"@en ;
     skos:altLabel "severity of incident  tpeg"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationClassifiers.xsd"@en .
 
 siri:Siri
     a owl:Class ;
     skos:definition "Service Interface for Real-time  Operation."@en ;
     skos:prefLabel "siri"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siriSg.xsd"@en .
 
 siri:SituationExchangeCapabilitiesRequest
     a owl:Class ;
@@ -1892,7 +1892,7 @@ siri:SituationExchangeCapabilitiesRequest
     skos:altLabel "situation exchange capabilities request"@en ;
     skos:altLabel "situationexchangecapabilitiesrequest"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceCapabilitiesRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_situationExchange_service.xsd"@en .
 
 siri:SituationExchangeCapabilitiesResponse
     a owl:Class ;
@@ -1901,7 +1901,7 @@ siri:SituationExchangeCapabilitiesResponse
     skos:altLabel "situation exchange capabilities response"@en ;
     skos:altLabel "situationexchangecapabilitiesresponse"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceCapabilitiesResponse ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_situationExchange_service.xsd"@en .
 
 siri:SituationExchangeDelivery
     a owl:Class ;
@@ -1910,7 +1910,7 @@ siri:SituationExchangeDelivery
     skos:altLabel "situation exchange delivery"@en ;
     skos:altLabel "situationexchangedelivery"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceDelivery ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_situationExchange_service.xsd"@en .
 
 siri:SituationExchangePermissions
     a owl:Class ;
@@ -1918,7 +1918,7 @@ siri:SituationExchangePermissions
     skos:prefLabel "participants permissions to use the"@en ;
     skos:altLabel "situation exchange permissions"@en ;
     skos:altLabel "situationexchangepermissions"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_situationExchange_service.xsd"@en .
 
 siri:SituationExchangeRequest
     a owl:Class ;
@@ -1927,7 +1927,7 @@ siri:SituationExchangeRequest
     skos:altLabel "situation exchange request"@en ;
     skos:altLabel "situationexchangerequest"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_situationExchange_service.xsd"@en .
 
 siri:SituationExchangeServiceCapabilities
     a owl:Class ;
@@ -1935,7 +1935,7 @@ siri:SituationExchangeServiceCapabilities
     skos:prefLabel "capabilities of situation exchange service"@en ;
     skos:altLabel "situation exchange service capabilities"@en ;
     skos:altLabel "situationexchangeservicecapabilities"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_situationExchange_service.xsd"@en .
 
 siri:SituationExchangeSubscriptionRequest
     a owl:Class ;
@@ -1944,7 +1944,7 @@ siri:SituationExchangeSubscriptionRequest
     skos:altLabel "situation exchange subscription request"@en ;
     skos:altLabel "situationexchangesubscriptionrequest"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceSubscriptionRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_situationExchange_service.xsd"@en .
 
 siri:SituationNumber
     a owl:Class ;
@@ -1952,27 +1952,27 @@ siri:SituationNumber
     skos:prefLabel "identifier of situation within a"@en ;
     skos:altLabel "situation number"@en ;
     skos:altLabel "situationnumber"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationIdentity.xsd"@en .
 
 siri:SrsName
     a owl:Class ;
     skos:definition "GML Spatial coordinate reference system."@en ;
     skos:prefLabel "srs name"@en ;
     skos:altLabel "srsname"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_utility/siri_location.xsd"@en .
 
 siri:Status
     a owl:Class ;
     skos:definition "Whether the request was processed successfully or not. Default is 'true'."@en ;
     skos:prefLabel "status"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_requests.xsd"@en .
 
 siri:StopLineNoticeCancellation
     a owl:Class ;
     skos:definition "Reference to an previously communicated LINE notice which should now be removed from the arrival/departure board for the stop."@en ;
     skos:prefLabel "stop line notice cancellation"@en ;
     skos:altLabel "stoplinenoticecancellation"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_stopMonitoring_service.xsd"@en .
 
 siri:StopMonitoringCapabilitiesRequest
     a owl:Class ;
@@ -1981,7 +1981,7 @@ siri:StopMonitoringCapabilitiesRequest
     skos:altLabel "stop monitoring capabilities request"@en ;
     skos:altLabel "stopmonitoringcapabilitiesrequest"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceCapabilitiesRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_stopMonitoring_service.xsd"@en .
 
 siri:StopMonitoringCapabilitiesResponse
     a owl:Class ;
@@ -1990,7 +1990,7 @@ siri:StopMonitoringCapabilitiesResponse
     skos:altLabel "stop monitoring capabilities response"@en ;
     skos:altLabel "stopmonitoringcapabilitiesresponse"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceCapabilitiesResponse ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_stopMonitoring_service.xsd"@en .
 
 siri:StopMonitoringDelivery
     a owl:Class ;
@@ -1999,7 +1999,7 @@ siri:StopMonitoringDelivery
     skos:altLabel "stop monitoring delivery"@en ;
     skos:altLabel "stopmonitoringdelivery"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceDelivery ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_stopMonitoring_service.xsd"@en .
 
 siri:StopMonitoringMultipleRequest
     a owl:Class ;
@@ -2008,7 +2008,7 @@ siri:StopMonitoringMultipleRequest
     skos:altLabel "stop monitoring multiple request"@en ;
     skos:altLabel "stopmonitoringmultiplerequest"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_stopMonitoring_service.xsd"@en .
 
 siri:StopMonitoringPermissions
     a owl:Class ;
@@ -2016,7 +2016,7 @@ siri:StopMonitoringPermissions
     skos:prefLabel "participants permissions to use the"@en ;
     skos:altLabel "stop monitoring permissions"@en ;
     skos:altLabel "stopmonitoringpermissions"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_stopMonitoring_service.xsd"@en .
 
 siri:StopMonitoringRequest
     a owl:Class ;
@@ -2025,7 +2025,7 @@ siri:StopMonitoringRequest
     skos:altLabel "stop monitoring request"@en ;
     skos:altLabel "stopmonitoringrequest"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_stopMonitoring_service.xsd"@en .
 
 siri:StopMonitoringServiceCapabilities
     a owl:Class ;
@@ -2033,7 +2033,7 @@ siri:StopMonitoringServiceCapabilities
     skos:prefLabel "capabilities of stopmonitoring service"@en ;
     skos:altLabel "stop monitoring service capabilities"@en ;
     skos:altLabel "stopmonitoringservicecapabilities"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_stopMonitoring_service.xsd"@en .
 
 siri:StopMonitoringSubscriptionRequest
     a owl:Class ;
@@ -2042,14 +2042,14 @@ siri:StopMonitoringSubscriptionRequest
     skos:altLabel "stop monitoring subscription request"@en ;
     skos:altLabel "stopmonitoringsubscriptionrequest"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceSubscriptionRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_stopMonitoring_service.xsd"@en .
 
 siri:StopNoticeCancellation
     a owl:Class ;
     skos:definition "Reference to an previously communicated Notice which should now be removed from the arrival/departure board for the stop."@en ;
     skos:prefLabel "stop notice cancellation"@en ;
     skos:altLabel "stopnoticecancellation"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_stopMonitoring_service.xsd"@en .
 
 siri:StopPointName
     a owl:Class ;
@@ -2057,7 +2057,7 @@ siri:StopPointName
     skos:prefLabel "name of scheduled stop point"@en ;
     skos:altLabel "stop point name"@en ;
     skos:altLabel "stoppointname"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_reference.xsd"@en .
 
 siri:StopPointsDelivery
     a owl:Class ;
@@ -2065,7 +2065,7 @@ siri:StopPointsDelivery
     skos:prefLabel "stop points delivery"@en ;
     skos:altLabel "stoppointsdelivery"@en ;
     rdfs:subClassOf siri:AbstractDiscoveryDelivery ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_discovery.xsd"@en .
 
 siri:StopPointsRequest
     a owl:Class ;
@@ -2073,7 +2073,7 @@ siri:StopPointsRequest
     skos:prefLabel "stop points request"@en ;
     skos:altLabel "stoppointsrequest"@en ;
     rdfs:subClassOf siri:AbstractDiscoveryRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_discovery.xsd"@en .
 
 siri:StopTimetableCapabilitiesRequest
     a owl:Class ;
@@ -2082,7 +2082,7 @@ siri:StopTimetableCapabilitiesRequest
     skos:altLabel "stop timetable capabilities request"@en ;
     skos:altLabel "stoptimetablecapabilitiesrequest"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceCapabilitiesRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_stopTimetable_service.xsd"@en .
 
 siri:StopTimetableCapabilitiesResponse
     a owl:Class ;
@@ -2091,7 +2091,7 @@ siri:StopTimetableCapabilitiesResponse
     skos:altLabel "stop timetable capabilities response"@en ;
     skos:altLabel "stoptimetablecapabilitiesresponse"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceCapabilitiesResponse ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_stopTimetable_service.xsd"@en .
 
 siri:StopTimetableDelivery
     a owl:Class ;
@@ -2100,7 +2100,7 @@ siri:StopTimetableDelivery
     skos:altLabel "stop timetable delivery"@en ;
     skos:altLabel "stoptimetabledelivery"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceDelivery ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_stopTimetable_service.xsd"@en .
 
 siri:StopTimetablePermissions
     a owl:Class ;
@@ -2108,7 +2108,7 @@ siri:StopTimetablePermissions
     skos:prefLabel "participants permissions to use the"@en ;
     skos:altLabel "stop timetable permissions"@en ;
     skos:altLabel "stoptimetablepermissions"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_stopTimetable_service.xsd"@en .
 
 siri:StopTimetableRequest
     a owl:Class ;
@@ -2117,7 +2117,7 @@ siri:StopTimetableRequest
     skos:altLabel "stop timetable request"@en ;
     skos:altLabel "stoptimetablerequest"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_stopTimetable_service.xsd"@en .
 
 siri:StopTimetableServiceCapabilities
     a owl:Class ;
@@ -2125,7 +2125,7 @@ siri:StopTimetableServiceCapabilities
     skos:prefLabel "capabilities of stop timetable service"@en ;
     skos:altLabel "stop timetable service capabilities"@en ;
     skos:altLabel "stoptimetableservicecapabilities"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_stopTimetable_service.xsd"@en .
 
 siri:StopTimetableSubscriptionRequest
     a owl:Class ;
@@ -2134,7 +2134,7 @@ siri:StopTimetableSubscriptionRequest
     skos:altLabel "stop timetable subscription request"@en ;
     skos:altLabel "stoptimetablesubscriptionrequest"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceSubscriptionRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_stopTimetable_service.xsd"@en .
 
 siri:SubscriptionRequest
     a owl:Class ;
@@ -2142,7 +2142,7 @@ siri:SubscriptionRequest
     skos:prefLabel "request from subscriber to producer"@en ;
     skos:altLabel "subscription request"@en ;
     skos:altLabel "subscriptionrequest"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri.xsd"@en .
 
 siri:SubscriptionResponse
     a owl:Class ;
@@ -2151,7 +2151,7 @@ siri:SubscriptionResponse
     skos:altLabel "subscription response"@en ;
     skos:altLabel "subscriptionresponse"@en ;
     rdfs:subClassOf siri:AbstractResponse ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_common_services.xsd"@en .
 
 siri:SubscriptionTerminatedNotification
     a owl:Class ;
@@ -2160,7 +2160,7 @@ siri:SubscriptionTerminatedNotification
     skos:altLabel "subscription terminated notification"@en ;
     skos:altLabel "subscriptionterminatednotification"@en ;
     rdfs:subClassOf siri:AbstractResponse ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_common_services.xsd"@en .
 
 siri:TargetedCall
     a owl:Class ;
@@ -2168,7 +2168,7 @@ siri:TargetedCall
     skos:prefLabel "information about the call at"@en ;
     skos:altLabel "targeted call"@en ;
     skos:altLabel "targetedcall"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_targetedVehicleJourney.xsd"@en .
 
 siri:TargetedVehicleJourney
     a owl:Class ;
@@ -2176,7 +2176,7 @@ siri:TargetedVehicleJourney
     skos:prefLabel "targeted vehicle journey"@en ;
     skos:altLabel "targetedvehiclejourney"@en ;
     skos:altLabel "timetabled vehicle journey"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_targetedVehicleJourney.xsd"@en .
 
 siri:TelecabinSubmode
     a owl:Class ;
@@ -2184,7 +2184,7 @@ siri:TelecabinSubmode
     skos:prefLabel "telecabin submode"@en ;
     skos:altLabel "telecabinsubmode"@en ;
     skos:altLabel "tpeg pti09 telecabin and pts109"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_modes.xsd"@en .
 
 siri:TerminateSubscriptionRequest
     a owl:Class ;
@@ -2193,7 +2193,7 @@ siri:TerminateSubscriptionRequest
     skos:altLabel "terminate subscription request"@en ;
     skos:altLabel "terminatesubscriptionrequest"@en ;
     rdfs:subClassOf siri:AuthenticatedRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_common_services.xsd"@en .
 
 siri:TerminateSubscriptionResponse
     a owl:Class ;
@@ -2202,7 +2202,7 @@ siri:TerminateSubscriptionResponse
     skos:altLabel "terminate subscription response"@en ;
     skos:altLabel "terminatesubscriptionresponse"@en ;
     rdfs:subClassOf siri:AbstractResponse ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_common_services.xsd"@en .
 
 siri:TicketingFacility
     a owl:Class ;
@@ -2210,7 +2210,7 @@ siri:TicketingFacility
     skos:prefLabel "classification of ticketing facility type"@en ;
     skos:altLabel "ticketing facility"@en ;
     skos:altLabel "ticketingfacility"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_facilities.xsd"@en .
 
 siri:TimetabledFeederArrival
     a owl:Class ;
@@ -2219,7 +2219,7 @@ siri:TimetabledFeederArrival
     skos:altLabel "timetabled feeder arrival"@en ;
     skos:altLabel "timetabledfeederarrival"@en ;
     rdfs:subClassOf siri:FeederItem ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_connectionTimetable_service.xsd"@en .
 
 siri:TimetabledFeederArrivalCancellation
     a owl:Class ;
@@ -2227,42 +2227,42 @@ siri:TimetabledFeederArrivalCancellation
     skos:prefLabel "cancellation of a previously issued"@en ;
     skos:altLabel "timetabled feeder arrival cancellation"@en ;
     skos:altLabel "timetabledfeederarrivalcancellation"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_connectionTimetable_service.xsd"@en .
 
 siri:TimingPoint
     a owl:Class ;
     skos:definition "Whether the stop is a TIMING POINT. Times for stops that are not timing points are sometimes interpolated crudely from the timing points, and may represent a lower level of accuracy. Default is 'true'."@en ;
     skos:prefLabel "timing point"@en ;
     skos:altLabel "timingpoint"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_reference.xsd"@en .
 
 siri:Train
     a owl:Class ;
     skos:definition "A vehicle composed of TRAIN ELEMENTs assembled in a certain order (so called TRAIN COMPONENTs), i.e. wagons assembled together and propelled by a locomotive or one of the wagons. (since SIRI 2.1)"@en ;
     skos:prefLabel "train"@en ;
     skos:altLabel "vehicle composed of train"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:TrainComponent
     a owl:Class ;
     skos:definition "Specifies the order of a certain TRAIN ELEMENT within a TRAIN and how the TRAIN ELEMENT is labeled in that context. (since SIRI 2.1)"@en ;
     skos:prefLabel "train component"@en ;
     skos:altLabel "traincomponent"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:TrainElement
     a owl:Class ;
     skos:definition "An elementary component of a TRAIN, e.g. wagon or locomotive. (since SIRI 2.1)"@en ;
     skos:prefLabel "train element"@en ;
     skos:altLabel "trainelement"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:TrainInCompoundTrain
     a owl:Class ;
     skos:definition "Specifies the order of a certain TRAIN within a COMPOUND TRAIN and how the TRAIN is labeled in that context. (since SIRI 2.1)"@en ;
     skos:prefLabel "train in compound train"@en ;
     skos:altLabel "trainincompoundtrain"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:TramSubmode
     a owl:Class ;
@@ -2270,7 +2270,7 @@ siri:TramSubmode
     skos:prefLabel "tpeg pti06 tram and pts104"@en ;
     skos:altLabel "tram submode"@en ;
     skos:altLabel "tramsubmode"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_modes.xsd"@en .
 
 siri:TypeOfValue
     a owl:Class ;
@@ -2278,7 +2278,7 @@ siri:TypeOfValue
     skos:prefLabel "code value from an"@en ;
     skos:altLabel "type of value"@en ;
     skos:altLabel "typeofvalue"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_utility/siri_utility.xsd"@en .
 
 siri:TypesOfValue
     a owl:Class ;
@@ -2286,21 +2286,21 @@ siri:TypesOfValue
     skos:prefLabel "types of value"@en ;
     skos:altLabel "typesofvalue"@en ;
     skos:altLabel "value sets and type of"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_utility/siri_utility.xsd"@en .
 
 siri:UnapprovedKeyAccessError
     a owl:Class ;
     skos:definition "Error:Recipient of a message to be distributed is not available. (since SIRI 2.0)"@en ;
     skos:prefLabel "unapproved key access error"@en ;
     skos:altLabel "unapprovedkeyaccesserror"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_request_errorConditions.xsd"@en .
 
 siri:UndefinedReason
     a owl:Class ;
     skos:definition "DEPRECATED since SIRI 2.1 (TPEG Pti18_255 - undefined event reason)."@en ;
     skos:prefLabel "undefined reason"@en ;
     skos:altLabel "undefinedreason"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationReasons.xsd"@en .
 
 siri:UnknownEndpointError
     a owl:Class ;
@@ -2308,14 +2308,14 @@ siri:UnknownEndpointError
     skos:prefLabel "error recipient for a message"@en ;
     skos:altLabel "unknown endpoint error"@en ;
     skos:altLabel "unknownendpointerror"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_request_errorConditions.xsd"@en .
 
 siri:UnknownExtensionsError
     a owl:Class ;
     skos:definition "Error: Request contained extensions that were not supported by the producer. A response has been provided but some or all extensions have been ignored. (since SIRI 2.0)."@en ;
     skos:prefLabel "unknown extensions error"@en ;
     skos:altLabel "unknownextensionserror"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_request_errorConditions.xsd"@en .
 
 siri:UnknownParticipantError
     a owl:Class ;
@@ -2323,14 +2323,14 @@ siri:UnknownParticipantError
     skos:prefLabel "error recipient for a message"@en ;
     skos:altLabel "unknown participant error"@en ;
     skos:altLabel "unknownparticipanterror"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_request_errorConditions.xsd"@en .
 
 siri:UnknownReason
     a owl:Class ;
     skos:definition "DEPRECATED since SIRI 2.1 (TPEG Pti18_0 - unknown event reason)."@en ;
     skos:prefLabel "unknown reason"@en ;
     skos:altLabel "unknownreason"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationReasons.xsd"@en .
 
 siri:UnknownSubscriberError
     a owl:Class ;
@@ -2338,7 +2338,7 @@ siri:UnknownSubscriberError
     skos:prefLabel "error subscriber not found"@en ;
     skos:altLabel "unknown subscriber error"@en ;
     skos:altLabel "unknownsubscribererror"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_request_errorConditions.xsd"@en .
 
 siri:UnknownSubscriptionError
     a owl:Class ;
@@ -2346,7 +2346,7 @@ siri:UnknownSubscriptionError
     skos:prefLabel "error subscription not found"@en ;
     skos:altLabel "unknown subscription error"@en ;
     skos:altLabel "unknownsubscriptionerror"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri/siri_request_errorConditions.xsd"@en .
 
 siri:ValueSet
     a owl:Class ;
@@ -2354,7 +2354,7 @@ siri:ValueSet
     skos:prefLabel "extensible set of code"@en ;
     skos:altLabel "value set"@en ;
     skos:altLabel "valueset"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_utility/siri_utility.xsd"@en .
 
 siri:VehicleAtStop
     a owl:Class ;
@@ -2362,7 +2362,7 @@ siri:VehicleAtStop
     skos:prefLabel "vehicle at stop"@en ;
     skos:altLabel "vehicleatstop"@en ;
     skos:altLabel "whether vehicle is currently at"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_reference.xsd"@en .
 
 siri:VehicleFeature
     a owl:Class ;
@@ -2370,7 +2370,7 @@ siri:VehicleFeature
     skos:prefLabel "vehicle feature"@en ;
     skos:altLabel "vehicle feature description"@en ;
     skos:altLabel "vehiclefeature"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model_discovery/siri_feature.xsd"@en .
 
 siri:VehicleFeaturesDelivery
     a owl:Class ;
@@ -2379,7 +2379,7 @@ siri:VehicleFeaturesDelivery
     skos:altLabel "vehicle features delivery"@en ;
     skos:altLabel "vehiclefeaturesdelivery"@en ;
     rdfs:subClassOf siri:AbstractDiscoveryDelivery ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_discovery.xsd"@en .
 
 siri:VehicleFeaturesRequest
     a owl:Class ;
@@ -2387,7 +2387,7 @@ siri:VehicleFeaturesRequest
     skos:prefLabel "vehicle features request"@en ;
     skos:altLabel "vehiclefeaturesrequest"@en ;
     rdfs:subClassOf siri:AbstractDiscoveryRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_discovery.xsd"@en .
 
 siri:VehicleMode
     a owl:Class ;
@@ -2395,7 +2395,7 @@ siri:VehicleMode
     skos:prefLabel "vehicle mode"@en ;
     skos:altLabel "vehicle mode or mode of"@en ;
     skos:altLabel "vehiclemode"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_modes.xsd"@en .
 
 siri:VehicleMonitoringCapabilitiesRequest
     a owl:Class ;
@@ -2404,7 +2404,7 @@ siri:VehicleMonitoringCapabilitiesRequest
     skos:altLabel "vehicle monitoring capabilities request"@en ;
     skos:altLabel "vehiclemonitoringcapabilitiesrequest"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceCapabilitiesRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_vehicleMonitoring_service.xsd"@en .
 
 siri:VehicleMonitoringCapabilitiesResponse
     a owl:Class ;
@@ -2413,7 +2413,7 @@ siri:VehicleMonitoringCapabilitiesResponse
     skos:altLabel "vehicle monitoring capabilities response"@en ;
     skos:altLabel "vehiclemonitoringcapabilitiesresponse"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceCapabilitiesResponse ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_vehicleMonitoring_service.xsd"@en .
 
 siri:VehicleMonitoringDelivery
     a owl:Class ;
@@ -2422,7 +2422,7 @@ siri:VehicleMonitoringDelivery
     skos:altLabel "vehicle monitoring delivery"@en ;
     skos:altLabel "vehiclemonitoringdelivery"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceDelivery ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_vehicleMonitoring_service.xsd"@en .
 
 siri:VehicleMonitoringPermissions
     a owl:Class ;
@@ -2430,7 +2430,7 @@ siri:VehicleMonitoringPermissions
     skos:prefLabel "participants permissions to use the"@en ;
     skos:altLabel "vehicle monitoring permissions"@en ;
     skos:altLabel "vehiclemonitoringpermissions"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_vehicleMonitoring_service.xsd"@en .
 
 siri:VehicleMonitoringRequest
     a owl:Class ;
@@ -2439,7 +2439,7 @@ siri:VehicleMonitoringRequest
     skos:altLabel "vehicle monitoring request"@en ;
     skos:altLabel "vehiclemonitoringrequest"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_vehicleMonitoring_service.xsd"@en .
 
 siri:VehicleMonitoringServiceCapabilities
     a owl:Class ;
@@ -2447,7 +2447,7 @@ siri:VehicleMonitoringServiceCapabilities
     skos:prefLabel "capabilities of vehicle monitoring service"@en ;
     skos:altLabel "vehicle monitoring service capabilities"@en ;
     skos:altLabel "vehiclemonitoringservicecapabilities"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_vehicleMonitoring_service.xsd"@en .
 
 siri:VehicleMonitoringSubscriptionRequest
     a owl:Class ;
@@ -2456,7 +2456,7 @@ siri:VehicleMonitoringSubscriptionRequest
     skos:altLabel "vehicle monitoring subscription request"@en ;
     skos:altLabel "vehiclemonitoringsubscriptionrequest"@en ;
     rdfs:subClassOf siri:AbstractFunctionalServiceSubscriptionRequest ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_vehicleMonitoring_service.xsd"@en .
 
 siri:VerificationStatus
     a owl:Class ;
@@ -2464,7 +2464,7 @@ siri:VerificationStatus
     skos:prefLabel "classification of verification status"@en ;
     skos:altLabel "verification status"@en ;
     skos:altLabel "verificationstatus"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_situationClassifiers.xsd"@en .
 
 siri:ViaName
     a owl:Class ;
@@ -2472,7 +2472,7 @@ siri:ViaName
     skos:prefLabel "names of via points used"@en ;
     skos:altLabel "via name"@en ;
     skos:altLabel "vianame"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_journey.xsd"@en .
 
 siri:VisitNumber
     a owl:Class ;
@@ -2480,11 +2480,11 @@ siri:VisitNumber
     skos:prefLabel "sequence of visit to scheduled"@en ;
     skos:altLabel "visit number"@en ;
     skos:altLabel "visitnumber"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_reference.xsd"@en .
 
 siri:WaterSubmode
     a owl:Class ;
     skos:definition "TPEG Pti07 and Pts107 \"WaterTransportService\" submodes."@en ;
     skos:prefLabel "water submode"@en ;
     skos:altLabel "watersubmode"@en ;
-    rdfs:comment "Extracted from XSD schema"@en .
+    rdfs:comment "Extracted from: siri_model/siri_modes.xsd"@en .
