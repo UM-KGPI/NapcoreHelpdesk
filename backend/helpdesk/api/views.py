@@ -861,6 +861,7 @@ class QuestionAnswerView(APIView):
             )
             retrieved_chunks = chunks
             retrieval_event_ids = [chunk["retrievalEventId"] for chunk in chunks]
+            all_candidates = graph_trace.get("allCandidates", [])
 
             use_llm = generation_profile == "llm-ready" and settings.LLM_ENABLED
             if chunks and use_llm:
@@ -871,6 +872,7 @@ class QuestionAnswerView(APIView):
                         scope=effective_scope,
                         faq_hint=faq_match["answer"],
                         language=language,
+                        all_candidates=all_candidates,
                     )
                     answer_text = generated["answer"]
                     confidence = generated["confidence"]
@@ -974,6 +976,7 @@ class QuestionAnswerView(APIView):
 
             retrieved_chunks = chunks
             retrieval_event_ids = [chunk["retrievalEventId"] for chunk in chunks]
+            all_candidates = graph_trace.get("allCandidates", [])
 
             if getattr(settings, "EVIDENCE_GATE_ENABLED", False):
                 evidence_gate = _evaluate_evidence_gate(
@@ -998,7 +1001,7 @@ class QuestionAnswerView(APIView):
                 use_llm = generation_profile == "llm-ready" and settings.LLM_ENABLED
                 if use_llm:
                     try:
-                        generated = generate_answer_llm(question=question, chunks=chunks, scope=effective_scope, language=language)
+                        generated = generate_answer_llm(question=question, chunks=chunks, scope=effective_scope, language=language, all_candidates=all_candidates)
                     except LLMGenerationError:
                         logger.warning(
                             "LLM generation failed; falling back to deterministic answer",
@@ -1326,6 +1329,7 @@ class QuestionAnswerStreamView(APIView):
             )
             retrieved_chunks = chunks
             retrieval_event_ids = [chunk["retrievalEventId"] for chunk in chunks]
+            all_candidates = graph_trace.get("allCandidates", [])
 
             use_llm = generation_profile == "llm-ready" and settings.LLM_ENABLED
             if chunks and use_llm:
@@ -1337,6 +1341,7 @@ class QuestionAnswerStreamView(APIView):
                         scope=effective_scope,
                         faq_hint=faq_match["answer"],
                         language=language,
+                        all_candidates=all_candidates,
                     ):
                         if event_type == "token":
                             yield self._sse({"type": "token", "delta": payload})
@@ -1436,6 +1441,7 @@ class QuestionAnswerStreamView(APIView):
 
             retrieved_chunks = chunks
             retrieval_event_ids = [chunk["retrievalEventId"] for chunk in chunks]
+            all_candidates = graph_trace.get("allCandidates", [])
 
             if getattr(settings, "EVIDENCE_GATE_ENABLED", False):
                 evidence_gate = _evaluate_evidence_gate(
@@ -1466,6 +1472,7 @@ class QuestionAnswerStreamView(APIView):
                             chunks=chunks,
                             scope=effective_scope,
                             language=language,
+                            all_candidates=all_candidates,
                         ):
                             if event_type == "token":
                                 yield self._sse({"type": "token", "delta": payload})
