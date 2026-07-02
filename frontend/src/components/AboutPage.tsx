@@ -40,8 +40,7 @@ export default function AboutPage() {
           (<a href="https://kgpi.fgpa.um.si/" target="_blank" rel="noreferrer">kgpi.fgpa.um.si</a>).
           They defined the standards scope (NeTEx/SIRI/OpRa/Transmodel), the
           FAQ-first/RAG-fallback answer strategy, the citation and abstention
-          guarantees, and the editorial review workflow. The work is part of NAPCORE
-          WG3; members of the workgroup are actively contributing after the app launch.
+          guarantees, and the editorial review workflow. The work is part of the NAPCORE WG 4.3. Members of the workgroup are actively contributing after the app launch.
         </p>
       </section>
 
