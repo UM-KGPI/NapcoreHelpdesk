@@ -31,6 +31,7 @@ import { HelpdeskApiClient } from "./api";
 import { AuthProvider } from "./auth-context";
 import AboutPage from "./components/AboutPage";
 import EditorConsoleWorkspace from "./components/EditorConsoleWorkspace";
+import QuestionDetailPage from "./components/QuestionDetailPage";
 import SharedAppLayout from "./components/SharedAppLayout";
 import UserChatWorkspace, { type ChatTurn } from "./components/UserChatWorkspace";
 import type {
@@ -227,6 +228,35 @@ function UserChatWithQueryParams(props: React.ComponentProps<typeof UserChatWork
   };
 
   return <UserChatWorkspace {...props} chatTurns={enhancedTurns} onResetChatSession={handleResetSession} />;
+}
+
+// Wrapper component to handle ?questionId= query parameter for question detail page
+function QuestionDetailWithQueryParams(props: {
+  token: string;
+  onSetAnswerFeedback: (
+    requestId: string,
+    payload: {
+      userLikes?: boolean;
+      userDislikes?: boolean;
+      answerSuccess?: boolean | null;
+      citationClicksDelta?: number;
+    }
+  ) => Promise<void>;
+}) {
+  const [searchParams] = useSearchParams();
+  const questionId = searchParams.get("questionId");
+
+  if (!questionId) {
+    return (
+      <div className="workspace-section">
+        <div className="panel">
+          <p>No question ID provided.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <QuestionDetailPage questionId={questionId} token={props.token} onSetAnswerFeedback={props.onSetAnswerFeedback} />;
 }
 
 // Wrapper component to handle ?questionId= query parameter in editor
@@ -1054,6 +1084,15 @@ export default function App() {
                   setIndexIncludeIssues={setIndexIncludeIssues}
                   setIndexAutoAllowRepository={setIndexAutoAllowRepository}
                   onIndexRepository={onIndexRepository}
+                />
+              }
+            />
+            <Route
+              path="question"
+              element={
+                <QuestionDetailWithQueryParams
+                  token={token}
+                  onSetAnswerFeedback={onSetAnswerFeedback}
                 />
               }
             />
