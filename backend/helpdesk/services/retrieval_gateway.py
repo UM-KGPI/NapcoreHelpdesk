@@ -1482,5 +1482,6 @@ def retrieve_chunks_with_trace(
         "retrievalMmrLambda": round(mmr_lambda, 4),
         "retrievalLatencyMs": round((time.time() - retrieval_start_time) * 1000, 1),
         "retrievalStageTimingsMs": stage_timing_ms,
+        "allCandidates": candidates,  # Include all candidate chunks for LLM awareness
     }
     return trimmed, trace
