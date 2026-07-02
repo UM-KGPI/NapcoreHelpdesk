@@ -1,6 +1,7 @@
 /**
  * Dedicated page for displaying a stored question with its answer.
  * Used when following deep links to specific Q&A exchanges.
+ * Shows only the question and answer — no input field, buttons, or chat controls.
  *
  * Crafted by: AI coding agents
  * Created: 2026-07-02
@@ -8,7 +9,7 @@
 
 import { useEffect, useState } from "react";
 import type { ChatTurn } from "./UserChatWorkspace";
-import UserChatWorkspace from "./UserChatWorkspace";
+import ReadOnlyQuestionDisplay from "./ReadOnlyQuestionDisplay";
 
 interface QuestionDetailPageProps {
   token: string;
@@ -132,16 +133,5 @@ export default function QuestionDetailPage({
     );
   }
 
-  return (
-    <UserChatWorkspace
-      chatTurns={chatTurns}
-      chatPrompt=""
-      setChatPrompt={() => {}}
-      onSendChat={() => Promise.resolve()}
-      onResetChatSession={() => {}}
-      onSetAnswerFeedback={onSetAnswerFeedback}
-      token={token}
-      busy={false}
-    />
-  );
+  return <ReadOnlyQuestionDisplay chatTurns={chatTurns} onSetAnswerFeedback={onSetAnswerFeedback} />;
 }
