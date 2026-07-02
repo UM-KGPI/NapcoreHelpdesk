@@ -257,7 +257,8 @@ _KNOWN_STANDARD_REFS = {
 }
 
 _UNCITED_STANDARD_PATTERN = re.compile(
-    r"\b(" + "|".join(re.escape(s) for s in _KNOWN_STANDARD_REFS) + r"(?:[-_][\w\d]+)?)\b"
+    r"\b(" + "|".join(re.escape(s) for s in _KNOWN_STANDARD_REFS) + r"(?:[-_][\w\d]+)?)\b",
+    re.IGNORECASE
 )
 
 
@@ -392,7 +393,7 @@ def _build_messages(
         "5. If you cannot answer from the provided evidence, say 'This information is not in the provided evidence blocks'\n"
         "6. Do NOT paraphrase or infer beyond what is explicitly stated in the evidence\n"
         "7. Stay within the requested standards scope\n"
-        "8. Do NOT write file names (e.g. file.xml, schema.xsd) anywhere in the answer prose — reference all sources ONLY as [E#] citations\n"
+        "8. CRITICAL: NEVER write file names or paths (e.g. file.xml, folder/schema.xsd, FX-PI-01_*.xml) in the answer text. NEVER list file names. Reference sources ONLY via [E#] citations. The [E#] marker tells the reader where to find the file.\n"
         f"\nRespond in 4-7 concise sentences with explicit [E#] citations for every claim.{language_instruction}"
     )
     if _question_requests_verbatim_example(question):
@@ -556,6 +557,11 @@ def _run_llm_attempt(
 
 def _append_feedback_message(messages: list[dict], rejected_answer: str, error_msg: str) -> list[dict]:
     """Return a new messages list with a feedback turn appended for retry."""
+    # Add specific guidance if the error is about file names
+    file_name_hint = ""
+    if "file name" in error_msg.lower() or "raw file" in error_msg.lower():
+        file_name_hint = "\n- CRITICAL: Do NOT write file names or paths like 'example.xml' or 'schema/file.xsd'. Instead write: 'The example [E2]' or 'In the schema definition [E1]'. The [E#] reference tells readers where the actual file is."
+
     feedback = (
         f"Your previous answer was rejected by the grounding validator.\n"
         f"Rejected answer: {rejected_answer[:600]}\n"
@@ -564,6 +570,7 @@ def _append_feedback_message(messages: list[dict], rejected_answer: str, error_m
         "- Use ONLY [E#] markers to reference sources — no file names, no invented identifiers\n"
         "- Only cite [E#] for a claim when that block's text directly contains the information\n"
         "- If the evidence does not support a claim, omit it or say 'This is not in the provided evidence'"
+        f"{file_name_hint}"
     )
     return messages + [
         {"role": "assistant", "content": rejected_answer},
