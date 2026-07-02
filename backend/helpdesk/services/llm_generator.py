@@ -253,7 +253,7 @@ def _validate_no_raw_filenames(answer: str) -> None:
 
 _KNOWN_STANDARD_REFS = {
     "SCWW", "LUAS", "NeTEx", "IFOPT", "SIRI", "GTFS", "TPEG",
-    "Transmodel", "TPEG", "PRTC", "OGC", "XML", "JSON", "XSD"
+    "Transmodel", "PRTC", "OGC"
 }
 
 _UNCITED_STANDARD_PATTERN = re.compile(
@@ -263,11 +263,11 @@ _UNCITED_STANDARD_PATTERN = re.compile(
 
 def _validate_no_uncited_standards(answer: str, chunks: list[dict], all_candidates: list[dict] | None = None) -> None:
     """
-    Reject answers that mention known standards without [E#] or [C#] citations.
+    Reject answers that mention known standards (SCWW, LUAS, etc.) without [E#] citations.
 
-    Detects standard abbreviations (SCWW, LUAS, etc.) that appear in the answer
-    without a preceding [E#] citation. If the standard is in the provided evidence
-    or candidates, the LLM should cite it. If not, the LLM should not mention it.
+    Only flags genuine standard names, not generic format descriptors. Allows mentions
+    if the standard appears in the evidence blocks (even without citation), since the
+    evidence provides grounding for that standard's existence.
     """
     # Build set of standards that are actually in the evidence or candidates
     available_standards = set()
@@ -284,20 +284,21 @@ def _validate_no_uncited_standards(answer: str, chunks: list[dict], all_candidat
                 if std in text:
                     available_standards.add(std)
 
-    # Find mentions without [E#] citations
+    # Find sentences that mention a standard WITHOUT a citation
     sentences = re.split(r"(?<=[.!?\)])\s+", answer.replace("\n", " "))
     for sentence in sentences:
-        # Remove all [E#] citations from the sentence
-        clean = CITATION_PATTERN.sub("", sentence)
+        # Check if sentence has any citation
+        has_citation = bool(CITATION_PATTERN.search(sentence))
 
-        # Find standards mentioned in the cleaned sentence
-        for match in _UNCITED_STANDARD_PATTERN.finditer(clean):
+        # Find standards mentioned in this sentence
+        for match in _UNCITED_STANDARD_PATTERN.finditer(sentence):
             std = match.group(1)
-            # Check if the standard appears in evidence/candidates or is mentioned with citation
-            if std not in available_standards:
+
+            # Only reject if: standard is mentioned, no citation in sentence, AND standard not in evidence
+            if not has_citation and std not in available_standards:
                 raise LLMGenerationError(
                     f"Answer mentions '{std}' without citation and it's not in provided evidence. "
-                    f"Standard must either be cited [E#] or not mentioned at all."
+                    f"Either cite the source with [E#] or don't mention the standard."
                 )
 
 
