@@ -437,6 +437,7 @@ def generate_answer_llm(
     scope: list[str] | None = None,
     faq_hint: str | None = None,
     language: str | None = None,
+    all_candidates: list[dict] | None = None,
 ) -> dict:
     """Generate a grounded answer through a configurable OpenAI-compatible API."""
 
@@ -523,6 +524,7 @@ def generate_answer_llm(
     scope: list[str] | None = None,
     faq_hint: str | None = None,
     language: str | None = None,
+    all_candidates: list[dict] | None = None,
 ) -> dict:
     """Generate a grounded answer through a configurable OpenAI-compatible API.
 
@@ -547,7 +549,7 @@ def generate_answer_llm(
         max_chars_per_chunk=max_chars_per_chunk,
         faq_hint=faq_hint,
         language=language,
-        all_candidates=None,  # Can be passed by caller if available
+        all_candidates=all_candidates,
     )
 
     primary_base_url = (settings.LLM_API_BASE_URL or "").strip()
@@ -674,6 +676,7 @@ def stream_answer_llm(
     scope: list[str] | None = None,
     faq_hint: str | None = None,
     language: str | None = None,
+    all_candidates: list[dict] | None = None,
 ) -> Generator[tuple[str, object], None, None]:
     """
     Generator yielding (event_type, payload) tuples for streaming narration.
@@ -706,7 +709,7 @@ def stream_answer_llm(
         max_chars_per_chunk=max_chars_per_chunk,
         faq_hint=faq_hint,
         language=language,
-        all_candidates=None,  # Can be passed by caller if available
+        all_candidates=all_candidates,
     )
 
     # Buffer all tokens before yielding any — validation must pass the full
