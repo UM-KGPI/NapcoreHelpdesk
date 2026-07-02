@@ -25,7 +25,7 @@
  */
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { BrowserRouter, Navigate, Route, Routes, useSearchParams } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useSearchParams, useNavigate } from "react-router-dom";
 
 import { HelpdeskApiClient } from "./api";
 import { AuthProvider } from "./auth-context";
@@ -238,6 +238,7 @@ function EditorWithQueryParams(props: React.ComponentProps<typeof EditorConsoleW
 }
 
 export default function App() {
+  const navigate = useNavigate();
   const frontendVersion = import.meta.env.VITE_APP_VERSION ?? '0.6.1';
   const [apiBaseUrl, setApiBaseUrl] = useState(() => {
     const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -616,6 +617,7 @@ export default function App() {
   function onResetChatSession(): void {
     setChatTurns([]);
     setSessionId(createSessionId());
+    navigate("/napcore-helpdesk/user", { replace: true });
   }
 
   async function onAskQuestion(event: FormEvent<HTMLFormElement>): Promise<void> {
