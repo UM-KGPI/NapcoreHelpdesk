@@ -28,6 +28,7 @@ class LLMGenerationError(Exception):
 
 
 FENCED_CODE_BLOCK_PATTERN = re.compile(r"```([A-Za-z0-9_+-]*)\n(.*?)```", re.DOTALL)
+CITATION_PATTERN = re.compile(r"\[E(\d+)\]")
 
 
 def _is_github_models_base_url(api_base_url: str) -> bool:
@@ -89,6 +90,27 @@ def _validate_grounded_example_output(question: str, answer: str, chunks: list[d
             raise LLMGenerationError(
                 "Generated example block is not grounded in retrieved evidence; refusing fabricated XML/example output."
             )
+
+
+def _validate_citations_to_chunks(answer: str, chunks: list[dict]) -> None:
+    """
+    Verify that each [E#] citation in the answer references a valid chunk index.
+    Rejects answers with hallucinated citations pointing to non-existent chunks.
+    """
+    citations = CITATION_PATTERN.findall(answer)
+    if not citations:
+        return  # No citations, nothing to validate
+
+    max_chunk_idx = len(chunks)
+    for citation_str in set(citations):
+        try:
+            citation_num = int(citation_str)
+            if citation_num < 1 or citation_num > max_chunk_idx:
+                raise LLMGenerationError(
+                    f"Citation [E{citation_num}] is out of range. Valid citations: [E1] through [E{max_chunk_idx}]."
+                )
+        except ValueError as e:
+            raise LLMGenerationError(f"Invalid citation format: {e}")
 
 
 def _build_ssl_context() -> ssl.SSLContext:
@@ -332,6 +354,7 @@ def generate_answer_llm(
     if not answer:
         raise LLMGenerationError("LLM response was empty.")
 
+    _validate_citations_to_chunks(answer=answer, chunks=chunks)
     _validate_grounded_example_output(question=question, answer=answer, chunks=chunks)
 
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
@@ -466,6 +489,7 @@ def stream_answer_llm(
     if not full_answer.strip():
         raise LLMGenerationError("LLM stream response was empty.")
 
+    _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
     _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
 
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
