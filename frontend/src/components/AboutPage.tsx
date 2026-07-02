@@ -11,6 +11,15 @@
 export default function AboutPage() {
   return (
     <section className="workspace-section about-page">
+      <section className="panel status-banner">
+        <p>
+          <strong>Status:</strong> This project is actively in development. Core functionality
+          is stable and in pilot testing, but new features, refinements, and integrations are
+          ongoing. The work is part of the NAPCORE WG 4.3, with active contributions from
+          workgroup members.
+        </p>
+      </section>
+
       <section className="panel">
         <div className="panel-title-row">
           <h2>About NAPCORE Helpdesk</h2>
