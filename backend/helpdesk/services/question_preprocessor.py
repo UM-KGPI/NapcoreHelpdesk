@@ -161,9 +161,36 @@ def _correct_with_library(question: str, language: str) -> Optional[str]:
     return " ".join(corrected) if has_changes else None
 
 
+def _looks_like_schema_identifier(word: str) -> bool:
+    """
+    Check if a word looks like a schema/class-name identifier (for language
+    detection input), as opposed to just an ordinary capitalized word (e.g.
+    the first word of a sentence). Deliberately stricter than
+    _is_technical_term: that function treats *any* capitalized word as
+    skip-worthy, which is fine for spell-check (don't "fix" proper nouns) but
+    would strip the sentence-initial word of every question here, leaving too
+    little text for reliable language detection.
+    """
+    clean_word = word.strip(".,;:!?\"'<>")
+    if not clean_word:
+        return False
+    if clean_word in TECHNICAL_PATTERNS:
+        return True
+    # CamelCase/PascalCase: a lowercase letter followed by an uppercase letter
+    # somewhere in the word, e.g. "DatedServiceJourney", "StopPlace".
+    if any(prev.islower() and curr.isupper() for prev, curr in zip(clean_word, clean_word[1:])):
+        return True
+    # Fully uppercase multi-letter acronyms, e.g. "XML", "SIRI".
+    if clean_word.isupper() and len(clean_word) > 1:
+        return True
+    if "_" in clean_word:
+        return True
+    return False
+
+
 def _strip_technical_terms(question: str) -> str:
     """Remove schema/class-name tokens that skew language detection toward English."""
-    return " ".join(word for word in question.split() if not _is_technical_term(word))
+    return " ".join(word for word in question.split() if not _looks_like_schema_identifier(word))
 
 
 def _detect_question_language(question: str) -> Optional[str]:
