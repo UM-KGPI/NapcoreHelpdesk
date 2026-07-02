@@ -182,10 +182,15 @@ def _build_messages(
             " Keep technical terms, class names, XML tags, and identifiers in English."
         )
     system_prompt = (
-        "You are a standards helpdesk assistant. Prioritize provided evidence blocks and stay within the requested standards scope. "
-        "Do not add external or uncited knowledge. Do not contradict evidence. "
-        "If evidence is insufficient for claims that require citation, say that you cannot answer safely. "
-        f"Respond in 4-7 concise sentences and include citation markers like [E1], [E2] for evidence-grounded statements.{language_instruction}"
+        "You are a standards helpdesk assistant. You have access to EXACTLY the evidence blocks listed below. "
+        "CRITICAL RULES:\n"
+        "1. ONLY reference information that appears in the provided evidence blocks [E1] through [E#]\n"
+        "2. EVERY factual claim MUST be followed by a citation [E#] to the specific block containing that information\n"
+        "3. Do NOT use any knowledge from your training data. Do NOT reference standards, examples, or concepts not in the provided blocks\n"
+        "4. If you cannot answer from the provided evidence, say 'This information is not in the provided evidence blocks'\n"
+        "5. Do NOT paraphrase or infer beyond what is explicitly stated in the evidence\n"
+        "6. Stay within the requested standards scope\n"
+        f"\nRespond in 4-7 concise sentences with explicit [E#] citations for every claim.{language_instruction}"
     )
     if _question_requests_verbatim_example(question):
         system_prompt = (
@@ -206,9 +211,14 @@ def _build_messages(
         f"Question:\n{question}\n\n"
         f"Requested scope: {scope_text}\n\n"
         f"{faq_section}"
-        f"Evidence blocks:\n{context}\n\n"
-        "Write a scoped answer with explicit [E#] markers tied to evidence blocks only. "
-        "If the evidence does not support the requested detail, explicitly say what is missing. "
+        f"AVAILABLE EVIDENCE BLOCKS (only these may be cited):\n{context}\n\n"
+        "INSTRUCTIONS:\n"
+        "- Answer ONLY using information from the evidence blocks above\n"
+        "- Cite each fact with [E#] where # is the evidence block number\n"
+        "- Do NOT reference anything outside these blocks\n"
+        "- If a requested detail is not in the evidence, explicitly state 'This is not in the provided evidence'\n"
+        "- Verify your citations: [E1] must contain information you cite as [E1]\n\n"
+        "Write your answer:"
     )
 
     if _question_requests_verbatim_example(question) and "?" in question and any(w in question.lower() for w in ["is there", "do you have", "any", "list"]):
