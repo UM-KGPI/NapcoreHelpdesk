@@ -29,6 +29,7 @@ import { BrowserRouter, Navigate, Route, Routes, useSearchParams } from "react-r
 
 import { HelpdeskApiClient } from "./api";
 import { AuthProvider } from "./auth-context";
+import AboutPage from "./components/AboutPage";
 import EditorConsoleWorkspace from "./components/EditorConsoleWorkspace";
 import SharedAppLayout from "./components/SharedAppLayout";
 import UserChatWorkspace, { type ChatTurn } from "./components/UserChatWorkspace";
@@ -1050,6 +1051,7 @@ export default function App() {
                 />
               }
             />
+            <Route path="about" element={<AboutPage />} />
           </Route>
         </Routes>
 
