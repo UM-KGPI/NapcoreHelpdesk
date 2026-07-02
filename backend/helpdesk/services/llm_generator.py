@@ -547,6 +547,7 @@ def generate_answer_llm(
         max_chars_per_chunk=max_chars_per_chunk,
         faq_hint=faq_hint,
         language=language,
+        all_candidates=None,  # Can be passed by caller if available
     )
 
     primary_base_url = (settings.LLM_API_BASE_URL or "").strip()
@@ -705,6 +706,7 @@ def stream_answer_llm(
         max_chars_per_chunk=max_chars_per_chunk,
         faq_hint=faq_hint,
         language=language,
+        all_candidates=None,  # Can be passed by caller if available
     )
 
     # Buffer all tokens before yielding any — validation must pass the full
