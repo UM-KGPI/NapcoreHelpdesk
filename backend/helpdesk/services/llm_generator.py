@@ -92,25 +92,62 @@ def _validate_grounded_example_output(question: str, answer: str, chunks: list[d
             )
 
 
+def _extract_key_terms(text: str, min_length: int = 4) -> set[str]:
+    """Extract significant words from text for grounding validation."""
+    # Remove citations, punctuation, and extract words
+    cleaned = re.sub(r'\[E\d+\]|[^\w\s:`@<>=/.-]', ' ', text.lower())
+    words = cleaned.split()
+    # Keep words that are likely meaningful (technical terms, class names, identifiers)
+    return {w for w in words if len(w) >= min_length and w not in {'that', 'with', 'from', 'this'}}
+
+
 def _validate_citations_to_chunks(answer: str, chunks: list[dict]) -> None:
     """
-    Verify that each [E#] citation in the answer references a valid chunk index.
-    Rejects answers with hallucinated citations pointing to non-existent chunks.
-    """
-    citations = CITATION_PATTERN.findall(answer)
-    if not citations:
-        return  # No citations, nothing to validate
+    Verify citations in the answer:
+    1. Each [E#] references a valid chunk index (1 to N)
+    2. Each cited sentence contains key terms that appear in the cited chunk
 
+    Rejects answers with out-of-range citations or hallucinated content.
+    """
     max_chunk_idx = len(chunks)
-    for citation_str in set(citations):
-        try:
-            citation_num = int(citation_str)
-            if citation_num < 1 or citation_num > max_chunk_idx:
-                raise LLMGenerationError(
-                    f"Citation [E{citation_num}] is out of range. Valid citations: [E1] through [E{max_chunk_idx}]."
-                )
-        except ValueError as e:
-            raise LLMGenerationError(f"Invalid citation format: {e}")
+
+    # Split answer into sentences and find citations
+    sentences = re.split(r'(?<=[.!?])\s+', answer.strip())
+
+    for sentence in sentences:
+        citations = CITATION_PATTERN.findall(sentence)
+        if not citations:
+            continue  # Sentence has no citation, skip
+
+        # Validate citation numbers
+        for citation_str in set(citations):
+            try:
+                citation_num = int(citation_str)
+                if citation_num < 1 or citation_num > max_chunk_idx:
+                    raise LLMGenerationError(
+                        f"Citation [E{citation_num}] is out of range. Valid range: [E1] to [E{max_chunk_idx}]."
+                    )
+
+                # Extract key terms from sentence
+                key_terms = _extract_key_terms(sentence)
+                if not key_terms:
+                    continue  # No key terms to verify, skip content check
+
+                # Check if key terms appear in the cited chunk
+                chunk_text = chunks[citation_num - 1].get("text", "").lower()
+                matched_terms = [term for term in key_terms if term in chunk_text]
+
+                # Require at least 30% of key terms to match to prevent hallucinations
+                match_ratio = len(matched_terms) / len(key_terms) if key_terms else 0
+                if match_ratio < 0.3:
+                    raise LLMGenerationError(
+                        f"Citation [E{citation_num}] is not grounded in the evidence: "
+                        f"sentence contains '{', '.join(list(key_terms)[:5])}...' "
+                        f"but chunk {citation_num} does not contain these terms. "
+                        f"Refusing to cite information not in provided evidence."
+                    )
+            except ValueError as e:
+                raise LLMGenerationError(f"Invalid citation format: {e}")
 
 
 def _build_ssl_context() -> ssl.SSLContext:
