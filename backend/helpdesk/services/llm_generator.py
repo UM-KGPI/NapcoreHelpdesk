@@ -279,6 +279,7 @@ def _build_messages(
     max_chars_per_chunk: int = 1800,
     faq_hint: str | None = None,
     language: str | None = None,
+    all_candidates: list[dict] | None = None,
 ) -> list[dict]:
     context_lines = []
     for index, chunk in enumerate(chunks[:max_chunks], start=1):
@@ -297,6 +298,20 @@ def _build_messages(
 
     context = "\n\n".join(context_lines)
     scope_text = ", ".join(scope) if scope else "all approved standards"
+
+    # Build candidate reference index from all candidates (if provided)
+    # This tells the LLM what sources are available in the database
+    candidate_index = ""
+    if all_candidates:
+        candidate_lines = []
+        for idx, candidate in enumerate(all_candidates[:20], start=1):  # Limit to top 20 for brevity
+            source_path = candidate.get("sourcePath", "unknown")
+            label = candidate.get("label", "")
+            score = candidate.get("score", 0)
+            label_display = f" - {label}" if label else ""
+            candidate_lines.append(f"[C{idx}] {source_path}{label_display} (score: {score:.2f})")
+        if candidate_lines:
+            candidate_index = "AVAILABLE CANDIDATE REFERENCES (in database):\n" + "\n".join(candidate_lines) + "\n\n"
 
     # Detect the language from the question text itself rather than trusting the
     # client-supplied `language` (often just the browser/OS locale, unrelated to
@@ -321,11 +336,12 @@ def _build_messages(
         "CRITICAL RULES:\n"
         "1. ONLY reference information that appears in the provided evidence blocks [E1] through [E#]\n"
         "2. EVERY factual claim MUST be followed by a citation [E#] to the specific block containing that information\n"
-        "3. Do NOT use any knowledge from your training data. Do NOT reference standards, examples, or concepts not in the provided blocks\n"
-        "4. If you cannot answer from the provided evidence, say 'This information is not in the provided evidence blocks'\n"
-        "5. Do NOT paraphrase or infer beyond what is explicitly stated in the evidence\n"
-        "6. Stay within the requested standards scope\n"
-        "7. Do NOT write file names (e.g. file.xml, schema.xsd) anywhere in the answer prose — reference all sources ONLY as [E#] citations\n"
+        "3. Do NOT use any knowledge from your training data. Do NOT reference standards, examples, or concepts not in the provided blocks or candidate index\n"
+        "4. If you recognize a source from your training (e.g., a known file or standard example) but it is not in [E#] or the candidate index, do NOT mention it\n"
+        "5. If you cannot answer from the provided evidence, say 'This information is not in the provided evidence blocks'\n"
+        "6. Do NOT paraphrase or infer beyond what is explicitly stated in the evidence\n"
+        "7. Stay within the requested standards scope\n"
+        "8. Do NOT write file names (e.g. file.xml, schema.xsd) anywhere in the answer prose — reference all sources ONLY as [E#] citations\n"
         f"\nRespond in 4-7 concise sentences with explicit [E#] citations for every claim.{language_instruction}"
     )
     if _question_requests_verbatim_example(question):
@@ -347,16 +363,17 @@ def _build_messages(
         f"Question:\n{question}\n\n"
         f"Requested scope: {scope_text}\n\n"
         f"{faq_section}"
+        f"{candidate_index}"
         f"AVAILABLE EVIDENCE BLOCKS (only these may be cited):\n{context}\n\n"
         "STEP 1 — EVIDENCE MAPPING (do this silently before writing):\n"
         "For each fact you plan to state, identify the exact phrase in the evidence block that supports it. "
         "If you cannot find supporting text in a specific block, do NOT cite that block — instead say "
-        "'This is not in the provided evidence'.\n\n"
+        "'This is not in the provided evidence'. Do NOT cite sources from the candidate index unless they are also in [E#] evidence blocks.\n\n"
         "STEP 2 — WRITE YOUR ANSWER:\n"
         "- Answer ONLY using information from the evidence blocks above\n"
         "- Cite each fact with [E#] where # is the block number whose text contains that fact\n"
         "- Do NOT cite [E1] for information that is only in [E2], or vice versa\n"
-        "- Do NOT reference anything outside these blocks\n"
+        "- Do NOT reference anything outside these blocks or the candidate index\n"
         "- Do NOT write file names anywhere in the answer — use only [E#] citation markers to reference sources\n"
         "- If a block is a schema definition file (.xsd), describe it as a 'definition', not an 'example'\n"
         "- If a block is an XML/JSON example file (.xml), describe it as an 'example'\n"
