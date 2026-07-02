@@ -170,7 +170,7 @@ def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
         url = f"{endpoint_url.rstrip('/')}?query={quote_plus(sparql)}"
         req = Request(url, headers={"Accept": "application/sparql-results+json"})
         try:
-            with urlopen(req, timeout=10) as resp:
+            with urlopen(req, timeout=60) as resp:
                 data = _json.loads(resp.read())
                 return [
                     {k: v.get("value", "") for k, v in b.items()}
@@ -321,7 +321,7 @@ def _load_nits_ontology_from_graphdb(endpoint_url: str) -> dict | None:
         url = f"{endpoint_url.rstrip('/')}?query={quote_plus(sparql)}"
         req = Request(url, headers={"Accept": "application/sparql-results+json"})
         try:
-            with urlopen(req, timeout=10) as resp:
+            with urlopen(req, timeout=60) as resp:
                 data = _json.loads(resp.read())
                 return [
                     {k: v.get("value", "") for k, v in b.items()}
