@@ -226,34 +226,25 @@ _RAW_FILENAME_PATTERN = re.compile(
 )
 
 
-def _validate_no_raw_filenames(answer: str, chunks: list[dict]) -> None:
+def _validate_no_raw_filenames(answer: str) -> None:
     """
-    Reject answers that contain raw file names not present in the evidence.
+    Reject answers that contain raw file names in prose (e.g. 'NeTEx_01.xml').
 
-    File names that appear in a chunk's sourcePath are legitimate — they were
-    retrieved from approved sources and the LLM is allowed to mention them.
-    File names that are NOT in any evidence source path are hallucination-prone
-    inventions and are rejected.
+    The LLM must reference all sources exclusively via [E#] citation markers.
+    Bare file names are banned even when they match an evidence source path —
+    the reader must follow the [E#] link to discover the actual file, keeping
+    answers traceable and preventing hallucinated-but-plausible file names from
+    slipping through.
 
     Fenced code blocks are excluded — verbatim XML/JSON quoted from evidence
     may legitimately contain file names inside attributes or comments.
     """
-    # Build set of allowed basenames from evidence source paths.
-    allowed_basenames: set[str] = set()
-    for chunk in chunks:
-        path = str(chunk.get("sourcePath", "") or chunk.get("source_path", ""))
-        if path:
-            allowed_basenames.add(path.rsplit("/", 1)[-1].lower())
-
-    # Strip fenced code blocks before checking prose.
     clean = FENCED_CODE_BLOCK_PATTERN.sub("", answer)
     matches = _RAW_FILENAME_PATTERN.findall(clean)
-    hallucinated = [m for m in matches if m.lower() not in allowed_basenames]
-    if hallucinated:
+    if matches:
         raise LLMGenerationError(
-            f"Answer contains file name(s) {hallucinated[:4]} not found in any "
-            "evidence block — source references must use [E#] citations or mention "
-            "only files that appear in the provided evidence."
+            f"Answer contains raw file name(s) {matches[:4]} — sources must be "
+            "referenced exclusively via [E#] citation markers, never by file name."
         )
 
 
@@ -331,7 +322,7 @@ def _build_messages(
         "4. If you cannot answer from the provided evidence, say 'This information is not in the provided evidence blocks'\n"
         "5. Do NOT paraphrase or infer beyond what is explicitly stated in the evidence\n"
         "6. Stay within the requested standards scope\n"
-        "7. Do NOT invent file names. You may only mention a file name if it appears verbatim in the source= field of an evidence block\n"
+        "7. Do NOT write file names (e.g. file.xml, schema.xsd) anywhere in the answer prose — reference all sources ONLY as [E#] citations\n"
         f"\nRespond in 4-7 concise sentences with explicit [E#] citations for every claim.{language_instruction}"
     )
     if _question_requests_verbatim_example(question):
@@ -363,7 +354,7 @@ def _build_messages(
         "- Cite each fact with [E#] where # is the block number whose text contains that fact\n"
         "- Do NOT cite [E1] for information that is only in [E2], or vice versa\n"
         "- Do NOT reference anything outside these blocks\n"
-        "- Do NOT invent file names. You may only mention a file name if it appears in the source= field of an evidence block\n"
+        "- Do NOT write file names anywhere in the answer — use only [E#] citation markers to reference sources\n"
         "- If a block is a schema definition file (.xsd), describe it as a 'definition', not an 'example'\n"
         "- If a block is an XML/JSON example file (.xml), describe it as an 'example'\n"
         "- If a requested detail is not in the evidence, explicitly state 'This is not in the provided evidence'\n\n"
@@ -518,7 +509,7 @@ def generate_answer_llm(
 
     _validate_citations_to_chunks(answer=answer, chunks=chunks)
     _validate_citation_grounding(answer=answer, chunks=chunks)
-    _validate_no_raw_filenames(answer=answer, chunks=chunks)
+    _validate_no_raw_filenames(answer=answer)
     _validate_grounded_example_output(question=question, answer=answer, chunks=chunks)
 
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
@@ -655,7 +646,7 @@ def stream_answer_llm(
 
     _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
     _validate_citation_grounding(answer=full_answer, chunks=chunks)
-    _validate_no_raw_filenames(answer=full_answer, chunks=chunks)
+    _validate_no_raw_filenames(answer=full_answer)
     _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
 
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
