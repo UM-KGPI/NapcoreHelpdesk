@@ -13,12 +13,15 @@ Created: 2026-03-29  |  Modified: 2026-06-28
 from __future__ import annotations
 
 import json
+import logging
 import re
 import ssl
 from collections.abc import Generator
 from urllib import error, request
 
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 from helpdesk.services.question_preprocessor import detect_question_language
 
@@ -427,6 +430,98 @@ def generate_answer_llm(
 
     max_chunks = max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 4)))
     max_chars_per_chunk = max(200, int(getattr(settings, "LLM_MAX_EVIDENCE_CHARS_PER_CHUNK", 1200)))
+def _run_llm_attempt(
+    question: str,
+    chunks: list[dict],
+    messages: list[dict],
+    request_targets: list[dict],
+) -> str:
+    """Execute one LLM call and validate the answer.  Returns the validated answer text."""
+    payload = None
+    last_error = None
+    try:
+        for target in request_targets:
+            try:
+                payload = _request_chat_completion(
+                    api_base_url=target["api_base_url"],
+                    api_key=target["api_key"],
+                    model=target["model"],
+                    timeout_seconds=target["timeout_seconds"],
+                    temperature=settings.LLM_TEMPERATURE,
+                    max_tokens=settings.LLM_MAX_TOKENS,
+                    messages=messages,
+                )
+                break
+            except error.HTTPError as exc:
+                try:
+                    error_body = exc.read().decode("utf-8")
+                except Exception:  # pragma: no cover
+                    error_body = ""
+                detail = f"LLM HTTP error: {exc.code}"
+                if error_body:
+                    detail = f"{detail} - {error_body[:500]}"
+                last_error = detail
+            except Exception as exc:  # pragma: no cover
+                last_error = f"LLM request failed: {exc.__class__.__name__}: {exc}"
+    except Exception as exc:
+        raise LLMGenerationError(str(exc)) from exc
+
+    if payload is None:
+        raise LLMGenerationError(last_error or "LLM request failed.")
+
+    choices = payload.get("choices") or []
+    if not choices:
+        raise LLMGenerationError("LLM response has no choices.")
+
+    answer = (choices[0].get("message", {}).get("content") or "").strip()
+    if not answer:
+        raise LLMGenerationError("LLM response was empty.")
+
+    _validate_citations_to_chunks(answer=answer, chunks=chunks)
+    _validate_citation_grounding(answer=answer, chunks=chunks)
+    _validate_no_raw_filenames(answer=answer)
+    return answer
+
+
+def _append_feedback_message(messages: list[dict], rejected_answer: str, error_msg: str) -> list[dict]:
+    """Return a new messages list with a feedback turn appended for retry."""
+    feedback = (
+        f"Your previous answer was rejected by the grounding validator.\n"
+        f"Rejected answer: {rejected_answer[:600]}\n"
+        f"Reason: {error_msg[:300]}\n\n"
+        "Please rewrite the answer following ALL rules strictly:\n"
+        "- Use ONLY [E#] markers to reference sources — no file names, no invented identifiers\n"
+        "- Only cite [E#] for a claim when that block's text directly contains the information\n"
+        "- If the evidence does not support a claim, omit it or say 'This is not in the provided evidence'"
+    )
+    return messages + [
+        {"role": "assistant", "content": rejected_answer},
+        {"role": "user", "content": feedback},
+    ]
+
+
+def generate_answer_llm(
+    question: str,
+    chunks: list[dict],
+    scope: list[str] | None = None,
+    faq_hint: str | None = None,
+    language: str | None = None,
+) -> dict:
+    """Generate a grounded answer through a configurable OpenAI-compatible API.
+
+    Attempts generation up to twice: the first attempt uses the standard prompt;
+    if a grounding validator rejects the answer, a second attempt is made with
+    explicit feedback explaining exactly what was wrong.  Both the rejected answer
+    and the rejection reason are returned in the result dict for trace logging.
+    """
+
+    if not settings.LLM_ENABLED:
+        raise LLMGenerationError("LLM mode is disabled by configuration.")
+    if settings.LLM_PROVIDER != "openai-compatible":
+        raise LLMGenerationError(f"Unsupported LLM provider: {settings.LLM_PROVIDER}")
+
+    max_chunks = max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 4)))
+    max_chars_per_chunk = max(200, int(getattr(settings, "LLM_MAX_EVIDENCE_CHARS_PER_CHUNK", 1200)))
     messages = _build_messages(
         question=question,
         chunks=chunks,
@@ -449,8 +544,6 @@ def generate_answer_llm(
         }
     ]
 
-    # If the primary key cannot access GitHub Models, retry once with the
-    # repository token.
     github_api_token = (getattr(settings, "GITHUB_API_TOKEN", "") or "").strip()
     if (
         _is_github_models_base_url(primary_base_url)
@@ -466,50 +559,31 @@ def generate_answer_llm(
             }
         )
 
-    payload = None
-    last_error = None
+    rejected_answer: str | None = None
+    rejection_reason: str | None = None
+
+    # First attempt
     try:
-        for target in request_targets:
-            try:
-                payload = _request_chat_completion(
-                    api_base_url=target["api_base_url"],
-                    api_key=target["api_key"],
-                    model=target["model"],
-                    timeout_seconds=target["timeout_seconds"],
-                    temperature=settings.LLM_TEMPERATURE,
-                    max_tokens=settings.LLM_MAX_TOKENS,
-                    messages=messages,
-                )
-                break
-            except error.HTTPError as exc:
-                try:
-                    error_body = exc.read().decode("utf-8")
-                except Exception:  # pragma: no cover - best-effort diagnostics
-                    error_body = ""
-                detail = f"LLM HTTP error: {exc.code}"
-                if error_body:
-                    detail = f"{detail} - {error_body[:500]}"
-                last_error = detail
-            except Exception as exc:  # pragma: no cover - network/runtime dependent
-                last_error = f"LLM request failed: {exc.__class__.__name__}: {exc}"
-    except Exception as exc:
-        raise LLMGenerationError(str(exc)) from exc
+        answer = _run_llm_attempt(question=question, chunks=chunks, messages=messages, request_targets=request_targets)
+    except LLMGenerationError as first_error:
+        rejected_answer = first_error.args[0] if first_error.args else str(first_error)
+        rejection_reason = str(first_error)
+        logger.warning(
+            "LLM first attempt rejected by validator; retrying with feedback. Reason: %s",
+            rejection_reason[:200],
+            extra={"question": question[:120]},
+        )
+        # Second attempt with explicit correction feedback
+        retry_messages = _append_feedback_message(
+            messages=messages,
+            rejected_answer=rejected_answer,
+            error_msg=rejection_reason,
+        )
+        answer = _run_llm_attempt(
+            question=question, chunks=chunks, messages=retry_messages, request_targets=request_targets
+        )
+        # If this also raises, propagate to the caller
 
-    if payload is None:
-        raise LLMGenerationError(last_error or "LLM request failed.")
-
-    choices = payload.get("choices") or []
-    if not choices:
-        raise LLMGenerationError("LLM response has no choices.")
-
-    message = choices[0].get("message", {})
-    answer = (message.get("content") or "").strip()
-    if not answer:
-        raise LLMGenerationError("LLM response was empty.")
-
-    _validate_citations_to_chunks(answer=answer, chunks=chunks)
-    _validate_citation_grounding(answer=answer, chunks=chunks)
-    _validate_no_raw_filenames(answer=answer)
     _validate_grounded_example_output(question=question, answer=answer, chunks=chunks)
 
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
@@ -520,7 +594,9 @@ def generate_answer_llm(
         "confidence": confidence,
         "review_required": confidence < 0.82,
         "provider": settings.LLM_PROVIDER,
-        "model": (payload.get("model") or request_targets[0]["model"]),
+        "model": (request_targets[0]["model"]),
+        "rejected_answer": rejected_answer,
+        "rejection_reason": rejection_reason,
     }
 
 
@@ -617,44 +693,68 @@ def stream_answer_llm(
     # Buffer all tokens before yielding any — validation must pass the full
     # answer before the client receives a single character, so a failed check
     # never produces a visible-then-vanishing answer.
-    deltas: list[str] = []
-    try:
-        for delta in _stream_request_chat_completion(
-            api_base_url=primary_base_url,
-            api_key=primary_api_key,
-            model=settings.LLM_MODEL,
-            timeout_seconds=settings.LLM_TIMEOUT_SECONDS,
-            temperature=settings.LLM_TEMPERATURE,
-            max_tokens=settings.LLM_MAX_TOKENS,
-            messages=messages,
-        ):
-            deltas.append(delta)
-    except error.HTTPError as exc:
+    def _collect_stream(active_messages: list[dict]) -> str:
+        collected: list[str] = []
         try:
-            error_body = exc.read().decode("utf-8")
-        except Exception:
-            error_body = ""
-        detail = f"LLM HTTP error: {exc.code}"
-        if error_body:
-            detail = f"{detail} - {error_body[:500]}"
-        raise LLMGenerationError(detail) from exc
-    except error.URLError as exc:
-        raise LLMGenerationError(f"LLM stream request failed: {exc.reason}") from exc
+            for delta in _stream_request_chat_completion(
+                api_base_url=primary_base_url,
+                api_key=primary_api_key,
+                model=settings.LLM_MODEL,
+                timeout_seconds=settings.LLM_TIMEOUT_SECONDS,
+                temperature=settings.LLM_TEMPERATURE,
+                max_tokens=settings.LLM_MAX_TOKENS,
+                messages=active_messages,
+            ):
+                collected.append(delta)
+        except error.HTTPError as exc:
+            try:
+                error_body = exc.read().decode("utf-8")
+            except Exception:
+                error_body = ""
+            detail = f"LLM HTTP error: {exc.code}"
+            if error_body:
+                detail = f"{detail} - {error_body[:500]}"
+            raise LLMGenerationError(detail) from exc
+        except error.URLError as exc:
+            raise LLMGenerationError(f"LLM stream request failed: {exc.reason}") from exc
+        text = "".join(collected)
+        if not text.strip():
+            raise LLMGenerationError("LLM stream response was empty.")
+        return text
 
-    full_answer = "".join(deltas)
-    if not full_answer.strip():
-        raise LLMGenerationError("LLM stream response was empty.")
-
-    _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
-    _validate_citation_grounding(answer=full_answer, chunks=chunks)
-    _validate_no_raw_filenames(answer=full_answer)
-    _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
+    # First attempt
+    rejected_answer: str | None = None
+    rejection_reason: str | None = None
+    try:
+        full_answer = _collect_stream(messages)
+        _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
+        _validate_citation_grounding(answer=full_answer, chunks=chunks)
+        _validate_no_raw_filenames(answer=full_answer)
+        _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
+    except LLMGenerationError as first_error:
+        rejected_answer = full_answer if "full_answer" in dir() else ""
+        rejection_reason = str(first_error)
+        logger.warning(
+            "Stream first attempt rejected; retrying with feedback. Reason: %s",
+            rejection_reason[:200],
+            extra={"question": question[:120]},
+        )
+        retry_messages = _append_feedback_message(
+            messages=messages,
+            rejected_answer=rejected_answer,
+            error_msg=rejection_reason,
+        )
+        full_answer = _collect_stream(retry_messages)
+        _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
+        _validate_citation_grounding(answer=full_answer, chunks=chunks)
+        _validate_no_raw_filenames(answer=full_answer)
+        _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
 
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
     confidence = min(0.94, max(0.60, float(top_score)))
 
     # Validation passed — now yield tokens so the client receives only valid content.
-    for delta in deltas:
+    for delta in full_answer:
         yield ("token", delta)
 
     yield (
@@ -665,5 +765,7 @@ def stream_answer_llm(
             "review_required": confidence < 0.82,
             "provider": settings.LLM_PROVIDER,
             "model": settings.LLM_MODEL,
+            "rejected_answer": rejected_answer,
+            "rejection_reason": rejection_reason,
         },
     )
