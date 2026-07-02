@@ -167,11 +167,17 @@ Definition:
         commit_sha = version_map.get(standard, "main")
 
         # Use XSD source file if available, ensure xsd/ prefix
+        # Extract directory path (without filename) for GitHub tree navigation
         if xsd_source:
             if not xsd_source.startswith("xsd/"):
-                source_path = f"xsd/{xsd_source}"
+                full_path = f"xsd/{xsd_source}"
             else:
-                source_path = xsd_source
+                full_path = xsd_source
+            # Extract directory from file path (remove filename)
+            if full_path.endswith(".xsd"):
+                source_path = full_path.rsplit("/", 1)[0] + "/"
+            else:
+                source_path = full_path
         else:
             source_path = f"xsd/{standard.lower()}/"
 
@@ -188,7 +194,7 @@ Definition:
             "standards_scope": [standard] if standard else [],
             "match_type": "semantic_definition",
             "similarity_reason": "Authoritative definition from XSD schema",
-            "repository_url": f"https://github.com/TransmodelEcosystem/{repo_name}/tree/{commit_sha}",
+            "repository_url": f"https://github.com/TransmodelEcosystem/{repo_name}",
             "commit_sha": commit_sha,
             "embedding_vector": None,
             "heading": f"{concept_name} - {standard} Definition",
