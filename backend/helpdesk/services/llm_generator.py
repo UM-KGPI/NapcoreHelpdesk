@@ -251,6 +251,56 @@ def _validate_no_raw_filenames(answer: str) -> None:
         )
 
 
+_KNOWN_STANDARD_REFS = {
+    "SCWW", "LUAS", "NeTEx", "IFOPT", "SIRI", "GTFS", "TPEG",
+    "Transmodel", "TPEG", "PRTC", "OGC", "XML", "JSON", "XSD"
+}
+
+_UNCITED_STANDARD_PATTERN = re.compile(
+    r"\b(" + "|".join(re.escape(s) for s in _KNOWN_STANDARD_REFS) + r"(?:[-_][\w\d]+)?)\b"
+)
+
+
+def _validate_no_uncited_standards(answer: str, chunks: list[dict], all_candidates: list[dict] | None = None) -> None:
+    """
+    Reject answers that mention known standards without [E#] or [C#] citations.
+
+    Detects standard abbreviations (SCWW, LUAS, etc.) that appear in the answer
+    without a preceding [E#] citation. If the standard is in the provided evidence
+    or candidates, the LLM should cite it. If not, the LLM should not mention it.
+    """
+    # Build set of standards that are actually in the evidence or candidates
+    available_standards = set()
+    for chunk in chunks:
+        text = str(chunk.get("text", "")).upper()
+        for std in _KNOWN_STANDARD_REFS:
+            if std in text:
+                available_standards.add(std)
+    if all_candidates:
+        for candidate in all_candidates:
+            text = str(candidate.get("label", "")) + " " + str(candidate.get("sourcePath", ""))
+            text = text.upper()
+            for std in _KNOWN_STANDARD_REFS:
+                if std in text:
+                    available_standards.add(std)
+
+    # Find mentions without [E#] citations
+    sentences = re.split(r"(?<=[.!?\)])\s+", answer.replace("\n", " "))
+    for sentence in sentences:
+        # Remove all [E#] citations from the sentence
+        clean = CITATION_PATTERN.sub("", sentence)
+
+        # Find standards mentioned in the cleaned sentence
+        for match in _UNCITED_STANDARD_PATTERN.finditer(clean):
+            std = match.group(1)
+            # Check if the standard appears in evidence/candidates or is mentioned with citation
+            if std not in available_standards:
+                raise LLMGenerationError(
+                    f"Answer mentions '{std}' without citation and it's not in provided evidence. "
+                    f"Standard must either be cited [E#] or not mentioned at all."
+                )
+
+
 def _build_ssl_context() -> ssl.SSLContext:
     """Build SSL context for LLM provider calls, supporting custom CA bundles."""
 
@@ -453,6 +503,7 @@ def _run_llm_attempt(
     chunks: list[dict],
     messages: list[dict],
     request_targets: list[dict],
+    all_candidates: list[dict] | None = None,
 ) -> str:
     """Execute one LLM call and validate the answer.  Returns the validated answer text."""
     payload = None
@@ -498,6 +549,7 @@ def _run_llm_attempt(
     _validate_citations_to_chunks(answer=answer, chunks=chunks)
     _validate_citation_grounding(answer=answer, chunks=chunks)
     _validate_no_raw_filenames(answer=answer)
+    _validate_no_uncited_standards(answer=answer, chunks=chunks, all_candidates=all_candidates)
     return answer
 
 
@@ -584,7 +636,7 @@ def generate_answer_llm(
 
     # First attempt
     try:
-        answer = _run_llm_attempt(question=question, chunks=chunks, messages=messages, request_targets=request_targets)
+        answer = _run_llm_attempt(question=question, chunks=chunks, messages=messages, request_targets=request_targets, all_candidates=all_candidates)
     except LLMGenerationError as first_error:
         rejected_answer = first_error.args[0] if first_error.args else str(first_error)
         rejection_reason = str(first_error)
@@ -600,7 +652,7 @@ def generate_answer_llm(
             error_msg=rejection_reason,
         )
         answer = _run_llm_attempt(
-            question=question, chunks=chunks, messages=retry_messages, request_targets=request_targets
+            question=question, chunks=chunks, messages=retry_messages, request_targets=request_targets, all_candidates=all_candidates
         )
         # If this also raises, propagate to the caller
 
@@ -752,6 +804,7 @@ def stream_answer_llm(
         _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
         _validate_citation_grounding(answer=full_answer, chunks=chunks)
         _validate_no_raw_filenames(answer=full_answer)
+        _validate_no_uncited_standards(answer=full_answer, chunks=chunks, all_candidates=all_candidates)
         _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
     except LLMGenerationError as first_error:
         rejected_answer = full_answer if "full_answer" in dir() else ""
@@ -770,6 +823,7 @@ def stream_answer_llm(
         _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
         _validate_citation_grounding(answer=full_answer, chunks=chunks)
         _validate_no_raw_filenames(answer=full_answer)
+        _validate_no_uncited_standards(answer=full_answer, chunks=chunks, all_candidates=all_candidates)
         _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
 
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
