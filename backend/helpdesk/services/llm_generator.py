@@ -228,6 +228,43 @@ _RAW_FILENAME_PATTERN = re.compile(
     r"\b[A-Za-z0-9_][A-Za-z0-9_.\-]*\.(?:xml|xsd|yaml|yml|json|ttl|csv|rdf|owl)\b"
 )
 
+# Matches file paths with directory separators (e.g., "folder/file.xml" or "path/to/file.xsd")
+_FILE_PATH_PATTERN = re.compile(
+    r"\b[A-Za-z0-9_\-./]*[/\\][A-Za-z0-9_.\-/\\]*\.(?:xml|xsd|yaml|yml|json|ttl|csv|rdf|owl)\b"
+)
+
+
+def _strip_raw_filenames(answer: str) -> str:
+    """
+    Remove raw file names and paths from answer text, excluding code blocks.
+
+    This cleanup is applied AFTER LLM generation as a safety measure when the LLM
+    persists in including file names despite prompt instructions. Removes both:
+    - Simple file names (example.xml)
+    - File paths with directories (folder/example.xml, path/to/file.xsd)
+
+    Fenced code blocks are preserved — verbatim XML/JSON from evidence legitimately
+    contains file names in attributes/comments.
+    """
+    # Preserve code blocks during processing
+    code_blocks = FENCED_CODE_BLOCK_PATTERN.findall(answer)
+    temp_answer = FENCED_CODE_BLOCK_PATTERN.sub("__CODE_BLOCK__", answer)
+
+    # Remove file paths (with directories)
+    temp_answer = _FILE_PATH_PATTERN.sub("", temp_answer)
+
+    # Remove bare file names
+    temp_answer = _RAW_FILENAME_PATTERN.sub("", temp_answer)
+
+    # Clean up excessive whitespace from removed names
+    temp_answer = re.sub(r"\s+", " ", temp_answer).strip()
+
+    # Restore code blocks
+    for code_block in code_blocks:
+        temp_answer = temp_answer.replace("__CODE_BLOCK__", code_block, 1)
+
+    return temp_answer
+
 
 def _validate_no_raw_filenames(answer: str) -> None:
     """
@@ -669,6 +706,9 @@ def generate_answer_llm(
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
     confidence = min(0.94, max(0.60, float(top_score)))
 
+    # Final safety: strip any remaining file names (in case validation passed but LLM still included them)
+    answer = _strip_raw_filenames(answer)
+
     return {
         "answer": answer,
         "confidence": confidence,
@@ -836,6 +876,9 @@ def stream_answer_llm(
 
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
     confidence = min(0.94, max(0.60, float(top_score)))
+
+    # Final safety: strip any remaining file names before streaming to client
+    full_answer = _strip_raw_filenames(full_answer)
 
     # Validation passed — now yield tokens so the client receives only valid content.
     for delta in full_answer:
