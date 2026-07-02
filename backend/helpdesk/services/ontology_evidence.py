@@ -166,24 +166,19 @@ Definition:
         }
         commit_sha = version_map.get(standard, "main")
 
-        # Use XSD source file if available, ensure xsd/ prefix
-        # Extract directory path (without filename) for GitHub tree navigation
+        # Use XSD source file path if available, ensure xsd/ prefix
+        # Source should be the actual XSD file: netex_part_2/.../file.xsd
         if xsd_source:
             if not xsd_source.startswith("xsd/"):
-                full_path = f"xsd/{xsd_source}"
+                source_path = f"xsd/{xsd_source}"
             else:
-                full_path = xsd_source
-            # Extract directory from file path (remove filename)
-            if full_path.endswith(".xsd"):
-                source_path = full_path.rsplit("/", 1)[0] + "/"
-            else:
-                source_path = full_path
+                source_path = xsd_source
         else:
             source_path = f"xsd/{standard.lower()}/"
 
-        # Build tree URL directly since _build_file_url() uses /blob/
-        # We want: github.com/{owner}/{repo}/tree/{version}/{path}
-        tree_url = f"https://github.com/TransmodelEcosystem/{repo_name}/tree/{commit_sha}/{source_path}"
+        # Build blob URL pointing to the actual XSD file
+        # Format: github.com/{owner}/{repo}/blob/{version}/{path}/file.xsd
+        blob_url = f"https://github.com/TransmodelEcosystem/{repo_name}/blob/{commit_sha}/{source_path}"
 
         chunk = {
             "id": chunk_id_int,
@@ -198,7 +193,7 @@ Definition:
             "standards_scope": [standard] if standard else [],
             "match_type": "semantic_definition",
             "similarity_reason": "Authoritative definition from XSD schema",
-            "repository_url": tree_url,  # Pre-built tree URL to bypass _build_file_url()
+            "repository_url": blob_url,  # Pre-built blob URL to actual XSD file
             "commit_sha": commit_sha,
             "embedding_vector": None,
             "heading": f"{concept_name} - {standard} Definition",
