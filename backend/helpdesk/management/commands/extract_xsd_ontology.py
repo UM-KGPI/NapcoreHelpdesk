@@ -420,11 +420,22 @@ def extract_concepts_from_xsd(
         labels = _generate_labels(elem_name, doc)
         related_to = _extract_related_concepts(elem, namespace_prefix, concept_id)
 
+        # Calculate source path with proper xsd/ prefix for GitHub URLs
+        if source_root:
+            relative_path = str(xsd_path.relative_to(source_root))
+            # Prepend "xsd/" if source_root was the xsd directory
+            if str(source_root).endswith("/xsd"):
+                source_path = f"xsd/{relative_path}"
+            else:
+                source_path = relative_path
+        else:
+            source_path = str(xsd_path.name)
+
         concepts[concept_id] = {
             "name": elem_name,
             "description": doc,
             "labels": labels,
-            "source": str(xsd_path.relative_to(source_root)) if source_root else str(xsd_path.name),
+            "source": source_path,
             "related_to": related_to,
         }
 
