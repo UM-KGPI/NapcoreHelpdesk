@@ -199,6 +199,10 @@ def _request_chat_completion(
         "messages": messages,
         "temperature": temperature,
         "max_tokens": max_tokens,
+        # Reasoning models (e.g. qwen3) can consume the entire token budget on
+        # hidden chain-of-thought before emitting any answer content, leaving
+        # the response empty. Disable thinking mode to get direct answers.
+        "chat_template_kwargs": {"enable_thinking": False},
     }
 
     headers = {
@@ -348,6 +352,9 @@ def _stream_request_chat_completion(
         "temperature": temperature,
         "max_tokens": max_tokens,
         "stream": True,
+        # See _request_chat_completion: avoid reasoning models exhausting the
+        # token budget on hidden chain-of-thought before any content is sent.
+        "chat_template_kwargs": {"enable_thinking": False},
     }
     headers = {"Content-Type": "application/json"}
     if api_key:
