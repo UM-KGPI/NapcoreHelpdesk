@@ -55,6 +55,27 @@ LANGDETECT_TO_SPELLCHECKER = {
     "sv": "Swedish",
 }
 
+# Full name for every language code langdetect's model can output (55 langs).
+# Broader than LANGDETECT_TO_SPELLCHECKER on purpose: an LLM can answer in any
+# of these languages even though pyspellchecker only ships local dictionaries
+# for the subset above. Used for answer-language detection, not spell-check.
+LANGDETECT_LANGUAGE_NAMES = {
+    "af": "Afrikaans", "ar": "Arabic", "bg": "Bulgarian", "bn": "Bengali",
+    "ca": "Catalan", "cs": "Czech", "cy": "Welsh", "da": "Danish", "de": "German",
+    "el": "Greek", "en": "English", "es": "Spanish", "et": "Estonian",
+    "fa": "Persian", "fi": "Finnish", "fr": "French", "gu": "Gujarati",
+    "he": "Hebrew", "hi": "Hindi", "hr": "Croatian", "hu": "Hungarian",
+    "id": "Indonesian", "it": "Italian", "ja": "Japanese", "kn": "Kannada",
+    "ko": "Korean", "lt": "Lithuanian", "lv": "Latvian", "mk": "Macedonian",
+    "ml": "Malayalam", "mr": "Marathi", "ne": "Nepali", "nl": "Dutch",
+    "no": "Norwegian", "pa": "Punjabi", "pl": "Polish", "pt": "Portuguese",
+    "ro": "Romanian", "ru": "Russian", "sk": "Slovak", "sl": "Slovenian",
+    "so": "Somali", "sq": "Albanian", "sv": "Swedish", "sw": "Swahili",
+    "ta": "Tamil", "te": "Telugu", "th": "Thai", "tl": "Tagalog", "tr": "Turkish",
+    "uk": "Ukrainian", "ur": "Urdu", "vi": "Vietnamese",
+    "zh-cn": "Chinese (Simplified)", "zh-tw": "Chinese (Traditional)",
+}
+
 # Technical terms to skip (XML tags, class names, standards)
 TECHNICAL_PATTERNS = {
     # NeTEx/SIRI/OpRa class names
@@ -160,7 +181,7 @@ def _detect_question_language(question: str) -> Optional[str]:
         detections = detect_langs(detection_input)
         if detections:
             detected_code = detections[0].lang  # Best match
-            detected_name = LANGDETECT_TO_SPELLCHECKER.get(detected_code)
+            detected_name = LANGDETECT_LANGUAGE_NAMES.get(detected_code)
             if detected_name:
                 confidence = detections[0].prob
                 logger.debug(f"Detected question language: {detected_name} (code={detected_code}, confidence={confidence:.2f})")
