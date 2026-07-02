@@ -175,14 +175,6 @@ Definition:
         else:
             source_path = f"xsd/{standard.lower()}/"
 
-        # Extract directory path for tree URL (remove filename)
-        # E.g., "xsd/netex_part_2/.../file.xsd" → "xsd/netex_part_2/.../"
-        if source_path.endswith(".xsd"):
-            # It's a file path - use the directory
-            citation_path = source_path.rsplit("/", 1)[0] + "/"
-        else:
-            citation_path = source_path
-
         chunk = {
             "id": chunk_id_int,
             "chunkId": chunk_id_str,
@@ -196,7 +188,7 @@ Definition:
             "standards_scope": [standard] if standard else [],
             "match_type": "semantic_definition",
             "similarity_reason": "Authoritative definition from XSD schema",
-            "repository_url": f"https://github.com/TransmodelEcosystem/{repo_name}/tree/{commit_sha}/{citation_path}",
+            "repository_url": f"https://github.com/TransmodelEcosystem/{repo_name}/tree/{commit_sha}",
             "commit_sha": commit_sha,
             "embedding_vector": None,
             "heading": f"{concept_name} - {standard} Definition",
