@@ -138,6 +138,7 @@ function isJwtExpired(token: string): boolean {
 
 // Wrapper for user chat to handle ?questionId= query parameter
 function UserChatWithQueryParams(props: React.ComponentProps<typeof UserChatWorkspace>) {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [enhancedTurns, setEnhancedTurns] = useState<typeof props.chatTurns>(props.chatTurns);
 
@@ -220,7 +221,12 @@ function UserChatWithQueryParams(props: React.ComponentProps<typeof UserChatWork
       });
   }, [searchParams, props.token]);
 
-  return <UserChatWorkspace {...props} chatTurns={enhancedTurns} />;
+  const handleResetSession = () => {
+    props.onResetChatSession();
+    navigate("/napcore-helpdesk/user", { replace: true });
+  };
+
+  return <UserChatWorkspace {...props} chatTurns={enhancedTurns} onResetChatSession={handleResetSession} />;
 }
 
 // Wrapper component to handle ?questionId= query parameter in editor
@@ -238,7 +244,6 @@ function EditorWithQueryParams(props: React.ComponentProps<typeof EditorConsoleW
 }
 
 export default function App() {
-  const navigate = useNavigate();
   const frontendVersion = import.meta.env.VITE_APP_VERSION ?? '0.6.1';
   const [apiBaseUrl, setApiBaseUrl] = useState(() => {
     const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -617,7 +622,6 @@ export default function App() {
   function onResetChatSession(): void {
     setChatTurns([]);
     setSessionId(createSessionId());
-    navigate("/napcore-helpdesk/user", { replace: true });
   }
 
   async function onAskQuestion(event: FormEvent<HTMLFormElement>): Promise<void> {
