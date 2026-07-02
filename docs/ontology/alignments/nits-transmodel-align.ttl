@@ -35,28 +35,28 @@
 #################################################################
 
 tm:LINE
-    rdfs:subClassOf nits:Service .
+    skos:closeMatch nits:Service .
 
 tm:NETWORK
-    rdfs:subClassOf nits:SpatialEntity .
+    skos:closeMatch nits:SpatialEntity .
 
 tm:JOURNEY
-    rdfs:subClassOf nits:DomainConcept .
+    skos:closeMatch nits:DomainConcept .
 
 tm:STOP_PLACE
-    rdfs:subClassOf nits:SpatialEntity .
+    skos:closeMatch nits:SpatialEntity .
 
 tm:SCHEDULED_STOP_POINT
-    rdfs:subClassOf nits:SpatialEntity .
+    skos:closeMatch nits:SpatialEntity .
 
 tm:QUAY
-    rdfs:subClassOf nits:SpatialEntity .
+    skos:closeMatch nits:SpatialEntity .
 
 tm:OPERATOR
-    rdfs:subClassOf nits:Actor .
+    skos:closeMatch nits:Actor .
 
 tm:ORGANISATION
-    rdfs:subClassOf nits:Actor .
+    skos:closeMatch nits:Actor .
 
 #################################################################
 # Cross-Standard Concept Relations
@@ -123,7 +123,7 @@ nits:Ferry
     a owl:Class ;
     rdfs:label "Ferry"@en ;
     skos:definition "Water-based public transport service operating between two shore locations, often on-demand or demand-responsive basis"@en ;
-    rdfs:subClassOf nits:TransportMode ;
+    skos:closeMatch nits:TransportMode ;
     skos:altLabel "Water Transport"@en ;
     skos:altLabel "Maritime Service"@en ;
     rdfs:comment "Covers river ferries, strait crossings, lake transport, and demand-responsive water services" .
@@ -132,21 +132,21 @@ nits:Bus
     a owl:Class ;
     rdfs:label "Bus"@en ;
     skos:definition "Road-based public transport service with scheduled stops along routes"@en ;
-    rdfs:subClassOf nits:TransportMode ;
+    skos:closeMatch nits:TransportMode ;
     rdfs:comment "Includes city buses, intercity coaches, shuttle services" .
 
 nits:Rail
     a owl:Class ;
     rdfs:label "Rail"@en ;
     skos:definition "Track-based public transport service (train, metro, tram)"@en ;
-    rdfs:subClassOf nits:TransportMode ;
+    skos:closeMatch nits:TransportMode ;
     rdfs:comment "Includes heavy rail, light rail, metro, tram systems" .
 
 nits:DemandResponsiveService
     a owl:Class ;
     rdfs:label "Demand-Responsive Transport"@en ;
     skos:definition "Public transport service that operates on-demand rather than fixed schedule, may combine multiple modes (ferry, bus, taxi, etc.)"@en ;
-    rdfs:subClassOf nits:TransportMode ;
+    skos:closeMatch nits:TransportMode ;
     rdfs:comment "Applies to services like ferries, shuttle buses, shared taxi services that operate when needed rather than on fixed timetables" .
 
 #################################################################
@@ -157,7 +157,7 @@ nits:FerryService
     a owl:Class ;
     rdfs:label "Ferry Service"@en ;
     skos:definition "A SERVICE implementing ferry-based transport between two or more stopping points"@en ;
-    rdfs:subClassOf nits:Service ;
+    skos:closeMatch nits:Service ;
     owl:sameAs netex:Service ;
     rdfs:comment "Ferry services are typically characterized by point-to-point water-based routes with limited stops (departure and arrival points)" .
 
@@ -165,7 +165,7 @@ nits:QuickTransitService
     a owl:Class ;
     rdfs:label "Quick Transit Service"@en ;
     skos:definition "High-frequency, short-duration transport service (e.g., river ferry with 3-min crossing, airport shuttle)"@en ;
-    rdfs:subClassOf nits:DemandResponsiveService ;
+    skos:closeMatch nits:DemandResponsiveService ;
     rdfs:comment "Characterizes services with crossing times measured in minutes rather than hours" .
 
 #################################################################
@@ -216,35 +216,35 @@ nits:ModeAgnosticStructure
     rdfs:comment "Examples of mode-agnostic concepts: TemplateServiceJourney, Service, Line, Journey, ScheduledStopPoint, StopPlace. A bus timetable, ferry schedule, and rail timetable use identical TemplateServiceJourney patterns." .
 
 netex:TemplateServiceJourney
-    rdfs:subClassOf nits:ModeAgnosticStructure ;
+    skos:closeMatch nits:ModeAgnosticStructure ;
     skos:definition "Reusable service journey pattern applicable to ALL transport modes: bus, ferry, rail, etc. Mode does not affect the structure."@en ;
     rdfs:comment "Examples from any mode (bus, ferry, rail) are directly applicable to any other mode. Structural semantics: regular frequency, stop sequence, time patterns—identical across modes." ;
     nits:applicableToAllModes true .
 
 netex:Service
-    rdfs:subClassOf nits:ModeAgnosticStructure ;
+    skos:closeMatch nits:ModeAgnosticStructure ;
     skos:definition "Service definition pattern working for all transport modes. Mode is a domain classification, not a structural concern."@en ;
     rdfs:comment "Bus service, ferry route, and rail line use the same Service structure. Examples are mutually reusable for modeling purposes." ;
     nits:applicableToAllModes true .
 
 netex:Line
-    rdfs:subClassOf nits:ModeAgnosticStructure ;
+    skos:closeMatch nits:ModeAgnosticStructure ;
     skos:definition "Line definition (within a service) works for bus lines, ferry routes, rail lines identically."@en ;
     rdfs:comment "Structural pattern: route, stops, operator—same for all modes." ;
     nits:applicableToAllModes true .
 
 netex:Journey
-    rdfs:subClassOf nits:ModeAgnosticStructure ;
+    skos:closeMatch nits:ModeAgnosticStructure ;
     skos:definition "Individual journey instance pattern. Identical for all transport modes."@en ;
     nits:applicableToAllModes true .
 
 netex:ScheduledStopPoint
-    rdfs:subClassOf nits:ModeAgnosticStructure ;
+    skos:closeMatch nits:ModeAgnosticStructure ;
     skos:definition "Stop point definition for any transport mode."@en ;
     nits:applicableToAllModes true .
 
 netex:StopPlace
-    rdfs:subClassOf nits:ModeAgnosticStructure ;
+    skos:closeMatch nits:ModeAgnosticStructure ;
     skos:definition "Stop/station definition for any transport mode."@en ;
     nits:applicableToAllModes true .
 
