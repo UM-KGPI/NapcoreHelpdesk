@@ -95,10 +95,6 @@ def _validate_grounded_example_output(question: str, answer: str, chunks: list[d
 def _validate_citations_to_chunks(answer: str, chunks: list[dict]) -> None:
     """
     Verify that each [E#] citation references a valid chunk index (1 to N).
-
-    Note: This only validates citation number validity, not content grounding.
-    Content grounding is guaranteed by pre-generation evidence validation
-    and LLM system prompt constraints.
     """
     citations = CITATION_PATTERN.findall(answer)
     if not citations:
@@ -114,6 +110,72 @@ def _validate_citations_to_chunks(answer: str, chunks: list[dict]) -> None:
                 )
         except ValueError as e:
             raise LLMGenerationError(f"Invalid citation format: {e}")
+
+
+_TECHNICAL_TERM_PATTERN = re.compile(
+    r"`([^`]+)`"                     # backtick-quoted identifiers
+    r'|"([A-Za-z0-9_.:/\\@#-]{4,})"'  # double-quoted technical strings
+    r"|([A-Za-z][A-Za-z0-9]{2,}[A-Z][A-Za-z0-9]*)"  # PascalCase / camelCase
+    r"|([A-Za-z0-9]{2,}:[A-Za-z0-9@_./-]{2,})"       # namespaced ids, e.g. stg:SCWW@86
+    r"|([A-Za-z0-9_.-]{3,}-[A-Za-z0-9_.-]{2,})"      # hyphenated identifiers, e.g. 93-RED-y11-1
+    r"|([A-Za-z0-9_]+\.(?:xsd|xml|yaml|json|ttl))"   # file names with known extensions
+)
+
+
+def _extract_key_terms(sentence: str) -> list[str]:
+    """Extract technical identifiers from a sentence for citation grounding checks."""
+    terms: list[str] = []
+    for match in _TECHNICAL_TERM_PATTERN.finditer(sentence):
+        term = next((g for g in match.groups() if g), None)
+        if term and len(term) >= 4:
+            terms.append(term)
+    return list(dict.fromkeys(terms))  # deduplicate, preserve order
+
+
+def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
+    """
+    Verify that each [E#] citation is grounded in the referenced chunk's text.
+
+    For every sentence containing [E#] citations, at least one extracted
+    technical term from that sentence must appear (case-insensitively) in the
+    text or source path of the cited chunk. This catches two failure modes:
+
+    - Wrong citation index: the LLM cites [E1] but the content is actually in [E2].
+    - Hallucinated content: the LLM cites [E#] for a claim that is not in any chunk.
+
+    Raises LLMGenerationError if a citation cannot be grounded.
+    """
+    # Split on sentence boundaries; keep trailing punctuation with its sentence.
+    sentences = re.split(r"(?<=[.!?\u0029])\s+", answer.replace("\n", " "))
+
+    for sentence in sentences:
+        found_citations = CITATION_PATTERN.findall(sentence)
+        if not found_citations:
+            continue
+
+        clean = CITATION_PATTERN.sub("", sentence)
+        key_terms = _extract_key_terms(clean)
+        if not key_terms:
+            continue  # No checkable technical terms — skip grounding check
+
+        for citation_str in found_citations:
+            idx = int(citation_str) - 1
+            if idx < 0 or idx >= len(chunks):
+                continue  # Range already rejected by _validate_citations_to_chunks
+
+            chunk = chunks[idx]
+            chunk_text_lower = str(chunk.get("text", "")).lower()
+            chunk_source_lower = str(chunk.get("sourcePath", "")).lower()
+            haystack = chunk_text_lower + " " + chunk_source_lower
+
+            if not any(term.lower() in haystack for term in key_terms):
+                raise LLMGenerationError(
+                    f"Citation [E{citation_str}] does not ground the claim: "
+                    f"'{sentence[:150].strip()}'. "
+                    f"Cited chunk source: '{chunk.get('sourcePath', 'unknown')}'. "
+                    f"Key terms not found: {key_terms[:6]}. "
+                    "The LLM may have cited the wrong evidence block or hallucinated content."
+                )
 
 
 def _build_ssl_context() -> ssl.SSLContext:
@@ -212,12 +274,18 @@ def _build_messages(
         f"Requested scope: {scope_text}\n\n"
         f"{faq_section}"
         f"AVAILABLE EVIDENCE BLOCKS (only these may be cited):\n{context}\n\n"
-        "INSTRUCTIONS:\n"
+        "STEP 1 — EVIDENCE MAPPING (do this silently before writing):\n"
+        "For each fact you plan to state, identify the exact phrase in the evidence block that supports it. "
+        "If you cannot find supporting text in a specific block, do NOT cite that block — instead say "
+        "'This is not in the provided evidence'.\n\n"
+        "STEP 2 — WRITE YOUR ANSWER:\n"
         "- Answer ONLY using information from the evidence blocks above\n"
-        "- Cite each fact with [E#] where # is the evidence block number\n"
+        "- Cite each fact with [E#] where # is the block number whose text contains that fact\n"
+        "- Do NOT cite [E1] for information that is only in [E2], or vice versa\n"
         "- Do NOT reference anything outside these blocks\n"
-        "- If a requested detail is not in the evidence, explicitly state 'This is not in the provided evidence'\n"
-        "- Verify your citations: [E1] must contain information you cite as [E1]\n\n"
+        "- If a block is a schema definition file (e.g. .xsd), describe it as a 'definition', not an 'example'\n"
+        "- If a block is an XML/JSON example file (e.g. .xml), describe it as an 'example'\n"
+        "- If a requested detail is not in the evidence, explicitly state 'This is not in the provided evidence'\n\n"
         "Write your answer:"
     )
 
@@ -368,6 +436,7 @@ def generate_answer_llm(
         raise LLMGenerationError("LLM response was empty.")
 
     _validate_citations_to_chunks(answer=answer, chunks=chunks)
+    _validate_citation_grounding(answer=answer, chunks=chunks)
     _validate_grounded_example_output(question=question, answer=answer, chunks=chunks)
 
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
@@ -503,6 +572,7 @@ def stream_answer_llm(
         raise LLMGenerationError("LLM stream response was empty.")
 
     _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
+    _validate_citation_grounding(answer=full_answer, chunks=chunks)
     _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
 
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
