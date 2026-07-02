@@ -188,9 +188,6 @@ export default function ReadOnlyQuestionDisplay({
                       </ul>
                     </>
                   )}
-                  <p className="muted tiny">
-                    requestId: {turn.requestId ?? turn.answer.trace.requestId} · mode: {turn.answer.mode} · confidence: {turn.answer.confidence.toFixed(2)}
-                  </p>
                 </>
               )}
             </article>
