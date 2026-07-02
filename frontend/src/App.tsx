@@ -35,7 +35,6 @@ import EditorPageLayout from "./components/EditorPageLayout";
 import QuestionDetailPage from "./components/QuestionDetailPage";
 import SharedAppLayout from "./components/SharedAppLayout";
 import UserChatWorkspace, { type ChatTurn } from "./components/UserChatWorkspace";
-import UserPageLayout from "./components/UserPageLayout";
 import type {
   AnswerResponse,
   AskedQuestionRow,
@@ -1031,18 +1030,16 @@ export default function App() {
             <Route
               path="user"
               element={
-                <UserPageLayout>
-                  <UserChatWithQueryParams
-                    chatPrompt={chatPrompt}
-                    chatTurns={chatTurns}
-                    token={token}
-                    busy={busy}
-                    setChatPrompt={setChatPrompt}
-                    onSendChat={onSendChat}
-                    onResetChatSession={onResetChatSession}
-                    onSetAnswerFeedback={onSetAnswerFeedback}
-                  />
-                </UserPageLayout>
+                <UserChatWithQueryParams
+                  chatPrompt={chatPrompt}
+                  chatTurns={chatTurns}
+                  token={token}
+                  busy={busy}
+                  setChatPrompt={setChatPrompt}
+                  onSendChat={onSendChat}
+                  onResetChatSession={onResetChatSession}
+                  onSetAnswerFeedback={onSetAnswerFeedback}
+                />
               }
             />
             <Route
@@ -1096,12 +1093,10 @@ export default function App() {
             <Route
               path="question"
               element={
-                <UserPageLayout>
-                  <QuestionDetailWithQueryParams
-                    token={token}
-                    onSetAnswerFeedback={onSetAnswerFeedback}
-                  />
-                </UserPageLayout>
+                <QuestionDetailWithQueryParams
+                  token={token}
+                  onSetAnswerFeedback={onSetAnswerFeedback}
+                />
               }
             />
             <Route path="about" element={<AboutPage />} />
