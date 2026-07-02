@@ -49,7 +49,6 @@ services:
     command: ["sh", "-c", "python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120 --access-logfile - --error-logfile -"]
     volumes:
       - ./docs:/app/docs:ro
-      - /opt/napcore-helpdesk/ontology:/app/ontology:ro
       - /opt/napcore-helpdesk/VERSION:/app/VERSION:ro
     mem_limit: ${BACKEND_MEM_LIMIT:-3g}
     cpus: ${BACKEND_CPUS:-2.0}
@@ -72,7 +71,6 @@ services:
     command: celery -A config worker -l info
     volumes:
       - ./docs:/app/docs:ro
-      - /opt/napcore-helpdesk/ontology:/app/ontology:ro
       - /opt/napcore-helpdesk/VERSION:/app/VERSION:ro
     mem_limit: ${CELERY_WORKER_MEM_LIMIT:-2g}
     cpus: ${CELERY_WORKER_CPUS:-1.5}
@@ -82,7 +80,6 @@ services:
     command: celery -A config beat -l info
     volumes:
       - ./docs:/app/docs:ro
-      - /opt/napcore-helpdesk/ontology:/app/ontology:ro
       - /opt/napcore-helpdesk/VERSION:/app/VERSION:ro
     mem_limit: ${CELERY_BEAT_MEM_LIMIT:-512m}
     cpus: ${CELERY_BEAT_CPUS:-0.5}
