@@ -427,6 +427,7 @@ def _build_messages(
         "2. EVERY factual claim MUST be followed by a citation [E#] to the specific block containing that information\n"
         "3. Do NOT use any knowledge from your training data. Do NOT reference standards, examples, or concepts not in the provided blocks or candidate index\n"
         "4. If you recognize a source from your training (e.g., a known file or standard example) but it is not in [E#] or the candidate index, do NOT mention it\n"
+        "4b. CRITICAL: Do NOT invent specific examples with numbers or IDs (e.g., 'SCWW-86', 'LUAS Line 93') unless you find those EXACT examples in the evidence. Generic standard names are OK if they appear in evidence; specific numbered instances are NOT.\n"
         "5. If you cannot answer from the provided evidence, say 'This information is not in the provided evidence blocks'\n"
         "6. Do NOT paraphrase or infer beyond what is explicitly stated in the evidence\n"
         "7. Stay within the requested standards scope\n"
@@ -599,6 +600,11 @@ def _append_feedback_message(messages: list[dict], rejected_answer: str, error_m
     if "file name" in error_msg.lower() or "raw file" in error_msg.lower():
         file_name_hint = "\n- CRITICAL: Do NOT write file names or paths like 'example.xml' or 'schema/file.xsd'. Instead write: 'The example [E2]' or 'In the schema definition [E1]'. The [E#] reference tells readers where the actual file is."
 
+    # Add specific guidance for invented examples
+    example_hint = ""
+    if "citation" in error_msg.lower() or "not in" in error_msg.lower() or "evidence" in error_msg.lower():
+        example_hint = "\n- CRITICAL: Do NOT mention specific numbered examples (like 'SCWW-86' or 'LUAS Line 93') unless you find those EXACT examples in the evidence blocks. You can mention generic standard names if they appear in evidence, but NOT specific numbered instances you know from training."
+
     feedback = (
         f"Your previous answer was rejected by the grounding validator.\n"
         f"Rejected answer: {rejected_answer[:600]}\n"
@@ -607,7 +613,7 @@ def _append_feedback_message(messages: list[dict], rejected_answer: str, error_m
         "- Use ONLY [E#] markers to reference sources — no file names, no invented identifiers\n"
         "- Only cite [E#] for a claim when that block's text directly contains the information\n"
         "- If the evidence does not support a claim, omit it or say 'This is not in the provided evidence'"
-        f"{file_name_hint}"
+        f"{file_name_hint}{example_hint}"
     )
     return messages + [
         {"role": "assistant", "content": rejected_answer},
