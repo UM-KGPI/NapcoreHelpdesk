@@ -181,6 +181,10 @@ Definition:
         else:
             source_path = f"xsd/{standard.lower()}/"
 
+        # Build tree URL directly since _build_file_url() uses /blob/
+        # We want: github.com/{owner}/{repo}/tree/{version}/{path}
+        tree_url = f"https://github.com/TransmodelEcosystem/{repo_name}/tree/{commit_sha}/{source_path}"
+
         chunk = {
             "id": chunk_id_int,
             "chunkId": chunk_id_str,
@@ -194,7 +198,7 @@ Definition:
             "standards_scope": [standard] if standard else [],
             "match_type": "semantic_definition",
             "similarity_reason": "Authoritative definition from XSD schema",
-            "repository_url": f"https://github.com/TransmodelEcosystem/{repo_name}",
+            "repository_url": tree_url,  # Pre-built tree URL to bypass _build_file_url()
             "commit_sha": commit_sha,
             "embedding_vector": None,
             "heading": f"{concept_name} - {standard} Definition",

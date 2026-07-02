@@ -303,13 +303,18 @@ def _select_citations(chunks: list[dict], max_citations: int) -> list[dict]:
 
         seen_sources.add(source_key)
         selected_repositories.add(repository_url)
+        # If repository_url is a pre-built GitHub tree/blob URL, use it as-is
+        if "/tree/" in repository_url or "/blob/" in repository_url:
+            final_url = repository_url
+        else:
+            final_url = _build_file_url(
+                repo_url=repository_url,
+                commit_sha=chunk["commitSha"],
+                source_path=source_path,
+            )
         selected.append(
             {
-                "repositoryUrl": _build_file_url(
-                    repo_url=repository_url,
-                    commit_sha=chunk["commitSha"],
-                    source_path=source_path,
-                ),
+                "repositoryUrl": final_url,
                 "commitSha": chunk["commitSha"],
                 "sourcePath": source_path,
                 "chunkId": chunk["chunkId"],
@@ -327,13 +332,18 @@ def _select_citations(chunks: list[dict], max_citations: int) -> list[dict]:
         if source_key in seen_sources:
             continue
         seen_sources.add(source_key)
+        # If repository_url is a pre-built GitHub tree/blob URL, use it as-is
+        if "/tree/" in repository_url or "/blob/" in repository_url:
+            final_url = repository_url
+        else:
+            final_url = _build_file_url(
+                repo_url=repository_url,
+                commit_sha=chunk["commitSha"],
+                source_path=source_path,
+            )
         selected.append(
             {
-                "repositoryUrl": _build_file_url(
-                    repo_url=repository_url,
-                    commit_sha=chunk["commitSha"],
-                    source_path=source_path,
-                ),
+                "repositoryUrl": final_url,
                 "commitSha": chunk["commitSha"],
                 "sourcePath": source_path,
                 "chunkId": chunk["chunkId"],
