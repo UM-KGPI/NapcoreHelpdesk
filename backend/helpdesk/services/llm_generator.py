@@ -588,10 +588,9 @@ def stream_answer_llm(
         ("token", delta_str) — for each token from the LLM.
         ("done", metadata_dict) — once after all tokens, with answer metadata.
 
-    Raises LLMGenerationError on setup failure, network error, or grounding
-    validation failure.  If raised after tokens have already been yielded,
-    the caller should emit an SSE error event so the client can discard the
-    partial text.
+    All tokens are buffered and validated before being yielded to the caller.
+    This prevents the 'answer shows then disappears' pattern that occurs when
+    validation fails after tokens have already been sent to the client.
     """
     if not settings.LLM_ENABLED:
         raise LLMGenerationError("LLM mode is disabled by configuration.")
@@ -615,6 +614,9 @@ def stream_answer_llm(
         language=language,
     )
 
+    # Buffer all tokens before yielding any — validation must pass the full
+    # answer before the client receives a single character, so a failed check
+    # never produces a visible-then-vanishing answer.
     deltas: list[str] = []
     try:
         for delta in _stream_request_chat_completion(
@@ -627,7 +629,6 @@ def stream_answer_llm(
             messages=messages,
         ):
             deltas.append(delta)
-            yield ("token", delta)
     except error.HTTPError as exc:
         try:
             error_body = exc.read().decode("utf-8")
@@ -651,6 +652,10 @@ def stream_answer_llm(
 
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
     confidence = min(0.94, max(0.60, float(top_score)))
+
+    # Validation passed — now yield tokens so the client receives only valid content.
+    for delta in deltas:
+        yield ("token", delta)
 
     yield (
         "done",

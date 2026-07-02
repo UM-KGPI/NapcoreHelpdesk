@@ -24,11 +24,10 @@ def _repository_count(chunks: list[dict]) -> int:
 
 def _build_minimal_grounded_answer(chunks: list[dict]) -> str:
     """Return a minimal deterministic fallback anchored in retrieved evidence."""
-    marker_count = min(3, max(1, len(chunks)))
-    marker_text = ", ".join(f"[E{index}]" for index in range(1, marker_count + 1))
     answer = (
-        f"Based on retrieved approved-source evidence ({marker_text}), "
-        "follow the relevant profile specification and validate implementation against published examples or test cases before deployment."
+        "Based on retrieved approved-source evidence, "
+        "follow the relevant profile specification and validate implementation "
+        "against published examples or test cases before deployment."
     )
     if _repository_count(chunks) >= 2:
         answer += " Evidence spans multiple repositories."
