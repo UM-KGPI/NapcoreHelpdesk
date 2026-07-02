@@ -174,7 +174,14 @@ Definition:
             else:
                 source_path = xsd_source
         else:
-            source_path = f"xsd/{standard.lower()}/"
+            # Fallback to main schema file for the standard (not just directory)
+            schema_name_map = {
+                "NeTEx": "netex_framework/netex_frame.xsd",
+                "OpRa": "opra.xsd",
+                "SIRI": "siri.xsd",
+            }
+            schema_file = schema_name_map.get(standard, f"{standard.lower()}.xsd")
+            source_path = f"xsd/{schema_file}"
 
         # Build blob URL pointing to the actual XSD file
         # Format: github.com/{owner}/{repo}/blob/{version}/{path}/file.xsd
@@ -185,7 +192,8 @@ Definition:
             "chunkId": chunk_id_str,
             "chunk_id": chunk_id_str,
             "retrievalEventId": f"ontology-{chunk_id_int}",
-            "source_path": source_path,
+            "sourcePath": source_path,  # Use camelCase to match LLM generator expectations
+            "source_path": source_path,  # Also keep snake_case for compatibility
             "label": f"Definition: {concept_name}",
             "text": chunk_text.strip(),
             "doc_type": "ontology-definition",
@@ -193,8 +201,10 @@ Definition:
             "standards_scope": [standard] if standard else [],
             "match_type": "semantic_definition",
             "similarity_reason": "Authoritative definition from XSD schema",
-            "repository_url": blob_url,  # Pre-built blob URL to actual XSD file
-            "commit_sha": commit_sha,
+            "repositoryUrl": blob_url,  # Use camelCase to match LLM generator expectations
+            "repository_url": blob_url,  # Also keep snake_case for compatibility
+            "commitSha": commit_sha,  # Use camelCase to match LLM generator expectations
+            "commit_sha": commit_sha,  # Also keep snake_case for compatibility
             "embedding_vector": None,
             "heading": f"{concept_name} - {standard} Definition",
         }
