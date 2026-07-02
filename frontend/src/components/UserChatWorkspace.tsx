@@ -112,7 +112,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
     }
 
     const baseUrl = window.location.origin;
-    const deepLink = `${baseUrl}/napcore-helpdesk/user?questionId=${questionId}`;
+    const deepLink = `${baseUrl}/napcore-helpdesk/question?questionId=${questionId}`;
 
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(deepLink);
