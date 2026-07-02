@@ -37,7 +37,7 @@ frontend/*.tsbuildinfo
 docs/testing
 
 # Docs symlinks / local-only testing output (root-level variants)
-ontology/
+/ontology/
 repos/
 
 # Production setup scripts with embedded credentials
