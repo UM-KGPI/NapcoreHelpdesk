@@ -1089,7 +1089,7 @@ class Command(BaseCommand):
                     lines.append(f"    rdfs:subClassOf {related_id} ;")
 
             # Source
-            source = concept.get("source", "")
+            source = concept.get("extracted_source", "")
             if source:
                 lines.append(f'    rdfs:comment "Extracted from: {source}"@en .')
             else:
