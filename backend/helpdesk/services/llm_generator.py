@@ -298,6 +298,12 @@ _UNCITED_STANDARD_PATTERN = re.compile(
     re.IGNORECASE
 )
 
+# Pattern for specific examples like "SCWW-86", "LUAS Line 93", etc.
+_SPECIFIC_EXAMPLE_PATTERN = re.compile(
+    r"\b(SCWW-\d+|LUAS\s+Line\s+\d+|SCWW\s+\d+|LUAS\s+\d+)\b",
+    re.IGNORECASE
+)
+
 
 def _validate_no_uncited_standards(answer: str, chunks: list[dict], all_candidates: list[dict] | None = None) -> None:
     """
@@ -338,6 +344,47 @@ def _validate_no_uncited_standards(answer: str, chunks: list[dict], all_candidat
                     f"Answer mentions '{std}' without citation and it's not in provided evidence. "
                     f"Either cite the source with [E#] or don't mention the standard."
                 )
+
+
+def _validate_no_unsupported_examples(answer: str, chunks: list[dict], all_candidates: list[dict] | None = None) -> None:
+    """
+    Reject answers that mention specific examples (SCWW-86, LUAS Line 93, etc.)
+    that don't actually appear in the evidence blocks.
+
+    Specific numbered examples like "SCWW-86" or "LUAS Line 93" are easy for LLMs
+    to hallucinate from training data. This validator ensures such examples are only
+    mentioned if they actually appear in the provided evidence.
+    """
+    # Build set of specific examples that appear in evidence/candidates
+    available_examples = set()
+
+    # Check chunks for specific examples
+    for chunk in chunks:
+        source_path = str(chunk.get("sourcePath", ""))
+        text = str(chunk.get("text", ""))
+        combined = f"{source_path} {text}".upper()
+
+        for match in _SPECIFIC_EXAMPLE_PATTERN.finditer(combined):
+            available_examples.add(match.group(1).upper())
+
+    # Check candidates for specific examples
+    if all_candidates:
+        for candidate in all_candidates:
+            source_path = str(candidate.get("sourcePath", ""))
+            label = str(candidate.get("label", ""))
+            combined = f"{source_path} {label}".upper()
+
+            for match in _SPECIFIC_EXAMPLE_PATTERN.finditer(combined):
+                available_examples.add(match.group(1).upper())
+
+    # Check answer for specific examples that aren't in evidence
+    for match in _SPECIFIC_EXAMPLE_PATTERN.finditer(answer):
+        example = match.group(1).upper()
+        if example not in available_examples:
+            raise LLMGenerationError(
+                f"Answer mentions specific example '{match.group(1)}' which is not in provided evidence. "
+                f"Do not invent specific examples from training data. Only mention examples that appear in the evidence blocks."
+            )
 
 
 def _build_ssl_context() -> ssl.SSLContext:
@@ -589,6 +636,7 @@ def _run_llm_attempt(
     _validate_citation_grounding(answer=answer, chunks=chunks)
     _validate_no_raw_filenames(answer=answer)
     _validate_no_uncited_standards(answer=answer, chunks=chunks, all_candidates=all_candidates)
+    _validate_no_unsupported_examples(answer=answer, chunks=chunks, all_candidates=all_candidates)
     return answer
 
 
@@ -853,6 +901,7 @@ def stream_answer_llm(
         _validate_citation_grounding(answer=full_answer, chunks=chunks)
         _validate_no_raw_filenames(answer=full_answer)
         _validate_no_uncited_standards(answer=full_answer, chunks=chunks, all_candidates=all_candidates)
+        _validate_no_unsupported_examples(answer=full_answer, chunks=chunks, all_candidates=all_candidates)
         _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
     except LLMGenerationError as first_error:
         rejected_answer = full_answer if "full_answer" in dir() else ""
@@ -872,6 +921,7 @@ def stream_answer_llm(
         _validate_citation_grounding(answer=full_answer, chunks=chunks)
         _validate_no_raw_filenames(answer=full_answer)
         _validate_no_uncited_standards(answer=full_answer, chunks=chunks, all_candidates=all_candidates)
+        _validate_no_unsupported_examples(answer=full_answer, chunks=chunks, all_candidates=all_candidates)
         _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
 
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
