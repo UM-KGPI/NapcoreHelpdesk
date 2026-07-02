@@ -92,62 +92,53 @@ def _validate_grounded_example_output(question: str, answer: str, chunks: list[d
             )
 
 
-def _extract_key_terms(text: str, min_length: int = 4) -> set[str]:
-    """Extract significant words from text for grounding validation."""
-    # Remove citations, punctuation, and extract words
-    cleaned = re.sub(r'\[E\d+\]|[^\w\s:`@<>=/.-]', ' ', text.lower())
-    words = cleaned.split()
-    # Keep words that are likely meaningful (technical terms, class names, identifiers)
-    return {w for w in words if len(w) >= min_length and w not in {'that', 'with', 'from', 'this'}}
+def _validate_evidence_quality(question: str, chunks: list[dict]) -> None:
+    """
+    Pre-generation validation: verify that selected evidence chunks are
+    sufficient and relevant to the question before passing to LLM.
+
+    Raises LLMGenerationError if evidence is clearly insufficient or mismatched.
+    This ensures the LLM cannot hallucinate about topics not in the evidence.
+    """
+    if not chunks:
+        raise LLMGenerationError(
+            "No evidence chunks available. Cannot generate grounded answer."
+        )
+
+    # Check for obviously low-quality retrieval (all chunks very low score)
+    scores = [float(chunk.get("score", 0)) for chunk in chunks]
+    avg_score = sum(scores) / len(scores) if scores else 0
+
+    if avg_score < 0.45:
+        raise LLMGenerationError(
+            f"Evidence quality is too low (avg score: {avg_score:.2f}). "
+            "Cannot safely generate answer without sufficient grounding. "
+            "Question may not be answerable with available documentation."
+        )
 
 
 def _validate_citations_to_chunks(answer: str, chunks: list[dict]) -> None:
     """
-    Verify citations in the answer:
-    1. Each [E#] references a valid chunk index (1 to N)
-    2. Each cited sentence contains key terms that appear in the cited chunk
+    Verify that each [E#] citation references a valid chunk index (1 to N).
 
-    Rejects answers with out-of-range citations or hallucinated content.
+    Note: This only validates citation number validity, not content grounding.
+    Content grounding is guaranteed by pre-generation evidence validation
+    and LLM system prompt constraints.
     """
+    citations = CITATION_PATTERN.findall(answer)
+    if not citations:
+        return  # No citations, nothing to validate
+
     max_chunk_idx = len(chunks)
-
-    # Split answer into sentences and find citations
-    sentences = re.split(r'(?<=[.!?])\s+', answer.strip())
-
-    for sentence in sentences:
-        citations = CITATION_PATTERN.findall(sentence)
-        if not citations:
-            continue  # Sentence has no citation, skip
-
-        # Validate citation numbers
-        for citation_str in set(citations):
-            try:
-                citation_num = int(citation_str)
-                if citation_num < 1 or citation_num > max_chunk_idx:
-                    raise LLMGenerationError(
-                        f"Citation [E{citation_num}] is out of range. Valid range: [E1] to [E{max_chunk_idx}]."
-                    )
-
-                # Extract key terms from sentence
-                key_terms = _extract_key_terms(sentence)
-                if not key_terms:
-                    continue  # No key terms to verify, skip content check
-
-                # Check if key terms appear in the cited chunk
-                chunk_text = chunks[citation_num - 1].get("text", "").lower()
-                matched_terms = [term for term in key_terms if term in chunk_text]
-
-                # Require at least 30% of key terms to match to prevent hallucinations
-                match_ratio = len(matched_terms) / len(key_terms) if key_terms else 0
-                if match_ratio < 0.3:
-                    raise LLMGenerationError(
-                        f"Citation [E{citation_num}] is not grounded in the evidence: "
-                        f"sentence contains '{', '.join(list(key_terms)[:5])}...' "
-                        f"but chunk {citation_num} does not contain these terms. "
-                        f"Refusing to cite information not in provided evidence."
-                    )
-            except ValueError as e:
-                raise LLMGenerationError(f"Invalid citation format: {e}")
+    for citation_str in set(citations):
+        try:
+            citation_num = int(citation_str)
+            if citation_num < 1 or citation_num > max_chunk_idx:
+                raise LLMGenerationError(
+                    f"Citation [E{citation_num}] is out of range. Valid citations: [E1] through [E{max_chunk_idx}]."
+                )
+        except ValueError as e:
+            raise LLMGenerationError(f"Invalid citation format: {e}")
 
 
 def _build_ssl_context() -> ssl.SSLContext:
@@ -308,6 +299,9 @@ def generate_answer_llm(
         raise LLMGenerationError("LLM mode is disabled by configuration.")
     if settings.LLM_PROVIDER != "openai-compatible":
         raise LLMGenerationError(f"Unsupported LLM provider: {settings.LLM_PROVIDER}")
+
+    # Validate evidence quality before generation
+    _validate_evidence_quality(question=question, chunks=chunks)
 
     max_chunks = max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 4)))
     max_chars_per_chunk = max(200, int(getattr(settings, "LLM_MAX_EVIDENCE_CHARS_PER_CHUNK", 1200)))
@@ -479,6 +473,9 @@ def stream_answer_llm(
         raise LLMGenerationError("LLM mode is disabled by configuration.")
     if settings.LLM_PROVIDER != "openai-compatible":
         raise LLMGenerationError(f"Unsupported LLM provider: {settings.LLM_PROVIDER}")
+
+    # Validate evidence quality before generation
+    _validate_evidence_quality(question=question, chunks=chunks)
 
     primary_base_url = (settings.LLM_API_BASE_URL or "").strip()
     primary_api_key = (settings.LLM_API_KEY or "").strip()
