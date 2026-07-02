@@ -20,6 +20,8 @@ from urllib import error, request
 
 from django.conf import settings
 
+from helpdesk.services.question_preprocessor import detect_question_language
+
 
 class LLMGenerationError(Exception):
     """Raised when LLM generation cannot be completed safely."""
@@ -136,10 +138,18 @@ def _build_messages(
     context = "\n\n".join(context_lines)
     scope_text = ", ".join(scope) if scope else "all approved standards"
 
-    _lang = (language or "").strip().lower()
+    # Detect the language from the question text itself rather than trusting the
+    # client-supplied `language` (often just the browser/OS locale, unrelated to
+    # what the user actually typed). With thinking mode disabled, the model has
+    # no reasoning step of its own to fall back on for "detect the language"
+    # instructions, so an explicit target language must be given here.
+    detected_language = detect_question_language(question)
+    effective_language = detected_language or language
+
+    _lang = (effective_language or "").strip().lower()
     if _lang and _lang not in ("en", "english"):
         language_instruction = (
-            f" Respond in {language}. Keep technical terms, class names, XML tags, and identifiers in English."
+            f" Respond in {effective_language}. Keep technical terms, class names, XML tags, and identifiers in English."
         )
     else:
         language_instruction = (

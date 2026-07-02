@@ -140,14 +140,24 @@ def _correct_with_library(question: str, language: str) -> Optional[str]:
     return " ".join(corrected) if has_changes else None
 
 
+def _strip_technical_terms(question: str) -> str:
+    """Remove schema/class-name tokens that skew language detection toward English."""
+    return " ".join(word for word in question.split() if not _is_technical_term(word))
+
+
 def _detect_question_language(question: str) -> Optional[str]:
     """
     Detect the actual language of the question text using langdetect.
     Returns language name (e.g., "Norwegian") or None if detection fails.
     """
+    # CamelCase technical terms (e.g. "DatedServiceJourney") read as English
+    # tokens to langdetect and can dominate the signal in short questions,
+    # so strip them before detecting the natural-language portion.
+    stripped = _strip_technical_terms(question)
+    detection_input = stripped if stripped.strip() else question
     try:
         # langdetect returns list of LangDetect objects with probabilities
-        detections = detect_langs(question)
+        detections = detect_langs(detection_input)
         if detections:
             detected_code = detections[0].lang  # Best match
             detected_name = LANGDETECT_TO_SPELLCHECKER.get(detected_code)
@@ -159,6 +169,11 @@ def _detect_question_language(question: str) -> Optional[str]:
         logger.debug(f"Language detection failed: {e}")
 
     return None
+
+
+def detect_question_language(question: str) -> Optional[str]:
+    """Public wrapper: detect a question's language from its text (not browser locale)."""
+    return _detect_question_language(question)
 
 
 def _correct_with_llm(question: str, language: str) -> Optional[str]:
