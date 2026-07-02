@@ -1,18 +1,20 @@
 /**
  * Read-only display of a stored question and answer.
  * Used on the /question page for deep-linked Q&A exchanges.
- * Shows only the question, answer, and citations — no input field, no buttons.
+ * Shows only the question, answer, and citations — no input field, no send/reset buttons.
+ * Includes interactive buttons: copy deep link, copy answer, like/dislike, and citations.
  *
  * Crafted by: AI coding agents
  * Created: 2026-07-02
  */
 
+import React from "react";
 import AnswerMarkdown from "./AnswerMarkdown";
 import type { ChatTurn } from "./UserChatWorkspace";
 
 interface ReadOnlyQuestionDisplayProps {
   chatTurns: ChatTurn[];
-  onSetAnswerFeedback?: (
+  onSetAnswerFeedback: (
     requestId: string,
     payload: {
       userLikes?: boolean;
@@ -27,6 +29,24 @@ export default function ReadOnlyQuestionDisplay({
   chatTurns,
   onSetAnswerFeedback,
 }: ReadOnlyQuestionDisplayProps) {
+  const [feedbackPendingByRequestId, setFeedbackPendingByRequestId] = React.useState<Record<string, boolean>>({});
+
+  const setFeedback = async (
+    requestId: string,
+    payload: {
+      userLikes?: boolean;
+      userDislikes?: boolean;
+      answerSuccess?: boolean | null;
+      citationClicksDelta?: number;
+    }
+  ) => {
+    setFeedbackPendingByRequestId((prev) => ({ ...prev, [requestId]: true }));
+    try {
+      await onSetAnswerFeedback(requestId, payload);
+    } finally {
+      setFeedbackPendingByRequestId((prev) => ({ ...prev, [requestId]: false }));
+    }
+  };
   const copyDeepLinkToClipboard = async (turn: ChatTurn) => {
     const questionId = turn.requestId ?? turn.answer?.trace.requestId;
     if (!questionId) {
@@ -104,39 +124,73 @@ export default function ReadOnlyQuestionDisplay({
                     >
                       📋
                     </button>
+                    <button
+                      type="button"
+                      className={`chat-icon-button ${(turn.answer.trace.userLikes ?? false) ? "chat-icon-button-active" : ""}`}
+                      onClick={() => {
+                        const requestId = turn.requestId ?? turn.answer?.trace.requestId;
+                        if (!requestId) {
+                          return;
+                        }
+                        const currentLike = turn.answer?.trace.userLikes ?? false;
+                        void setFeedback(requestId, { userLikes: !currentLike, userDislikes: false, answerSuccess: currentLike ? null : true });
+                      }}
+                      disabled={feedbackPendingByRequestId[turn.requestId ?? turn.answer.trace.requestId] === true}
+                      title="Good answer"
+                      aria-label="Good answer"
+                    >
+                      👍
+                    </button>
+                    <button
+                      type="button"
+                      className={`chat-icon-button ${(turn.answer.trace.userDislikes ?? false) ? "chat-icon-button-active" : ""}`}
+                      onClick={() => {
+                        const requestId = turn.requestId ?? turn.answer?.trace.requestId;
+                        if (!requestId) {
+                          return;
+                        }
+                        const currentDislike = turn.answer?.trace.userDislikes ?? false;
+                        void setFeedback(requestId, { userLikes: false, userDislikes: !currentDislike, answerSuccess: currentDislike ? null : false });
+                      }}
+                      disabled={feedbackPendingByRequestId[turn.requestId ?? turn.answer.trace.requestId] === true}
+                      title="Answer could be better"
+                      aria-label="Answer could be better"
+                    >
+                      👎
+                    </button>
                   </div>
-                  <details className="collapsible-panel citations-collapsible">
-                    <summary className="collapsible-summary">
-                      <span>
-                        {turn.answer.citations.length} citation{turn.answer.citations.length !== 1 ? "s" : ""}
-                      </span>
-                    </summary>
-                    <div className="collapsible-body citations-list">
-                      {turn.answer.citations.map((citation, i) => (
-                        <div key={i} className="citation-item">
-                          <a
-                            href={citation.repositoryUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="citation-link"
-                            onClick={() => {
-                              if (onSetAnswerFeedback && turn.requestId) {
-                                void onSetAnswerFeedback(turn.requestId, { citationClicksDelta: 1 });
-                              }
-                            }}
-                          >
-                            {citation.label || citation.sourcePath}
-                          </a>
-                        </div>
-                      ))}
-                    </div>
-                  </details>
-                  {turn.answer.confidence && (
-                    <div className="confidence-indicator">
-                      <span className="confidence-label">Confidence:</span>
-                      <span className="confidence-value">{(turn.answer.confidence * 100).toFixed(0)}%</span>
-                    </div>
+                  {turn.answer.citations.length > 0 && (
+                    <>
+                      <p className="tiny"><strong>Evidence list</strong></p>
+                      <ul>
+                        {turn.answer.citations.map((citation, index) => (
+                          <li key={`${turn.id}-${citation.chunkId}`}>
+                            <strong>{`[E${index + 1}]`}</strong>{" "}
+                            <a
+                              href={citation.repositoryUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={() => {
+                                const requestId = turn.requestId ?? turn.answer?.trace.requestId;
+                                if (!requestId) {
+                                  return;
+                                }
+                                void setFeedback(requestId, { citationClicksDelta: 1 });
+                              }}
+                            >
+                              {citation.label ?? citation.sourcePath.split("/").pop()}
+                            </a>
+                            {citation.label && citation.label !== citation.sourcePath && (
+                              <span className="muted"> · {citation.sourcePath}</span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
                   )}
+                  <p className="muted tiny">
+                    requestId: {turn.requestId ?? turn.answer.trace.requestId} · mode: {turn.answer.mode} · confidence: {turn.answer.confidence.toFixed(2)}
+                  </p>
                 </>
               )}
             </article>
