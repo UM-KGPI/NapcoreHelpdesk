@@ -37,6 +37,10 @@ export default function SharedAppLayout({ appVersion, backendBuildRef }: SharedA
         <p className="app-version-line">
           Frontend {formatAppVersion(appVersion)}
           {backendBuildRef && ` · Backend ${backendBuildRef}`}
+          {" · "}
+          <NavLink to="/about" className="app-about-link">
+            About this project
+          </NavLink>
         </p>
       </header>
       <section className="panel route-switcher-panel">

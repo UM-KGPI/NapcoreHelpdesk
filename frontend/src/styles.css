@@ -67,6 +67,25 @@ body {
   color: #4b5563;
 }
 
+.app-about-link {
+  color: #0f766e;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.app-about-link:hover,
+.app-about-link:focus-visible {
+  text-decoration: underline;
+}
+
+.about-page .panel + .panel {
+  margin-top: 1rem;
+}
+
+.about-page .panel a {
+  color: #0f766e;
+}
+
 .hero {
   background: linear-gradient(125deg, #0f766e, #164e63 65%, #1f2937);
   color: #f7f8f8;
