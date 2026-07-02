@@ -223,7 +223,7 @@ function UserChatWithQueryParams(props: React.ComponentProps<typeof UserChatWork
 
   const handleResetSession = () => {
     props.onResetChatSession();
-    navigate("/napcore-helpdesk/user", { replace: true });
+    navigate("user", { replace: true });
   };
 
   return <UserChatWorkspace {...props} chatTurns={enhancedTurns} onResetChatSession={handleResetSession} />;
