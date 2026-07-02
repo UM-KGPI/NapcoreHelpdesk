@@ -9,7 +9,7 @@
  * Created: 2026-03-29  |  Modified: 2026-06-28
  */
 
-import { NavLink, Outlet } from "react-router-dom";
+import { Outlet, NavLink } from "react-router-dom";
 
 import { useAuth } from "../auth-context";
 
@@ -43,20 +43,6 @@ export default function SharedAppLayout({ appVersion, backendBuildRef }: SharedA
           </NavLink>
         </p>
       </header>
-      <section className="panel route-switcher-panel">
-        <div className="route-switcher-copy">
-          <h2>Role Switcher</h2>
-        </div>
-        <nav className="route-switcher-nav" aria-label="Workspace navigation">
-          <NavLink to="/user" className={({ isActive }) => `route-link ${isActive ? "route-link-active" : ""}`}>
-            Q&amp;A Asisstant
-          </NavLink>
-          <NavLink to="/editor" className={({ isActive }) => `route-link ${isActive ? "route-link-active" : ""}`}>
-            Editorial Console
-          </NavLink>
-        </nav>
-      </section>
-
       <Outlet />
     </div>
   );
