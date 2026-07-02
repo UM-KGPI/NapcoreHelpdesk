@@ -112,36 +112,71 @@ def _validate_citations_to_chunks(answer: str, chunks: list[dict]) -> None:
             raise LLMGenerationError(f"Invalid citation format: {e}")
 
 
-_TECHNICAL_TERM_PATTERN = re.compile(
-    r"`([^`]+)`"                     # backtick-quoted identifiers
-    r'|"([A-Za-z0-9_.:/\\@#-]{4,})"'  # double-quoted technical strings
-    r"|([A-Za-z][A-Za-z0-9]{2,}[A-Z][A-Za-z0-9]*)"  # PascalCase / camelCase
-    r"|([A-Za-z0-9]{2,}:[A-Za-z0-9@_./-]{2,})"       # namespaced ids, e.g. stg:SCWW@86
+# Strong terms: specific enough that a match is meaningful evidence of grounding.
+_STRONG_TERM_PATTERN = re.compile(
+    r"`([^`]{4,})`"                                   # backtick-quoted identifiers
+    r'|"([A-Za-z0-9_.:/\\@#-]{6,})"'                 # double-quoted technical strings (≥6 chars)
+    r"|([A-Za-z0-9]{2,}:[A-Za-z0-9@_./-]{3,})"       # namespaced ids, e.g. stg:SCWW@86, netex:Line
     r"|([A-Za-z0-9_.-]{3,}-[A-Za-z0-9_.-]{2,})"      # hyphenated identifiers, e.g. 93-RED-y11-1
-    r"|([A-Za-z0-9_]+\.(?:xsd|xml|yaml|json|ttl))"   # file names with known extensions
+    r"|([A-Za-z0-9_-]+\.(?:xsd|xml|yaml|json|ttl))"  # file names with known extensions
 )
+
+# Weak terms: PascalCase/camelCase element names that appear across many chunks.
+_WEAK_TERM_PATTERN = re.compile(
+    r"([A-Za-z][A-Za-z0-9]{2,}[A-Z][A-Za-z0-9]*)"   # PascalCase / camelCase
+)
+
+# Terms so generic they appear in virtually every NeTEx/standards document and
+# must never be used as the sole grounding evidence for a citation.
+_UBIQUITOUS_TERMS = frozenset({
+    "netex", "nete", "opra", "siri", "datex", "transmodel", "nits",
+    "line", "route", "stop", "trip", "service", "journey",
+})
+
+
+def _classify_terms(sentence: str) -> tuple[list[str], list[str]]:
+    """
+    Return (strong_terms, weak_terms) extracted from a sentence.
+
+    Strong terms are specific identifiers unlikely to appear across many chunks
+    (file names, namespaced IDs, hyphenated IDs, backtick-quoted strings).
+    Weak terms are PascalCase/camelCase element names that may appear anywhere.
+    """
+    strong: list[str] = []
+    for match in _STRONG_TERM_PATTERN.finditer(sentence):
+        term = next((g for g in match.groups() if g), None)
+        if term and len(term) >= 4 and term.lower() not in _UBIQUITOUS_TERMS:
+            strong.append(term)
+
+    weak: list[str] = []
+    seen = set(t.lower() for t in strong)
+    for match in _WEAK_TERM_PATTERN.finditer(sentence):
+        term = match.group(1)
+        if term and len(term) >= 4 and term.lower() not in _UBIQUITOUS_TERMS and term.lower() not in seen:
+            weak.append(term)
+            seen.add(term.lower())
+
+    return list(dict.fromkeys(strong)), list(dict.fromkeys(weak))
 
 
 def _extract_key_terms(sentence: str) -> list[str]:
     """Extract technical identifiers from a sentence for citation grounding checks."""
-    terms: list[str] = []
-    for match in _TECHNICAL_TERM_PATTERN.finditer(sentence):
-        term = next((g for g in match.groups() if g), None)
-        if term and len(term) >= 4:
-            terms.append(term)
-    return list(dict.fromkeys(terms))  # deduplicate, preserve order
+    strong, weak = _classify_terms(sentence)
+    return list(dict.fromkeys(strong + weak))
 
 
 def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
     """
     Verify that each [E#] citation is grounded in the referenced chunk's text.
 
-    For every sentence containing [E#] citations, at least one extracted
-    technical term from that sentence must appear (case-insensitively) in the
-    text or source path of the cited chunk. This catches two failure modes:
-
-    - Wrong citation index: the LLM cites [E1] but the content is actually in [E2].
-    - Hallucinated content: the LLM cites [E#] for a claim that is not in any chunk.
+    For every sentence containing [E#] citations the check requires:
+    - If the sentence contains STRONG terms (file names, namespaced/hyphenated
+      IDs): at least one strong term must appear in the cited chunk. A match on
+      only weak/generic terms (e.g. "NeTEx", "LineRef") is NOT sufficient when
+      strong terms are present — this prevents hallucinated file names from
+      passing because a generic standard name happens to match.
+    - If the sentence contains ONLY weak terms: at least one weak term must
+      appear in the cited chunk.
 
     Raises LLMGenerationError if a citation cannot be grounded.
     """
@@ -154,8 +189,8 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
             continue
 
         clean = CITATION_PATTERN.sub("", sentence)
-        key_terms = _extract_key_terms(clean)
-        if not key_terms:
+        strong_terms, weak_terms = _classify_terms(clean)
+        if not strong_terms and not weak_terms:
             continue  # No checkable technical terms — skip grounding check
 
         for citation_str in found_citations:
@@ -168,14 +203,47 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
             chunk_source_lower = str(chunk.get("sourcePath", "")).lower()
             haystack = chunk_text_lower + " " + chunk_source_lower
 
-            if not any(term.lower() in haystack for term in key_terms):
+            if strong_terms:
+                # Strong terms present: require at least one strong match.
+                # A weak-only match is not accepted — it would allow hallucinated
+                # file names/IDs to pass because a generic term like "NeTEx" matches.
+                grounded = any(term.lower() in haystack for term in strong_terms)
+            else:
+                grounded = any(term.lower() in haystack for term in weak_terms)
+
+            if not grounded:
                 raise LLMGenerationError(
                     f"Citation [E{citation_str}] does not ground the claim: "
                     f"'{sentence[:150].strip()}'. "
                     f"Cited chunk source: '{chunk.get('sourcePath', 'unknown')}'. "
-                    f"Key terms not found: {key_terms[:6]}. "
+                    f"Strong terms checked: {strong_terms[:4]}. Weak terms checked: {weak_terms[:4]}. "
                     "The LLM may have cited the wrong evidence block or hallucinated content."
                 )
+
+
+_RAW_FILENAME_PATTERN = re.compile(
+    r"\b[A-Za-z0-9_][A-Za-z0-9_.\-]*\.(?:xml|xsd|yaml|yml|json|ttl|csv|rdf|owl)\b"
+)
+
+
+def _validate_no_raw_filenames(answer: str) -> None:
+    """
+    Reject answers that contain raw file names (e.g. 'NeTEx_01_simple_line.xml').
+
+    File names are hallucination-prone: the LLM can invent plausible-sounding
+    names that do not exist in the evidence.  All source references must be
+    expressed as [E#] evidence citations so they are traceable to actual chunks.
+    Fenced code blocks are excluded — verbatim content quoted from evidence may
+    legitimately contain file names inside XML attributes or comments.
+    """
+    # Strip fenced code blocks before checking.
+    clean = FENCED_CODE_BLOCK_PATTERN.sub("", answer)
+    matches = _RAW_FILENAME_PATTERN.findall(clean)
+    if matches:
+        raise LLMGenerationError(
+            f"Answer contains raw file name(s) {matches[:4]} — source references "
+            "must use [E#] evidence citations only, never bare file names."
+        )
 
 
 def _build_ssl_context() -> ssl.SSLContext:
@@ -252,6 +320,7 @@ def _build_messages(
         "4. If you cannot answer from the provided evidence, say 'This information is not in the provided evidence blocks'\n"
         "5. Do NOT paraphrase or infer beyond what is explicitly stated in the evidence\n"
         "6. Stay within the requested standards scope\n"
+        "7. Do NOT write file names (e.g. file.xml, schema.xsd) in the answer prose — reference sources ONLY as [E#] citations\n"
         f"\nRespond in 4-7 concise sentences with explicit [E#] citations for every claim.{language_instruction}"
     )
     if _question_requests_verbatim_example(question):
@@ -283,8 +352,9 @@ def _build_messages(
         "- Cite each fact with [E#] where # is the block number whose text contains that fact\n"
         "- Do NOT cite [E1] for information that is only in [E2], or vice versa\n"
         "- Do NOT reference anything outside these blocks\n"
-        "- If a block is a schema definition file (e.g. .xsd), describe it as a 'definition', not an 'example'\n"
-        "- If a block is an XML/JSON example file (e.g. .xml), describe it as an 'example'\n"
+        "- Do NOT write file names (e.g. 'example.xml', 'schema.xsd') in the answer — use only [E#] markers\n"
+        "- If a block is a schema definition file (.xsd), describe it as a 'definition', not an 'example'\n"
+        "- If a block is an XML/JSON example file (.xml), describe it as an 'example'\n"
         "- If a requested detail is not in the evidence, explicitly state 'This is not in the provided evidence'\n\n"
         "Write your answer:"
     )
@@ -437,6 +507,7 @@ def generate_answer_llm(
 
     _validate_citations_to_chunks(answer=answer, chunks=chunks)
     _validate_citation_grounding(answer=answer, chunks=chunks)
+    _validate_no_raw_filenames(answer=answer)
     _validate_grounded_example_output(question=question, answer=answer, chunks=chunks)
 
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
@@ -573,6 +644,7 @@ def stream_answer_llm(
 
     _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
     _validate_citation_grounding(answer=full_answer, chunks=chunks)
+    _validate_no_raw_filenames(answer=full_answer)
     _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
 
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
