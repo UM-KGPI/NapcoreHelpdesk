@@ -586,6 +586,10 @@ def _run_llm_attempt(
     if not answer:
         raise LLMGenerationError("LLM response was empty.")
 
+    # Clean file names early, before validation
+    # This handles the common case where LLM includes file names despite instructions
+    answer = _strip_raw_filenames(answer)
+
     _validate_citations_to_chunks(answer=answer, chunks=chunks)
     _validate_citation_grounding(answer=answer, chunks=chunks)
     _validate_no_raw_filenames(answer=answer)
@@ -855,6 +859,8 @@ def stream_answer_llm(
     rejection_reason: str | None = None
     try:
         full_answer = _collect_stream(messages)
+        # Clean file names early to prevent validation failures on these common LLM mistakes
+        full_answer = _strip_raw_filenames(full_answer)
         _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
         _validate_citation_grounding(answer=full_answer, chunks=chunks)
         _validate_no_raw_filenames(answer=full_answer)
@@ -874,6 +880,8 @@ def stream_answer_llm(
             error_msg=rejection_reason,
         )
         full_answer = _collect_stream(retry_messages)
+        # Clean file names early to prevent validation failures on retry
+        full_answer = _strip_raw_filenames(full_answer)
         _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
         _validate_citation_grounding(answer=full_answer, chunks=chunks)
         _validate_no_raw_filenames(answer=full_answer)
@@ -882,9 +890,6 @@ def stream_answer_llm(
 
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
     confidence = min(0.94, max(0.60, float(top_score)))
-
-    # Final safety: strip any remaining file names before streaming to client
-    full_answer = _strip_raw_filenames(full_answer)
 
     # Validation passed — now yield tokens so the client receives only valid content.
     for delta in full_answer:
