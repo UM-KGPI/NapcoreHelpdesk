@@ -92,31 +92,6 @@ def _validate_grounded_example_output(question: str, answer: str, chunks: list[d
             )
 
 
-def _validate_evidence_quality(question: str, chunks: list[dict]) -> None:
-    """
-    Pre-generation validation: verify that selected evidence chunks are
-    sufficient and relevant to the question before passing to LLM.
-
-    Raises LLMGenerationError if evidence is clearly insufficient or mismatched.
-    This ensures the LLM cannot hallucinate about topics not in the evidence.
-    """
-    if not chunks:
-        raise LLMGenerationError(
-            "No evidence chunks available. Cannot generate grounded answer."
-        )
-
-    # Check for obviously low-quality retrieval (all chunks very low score)
-    scores = [float(chunk.get("score", 0)) for chunk in chunks]
-    avg_score = sum(scores) / len(scores) if scores else 0
-
-    if avg_score < 0.45:
-        raise LLMGenerationError(
-            f"Evidence quality is too low (avg score: {avg_score:.2f}). "
-            "Cannot safely generate answer without sufficient grounding. "
-            "Question may not be answerable with available documentation."
-        )
-
-
 def _validate_citations_to_chunks(answer: str, chunks: list[dict]) -> None:
     """
     Verify that each [E#] citation references a valid chunk index (1 to N).
@@ -300,9 +275,6 @@ def generate_answer_llm(
     if settings.LLM_PROVIDER != "openai-compatible":
         raise LLMGenerationError(f"Unsupported LLM provider: {settings.LLM_PROVIDER}")
 
-    # Validate evidence quality before generation
-    _validate_evidence_quality(question=question, chunks=chunks)
-
     max_chunks = max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 4)))
     max_chars_per_chunk = max(200, int(getattr(settings, "LLM_MAX_EVIDENCE_CHARS_PER_CHUNK", 1200)))
     messages = _build_messages(
@@ -473,9 +445,6 @@ def stream_answer_llm(
         raise LLMGenerationError("LLM mode is disabled by configuration.")
     if settings.LLM_PROVIDER != "openai-compatible":
         raise LLMGenerationError(f"Unsupported LLM provider: {settings.LLM_PROVIDER}")
-
-    # Validate evidence quality before generation
-    _validate_evidence_quality(question=question, chunks=chunks)
 
     primary_base_url = (settings.LLM_API_BASE_URL or "").strip()
     primary_api_key = (settings.LLM_API_KEY or "").strip()
