@@ -131,9 +131,12 @@ _WEAK_TERM_PATTERN = re.compile(
 
 # Terms so generic they appear in virtually every NeTEx/standards document and
 # must never be used as the sole grounding evidence for a citation.
+# Includes both singular and plural/variant forms so e.g. "ROUTEs" is also excluded.
 _UBIQUITOUS_TERMS = frozenset({
     "netex", "nete", "opra", "siri", "datex", "transmodel", "nits",
-    "line", "route", "stop", "trip", "service", "journey",
+    "line", "lines", "route", "routes", "stop", "stops",
+    "trip", "trips", "service", "services", "journey", "journeys",
+    "network", "networks", "operator", "operators", "pattern", "patterns",
 })
 
 
