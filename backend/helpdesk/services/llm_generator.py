@@ -807,7 +807,7 @@ def _run_llm_attempt(
         logger.info(f"[JSON_PARSE] type={type(response_json).__name__}, keys={list(response_json.keys()) if isinstance(response_json, dict) else 'N/A'}")
         if isinstance(response_json, dict) and "answer" in response_json:
             answer = response_json["answer"]
-            logger.info(f"[JSON_EXTRACT] Extracted answer field: {len(answer)} chars, starts_with: {str(answer)[:80]}")
+            logger.info(f"[JSON_EXTRACT] Extracted answer field: {len(answer)} chars, type={type(answer).__name__}, starts_with: {str(answer)[:80]}")
 
             # Handle double-wrapped JSON: if the answer field itself is a JSON string, parse it
             if isinstance(answer, str) and answer.strip().startswith("{"):
@@ -826,8 +826,18 @@ def _run_llm_attempt(
         else:
             # If not in expected JSON format, try to use as-is
             if isinstance(response_json, dict):
-                logger.debug(f"No 'answer' key found, using str() fallback")
-                answer = str(response_json)
+                logger.debug(f"No 'answer' key found, available keys: {list(response_json.keys())}")
+                logger.warning(f"[JSON_MISSING_ANSWER_KEY] Attempting fallback extraction")
+                # Try fallback: look for any string-like field that looks like an answer
+                for key in ['text', 'content', 'response', 'message']:
+                    if key in response_json and isinstance(response_json[key], str):
+                        answer = response_json[key]
+                        logger.info(f"[JSON_FALLBACK] Using '{key}' field instead: {len(answer)} chars")
+                        break
+                else:
+                    # No suitable field found, use str() as last resort
+                    answer = str(response_json)
+                    logger.warning(f"[JSON_FALLBACK_FAILED] No suitable field found, using str()")
     except json.JSONDecodeError as e:
         # Not JSON, treat as plain text response
         logger.debug(f"JSON parse failed: {e}, treating as plain text")
