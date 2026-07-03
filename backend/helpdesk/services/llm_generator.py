@@ -326,15 +326,15 @@ def _validate_no_uncited_standards(answer: str, chunks: list[dict], all_candidat
     for chunk in chunks:
         text = str(chunk.get("text", "")).upper()
         for std in _KNOWN_STANDARD_REFS:
-            if std in text:
-                available_standards.add(std)
+            if std.upper() in text:  # Case-insensitive comparison
+                available_standards.add(std.upper())
     if all_candidates:
         for candidate in all_candidates:
             text = str(candidate.get("label", "")) + " " + str(candidate.get("sourcePath", ""))
             text = text.upper()
             for std in _KNOWN_STANDARD_REFS:
-                if std in text:
-                    available_standards.add(std)
+                if std.upper() in text:  # Case-insensitive comparison
+                    available_standards.add(std.upper())
 
     # Find standards that are mentioned without citations
     # Check each standard mention to see if it's followed/preceded by a citation
@@ -352,7 +352,7 @@ def _validate_no_uncited_standards(answer: str, chunks: list[dict], all_candidat
         has_nearby_citation = bool(CITATION_PATTERN.search(context))
 
         # Only reject if: standard is mentioned without nearby citation AND standard not in evidence
-        if not has_nearby_citation and std.upper() not in {s.upper() for s in available_standards}:
+        if not has_nearby_citation and std.upper() not in available_standards:
             raise LLMGenerationError(
                 f"Answer mentions '{std}' without citation and it's not in provided evidence. "
                 f"Either cite the source with [E#] or don't mention the standard."
