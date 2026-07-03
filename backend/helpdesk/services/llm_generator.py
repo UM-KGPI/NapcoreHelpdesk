@@ -754,23 +754,6 @@ def _request_chat_completion(
         return json.loads(response.read().decode("utf-8"))
 
 
-def generate_answer_llm(
-    question: str,
-    chunks: list[dict],
-    scope: list[str] | None = None,
-    faq_hint: str | None = None,
-    language: str | None = None,
-    all_candidates: list[dict] | None = None,
-) -> dict:
-    """Generate a grounded answer through a configurable OpenAI-compatible API."""
-
-    if not settings.LLM_ENABLED:
-        raise LLMGenerationError("LLM mode is disabled by configuration.")
-    if settings.LLM_PROVIDER != "openai-compatible":
-        raise LLMGenerationError(f"Unsupported LLM provider: {settings.LLM_PROVIDER}")
-
-    max_chunks = max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 4)))
-    max_chars_per_chunk = max(200, int(getattr(settings, "LLM_MAX_EVIDENCE_CHARS_PER_CHUNK", 1200)))
 def _run_llm_attempt(
     question: str,
     chunks: list[dict],
@@ -1282,10 +1265,12 @@ def stream_answer_llm(
             logger.debug(f"[STREAM_JSON_PARSE_FAILED] JSON parse failed: {e}, treating as plain text")
 
         # Strip hallucinated file names; evidence file names are preserved.
+        full_answer = _strip_json_suffix(full_answer)
         full_answer = _strip_raw_filenames(full_answer, chunks)
         _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
         _validate_citation_grounding(answer=full_answer, chunks=chunks)
         _validate_no_raw_filenames(answer=full_answer, chunks=chunks)
+        _validate_answer_has_specificity(answer=full_answer)
         # Standards validation disabled: citation grounding validator catches real issues
         _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
     except LLMGenerationError as first_error:
@@ -1327,10 +1312,12 @@ def stream_answer_llm(
             logger.debug(f"[STREAM_RETRY_JSON_PARSE_FAILED] Not JSON, treating as plain text")
 
         # Strip hallucinated file names; evidence file names are preserved.
+        full_answer = _strip_json_suffix(full_answer)
         full_answer = _strip_raw_filenames(full_answer, chunks)
         _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
         _validate_citation_grounding(answer=full_answer, chunks=chunks)
         _validate_no_raw_filenames(answer=full_answer, chunks=chunks)
+        _validate_answer_has_specificity(answer=full_answer)
         # Standards validation disabled: citation grounding validator catches real issues
         _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
 
