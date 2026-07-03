@@ -17,11 +17,25 @@ interface AnswerMarkdownProps {
 }
 
 export default function AnswerMarkdown({ text }: AnswerMarkdownProps) {
-  // Debug logging to verify Markdown is being rendered
-  console.log("[AnswerMarkdown] Rendering text length:", text.length);
-  console.log("[AnswerMarkdown] Has code blocks:", text.includes("```"));
-  console.log("[AnswerMarkdown] Has bold:", text.includes("**"));
-  console.log("[AnswerMarkdown] First 200 chars:", text.substring(0, 200));
+  // Comprehensive debug logging
+  const hasCodeBlocks = text.includes("```");
+  const hasBold = text.includes("**");
+  const lines = text.split("\n").length;
+
+  console.log("[AnswerMarkdown] Props received:", {
+    length: text.length,
+    lines: lines,
+    hasCodeBlocks: hasCodeBlocks,
+    hasBold: hasBold,
+    hasBackticks: text.includes("`"),
+    first200: text.substring(0, 200),
+  });
+
+  // Check for literal \n escape sequences
+  const hasEscapedNewlines = text.includes("\\n");
+  if (hasEscapedNewlines) {
+    console.warn("[AnswerMarkdown] WARNING: Text contains literal \\n escape sequences!");
+  }
 
   return (
     <div className="answer-markdown">
