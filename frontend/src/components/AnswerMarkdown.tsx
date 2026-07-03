@@ -17,6 +17,12 @@ interface AnswerMarkdownProps {
 }
 
 export default function AnswerMarkdown({ text }: AnswerMarkdownProps) {
+  // Debug logging to verify Markdown is being rendered
+  console.log("[AnswerMarkdown] Rendering text length:", text.length);
+  console.log("[AnswerMarkdown] Has code blocks:", text.includes("```"));
+  console.log("[AnswerMarkdown] Has bold:", text.includes("**"));
+  console.log("[AnswerMarkdown] First 200 chars:", text.substring(0, 200));
+
   return (
     <div className="answer-markdown">
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>

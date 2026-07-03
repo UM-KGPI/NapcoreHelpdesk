@@ -816,9 +816,8 @@ def _run_llm_attempt(
         logger.info(f"[JSON_PARSE] type={type(response_json).__name__}, keys={list(response_json.keys()) if isinstance(response_json, dict) else 'N/A'}")
         if isinstance(response_json, dict) and "answer" in response_json:
             answer = response_json["answer"]
-            # Decode escape sequences: JSON escapes newlines as \n, but we need actual newlines for Markdown
-            if isinstance(answer, str):
-                answer = answer.encode().decode('unicode_escape')
+            # NOTE: json.loads() already converts \n to actual newlines, so no need for decode('unicode_escape')
+            # That would corrupt any legitimate backslashes in the text
             logger.info(f"[JSON_EXTRACT] Extracted answer field: {len(answer)} chars, type={type(answer).__name__}, starts_with: {str(answer)[:80]}")
 
             # Handle double-wrapped JSON: if the answer field itself is a JSON string, parse it
@@ -1244,9 +1243,7 @@ def stream_answer_llm(
             logger.info(f"[STREAM_JSON_PARSE] type={type(response_json).__name__}, keys={list(response_json.keys()) if isinstance(response_json, dict) else 'N/A'}")
             if isinstance(response_json, dict) and "answer" in response_json:
                 full_answer = response_json["answer"]
-                # Decode escape sequences for proper Markdown rendering
-                if isinstance(full_answer, str):
-                    full_answer = full_answer.encode().decode('unicode_escape')
+                # NOTE: json.loads() already converts \n to actual newlines
                 logger.info(f"[STREAM_JSON_EXTRACT] Extracted answer field: {len(full_answer)} chars, starts_with: {str(full_answer)[:80]}")
 
                 # Handle double-wrapped JSON
@@ -1292,9 +1289,7 @@ def stream_answer_llm(
             logger.info(f"[STREAM_RETRY_JSON_PARSE] type={type(response_json).__name__}, keys={list(response_json.keys()) if isinstance(response_json, dict) else 'N/A'}")
             if isinstance(response_json, dict) and "answer" in response_json:
                 full_answer = response_json["answer"]
-                # Decode escape sequences for proper Markdown rendering
-                if isinstance(full_answer, str):
-                    full_answer = full_answer.encode().decode('unicode_escape')
+                # NOTE: json.loads() already converts \n to actual newlines
                 logger.info(f"[STREAM_RETRY_JSON_EXTRACT] Extracted answer field: {len(full_answer)} chars")
 
                 # Handle double-wrapped JSON
