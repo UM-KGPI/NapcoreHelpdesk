@@ -932,39 +932,6 @@ button:disabled {
   margin: 0.6rem 0;
 }
 
-/* Inline code spans inside answer prose */
-.answer-inline-code {
-  background: #f0ece0;
-  border: 1px solid var(--line, #d6ceb8);
-  border-radius: 4px;
-  padding: 0.1em 0.35em;
-  font-size: 0.88em;
-  font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
-  color: #1f2b26;
-  white-space: nowrap;
-}
-
-/* Fenced code blocks inside answer prose — inherit base pre styles,
-   add XML/language label via the code element's className */
-.answer-code-block {
-  overflow: auto;
-  background: #f8f5ed;
-  border: 1px solid var(--line, #d6ceb8);
-  border-radius: 10px;
-  padding: 0.75rem 1rem;
-  margin: 0.75rem 0;
-  font-size: 0.85em;
-  line-height: 1.6;
-}
-
-.answer-code-block code {
-  background: none;
-  border: none;
-  padding: 0;
-  font-size: inherit;
-  white-space: pre;
-}
-
 .muted {
   color: var(--muted);
 }
@@ -981,6 +948,7 @@ pre {
   border-radius: 10px;
   padding: 0.65rem;
   font-size: 0.82rem;
+  white-space: pre-wrap;   /* preserve indentation and newlines */
 }
 
 ul {
