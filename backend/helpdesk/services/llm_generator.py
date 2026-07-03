@@ -227,9 +227,18 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
             if term_clean in _UBIQUITOUS_TERMS and len(term_clean) >= 4:
                 ubiquitous_terms.append(term_clean)
 
-        # Skip only if we have no terms at all (not even generic ones)
-        if not strong_terms and not weak_terms and not ubiquitous_terms:
-            continue
+        # CRITICAL: Cited sentences MUST have specific technical content (strong or weak terms)
+        # Sentences with only ubiquitous terms are hallucinated filler ("follow spec, validate with examples")
+        if not strong_terms and not weak_terms:
+            if found_citations:  # Has citations but NO specific terms = hallucination
+                raise LLMGenerationError(
+                    f"Citation [E{found_citations[0]}] without specific technical content: "
+                    f"'{sentence[:120].strip()}'. "
+                    "Cited claims must reference specific file names, IDs, or concepts from evidence, "
+                    "not generic language like 'follow the specification' or 'validate with examples'."
+                )
+            else:
+                continue  # No citations, no terms - skip
 
         for citation_str in found_citations:
             idx = int(citation_str) - 1
