@@ -767,13 +767,17 @@ def _run_llm_attempt(
 
             # Handle double-wrapped JSON: if the answer field itself is a JSON string, parse it
             if isinstance(answer, str) and answer.strip().startswith("{"):
+                logger.info(f"[UNWRAP_JSON] Answer field is JSON string, attempting unwrap: {answer[:100]}")
                 try:
                     inner_json = json.loads(answer)
                     if isinstance(inner_json, dict) and "answer" in inner_json:
                         answer = inner_json["answer"]
-                        logger.debug(f"Extracted double-wrapped answer: {len(answer)} chars")
-                except json.JSONDecodeError:
+                        logger.info(f"[UNWRAP_SUCCESS] Double-wrapped answer extracted: {len(answer)} chars")
+                    else:
+                        logger.info(f"[UNWRAP_NO_ANSWER_KEY] Inner JSON has no 'answer' key, keys: {inner_json.keys() if isinstance(inner_json, dict) else 'N/A'}")
+                except json.JSONDecodeError as unwrap_error:
                     # Not JSON, keep as-is
+                    logger.warning(f"[UNWRAP_FAILED] Could not parse answer field as JSON: {str(unwrap_error)[:100]}")
                     pass
         else:
             # If not in expected JSON format, try to use as-is
