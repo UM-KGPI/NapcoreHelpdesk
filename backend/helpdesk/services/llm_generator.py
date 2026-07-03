@@ -871,6 +871,8 @@ def generate_answer_llm(
     and the rejection reason are returned in the result dict for trace logging.
     """
 
+    logger.info(f"[GENERATE_LLM_START] Question: {question[:80]}, chunks: {len(chunks)}")
+
     if not settings.LLM_ENABLED:
         raise LLMGenerationError("LLM mode is disabled by configuration.")
     if settings.LLM_PROVIDER != "openai-compatible":
@@ -947,15 +949,41 @@ def generate_answer_llm(
             # Retry failed validation too. Log it but return the answer anyway.
             # The feedback was the best guidance we could provide.
             logger.warning(
-                "LLM retry failed validation too, but returning answer anyway. Reason: %s",
+                "LLM retry failed validation too, but attempting raw retry. Reason: %s",
                 str(retry_error)[:200],
                 extra={"question": question[:120]},
             )
             # Re-run without validation to get the raw answer
-            answer = _run_llm_attempt(
-                question=question, chunks=chunks, messages=retry_messages, request_targets=request_targets,
-                validate=False
-            )
+            try:
+                answer = _run_llm_attempt(
+                    question=question, chunks=chunks, messages=retry_messages, request_targets=request_targets,
+                    validate=False
+                )
+            except Exception as fatal_error:
+                # Even the second attempt failed. This is a critical issue.
+                # Return an honest error message instead of letting exception propagate to fallback.
+                logger.error(
+                    "FATAL: Both LLM attempts failed. Cannot generate answer. Exception: %s",
+                    str(fatal_error)[:200],
+                    extra={"question": question[:120]},
+                    exc_info=True,
+                )
+                answer = (
+                    "I was unable to generate a proper answer due to technical issues with the LLM. "
+                    "The evidence retrieval worked, but the answer generation failed. "
+                    "Please try again or contact support."
+                )
+                confidence = 0.0
+                # Return immediately to prevent fallback to generic boilerplate
+                return {
+                    "answer": answer,
+                    "confidence": confidence,
+                    "review_required": True,
+                    "provider": settings.LLM_PROVIDER,
+                    "model": (request_targets[0]["model"]),
+                    "rejected_answer": rejected_answer,
+                    "rejection_reason": rejection_reason,
+                }
 
     _validate_grounded_example_output(question=question, answer=answer, chunks=chunks)
 
@@ -972,6 +1000,10 @@ def generate_answer_llm(
 
     if is_boilerplate:
         logger.warning(
+            "[BOILERPLATE_REPLACEMENT] Replacing boilerplate with honest message",
+            extra={"question": question[:100]},
+        )
+        logger.warning(
             "FINAL ENFORCEMENT: Answer was detected as pure boilerplate at end of generation. "
             "Replacing with honest answer.",
             extra={"question": question[:120], "boilerplate_answer": answer[:200]},
@@ -983,6 +1015,11 @@ def generate_answer_llm(
         )
         confidence = 0.0
         review_required = True
+
+    logger.info(
+        f"[GENERATE_LLM_END] Returning answer with confidence {confidence}. "
+        f"Answer preview: {answer[:80]}"
+    )
 
     return {
         "answer": answer,
