@@ -246,12 +246,24 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
                 # A weak-only match is not accepted — it would allow hallucinated
                 # file names/IDs to pass because a generic term like "NeTEx" matches.
                 grounded = any(term.lower() in haystack for term in strong_terms)
+                if not grounded:
+                    logger.debug(
+                        f"Citation [E{citation_str}] grounding check FAILED: strong terms {strong_terms} not found in chunk source '{chunk.get('sourcePath', 'unknown')}'"
+                    )
             elif weak_terms:
                 grounded = any(term.lower() in haystack for term in weak_terms)
+                if not grounded:
+                    logger.debug(
+                        f"Citation [E{citation_str}] grounding check FAILED: weak terms {weak_terms} not found in chunk source '{chunk.get('sourcePath', 'unknown')}'"
+                    )
             else:
                 # No strong or weak terms; check ubiquitous terms (these are more lenient)
                 # Ubiquitous terms appear everywhere, so we just require at least one match
                 grounded = any(term.lower() in haystack for term in ubiquitous_terms)
+                if not grounded:
+                    logger.debug(
+                        f"Citation [E{citation_str}] grounding check FAILED: ubiquitous terms {ubiquitous_terms} not found in chunk source '{chunk.get('sourcePath', 'unknown')}'"
+                    )
 
             if not grounded:
                 all_checked_terms = strong_terms + weak_terms + ubiquitous_terms
@@ -670,9 +682,11 @@ def _run_llm_attempt(
     # Strip hallucinated file names early; evidence file names are preserved.
     answer = _strip_raw_filenames(answer, chunks)
 
+    logger.debug(f"Validating answer after stripping: {len(answer)} chars, {len(chunks)} chunks")
     _validate_citations_to_chunks(answer=answer, chunks=chunks)
     _validate_citation_grounding(answer=answer, chunks=chunks)
     _validate_no_raw_filenames(answer=answer, chunks=chunks)
+    logger.debug("All validation checks passed")
     # Standards validation disabled: too many false positives on file name components
     # Citation grounding validator already catches real hallucinations
     return answer
@@ -798,7 +812,7 @@ def generate_answer_llm(
     confidence = min(0.94, max(0.60, float(top_score)))
 
     # Final safety: strip any remaining file names (in case validation passed but LLM still included them)
-    answer = _strip_raw_filenames(answer)
+    answer = _strip_raw_filenames(answer, chunks)
 
     return {
         "answer": answer,
