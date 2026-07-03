@@ -120,7 +120,7 @@ _STRONG_TERM_PATTERN = re.compile(
     r"`([^`]{4,})`"                                   # backtick-quoted identifiers
     r'|"([A-Za-z0-9_.:/\\@#-]{6,})"'                 # double-quoted technical strings (≥6 chars)
     r"|([A-Za-z0-9]{2,}:[A-Za-z0-9@_./-]{3,})"       # namespaced ids, e.g. stg:SCWW@86, netex:Line
-    r"|([A-Za-z0-9_.-]{3,}-[A-Za-z0-9_.-]{2,})"      # hyphenated identifiers, e.g. 93-RED-y11-1
+    r"|([A-Z0-9][A-Za-z0-9_.-]*-[A-Za-z0-9_.-]*[A-Z0-9])"  # hyphenated IDs with uppercase/digits, e.g. SCWW-86, UK-2022, 93-RED-y11-1
     r"|([A-Za-z0-9_-]+\.(?:xsd|xml|yaml|json|ttl))"  # file names with known extensions
 )
 
