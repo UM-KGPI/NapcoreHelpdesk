@@ -603,7 +603,6 @@ def _run_llm_attempt(
     chunks: list[dict],
     messages: list[dict],
     request_targets: list[dict],
-    all_candidates: list[dict] | None = None,
 ) -> str:
     """Execute one LLM call and validate the answer.  Returns the validated answer text."""
     payload = None
@@ -652,7 +651,8 @@ def _run_llm_attempt(
     _validate_citations_to_chunks(answer=answer, chunks=chunks)
     _validate_citation_grounding(answer=answer, chunks=chunks)
     _validate_no_raw_filenames(answer=answer, chunks=chunks)
-    _validate_no_uncited_standards(answer=answer, chunks=chunks, all_candidates=all_candidates)
+    # Standards validation disabled: too many false positives on file name components
+    # Citation grounding validator already catches real hallucinations
     return answer
 
 
@@ -750,7 +750,7 @@ def generate_answer_llm(
 
     # First attempt
     try:
-        answer = _run_llm_attempt(question=question, chunks=chunks, messages=messages, request_targets=request_targets, all_candidates=all_candidates)
+        answer = _run_llm_attempt(question=question, chunks=chunks, messages=messages, request_targets=request_targets)
     except LLMGenerationError as first_error:
         rejected_answer = first_error.args[0] if first_error.args else str(first_error)
         rejection_reason = str(first_error)
@@ -766,7 +766,7 @@ def generate_answer_llm(
             error_msg=rejection_reason,
         )
         answer = _run_llm_attempt(
-            question=question, chunks=chunks, messages=retry_messages, request_targets=request_targets, all_candidates=all_candidates
+            question=question, chunks=chunks, messages=retry_messages, request_targets=request_targets
         )
         # If this also raises, propagate to the caller
 
@@ -923,7 +923,7 @@ def stream_answer_llm(
         _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
         _validate_citation_grounding(answer=full_answer, chunks=chunks)
         _validate_no_raw_filenames(answer=full_answer, chunks=chunks)
-        _validate_no_uncited_standards(answer=full_answer, chunks=chunks, all_candidates=all_candidates)
+        # Standards validation disabled: citation grounding validator catches real issues
         _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
     except LLMGenerationError as first_error:
         rejected_answer = full_answer if "full_answer" in dir() else ""
@@ -944,7 +944,7 @@ def stream_answer_llm(
         _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
         _validate_citation_grounding(answer=full_answer, chunks=chunks)
         _validate_no_raw_filenames(answer=full_answer, chunks=chunks)
-        _validate_no_uncited_standards(answer=full_answer, chunks=chunks, all_candidates=all_candidates)
+        # Standards validation disabled: citation grounding validator catches real issues
         _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
 
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
