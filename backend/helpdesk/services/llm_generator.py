@@ -328,6 +328,24 @@ _FILE_PATH_PATTERN = re.compile(
     r"\b[A-Za-z0-9_\-./]*[/\\][A-Za-z0-9_.\-/\\]*\.(?:xml|xsd|yaml|yml|json|ttl|csv|rdf|owl)\b"
 )
 
+# Detect a trailing JSON object that some LLMs append after the prose answer,
+# e.g.  `{"answer": "...", "citations_used": ["E3"]}` or `{"citations": [...]}`.
+_JSON_SUFFIX_PATTERN = re.compile(
+    r"\s*\{[^{}]*\"(?:answer|citations|citations_used|sources|source_ids)[^{}]*\}\s*$",
+    re.DOTALL,
+)
+
+
+def _strip_json_suffix(answer: str) -> str:
+    """
+    Remove a trailing JSON metadata object that some LLMs append to their prose.
+
+    Several LLMs, when uncertain about output format, append a JSON summary
+    like ``{"answer": "...", "citations_used": ["E3"]}`` after the prose text.
+    This corrupts markdown rendering and duplicates content in the UI.
+    """
+    return _JSON_SUFFIX_PATTERN.sub("", answer).rstrip()
+
 
 def _strip_raw_filenames(answer: str, chunks: list[dict] | None = None) -> str:
     """
@@ -852,6 +870,9 @@ def _run_llm_attempt(
     except json.JSONDecodeError as e:
         # Not JSON, treat as plain text response
         logger.debug(f"JSON parse failed: {e}, treating as plain text")
+
+    # Strip trailing JSON metadata object before any other processing.
+    answer = _strip_json_suffix(answer)
 
     # Strip hallucinated file names early; evidence file names are preserved.
     answer = _strip_raw_filenames(answer, chunks)

@@ -35,15 +35,23 @@ export default function AnswerMarkdown({ text }: AnswerMarkdownProps) {
   // Custom component overrides to ensure code blocks render
   const components: Components = {
     pre: ({ children }) => (
-      <pre>
+      <pre className="answer-code-block">
         {children}
       </pre>
     ),
-    code: ({ className, children, ...props }) => (
-      <code className={className} {...props}>
-        {children}
-      </code>
-    ),
+    code: ({ className, children, ...props }) => {
+      // Fenced code blocks are wrapped in <pre> by react-markdown; inline code is not.
+      const isInline = !className;
+      return isInline ? (
+        <code className="answer-inline-code" {...props}>
+          {children}
+        </code>
+      ) : (
+        <code className={className} {...props}>
+          {children}
+        </code>
+      );
+    },
   };
 
   return (
