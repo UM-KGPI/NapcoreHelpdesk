@@ -248,57 +248,72 @@ _FILE_PATH_PATTERN = re.compile(
 )
 
 
-def _strip_raw_filenames(answer: str) -> str:
+def _strip_raw_filenames(answer: str, chunks: list[dict] | None = None) -> str:
     """
-    Remove raw file names and paths from answer text, excluding code blocks.
+    Remove hallucinated file names from answer text, preserving evidence file names.
 
-    This cleanup is applied AFTER LLM generation as a safety measure when the LLM
-    persists in including file names despite prompt instructions. Removes both:
-    - Simple file names (example.xml)
-    - File paths with directories (folder/example.xml, path/to/file.xsd)
+    File names whose basename appears in a chunk's sourcePath are legitimate and
+    are kept in the answer.  Only file names NOT present in any evidence source
+    path are removed — these are hallucinated-but-plausible inventions.
 
-    Fenced code blocks are preserved — verbatim XML/JSON from evidence legitimately
-    contains file names in attributes/comments.
+    Fenced code blocks are preserved entirely.
     """
-    # Preserve code blocks during processing
-    code_blocks = FENCED_CODE_BLOCK_PATTERN.findall(answer)
+    # Build allowlist of basenames from evidence source paths.
+    allowed_basenames: set[str] = set()
+    for chunk in (chunks or []):
+        path = str(chunk.get("sourcePath", "") or chunk.get("source_path", ""))
+        if path:
+            allowed_basenames.add(path.rsplit("/", 1)[-1].lower())
+
+    # Preserve code blocks during processing.
+    # findall returns tuples when pattern has groups; use finditer for full match text.
+    code_block_texts: list[str] = [m.group(0) for m in FENCED_CODE_BLOCK_PATTERN.finditer(answer)]
     temp_answer = FENCED_CODE_BLOCK_PATTERN.sub("__CODE_BLOCK__", answer)
 
-    # Remove file paths (with directories)
-    temp_answer = _FILE_PATH_PATTERN.sub("", temp_answer)
+    # Remove file paths (with directories) that are not in the allowlist.
+    def _replace_if_not_allowed(m: re.Match) -> str:
+        name = m.group(0).rsplit("/", 1)[-1].lower()
+        return "" if name not in allowed_basenames else m.group(0)
 
-    # Remove bare file names
-    temp_answer = _RAW_FILENAME_PATTERN.sub("", temp_answer)
+    temp_answer = _FILE_PATH_PATTERN.sub(_replace_if_not_allowed, temp_answer)
+    temp_answer = _RAW_FILENAME_PATTERN.sub(_replace_if_not_allowed, temp_answer)
 
-    # Clean up excessive whitespace from removed names
+    # Clean up excessive whitespace from removed names.
     temp_answer = re.sub(r"\s+", " ", temp_answer).strip()
 
-    # Restore code blocks
-    for code_block in code_blocks:
+    # Restore code blocks.
+    for code_block in code_block_texts:
         temp_answer = temp_answer.replace("__CODE_BLOCK__", code_block, 1)
 
     return temp_answer
 
 
-def _validate_no_raw_filenames(answer: str) -> None:
+def _validate_no_raw_filenames(answer: str, chunks: list[dict] | None = None) -> None:
     """
-    Reject answers that contain raw file names in prose (e.g. 'NeTEx_01.xml').
+    Reject answers that contain raw file names not present in the evidence.
 
-    The LLM must reference all sources exclusively via [E#] citation markers.
-    Bare file names are banned even when they match an evidence source path —
-    the reader must follow the [E#] link to discover the actual file, keeping
-    answers traceable and preventing hallucinated-but-plausible file names from
-    slipping through.
+    File names whose basename appears in a chunk's sourcePath are legitimate —
+    they were retrieved from approved sources.  File names that are NOT in any
+    evidence source path are hallucination-prone inventions and are rejected.
 
     Fenced code blocks are excluded — verbatim XML/JSON quoted from evidence
     may legitimately contain file names inside attributes or comments.
     """
+    # Build allowlist of basenames from evidence source paths.
+    allowed_basenames: set[str] = set()
+    for chunk in (chunks or []):
+        path = str(chunk.get("sourcePath", "") or chunk.get("source_path", ""))
+        if path:
+            allowed_basenames.add(path.rsplit("/", 1)[-1].lower())
+
     clean = FENCED_CODE_BLOCK_PATTERN.sub("", answer)
     matches = _RAW_FILENAME_PATTERN.findall(clean)
-    if matches:
+    hallucinated = [m for m in matches if m.lower() not in allowed_basenames]
+    if hallucinated:
         raise LLMGenerationError(
-            f"Answer contains raw file name(s) {matches[:4]} — sources must be "
-            "referenced exclusively via [E#] citation markers, never by file name."
+            f"Answer contains file name(s) {hallucinated[:4]} not found in any "
+            "evidence block — only file names from the provided evidence may be "
+            "used; do not invent file names."
         )
 
 
@@ -605,13 +620,12 @@ def _run_llm_attempt(
     if not answer:
         raise LLMGenerationError("LLM response was empty.")
 
-    # Clean file names early, before validation
-    # This handles the common case where LLM includes file names despite instructions
-    answer = _strip_raw_filenames(answer)
+    # Strip hallucinated file names early; evidence file names are preserved.
+    answer = _strip_raw_filenames(answer, chunks)
 
     _validate_citations_to_chunks(answer=answer, chunks=chunks)
     _validate_citation_grounding(answer=answer, chunks=chunks)
-    _validate_no_raw_filenames(answer=answer)
+    _validate_no_raw_filenames(answer=answer, chunks=chunks)
     _validate_no_uncited_standards(answer=answer, chunks=chunks, all_candidates=all_candidates)
     return answer
 
@@ -878,11 +892,11 @@ def stream_answer_llm(
     rejection_reason: str | None = None
     try:
         full_answer = _collect_stream(messages)
-        # Clean file names early to prevent validation failures on these common LLM mistakes
-        full_answer = _strip_raw_filenames(full_answer)
+        # Strip hallucinated file names; evidence file names are preserved.
+        full_answer = _strip_raw_filenames(full_answer, chunks)
         _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
         _validate_citation_grounding(answer=full_answer, chunks=chunks)
-        _validate_no_raw_filenames(answer=full_answer)
+        _validate_no_raw_filenames(answer=full_answer, chunks=chunks)
         _validate_no_uncited_standards(answer=full_answer, chunks=chunks, all_candidates=all_candidates)
         _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
     except LLMGenerationError as first_error:
@@ -899,11 +913,11 @@ def stream_answer_llm(
             error_msg=rejection_reason,
         )
         full_answer = _collect_stream(retry_messages)
-        # Clean file names early to prevent validation failures on retry
-        full_answer = _strip_raw_filenames(full_answer)
+        # Strip hallucinated file names; evidence file names are preserved.
+        full_answer = _strip_raw_filenames(full_answer, chunks)
         _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
         _validate_citation_grounding(answer=full_answer, chunks=chunks)
-        _validate_no_raw_filenames(answer=full_answer)
+        _validate_no_raw_filenames(answer=full_answer, chunks=chunks)
         _validate_no_uncited_standards(answer=full_answer, chunks=chunks, all_candidates=all_candidates)
         _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
 
