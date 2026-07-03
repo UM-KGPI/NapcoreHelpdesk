@@ -1251,6 +1251,11 @@ def stream_answer_llm(
         language=language,
         all_candidates=all_candidates,
     )
+    # Mirror _build_messages' own language detection so the later
+    # _validate_answer_language() calls in this function have a value to
+    # compare against (that detection result is otherwise local to
+    # _build_messages and never returned).
+    effective_language = detect_question_language(question) or language
 
     # Buffer all tokens before yielding any — validation must pass the full
     # answer before the client receives a single character, so a failed check
