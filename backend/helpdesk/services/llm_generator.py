@@ -1223,6 +1223,31 @@ def stream_answer_llm(
     rejection_reason: str | None = None
     try:
         full_answer = _collect_stream(messages)
+
+        # CRITICAL: Unwrap JSON response if LLM is in JSON mode
+        # The LLM generates {"answer": "...", "citations_used": [...]} but we need just the text
+        logger.info(f"[STREAM_LLM_RAW] Raw response (first 250 chars): {full_answer[:250]}")
+        try:
+            response_json = json.loads(full_answer)
+            logger.info(f"[STREAM_JSON_PARSE] type={type(response_json).__name__}, keys={list(response_json.keys()) if isinstance(response_json, dict) else 'N/A'}")
+            if isinstance(response_json, dict) and "answer" in response_json:
+                full_answer = response_json["answer"]
+                logger.info(f"[STREAM_JSON_EXTRACT] Extracted answer field: {len(full_answer)} chars, starts_with: {str(full_answer)[:80]}")
+
+                # Handle double-wrapped JSON
+                if isinstance(full_answer, str) and full_answer.strip().startswith("{"):
+                    logger.info(f"[STREAM_UNWRAP_JSON] Answer field is JSON string, attempting unwrap: {full_answer[:100]}")
+                    try:
+                        inner_json = json.loads(full_answer)
+                        if isinstance(inner_json, dict) and "answer" in inner_json:
+                            full_answer = inner_json["answer"]
+                            logger.info(f"[STREAM_UNWRAP_SUCCESS] Double-wrapped answer extracted: {len(full_answer)} chars")
+                    except json.JSONDecodeError as unwrap_error:
+                        logger.warning(f"[STREAM_UNWRAP_FAILED] Could not parse answer field as JSON: {str(unwrap_error)[:100]}")
+        except json.JSONDecodeError as e:
+            # Not JSON, treat as plain text response
+            logger.debug(f"[STREAM_JSON_PARSE_FAILED] JSON parse failed: {e}, treating as plain text")
+
         # Strip hallucinated file names; evidence file names are preserved.
         full_answer = _strip_raw_filenames(full_answer, chunks)
         _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
@@ -1244,6 +1269,29 @@ def stream_answer_llm(
             error_msg=rejection_reason,
         )
         full_answer = _collect_stream(retry_messages)
+
+        # CRITICAL: Unwrap JSON response for retry attempt too
+        logger.info(f"[STREAM_RETRY_RAW] Retry response (first 250 chars): {full_answer[:250]}")
+        try:
+            response_json = json.loads(full_answer)
+            logger.info(f"[STREAM_RETRY_JSON_PARSE] type={type(response_json).__name__}, keys={list(response_json.keys()) if isinstance(response_json, dict) else 'N/A'}")
+            if isinstance(response_json, dict) and "answer" in response_json:
+                full_answer = response_json["answer"]
+                logger.info(f"[STREAM_RETRY_JSON_EXTRACT] Extracted answer field: {len(full_answer)} chars")
+
+                # Handle double-wrapped JSON
+                if isinstance(full_answer, str) and full_answer.strip().startswith("{"):
+                    logger.info(f"[STREAM_RETRY_UNWRAP_JSON] Answer field is JSON string")
+                    try:
+                        inner_json = json.loads(full_answer)
+                        if isinstance(inner_json, dict) and "answer" in inner_json:
+                            full_answer = inner_json["answer"]
+                            logger.info(f"[STREAM_RETRY_UNWRAP_SUCCESS] Double-wrapped answer extracted")
+                    except json.JSONDecodeError:
+                        logger.warning(f"[STREAM_RETRY_UNWRAP_FAILED] Could not parse inner JSON")
+        except json.JSONDecodeError:
+            logger.debug(f"[STREAM_RETRY_JSON_PARSE_FAILED] Not JSON, treating as plain text")
+
         # Strip hallucinated file names; evidence file names are preserved.
         full_answer = _strip_raw_filenames(full_answer, chunks)
         _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
