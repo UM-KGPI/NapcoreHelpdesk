@@ -630,7 +630,8 @@ def _build_messages(
     system_prompt = (
         "You are a standards helpdesk assistant. You have access to EXACTLY the evidence blocks listed below. "
         "You MUST output valid JSON only. Do not output any text outside the JSON structure.\n"
-        "CRITICAL RULES:\n"
+        f"\n🌍 LANGUAGE REQUIREMENT: {language_instruction}\n"
+        "\nCRITICAL RULES:\n"
         "⚠️ CITATION NUMBERS: Look at the evidence blocks below and count how many [E#] blocks exist. "
         "ONLY cite those exact numbers. NEVER cite any [E#] number higher than what exists in the evidence.\n"
         "1. ONLY reference information that appears in the provided evidence blocks [E1] through [E#]\n"
@@ -664,7 +665,6 @@ def _build_messages(
         "  ```\n"
         "- Use actual line breaks in code blocks (not escaped \\n characters)\n"
         "- Keep code blocks to 3-15 lines to remain readable\n"
-        f"\n{language_instruction}"
     )
     if _question_requests_verbatim_example(question):
         system_prompt = (
