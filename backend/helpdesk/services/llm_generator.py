@@ -387,6 +387,19 @@ def _strip_raw_filenames(answer: str, chunks: list[dict] | None = None) -> str:
     return temp_answer
 
 
+def _strip_stray_list_markers(answer: str) -> str:
+    """
+    Remove stray numeric list markers (e.g., "1\n") that appear before code blocks.
+
+    Some LLMs generate markdown like "text:\n\n1\n```xml" instead of properly
+    formatted lists. This strips the orphaned list number to prevent "1" from
+    appearing on its own line in the rendered output.
+    """
+    # Remove numeric list markers (1, 2, etc.) that appear on their own line
+    # immediately before a code fence (allowing optional whitespace).
+    return re.sub(r"^\d+\n(?=```)", "", answer, flags=re.MULTILINE)
+
+
 def _validate_no_raw_filenames(answer: str, chunks: list[dict] | None = None) -> None:
     """
     Reject answers that contain raw file names not present in the evidence.
@@ -860,6 +873,9 @@ def _run_llm_attempt(
     # Strip hallucinated file names early; evidence file names are preserved.
     answer = _strip_raw_filenames(answer, chunks)
 
+    # Strip stray list markers before code blocks (e.g., "1\n```" → "```")
+    answer = _strip_stray_list_markers(answer)
+
     # Fix out-of-range citations before validation (LLM may hallucinate [E10] when only [E1-E6] exist)
     max_chunk_idx = len(chunks)
     answer = _fix_out_of_range_citations(answer, max_chunk_idx)
@@ -1267,6 +1283,7 @@ def stream_answer_llm(
         # Strip hallucinated file names; evidence file names are preserved.
         full_answer = _strip_json_suffix(full_answer)
         full_answer = _strip_raw_filenames(full_answer, chunks)
+        full_answer = _strip_stray_list_markers(full_answer)
         _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
         _validate_citation_grounding(answer=full_answer, chunks=chunks)
         _validate_no_raw_filenames(answer=full_answer, chunks=chunks)
@@ -1314,6 +1331,7 @@ def stream_answer_llm(
         # Strip hallucinated file names; evidence file names are preserved.
         full_answer = _strip_json_suffix(full_answer)
         full_answer = _strip_raw_filenames(full_answer, chunks)
+        full_answer = _strip_stray_list_markers(full_answer)
         _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
         _validate_citation_grounding(answer=full_answer, chunks=chunks)
         _validate_no_raw_filenames(answer=full_answer, chunks=chunks)
