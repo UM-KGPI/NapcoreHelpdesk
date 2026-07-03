@@ -46,6 +46,7 @@ from helpdesk.models import SourceChunk
 from helpdesk.db_fields import HAS_NATIVE_PGVECTOR
 from helpdesk.services.embeddings import build_text_embedding, cosine_similarity, normalize_text_tokens
 from helpdesk.services.concept_extractor import extract_concepts, build_enriched_query
+from helpdesk.services.xsd_schema_extractor import retrieve_schema_definitions_for_concepts
 from helpdesk.services.example_retrieval import (
     format_examples_as_chunks,
     retrieve_concept_examples_with_fallback,
@@ -1132,10 +1133,31 @@ def retrieve_chunks_with_trace(
     stage_start = time.perf_counter()
     domain_concepts = extract_concepts(question)
     domain_concept_terms = []
+    xsd_schema_chunks = []
+
     if domain_concepts.get("properties"):
         domain_concept_terms.extend(domain_concepts["properties"])
+        # Try to retrieve XSD schema definitions for properties
+        for prop in domain_concepts["properties"]:
+            # Convert "departure time" to "DepartureTime" for XSD lookup
+            prop_camel = ''.join(word.capitalize() for word in prop.split())
+            try:
+                schema_chunks = retrieve_schema_definitions_for_concepts([prop_camel], standard="NeTEx")
+                xsd_schema_chunks.extend(schema_chunks)
+            except Exception as e:
+                logger.debug(f"Could not retrieve XSD definition for {prop}: {e}")
+
     if domain_concepts.get("classes"):
         domain_concept_terms.extend(domain_concepts["classes"])
+        # Try to retrieve XSD schema definitions for classes
+        for cls in domain_concepts["classes"]:
+            cls_camel = ''.join(word.capitalize() for word in cls.split())
+            try:
+                schema_chunks = retrieve_schema_definitions_for_concepts([cls_camel], standard="NeTEx")
+                xsd_schema_chunks.extend(schema_chunks)
+            except Exception as e:
+                logger.debug(f"Could not retrieve XSD definition for {cls}: {e}")
+
     if domain_concepts.get("standards"):
         domain_concept_terms.extend(domain_concepts["standards"])
 
@@ -1419,6 +1441,33 @@ def retrieve_chunks_with_trace(
             }
         )
     _record_stage("candidateScoringMs", stage_start)
+
+    # Add XSD schema definitions if they were retrieved for domain concepts
+    # These chunks have high quality scores and provide structural information
+    if xsd_schema_chunks:
+        for xsd_chunk in xsd_schema_chunks:
+            candidates.append(
+                {
+                    "text": xsd_chunk["text"],
+                    "score": 0.95,  # High quality score for schema definitions
+                    "_rankScore": 0.95,
+                    "_vectorScore": 0.90,
+                    "repositoryUrl": xsd_chunk.get("repositoryUrl", ""),
+                    "commitSha": xsd_chunk.get("commitSha", "v2.0"),
+                    "sourcePath": xsd_chunk.get("sourcePath", "xsd/netex_framework/netex_frame.xsd"),
+                    "chunkId": xsd_chunk.get("chunkId", ""),
+                    "label": xsd_chunk.get("label", ""),
+                    "standardsScope": xsd_chunk.get("standards_scope", ["NeTEx"]),
+                    "chunkType": "xsd-definition",
+                    "docType": xsd_chunk.get("doc_type", "xsd-definition"),
+                    "heading": xsd_chunk.get("heading", ""),
+                    "retrievalEventId": f"re-{uuid4().hex[:8]}",
+                    "_graphContribution": 0.0,
+                    "_graphHit": False,
+                    "_graphProvenanceConceptIds": [],
+                }
+            )
+        logger.info(f"Added {len(xsd_schema_chunks)} XSD schema definition chunks to candidates")
 
     stage_start = time.perf_counter()
     candidates.sort(key=lambda value: (value["_rankScore"], value["score"]), reverse=True)
