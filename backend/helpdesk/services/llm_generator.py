@@ -899,13 +899,26 @@ def generate_answer_llm(
             rejected_answer=rejected_answer,
             error_msg=rejection_reason,
         )
-        # Retry without validation: accept the answer even if it would fail validation,
-        # since we've given the LLM explicit feedback to fix the issue.
-        # If retry still generates problematic content, that's a sign the LLM can't help further.
-        answer = _run_llm_attempt(
-            question=question, chunks=chunks, messages=retry_messages, request_targets=request_targets,
-            validate=False
-        )
+        try:
+            # Retry with validation enabled. If it fails validation too, we catch the exception
+            # and return the answer anyway since we've given explicit feedback.
+            answer = _run_llm_attempt(
+                question=question, chunks=chunks, messages=retry_messages, request_targets=request_targets,
+                validate=True
+            )
+        except LLMGenerationError as retry_error:
+            # Retry failed validation too. Log it but return the answer anyway.
+            # The feedback was the best guidance we could provide.
+            logger.warning(
+                "LLM retry failed validation too, but returning answer anyway. Reason: %s",
+                str(retry_error)[:200],
+                extra={"question": question[:120]},
+            )
+            # Re-run without validation to get the raw answer
+            answer = _run_llm_attempt(
+                question=question, chunks=chunks, messages=retry_messages, request_targets=request_targets,
+                validate=False
+            )
 
     _validate_grounded_example_output(question=question, answer=answer, chunks=chunks)
 
