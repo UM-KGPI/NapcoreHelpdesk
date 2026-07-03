@@ -621,12 +621,20 @@ def _build_messages(
             f"Editorial baseline (approved directional answer — enrich and ground it using the evidence blocks below, do not copy verbatim):\n{faq_hint}\n\n"
         )
 
+    # Count evidence blocks to explicitly tell the LLM the valid citation range
+    num_blocks = len(context_lines)
+    citation_range_warning = (
+        f"\n⚠️ CRITICAL CITATION RANGE: You have {num_blocks} evidence blocks: [E1] through [E{num_blocks}].\n"
+        f"NEVER cite [E{num_blocks+1}], [E{num_blocks+2}], or any higher numbers. Only use [E1] through [E{num_blocks}].\n\n"
+    )
+
     user_prompt = (
         f"Question:\n{question}\n\n"
         f"Requested scope: {scope_text}\n\n"
         f"{faq_section}"
         f"{candidate_index}"
-        f"AVAILABLE EVIDENCE BLOCKS (only these may be cited):\n{context}\n\n"
+        f"AVAILABLE EVIDENCE BLOCKS (only these may be cited):\n{context}"
+        f"{citation_range_warning}"
         "STEP 1 — EVIDENCE MAPPING (do this silently before writing):\n"
         "For each fact you plan to state, identify the exact phrase in the evidence block that supports it. "
         "CRITICAL: Before mentioning ANY SPECIFIC EXAMPLE (like 'SCWW-86', 'LUAS Line 93', specific file names), "
