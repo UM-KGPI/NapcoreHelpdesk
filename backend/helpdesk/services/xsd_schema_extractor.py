@@ -29,30 +29,39 @@ from urllib.error import URLError
 
 logger = logging.getLogger(__name__)
 
-# NeTEx XSD file URLs (main schema files)
-# Note: These URLs must be configured for your environment
-# Options:
-# 1. Local file paths (if XSD files are cloned locally)
-# 2. GitHub raw content URLs (verify correct directory structure)
-# 3. Schema repository HTTP server
-# Set via NETEX_XSD_URLS environment variable or settings
-NETEX_XSD_URLS = {
-    # Using blob URLs pattern - adjust domain/path for your repository mirror
-    "netex_frame": "https://raw.githubusercontent.com/TransmodelEcosystem/NeTEx/master/xsd/netex_framework/netex_frame.xsd",
-    "netex_part2": "https://raw.githubusercontent.com/TransmodelEcosystem/NeTEx/master/xsd/netex_part_2/netex_part2_part2_1_journeys.xsd",
+# Local XSD file paths (repositories cloned locally)
+# Search multiple locations for element definitions
+NETEX_XSD_PATHS = {
+    "journey_times": "/Users/andrejt/Research/repositories/git/NeTEx/xsd/netex_part_2/part2_journeyTimes/netex_passingTimes_version.xsd",
+    "service_journey": "/Users/andrejt/Research/repositories/git/NeTEx/xsd/netex_part_2/part2_journeyTimes/netex_serviceJourney_version.xsd",
+    "netex_framework": "/Users/andrejt/Research/repositories/git/NeTEx/xsd/netex_framework/netex_all_objects_framework.xsd",
+    "netex_part1": "/Users/andrejt/Research/repositories/git/NeTEx/xsd/netex_part_1/netex_all_objects_part1.xsd",
+    "netex_part2": "/Users/andrejt/Research/repositories/git/NeTEx/xsd/netex_part_2/netex_all_objects_part2.xsd",
+}
+
+SIRI_XSD_PATHS = {
+    "siri_framework": "/Users/andrejt/Research/repositories/git/SIRI/xsd/siri_all_framework-v2.0.xsd",
+}
+
+OPRA_XSD_PATHS = {
+    "opra_framework": "/Users/andrejt/Research/repositories/git/OpRa/xsd/opra_all_objects.xsd",
+}
+
+# Map standards to their XSD paths
+STANDARD_XSD_MAP = {
+    "NeTEx": NETEX_XSD_PATHS,
+    "SIRI": SIRI_XSD_PATHS,
+    "OpRa": OPRA_XSD_PATHS,
 }
 
 
-def _fetch_xsd_content(url: str) -> Optional[str]:
-    """Fetch XSD file content from GitHub."""
+def _read_xsd_file(file_path: str) -> Optional[str]:
+    """Read XSD file from local filesystem."""
     try:
-        # Create SSL context - bypass verification for development/testing
-        # In production, use proper certificate verification
-        ssl_context = ssl._create_unverified_context()
-        with urlopen(url, timeout=10, context=ssl_context) as response:
-            return response.read().decode("utf-8")
-    except (URLError, Exception) as e:
-        logger.warning(f"Failed to fetch XSD from {url}: {e}")
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except (FileNotFoundError, IOError) as e:
+        logger.debug(f"Failed to read XSD file {file_path}: {e}")
         return None
 
 
@@ -108,31 +117,34 @@ def _find_element_in_xsd(xsd_content: str, element_name: str) -> Optional[str]:
 
 def extract_schema_definition(element_name: str, standard: str = "NeTEx") -> Optional[str]:
     """
-    Extract XSD schema definition for an element name.
+    Extract XSD schema definition for an element name from local XSD files.
 
     Args:
         element_name: XML element name (e.g., "DepartureTime", "Journey")
-        standard: Standard name (currently only "NeTEx" supported)
+        standard: Standard name ("NeTEx", "SIRI", "OpRa")
 
     Returns:
         XSD definition snippet, or None if not found
     """
-    if standard.lower() != "netex":
-        logger.warning(f"Standard {standard} not yet supported for XSD extraction")
+    xsd_paths = STANDARD_XSD_MAP.get(standard)
+    if not xsd_paths:
+        logger.warning(f"Standard {standard} not configured for XSD extraction")
         return None
 
-    # Try the main NeTEx frame schema first (usually has core definitions)
-    for schema_name, url in NETEX_XSD_URLS.items():
-        logger.debug(f"Searching {schema_name} for {element_name}")
-        xsd_content = _fetch_xsd_content(url)
+    # Try each schema file for the standard
+    for schema_name, file_path in xsd_paths.items():
+        logger.debug(f"Searching {schema_name} ({file_path}) for {element_name}")
+        xsd_content = _read_xsd_file(file_path)
         if not xsd_content:
+            logger.debug(f"Could not read XSD file: {file_path}")
             continue
 
         definition = _find_element_in_xsd(xsd_content, element_name)
         if definition:
-            logger.debug(f"Found {element_name} in {schema_name}")
+            logger.info(f"Found {element_name} in {schema_name}")
             return definition
 
+    logger.debug(f"Element {element_name} not found in any {standard} XSD schema")
     return None
 
 
@@ -161,6 +173,15 @@ Definition:
 {definition_clean}
 """
 
+    # Map standards to their GitHub repository URLs
+    repo_urls = {
+        "NeTEx": "https://github.com/TransmodelEcosystem/NeTEx",
+        "SIRI": "https://github.com/TransmodelEcosystem/SIRI",
+        "OpRa": "https://github.com/TransmodelEcosystem/OpRa",
+    }
+
+    repo_url = repo_urls.get(standard, "https://github.com/TransmodelEcosystem/NeTEx")
+
     return {
         "id": chunk_id_int,
         "chunkId": chunk_id_str,
@@ -173,12 +194,12 @@ Definition:
         "standards_scope": [standard],
         "match_type": "schema_definition",
         "similarity_reason": f"XSD schema definition for {element_name} element",
-        "repositoryUrl": NETEX_XSD_URLS.get("netex_frame", ""),
-        "repository_url": NETEX_XSD_URLS.get("netex_frame", ""),
-        "commitSha": "v2.0",
-        "commit_sha": "v2.0",
-        "sourcePath": "xsd/netex_framework/netex_frame.xsd",
-        "source_path": "xsd/netex_framework/netex_frame.xsd",
+        "repositoryUrl": repo_url,
+        "repository_url": repo_url,
+        "commitSha": "master",
+        "commit_sha": "master",
+        "sourcePath": "xsd/netex_framework/",
+        "source_path": "xsd/netex_framework/",
         "embedding_vector": None,
         "heading": f"{element_name} - {standard} XSD Definition",
     }
