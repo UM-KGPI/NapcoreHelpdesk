@@ -707,6 +707,8 @@ def _run_llm_attempt(
     if not answer:
         raise LLMGenerationError("LLM response was empty.")
 
+    logger.info(f"Raw LLM response (first 200 chars): {answer[:200]}")
+
     # Parse JSON response if in JSON mode
     try:
         response_json = json.loads(answer)
@@ -739,19 +741,35 @@ def _run_llm_attempt(
 
     if validate:
         logger.debug(f"Validating answer after stripping: {len(answer)} chars, {len(chunks)} chunks")
-        logger.info(f"Running citation validation on: {answer[:100]}")
-        _validate_citations_to_chunks(answer=answer, chunks=chunks)
-        logger.info("Citation validation passed")
-        _validate_citation_grounding(answer=answer, chunks=chunks)
-        logger.info("Grounding validation passed")
-        _validate_no_raw_filenames(answer=answer, chunks=chunks)
-        logger.info("Filename validation passed")
-        logger.info(f"Running specificity validation on: {answer[:80]}")
-        _validate_answer_has_specificity(answer=answer)
-        logger.info("All validators passed!")
-        logger.debug("All validation checks passed")
+        logger.info(f"[VALIDATE=True] Running validation on: {answer[:100]}")
+        try:
+            _validate_citations_to_chunks(answer=answer, chunks=chunks)
+            logger.info("[VALIDATE=True] Citation validation PASSED")
+        except Exception as e:
+            logger.info(f"[VALIDATE=True] Citation validation FAILED: {str(e)[:100]}")
+            raise
+        try:
+            _validate_citation_grounding(answer=answer, chunks=chunks)
+            logger.info("[VALIDATE=True] Grounding validation PASSED")
+        except Exception as e:
+            logger.info(f"[VALIDATE=True] Grounding validation FAILED: {str(e)[:100]}")
+            raise
+        try:
+            _validate_no_raw_filenames(answer=answer, chunks=chunks)
+            logger.info("[VALIDATE=True] Filename validation PASSED")
+        except Exception as e:
+            logger.info(f"[VALIDATE=True] Filename validation FAILED: {str(e)[:100]}")
+            raise
+        try:
+            logger.info(f"[VALIDATE=True] Running specificity validation")
+            _validate_answer_has_specificity(answer=answer)
+            logger.info("[VALIDATE=True] Specificity validation PASSED")
+        except Exception as e:
+            logger.info(f"[VALIDATE=True] Specificity validation FAILED: {str(e)[:100]}")
+            raise
+        logger.info("[VALIDATE=True] All validators PASSED!")
     else:
-        logger.info(f"Skipping validation (retry attempt): {answer[:80]}")
+        logger.info(f"[VALIDATE=False] Skipping validation (retry attempt): {answer[:100]}")
     # Standards validation disabled: too many false positives on file name components
     # Citation grounding validator already catches real hallucinations
     return answer
