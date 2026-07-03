@@ -19,12 +19,14 @@ interface AnswerMarkdownProps {
 }
 
 export default function AnswerMarkdown({ text }: AnswerMarkdownProps) {
-  // GFM fenced code blocks must start at the beginning of a line.
-  // The LLM sometimes places the opening fence mid-sentence, e.g.:
-  //   "For example: ```xml\n<...>\n```"
-  // Inserting a newline before any ``` that is not already line-initial
-  // makes react-markdown parse it as a proper fenced code block.
-  const normalised = text.replace(/([^\n])(```)/g, "$1\n$2");
+  // GFM fenced code blocks must start and end at the beginning of a line.
+  // The LLM sometimes places fences mid-sentence, e.g.:
+  //   "For example: ```xml\n<...>\n``` [E2] 2. Next section"
+  // We normalize by:
+  // 1. Inserting newline before opening ``` that is not line-initial
+  // 2. Inserting newline after closing ``` when followed by non-whitespace
+  let normalised = text.replace(/([^\n])(```)/g, "$1\n$2");  // opening fence
+  normalised = normalised.replace(/(```[A-Za-z0-9_-]*)([ \t]*[^\n\s])/g, "$1\n$2");  // closing fence
 
   return (
     <div className="answer-markdown">
