@@ -11,13 +11,14 @@
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import type { Components } from "react-markdown";
 
 interface AnswerMarkdownProps {
   text: string;
 }
 
 export default function AnswerMarkdown({ text }: AnswerMarkdownProps) {
-  // Comprehensive debug logging
+  // Debug logging
   const hasCodeBlocks = text.includes("```");
   const hasBold = text.includes("**");
   const lines = text.split("\n").length;
@@ -31,15 +32,28 @@ export default function AnswerMarkdown({ text }: AnswerMarkdownProps) {
     first200: text.substring(0, 200),
   });
 
-  // Check for literal \n escape sequences
-  const hasEscapedNewlines = text.includes("\\n");
-  if (hasEscapedNewlines) {
-    console.warn("[AnswerMarkdown] WARNING: Text contains literal \\n escape sequences!");
-  }
+  // Custom component overrides to ensure code blocks render
+  const components: Components = {
+    pre: ({ children }) => (
+      <pre>
+        {children}
+      </pre>
+    ),
+    code: ({ className, children, ...props }) => (
+      <code className={className} {...props}>
+        {children}
+      </code>
+    ),
+  };
 
   return (
     <div className="answer-markdown">
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={components}
+      >
+        {text}
+      </ReactMarkdown>
     </div>
   );
 }
