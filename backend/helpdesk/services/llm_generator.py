@@ -706,6 +706,17 @@ def _run_llm_attempt(
         if isinstance(response_json, dict) and "answer" in response_json:
             answer = response_json["answer"]
             logger.debug(f"Extracted answer field: {len(answer)} chars")
+
+            # Handle double-wrapped JSON: if the answer field itself is a JSON string, parse it
+            if isinstance(answer, str) and answer.strip().startswith("{"):
+                try:
+                    inner_json = json.loads(answer)
+                    if isinstance(inner_json, dict) and "answer" in inner_json:
+                        answer = inner_json["answer"]
+                        logger.debug(f"Extracted double-wrapped answer: {len(answer)} chars")
+                except json.JSONDecodeError:
+                    # Not JSON, keep as-is
+                    pass
         else:
             # If not in expected JSON format, try to use as-is
             if isinstance(response_json, dict):
