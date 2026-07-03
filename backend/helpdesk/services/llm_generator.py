@@ -355,6 +355,30 @@ def _validate_no_raw_filenames(answer: str, chunks: list[dict] | None = None) ->
         )
 
 
+def _validate_answer_has_specificity(answer: str) -> None:
+    """
+    Reject boilerplate/generic answers that contain only ubiquitous terms.
+
+    Answers like "follow the specification and validate with examples" have no
+    specific content and are hallucinated filler. This check ensures answers
+    contain at least one specific technical term (file name, concept ID, or
+    PascalCase element name) beyond generic language.
+    """
+    # Check if answer contains any strong or weak terms
+    strong_terms, weak_terms = _classify_terms(answer)
+
+    if not strong_terms and not weak_terms:
+        # Answer has NO specific technical terms - pure boilerplate
+        # Check answer length; very short answers may be legitimately generic
+        answer_clean = CITATION_PATTERN.sub("", answer).strip()
+        if len(answer_clean) > 50:  # Only reject if it's substantial text
+            raise LLMGenerationError(
+                f"Answer contains only generic language with no specific technical content. "
+                f"Answers must reference specific concepts, examples, or identifiers from evidence, "
+                f"not generic advice. Answer: '{answer_clean[:100]}'"
+            )
+
+
 _KNOWN_STANDARD_REFS = {
     "SCWW", "LUAS", "NeTEx", "IFOPT", "SIRI", "GTFS", "TPEG",
     "Transmodel", "PRTC", "OGC"
@@ -686,6 +710,7 @@ def _run_llm_attempt(
     _validate_citations_to_chunks(answer=answer, chunks=chunks)
     _validate_citation_grounding(answer=answer, chunks=chunks)
     _validate_no_raw_filenames(answer=answer, chunks=chunks)
+    _validate_answer_has_specificity(answer=answer)
     logger.debug("All validation checks passed")
     # Standards validation disabled: too many false positives on file name components
     # Citation grounding validator already catches real hallucinations
