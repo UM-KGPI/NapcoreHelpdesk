@@ -719,8 +719,7 @@ def _run_llm_attempt(
     _validate_citations_to_chunks(answer=answer, chunks=chunks)
     _validate_citation_grounding(answer=answer, chunks=chunks)
     _validate_no_raw_filenames(answer=answer, chunks=chunks)
-    # Specificity validator disabled: too aggressive, rejects legitimate answers and causes worse retries
-    # _validate_answer_has_specificity(answer=answer)
+    _validate_answer_has_specificity(answer=answer)
     logger.debug("All validation checks passed")
     # Standards validation disabled: too many false positives on file name components
     # Citation grounding validator already catches real hallucinations
