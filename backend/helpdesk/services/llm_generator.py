@@ -365,24 +365,33 @@ def _validate_no_raw_filenames(answer: str, chunks: list[dict] | None = None) ->
 
 
 def _is_pure_boilerplate(answer: str) -> bool:
-    """Check if answer is the generic boilerplate response."""
+    """Check if answer is the EXACT generic boilerplate we keep seeing.
+
+    Only detects the specific boilerplate pattern, not just any answer containing
+    words like "follow" or "specification" (which would create false positives).
+    """
     # Remove citations to check the raw text
     clean = CITATION_PATTERN.sub("", answer).strip()
     clean_lower = clean.lower()
 
-    # Detect the exact boilerplate patterns we keep seeing
-    boilerplate_phrases = [
-        "based on retrieved approved-source evidence",
-        "follow the relevant profile specification",
-        "validate implementation against published examples",
-        "follow the specification",
-        "validate with examples",
-        "follow published examples or test cases",
+    # Only detect the EXACT boilerplate pattern we've seen repeatedly.
+    # This is the deterministic fallback answer from grounded_generator.py
+    exact_boilerplate_start = "based on retrieved approved-source evidence"
+
+    # Check if it starts with the telltale boilerplate beginning
+    if not clean_lower.startswith(exact_boilerplate_start):
+        return False
+
+    # Also check for the specific keywords that only appear in boilerplate
+    must_have_keywords = [
+        "follow the",  # "follow the specification" or "follow the relevant"
+        "validate implementation",  # specific to boilerplate
+        "published examples or test cases",  # specific phrase
     ]
 
-    # If answer contains multiple boilerplate phrases, it's pure boilerplate
-    matches = sum(1 for phrase in boilerplate_phrases if phrase in clean_lower)
-    return matches >= 2
+    # All three keywords must be present for it to be the boilerplate
+    has_all = all(keyword in clean_lower for keyword in must_have_keywords)
+    return has_all
 
 
 def _validate_answer_has_specificity(answer: str) -> None:
@@ -746,7 +755,7 @@ def _run_llm_attempt(
     if not answer:
         raise LLMGenerationError("LLM response was empty.")
 
-    logger.info(f"Raw LLM response (first 200 chars): {answer[:200]}")
+    logger.info(f"[LLM_RAW] Raw response (first 250 chars): {answer[:250]}")
 
     # Parse JSON response if in JSON mode
     try:
@@ -958,7 +967,10 @@ def generate_answer_llm(
 
     # FINAL ENFORCEMENT: If answer is still pure boilerplate despite all attempts,
     # replace it with an honest "unable to answer" message rather than returning generic advice
-    if _is_pure_boilerplate(answer):
+    is_boilerplate = _is_pure_boilerplate(answer)
+    logger.info(f"[FINAL_CHECK] Boilerplate detected: {is_boilerplate}, answer_preview: {answer[:100]}")
+
+    if is_boilerplate:
         logger.warning(
             "FINAL ENFORCEMENT: Answer was detected as pure boilerplate at end of generation. "
             "Replacing with honest answer.",
