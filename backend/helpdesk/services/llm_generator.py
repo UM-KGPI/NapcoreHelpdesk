@@ -459,6 +459,35 @@ def _is_pure_boilerplate(answer: str) -> bool:
     return has_all
 
 
+def _validate_answer_language(answer: str, question: str, target_language: str | None = None) -> None:
+    """
+    Validate that answer is in the same language as the question.
+
+    If question is non-English but answer is in English, raise error to trigger retry
+    with more aggressive language instruction.
+    """
+    if not target_language or target_language.lower() in ("en", "english"):
+        return  # English questions don't need language validation
+
+    # Detect the language of the answer
+    try:
+        from helpdesk.services.question_preprocessor import detect_question_language
+        answer_lang = detect_question_language(answer)
+
+        # Normalize language names for comparison
+        target_normalized = target_language.lower().strip()
+        answer_normalized = (answer_lang or "").lower().strip()
+
+        # Check if answer is in a different language (especially if it's English)
+        if answer_normalized in ("english", "en") and target_normalized not in ("english", "en"):
+            raise LLMGenerationError(
+                f"Answer is in English but question is in {target_language}. "
+                f"LLM did not respect language instruction. Please retry."
+            )
+    except Exception as e:
+        logger.warning(f"Language validation check failed: {e}")
+
+
 def _validate_answer_has_specificity(answer: str) -> None:
     """
     Reject boilerplate/generic answers that contain only ubiquitous terms.
@@ -929,6 +958,11 @@ def _append_feedback_message(messages: list[dict], rejected_answer: str, error_m
     if "citation" in error_msg.lower() or "not in" in error_msg.lower() or "evidence" in error_msg.lower():
         example_hint = "\n- CRITICAL: Do NOT mention specific numbered examples (like 'SCWW-86' or 'LUAS Line 93') unless you find those EXACT examples in the evidence blocks. You can mention generic standard names if they appear in evidence, but NOT specific numbered instances you know from training."
 
+    # Add specific guidance for language errors
+    language_hint = ""
+    if "language" in error_msg.lower() or "english" in error_msg.lower():
+        language_hint = "\n- CRITICAL LANGUAGE REQUIREMENT: You MUST write your entire answer in the language of the question. Do NOT respond in English when the question is in another language. Write EVERYTHING in that language, including all text and explanations."
+
     feedback = (
         f"Your previous answer was REJECTED. It did not meet requirements.\n"
         f"Rejected answer: {rejected_answer[:400]}\n"
@@ -941,7 +975,7 @@ def _append_feedback_message(messages: list[dict], rejected_answer: str, error_m
         "5. If evidence shows code/XML, include a snippet with element names\n"
         "6. If you cannot find specific technical details, say: 'The provided evidence does not contain specific details about this'\n"
         "7. EVERY sentence must have [E#] citation to the exact evidence block"
-        f"{file_name_hint}{example_hint}"
+        f"{file_name_hint}{example_hint}{language_hint}"
     )
     return messages + [
         {"role": "assistant", "content": rejected_answer},
@@ -1285,6 +1319,7 @@ def stream_answer_llm(
         full_answer = _strip_json_suffix(full_answer)
         full_answer = _strip_raw_filenames(full_answer, chunks)
         full_answer = _strip_stray_list_markers(full_answer)
+        _validate_answer_language(answer=full_answer, question=question, target_language=effective_language)
         _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
         _validate_citation_grounding(answer=full_answer, chunks=chunks)
         _validate_no_raw_filenames(answer=full_answer, chunks=chunks)
@@ -1333,6 +1368,7 @@ def stream_answer_llm(
         full_answer = _strip_json_suffix(full_answer)
         full_answer = _strip_raw_filenames(full_answer, chunks)
         full_answer = _strip_stray_list_markers(full_answer)
+        _validate_answer_language(answer=full_answer, question=question, target_language=effective_language)
         _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
         _validate_citation_grounding(answer=full_answer, chunks=chunks)
         _validate_no_raw_filenames(answer=full_answer, chunks=chunks)
