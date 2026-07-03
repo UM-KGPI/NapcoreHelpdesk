@@ -364,6 +364,27 @@ def _validate_no_raw_filenames(answer: str, chunks: list[dict] | None = None) ->
         )
 
 
+def _is_pure_boilerplate(answer: str) -> bool:
+    """Check if answer is the generic boilerplate response."""
+    # Remove citations to check the raw text
+    clean = CITATION_PATTERN.sub("", answer).strip()
+    clean_lower = clean.lower()
+
+    # Detect the exact boilerplate patterns we keep seeing
+    boilerplate_phrases = [
+        "based on retrieved approved-source evidence",
+        "follow the relevant profile specification",
+        "validate implementation against published examples",
+        "follow the specification",
+        "validate with examples",
+        "follow published examples or test cases",
+    ]
+
+    # If answer contains multiple boilerplate phrases, it's pure boilerplate
+    matches = sum(1 for phrase in boilerplate_phrases if phrase in clean_lower)
+    return matches >= 2
+
+
 def _validate_answer_has_specificity(answer: str) -> None:
     """
     Reject boilerplate/generic answers that contain only ubiquitous terms.
@@ -373,6 +394,13 @@ def _validate_answer_has_specificity(answer: str) -> None:
     contain at least one specific technical term (file name, concept ID, or
     PascalCase element name) beyond generic language.
     """
+    # First check: is this pure boilerplate?
+    if _is_pure_boilerplate(answer):
+        raise LLMGenerationError(
+            f"Answer is pure boilerplate generic advice. Must include specific technical "
+            f"content from evidence (XML elements, attributes, code snippets, etc.)"
+        )
+
     # Check if answer contains any strong or weak terms
     strong_terms, weak_terms = _classify_terms(answer)
 
@@ -927,6 +955,22 @@ def generate_answer_llm(
 
     # Final safety: strip any remaining file names (in case validation passed but LLM still included them)
     answer = _strip_raw_filenames(answer, chunks)
+
+    # FINAL ENFORCEMENT: If answer is still pure boilerplate despite all attempts,
+    # replace it with an honest "unable to answer" message rather than returning generic advice
+    if _is_pure_boilerplate(answer):
+        logger.warning(
+            "FINAL ENFORCEMENT: Answer was detected as pure boilerplate at end of generation. "
+            "Replacing with honest answer.",
+            extra={"question": question[:120], "boilerplate_answer": answer[:200]},
+        )
+        answer = (
+            "The provided evidence does not contain specific technical details about this topic. "
+            "To answer this question properly, I would need evidence blocks that include specific "
+            "XML element names, attribute definitions, or code examples."
+        )
+        confidence = 0.0
+        review_required = True
 
     return {
         "answer": answer,
