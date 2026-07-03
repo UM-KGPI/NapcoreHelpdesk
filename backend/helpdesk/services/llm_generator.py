@@ -689,6 +689,7 @@ def _build_messages(
     )
 
     user_prompt = (
+        f"🌍 RESPOND IN: {effective_language if (effective_language or '').lower() not in ('en', 'english') else 'English (detect question language)'}\n\n"
         f"Question:\n{question}\n\n"
         f"Requested scope: {scope_text}\n\n"
         f"{faq_section}"
