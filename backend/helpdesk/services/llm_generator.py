@@ -537,6 +537,13 @@ def _build_messages(
         "6. Do NOT paraphrase or infer beyond what is explicitly stated in the evidence\n"
         "7. Stay within requested standards scope\n"
         "8. NEVER write file names in answer text. Reference sources ONLY via [E#] citations.\n"
+        "9. FORBIDDEN PATTERNS — NEVER generate these:\n"
+        "   - Do NOT say 'follow the specification' or 'validate implementation'\n"
+        "   - Do NOT say 'follow the relevant profile specification'\n"
+        "   - Do NOT say 'follow published examples or test cases'\n"
+        "   - Do NOT say 'Based on retrieved approved-source evidence, follow...'\n"
+        "   - Do NOT give generic advice about standards or specifications\n"
+        "   - ONLY extract and present specific technical information from the evidence\n"
         "\n"
         "OUTPUT FORMAT (strict JSON):\n"
         '{"answer": "Your answer text here with [E1] [E2] citations inline.", "citations_used": ["E1", "E2"]}'
