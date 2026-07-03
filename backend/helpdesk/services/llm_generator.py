@@ -624,6 +624,15 @@ def _build_messages(
         "\n"
         "OUTPUT FORMAT (strict JSON):\n"
         '{"answer": "Your answer text here with [E1] [E2] citations inline.", "citations_used": ["E1", "E2"]}'
+        "\n\nMARKDOWN FORMATTING RULES:\n"
+        "- Use **bold** for emphasis on key concepts\n"
+        "- Use `inline code` for XML element names, attribute names, and values (e.g., `<DepartureTime>`, `version=\"any\"`)\n"
+        "- When showing XML/JSON code snippets (3+ lines), wrap them in triple backticks with language identifier:\n"
+        "  ```xml\n"
+        "  <DepartureTime>09:54:00</DepartureTime>\n"
+        "  ```\n"
+        "- Use actual line breaks in code blocks (not escaped \\n characters)\n"
+        "- Keep code blocks to 3-15 lines to remain readable\n"
         f"\n{language_instruction}"
     )
     if _question_requests_verbatim_example(question):
