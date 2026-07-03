@@ -702,15 +702,18 @@ def _run_llm_attempt(
     # Parse JSON response if in JSON mode
     try:
         response_json = json.loads(answer)
+        logger.debug(f"JSON parsed: type={type(response_json)}, keys={response_json.keys() if isinstance(response_json, dict) else 'N/A'}")
         if isinstance(response_json, dict) and "answer" in response_json:
             answer = response_json["answer"]
+            logger.debug(f"Extracted answer field: {len(answer)} chars")
         else:
             # If not in expected JSON format, try to use as-is
             if isinstance(response_json, dict):
+                logger.debug(f"No 'answer' key found, using str() fallback")
                 answer = str(response_json)
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
         # Not JSON, treat as plain text response
-        pass
+        logger.debug(f"JSON parse failed: {e}, treating as plain text")
 
     # Strip hallucinated file names early; evidence file names are preserved.
     answer = _strip_raw_filenames(answer, chunks)
