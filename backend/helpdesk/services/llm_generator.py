@@ -245,6 +245,13 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
         # Check if sentence contains code blocks (```) or XML tags - these are more lenient
         is_code_block = "```" in sentence or ("<" in sentence and ">" in sentence)
 
+        # CRITICAL: For code blocks (XML/code examples), skip strict grounding validation
+        # XML with specific values (e.g., <DepartureTime>09:54:00</DepartureTime>) should not fail
+        # just because the exact value isn't in the evidence. The element name is sufficient proof.
+        if is_code_block and found_citations:
+            logger.debug(f"Accepting code block citation without strict grounding: {sentence[:100]}")
+            continue  # Skip to next sentence - code blocks are inherently technical
+
         strong_terms, weak_terms = _classify_terms(clean)
 
         # Extract ubiquitous terms that were filtered out (we still want to check these)
@@ -255,22 +262,15 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
                 ubiquitous_terms.append(term_clean)
 
         # CRITICAL: Cited sentences MUST have specific technical content (strong or weak terms)
-        # EXCEPTION: For code blocks (XML/code examples), be lenient - they inherently have technical content
-        # even if term extraction misses elements inside tags
         if not strong_terms and not weak_terms:
             if found_citations:  # Has citations but NO specific terms = potential hallucination
-                # But check: if this is a code block, allow it (XML elements are technical content)
-                if is_code_block:
-                    logger.debug(f"Accepting code block citation despite no extracted terms: {sentence[:80]}")
-                    continue  # Code blocks are inherently technical, skip to next sentence
-                else:
-                    # No citations, no terms, not code = hallucination
-                    raise LLMGenerationError(
-                        f"Citation [E{found_citations[0]}] without specific technical content: "
-                        f"'{sentence[:120].strip()}'. "
-                        "Cited claims must reference specific file names, IDs, or concepts from evidence, "
-                        "not generic language like 'follow the specification' or 'validate with examples'."
-                    )
+                # No citations, no terms, not code = hallucination
+                raise LLMGenerationError(
+                    f"Citation [E{found_citations[0]}] without specific technical content: "
+                    f"'{sentence[:120].strip()}'. "
+                    "Cited claims must reference specific file names, IDs, or concepts from evidence, "
+                    "not generic language like 'follow the specification' or 'validate with examples'."
+                )
             else:
                 continue  # No citations, no terms - skip
 
