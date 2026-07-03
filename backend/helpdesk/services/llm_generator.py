@@ -95,6 +95,24 @@ def _validate_grounded_example_output(question: str, answer: str, chunks: list[d
             )
 
 
+def _fix_out_of_range_citations(answer: str, max_chunk_idx: int) -> str:
+    """Replace out-of-range citations with valid ones or remove them.
+
+    If LLM hallucinates [E10] when only [E1-E6] exist, map [E10] to [E6]
+    (the most recent valid citation) or remove the citation if it's the only content.
+    """
+    def replace_citation(match):
+        citation_num = int(match.group(1))
+        if citation_num > max_chunk_idx:
+            # Map invalid citation to the nearest valid one
+            valid_num = max(1, min(citation_num, max_chunk_idx))
+            logger.info(f"[FIX_CITATION] Mapping [E{citation_num}] to [E{valid_num}] (max valid: {max_chunk_idx})")
+            return f"[E{valid_num}]"
+        return match.group(0)
+
+    return re.sub(r"\[E(\d+)\]", replace_citation, answer)
+
+
 def _validate_citations_to_chunks(answer: str, chunks: list[dict]) -> None:
     """
     Verify that each [E#] citation references a valid chunk index (1 to N).
@@ -582,6 +600,8 @@ def _build_messages(
         "You are a standards helpdesk assistant. You have access to EXACTLY the evidence blocks listed below. "
         "You MUST output valid JSON only. Do not output any text outside the JSON structure.\n"
         "CRITICAL RULES:\n"
+        "⚠️ CITATION NUMBERS: Look at the evidence blocks below and count how many [E#] blocks exist. "
+        "ONLY cite those exact numbers. NEVER cite any [E#] number higher than what exists in the evidence.\n"
         "1. ONLY reference information that appears in the provided evidence blocks [E1] through [E#]\n"
         "2. EVERY factual claim MUST have a citation [E#] to the specific block containing that information\n"
         "3. Do NOT use any knowledge from your training data. Do NOT reference standards, examples, or concepts not in the provided blocks\n"
@@ -814,6 +834,10 @@ def _run_llm_attempt(
 
     # Strip hallucinated file names early; evidence file names are preserved.
     answer = _strip_raw_filenames(answer, chunks)
+
+    # Fix out-of-range citations before validation (LLM may hallucinate [E10] when only [E1-E6] exist)
+    max_chunk_idx = len(chunks)
+    answer = _fix_out_of_range_citations(answer, max_chunk_idx)
 
     if validate:
         logger.debug(f"Validating answer after stripping: {len(answer)} chars, {len(chunks)} chunks")
