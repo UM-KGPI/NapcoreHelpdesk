@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Markdown Test</title>
+</head>
+<body>
+    <h1>Testing React Markdown with Code Blocks</h1>
+    <div id="root"></div>
+
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/remarkable@2.0.1/dist/remarkable.js"></script>
+
+    <script>
+        // Simple test to check if code blocks work
+        const testMarkdown = `# Test
+
+Here is a code block:
+
+\`\`\`xml
+<DepartureTime>09:54:00</DepartureTime>
+\`\`\`
+
+And **bold text** works too.`;
+
+        console.log("Test markdown:", testMarkdown);
+        console.log("Has code blocks:", testMarkdown.includes("```"));
+        console.log("Rendered by browser - check if code block appears below:");
+    </script>
+
+    <hr>
+    <h2>Raw Markdown:</h2>
+    <pre id="raw"></pre>
+
+    <h2>Rendered (using Remarkable):</h2>
+    <div id="rendered"></div>
+
+    <script>
+        const md = new Remarkable();
+        const markdown = `# Test
+
+Here is a code block:
+
+\`\`\`xml
+<DepartureTime>09:54:00</DepartureTime>
+\`\`\`
+
+And **bold text** works too.`;
+
+        document.getElementById("raw").textContent = markdown;
+        document.getElementById("rendered").innerHTML = md.render(markdown);
+    </script>
+</body>
+</html>
