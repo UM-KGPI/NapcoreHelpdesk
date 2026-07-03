@@ -131,13 +131,36 @@ _WEAK_TERM_PATTERN = re.compile(
 
 # Terms so generic they appear in virtually every NeTEx/standards document and
 # must never be used as the sole grounding evidence for a citation.
-# Includes both singular and plural/variant forms so e.g. "ROUTEs" is also excluded.
-_UBIQUITOUS_TERMS = frozenset({
-    "netex", "nete", "opra", "siri", "datex", "transmodel", "nits",
-    "line", "lines", "route", "routes", "stop", "stops",
-    "trip", "trips", "service", "services", "journey", "journeys",
-    "network", "networks", "operator", "operators", "pattern", "patterns",
-})
+# Derived dynamically from the NITS ontology labels so the set grows automatically
+# as new abstract concepts are added; a minimal hardcoded fallback is used when
+# the ontology is unavailable (e.g. during tests without a live GraphDB).
+def _build_ubiquitous_terms() -> frozenset[str]:
+    try:
+        from helpdesk.services.semantic_graph import _NITS_ONTOLOGY  # noqa: PLC0415
+        concepts = _NITS_ONTOLOGY.get("concepts", {})
+        terms: set[str] = set()
+        for concept_data in concepts.values():
+            for label in concept_data.get("labels", []):
+                lower = label.lower().strip()
+                if len(lower) >= 3:
+                    terms.add(lower)
+                    # Also add simple plural so e.g. "ROUTEs" → "routes" is covered.
+                    if not lower.endswith("s"):
+                        terms.add(lower + "s")
+        if terms:
+            return frozenset(terms)
+    except Exception:
+        pass
+    # Minimal fallback used when the ontology module is unavailable.
+    return frozenset({
+        "netex", "opra", "siri", "datex", "transmodel", "nits",
+        "line", "lines", "route", "routes", "stop", "stops",
+        "trip", "trips", "service", "services", "journey", "journeys",
+        "network", "networks", "operator", "operators", "pattern", "patterns",
+    })
+
+
+_UBIQUITOUS_TERMS = _build_ubiquitous_terms()
 
 
 def _classify_terms(sentence: str) -> tuple[list[str], list[str]]:
