@@ -45,6 +45,7 @@ except Exception:  # pragma: no cover - unavailable when postgres search extras 
 from helpdesk.models import SourceChunk
 from helpdesk.db_fields import HAS_NATIVE_PGVECTOR
 from helpdesk.services.embeddings import build_text_embedding, cosine_similarity, normalize_text_tokens
+from helpdesk.services.concept_extractor import extract_concepts, build_enriched_query
 from helpdesk.services.example_retrieval import (
     format_examples_as_chunks,
     retrieve_concept_examples_with_fallback,
@@ -1126,13 +1127,29 @@ def retrieve_chunks_with_trace(
     canonical_concept_terms = get_concept_canonical_terms(expanded_concepts) if expanded_concepts else []
     _record_stage("conceptMetadataMs", stage_start)
 
+    # Extract domain-specific concepts (XML elements, properties, classes) from question
+    # These are combined with ontology concepts for richer semantic search
+    stage_start = time.perf_counter()
+    domain_concepts = extract_concepts(question)
+    domain_concept_terms = []
+    if domain_concepts.get("properties"):
+        domain_concept_terms.extend(domain_concepts["properties"])
+    if domain_concepts.get("classes"):
+        domain_concept_terms.extend(domain_concepts["classes"])
+    if domain_concepts.get("standards"):
+        domain_concept_terms.extend(domain_concepts["standards"])
+
+    # Combine ontology concepts with domain concepts for richer embedding
+    all_concept_terms = canonical_concept_terms + domain_concept_terms if canonical_concept_terms else domain_concept_terms
+    _record_stage("domainConceptExtractMs", stage_start)
+
     stage_start = time.perf_counter()
     query_embedding = build_text_embedding(
         _build_query_embedding_input(
             question=question,
             hinted_standards=hinted_standards,
             hinted_doc_types=hinted_doc_types,
-            expanded_concept_terms=canonical_concept_terms if canonical_concept_terms else None,
+            expanded_concept_terms=all_concept_terms if all_concept_terms else None,
         )
     )
     _record_stage("queryEmbeddingMs", stage_start)
