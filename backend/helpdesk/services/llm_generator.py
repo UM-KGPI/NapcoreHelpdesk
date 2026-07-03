@@ -774,10 +774,10 @@ def _run_llm_attempt(
     # Parse JSON response if in JSON mode
     try:
         response_json = json.loads(answer)
-        logger.debug(f"JSON parsed: type={type(response_json)}, keys={response_json.keys() if isinstance(response_json, dict) else 'N/A'}")
+        logger.info(f"[JSON_PARSE] type={type(response_json).__name__}, keys={list(response_json.keys()) if isinstance(response_json, dict) else 'N/A'}")
         if isinstance(response_json, dict) and "answer" in response_json:
             answer = response_json["answer"]
-            logger.debug(f"Extracted answer field: {len(answer)} chars")
+            logger.info(f"[JSON_EXTRACT] Extracted answer field: {len(answer)} chars, starts_with: {str(answer)[:80]}")
 
             # Handle double-wrapped JSON: if the answer field itself is a JSON string, parse it
             if isinstance(answer, str) and answer.strip().startswith("{"):
