@@ -124,9 +124,10 @@ _STRONG_TERM_PATTERN = re.compile(
     r"|([A-Za-z0-9_-]+\.(?:xsd|xml|yaml|json|ttl))"  # file names with known extensions
 )
 
-# Weak terms: PascalCase/camelCase element names that appear across many chunks.
+# Weak terms: PascalCase element names (single or multi-word)
+# Matches: Time, Departure, DepartureTime, ScheduledStop, etc.
 _WEAK_TERM_PATTERN = re.compile(
-    r"([A-Za-z][A-Za-z0-9]{2,}[A-Z][A-Za-z0-9]*)"   # PascalCase / camelCase
+    r"([A-Z][a-z]+(?:[A-Z][a-z]+)*)"   # PascalCase: starts with uppercase, followed by lowercase(s)
 )
 
 # Terms so generic they appear in virtually every NeTEx/standards document and
@@ -171,15 +172,19 @@ def _classify_terms(sentence: str) -> tuple[list[str], list[str]]:
     (file names, namespaced IDs, hyphenated IDs, backtick-quoted strings).
     Weak terms are PascalCase/camelCase element names that may appear anywhere.
     """
+    # Strip XML/HTML tag brackets but keep content so element names are found
+    # e.g., "<Departure>" becomes " Departure "
+    clean_sentence = re.sub(r"[<>]", " ", sentence)
+
     strong: list[str] = []
-    for match in _STRONG_TERM_PATTERN.finditer(sentence):
+    for match in _STRONG_TERM_PATTERN.finditer(clean_sentence):
         term = next((g for g in match.groups() if g), None)
         if term and len(term) >= 4 and term.lower() not in _UBIQUITOUS_TERMS:
             strong.append(term)
 
     weak: list[str] = []
     seen = set(t.lower() for t in strong)
-    for match in _WEAK_TERM_PATTERN.finditer(sentence):
+    for match in _WEAK_TERM_PATTERN.finditer(clean_sentence):
         term = match.group(1)
         if term and len(term) >= 4 and term.lower() not in _UBIQUITOUS_TERMS and term.lower() not in seen:
             weak.append(term)
