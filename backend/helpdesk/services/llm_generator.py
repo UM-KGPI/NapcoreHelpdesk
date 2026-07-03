@@ -193,8 +193,17 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
 
         clean = CITATION_PATTERN.sub("", sentence)
         strong_terms, weak_terms = _classify_terms(clean)
-        if not strong_terms and not weak_terms:
-            continue  # No checkable technical terms — skip grounding check
+
+        # Extract ubiquitous terms that were filtered out (we still want to check these)
+        ubiquitous_terms = []
+        for term in clean.split():
+            term_clean = term.strip('.,!?;:').lower()
+            if term_clean in _UBIQUITOUS_TERMS and len(term_clean) >= 4:
+                ubiquitous_terms.append(term_clean)
+
+        # Skip only if we have no terms at all (not even generic ones)
+        if not strong_terms and not weak_terms and not ubiquitous_terms:
+            continue
 
         for citation_str in found_citations:
             idx = int(citation_str) - 1
@@ -211,15 +220,20 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
                 # A weak-only match is not accepted — it would allow hallucinated
                 # file names/IDs to pass because a generic term like "NeTEx" matches.
                 grounded = any(term.lower() in haystack for term in strong_terms)
-            else:
+            elif weak_terms:
                 grounded = any(term.lower() in haystack for term in weak_terms)
+            else:
+                # No strong or weak terms; check ubiquitous terms (these are more lenient)
+                # Ubiquitous terms appear everywhere, so we just require at least one match
+                grounded = any(term.lower() in haystack for term in ubiquitous_terms)
 
             if not grounded:
+                all_checked_terms = strong_terms + weak_terms + ubiquitous_terms
                 raise LLMGenerationError(
                     f"Citation [E{citation_str}] does not ground the claim: "
                     f"'{sentence[:150].strip()}'. "
                     f"Cited chunk source: '{chunk.get('sourcePath', 'unknown')}'. "
-                    f"Strong terms checked: {strong_terms[:4]}. Weak terms checked: {weak_terms[:4]}. "
+                    f"Terms checked: {all_checked_terms[:4]}. "
                     "The LLM may have cited the wrong evidence block or hallucinated content."
                 )
 
@@ -322,22 +336,27 @@ def _validate_no_uncited_standards(answer: str, chunks: list[dict], all_candidat
                 if std in text:
                     available_standards.add(std)
 
-    # Find sentences that mention a standard WITHOUT a citation
-    sentences = re.split(r"(?<=[.!?\)])\s+", answer.replace("\n", " "))
-    for sentence in sentences:
-        # Check if sentence has any citation
-        has_citation = bool(CITATION_PATTERN.search(sentence))
+    # Find standards that are mentioned without citations
+    # Check each standard mention to see if it's followed/preceded by a citation
+    for match in _UNCITED_STANDARD_PATTERN.finditer(answer):
+        std = match.group(1)
+        std_start = match.start()
+        std_end = match.end()
 
-        # Find standards mentioned in this sentence
-        for match in _UNCITED_STANDARD_PATTERN.finditer(sentence):
-            std = match.group(1)
+        # Look for citations near this standard mention (within 30 chars before/after)
+        context_start = max(0, std_start - 30)
+        context_end = min(len(answer), std_end + 30)
+        context = answer[context_start:context_end]
 
-            # Only reject if: standard is mentioned, no citation in sentence, AND standard not in evidence
-            if not has_citation and std not in available_standards:
-                raise LLMGenerationError(
-                    f"Answer mentions '{std}' without citation and it's not in provided evidence. "
-                    f"Either cite the source with [E#] or don't mention the standard."
-                )
+        # Check if there's a citation in the context
+        has_nearby_citation = bool(CITATION_PATTERN.search(context))
+
+        # Only reject if: standard is mentioned without nearby citation AND standard not in evidence
+        if not has_nearby_citation and std.upper() not in {s.upper() for s in available_standards}:
+            raise LLMGenerationError(
+                f"Answer mentions '{std}' without citation and it's not in provided evidence. "
+                f"Either cite the source with [E#] or don't mention the standard."
+            )
 
 
 def _build_ssl_context() -> ssl.SSLContext:
