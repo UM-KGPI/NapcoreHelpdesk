@@ -232,15 +232,22 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
                 ubiquitous_terms.append(term_clean)
 
         # CRITICAL: Cited sentences MUST have specific technical content (strong or weak terms)
-        # Sentences with only ubiquitous terms are hallucinated filler ("follow spec, validate with examples")
+        # EXCEPTION: For code blocks (XML/code examples), be lenient - they inherently have technical content
+        # even if term extraction misses elements inside tags
         if not strong_terms and not weak_terms:
-            if found_citations:  # Has citations but NO specific terms = hallucination
-                raise LLMGenerationError(
-                    f"Citation [E{found_citations[0]}] without specific technical content: "
-                    f"'{sentence[:120].strip()}'. "
-                    "Cited claims must reference specific file names, IDs, or concepts from evidence, "
-                    "not generic language like 'follow the specification' or 'validate with examples'."
-                )
+            if found_citations:  # Has citations but NO specific terms = potential hallucination
+                # But check: if this is a code block, allow it (XML elements are technical content)
+                if is_code_block:
+                    logger.debug(f"Accepting code block citation despite no extracted terms: {sentence[:80]}")
+                    continue  # Code blocks are inherently technical, skip to next sentence
+                else:
+                    # No citations, no terms, not code = hallucination
+                    raise LLMGenerationError(
+                        f"Citation [E{found_citations[0]}] without specific technical content: "
+                        f"'{sentence[:120].strip()}'. "
+                        "Cited claims must reference specific file names, IDs, or concepts from evidence, "
+                        "not generic language like 'follow the specification' or 'validate with examples'."
+                    )
             else:
                 continue  # No citations, no terms - skip
 
@@ -279,16 +286,6 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
                     )
 
             if not grounded:
-                # More lenient: if the sentence contains XML elements or code, and ANY
-                # weak term or ubiquitous term matches, that's sufficient grounding.
-                # This allows extracted code examples even if specific values differ.
-                if is_code_block and (weak_terms or ubiquitous_terms):
-                    # Code block with at least some element names found - accept it
-                    logger.debug(
-                        f"Citation [E{citation_str}] accepted for code block despite weak grounding"
-                    )
-                    continue
-
                 all_checked_terms = strong_terms + weak_terms + ubiquitous_terms
                 raise LLMGenerationError(
                     f"Citation [E{citation_str}] does not ground the claim: "
