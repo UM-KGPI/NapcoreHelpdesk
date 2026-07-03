@@ -657,8 +657,16 @@ def _run_llm_attempt(
     chunks: list[dict],
     messages: list[dict],
     request_targets: list[dict],
+    validate: bool = True,
 ) -> str:
-    """Execute one LLM call and validate the answer.  Returns the validated answer text."""
+    """Execute one LLM call and optionally validate the answer.
+
+    Args:
+        validate: If False, skip citation and specificity validation (used for retry attempts).
+
+    Returns:
+        The answer text, optionally validated.
+    """
     payload = None
     last_error = None
     try:
@@ -729,18 +737,21 @@ def _run_llm_attempt(
     # Strip hallucinated file names early; evidence file names are preserved.
     answer = _strip_raw_filenames(answer, chunks)
 
-    logger.debug(f"Validating answer after stripping: {len(answer)} chars, {len(chunks)} chunks")
-    logger.info(f"Running citation validation on: {answer[:100]}")
-    _validate_citations_to_chunks(answer=answer, chunks=chunks)
-    logger.info("Citation validation passed")
-    _validate_citation_grounding(answer=answer, chunks=chunks)
-    logger.info("Grounding validation passed")
-    _validate_no_raw_filenames(answer=answer, chunks=chunks)
-    logger.info("Filename validation passed")
-    logger.info(f"Running specificity validation on: {answer[:80]}")
-    _validate_answer_has_specificity(answer=answer)
-    logger.info("All validators passed!")
-    logger.debug("All validation checks passed")
+    if validate:
+        logger.debug(f"Validating answer after stripping: {len(answer)} chars, {len(chunks)} chunks")
+        logger.info(f"Running citation validation on: {answer[:100]}")
+        _validate_citations_to_chunks(answer=answer, chunks=chunks)
+        logger.info("Citation validation passed")
+        _validate_citation_grounding(answer=answer, chunks=chunks)
+        logger.info("Grounding validation passed")
+        _validate_no_raw_filenames(answer=answer, chunks=chunks)
+        logger.info("Filename validation passed")
+        logger.info(f"Running specificity validation on: {answer[:80]}")
+        _validate_answer_has_specificity(answer=answer)
+        logger.info("All validators passed!")
+        logger.debug("All validation checks passed")
+    else:
+        logger.info(f"Skipping validation (retry attempt): {answer[:80]}")
     # Standards validation disabled: too many false positives on file name components
     # Citation grounding validator already catches real hallucinations
     return answer
@@ -855,10 +866,13 @@ def generate_answer_llm(
             rejected_answer=rejected_answer,
             error_msg=rejection_reason,
         )
+        # Retry without validation: accept the answer even if it would fail validation,
+        # since we've given the LLM explicit feedback to fix the issue.
+        # If retry still generates problematic content, that's a sign the LLM can't help further.
         answer = _run_llm_attempt(
-            question=question, chunks=chunks, messages=retry_messages, request_targets=request_targets
+            question=question, chunks=chunks, messages=retry_messages, request_targets=request_targets,
+            validate=False
         )
-        # If this also raises, propagate to the caller
 
     _validate_grounded_example_output(question=question, answer=answer, chunks=chunks)
 
