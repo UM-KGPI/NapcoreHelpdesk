@@ -730,10 +730,16 @@ def _run_llm_attempt(
     answer = _strip_raw_filenames(answer, chunks)
 
     logger.debug(f"Validating answer after stripping: {len(answer)} chars, {len(chunks)} chunks")
+    logger.info(f"Running citation validation on: {answer[:100]}")
     _validate_citations_to_chunks(answer=answer, chunks=chunks)
+    logger.info("Citation validation passed")
     _validate_citation_grounding(answer=answer, chunks=chunks)
+    logger.info("Grounding validation passed")
     _validate_no_raw_filenames(answer=answer, chunks=chunks)
+    logger.info("Filename validation passed")
+    logger.info(f"Running specificity validation on: {answer[:80]}")
     _validate_answer_has_specificity(answer=answer)
+    logger.info("All validators passed!")
     logger.debug("All validation checks passed")
     # Standards validation disabled: too many false positives on file name components
     # Citation grounding validator already catches real hallucinations
