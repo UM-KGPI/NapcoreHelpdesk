@@ -1153,6 +1153,8 @@ class QuestionAnswerView(APIView):
             "userDislikes": event.user_dislikes,
             "answerSuccess": event.answer_success,
             "citationClickCount": event.citation_click_count,
+            "llmRejectedAnswer": (generated.get("rejected_answer") if isinstance(locals().get("generated"), dict) else None),
+            "llmRejectionReason": (generated.get("rejection_reason") if isinstance(locals().get("generated"), dict) else None),
         }
 
         # Persist trace to event for later retrieval
@@ -1622,6 +1624,8 @@ class QuestionAnswerStreamView(APIView):
             "userDislikes": event.user_dislikes,
             "answerSuccess": event.answer_success,
             "citationClickCount": event.citation_click_count,
+            "llmRejectedAnswer": (generated.get("rejected_answer") if isinstance(locals().get("generated"), dict) else None),
+            "llmRejectionReason": (generated.get("rejection_reason") if isinstance(locals().get("generated"), dict) else None),
         }
 
         # Persist trace to event
