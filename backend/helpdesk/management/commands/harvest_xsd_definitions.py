@@ -123,6 +123,8 @@ class XSDHarvester:
 
     def _store_definition(self, name: str, elem_type: str, element_xml: str, source_file: str, config: dict):
         """Store a definition as a SourceChunk."""
+        from helpdesk.services.embeddings import build_text_embedding
+
         chunk_id = f"xsd-def-{self.standard.lower()}-{name.lower()}"
 
         # Build chunk text
@@ -136,37 +138,31 @@ Definition:
 {element_xml[:500]}
 """
 
-        chunk = SourceChunk(
-            chunk_id=chunk_id,
-            text=chunk_text.strip(),
-            label=f"XSD Definition: {name}",
-            doc_type="xsd-definition",
-            chunk_type="xsd-definition",
-            quality_score=0.96,
-            standards_scope=[self.standard],
-            repository_url=config["repo_url"],
-            commit_sha="master",
-            source_path=source_file,
-            heading=f"{name} - {self.standard} XSD Definition",
-            created_at=timezone.now(),
-            updated_at=timezone.now(),
-        )
+        # Generate embedding for the definition
+        try:
+            embedding = build_text_embedding(chunk_text.strip())
+        except Exception as e:
+            logger.warning(f"Failed to generate embedding for {name}: {e}")
+            embedding = []
+
+        chunk_data = {
+            "text": chunk_text.strip(),
+            "label": f"XSD Definition: {name}",
+            "doc_type": "xsd-definition",
+            "chunk_type": "xsd-definition",
+            "quality_score": 0.96,
+            "standards_scope": [self.standard],
+            "repository_url": config["repo_url"],
+            "commit_sha": "master",
+            "source_path": source_file,
+            "heading": f"{name} - {self.standard} XSD Definition",
+            "embedding_vector": embedding,
+            "updated_at": timezone.now(),
+        }
 
         try:
             # Use update_or_create to handle re-harvests
-            SourceChunk.objects.update_or_create(chunk_id=chunk_id, defaults={
-                "text": chunk.text,
-                "label": chunk.label,
-                "doc_type": chunk.doc_type,
-                "chunk_type": chunk.chunk_type,
-                "quality_score": chunk.quality_score,
-                "standards_scope": chunk.standards_scope,
-                "repository_url": chunk.repository_url,
-                "commit_sha": chunk.commit_sha,
-                "source_path": chunk.source_path,
-                "heading": chunk.heading,
-                "updated_at": timezone.now(),
-            })
+            SourceChunk.objects.update_or_create(chunk_id=chunk_id, defaults=chunk_data)
             self.definitions_stored += 1
             logger.debug(f"Stored: {name}")
         except Exception as e:
