@@ -482,17 +482,20 @@ def _build_messages(
         )
     system_prompt = (
         "You are a standards helpdesk assistant. You have access to EXACTLY the evidence blocks listed below. "
+        "You MUST output valid JSON only. Do not output any text outside the JSON structure.\n"
         "CRITICAL RULES:\n"
         "1. ONLY reference information that appears in the provided evidence blocks [E1] through [E#]\n"
-        "2. EVERY factual claim MUST be followed by a citation [E#] to the specific block containing that information\n"
-        "3. Do NOT use any knowledge from your training data. Do NOT reference standards, examples, or concepts not in the provided blocks or candidate index\n"
-        "4. If you recognize a source from your training (e.g., a known file or standard example) but it is not in [E#] or the candidate index, do NOT mention it\n"
-        "4b. CRITICAL: Do NOT invent specific examples with numbers or IDs (e.g., 'SCWW-86', 'LUAS Line 93') unless you find those EXACT examples in the evidence. Generic standard names are OK if they appear in evidence; specific numbered instances are NOT.\n"
-        "5. If you cannot answer from the provided evidence, say 'This information is not in the provided evidence blocks'\n"
+        "2. EVERY factual claim MUST have a citation [E#] to the specific block containing that information\n"
+        "3. Do NOT use any knowledge from your training data. Do NOT reference standards, examples, or concepts not in the provided blocks\n"
+        "4. If you recognize a source from your training (e.g., known file or standard example) but it is not in [E#], do NOT mention it\n"
+        "5. If you cannot answer from provided evidence, say 'This information is not in the provided evidence blocks'\n"
         "6. Do NOT paraphrase or infer beyond what is explicitly stated in the evidence\n"
-        "7. Stay within the requested standards scope\n"
-        "8. CRITICAL: NEVER write file names or paths (e.g. file.xml, folder/schema.xsd, FX-PI-01_*.xml) in the answer text. NEVER list file names. Reference sources ONLY via [E#] citations. The [E#] marker tells the reader where to find the file.\n"
-        f"\nRespond in 4-7 concise sentences with explicit [E#] citations for every claim.{language_instruction}"
+        "7. Stay within requested standards scope\n"
+        "8. NEVER write file names in answer text. Reference sources ONLY via [E#] citations.\n"
+        "\n"
+        "OUTPUT FORMAT (strict JSON):\n"
+        '{"answer": "Your answer text here with [E1] [E2] citations inline.", "citations_used": ["E1", "E2"]}'
+        f"\n{language_instruction}"
     )
     if _question_requests_verbatim_example(question):
         system_prompt = (
@@ -557,6 +560,9 @@ def _request_chat_completion(
         "messages": messages,
         "temperature": temperature,
         "max_tokens": max_tokens,
+        # Enforce JSON output to prevent hallucinations: model MUST output valid JSON
+        # with citations constrained to valid evidence indices
+        "response_format": {"type": "json_object"},
         # Reasoning models (e.g. qwen3) can consume the entire token budget on
         # hidden chain-of-thought before emitting any answer content, leaving
         # the response empty. Disable thinking mode to get direct answers.
@@ -647,6 +653,19 @@ def _run_llm_attempt(
     answer = (choices[0].get("message", {}).get("content") or "").strip()
     if not answer:
         raise LLMGenerationError("LLM response was empty.")
+
+    # Parse JSON response if in JSON mode
+    try:
+        response_json = json.loads(answer)
+        if isinstance(response_json, dict) and "answer" in response_json:
+            answer = response_json["answer"]
+        else:
+            # If not in expected JSON format, try to use as-is
+            if isinstance(response_json, dict):
+                answer = str(response_json)
+    except json.JSONDecodeError:
+        # Not JSON, treat as plain text response
+        pass
 
     # Strip hallucinated file names early; evidence file names are preserved.
     answer = _strip_raw_filenames(answer, chunks)
