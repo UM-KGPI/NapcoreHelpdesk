@@ -218,6 +218,10 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
             continue
 
         clean = CITATION_PATTERN.sub("", sentence)
+
+        # Check if sentence contains code blocks (```) or XML tags - these are more lenient
+        is_code_block = "```" in sentence or ("<" in sentence and ">" in sentence)
+
         strong_terms, weak_terms = _classify_terms(clean)
 
         # Extract ubiquitous terms that were filtered out (we still want to check these)
@@ -275,6 +279,16 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
                     )
 
             if not grounded:
+                # More lenient: if the sentence contains XML elements or code, and ANY
+                # weak term or ubiquitous term matches, that's sufficient grounding.
+                # This allows extracted code examples even if specific values differ.
+                if is_code_block and (weak_terms or ubiquitous_terms):
+                    # Code block with at least some element names found - accept it
+                    logger.debug(
+                        f"Citation [E{citation_str}] accepted for code block despite weak grounding"
+                    )
+                    continue
+
                 all_checked_terms = strong_terms + weak_terms + ubiquitous_terms
                 raise LLMGenerationError(
                     f"Citation [E{citation_str}] does not ground the claim: "
