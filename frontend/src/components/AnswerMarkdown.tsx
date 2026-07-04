@@ -25,8 +25,17 @@ export default function AnswerMarkdown({ text }: AnswerMarkdownProps) {
   // We normalize by:
   // 1. Inserting newline before opening ``` that is not line-initial
   // 2. Inserting newline after closing ``` when followed by non-whitespace
+  //
+  // The `(?![A-Za-z0-9_-])` after the tag makes it possessive: without it,
+  // a well-formed opening fence like "```xml\n<...>" would still match here,
+  // because when the greedy tag match "xml" fails to find a non-newline
+  // character after it, the regex backtracks to "xm" — at which point the
+  // stray "l" satisfies the trailing [^\n\s], splitting the tag and leaking
+  // "l" onto its own line before the code content. The lookahead blocks that
+  // backtrack: any character still inside the tag's run fails `(?!...)`, so
+  // the match is rejected outright instead of being silently corrupted.
   let normalised = text.replace(/([^\n])(```)/g, "$1\n$2");  // opening fence
-  normalised = normalised.replace(/(```[A-Za-z0-9_-]*)([ \t]*[^\n\s])/g, "$1\n$2");  // closing fence
+  normalised = normalised.replace(/(```[A-Za-z0-9_-]*(?![A-Za-z0-9_-]))([ \t]*[^\n\s])/g, "$1\n$2");  // closing fence
 
   return (
     <div className="answer-markdown">
