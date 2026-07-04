@@ -125,6 +125,26 @@ interface EditorConsoleWorkspaceProps {
   onIndexRepository: () => Promise<void>;
 }
 
+async function copyDeepLinkToClipboard(questionId: string): Promise<void> {
+  const baseUrl = window.location.origin;
+  const deepLink = `${baseUrl}/napcore-helpdesk/question?questionId=${questionId}`;
+
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(deepLink);
+    return;
+  }
+
+  const temp = document.createElement("textarea");
+  temp.value = deepLink;
+  temp.setAttribute("readonly", "true");
+  temp.style.position = "absolute";
+  temp.style.left = "-9999px";
+  document.body.appendChild(temp);
+  temp.select();
+  document.execCommand("copy");
+  document.body.removeChild(temp);
+}
+
 export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProps) {
   const [activeTab, setActiveTab] = useState<EditorTab>("indexing");
   const [askedStatusFilter, setAskedStatusFilter] = useState<AskedStatusFilter>("");
@@ -481,7 +501,21 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                                         </>
                                       )}
                                     </div>
-                                    <p className="muted tiny">{item.requestId}</p>
+                                    <p className="muted tiny">
+                                      {item.requestId}
+                                      <button
+                                        type="button"
+                                        className="chat-icon-button"
+                                        onClick={() => {
+                                          void copyDeepLinkToClipboard(item.questionEventId);
+                                        }}
+                                        title="Copy deep link to share this Q&A"
+                                        aria-label="Copy deep link to share this Q&A"
+                                        style={{ marginLeft: "0.5rem" }}
+                                      >
+                                        🔗
+                                      </button>
+                                    </p>
                                     <div className="detail-row-actions">
                                       {deleteConfirmId === item.questionEventId ? (
                                         <>
@@ -621,7 +655,21 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                                           </>
                                         )}
                                       </div>
-                                      <p className="muted tiny">{item.requestId}</p>
+                                      <p className="muted tiny">
+                                        {item.requestId}
+                                        <button
+                                          type="button"
+                                          className="chat-icon-button"
+                                          onClick={() => {
+                                            void copyDeepLinkToClipboard(item.questionEventId);
+                                          }}
+                                          title="Copy deep link to share this Q&A"
+                                          aria-label="Copy deep link to share this Q&A"
+                                          style={{ marginLeft: "0.5rem" }}
+                                        >
+                                          🔗
+                                        </button>
+                                      </p>
                                     </>
                                   )}
                                 </td>
@@ -723,7 +771,21 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                                 </>
                               )}
                             </div>
-                            <p className="muted tiny">{item.requestId}</p>
+                            <p className="muted tiny">
+                              {item.requestId}
+                              <button
+                                type="button"
+                                className="chat-icon-button"
+                                onClick={() => {
+                                  void copyDeepLinkToClipboard(item.questionEventId);
+                                }}
+                                title="Copy deep link to share this Q&A"
+                                aria-label="Copy deep link to share this Q&A"
+                                style={{ marginLeft: "0.5rem" }}
+                              >
+                                🔗
+                              </button>
+                            </p>
                           </>
                         )}
                       </article>
