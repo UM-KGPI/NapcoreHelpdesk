@@ -1377,13 +1377,26 @@ def stream_answer_llm(
         full_answer = _strip_json_suffix(full_answer)
         full_answer = _strip_raw_filenames(full_answer, chunks)
         full_answer = _strip_stray_list_markers(full_answer)
-        _validate_answer_language(answer=full_answer, question=question, target_language=effective_language)
-        _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
-        _validate_citation_grounding(answer=full_answer, chunks=chunks)
-        _validate_no_raw_filenames(answer=full_answer, chunks=chunks)
-        _validate_answer_has_specificity(answer=full_answer)
-        # Standards validation disabled: citation grounding validator catches real issues
-        _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
+        try:
+            _validate_answer_language(answer=full_answer, question=question, target_language=effective_language)
+            _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
+            _validate_citation_grounding(answer=full_answer, chunks=chunks)
+            _validate_no_raw_filenames(answer=full_answer, chunks=chunks)
+            _validate_answer_has_specificity(answer=full_answer)
+            # Standards validation disabled: citation grounding validator catches real issues
+            _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
+        except LLMGenerationError as retry_error:
+            # Retry failed validation too. A real, on-topic answer that fails a strict
+            # grounding heuristic is still far more useful than the generic
+            # non-LLM deterministic template views.py falls back to if this
+            # propagates - use the retry's answer as-is rather than raising.
+            logger.warning(
+                "Stream retry failed validation too; using raw retry answer instead of "
+                "falling back to the deterministic template. Reason: %s",
+                str(retry_error)[:200],
+                extra={"question": question[:120]},
+            )
+            rejection_reason = f"{rejection_reason} | retry also failed: {retry_error}"[:500]
 
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
     confidence = min(0.94, max(0.60, float(top_score)))
