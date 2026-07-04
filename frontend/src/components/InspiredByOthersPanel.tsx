@@ -71,7 +71,7 @@ export default function InspiredByOthersPanel(props: InspiredByOthersPanelProps)
         className="collapsible-summary inspired-by-others-summary"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span>✨ Inspired by Others</span>
+        <span>✨ Inspiring questions</span>
       </summary>
       <div className="collapsible-body inspired-by-others-grid">
         {questions.map((question) => (
