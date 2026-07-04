@@ -502,7 +502,6 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                                       )}
                                     </div>
                                     <p className="muted tiny">
-                                      {item.requestId}
                                       <button
                                         type="button"
                                         className="chat-icon-button"
@@ -511,10 +510,11 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                                         }}
                                         title="Copy deep link to share this Q&A"
                                         aria-label="Copy deep link to share this Q&A"
-                                        style={{ marginLeft: "0.5rem" }}
+                                        style={{ marginRight: "0.5rem" }}
                                       >
                                         🔗
                                       </button>
+                                      questionId: {item.requestId}
                                     </p>
                                     <div className="detail-row-actions">
                                       {deleteConfirmId === item.questionEventId ? (
@@ -656,7 +656,6 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                                         )}
                                       </div>
                                       <p className="muted tiny">
-                                        {item.requestId}
                                         <button
                                           type="button"
                                           className="chat-icon-button"
@@ -665,10 +664,11 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                                           }}
                                           title="Copy deep link to share this Q&A"
                                           aria-label="Copy deep link to share this Q&A"
-                                          style={{ marginLeft: "0.5rem" }}
+                                          style={{ marginRight: "0.5rem" }}
                                         >
                                           🔗
                                         </button>
+                                        questionId: {item.requestId}
                                       </p>
                                     </>
                                   )}
@@ -772,7 +772,6 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                               )}
                             </div>
                             <p className="muted tiny">
-                              {item.requestId}
                               <button
                                 type="button"
                                 className="chat-icon-button"
@@ -781,10 +780,11 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                                 }}
                                 title="Copy deep link to share this Q&A"
                                 aria-label="Copy deep link to share this Q&A"
-                                style={{ marginLeft: "0.5rem" }}
+                                style={{ marginRight: "0.5rem" }}
                               >
                                 🔗
                               </button>
+                              questionId: {item.requestId}
                             </p>
                           </>
                         )}
