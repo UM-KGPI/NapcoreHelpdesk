@@ -25,7 +25,7 @@
  */
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { BrowserRouter, Navigate, Route, Routes, useSearchParams, useNavigate } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useSearchParams } from "react-router-dom";
 
 import { HelpdeskApiClient } from "./api";
 import { AuthProvider } from "./auth-context";
@@ -140,7 +140,6 @@ function isJwtExpired(token: string): boolean {
 
 // Wrapper for user chat to handle ?questionId= query parameter
 function UserChatWithQueryParams(props: React.ComponentProps<typeof UserChatWorkspace>) {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [enhancedTurns, setEnhancedTurns] = useState<typeof props.chatTurns>(props.chatTurns);
 
@@ -223,12 +222,7 @@ function UserChatWithQueryParams(props: React.ComponentProps<typeof UserChatWork
       });
   }, [searchParams, props.token]);
 
-  const handleResetSession = () => {
-    props.onResetChatSession();
-    navigate("/user", { replace: true });
-  };
-
-  return <UserChatWorkspace {...props} chatTurns={enhancedTurns} onResetChatSession={handleResetSession} />;
+  return <UserChatWorkspace {...props} chatTurns={enhancedTurns} />;
 }
 
 // Wrapper component to handle ?questionId= query parameter for question detail page
@@ -294,7 +288,7 @@ export default function App() {
   });
 
   const [question, setQuestion] = useState("How to use NeTEx for exchanging a timetable?");
-  const [sessionId, setSessionId] = useState("sess-local");
+  const [sessionId] = useState("sess-local");
   const userId = "user-local";
   const [standardsScope] = useState<StandardsScope[]>([]);
 
@@ -464,10 +458,6 @@ export default function App() {
     } finally {
       setBusy(false);
     }
-  }
-
-  function createSessionId(): string {
-    return `sess-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
   }
 
   async function refreshDevTokenAfterUnauthorized(caught: unknown): Promise<string | null> {
@@ -648,11 +638,6 @@ export default function App() {
     } finally {
       setBusy(false);
     }
-  }
-
-  function onResetChatSession(): void {
-    setChatTurns([]);
-    setSessionId(createSessionId());
   }
 
   async function onAskQuestion(event: FormEvent<HTMLFormElement>): Promise<void> {
@@ -1037,7 +1022,6 @@ export default function App() {
                   busy={busy}
                   setChatPrompt={setChatPrompt}
                   onSendChat={onSendChat}
-                  onResetChatSession={onResetChatSession}
                   onSetAnswerFeedback={onSetAnswerFeedback}
                 />
               }
