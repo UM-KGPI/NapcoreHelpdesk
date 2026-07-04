@@ -334,5 +334,5 @@ deploy-verify: ## Verify code is deployment-ready (all checks before push)
 
 deploy-build: ## Build production Docker images locally (docker-compose.prod.yml)
 	@echo "Building production images with docker-compose.prod.yml..."
-	@docker compose -f docker-compose.prod.yml build --pull
+	@VITE_APP_VERSION="$$(bash scripts/app_version.sh)" docker compose -f docker-compose.prod.yml build --pull
 	@echo "✓ Production images built successfully"
