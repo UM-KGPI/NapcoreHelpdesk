@@ -88,6 +88,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_APP_VERSION: ${VITE_APP_VERSION:-0.6.1}
     restart: unless-stopped
     ports:
       - "8080:80"
