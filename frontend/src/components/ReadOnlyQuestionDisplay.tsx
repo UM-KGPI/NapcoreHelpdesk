@@ -91,8 +91,7 @@ export default function ReadOnlyQuestionDisplay({
   };
 
   return (
-    <section className="workspace-section user-workspace">
-      <section className="panel chat-panel">
+    <section className="panel chat-panel user-workspace">
         <div className="chat-log" aria-live="polite">
           {chatTurns.length === 0 && <p className="muted">No question found.</p>}
           {chatTurns.map((turn) => (
@@ -193,7 +192,6 @@ export default function ReadOnlyQuestionDisplay({
             </article>
           ))}
         </div>
-      </section>
     </section>
   );
 }
