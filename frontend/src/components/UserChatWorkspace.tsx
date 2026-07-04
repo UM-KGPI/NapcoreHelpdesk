@@ -370,16 +370,14 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
         </div>
 
         <form onSubmit={onSendChat} className="stack">
-          <label>
-            Message
-            <textarea
-              value={chatPrompt}
-              onChange={(event) => setChatPrompt(event.target.value)}
-              rows={3}
-              placeholder="Ask a standards question..."
-              required
-            />
-          </label>
+          <textarea
+            value={chatPrompt}
+            onChange={(event) => setChatPrompt(event.target.value)}
+            rows={3}
+            placeholder="Ask a question..."
+            required
+            aria-label="Question input"
+          />
 
           <div className="chat-actions">
             <button type="submit" disabled={busy || !token || !chatPrompt.trim()}>Send</button>
