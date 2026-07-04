@@ -139,32 +139,22 @@ function isJwtExpired(token: string): boolean {
 }
 
 // Wrapper for user chat to handle ?questionId= query parameter
-function UserChatWithQueryParams(props: React.ComponentProps<typeof UserChatWorkspace>) {
-  const [searchParams] = useSearchParams();
+function UserChatWithQueryParams(
+  props: Omit<React.ComponentProps<typeof UserChatWorkspace>, "onLoadHistoricalQuestion">
+) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [enhancedTurns, setEnhancedTurns] = useState<typeof props.chatTurns>(props.chatTurns);
 
-  // Sync with parent chatTurns when no query parameter
-  useEffect(() => {
-    const questionId = searchParams.get("questionId");
-    if (!questionId) {
-      setEnhancedTurns(props.chatTurns);
-    }
-  }, [props.chatTurns, searchParams]);
+  const loadQuestionDetails = (requestId: string) => {
+    if (!props.token) return;
 
-  // Load historical question when query parameter present
-  useEffect(() => {
-    const questionId = searchParams.get("questionId");
-    if (!questionId || !props.token) return;
-
-    // Clear the input field when showing historical Q&A
     props.setChatPrompt("");
 
-    // Fetch and display the historical question
     const baseUrl = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
       ? "http://localhost:8000/api/v1"
       : `${window.location.origin}${import.meta.env.BASE_URL}api/v1`;
 
-    fetch(`${baseUrl}/questions/events/${questionId}`, {
+    fetch(`${baseUrl}/questions/events/${requestId}`, {
       headers: { Authorization: `Bearer ${props.token}` },
     })
       .then(res => {
@@ -174,7 +164,6 @@ function UserChatWithQueryParams(props: React.ComponentProps<typeof UserChatWork
       .then((detail) => {
         console.log("Deep-link loaded question:", { requestId: detail.requestId, hasAnswer: !!detail.answer, traceFields: Object.keys(detail.trace || {}).length });
 
-        // Create two turns: one for the question, one for the answer
         const questionTurn: ChatTurn = {
           id: `${detail.requestId}-q`,
           role: "user",
@@ -185,7 +174,7 @@ function UserChatWithQueryParams(props: React.ComponentProps<typeof UserChatWork
         const answerTurn: ChatTurn = {
           id: `${detail.requestId}-a`,
           role: "assistant",
-          text: detail.answer, // Show answer as text
+          text: detail.answer,
           createdAt: detail.createdAt,
           answer: {
             answerId: detail.questionEventId,
@@ -218,11 +207,30 @@ function UserChatWithQueryParams(props: React.ComponentProps<typeof UserChatWork
         setEnhancedTurns([questionTurn, answerTurn]);
       })
       .catch((error) => {
-        console.error(`Failed to load question ${questionId}:`, error);
+        console.error(`Failed to load question ${requestId}:`, error);
       });
+  };
+
+  // Sync with parent chatTurns when no query parameter
+  useEffect(() => {
+    const questionId = searchParams.get("questionId");
+    if (!questionId) {
+      setEnhancedTurns(props.chatTurns);
+    }
+  }, [props.chatTurns, searchParams]);
+
+  // Load historical question when query parameter present
+  useEffect(() => {
+    const questionId = searchParams.get("questionId");
+    if (!questionId || !props.token) return;
+    loadQuestionDetails(questionId);
   }, [searchParams, props.token]);
 
-  return <UserChatWorkspace {...props} chatTurns={enhancedTurns} />;
+  const handleLoadHistoricalQuestion = (requestId: string) => {
+    setSearchParams({ questionId: requestId });
+  };
+
+  return <UserChatWorkspace {...props} chatTurns={enhancedTurns} onLoadHistoricalQuestion={handleLoadHistoricalQuestion} />;
 }
 
 // Wrapper component to handle ?questionId= query parameter for question detail page
@@ -1020,6 +1028,7 @@ export default function App() {
                   chatTurns={chatTurns}
                   token={token}
                   busy={busy}
+                  apiBaseUrl={apiBaseUrl}
                   setChatPrompt={setChatPrompt}
                   onSendChat={onSendChat}
                   onSetAnswerFeedback={onSetAnswerFeedback}

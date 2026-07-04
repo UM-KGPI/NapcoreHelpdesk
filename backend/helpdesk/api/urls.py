@@ -28,6 +28,7 @@ from .views import (
     QuestionEventDetailView,
     QuestionEventsView,
     QuestionFeedbackView,
+    TrendingQuestionsView,
 )
 
 urlpatterns = [
@@ -37,6 +38,7 @@ urlpatterns = [
     path("questions/answer", QuestionAnswerView.as_view(), name="answer-question"),
     path("questions/answer/stream", QuestionAnswerStreamView.as_view(), name="answer-question-stream"),
     path("questions/events", QuestionEventsView.as_view(), name="questions-events"),
+    path("questions/trending", TrendingQuestionsView.as_view(), name="trending-questions"),
     path("questions/events/<str:question_event_id>", QuestionEventDetailView.as_view(), name="question-event-detail"),
     path("questions/feedback", QuestionFeedbackView.as_view(), name="answer-feedback"),
     path("faqs/promotion-candidates", PromotionCandidatesView.as_view(), name="promotion-candidates"),

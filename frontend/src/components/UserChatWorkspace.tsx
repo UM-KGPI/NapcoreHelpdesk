@@ -16,6 +16,7 @@ import type { FormEvent } from "react";
 
 import type { AnswerResponse } from "../types";
 import AnswerMarkdown from "./AnswerMarkdown";
+import InspiredByOthersPanel from "./InspiredByOthersPanel";
 
 export interface ChatTurn {
   id: string;
@@ -31,6 +32,7 @@ interface UserChatWorkspaceProps {
   chatTurns: ChatTurn[];
   token: string;
   busy: boolean;
+  apiBaseUrl: string;
   setChatPrompt: (value: string) => void;
   onSendChat: (event: FormEvent<HTMLFormElement>) => Promise<void>;
   onSetAnswerFeedback: (
@@ -42,6 +44,7 @@ interface UserChatWorkspaceProps {
       citationClicksDelta?: number;
     }
   ) => Promise<void>;
+  onLoadHistoricalQuestion: (requestId: string) => void;
 }
 
 export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
@@ -50,9 +53,11 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
     chatTurns,
     token,
     busy,
+    apiBaseUrl,
     setChatPrompt,
     onSendChat,
     onSetAnswerFeedback,
+    onLoadHistoricalQuestion,
   } = props;
 
   const latestUserTurnId = [...chatTurns].reverse().find((turn) => turn.role === "user")?.id;
@@ -251,6 +256,12 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
             </div>
           </div>
         </details>
+
+        <InspiredByOthersPanel
+          token={token}
+          apiBaseUrl={apiBaseUrl}
+          onLoadQuestion={onLoadHistoricalQuestion}
+        />
 
         <div className="chat-log" aria-live="polite" ref={chatLogRef}>
           {chatTurns.length === 0 && <p className="muted">Start a conversation.</p>}

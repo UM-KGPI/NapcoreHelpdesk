@@ -122,6 +122,20 @@ export interface QuestionEventsResponse {
   items: AskedQuestionRow[];
 }
 
+export interface TrendingQuestion {
+  question: string;
+  answer: string;
+  askedAt: string;
+  requestId: string;
+  questionEventId: string;
+  mode: AnswerMode;
+  confidence: number;
+}
+
+export interface TrendingQuestionsResponse {
+  items: TrendingQuestion[];
+}
+
 export interface PromotionCandidate {
   questionEventId: string;
   normalizedIntent: string;
