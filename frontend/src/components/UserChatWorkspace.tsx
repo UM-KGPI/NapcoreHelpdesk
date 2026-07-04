@@ -239,7 +239,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
 
         <details className="getting-started-inline collapsible-panel">
           <summary className="collapsible-summary getting-started-summary">
-            <span>Getting Started</span>
+            <span>📖 Getting Started</span>
           </summary>
           <div className="collapsible-body welcome-grid">
             <div>
