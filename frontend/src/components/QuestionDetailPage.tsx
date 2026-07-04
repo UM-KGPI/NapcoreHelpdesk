@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { ChatTurn } from "./UserChatWorkspace";
 import ReadOnlyQuestionDisplay from "./ReadOnlyQuestionDisplay";
 
@@ -30,6 +31,7 @@ export default function QuestionDetailPage({
   questionId,
   onSetAnswerFeedback,
 }: QuestionDetailPageProps) {
+  const navigate = useNavigate();
   const [chatTurns, setChatTurns] = useState<ChatTurn[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -133,5 +135,26 @@ export default function QuestionDetailPage({
     );
   }
 
-  return <ReadOnlyQuestionDisplay chatTurns={chatTurns} onSetAnswerFeedback={onSetAnswerFeedback} />;
+  return (
+    <>
+      <div style={{ padding: "1rem", textAlign: "center", borderBottom: "1px solid #e0e0e0" }}>
+        <button
+          type="button"
+          onClick={() => navigate("/user")}
+          style={{
+            padding: "0.5rem 1rem",
+            backgroundColor: "#5a9080",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+            fontSize: "0.95rem",
+          }}
+        >
+          Have a question?
+        </button>
+      </div>
+      <ReadOnlyQuestionDisplay chatTurns={chatTurns} onSetAnswerFeedback={onSetAnswerFeedback} />
+    </>
+  );
 }
