@@ -25,6 +25,7 @@ import type {
   QuestionEventDetail,
   QuestionEventsResponse,
   StandardsScope,
+  TrendingQuestionsResponse,
 } from "./types";
 
 export interface AnswerRequest {
@@ -175,6 +176,14 @@ export class HelpdeskApiClient {
   async deleteQuestionEvent(questionEventId: string): Promise<void> {
     await this.request<void>(`/questions/events/${encodeURIComponent(questionEventId)}`, {
       method: "DELETE",
+    });
+  }
+
+  async listTrendingQuestions(limit: number = 3): Promise<TrendingQuestionsResponse> {
+    const params = new URLSearchParams();
+    params.set("limit", String(limit));
+    return this.request<TrendingQuestionsResponse>(`/questions/trending?${params.toString()}`, {
+      method: "GET",
     });
   }
 

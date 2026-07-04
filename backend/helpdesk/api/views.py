@@ -1828,6 +1828,35 @@ class QuestionEventDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+class TrendingQuestionsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Return top N questions by user likes, ordered by created_at descending
+        limit = int(request.query_params.get("limit", 3))
+        limit = min(limit, 10)  # Cap at 10 to prevent abuse
+
+        items = QuestionEvent.objects.filter(user_likes=True).order_by("-created_at")[:limit]
+
+        return Response(
+            {
+                "items": [
+                    {
+                        "question": item.question,
+                        "answer": item.answer,
+                        "askedAt": item.created_at.isoformat().replace("+00:00", "Z"),
+                        "requestId": item.request_id,
+                        "questionEventId": str(item.id),
+                        "mode": item.mode,
+                        "confidence": float(item.confidence),
+                    }
+                    for item in items
+                ],
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
 class PromotionCandidatesView(APIView):
     permission_classes = [IsAuthenticated]
 
