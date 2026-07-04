@@ -33,7 +33,6 @@ interface UserChatWorkspaceProps {
   busy: boolean;
   setChatPrompt: (value: string) => void;
   onSendChat: (event: FormEvent<HTMLFormElement>) => Promise<void>;
-  onResetChatSession: () => void;
   onSetAnswerFeedback: (
     requestId: string,
     payload: {
@@ -53,7 +52,6 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
     busy,
     setChatPrompt,
     onSendChat,
-    onResetChatSession,
     onSetAnswerFeedback,
   } = props;
 
@@ -386,7 +384,6 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
 
           <div className="chat-actions">
             <button type="submit" disabled={busy || !token || !chatPrompt.trim()}>Send</button>
-            <button type="button" onClick={onResetChatSession} disabled={busy}>New Session</button>
           </div>
 
           {busy && (
