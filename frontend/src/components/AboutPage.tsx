@@ -10,7 +10,7 @@
 
 export default function AboutPage() {
   return (
-    <section className="workspace-section about-page">
+    <section className="about-page">
       <section className="panel status-banner">
         <p>
           <strong>Status:</strong> This project is actively in development. Core functionality

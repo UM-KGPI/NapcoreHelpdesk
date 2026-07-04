@@ -230,8 +230,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
   }, [busy, latestUserTurnId]);
 
   return (
-    <section className="workspace-section user-workspace">
-      <section className="panel chat-panel">
+    <section className="panel chat-panel user-workspace">
 
         <details className="getting-started-inline collapsible-panel">
           <summary className="collapsible-summary getting-started-summary">
@@ -395,6 +394,5 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
         </form>
 
       </section>
-    </section>
   );
 }

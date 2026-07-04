@@ -107,30 +107,24 @@ export default function QuestionDetailPage({
 
   if (loading) {
     return (
-      <div className="workspace-section">
-        <div className="panel">
-          <p>Loading question...</p>
-        </div>
+      <div className="panel" style={{ marginTop: "1.1rem" }}>
+        <p>Loading question...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="workspace-section">
-        <div className="panel">
-          <p className="error-text">{error}</p>
-        </div>
+      <div className="panel" style={{ marginTop: "1.1rem" }}>
+        <p className="error-text">{error}</p>
       </div>
     );
   }
 
   if (!chatTurns.length) {
     return (
-      <div className="workspace-section">
-        <div className="panel">
-          <p>Question not found.</p>
-        </div>
+      <div className="panel" style={{ marginTop: "1.1rem" }}>
+        <p>Question not found.</p>
       </div>
     );
   }
