@@ -260,7 +260,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
   const faqPageItems = faqItems.slice((faqPage - 1) * FAQ_PAGE_SIZE, faqPage * FAQ_PAGE_SIZE);
 
   return (
-    <section className="editor-workspace">
+    <section className="panel editor-workspace">
       <header className="workspace-header">
 <h2>Editorial Console</h2>
         <p className="muted">Operational controls for harvesting and indexing trusted knowledge sources, Q&amp;A validation, editorial review.</p>
