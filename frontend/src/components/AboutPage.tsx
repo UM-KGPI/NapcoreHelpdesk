@@ -34,8 +34,7 @@ export default function AboutPage({ appVersion, backendBuildRef }: AboutPageProp
 
       <section className="panel">
         <div className="panel-title-row">
-          <h2>About NAPCORE Helpdesk</h2>
-          <p>Where the project came from, who defined it, and how it was built.</p>
+          <h2>Purpose</h2>
         </div>
         <p>
           NAPCORE Helpdesk is a multilingual Q&amp;A assistant for implementer questions
@@ -54,14 +53,19 @@ export default function AboutPage({ appVersion, backendBuildRef }: AboutPageProp
           <h2>Requirements &amp; design</h2>
         </div>
         <p>
-          The requirements and domain design are credited throughout the codebase to
-          Andrej Tibaut and Sara Guerra de Oliveira, both affiliated with the University
-          of Maribor, Faculty of Civil Engineering, Transportation Engineering and
-          Architecture, Chair of Construction and Transportation Informatics
-          (<a href="https://kgpi.fgpa.um.si/" target="_blank" rel="noreferrer">kgpi.fgpa.um.si</a>).
-          They defined the standards scope (NeTEx/SIRI/OpRa/Transmodel), the
-          FAQ-first/RAG-fallback answer strategy, the citation and abstention
-          guarantees, and the editorial review workflow. The work is part of the NAPCORE Task 4.3. Active task partners are contributing after the app launch.
+          The requirements and domain design are credited throughout the codebase (see
+          the header comment of most backend service modules) to:
+        </p>
+        <ul>
+          <li>Andrej Tibaut</li>
+          <li>Sara Guerra de Oliveira</li>
+        </ul>
+        <p>
+          both affiliated with University of Maribor,
+          Faculty of Civil Engineering,
+          Transportation Engineering and Architecture,
+          Chair of Construction and Transportation Informatics (<a href="https://kgpi.fgpa.um.si/" target="_blank" rel="noreferrer">kgpi.fgpa.um.si</a>). They defined the standards scope (NeTEx/SIRI/OpRa/Transmodel), the FAQ-first/RAG-fallback answer strategy, the citation and
+          abstention guarantees, and the editorial review workflow. The work is part of the NAPCORE Task 4.3. Active task partners are contributing after the app launch.
         </p>
       </section>
 
@@ -70,29 +74,40 @@ export default function AboutPage({ appVersion, backendBuildRef }: AboutPageProp
           <h2>Development approach</h2>
         </div>
         <p>
-          Implementation was carried out by humans and by AI coding agents working
-          under human direction — every service module states this explicitly in its header
-          (<code>Crafted by: AI coding agents</code>). The development style is iterative rather than
-          big-upfront-design:
+          Implementation was carried out by humans and by AI coding agents working under human
+          direction — every service module in <code>backend/helpdesk/services/</code> and
+          <code>backend/helpdesk/management/commands/</code> states this explicitly in its header
+          (<code>Crafted by: AI coding agents</code>). The development style visible in the commit
+          history is iterative rather than big-upfront-design:
         </p>
         <ul>
           <li>Small, scoped, conventionally-named commits (<code>feat(...)</code>, <code>fix(...)</code>, <code>chore(...)</code>, <code>docs(...)</code>).</li>
-          <li>CI quality gates (backend tests, OpenAPI schema, C4 diagram checks, Postgres integration) were added early and extended alongside features.</li>
-          <li>Fixes and reverts follow closely behind features shipped to real usage, reflecting a "ship, observe, correct quickly" loop rather than long pre-verification cycles.</li>
+          <li>CI quality gates (backend tests, OpenAPI schema, C4 diagram checks, Postgres integration) were added early and extended alongside features rather than bolted on at the end.</li>
+          <li>Fixes and reverts follow closely behind features shipped to real usage (e.g. the deep-link, spell-check, and GraphRAG definition-retrieval work), reflecting a "ship, observe, correct quickly" loop rather than long pre-verification cycles.</li>
         </ul>
       </section>
 
       <section className="panel">
         <div className="panel-title-row">
-          <h2>Timeline</h2>
+          <h2>Timeline (from git history)</h2>
         </div>
-        <p className="muted" style={{ fontSize: "0.9rem" }}>Project started 2026-03-28 with continuous active development:</p>
+        <p>
+          The project started on 2026-03-28 and has had continuous, active development
+          since. Broad phases, in order:
+        </p>
         <ol>
-          <li><strong>Foundations</strong> — initial project import; hybrid lexical+vector retrieval on PostgreSQL/pgvector; FAQ and RAG persistence aligned to the C4 architecture.</li>
-          <li><strong>Editorial workflow</strong> — RBAC-based draft → review → approved/rejected → published queue, KPI widgets, and board UI.</li>
-          <li><strong>CI/ops hardening</strong> — backend, OpenAPI, and C4 quality gates; health probes; security and release automation.</li>
+          <li><strong>Foundations</strong> — initial project import; hybrid lexical+vector retrieval
+             on PostgreSQL/pgvector; FAQ and RAG persistence aligned to the C4
+             architecture.</li>
+          <li><strong>Editorial workflow</strong> — RBAC-based draft → review → approved/rejected →
+             published queue, KPI widgets, and board UI.</li>
+          <li><strong>CI/ops hardening</strong> — backend, OpenAPI, and C4 quality gates; health
+             probes; security and release automation.</li>
           <li><strong>Pilot testing</strong> — first-user testing pack and feedback workflow.</li>
-          <li><strong>Production deployment &amp; GraphRAG</strong> — Fedora VM + Docker Compose deployment; GraphDB-backed concept expansion; XSD-to-ontology extraction pipeline providing authoritative concept definitions; multilingual question support; deep-linking to individual Q&amp;A exchanges.</li>
+          <li><strong>Production deployment &amp; GraphRAG</strong> — Fedora VM + Docker Compose
+             deployment; GraphDB-backed concept expansion; XSD-to-ontology extraction
+             pipeline providing authoritative concept definitions; multilingual
+             question support; deep-linking to individual Q&amp;A exchanges.</li>
         </ol>
       </section>
 
