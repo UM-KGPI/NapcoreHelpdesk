@@ -702,6 +702,13 @@ def _build_messages(
         "- Use actual line breaks in code blocks (not escaped \\n characters)\n"
         "- Keep code blocks to 3-15 lines to remain readable\n"
         "- For lists, use proper markdown: start with '* ' or '- ' on a new line\n"
+        "- For numbered sections/examples (e.g., \"1. Example Title\", \"2. Another Example\"):\n"
+        "  * NEVER use **bold** for numbered headers inline in paragraphs (e.g., \"...evidence. **1. Title** more text...\" is forbidden)\n"
+        "  * ALWAYS put numbered sections on their own line using either:\n"
+        "    - Markdown headings: #### 1. Example Title\n"
+        "    - OR list format: 1. **Example Title** — description text\n"
+        "  * Insert a blank line BEFORE the numbered section and AFTER the previous paragraph\n"
+        "  * Insert a blank line AFTER the numbered section before continuing text\n"
     )
     if _question_requests_verbatim_example(question):
         system_prompt = (
