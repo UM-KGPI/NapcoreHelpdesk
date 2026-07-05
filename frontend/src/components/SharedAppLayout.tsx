@@ -9,7 +9,7 @@
  * Created: 2026-03-29  |  Modified: 2026-06-28
  */
 
-import { Outlet, NavLink } from "react-router-dom";
+import { Outlet, NavLink, Link } from "react-router-dom";
 
 import { useAuth } from "../auth-context";
 
@@ -29,7 +29,7 @@ export default function SharedAppLayout({ appVersion }: SharedAppLayoutProps) {
   return (
     <div className="page-shell">
       <header className="app-title-header">
-        <h1><a href="https://kgpi.fgpa.um.si/napcore-helpdesk/" className="app-title-link">NAPCORE Helpdesk</a></h1>
+        <h1><Link to="/" className="app-title-link">NAPCORE Helpdesk</Link></h1>
         <p className="app-subtitle">Source-Grounded Q&A Assistant with Editorial knowledge building for Transmodel ecosystem</p>
         <p className="app-version-line">
           v{extractBaseVersion(appVersion)} · {" "}
