@@ -430,6 +430,7 @@ class HelpdeskApiTests(APITestCase):
             core_concept="nits:unknown-concept",
             ambiguous_core_concept=False,
             candidate_standards=[],
+            original_terms=["unmapped"],
             as_dict=lambda: {
                 "intent": "unknown",
                 "normativity": "unspecified",

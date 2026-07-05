@@ -998,6 +998,16 @@ components:
         citationClickCount:
           type: integer
           minimum: 0
+        exampleChunksAdded:
+          type: integer
+          minimum: 0
+        ontologyDefinitionsAdded:
+          type: integer
+          minimum: 0
+        llmRejectedAnswer:
+          type: [string, "null"]
+        llmRejectionReason:
+          type: [string, "null"]
       additionalProperties: false
     AnswerFeedbackRequest:
       type: object
