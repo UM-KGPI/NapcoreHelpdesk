@@ -1092,7 +1092,7 @@ export default function App() {
                 />
               }
             />
-            <Route path="about" element={<AboutPage />} />
+            <Route path="about" element={<AboutPage appVersion={frontendVersion} backendBuildRef={backendBuildRef} />} />
           </Route>
         </Routes>
 

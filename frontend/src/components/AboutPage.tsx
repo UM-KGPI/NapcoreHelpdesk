@@ -5,10 +5,25 @@
  *
  * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
  * Crafted by: AI coding agents
- * Created: 2026-07-02
+ * Created: 2026-07-02  |  Modified: 2026-07-05
  */
 
-export default function AboutPage() {
+interface AboutPageProps {
+  appVersion: string;
+  backendBuildRef: string;
+}
+
+function extractBaseVersion(appVersion: string): string {
+  const [baseVersion] = appVersion.split("+", 2);
+  return baseVersion;
+}
+
+function extractBuildInfo(appVersion: string): string {
+  const [, buildMetadata] = appVersion.split("+", 2);
+  return buildMetadata || "dev";
+}
+
+export default function AboutPage({ appVersion, backendBuildRef }: AboutPageProps) {
   return (
     <section className="about-page">
       <section className="panel status-banner">
@@ -78,6 +93,20 @@ export default function AboutPage() {
           <li><strong>Pilot testing</strong> — first-user testing pack and feedback workflow.</li>
           <li><strong>Production deployment &amp; GraphRAG</strong> — Fedora VM + Docker Compose deployment; GraphDB-backed concept expansion; XSD-to-ontology extraction pipeline providing authoritative concept definitions; multilingual question support; deep-linking to individual Q&amp;A exchanges.</li>
         </ol>
+      </section>
+
+      <section className="panel">
+        <div className="panel-title-row">
+          <h2>Version information</h2>
+        </div>
+        <dl className="version-info">
+          <dt>Application version:</dt>
+          <dd>v{extractBaseVersion(appVersion)}</dd>
+          <dt>Build:</dt>
+          <dd>{extractBuildInfo(appVersion)}</dd>
+          <dt>Backend:</dt>
+          <dd>{backendBuildRef || "dev"}</dd>
+        </dl>
       </section>
     </section>
   );

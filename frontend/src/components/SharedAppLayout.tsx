@@ -18,15 +18,12 @@ interface SharedAppLayoutProps {
   backendBuildRef: string;
 }
 
-function formatAppVersion(appVersion: string): string {
-  const [baseVersion, buildMetadata] = appVersion.split("+", 2);
-  if (!buildMetadata) {
-    return appVersion;
-  }
-  return `${baseVersion} (${buildMetadata})`;
+function extractBaseVersion(appVersion: string): string {
+  const [baseVersion] = appVersion.split("+", 2);
+  return baseVersion;
 }
 
-export default function SharedAppLayout({ appVersion, backendBuildRef }: SharedAppLayoutProps) {
+export default function SharedAppLayout({ appVersion }: SharedAppLayoutProps) {
   useAuth();
 
   return (
@@ -35,11 +32,9 @@ export default function SharedAppLayout({ appVersion, backendBuildRef }: SharedA
         <h1><a href="https://kgpi.fgpa.um.si/napcore-helpdesk/" className="app-title-link">NAPCORE Helpdesk</a></h1>
         <p className="app-subtitle">Source-Grounded Q&A Assistant with Editorial knowledge building for Transmodel ecosystem</p>
         <p className="app-version-line">
-          Frontend {formatAppVersion(appVersion)}
-          {backendBuildRef && ` · Backend ${backendBuildRef}`}
-          {" · "}
+          v{extractBaseVersion(appVersion)} · {" "}
           <NavLink to="/about" className="app-about-link">
-            About this project
+            About (build {appVersion})
           </NavLink>
         </p>
       </header>

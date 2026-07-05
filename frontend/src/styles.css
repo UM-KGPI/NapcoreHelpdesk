@@ -98,6 +98,25 @@ body {
   color: #0f766e;
 }
 
+.version-info {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.5rem 1rem;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.version-info dt {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.version-info dd {
+  margin: 0;
+  color: var(--muted);
+  font-family: "IBM Plex Mono", monospace;
+}
+
 .hero {
   background: linear-gradient(125deg, #0f766e, #164e63 65%, #1f2937);
   color: #f7f8f8;
