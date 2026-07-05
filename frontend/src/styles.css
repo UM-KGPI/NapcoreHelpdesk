@@ -1039,6 +1039,12 @@ button:disabled {
   margin-bottom: 0;
 }
 
+.answer-markdown strong,
+.answer-markdown b {
+  font-weight: normal;
+  color: var(--accent-strong);
+}
+
 .answer-markdown pre {
   margin: 0.6rem 0;
 }
