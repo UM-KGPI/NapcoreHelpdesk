@@ -1465,19 +1465,28 @@ class HelpdeskApiTests(APITestCase):
 
     def test_editorial_queue_list_returns_board_items_with_filters(self):
         """Ensure editorial board endpoint returns paginated queue rows and supports filters."""
-        answer_response = self.client.post(
+        answer_response_1 = self.client.post(
             reverse("answer-question"),
             {"question": "Explain OpRa operational exchange setup sequence."},
             format="json",
             HTTP_X_REQUEST_ID="req-board-source-1",
             **self.auth_headers(),
         )
-        question_event_id = answer_response.data["trace"]["questionEventId"]
+        question_event_id_1 = answer_response_1.data["trace"]["questionEventId"]
+
+        answer_response_2 = self.client.post(
+            reverse("answer-question"),
+            {"question": "What is NeTEx operational model?"},
+            format="json",
+            HTTP_X_REQUEST_ID="req-board-source-2",
+            **self.auth_headers(),
+        )
+        question_event_id_2 = answer_response_2.data["trace"]["questionEventId"]
 
         self.client.post(
             reverse("editorial-queue"),
             {
-                "questionEventId": question_event_id,
+                "questionEventId": question_event_id_1,
                 "reason": "LOW_CONFIDENCE",
                 "priority": "normal",
             },
@@ -1488,7 +1497,7 @@ class HelpdeskApiTests(APITestCase):
         self.client.post(
             reverse("editorial-queue"),
             {
-                "questionEventId": question_event_id,
+                "questionEventId": question_event_id_2,
                 "reason": "POLICY_REVIEW",
                 "priority": "high",
             },
@@ -1501,7 +1510,7 @@ class HelpdeskApiTests(APITestCase):
             {
                 "status": "in_review",
                 "priority": "high",
-                "search": "operational exchange",
+                "search": "operational",
                 "page": 1,
                 "pageSize": 10,
             },
