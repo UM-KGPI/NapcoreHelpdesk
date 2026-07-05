@@ -46,6 +46,13 @@ def _question_requests_verbatim_example(question: str) -> bool:
     return asks_for_example and asks_for_code
 
 
+def _question_about_xml_or_technical(question: str) -> bool:
+    question_lower = question.lower()
+    mentions_standard = any(term in question_lower for term in ["xml", "netex", "siri", "opra", "transmodel", "json", "code"])
+    asks_how_or_explain = any(term in question_lower for term in ["how", "show", "what is", "explain", "example", "structure"])
+    return mentions_standard or asks_how_or_explain
+
+
 def _normalize_grounded_line(line: str) -> str:
     return " ".join(line.strip().lower().split())
 
@@ -699,6 +706,13 @@ def _build_messages(
             "When showing XML/JSON/YAML, include one fenced code block (```xml) of 6-20 lines from a single evidence block. "
             "Quote only verbatim excerpts from evidence blocks. Never synthesize or combine structures across sources. "
             "If asking for availability ('Is there any...?'), list all matching examples found in the evidence with their source paths and brief descriptions."
+        )
+    elif _question_about_xml_or_technical(question):
+        system_prompt = (
+            f"{system_prompt} "
+            "For technical questions about XML, standards structures, or implementations: Include a relevant code example from the evidence if available. "
+            "When showing XML/JSON structures, use one fenced code block (```xml) with 6-15 lines from the evidence. "
+            "Never synthesize or invent examples — only quote verbatim from the evidence blocks."
         )
 
     faq_section = ""
