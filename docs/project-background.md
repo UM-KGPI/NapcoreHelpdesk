@@ -36,9 +36,7 @@ abstention guarantees, and the editorial review workflow. The work is part of th
 ## Development approach
 
 Implementation was carried out by humans and by AI coding agents working under human
-direction — every service module in `backend/helpdesk/services/` and
-`backend/helpdesk/management/commands/` states this explicitly in its header
-(`Crafted by: AI coding agents`). The development style visible in the commit
+direction. The development style visible in the commit
 history is iterative rather than big-upfront-design:
 
 - Small, scoped, conventionally-named commits (`feat(...)`, `fix(...)`,
@@ -72,9 +70,19 @@ since. Broad phases, in order:
 See [Recent updates](recent-updates.md) for a detailed log of the latest
 phase.
 
+## Contributing
+
+NAPCORE Helpdesk is open-source and developed collaboratively. We welcome
+contributions, feedback, and ideas from the community. Visit the
+[GitHub repository](https://github.com/UM-KGPI/NapcoreHelpdesk) to report
+issues, propose features, submit pull requests, or review the codebase and
+architecture. See [Contributing](../CONTRIBUTING.md) for development flow and
+commit conventions.
+
 ## Where to go next
 
 - [Architecture overview](architecture-overview.md) — system design and runtime flow
 - [Recent updates](recent-updates.md) — latest feature and API changes
 - [Installation](installation.md) / [Production deployment](production-deployment.md)
 - [Contributing](../CONTRIBUTING.md) — development flow and commit conventions
+- [GitHub repository](https://github.com/UM-KGPI/NapcoreHelpdesk) — source code and issue tracking

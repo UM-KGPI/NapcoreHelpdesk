@@ -10,7 +10,7 @@
 
 interface AboutPageProps {
   appVersion: string;
-  backendBuildRef: string;
+  backendBuildRef?: string;
 }
 
 function extractBaseVersion(appVersion: string): string {
@@ -18,12 +18,7 @@ function extractBaseVersion(appVersion: string): string {
   return baseVersion;
 }
 
-function extractBuildInfo(appVersion: string): string {
-  const [, buildMetadata] = appVersion.split("+", 2);
-  return buildMetadata || "dev";
-}
-
-export default function AboutPage({ appVersion, backendBuildRef }: AboutPageProps) {
+export default function AboutPage({ appVersion }: AboutPageProps) {
   return (
     <section className="about-page">
       <section className="panel status-banner">
@@ -113,16 +108,30 @@ export default function AboutPage({ appVersion, backendBuildRef }: AboutPageProp
 
       <section className="panel">
         <div className="panel-title-row">
-          <h2>Version information</h2>
+          <h2>Contributing</h2>
         </div>
-        <dl className="version-info">
-          <dt>Application version:</dt>
-          <dd>v{extractBaseVersion(appVersion)}</dd>
-          <dt>Build:</dt>
-          <dd>{extractBuildInfo(appVersion)}</dd>
-          <dt>Backend:</dt>
-          <dd>{backendBuildRef || "dev"}</dd>
-        </dl>
+        <p>
+          NAPCORE Helpdesk is open-source and developed collaboratively. We welcome contributions, feedback, and ideas from the community.
+        </p>
+        <p>
+          Visit the <a href="https://github.com/UM-KGPI/NapcoreHelpdesk" target="_blank" rel="noreferrer">GitHub repository</a> to:
+        </p>
+        <ul>
+          <li>Report issues and bugs</li>
+          <li>Propose new features and improvements</li>
+          <li>Submit pull requests</li>
+          <li>Review the codebase and architecture</li>
+          <li>Follow development progress</li>
+        </ul>
+      </section>
+
+      <section className="panel">
+        <div className="panel-title-row">
+          <h2>Version</h2>
+        </div>
+        <p>
+          Application version: <code>v{extractBaseVersion(appVersion)}</code>
+        </p>
       </section>
     </section>
   );
