@@ -686,22 +686,11 @@ def _build_messages(
         "\n"
         "OUTPUT FORMAT (strict JSON):\n"
         '{"answer": "Your answer text here with [E1] [E2] citations inline.", "citations_used": ["E1", "E2"]}'
-        "\n\nMARKDOWN FORMATTING RULES:\n"
-        "- ALWAYS use `inline code` (backticks) for ALL technical content:\n"
-        "  * XML/JSON element names: `<Quay>`, `<ServiceJourney>`, `<TrainElement>`\n"
-        "  * Attribute names: `ref`, `id`, `version`\n"
-        "  * Values: `busStop`, `train`, `covered`\n"
-        "  * Filenames and paths: `Netex_11_Rail_CompoundTrain.xml`, `example_file.json`\n"
-        "  * Class/type names: `TRAIN ELEMENT`, `DECK PLAN`, `COMPOUND TRAIN` → use backticks like `TRAIN ELEMENT`\n"
-        "- Do NOT use **bold** for technical terms, attribute names, filenames, or values — ONLY use backticks\n"
-        "- Use **bold** ONLY for emphasis on general concepts or section headers, NOT for technical syntax\n"
-        "- When showing XML/JSON code snippets (3+ lines), wrap them in triple backticks with language identifier:\n"
-        "  ```xml\n"
-        "  <DepartureTime>09:54:00</DepartureTime>\n"
-        "  ```\n"
-        "- Use actual line breaks in code blocks (not escaped \\n characters)\n"
-        "- Keep code blocks to 3-15 lines to remain readable\n"
-        "- For lists, use proper markdown: start with '* ' or '- ' on a new line\n"
+        "\n\nMARKDOWN FORMATTING:\n"
+        "- Use `backticks` for technical content: XML elements, attributes, filenames, class names, values.\n"
+        "- Use triple backticks for code blocks: ```xml ... ```\n"
+        "- Use **bold** for emphasis only, not for technical terms.\n"
+        "- Standard markdown for lists, headers, and paragraphs.\n"
     )
     if _question_requests_verbatim_example(question):
         system_prompt = (
