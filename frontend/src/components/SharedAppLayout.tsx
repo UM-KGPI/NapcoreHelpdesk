@@ -34,7 +34,7 @@ export default function SharedAppLayout({ appVersion }: SharedAppLayoutProps) {
         <p className="app-version-line">
           v{extractBaseVersion(appVersion)} · {" "}
           <NavLink to="/about" className="app-about-link">
-            About (build {appVersion})
+            About this project
           </NavLink>
         </p>
       </header>
