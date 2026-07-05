@@ -11,7 +11,7 @@
  * Created: 2026-03-29  |  Modified: 2026-06-28
  */
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
 import type { AnswerResponse } from "../types";
@@ -213,26 +213,14 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
   };
 
   useLayoutEffect(() => {
-    if (!busy || !latestUserTurnRef.current || !chatLogRef.current) {
+    if (!latestUserTurnRef.current || !chatLogRef.current) {
       return;
     }
 
     alignLatestUserBubbleToTop();
     const frameId = window.requestAnimationFrame(alignLatestUserBubbleToTop);
     return () => window.cancelAnimationFrame(frameId);
-  }, [busy, latestUserTurnId, chatTurns.length]);
-
-  useEffect(() => {
-    if (!busy) {
-      return;
-    }
-
-    const intervalId = window.setInterval(() => {
-      alignLatestUserBubbleToTop();
-    }, 60);
-
-    return () => window.clearInterval(intervalId);
-  }, [busy, latestUserTurnId]);
+  }, [latestUserTurnId, chatTurns.length]);
 
   return (
     <section className="panel chat-panel user-workspace">
