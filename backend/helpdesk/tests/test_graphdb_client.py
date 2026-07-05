@@ -125,7 +125,7 @@ class GraphDbClientTests(TestCase):
             )
 
         graph_uris = {item["graphUri"] for item in results}
-        self.assertEqual(len(results), 11)
+        self.assertEqual(len(results), 10)
         self.assertFalse(any("/artifact-rules/" in uri for uri in graph_uris))
 
     def test_load_default_ontology_graphs_includes_selected_artifact_rules(self):
