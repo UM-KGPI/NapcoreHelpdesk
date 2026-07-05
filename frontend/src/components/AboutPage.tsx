@@ -10,7 +10,7 @@
 
 interface AboutPageProps {
   appVersion: string;
-  backendBuildRef?: string;
+  backendBuildRef: string;
 }
 
 function extractBaseVersion(appVersion: string): string {
@@ -18,7 +18,12 @@ function extractBaseVersion(appVersion: string): string {
   return baseVersion;
 }
 
-export default function AboutPage({ appVersion }: AboutPageProps) {
+function extractBuildInfo(appVersion: string): string {
+  const [, buildMetadata] = appVersion.split("+", 2);
+  return buildMetadata || "dev";
+}
+
+export default function AboutPage({ appVersion, backendBuildRef }: AboutPageProps) {
   return (
     <section className="about-page">
       <section className="panel status-banner">
@@ -127,11 +132,16 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
 
       <section className="panel">
         <div className="panel-title-row">
-          <h2>Version</h2>
+          <h2>Version information</h2>
         </div>
-        <p>
-          Application version: <code>v{extractBaseVersion(appVersion)}</code>
-        </p>
+        <dl className="version-info">
+          <dt>Application version:</dt>
+          <dd>v{extractBaseVersion(appVersion)}</dd>
+          <dt>Build:</dt>
+          <dd>{extractBuildInfo(appVersion)}</dd>
+          <dt>Backend:</dt>
+          <dd>{backendBuildRef || "dev"}</dd>
+        </dl>
       </section>
     </section>
   );
