@@ -16,14 +16,6 @@ from helpdesk.models import EditorialQueueItem
 
 
 def route_to_editorial_queue(payload: dict) -> EditorialQueueItem:
-    """Persist editorial queue item and return created model instance.
-
-    Raises IntegrityError if an item already exists for this question_event_id.
-    """
-    question_event_id = payload["question_event"].id
-
-    if EditorialQueueItem.objects.filter(question_event_id=question_event_id).exists():
-        # Return existing item instead of creating duplicate
-        return EditorialQueueItem.objects.get(question_event_id=question_event_id)
+    """Persist editorial queue item and return created model instance."""
 
     return EditorialQueueItem.objects.create(**payload)

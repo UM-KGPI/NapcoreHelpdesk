@@ -1575,19 +1575,28 @@ class HelpdeskApiTests(APITestCase):
 
     def test_editorial_queue_metrics_returns_kpi_distributions_and_aging(self):
         """Ensure board metrics endpoint returns status and aging aggregates."""
-        answer_response = self.client.post(
+        answer_response_1 = self.client.post(
             reverse("answer-question"),
             {"question": "Explain OpRa operational exchange setup sequence."},
             format="json",
             HTTP_X_REQUEST_ID="req-metrics-source-1",
             **self.auth_headers(),
         )
-        question_event_id = answer_response.data["trace"]["questionEventId"]
+        question_event_id_1 = answer_response_1.data["trace"]["questionEventId"]
+
+        answer_response_2 = self.client.post(
+            reverse("answer-question"),
+            {"question": "What is NeTEx semantic definition?"},
+            format="json",
+            HTTP_X_REQUEST_ID="req-metrics-source-2",
+            **self.auth_headers(),
+        )
+        question_event_id_2 = answer_response_2.data["trace"]["questionEventId"]
 
         first_response = self.client.post(
             reverse("editorial-queue"),
             {
-                "questionEventId": question_event_id,
+                "questionEventId": question_event_id_1,
                 "priority": "normal",
             },
             format="json",
@@ -1597,7 +1606,7 @@ class HelpdeskApiTests(APITestCase):
         second_response = self.client.post(
             reverse("editorial-queue"),
             {
-                "questionEventId": question_event_id,
+                "questionEventId": question_event_id_2,
                 "reason": "POLICY_REVIEW",
                 "priority": "high",
             },
