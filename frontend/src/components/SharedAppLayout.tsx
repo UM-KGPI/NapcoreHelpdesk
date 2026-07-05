@@ -32,7 +32,7 @@ export default function SharedAppLayout({ appVersion, backendBuildRef }: SharedA
   return (
     <div className="page-shell">
       <header className="app-title-header">
-        <h1>NAPCORE Helpdesk</h1>
+        <h1><a href="https://kgpi.fgpa.um.si/napcore-helpdesk/" className="app-title-link">NAPCORE Helpdesk</a></h1>
         <p className="app-subtitle">Source-Grounded Q&A Assistant with Editorial knowledge building for Transmodel ecosystem</p>
         <p className="app-version-line">
           Frontend {formatAppVersion(appVersion)}
