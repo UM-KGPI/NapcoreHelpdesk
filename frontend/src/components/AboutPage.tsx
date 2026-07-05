@@ -28,10 +28,7 @@ export default function AboutPage({ appVersion, backendBuildRef }: AboutPageProp
     <section className="about-page">
       <section className="panel status-banner">
         <p>
-          <strong>Status:</strong> This project is actively in development. Core functionality
-          is stable and in pilot testing, but new features, refinements, and integrations are
-          ongoing. The work is part of the NAPCORE WG 4.3, with active contributions from
-          workgroup members.
+          <strong>Status:</strong> This project is actively in development. The core functionality is stable and in pilot testing, but new features, refinements, and integrations are ongoing. The work is part of the NAPCORE Task 4.3 Multimodal Standards, with active contributions from task members.
         </p>
       </section>
 
@@ -64,7 +61,7 @@ export default function AboutPage({ appVersion, backendBuildRef }: AboutPageProp
           (<a href="https://kgpi.fgpa.um.si/" target="_blank" rel="noreferrer">kgpi.fgpa.um.si</a>).
           They defined the standards scope (NeTEx/SIRI/OpRa/Transmodel), the
           FAQ-first/RAG-fallback answer strategy, the citation and abstention
-          guarantees, and the editorial review workflow. The work is part of the NAPCORE WG 4.3. Members of the workgroup are actively contributing after the app launch.
+          guarantees, and the editorial review workflow. The work is part of the NAPCORE Task 4.3. Active task partners are contributing after the app launch.
         </p>
       </section>
 
@@ -74,18 +71,22 @@ export default function AboutPage({ appVersion, backendBuildRef }: AboutPageProp
         </div>
         <p>
           Implementation was carried out by humans and by AI coding agents working
-          under human direction. The development style is iterative rather than
-          big-upfront-design: small, scoped, conventionally-named commits; CI quality
-          gates added early and extended alongside features; fixes following closely
-          behind features shipped to real usage rather than long pre-verification
-          cycles.
+          under human direction — every service module states this explicitly in its header
+          (<code>Crafted by: AI coding agents</code>). The development style is iterative rather than
+          big-upfront-design:
         </p>
+        <ul>
+          <li>Small, scoped, conventionally-named commits (<code>feat(...)</code>, <code>fix(...)</code>, <code>chore(...)</code>, <code>docs(...)</code>).</li>
+          <li>CI quality gates (backend tests, OpenAPI schema, C4 diagram checks, Postgres integration) were added early and extended alongside features.</li>
+          <li>Fixes and reverts follow closely behind features shipped to real usage, reflecting a "ship, observe, correct quickly" loop rather than long pre-verification cycles.</li>
+        </ul>
       </section>
 
       <section className="panel">
         <div className="panel-title-row">
           <h2>Timeline</h2>
         </div>
+        <p className="muted" style={{ fontSize: "0.9rem" }}>Project started 2026-03-28 with continuous active development:</p>
         <ol>
           <li><strong>Foundations</strong> — initial project import; hybrid lexical+vector retrieval on PostgreSQL/pgvector; FAQ and RAG persistence aligned to the C4 architecture.</li>
           <li><strong>Editorial workflow</strong> — RBAC-based draft → review → approved/rejected → published queue, KPI widgets, and board UI.</li>
