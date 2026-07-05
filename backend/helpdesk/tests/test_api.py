@@ -154,9 +154,9 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(response.data["version"], settings.SERVICE_VERSION)
         self.assertEqual(response.data["buildRef"], settings.SERVICE_BUILD_REF)
 
-    @override_settings(DEBUG=True, DEV_JWT_AUTO_ISSUE=True)
-    def test_dev_token_endpoint_issues_token_in_debug(self):
-        """Ensure local development can mint a JWT without manual shell commands."""
+    @override_settings(DEV_JWT_AUTO_ISSUE=True)
+    def test_dev_token_endpoint_issues_token_when_auto_issue_enabled(self):
+        """Ensure auto-issued tokens work regardless of DEBUG (needed in production too)."""
         response = self.client.post(reverse("auth-dev-token"), {}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -164,9 +164,9 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(response.data["tokenType"], "Bearer")
         self.assertGreater(response.data["expiresInSeconds"], 0)
 
-    @override_settings(DEBUG=False, DEV_JWT_AUTO_ISSUE=True)
-    def test_dev_token_endpoint_rejects_when_not_debug(self):
-        """Ensure dev token mint endpoint cannot be used when debug mode is off."""
+    @override_settings(DEV_JWT_AUTO_ISSUE=False)
+    def test_dev_token_endpoint_rejects_when_auto_issue_disabled(self):
+        """Ensure dev token mint endpoint cannot be used when auto-issue is off."""
         response = self.client.post(reverse("auth-dev-token"), {}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
