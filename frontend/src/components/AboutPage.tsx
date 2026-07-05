@@ -108,6 +108,10 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
              deployment; GraphDB-backed concept expansion; XSD-to-ontology extraction
              pipeline providing authoritative concept definitions; multilingual
              question support; deep-linking to individual Q&amp;A exchanges.</li>
+          <li><strong>UI/UX Refinement &amp; Community Engagement</strong> — User discovery features
+             (Inspiring questions panel with smart caching); streamlined version display;
+             community contribution pathway via GitHub; performance optimizations;
+             quality gate improvements and ongoing refinements.</li>
         </ol>
       </section>
 

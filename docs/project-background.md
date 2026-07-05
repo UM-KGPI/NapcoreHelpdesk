@@ -66,6 +66,10 @@ since. Broad phases, in order:
    deployment; GraphDB-backed concept expansion; XSD-to-ontology extraction
    pipeline providing authoritative concept definitions; multilingual
    question support; deep-linking to individual Q&A exchanges.
+6. **UI/UX Refinement & Community Engagement** — User discovery features
+   (Inspiring questions panel with smart caching); streamlined version display;
+   community contribution pathway via GitHub; performance optimizations;
+   quality gate improvements and ongoing refinements.
 
 See [Recent updates](recent-updates.md) for a detailed log of the latest
 phase.
