@@ -20,7 +20,7 @@ diagrams-c4: ## Render all C4 architecture diagrams (PlantUML)
 	@bash scripts/render-plantuml.sh .mylocal/docs/architecture/c4-system-context.puml .mylocal/docs/architecture/c4-container.puml .mylocal/docs/architecture/c4-orchestrator-components.puml
 
 diagrams-erd: ## Render ERD architecture diagram (PlantUML -> SVG)
-	@bash scripts/render-plantuml.sh docs/diagrams/erd-schema.puml
+	@bash scripts/render-plantuml.sh .mylocal/docs/architecture/erd-schema.puml
 
 diagrams-bpmn: ## Render BPMN process diagrams (PlantUML -> SVG)
 	@bash scripts/render-plantuml.sh .mylocal/docs/architecture/editor-review-process-bpmn.puml .mylocal/docs/architecture/question-answer-process-bpmn.puml

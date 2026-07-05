@@ -28,7 +28,7 @@ NAPCORE Helpdesk is a FAQ-first, RAG-fallback system for transport standards.
 
 ## RAG activity diagram (updated with GraphDB)
 
-- PlantUML source: [docs/diagrams/rag-activity-graphdb.puml](diagrams/rag-activity-graphdb.puml)
+- PlantUML source: [.mylocal/docs/architecture/rag-activity-graphdb.puml](../../.mylocal/docs/architecture/rag-activity-graphdb.puml)
 - SVG render: [docs/diagrams/rag-activity-graphdb.svg](diagrams/rag-activity-graphdb.svg)
 
 ![RAG Activity Diagram](diagrams/rag-activity-graphdb.svg)
