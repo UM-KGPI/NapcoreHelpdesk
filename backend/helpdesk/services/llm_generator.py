@@ -354,6 +354,43 @@ def _strip_json_suffix(answer: str) -> str:
     return _JSON_SUFFIX_PATTERN.sub("", answer).rstrip()
 
 
+def _unwrap_json_answer(text: str) -> str:
+    """
+    Extract the prose answer from a JSON-mode LLM response.
+
+    JSON mode makes the model emit ``{"answer": "...", "citations_used": [...]}``;
+    this returns the "answer" field, unwrapping a double-encoded answer field and
+    falling back to other common field names. Non-JSON input is returned as-is.
+    """
+    try:
+        response_json = json.loads(text)
+    except json.JSONDecodeError:
+        logger.debug("[UNWRAP] Not JSON, treating as plain text")
+        return text
+    if not isinstance(response_json, dict):
+        return text
+
+    answer = response_json.get("answer")
+    if isinstance(answer, str):
+        # Handle double-wrapped JSON: the answer field itself may be a JSON string.
+        if answer.strip().startswith("{"):
+            try:
+                inner_json = json.loads(answer)
+            except json.JSONDecodeError:
+                return answer
+            if isinstance(inner_json, dict) and isinstance(inner_json.get("answer"), str):
+                logger.info(f"[UNWRAP] Double-wrapped answer extracted: {len(inner_json['answer'])} chars")
+                return inner_json["answer"]
+        return answer
+
+    logger.warning(f"[UNWRAP] No 'answer' key, falling back. Keys: {list(response_json.keys())}")
+    for key in ("text", "content", "response", "message"):
+        if isinstance(response_json.get(key), str):
+            logger.info(f"[UNWRAP] Using '{key}' field instead")
+            return response_json[key]
+    return str(response_json)
+
+
 def _strip_raw_filenames(answer: str, chunks: list[dict] | None = None) -> str:
     """
     Remove hallucinated file names from answer text, preserving evidence file names.
@@ -612,6 +649,7 @@ def _build_messages(
     faq_hint: str | None = None,
     language: str | None = None,
     all_candidates: list[dict] | None = None,
+    detected_language: str | None = None,
 ) -> list[dict]:
     context_lines = []
     for index, chunk in enumerate(chunks[:max_chunks], start=1):
@@ -649,8 +687,10 @@ def _build_messages(
     # client-supplied `language` (often just the browser/OS locale, unrelated to
     # what the user actually typed). With thinking mode disabled, the model has
     # no reasoning step of its own to fall back on for "detect the language"
-    # instructions, so an explicit target language must be given here.
-    detected_language = detect_question_language(question)
+    # instructions, so an explicit target language must be given here. Callers
+    # that already detected the language pass it in to avoid a second detection.
+    if detected_language is None:
+        detected_language = detect_question_language(question)
     effective_language = detected_language or language
 
     _lang = (effective_language or "").strip().lower()
@@ -668,8 +708,6 @@ def _build_messages(
         "You MUST output valid JSON only. Do not output any text outside the JSON structure.\n"
         f"\n🌍 LANGUAGE REQUIREMENT: {language_instruction}\n"
         "\nCRITICAL RULES:\n"
-        "⚠️ CITATION NUMBERS: Look at the evidence blocks below and count how many [E#] blocks exist. "
-        "ONLY cite those exact numbers. NEVER cite any [E#] number higher than what exists in the evidence.\n"
         "1. ONLY reference information that appears in the provided evidence blocks [E1] through [E#]\n"
         "2. EVERY factual claim MUST have a citation [E#] to the specific block containing that information\n"
         "3. Do NOT use any knowledge from your training data. Do NOT reference standards, examples, or concepts not in the provided blocks\n"
@@ -863,48 +901,7 @@ def _generate_answer_text(
 
     logger.info(f"[LLM_RAW] Raw response (first 250 chars): {answer[:250]}")
 
-    # Parse JSON response if in JSON mode
-    try:
-        response_json = json.loads(answer)
-        logger.info(f"[JSON_PARSE] type={type(response_json).__name__}, keys={list(response_json.keys()) if isinstance(response_json, dict) else 'N/A'}")
-        if isinstance(response_json, dict) and "answer" in response_json:
-            answer = response_json["answer"]
-            # NOTE: json.loads() already converts \n to actual newlines, so no need for decode('unicode_escape')
-            # That would corrupt any legitimate backslashes in the text
-            logger.info(f"[JSON_EXTRACT] Extracted answer field: {len(answer)} chars, type={type(answer).__name__}, starts_with: {str(answer)[:80]}")
-
-            # Handle double-wrapped JSON: if the answer field itself is a JSON string, parse it
-            if isinstance(answer, str) and answer.strip().startswith("{"):
-                logger.info(f"[UNWRAP_JSON] Answer field is JSON string, attempting unwrap: {answer[:100]}")
-                try:
-                    inner_json = json.loads(answer)
-                    if isinstance(inner_json, dict) and "answer" in inner_json:
-                        answer = inner_json["answer"]
-                        logger.info(f"[UNWRAP_SUCCESS] Double-wrapped answer extracted: {len(answer)} chars")
-                    else:
-                        logger.info(f"[UNWRAP_NO_ANSWER_KEY] Inner JSON has no 'answer' key, keys: {inner_json.keys() if isinstance(inner_json, dict) else 'N/A'}")
-                except json.JSONDecodeError as unwrap_error:
-                    # Not JSON, keep as-is
-                    logger.warning(f"[UNWRAP_FAILED] Could not parse answer field as JSON: {str(unwrap_error)[:100]}")
-                    pass
-        else:
-            # If not in expected JSON format, try to use as-is
-            if isinstance(response_json, dict):
-                logger.debug(f"No 'answer' key found, available keys: {list(response_json.keys())}")
-                logger.warning(f"[JSON_MISSING_ANSWER_KEY] Attempting fallback extraction")
-                # Try fallback: look for any string-like field that looks like an answer
-                for key in ['text', 'content', 'response', 'message']:
-                    if key in response_json and isinstance(response_json[key], str):
-                        answer = response_json[key]
-                        logger.info(f"[JSON_FALLBACK] Using '{key}' field instead: {len(answer)} chars")
-                        break
-                else:
-                    # No suitable field found, use str() as last resort
-                    answer = str(response_json)
-                    logger.warning(f"[JSON_FALLBACK_FAILED] No suitable field found, using str()")
-    except json.JSONDecodeError as e:
-        # Not JSON, treat as plain text response
-        logger.debug(f"JSON parse failed: {e}, treating as plain text")
+    answer = _unwrap_json_answer(answer)
 
     # Strip trailing JSON metadata object before any other processing.
     answer = _strip_json_suffix(answer)
@@ -1172,6 +1169,9 @@ def _stream_request_chat_completion(
         "temperature": temperature,
         "max_tokens": max_tokens,
         "stream": True,
+        # Tokens are fully buffered and validated before any reach the client,
+        # so JSON mode is safe here and keeps output parseable like the sync path.
+        "response_format": {"type": "json_object"},
         # See _request_chat_completion: avoid reasoning models exhausting the
         # token budget on hidden chain-of-thought before any content is sent.
         "chat_template_kwargs": {"enable_thinking": False},
@@ -1237,6 +1237,11 @@ def stream_answer_llm(
 
     max_chunks = max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 4)))
     max_chars_per_chunk = max(200, int(getattr(settings, "LLM_MAX_EVIDENCE_CHARS_PER_CHUNK", 1200)))
+    # Detect once and share: _build_messages uses it for the prompt's language
+    # instruction, and the _validate_answer_language() calls below compare
+    # against it.
+    detected_language = detect_question_language(question)
+    effective_language = detected_language or language
     messages = _build_messages(
         question=question,
         chunks=chunks,
@@ -1246,12 +1251,8 @@ def stream_answer_llm(
         faq_hint=faq_hint,
         language=language,
         all_candidates=all_candidates,
+        detected_language=detected_language,
     )
-    # Mirror _build_messages' own language detection so the later
-    # _validate_answer_language() calls in this function have a value to
-    # compare against (that detection result is otherwise local to
-    # _build_messages and never returned).
-    effective_language = detect_question_language(question) or language
 
     # Buffer all tokens before yielding any — validation must pass the full
     # answer before the client receives a single character, so a failed check
@@ -1291,30 +1292,8 @@ def stream_answer_llm(
     try:
         full_answer = _collect_stream(messages)
 
-        # CRITICAL: Unwrap JSON response if LLM is in JSON mode
-        # The LLM generates {"answer": "...", "citations_used": [...]} but we need just the text
         logger.info(f"[STREAM_LLM_RAW] Raw response (first 250 chars): {full_answer[:250]}")
-        try:
-            response_json = json.loads(full_answer)
-            logger.info(f"[STREAM_JSON_PARSE] type={type(response_json).__name__}, keys={list(response_json.keys()) if isinstance(response_json, dict) else 'N/A'}")
-            if isinstance(response_json, dict) and "answer" in response_json:
-                full_answer = response_json["answer"]
-                # NOTE: json.loads() already converts \n to actual newlines
-                logger.info(f"[STREAM_JSON_EXTRACT] Extracted answer field: {len(full_answer)} chars, starts_with: {str(full_answer)[:80]}")
-
-                # Handle double-wrapped JSON
-                if isinstance(full_answer, str) and full_answer.strip().startswith("{"):
-                    logger.info(f"[STREAM_UNWRAP_JSON] Answer field is JSON string, attempting unwrap: {full_answer[:100]}")
-                    try:
-                        inner_json = json.loads(full_answer)
-                        if isinstance(inner_json, dict) and "answer" in inner_json:
-                            full_answer = inner_json["answer"]
-                            logger.info(f"[STREAM_UNWRAP_SUCCESS] Double-wrapped answer extracted: {len(full_answer)} chars")
-                    except json.JSONDecodeError as unwrap_error:
-                        logger.warning(f"[STREAM_UNWRAP_FAILED] Could not parse answer field as JSON: {str(unwrap_error)[:100]}")
-        except json.JSONDecodeError as e:
-            # Not JSON, treat as plain text response
-            logger.debug(f"[STREAM_JSON_PARSE_FAILED] JSON parse failed: {e}, treating as plain text")
+        full_answer = _unwrap_json_answer(full_answer)
 
         # Strip hallucinated file names; evidence file names are preserved.
         full_answer = _strip_json_suffix(full_answer)
@@ -1338,28 +1317,8 @@ def stream_answer_llm(
         )
         full_answer = _collect_stream(retry_messages)
 
-        # CRITICAL: Unwrap JSON response for retry attempt too
         logger.info(f"[STREAM_RETRY_RAW] Retry response (first 250 chars): {full_answer[:250]}")
-        try:
-            response_json = json.loads(full_answer)
-            logger.info(f"[STREAM_RETRY_JSON_PARSE] type={type(response_json).__name__}, keys={list(response_json.keys()) if isinstance(response_json, dict) else 'N/A'}")
-            if isinstance(response_json, dict) and "answer" in response_json:
-                full_answer = response_json["answer"]
-                # NOTE: json.loads() already converts \n to actual newlines
-                logger.info(f"[STREAM_RETRY_JSON_EXTRACT] Extracted answer field: {len(full_answer)} chars")
-
-                # Handle double-wrapped JSON
-                if isinstance(full_answer, str) and full_answer.strip().startswith("{"):
-                    logger.info(f"[STREAM_RETRY_UNWRAP_JSON] Answer field is JSON string")
-                    try:
-                        inner_json = json.loads(full_answer)
-                        if isinstance(inner_json, dict) and "answer" in inner_json:
-                            full_answer = inner_json["answer"]
-                            logger.info(f"[STREAM_RETRY_UNWRAP_SUCCESS] Double-wrapped answer extracted")
-                    except json.JSONDecodeError:
-                        logger.warning(f"[STREAM_RETRY_UNWRAP_FAILED] Could not parse inner JSON")
-        except json.JSONDecodeError:
-            logger.debug(f"[STREAM_RETRY_JSON_PARSE_FAILED] Not JSON, treating as plain text")
+        full_answer = _unwrap_json_answer(full_answer)
 
         # Strip hallucinated file names; evidence file names are preserved.
         full_answer = _strip_json_suffix(full_answer)
@@ -1385,9 +1344,13 @@ def stream_answer_llm(
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
     confidence = min(0.94, max(0.60, float(top_score)))
 
-    # Validation passed — now yield tokens so the client receives only valid content.
-    for delta in full_answer:
-        yield ("token", delta)
+    # Validation passed — now yield the buffered answer so the client receives
+    # only valid content. Emit multi-character slices, not single characters:
+    # each yield becomes one SSE event, and per-character events inflate the
+    # event count by an order of magnitude for no smoother rendering.
+    chunk_size = 24
+    for start in range(0, len(full_answer), chunk_size):
+        yield ("token", full_answer[start : start + chunk_size])
 
     yield (
         "done",

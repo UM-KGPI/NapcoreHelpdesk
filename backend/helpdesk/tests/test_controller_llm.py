@@ -6,10 +6,18 @@ from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase, override_settings
 
-from helpdesk.services.controller_llm import ControllerLLMError, decide_route_with_controller_llm
+from helpdesk.services.controller_llm import (
+    ControllerLLMError,
+    _decide_route_cached,
+    decide_route_with_controller_llm,
+)
 
 
 class ControllerLLMServiceTests(SimpleTestCase):
+    def setUp(self):
+        # Decisions are cached in-process; clear between tests so mocked
+        # provider responses cannot leak across test cases.
+        _decide_route_cached.cache_clear()
     @override_settings(CONTROLLER_LLM_ENABLED=False)
     def test_returns_none_when_disabled(self):
         decision = decide_route_with_controller_llm(
@@ -43,6 +51,34 @@ class ControllerLLMServiceTests(SimpleTestCase):
         self.assertEqual(decision.route, "rag")
         self.assertEqual(decision.intent, "implementation_detail")
         self.assertGreaterEqual(decision.confidence, 0.8)
+
+    @override_settings(
+        CONTROLLER_LLM_ENABLED=True,
+        CONTROLLER_LLM_PROVIDER="subprocess",
+        CONTROLLER_LLM_EXECUTABLE="/bin/echo",
+        CONTROLLER_LLM_MODEL_PATH="/tmp/model.gguf",
+    )
+    @patch("helpdesk.services.controller_llm.subprocess.run")
+    def test_identical_questions_are_served_from_cache(self, run_mock):
+        run_mock.return_value = SimpleNamespace(
+            stdout='{"route":"faq"}',
+            stderr="",
+        )
+
+        first = decide_route_with_controller_llm(
+            question="What is a SIRI situation exchange?",
+            requested_scope=["SIRI"],
+            semantic_query={"intent": "definition"},
+        )
+        second = decide_route_with_controller_llm(
+            question="What is a SIRI situation exchange?",
+            requested_scope=["SIRI"],
+            semantic_query={"intent": "definition"},
+        )
+
+        self.assertEqual(first, second)
+        self.assertEqual(first.route, "faq")
+        run_mock.assert_called_once()
 
     @override_settings(
         CONTROLLER_LLM_ENABLED=True,

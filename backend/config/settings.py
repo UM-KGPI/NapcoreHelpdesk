@@ -56,7 +56,9 @@ env = environ.Env(
     CONTROLLER_LLM_EXECUTABLE=(str, ""),
     CONTROLLER_LLM_MODEL_PATH=(str, ""),
     CONTROLLER_LLM_DEVICE=(str, "none"),
-    CONTROLLER_LLM_TIMEOUT_SECONDS=(int, 20),
+    # Routing decision with graceful fallback: a slow controller must not hold
+    # the request anywhere near as long as answer generation may.
+    CONTROLLER_LLM_TIMEOUT_SECONDS=(int, 5),
     CONTROLLER_LLM_CTX_SIZE=(int, 2048),
     CONTROLLER_LLM_MAX_TOKENS=(int, 96),
     CONTROLLER_LLM_THREADS=(int, 8),

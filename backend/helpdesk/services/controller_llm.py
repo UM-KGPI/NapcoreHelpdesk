@@ -14,6 +14,7 @@ Created: 2026-05-06  |  Modified: 2026-06-28
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 import json
 import re
 import ssl
@@ -43,7 +44,7 @@ def _extract_json_payload(text: str) -> dict:
 
     candidate_payload: dict | None = None
     for match in _JSON_OBJECT_PATTERN.findall(text or ""):
-        if '"route"' not in match or '"confidence"' not in match:
+        if '"route"' not in match:
             continue
         try:
             parsed = json.loads(match)
@@ -105,7 +106,7 @@ def _build_prompt(question: str, requested_scope: list[str], semantic_query: dic
         "Choose route='faq' only when the question likely matches a stable canonical FAQ intent (general guidance, best practices, definitions). "
         "Choose route='rag' for: specific implementation details, code/XML examples, demonstration requests, novel questions, cross-standard queries, or any request asking to 'show', 'demonstrate', 'provide example', or referencing concrete artifacts. "
         "Return ONLY strict JSON with this schema: "
-        '{"route":"faq|rag","intent":"short_intent_label","confidence":0.0}. '\
+        '{"route":"faq|rag"}. '\
         "Do not include markdown, explanations, or extra keys.\n\n"
         f"Question: {question}\n"
         f"RequestedScope: {scope_text}\n"
@@ -155,7 +156,7 @@ def _decide_via_http(*, question: str, requested_scope: list[str], semantic_quer
     try:
         with request.urlopen(
             req,
-            timeout=int(getattr(settings, "CONTROLLER_LLM_TIMEOUT_SECONDS", 20)),
+            timeout=int(getattr(settings, "CONTROLLER_LLM_TIMEOUT_SECONDS", 5)),
             context=_build_ssl_context(),
         ) as response:
             payload = json.loads(response.read().decode("utf-8"))
@@ -178,18 +179,24 @@ def _decide_via_http(*, question: str, requested_scope: list[str], semantic_quer
     return _validate_payload(decision_payload)
 
 
-def decide_route_with_controller_llm(
-    *,
+@lru_cache(maxsize=256)
+def _decide_route_cached(
     question: str,
-    requested_scope: list[str],
-    semantic_query: dict | None = None,
-) -> ControllerDecision | None:
-    """Return FAQ/RAG route from local controller model when enabled."""
+    scope_key: tuple[str, ...],
+    semantic_key: str,
+    provider: str,
+    model_key: str,
+) -> ControllerDecision:
+    """Dispatch to the configured provider; results cached per (inputs, config).
 
-    if not getattr(settings, "CONTROLLER_LLM_ENABLED", False):
-        return None
+    The controller runs at temperature 0, so identical inputs yield the same
+    decision — repeat questions skip the model call. Provider and model are
+    part of the key so config changes are not served stale decisions; failures
+    raise and are never cached, so they retry on the next request.
+    """
+    requested_scope = list(scope_key)
+    semantic_query = json.loads(semantic_key)
 
-    provider = getattr(settings, "CONTROLLER_LLM_PROVIDER", "subprocess").strip().lower() or "subprocess"
     if provider == "openai-compatible":
         return _decide_via_http(
             question=question,
@@ -231,7 +238,7 @@ def decide_route_with_controller_llm(
             check=True,
             capture_output=True,
             text=True,
-            timeout=int(getattr(settings, "CONTROLLER_LLM_TIMEOUT_SECONDS", 20)),
+            timeout=int(getattr(settings, "CONTROLLER_LLM_TIMEOUT_SECONDS", 5)),
         )
     except subprocess.TimeoutExpired as exc:
         raise ControllerLLMError("Controller LLM timed out.") from exc
@@ -246,3 +253,29 @@ def decide_route_with_controller_llm(
     mixed_output = "\n".join([result.stdout or "", result.stderr or ""]).strip()
     payload = _extract_json_payload(mixed_output)
     return _validate_payload(payload)
+
+
+def decide_route_with_controller_llm(
+    *,
+    question: str,
+    requested_scope: list[str],
+    semantic_query: dict | None = None,
+) -> ControllerDecision | None:
+    """Return FAQ/RAG route from local controller model when enabled."""
+
+    if not getattr(settings, "CONTROLLER_LLM_ENABLED", False):
+        return None
+
+    provider = getattr(settings, "CONTROLLER_LLM_PROVIDER", "subprocess").strip().lower() or "subprocess"
+    if provider == "openai-compatible":
+        model_key = getattr(settings, "CONTROLLER_LLM_API_MODEL", "").strip()
+    else:
+        model_key = getattr(settings, "CONTROLLER_LLM_MODEL_PATH", "").strip()
+
+    return _decide_route_cached(
+        question.strip(),
+        tuple(requested_scope or ()),
+        json.dumps(semantic_query or {}, sort_keys=True, ensure_ascii=True),
+        provider,
+        model_key,
+    )
