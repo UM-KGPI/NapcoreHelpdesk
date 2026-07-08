@@ -199,8 +199,13 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(response.data["error"]["code"], "FORBIDDEN")
         self.assertEqual(response.data["error"]["requestId"], "req-forbidden")
 
+    @override_settings(CONTROLLER_LLM_ENABLED=False)
     def test_answer_returns_faq_mode_for_known_question(self):
-        """Ensure known FAQ intent follows the FAQ-first path with citations."""
+        """Ensure known FAQ intent follows the FAQ-first path with citations.
+
+        The controller is disabled so a locally configured live controller
+        endpoint cannot veto the FAQ route and make this test nondeterministic.
+        """
         response = self.client.post(
             reverse("answer-question"),
             {

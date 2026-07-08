@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import json
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase, override_settings
 
@@ -45,6 +46,7 @@ class ControllerLLMServiceTests(SimpleTestCase):
 
     @override_settings(
         CONTROLLER_LLM_ENABLED=True,
+        CONTROLLER_LLM_PROVIDER="subprocess",
         CONTROLLER_LLM_EXECUTABLE="/bin/echo",
         CONTROLLER_LLM_MODEL_PATH="/tmp/model.gguf",
     )
@@ -61,3 +63,37 @@ class ControllerLLMServiceTests(SimpleTestCase):
                 requested_scope=[],
                 semantic_query={},
             )
+
+    @override_settings(
+        CONTROLLER_LLM_ENABLED=True,
+        CONTROLLER_LLM_PROVIDER="openai-compatible",
+        CONTROLLER_LLM_API_BASE_URL="https://llm.example.test/v1",
+        CONTROLLER_LLM_API_MODEL="qwen3",
+    )
+    @patch("helpdesk.services.controller_llm.request.urlopen")
+    def test_http_provider_disables_thinking_and_requests_json(self, urlopen_mock):
+        response_mock = MagicMock()
+        response_mock.read.return_value = json.dumps(
+            {
+                "choices": [
+                    {"message": {"content": '{"route":"faq","intent":"definition","confidence":0.9}'}}
+                ]
+            }
+        ).encode("utf-8")
+        urlopen_mock.return_value.__enter__.return_value = response_mock
+
+        decision = decide_route_with_controller_llm(
+            question="What is a NeTEx timetable?",
+            requested_scope=["NeTEx"],
+            semantic_query={"intent": "definition"},
+        )
+
+        self.assertIsNotNone(decision)
+        self.assertEqual(decision.route, "faq")
+
+        sent_request = urlopen_mock.call_args[0][0]
+        sent_body = json.loads(sent_request.data.decode("utf-8"))
+        # Reasoning models must not burn the small token budget on hidden
+        # chain-of-thought, and the reply must be parseable JSON.
+        self.assertEqual(sent_body["chat_template_kwargs"], {"enable_thinking": False})
+        self.assertEqual(sent_body["response_format"], {"type": "json_object"})

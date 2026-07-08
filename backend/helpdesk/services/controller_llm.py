@@ -133,6 +133,11 @@ def _decide_via_http(*, question: str, requested_scope: list[str], semantic_quer
         ],
         "temperature": float(getattr(settings, "CONTROLLER_LLM_TEMPERATURE", 0.0)),
         "max_tokens": int(getattr(settings, "CONTROLLER_LLM_MAX_TOKENS", 96)),
+        "response_format": {"type": "json_object"},
+        # Reasoning models (e.g. qwen3) can spend the whole small token budget
+        # on hidden chain-of-thought and emit no JSON at all. Disable thinking
+        # so the routing decision is returned directly.
+        "chat_template_kwargs": {"enable_thinking": False},
     }
 
     headers = {"Content-Type": "application/json"}

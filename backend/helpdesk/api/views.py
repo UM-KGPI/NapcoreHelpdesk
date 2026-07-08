@@ -805,18 +805,6 @@ class QuestionAnswerView(APIView):
         faq_match = None
         controller_route = None
 
-        # Optional controller model decides FAQ-first vs RAG route. Any failure falls back to current deterministic flow.
-        if controller_profile == "llm-ready":
-            try:
-                controller_decision = decide_route_with_controller_llm(
-                    question=question,
-                    requested_scope=effective_scope,
-                    semantic_query=semantic_query_dict,
-                )
-                controller_route = controller_decision.route if controller_decision else None
-            except ControllerLLMError:
-                controller_route = None
-
         # 1) FAQ-first: fast, deterministic, and usually high confidence.
         if not scope and semantic_query.ambiguous_core_concept and len(effective_scope) > 1:
             # Ambiguity fallback: reduce reasoning scope and ask for clarification.
@@ -838,12 +826,28 @@ class QuestionAnswerView(APIView):
         )
 
         faq_match = match_faq(question=question, scope=effective_scope)
-        if (
-            controller_route != "rag"
-            and faq_match
+        qualifying_faq_match = bool(
+            faq_match
             and faq_match["confidence"] >= faq_min_confidence
             and faq_match.get("scope_match", True)
-        ):
+        )
+
+        # Optional controller model can veto the FAQ route in favour of RAG. Its
+        # decision only matters when a qualifying FAQ match exists, so the
+        # controller LLM call is skipped entirely otherwise. Any failure falls
+        # back to the current deterministic flow.
+        if qualifying_faq_match and controller_profile == "llm-ready":
+            try:
+                controller_decision = decide_route_with_controller_llm(
+                    question=question,
+                    requested_scope=effective_scope,
+                    semantic_query=semantic_query_dict,
+                )
+                controller_route = controller_decision.route if controller_decision else None
+            except ControllerLLMError:
+                controller_route = None
+
+        if qualifying_faq_match and controller_route != "rag":
             # FAQ match identifies the intent and scope. Run retrieval + LLM to
             # produce a grounded answer enriched from actual source evidence.
             # The stored FAQ answer is passed as a directional hint to the LLM.
@@ -1276,17 +1280,6 @@ class QuestionAnswerStreamView(APIView):
         }
         controller_route = None
 
-        if controller_profile == "llm-ready":
-            try:
-                controller_decision = decide_route_with_controller_llm(
-                    question=question,
-                    requested_scope=effective_scope,
-                    semantic_query=semantic_query_dict,
-                )
-                controller_route = controller_decision.route if controller_decision else None
-            except ControllerLLMError:
-                controller_route = None
-
         if not scope and semantic_query.ambiguous_core_concept and len(effective_scope) > 1:
             effective_scope = [effective_scope[0]]
             semantic_disambiguation_required = True
@@ -1308,12 +1301,28 @@ class QuestionAnswerStreamView(APIView):
         faq_match = match_faq(question=question, scope=effective_scope)
         answer_text = ""
 
-        if (
-            controller_route != "rag"
-            and faq_match
+        qualifying_faq_match = bool(
+            faq_match
             and faq_match["confidence"] >= faq_min_confidence
             and faq_match.get("scope_match", True)
-        ):
+        )
+
+        # Optional controller model can veto the FAQ route in favour of RAG. Its
+        # decision only matters when a qualifying FAQ match exists, so the
+        # controller LLM call is skipped entirely otherwise. Any failure falls
+        # back to the current deterministic flow.
+        if qualifying_faq_match and controller_profile == "llm-ready":
+            try:
+                controller_decision = decide_route_with_controller_llm(
+                    question=question,
+                    requested_scope=effective_scope,
+                    semantic_query=semantic_query_dict,
+                )
+                controller_route = controller_decision.route if controller_decision else None
+            except ControllerLLMError:
+                controller_route = None
+
+        if qualifying_faq_match and controller_route != "rag":
             # FAQ match identifies the intent and scope. Run retrieval + LLM to
             # produce a grounded answer enriched from actual source evidence.
             # The stored FAQ answer is passed as a directional hint to the LLM.

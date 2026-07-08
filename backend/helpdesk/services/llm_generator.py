@@ -810,20 +810,16 @@ def _request_chat_completion(
         return json.loads(response.read().decode("utf-8"))
 
 
-def _run_llm_attempt(
-    question: str,
+def _generate_answer_text(
     chunks: list[dict],
     messages: list[dict],
     request_targets: list[dict],
-    validate: bool = True,
 ) -> str:
-    """Execute one LLM call and optionally validate the answer.
+    """Execute one LLM call and return the post-processed (unvalidated) answer text.
 
-    Args:
-        validate: If False, skip citation and specificity validation (used for retry attempts).
-
-    Returns:
-        The answer text, optionally validated.
+    Validation is deliberately separate (see _validate_generated_answer) so a
+    rejected answer stays available verbatim for retry feedback instead of
+    requiring another generation call.
     """
     payload = None
     last_error = None
@@ -923,40 +919,25 @@ def _run_llm_attempt(
     max_chunk_idx = len(chunks)
     answer = _fix_out_of_range_citations(answer, max_chunk_idx)
 
-    if validate:
-        logger.debug(f"Validating answer after stripping: {len(answer)} chars, {len(chunks)} chunks")
-        logger.info(f"[VALIDATE=True] Running validation on: {answer[:100]}")
-        try:
-            _validate_citations_to_chunks(answer=answer, chunks=chunks)
-            logger.info("[VALIDATE=True] Citation validation PASSED")
-        except Exception as e:
-            logger.info(f"[VALIDATE=True] Citation validation FAILED: {str(e)[:100]}")
-            raise
-        try:
-            _validate_citation_grounding(answer=answer, chunks=chunks)
-            logger.info("[VALIDATE=True] Grounding validation PASSED")
-        except Exception as e:
-            logger.info(f"[VALIDATE=True] Grounding validation FAILED: {str(e)[:100]}")
-            raise
-        try:
-            _validate_no_raw_filenames(answer=answer, chunks=chunks)
-            logger.info("[VALIDATE=True] Filename validation PASSED")
-        except Exception as e:
-            logger.info(f"[VALIDATE=True] Filename validation FAILED: {str(e)[:100]}")
-            raise
-        try:
-            logger.info(f"[VALIDATE=True] Running specificity validation")
-            _validate_answer_has_specificity(answer=answer)
-            logger.info("[VALIDATE=True] Specificity validation PASSED")
-        except Exception as e:
-            logger.info(f"[VALIDATE=True] Specificity validation FAILED: {str(e)[:100]}")
-            raise
-        logger.info("[VALIDATE=True] All validators PASSED!")
-    else:
-        logger.info(f"[VALIDATE=False] Skipping validation (retry attempt): {answer[:100]}")
-    # Standards validation disabled: too many false positives on file name components
-    # Citation grounding validator already catches real hallucinations
     return answer
+
+
+def _validate_generated_answer(answer: str, chunks: list[dict]) -> None:
+    """Run all grounding validators against a generated answer.
+
+    Raises LLMGenerationError on the first failed check. Standards validation
+    stays disabled: too many false positives on file name components; the
+    citation grounding validator already catches real hallucinations.
+    """
+    try:
+        _validate_citations_to_chunks(answer=answer, chunks=chunks)
+        _validate_citation_grounding(answer=answer, chunks=chunks)
+        _validate_no_raw_filenames(answer=answer, chunks=chunks)
+        _validate_answer_has_specificity(answer=answer)
+    except LLMGenerationError as exc:
+        logger.info(f"[VALIDATE] Validation FAILED: {str(exc)[:150]}")
+        raise
+    logger.info("[VALIDATE] All validators PASSED")
 
 
 def _append_feedback_message(messages: list[dict], rejected_answer: str, error_msg: str) -> list[dict]:
@@ -1063,69 +1044,70 @@ def generate_answer_llm(
     rejected_answer: str | None = None
     rejection_reason: str | None = None
 
-    # First attempt
+    # First attempt: generation and validation run separately so the rejected
+    # answer text (not just the validator's error) is available for retry feedback.
+    answer: str | None = None
     try:
-        answer = _run_llm_attempt(question=question, chunks=chunks, messages=messages, request_targets=request_targets)
+        answer = _generate_answer_text(chunks=chunks, messages=messages, request_targets=request_targets)
+        _validate_generated_answer(answer=answer, chunks=chunks)
     except LLMGenerationError as first_error:
-        rejected_answer = first_error.args[0] if first_error.args else str(first_error)
+        rejected_answer = answer or ""
         rejection_reason = str(first_error)
         logger.warning(
             "LLM first attempt rejected by validator; retrying with feedback. Reason: %s",
             rejection_reason[:200],
             extra={"question": question[:120]},
         )
-        # Second attempt with explicit correction feedback
-        retry_messages = _append_feedback_message(
-            messages=messages,
-            rejected_answer=rejected_answer,
-            error_msg=rejection_reason,
-        )
-        try:
-            # Retry with validation enabled. If it fails validation too, we catch the exception
-            # and return the answer anyway since we've given explicit feedback.
-            answer = _run_llm_attempt(
-                question=question, chunks=chunks, messages=retry_messages, request_targets=request_targets,
-                validate=True
+        # Second attempt with explicit correction feedback. If generation itself
+        # failed (no answer produced), feedback about a rejected answer does not
+        # apply — retry the original prompt instead.
+        if rejected_answer:
+            retry_messages = _append_feedback_message(
+                messages=messages,
+                rejected_answer=rejected_answer,
+                error_msg=rejection_reason,
             )
+        else:
+            retry_messages = messages
+        try:
+            answer = _generate_answer_text(chunks=chunks, messages=retry_messages, request_targets=request_targets)
+        except Exception as fatal_error:
+            # Even the second attempt failed. This is a critical issue.
+            # Return an honest error message instead of letting exception propagate to fallback.
+            logger.error(
+                "FATAL: Both LLM attempts failed. Cannot generate answer. Exception: %s",
+                str(fatal_error)[:200],
+                extra={"question": question[:120]},
+                exc_info=True,
+            )
+            answer = (
+                "I was unable to generate a proper answer due to technical issues with the LLM. "
+                "The evidence retrieval worked, but the answer generation failed. "
+                "Please try again or contact support."
+            )
+            confidence = 0.0
+            # Return immediately to prevent fallback to generic boilerplate
+            return {
+                "answer": answer,
+                "confidence": confidence,
+                "review_required": True,
+                "provider": settings.LLM_PROVIDER,
+                "model": (request_targets[0]["model"]),
+                "rejected_answer": rejected_answer,
+                "rejection_reason": rejection_reason,
+            }
+        try:
+            _validate_generated_answer(answer=answer, chunks=chunks)
         except LLMGenerationError as retry_error:
-            # Retry failed validation too. Log it but return the answer anyway.
-            # The feedback was the best guidance we could provide.
+            # Retry failed validation too, but it did produce an answer. Keep it
+            # as-is rather than paying for a third generation call — the feedback
+            # was the best guidance we could provide.
             logger.warning(
-                "LLM retry failed validation too, but attempting raw retry. Reason: %s",
+                "LLM retry failed validation too; using the retry answer as-is. Reason: %s",
                 str(retry_error)[:200],
                 extra={"question": question[:120]},
             )
-            # Re-run without validation to get the raw answer
-            try:
-                answer = _run_llm_attempt(
-                    question=question, chunks=chunks, messages=retry_messages, request_targets=request_targets,
-                    validate=False
-                )
-            except Exception as fatal_error:
-                # Even the second attempt failed. This is a critical issue.
-                # Return an honest error message instead of letting exception propagate to fallback.
-                logger.error(
-                    "FATAL: Both LLM attempts failed. Cannot generate answer. Exception: %s",
-                    str(fatal_error)[:200],
-                    extra={"question": question[:120]},
-                    exc_info=True,
-                )
-                answer = (
-                    "I was unable to generate a proper answer due to technical issues with the LLM. "
-                    "The evidence retrieval worked, but the answer generation failed. "
-                    "Please try again or contact support."
-                )
-                confidence = 0.0
-                # Return immediately to prevent fallback to generic boilerplate
-                return {
-                    "answer": answer,
-                    "confidence": confidence,
-                    "review_required": True,
-                    "provider": settings.LLM_PROVIDER,
-                    "model": (request_targets[0]["model"]),
-                    "rejected_answer": rejected_answer,
-                    "rejection_reason": rejection_reason,
-                }
+            rejection_reason = f"{rejection_reason} | retry also failed: {retry_error}"[:500]
 
     _validate_grounded_example_output(question=question, answer=answer, chunks=chunks)
 
@@ -1339,11 +1321,7 @@ def stream_answer_llm(
         full_answer = _strip_raw_filenames(full_answer, chunks)
         full_answer = _strip_stray_list_markers(full_answer)
         _validate_answer_language(answer=full_answer, question=question, target_language=effective_language)
-        _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
-        _validate_citation_grounding(answer=full_answer, chunks=chunks)
-        _validate_no_raw_filenames(answer=full_answer, chunks=chunks)
-        _validate_answer_has_specificity(answer=full_answer)
-        # Standards validation disabled: citation grounding validator catches real issues
+        _validate_generated_answer(answer=full_answer, chunks=chunks)
         _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
     except LLMGenerationError as first_error:
         rejected_answer = full_answer if "full_answer" in dir() else ""
@@ -1389,11 +1367,7 @@ def stream_answer_llm(
         full_answer = _strip_stray_list_markers(full_answer)
         try:
             _validate_answer_language(answer=full_answer, question=question, target_language=effective_language)
-            _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
-            _validate_citation_grounding(answer=full_answer, chunks=chunks)
-            _validate_no_raw_filenames(answer=full_answer, chunks=chunks)
-            _validate_answer_has_specificity(answer=full_answer)
-            # Standards validation disabled: citation grounding validator catches real issues
+            _validate_generated_answer(answer=full_answer, chunks=chunks)
             _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
         except LLMGenerationError as retry_error:
             # Retry failed validation too. A real, on-topic answer that fails a strict
