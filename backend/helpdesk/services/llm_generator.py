@@ -421,8 +421,11 @@ def _strip_raw_filenames(answer: str, chunks: list[dict] | None = None) -> str:
     temp_answer = _FILE_PATH_PATTERN.sub(_replace_if_not_allowed, temp_answer)
     temp_answer = _RAW_FILENAME_PATTERN.sub(_replace_if_not_allowed, temp_answer)
 
-    # Clean up excessive whitespace from removed names.
-    temp_answer = re.sub(r"\s+", " ", temp_answer).strip()
+    # Clean up excessive whitespace from removed names, preserving newlines
+    # so markdown line structure (lists, paragraphs, headings) survives.
+    temp_answer = re.sub(r"(?<=\S)[ \t]{2,}", " ", temp_answer)
+    temp_answer = re.sub(r" +\n", "\n", temp_answer)
+    temp_answer = re.sub(r"\n{3,}", "\n\n", temp_answer).strip()
 
     # Restore code blocks.
     for code_block in code_block_texts:
