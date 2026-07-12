@@ -36,13 +36,33 @@ SCOPE_DIRS = [
     "netex_service",
 ]
 TTL_PATH = Path(
-    "/Users/andrejt/Research/repositories/git/NapcoreHelpdesk/docs/ontology/standards/netex.ttl"
+    sys.argv[1]
+    if len(sys.argv) > 1
+    else "/Users/andrejt/Research/repositories/git/NapcoreHelpdesk/docs/ontology/standards/netex.ttl"
 )
-OUT_PATH = TTL_PATH.with_suffix(".ttl.new")
+OUT_PATH = Path(sys.argv[2]) if len(sys.argv) > 2 else TTL_PATH.with_suffix(".ttl.new")
 
-CLASS_STRUCT_SUFFIXES = ("_VersionStructure", "_VersionedChildStructure")
-VERSION_OLD = '"0.2-xsd-rebuild-with-relationships"'
-VERSION_NEW = '"0.3-with-object-and-datatype-properties"'
+# Structure-type suffixes used across the NeTEx schema, most specific first
+# (the match loop stops at the first hit). "_VersionedChlldStructure" is a
+# genuine typo in the NeTEx XSDs, not ours. Plain "Structure" must stay last:
+# it only binds when the stripped stem is an ontology class, so list-helper
+# types like quays_RelStructure never match.
+CLASS_STRUCT_SUFFIXES = (
+    "_VersionedChildStructure",
+    "_VersionedChlldStructure",
+    "_VersionFrameStructure",
+    "_VersionedStructure",
+    "__VersionStructure",
+    "_VersionStructure",
+    "_ValueStructure",
+    "_EntityStructure",
+    "Structure",
+)
+VERSION_OLDS = (
+    '"0.2-xsd-rebuild-with-relationships"',
+    '"0.3-with-object-and-datatype-properties"',
+)
+VERSION_NEW = '"0.4-expanded-classes-and-structure-suffixes"'
 
 
 def load_ttl_classes(text: str) -> set[str]:
@@ -356,7 +376,9 @@ def main():
         lines.append(f"netex:{a} skos:related netex:{b} .\n")
     print(f"skos:related pairs: {len(skos_pairs)}")
 
-    merged = ttl_text.replace(VERSION_OLD, VERSION_NEW, 1)
+    merged = ttl_text
+    for version_old in VERSION_OLDS:
+        merged = merged.replace(version_old, VERSION_NEW, 1)
     if VERSION_NEW not in merged:
         print("WARN: versionInfo string not found; keeping original header")
     merged = merged.rstrip("\n") + "\n" + "".join(lines)
