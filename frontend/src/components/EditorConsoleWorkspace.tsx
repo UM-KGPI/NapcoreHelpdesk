@@ -25,6 +25,7 @@
  */
 
 import React, { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { citationDisplayName, citationMarker } from "../citationLabels";
 import AnswerMarkdown from "./AnswerMarkdown";
 
 import type {
@@ -353,8 +354,8 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                     <ul>
                       {answerResult.citations.map((citation, index) => (
                         <li key={`${citation.chunkId}-${citation.sourcePath}`}>
-                          <strong>{`[E${index + 1}]`}</strong>{" "}
-                          <a href={citation.repositoryUrl} target="_blank" rel="noreferrer">{citation.label ?? citation.sourcePath}</a>
+                          <strong>{citationMarker(citation, index)}</strong>{" "}
+                          <a href={citation.repositoryUrl} target="_blank" rel="noreferrer">{citationDisplayName(citation)}</a>
                           <span className="muted"> · {citation.sourcePath}</span>
                         </li>
                       ))}

@@ -22,6 +22,7 @@ from datetime import timedelta
 import json
 import logging
 from pathlib import Path
+import re
 import subprocess
 from urllib.parse import quote
 from uuid import uuid4
@@ -354,6 +355,48 @@ def _select_citations(chunks: list[dict], max_citations: int) -> list[dict]:
             break
 
     return selected
+
+
+def _citations_from_prompt_order(chunks: list[dict], answer_text: str) -> list[dict]:
+    """Build the citation list mirroring the LLM prompt's [E#] numbering.
+
+    generate_answer_llm labels evidence blocks [E1]..[EN] as the first
+    LLM_MAX_EVIDENCE_CHUNKS chunks in retrieval order, so the citation list
+    must preserve exactly that order and length for the answer's [E#] markers
+    to point at the right sources. Uncited trailing entries are trimmed so the
+    list does not advertise references the answer never uses; interior entries
+    are kept so positions still match labels for position-based consumers.
+    """
+    max_chunks = max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 4)))
+    prompt_chunks = chunks[:max_chunks]
+    cited = {
+        int(num)
+        for num in re.findall(r"\[E(\d+)\]", answer_text or "")
+        if 1 <= int(num) <= len(prompt_chunks)
+    }
+    keep_until = max(cited) if cited else len(prompt_chunks)
+
+    citations: list[dict] = []
+    for index, chunk in enumerate(prompt_chunks[:keep_until], start=1):
+        repository_url = chunk.get("repositoryUrl", "")
+        if "/tree/" in repository_url or "/blob/" in repository_url:
+            final_url = repository_url
+        else:
+            final_url = _build_file_url(
+                repo_url=repository_url,
+                commit_sha=chunk["commitSha"],
+                source_path=chunk.get("sourcePath", ""),
+            )
+        citations.append(
+            {
+                "repositoryUrl": final_url,
+                "commitSha": chunk["commitSha"],
+                "sourcePath": chunk.get("sourcePath", ""),
+                "chunkId": chunk["chunkId"],
+                "label": f"E{index}",
+            }
+        )
+    return citations
 
 
 def _rewrite_source_paths_as_evidence_markers(answer_text: str, citations: list[dict]) -> str:
@@ -1003,9 +1046,11 @@ class QuestionAnswerView(APIView):
                 answer_text = "I do not have sufficient approved-source evidence to answer this safely."
             else:
                 use_llm = generation_profile == "llm-ready" and settings.LLM_ENABLED
+                llm_generated = False
                 if use_llm:
                     try:
                         generated = generate_answer_llm(question=question, chunks=chunks, scope=effective_scope, language=language, all_candidates=all_candidates)
+                        llm_generated = True
                     except LLMGenerationError:
                         logger.warning(
                             "LLM generation failed; falling back to deterministic answer",
@@ -1024,7 +1069,12 @@ class QuestionAnswerView(APIView):
                 answer_text = generated["answer"]
                 confidence = generated["confidence"]
                 review_required = generated["review_required"]
-                citations = _select_citations(chunks=chunks, max_citations=max_citations)
+                if llm_generated:
+                    # LLM answers cite [E#] by prompt order; the citation list
+                    # must mirror that numbering exactly (see _citations_from_prompt_order).
+                    citations = _citations_from_prompt_order(chunks=chunks, answer_text=answer_text)
+                else:
+                    citations = _select_citations(chunks=chunks, max_citations=max_citations)
                 policy = evaluate_policy(answer_text=answer_text, citations=citations)
                 if not policy["allowed"]:
                     if allow_abstain:
@@ -1474,6 +1524,7 @@ class QuestionAnswerStreamView(APIView):
                 answer_text = "I do not have sufficient approved-source evidence to answer this safely."
             else:
                 use_llm = generation_profile == "llm-ready" and settings.LLM_ENABLED
+                llm_generated = False
                 if use_llm:
                     # Stream tokens to the client; accumulate for post-stream processing.
                     generated = None
@@ -1489,6 +1540,7 @@ class QuestionAnswerStreamView(APIView):
                                 yield self._sse({"type": "token", "delta": payload})
                             elif event_type == "done":
                                 generated = payload
+                                llm_generated = True
                     except LLMGenerationError as exc:
                         logger.warning(
                             "LLM stream generation failed; falling back to deterministic answer",
@@ -1498,6 +1550,7 @@ class QuestionAnswerStreamView(APIView):
                         # Tokens may have been partially emitted; signal client to discard them.
                         yield self._sse({"type": "llm_fallback", "message": str(exc)})
                         generated = generate_answer(question=question, chunks=chunks)
+                        llm_generated = False
 
                     answer_text = generated["answer"]
                     confidence = generated["confidence"]
@@ -1508,7 +1561,12 @@ class QuestionAnswerStreamView(APIView):
                     confidence = generated["confidence"]
                     review_required = generated["review_required"]
 
-                citations = _select_citations(chunks=chunks, max_citations=max_citations)
+                if llm_generated:
+                    # LLM answers cite [E#] by prompt order; the citation list
+                    # must mirror that numbering exactly (see _citations_from_prompt_order).
+                    citations = _citations_from_prompt_order(chunks=chunks, answer_text=answer_text)
+                else:
+                    citations = _select_citations(chunks=chunks, max_citations=max_citations)
                 policy = evaluate_policy(answer_text=answer_text, citations=citations)
                 if not policy["allowed"]:
                     if allow_abstain:

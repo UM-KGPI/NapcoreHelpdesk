@@ -9,6 +9,7 @@
  */
 
 import React from "react";
+import { citationDisplayName, citationMarker } from "../citationLabels";
 import AnswerMarkdown from "./AnswerMarkdown";
 import type { ChatTurn } from "./UserChatWorkspace";
 
@@ -164,7 +165,7 @@ export default function ReadOnlyQuestionDisplay({
                       <ul>
                         {turn.answer.citations.map((citation, index) => (
                           <li key={`${turn.id}-${citation.chunkId}`}>
-                            <strong>{`[E${index + 1}]`}</strong>{" "}
+                            <strong>{citationMarker(citation, index)}</strong>{" "}
                             <a
                               href={citation.repositoryUrl}
                               target="_blank"
@@ -177,9 +178,9 @@ export default function ReadOnlyQuestionDisplay({
                                 void setFeedback(requestId, { citationClicksDelta: 1 });
                               }}
                             >
-                              {citation.label ?? citation.sourcePath.split("/").pop()}
+                              {citationDisplayName(citation)}
                             </a>
-                            {citation.label && citation.label !== citation.sourcePath && (
+                            {citationDisplayName(citation) !== citation.sourcePath && (
                               <span className="muted"> · {citation.sourcePath}</span>
                             )}
                           </li>

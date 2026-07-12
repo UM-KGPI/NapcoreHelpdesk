@@ -15,6 +15,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
 import type { AnswerResponse } from "../types";
+import { citationDisplayName, citationMarker } from "../citationLabels";
 import AnswerMarkdown from "./AnswerMarkdown";
 import InspiredByOthersPanel from "./InspiredByOthersPanel";
 
@@ -76,9 +77,8 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
       lines.push("");
       lines.push("Evidence list:");
       turn.answer.citations.forEach((citation, index) => {
-        const label = citation.label ?? citation.sourcePath;
         lines.push(
-          `- [E${index + 1}] ${label} | ${citation.sourcePath} | ${citation.repositoryUrl}`
+          `- ${citationMarker(citation, index)} ${citationDisplayName(citation)} | ${citation.sourcePath} | ${citation.repositoryUrl}`
         );
       });
     }
@@ -149,9 +149,8 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
         lines.push("");
         lines.push("### Evidence list");
         turn.answer.citations.forEach((citation, index) => {
-          const label = citation.label ?? citation.sourcePath;
           lines.push(
-            `- [E${index + 1}] ${label} | ${citation.sourcePath} | ${citation.repositoryUrl}`
+            `- ${citationMarker(citation, index)} ${citationDisplayName(citation)} | ${citation.sourcePath} | ${citation.repositoryUrl}`
           );
         });
       }
@@ -336,7 +335,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                       <ul>
                         {turn.answer.citations.map((citation, index) => (
                           <li key={`${turn.id}-${citation.chunkId}`}>
-                            <strong>{`[E${index + 1}]`}</strong>{" "}
+                            <strong>{citationMarker(citation, index)}</strong>{" "}
                             <a
                               href={citation.repositoryUrl}
                               target="_blank"
@@ -349,9 +348,9 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                                 void onSetAnswerFeedback(requestId, { citationClicksDelta: 1 });
                               }}
                             >
-                              {citation.label ?? citation.sourcePath.split("/").pop()}
+                              {citationDisplayName(citation)}
                             </a>
-                            {citation.label && citation.label !== citation.sourcePath && (
+                            {citationDisplayName(citation) !== citation.sourcePath && (
                               <span className="muted"> · {citation.sourcePath}</span>
                             )}
                           </li>
