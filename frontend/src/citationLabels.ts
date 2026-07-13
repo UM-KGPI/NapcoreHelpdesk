@@ -24,3 +24,34 @@ export function citationDisplayName(citation: CitationLike): string {
   }
   return citation.sourcePath.split("/").pop() ?? citation.sourcePath;
 }
+
+export interface CitationGroup<T extends CitationLike> {
+  /** All entries sharing the same sourcePath, in original list order. */
+  citations: T[];
+  /** Markers for each entry, e.g. ["[E1]", "[E2]"] — order matches `citations`. */
+  markers: string[];
+  /** First entry of the group; use for the link target and display name. */
+  primary: T;
+}
+
+/**
+ * Group citations that reference the same source file so the evidence list
+ * shows one row per document with all its E# markers, instead of repeating
+ * the file once per cited chunk. Markers keep their original list positions
+ * so they still match the [E#] references in the answer text.
+ */
+export function groupCitationsBySource<T extends CitationLike>(citations: T[]): CitationGroup<T>[] {
+  const groups: CitationGroup<T>[] = [];
+  const byPath = new Map<string, CitationGroup<T>>();
+  citations.forEach((citation, index) => {
+    let group = byPath.get(citation.sourcePath);
+    if (!group) {
+      group = { citations: [], markers: [], primary: citation };
+      byPath.set(citation.sourcePath, group);
+      groups.push(group);
+    }
+    group.citations.push(citation);
+    group.markers.push(citationMarker(citation, index));
+  });
+  return groups;
+}

@@ -15,7 +15,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
 import type { AnswerResponse } from "../types";
-import { citationDisplayName, citationMarker } from "../citationLabels";
+import { citationDisplayName, citationMarker, groupCitationsBySource } from "../citationLabels";
 import AnswerMarkdown from "./AnswerMarkdown";
 import InspiredByOthersPanel from "./InspiredByOthersPanel";
 
@@ -333,11 +333,11 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                     <>
                       <p className="tiny"><strong>Evidence list</strong></p>
                       <ul>
-                        {turn.answer.citations.map((citation, index) => (
-                          <li key={`${turn.id}-${citation.chunkId}`}>
-                            <strong>{citationMarker(citation, index)}</strong>{" "}
+                        {groupCitationsBySource(turn.answer.citations).map((group) => (
+                          <li key={`${turn.id}-${group.primary.chunkId}`}>
+                            <strong>{group.markers.join(" ")}</strong>{" "}
                             <a
-                              href={citation.repositoryUrl}
+                              href={group.primary.repositoryUrl}
                               target="_blank"
                               rel="noreferrer"
                               onClick={() => {
@@ -348,10 +348,10 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                                 void onSetAnswerFeedback(requestId, { citationClicksDelta: 1 });
                               }}
                             >
-                              {citationDisplayName(citation)}
+                              {citationDisplayName(group.primary)}
                             </a>
-                            {citationDisplayName(citation) !== citation.sourcePath && (
-                              <span className="muted"> · {citation.sourcePath}</span>
+                            {citationDisplayName(group.primary) !== group.primary.sourcePath && (
+                              <span className="muted"> · {group.primary.sourcePath}</span>
                             )}
                           </li>
                         ))}

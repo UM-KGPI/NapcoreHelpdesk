@@ -149,10 +149,13 @@ _STRONG_TERM_PATTERN = re.compile(
     r"|([A-Za-z0-9_-]+\.(?:xsd|xml|yaml|json|ttl))"  # file names with known extensions
 )
 
-# Weak terms: PascalCase element names (single or multi-word)
-# Matches: Time, Departure, DepartureTime, ScheduledStop, etc.
+# Weak terms: PascalCase element names (single or multi-word) and ALL-CAPS
+# Transmodel concept names, which the standards write in capitals by convention
+# (e.g. "STOP PLACE", "TAXI RANK", "VEHICLE MEETING POINT").
+# Matches: Time, Departure, DepartureTime, ScheduledStop, STOP PLACE, etc.
 _WEAK_TERM_PATTERN = re.compile(
-    r"([A-Z][a-z]+(?:[A-Z][a-z]+)*)"   # PascalCase: starts with uppercase, followed by lowercase(s)
+    r"([A-Z]{3,}(?:\s+[A-Z]{3,})*"      # ALL-CAPS Transmodel concepts, single or multi-word
+    r"|[A-Z][a-z]+(?:[A-Z][a-z]+)*)"    # PascalCase: starts with uppercase, followed by lowercase(s)
 )
 
 # Terms so generic they appear in virtually every NeTEx/standards document and
@@ -240,7 +243,10 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
     Raises LLMGenerationError if a citation cannot be grounded.
     """
     # Split on sentence boundaries; keep trailing punctuation with its sentence.
-    sentences = re.split(r"(?<=[.!?\u0029])\s+", answer.replace("\n", " "))
+    # `)` is deliberately not a boundary: splitting after a parenthetical like
+    # "(e.g., a station)" orphans the rest of the sentence from its subject and
+    # produces fragments that fail grounding checks spuriously.
+    sentences = re.split(r"(?<=[.!?])\s+", answer.replace("\n", " "))
 
     for sentence in sentences:
         found_citations = CITATION_PATTERN.findall(sentence)

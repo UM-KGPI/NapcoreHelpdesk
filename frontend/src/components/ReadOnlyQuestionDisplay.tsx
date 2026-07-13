@@ -9,7 +9,7 @@
  */
 
 import React from "react";
-import { citationDisplayName, citationMarker } from "../citationLabels";
+import { citationDisplayName, groupCitationsBySource } from "../citationLabels";
 import AnswerMarkdown from "./AnswerMarkdown";
 import type { ChatTurn } from "./UserChatWorkspace";
 
@@ -163,11 +163,11 @@ export default function ReadOnlyQuestionDisplay({
                     <>
                       <p className="tiny"><strong>Evidence list</strong></p>
                       <ul>
-                        {turn.answer.citations.map((citation, index) => (
-                          <li key={`${turn.id}-${citation.chunkId}`}>
-                            <strong>{citationMarker(citation, index)}</strong>{" "}
+                        {groupCitationsBySource(turn.answer.citations).map((group) => (
+                          <li key={`${turn.id}-${group.primary.chunkId}`}>
+                            <strong>{group.markers.join(" ")}</strong>{" "}
                             <a
-                              href={citation.repositoryUrl}
+                              href={group.primary.repositoryUrl}
                               target="_blank"
                               rel="noreferrer"
                               onClick={() => {
@@ -178,10 +178,10 @@ export default function ReadOnlyQuestionDisplay({
                                 void setFeedback(requestId, { citationClicksDelta: 1 });
                               }}
                             >
-                              {citationDisplayName(citation)}
+                              {citationDisplayName(group.primary)}
                             </a>
-                            {citationDisplayName(citation) !== citation.sourcePath && (
-                              <span className="muted"> · {citation.sourcePath}</span>
+                            {citationDisplayName(group.primary) !== group.primary.sourcePath && (
+                              <span className="muted"> · {group.primary.sourcePath}</span>
                             )}
                           </li>
                         ))}
