@@ -159,6 +159,15 @@ ontology-alignment-gap: ## Report classes in standard ontologies with no NITS al
 	@cd backend && ../.venv/bin/python manage.py ontology_alignment_gap
 
 ## ─── Docker dev stack ────────────────────────────────────────────────────────
+# Gotcha: frontend/package.json dependency changes need more than `make dev-up`.
+# node_modules lives in the named volume `frontend-node-modules`, which Docker
+# only seeds from the image on first creation - rebuilding the image does NOT
+# refresh an already-existing volume, so the frontend container keeps running
+# stale deps silently (no error) after a lockfile bump. Fix: drop the volume so
+# it reseeds from the freshly built image:
+#   docker compose -f docker-compose.dev.yml --profile local-db rm -sf frontend
+#   docker volume rm napcorehelpdesk_frontend-node-modules
+#   make dev-up
 docker-dev-build: ## Build Docker dev images
 	@docker compose -f docker-compose.dev.yml --profile local-db build
 
