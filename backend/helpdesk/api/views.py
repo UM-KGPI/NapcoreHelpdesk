@@ -149,8 +149,12 @@ def _build_file_url(repo_url: str, commit_sha: str, source_path: str) -> str:
                 "https://github.com/TransmodelEcosystem/SIRI",
                 "v2.2",
             ),
+            "https://github.com/transmodelecosystem/opra": (
+                "https://github.com/TransmodelEcosystem/OpRa",
+                "1.0rc",
+            ),
             "https://github.com/opra-cen/opra": (
-                "https://github.com/OpRa-CEN/OpRa",
+                "https://github.com/TransmodelEcosystem/OpRa",
                 "1.0rc",
             ),
         }

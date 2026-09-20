@@ -21,7 +21,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--repo-url",
             default="",
-            help="Optional repository URL filter (e.g., https://github.com/OpRa-CEN/OpRa).",
+            help="Optional repository URL filter (e.g., https://github.com/TransmodelEcosystem/OpRa).",
         )
         parser.add_argument(
             "--min-quality",

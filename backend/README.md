@@ -90,7 +90,7 @@ Repository allow-list is enforced via `ALLOWED_SOURCE_REPOSITORIES`.
 
 Multiple approved repositories can be ingested side-by-side, for example:
 - `https://github.com/TransmodelEcosystem/NeTEx`
-- `https://github.com/OpRa-CEN/OpRa`
+- `https://github.com/TransmodelEcosystem/OpRa`
 
 Store them as a comma-separated list in `ALLOWED_SOURCE_REPOSITORIES`.
 

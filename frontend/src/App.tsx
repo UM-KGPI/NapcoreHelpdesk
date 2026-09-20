@@ -77,7 +77,7 @@ const DEFAULT_INDEX_REPO_PRESETS: IndexRepoPreset[] = [
   {
     id: "opra",
     label: "OpRa",
-    repoUrl: "https://github.com/OpRa-CEN/OpRa",
+    repoUrl: "https://github.com/TransmodelEcosystem/OpRa",
     repoPath: "/app/repos/OpRa",
     profile: "opra",
   },

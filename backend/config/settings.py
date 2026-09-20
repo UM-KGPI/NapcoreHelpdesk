@@ -31,7 +31,7 @@ env = environ.Env(
     DEV_JWT_TTL_MINUTES=(int, 480),
     ALLOWED_SOURCE_REPOSITORIES=(
         str,
-        "https://github.com/TransmodelEcosystem/NeTEx,https://github.com/SIRI-CEN/SIRI,https://github.com/OpRa-CEN/OpRa",
+        "https://github.com/TransmodelEcosystem/NeTEx,https://github.com/SIRI-CEN/SIRI,https://github.com/TransmodelEcosystem/OpRa",
     ),
     INDEX_SCHEDULE_REPO_URL=(str, ""),
     INDEX_SCHEDULE_REPO_PATH=(str, ""),
@@ -76,7 +76,7 @@ env = environ.Env(
     EMBEDDING_TIMEOUT_SECONDS=(int, 30),
     SEED_REPO_NETEX=(str, "https://github.com/TransmodelEcosystem/NeTEx"),
     SEED_REPO_SIRI=(str, "https://github.com/SIRI-CEN/SIRI"),
-    SEED_REPO_OPRA=(str, "https://github.com/OpRa-CEN/OpRa"),
+    SEED_REPO_OPRA=(str, "https://github.com/TransmodelEcosystem/OpRa"),
     GRAPH_RAG_ENABLED=(bool, False),
     SEMANTIC_LOW_CONFIDENCE_THRESHOLD=(float, 0.60),
     EVIDENCE_GATE_ENABLED=(bool, False),
@@ -235,7 +235,7 @@ ALLOWED_SOURCE_REPOSITORIES = {
     value.strip()
     for value in env(
         "ALLOWED_SOURCE_REPOSITORIES",
-        default="https://github.com/TransmodelEcosystem/NeTEx,https://github.com/SIRI-CEN/SIRI,https://github.com/OpRa-CEN/OpRa",
+        default="https://github.com/TransmodelEcosystem/NeTEx,https://github.com/SIRI-CEN/SIRI,https://github.com/TransmodelEcosystem/OpRa",
     ).split(",")
     if value.strip()
 }
@@ -284,7 +284,7 @@ EMBEDDING_MODEL = env("EMBEDDING_MODEL").strip() or "text-embedding-3-small"
 EMBEDDING_TIMEOUT_SECONDS = env("EMBEDDING_TIMEOUT_SECONDS")
 SEED_REPO_NETEX = env("SEED_REPO_NETEX").strip() or "https://github.com/TransmodelEcosystem/NeTEx"
 SEED_REPO_SIRI = env("SEED_REPO_SIRI").strip() or "https://github.com/SIRI-CEN/SIRI"
-SEED_REPO_OPRA = env("SEED_REPO_OPRA").strip() or "https://github.com/OpRa-CEN/OpRa"
+SEED_REPO_OPRA = env("SEED_REPO_OPRA").strip() or "https://github.com/TransmodelEcosystem/OpRa"
 ALLOWED_SOURCE_REPOSITORIES |= {
     SEED_REPO_NETEX,
     SEED_REPO_SIRI,

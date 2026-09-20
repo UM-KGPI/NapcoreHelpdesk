@@ -280,7 +280,7 @@ docker compose -f docker-compose.prod.yml exec backend \
 
 docker compose -f docker-compose.prod.yml exec backend \
   python manage.py index_repository \
-    --repo-url https://github.com/OpRa-CEN/OpRa \
+    --repo-url https://github.com/TransmodelEcosystem/OpRa \
     --profile opra
 
 docker compose -f docker-compose.prod.yml exec backend \
