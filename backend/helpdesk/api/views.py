@@ -833,7 +833,12 @@ class HealthLLMView(APIView):
         else:
             overall = "ok"
 
-        http_status = status.HTTP_200_OK if overall in ("ok", "disabled", "unknown", "degraded") else status.HTTP_503_SERVICE_UNAVAILABLE
+        # Unlike /health/ready, this endpoint isn't a traffic-gating readiness
+        # probe -- it's a diagnostic dashboard for humans/tooling to read.
+        # Always return 200 so the body's own `status` field (ok/degraded/
+        # error/disabled/unknown) is the single source of truth, and callers
+        # (including the frontend status page) don't need special-case
+        # handling for a non-2xx response that still carries useful data.
         return Response(
             _service_health_payload(
                 check="llm",
@@ -841,7 +846,7 @@ class HealthLLMView(APIView):
                 llm=llm_block,
                 controllerLlm=controller_block,
             ),
-            status=http_status,
+            status=status.HTTP_200_OK,
         )
 
 

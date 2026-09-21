@@ -315,6 +315,30 @@ export interface HealthResponse {
   database?: string;
 }
 
+export interface LlmProviderStatus {
+  provider: string;
+  enabled: boolean;
+  status: "ok" | "degraded" | "error" | "disabled" | "unknown";
+  apiBaseUrl?: string;
+  configuredModel?: string;
+  activeModel?: string;
+  autoCorrected?: boolean;
+  gatewayReachable?: boolean;
+  authorizedModels?: string[];
+  configuredModelAuthorized?: boolean;
+  probeError?: string;
+}
+
+export interface LlmStatusResponse {
+  status: "ok" | "degraded" | "error" | "disabled" | "unknown";
+  service: string;
+  check: "llm";
+  version: string;
+  buildRef: string;
+  llm: LlmProviderStatus;
+  controllerLlm: LlmProviderStatus;
+}
+
 export interface ApiErrorEnvelope {
   error?: {
     code?: string;
