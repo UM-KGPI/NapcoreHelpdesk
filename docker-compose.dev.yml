@@ -84,6 +84,7 @@ services:
       - ./backend:/app/backend
       - ./docs:/app/docs:ro
       - ./scripts:/app/scripts:ro
+      - ./api:/app/api:ro
       - ./VERSION:/app/VERSION:ro
       - ../NeTEx:/app/repos/NeTEx:ro
       - ../OpRa:/app/repos/OpRa:ro

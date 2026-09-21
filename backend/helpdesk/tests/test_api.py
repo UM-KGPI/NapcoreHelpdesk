@@ -634,7 +634,7 @@ class HelpdeskApiTests(APITestCase):
                 {
                     "text": "OpRa MAY exchange delayed journey reporting as optional extensions.",
                     "score": 0.81,
-                    "repositoryUrl": "https://github.com/OpRa-CEN/OpRa",
+                    "repositoryUrl": "https://github.com/TransmodelEcosystem/OpRa",
                     "commitSha": "def456",
                     "sourcePath": "docs/opra-delay.md",
                     "chunkId": "chunk-conflict-2",
@@ -1037,7 +1037,7 @@ class HelpdeskApiTests(APITestCase):
 
         self.assertEqual(
             url,
-            "https://github.com/OpRa-CEN/OpRa/blob/1.0rc/examples/CancelledAndLateDatedVehicleJourneys.xml",
+            "https://github.com/TransmodelEcosystem/OpRa/blob/1.0rc/examples/CancelledAndLateDatedVehicleJourneys.xml",
         )
         resolve_commit_sha_mock.assert_called_once_with(
             repo_url="https://github.com/OpRa-CEN/OpRa",
