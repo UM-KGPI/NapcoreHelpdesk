@@ -12,7 +12,7 @@ Authoritative contract: [api/openapi.yaml](../api/openapi.yaml)
 
 - `GET /health/live`
 - `GET /health/ready`
-- `GET /health/llm` — configured vs. gateway-authorized model status for answer generation and controller routing (see [LLM status page](#llm-status-page) below)
+- `GET /health/llm` — configured vs. gateway-authorized model status for answer generation and controller routing (see [LLM status](#llm-status) below)
 - `POST /admin/index`
 
 ### Auth
@@ -74,7 +74,7 @@ Response will be in Slovenian, with technical terms in English.
 - Insufficient evidence returns explicit abstention
 - Evidence display improved: no duplicate file paths
 
-## LLM status page
+## LLM status
 
 `GET /health/llm` is a diagnostic endpoint (not a readiness probe — always
 returns 200, with health conveyed via the body's `status` field). Like
@@ -86,8 +86,8 @@ reachability, the gateway's current authorized-model list, and whether the
 model-drift self-heal has already corrected anything this process. Pass
 `?live=false` to skip the live gateway probe and read cached state only.
 
-For a nicer rendered view instead of raw JSON, use
-`/napcore-helpdesk/llm-status` (nav link "LLM status") in the frontend app.
+There is no dedicated frontend page for this — the endpoint being public and
+browser-viewable directly makes one redundant.
 
 ## Frontend Deep-Linking
 

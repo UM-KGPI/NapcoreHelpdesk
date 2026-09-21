@@ -36,10 +36,6 @@ export default function SharedAppLayout({ appVersion }: SharedAppLayoutProps) {
           <NavLink to="/about" className="app-about-link">
             About this project
           </NavLink>
-          {" · "}
-          <NavLink to="/llm-status" className="app-about-link">
-            LLM status
-          </NavLink>
         </p>
       </header>
       <Outlet />

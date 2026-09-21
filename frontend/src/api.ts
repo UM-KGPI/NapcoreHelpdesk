@@ -21,7 +21,6 @@ import type {
   EditorialQueueTransitionResponse,
   HealthResponse,
   IndexRepositoryResponse,
-  LlmStatusResponse,
   PromotionCandidatesResponse,
   QuestionEventDetail,
   QuestionEventsResponse,
@@ -272,10 +271,6 @@ export class HelpdeskApiClient {
 
   async getLiveHealth(): Promise<HealthResponse> {
     return this.request<HealthResponse>("/health/live", { method: "GET" }, false);
-  }
-
-  async getLlmStatus(live: boolean = true): Promise<LlmStatusResponse> {
-    return this.request<LlmStatusResponse>(`/health/llm?live=${live}`, { method: "GET" });
   }
 
   async listPromotionCandidates(windowDays: number, minCount: number, onlyUnresolved: boolean): Promise<PromotionCandidatesResponse> {

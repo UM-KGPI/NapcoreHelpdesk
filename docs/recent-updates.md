@@ -446,20 +446,13 @@ mock added, since without it they'd have started making real HTTP calls during t
 
 ---
 
-## 13. Browser-Viewable LLM Status Page
+## 13. LLM Status Page — Added, Then Removed (Superseded by §12)
 
-**Problem this closes:** raw JSON from `GET /health/llm` works fine for a quick browser visit, but
-isn't pleasant to read or re-check repeatedly — not something to hand an operator who just wants to
-glance at LLM health.
-
-Adds a "LLM status" nav link (next to "About this project") at `/napcore-helpdesk/llm-status`,
-rendering `GET /health/llm`'s result as a readable page: an overall status pill plus per-provider
-detail (configured vs. active model, gateway reachability, authorized models, auto-corrected flag)
-for both answer generation and controller routing. "Re-check now" re-runs the live gateway probe;
-"Cached only" reads state without a network call.
-
-Live-verified in the browser against the real running dev stack, in both states (`ok` after a
-real gateway check, `unknown` on cached-only).
+A dedicated "LLM status" page (`/napcore-helpdesk/llm-status`) was briefly added to render
+`GET /health/llm`'s result more readably than raw JSON. Once §12's endpoint was made public (no
+auth, same as `/health/live`/`/health/ready`), the page became redundant — the endpoint itself is
+now directly viewable in any browser, so the extra route, nav link, API client method, and CSS
+were removed rather than kept as unused surface. Check LLM status via `GET /health/llm` directly.
 
 ---
 
@@ -576,10 +569,11 @@ docker compose -f docker-compose.prod.yml up -d
 
 **As of §11–§12, this should now be rare** — a wrong `LLM_MODEL`/`CONTROLLER_LLM_API_MODEL` alias
 self-corrects at runtime (proactively as of §12, not just reactively after a failed call) instead
-of falling back silently. **First check** [`/napcore-helpdesk/llm-status`](#13-browser-viewable-llm-status-page)
-(§13) or `GET /health/llm` (§12) — it shows the configured vs. active model and whether the
-gateway currently authorizes the configured one, without needing to ask a real question first. If
-it reports `error` or `degraded`, or the boilerplate persists despite an `ok` status:
+of falling back silently. **First check** `GET /health/llm` (§12) — public, no auth needed, so you
+can just visit `http://localhost:8000/api/v1/health/llm` in a browser — it shows the configured vs.
+active model and whether the gateway currently authorizes the configured one, without needing to
+ask a real question first. If it reports `error` or `degraded`, or the boilerplate persists despite
+an `ok` status:
 **Cause:** either the self-heal's parser didn't recognize the gateway's error format, or the
 gateway is down/erroring for a different reason entirely (see [§10](#10-llm-model-alias-fix-litellm-gateway),
 [§11](#11-self-healing-llm-model-recovery), [§12](#12-llm-status-endpoint--proactive-self-heal)).

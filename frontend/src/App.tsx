@@ -32,7 +32,6 @@ import { AuthProvider } from "./auth-context";
 import AboutPage from "./components/AboutPage";
 import EditorConsoleWorkspace from "./components/EditorConsoleWorkspace";
 import EditorPageLayout from "./components/EditorPageLayout";
-import LlmStatusPage from "./components/LlmStatusPage";
 import QuestionDetailPage from "./components/QuestionDetailPage";
 import SharedAppLayout from "./components/SharedAppLayout";
 import UserChatWorkspace, { type ChatTurn } from "./components/UserChatWorkspace";
@@ -1102,7 +1101,6 @@ export default function App() {
               }
             />
             <Route path="about" element={<AboutPage appVersion={frontendVersion} backendBuildRef={backendBuildRef} />} />
-            <Route path="llm-status" element={<LlmStatusPage client={client} />} />
           </Route>
         </Routes>
 
