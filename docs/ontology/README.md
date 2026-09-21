@@ -83,8 +83,10 @@ This structure keeps runtime anchoring stable while allowing each standard ontol
 - Use `--artifact-rule-standards netex,opra` to limit scope to selected standards.
 
 ## Maintainers
-- Author: TODO: Author Name
-- Organization: TODO: Organization Name
+- Authors: Andrej Tibaut, Sara Guerra de Oliveira
+- Organization: University of Maribor, Faculty of Civil Engineering, Transportation Engineering
+  and Architecture, Chair of Construction and Transportation Informatics
+  (https://kgpi.fgpa.um.si/)
 
 ## Modeling Conventions
 - Use `nits:` for canonical project-specific core terms.

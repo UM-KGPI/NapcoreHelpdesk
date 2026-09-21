@@ -15,7 +15,7 @@
 
 ## ERD
 
-- PlantUML source: [docs/diagrams/erd-schema.puml](diagrams/erd-schema.puml)
+- PlantUML source: [.mylocal/docs/architecture/erd-schema.puml](../../.mylocal/docs/architecture/erd-schema.puml)
 - SVG render: [docs/diagrams/erd-schema.svg](diagrams/erd-schema.svg)
 
 ![ERD Schema](diagrams/erd-schema.svg)

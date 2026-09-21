@@ -74,8 +74,10 @@ When changing behavior, update docs in the same PR:
 - Public overview or usage: `README.md`
 - Developer workflow: `CONTRIBUTING.md`
 - Detailed documentation map: `docs/README.md`
-- Architecture changes: `docs/architecture/*`
-- Operations/testing changes: `docs/testing/*`
+- Architecture changes: `docs/architecture-overview.md` (tracked); C4/ERD PlantUML sources live at
+  `.mylocal/docs/architecture/*` (local-only per developer, gitignored) — rendered SVGs land in
+  `docs/diagrams/` and are tracked
+- Operations/deployment changes: `docs/production-deployment.md`
 
 ## API and frontend contract alignment
 
@@ -94,5 +96,5 @@ If backend API shape changes:
 ## Useful references
 
 - [Documentation index](docs/README.md)
-- [Make targets reference](docs/testing/make-targets-reference.md)
-- [Local run quickstart](docs/testing/local-run-quickstart.md)
+- Make targets reference: `make help`
+- [Local installation guide](docs/installation.md)

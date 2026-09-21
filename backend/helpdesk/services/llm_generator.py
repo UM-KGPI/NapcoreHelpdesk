@@ -24,6 +24,11 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 from helpdesk.services.question_preprocessor import detect_question_language
+from helpdesk.services.llm_model_recovery import (
+    extract_authorized_model,
+    remember_correction,
+    resolve_effective_model,
+)
 
 
 class LLMGenerationError(Exception):
@@ -44,6 +49,13 @@ def _question_requests_verbatim_example(question: str) -> bool:
     asks_for_example = any(term in question_lower for term in ["example", "sample", "snippet"])
     asks_for_code = any(term in question_lower for term in ["xml", "json", "yaml", "code"])
     return asks_for_example and asks_for_code
+
+
+def _question_about_xml_or_technical(question: str) -> bool:
+    question_lower = question.lower()
+    mentions_standard = any(term in question_lower for term in ["xml", "netex", "siri", "opra", "transmodel", "json", "code"])
+    asks_how_or_explain = any(term in question_lower for term in ["how", "show", "what is", "explain", "example", "structure"])
+    return mentions_standard or asks_how_or_explain
 
 
 def _normalize_grounded_line(line: str) -> str:
@@ -142,10 +154,13 @@ _STRONG_TERM_PATTERN = re.compile(
     r"|([A-Za-z0-9_-]+\.(?:xsd|xml|yaml|json|ttl))"  # file names with known extensions
 )
 
-# Weak terms: PascalCase element names (single or multi-word)
-# Matches: Time, Departure, DepartureTime, ScheduledStop, etc.
+# Weak terms: PascalCase element names (single or multi-word) and ALL-CAPS
+# Transmodel concept names, which the standards write in capitals by convention
+# (e.g. "STOP PLACE", "TAXI RANK", "VEHICLE MEETING POINT").
+# Matches: Time, Departure, DepartureTime, ScheduledStop, STOP PLACE, etc.
 _WEAK_TERM_PATTERN = re.compile(
-    r"([A-Z][a-z]+(?:[A-Z][a-z]+)*)"   # PascalCase: starts with uppercase, followed by lowercase(s)
+    r"([A-Z]{3,}(?:\s+[A-Z]{3,})*"      # ALL-CAPS Transmodel concepts, single or multi-word
+    r"|[A-Z][a-z]+(?:[A-Z][a-z]+)*)"    # PascalCase: starts with uppercase, followed by lowercase(s)
 )
 
 # Terms so generic they appear in virtually every NeTEx/standards document and
@@ -233,7 +248,10 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
     Raises LLMGenerationError if a citation cannot be grounded.
     """
     # Split on sentence boundaries; keep trailing punctuation with its sentence.
-    sentences = re.split(r"(?<=[.!?\u0029])\s+", answer.replace("\n", " "))
+    # `)` is deliberately not a boundary: splitting after a parenthetical like
+    # "(e.g., a station)" orphans the rest of the sentence from its subject and
+    # produces fragments that fail grounding checks spuriously.
+    sentences = re.split(r"(?<=[.!?])\s+", answer.replace("\n", " "))
 
     for sentence in sentences:
         found_citations = CITATION_PATTERN.findall(sentence)
@@ -347,6 +365,43 @@ def _strip_json_suffix(answer: str) -> str:
     return _JSON_SUFFIX_PATTERN.sub("", answer).rstrip()
 
 
+def _unwrap_json_answer(text: str) -> str:
+    """
+    Extract the prose answer from a JSON-mode LLM response.
+
+    JSON mode makes the model emit ``{"answer": "...", "citations_used": [...]}``;
+    this returns the "answer" field, unwrapping a double-encoded answer field and
+    falling back to other common field names. Non-JSON input is returned as-is.
+    """
+    try:
+        response_json = json.loads(text)
+    except json.JSONDecodeError:
+        logger.debug("[UNWRAP] Not JSON, treating as plain text")
+        return text
+    if not isinstance(response_json, dict):
+        return text
+
+    answer = response_json.get("answer")
+    if isinstance(answer, str):
+        # Handle double-wrapped JSON: the answer field itself may be a JSON string.
+        if answer.strip().startswith("{"):
+            try:
+                inner_json = json.loads(answer)
+            except json.JSONDecodeError:
+                return answer
+            if isinstance(inner_json, dict) and isinstance(inner_json.get("answer"), str):
+                logger.info(f"[UNWRAP] Double-wrapped answer extracted: {len(inner_json['answer'])} chars")
+                return inner_json["answer"]
+        return answer
+
+    logger.warning(f"[UNWRAP] No 'answer' key, falling back. Keys: {list(response_json.keys())}")
+    for key in ("text", "content", "response", "message"):
+        if isinstance(response_json.get(key), str):
+            logger.info(f"[UNWRAP] Using '{key}' field instead")
+            return response_json[key]
+    return str(response_json)
+
+
 def _strip_raw_filenames(answer: str, chunks: list[dict] | None = None) -> str:
     """
     Remove hallucinated file names from answer text, preserving evidence file names.
@@ -377,8 +432,11 @@ def _strip_raw_filenames(answer: str, chunks: list[dict] | None = None) -> str:
     temp_answer = _FILE_PATH_PATTERN.sub(_replace_if_not_allowed, temp_answer)
     temp_answer = _RAW_FILENAME_PATTERN.sub(_replace_if_not_allowed, temp_answer)
 
-    # Clean up excessive whitespace from removed names.
-    temp_answer = re.sub(r"\s+", " ", temp_answer).strip()
+    # Clean up excessive whitespace from removed names, preserving newlines
+    # so markdown line structure (lists, paragraphs, headings) survives.
+    temp_answer = re.sub(r"(?<=\S)[ \t]{2,}", " ", temp_answer)
+    temp_answer = re.sub(r" +\n", "\n", temp_answer)
+    temp_answer = re.sub(r"\n{3,}", "\n\n", temp_answer).strip()
 
     # Restore code blocks.
     for code_block in code_block_texts:
@@ -605,6 +663,7 @@ def _build_messages(
     faq_hint: str | None = None,
     language: str | None = None,
     all_candidates: list[dict] | None = None,
+    detected_language: str | None = None,
 ) -> list[dict]:
     context_lines = []
     for index, chunk in enumerate(chunks[:max_chunks], start=1):
@@ -642,8 +701,10 @@ def _build_messages(
     # client-supplied `language` (often just the browser/OS locale, unrelated to
     # what the user actually typed). With thinking mode disabled, the model has
     # no reasoning step of its own to fall back on for "detect the language"
-    # instructions, so an explicit target language must be given here.
-    detected_language = detect_question_language(question)
+    # instructions, so an explicit target language must be given here. Callers
+    # that already detected the language pass it in to avoid a second detection.
+    if detected_language is None:
+        detected_language = detect_question_language(question)
     effective_language = detected_language or language
 
     _lang = (effective_language or "").strip().lower()
@@ -661,8 +722,6 @@ def _build_messages(
         "You MUST output valid JSON only. Do not output any text outside the JSON structure.\n"
         f"\n🌍 LANGUAGE REQUIREMENT: {language_instruction}\n"
         "\nCRITICAL RULES:\n"
-        "⚠️ CITATION NUMBERS: Look at the evidence blocks below and count how many [E#] blocks exist. "
-        "ONLY cite those exact numbers. NEVER cite any [E#] number higher than what exists in the evidence.\n"
         "1. ONLY reference information that appears in the provided evidence blocks [E1] through [E#]\n"
         "2. EVERY factual claim MUST have a citation [E#] to the specific block containing that information\n"
         "3. Do NOT use any knowledge from your training data. Do NOT reference standards, examples, or concepts not in the provided blocks\n"
@@ -686,15 +745,11 @@ def _build_messages(
         "\n"
         "OUTPUT FORMAT (strict JSON):\n"
         '{"answer": "Your answer text here with [E1] [E2] citations inline.", "citations_used": ["E1", "E2"]}'
-        "\n\nMARKDOWN FORMATTING RULES:\n"
-        "- Use **bold** for emphasis on key concepts\n"
-        "- Use `inline code` for XML element names, attribute names, and values (e.g., `<DepartureTime>`, `version=\"any\"`)\n"
-        "- When showing XML/JSON code snippets (3+ lines), wrap them in triple backticks with language identifier:\n"
-        "  ```xml\n"
-        "  <DepartureTime>09:54:00</DepartureTime>\n"
-        "  ```\n"
-        "- Use actual line breaks in code blocks (not escaped \\n characters)\n"
-        "- Keep code blocks to 3-15 lines to remain readable\n"
+        "\n\nMARKDOWN FORMATTING:\n"
+        "- Use `backticks` for technical content: XML elements, attributes, filenames, class names, values.\n"
+        "- Use triple backticks for code blocks: ```xml ... ```\n"
+        "- Use **bold** for emphasis only, not for technical terms.\n"
+        "- Standard markdown for lists, headers, and paragraphs.\n"
     )
     if _question_requests_verbatim_example(question):
         system_prompt = (
@@ -703,6 +758,13 @@ def _build_messages(
             "When showing XML/JSON/YAML, include one fenced code block (```xml) of 6-20 lines from a single evidence block. "
             "Quote only verbatim excerpts from evidence blocks. Never synthesize or combine structures across sources. "
             "If asking for availability ('Is there any...?'), list all matching examples found in the evidence with their source paths and brief descriptions."
+        )
+    elif _question_about_xml_or_technical(question):
+        system_prompt = (
+            f"{system_prompt} "
+            "For technical questions about XML, standards structures, or implementations: Include a relevant code example from the evidence if available. "
+            "When showing XML/JSON structures, use one fenced code block (```xml) with 6-15 lines from the evidence. "
+            "Never synthesize or invent examples — only quote verbatim from the evidence blocks."
         )
 
     faq_section = ""
@@ -765,55 +827,82 @@ def _request_chat_completion(
     max_tokens: int,
     messages: list[dict],
 ) -> dict:
-    body = {
-        "model": model,
-        "messages": messages,
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-        # Enforce JSON output to prevent hallucinations: model MUST output valid JSON
-        # with citations constrained to valid evidence indices
-        "response_format": {"type": "json_object"},
-        # Reasoning models (e.g. qwen3) can consume the entire token budget on
-        # hidden chain-of-thought before emitting any answer content, leaving
-        # the response empty. Disable thinking mode to get direct answers.
-        "chat_template_kwargs": {"enable_thinking": False},
-    }
+    def _send(model_to_use: str) -> dict:
+        body = {
+            "model": model_to_use,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            # Enforce JSON output to prevent hallucinations: model MUST output valid JSON
+            # with citations constrained to valid evidence indices
+            "response_format": {"type": "json_object"},
+            # Reasoning models (e.g. qwen3) can consume the entire token budget on
+            # hidden chain-of-thought before emitting any answer content, leaving
+            # the response empty. Disable thinking mode to get direct answers.
+            "chat_template_kwargs": {"enable_thinking": False},
+        }
 
-    headers = {
-        "Content-Type": "application/json",
-    }
-    if api_key:
-        headers["Authorization"] = f"Bearer {api_key}"
+        headers = {
+            "Content-Type": "application/json",
+        }
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
 
-    req = request.Request(
-        url=f"{api_base_url.rstrip('/')}/chat/completions",
-        data=json.dumps(body).encode("utf-8"),
-        method="POST",
-        headers=headers,
+        req = request.Request(
+            url=f"{api_base_url.rstrip('/')}/chat/completions",
+            data=json.dumps(body).encode("utf-8"),
+            method="POST",
+            headers=headers,
+        )
+
+        with request.urlopen(
+            req,
+            timeout=timeout_seconds,
+            context=_build_ssl_context(),
+        ) as response:
+            return json.loads(response.read().decode("utf-8"))
+
+    # Resolve drift proactively against the live gateway (cached after the
+    # first check per process) instead of only reacting after a 403.
+    effective_model = resolve_effective_model(
+        api_base_url=api_base_url,
+        api_key=api_key,
+        configured_model=model,
+        verify_ssl=settings.LLM_VERIFY_SSL,
+        ca_bundle=settings.LLM_CA_BUNDLE,
+        source="answer_generation",
     )
+    try:
+        return _send(effective_model)
+    except error.HTTPError as exc:
+        if exc.code != 403:
+            raise
+        try:
+            error_body = exc.read().decode("utf-8")
+        except Exception:  # pragma: no cover
+            error_body = ""
+        corrected_model = extract_authorized_model(error_body)
+        if not corrected_model or corrected_model == effective_model:
+            raise
+        remember_correction(
+            api_base_url=api_base_url,
+            configured_model=model,
+            corrected_model=corrected_model,
+            source="answer_generation",
+        )
+        return _send(corrected_model)
 
-    with request.urlopen(
-        req,
-        timeout=timeout_seconds,
-        context=_build_ssl_context(),
-    ) as response:
-        return json.loads(response.read().decode("utf-8"))
 
-
-def _run_llm_attempt(
-    question: str,
+def _generate_answer_text(
     chunks: list[dict],
     messages: list[dict],
     request_targets: list[dict],
-    validate: bool = True,
 ) -> str:
-    """Execute one LLM call and optionally validate the answer.
+    """Execute one LLM call and return the post-processed (unvalidated) answer text.
 
-    Args:
-        validate: If False, skip citation and specificity validation (used for retry attempts).
-
-    Returns:
-        The answer text, optionally validated.
+    Validation is deliberately separate (see _validate_generated_answer) so a
+    rejected answer stays available verbatim for retry feedback instead of
+    requiring another generation call.
     """
     payload = None
     last_error = None
@@ -857,48 +946,7 @@ def _run_llm_attempt(
 
     logger.info(f"[LLM_RAW] Raw response (first 250 chars): {answer[:250]}")
 
-    # Parse JSON response if in JSON mode
-    try:
-        response_json = json.loads(answer)
-        logger.info(f"[JSON_PARSE] type={type(response_json).__name__}, keys={list(response_json.keys()) if isinstance(response_json, dict) else 'N/A'}")
-        if isinstance(response_json, dict) and "answer" in response_json:
-            answer = response_json["answer"]
-            # NOTE: json.loads() already converts \n to actual newlines, so no need for decode('unicode_escape')
-            # That would corrupt any legitimate backslashes in the text
-            logger.info(f"[JSON_EXTRACT] Extracted answer field: {len(answer)} chars, type={type(answer).__name__}, starts_with: {str(answer)[:80]}")
-
-            # Handle double-wrapped JSON: if the answer field itself is a JSON string, parse it
-            if isinstance(answer, str) and answer.strip().startswith("{"):
-                logger.info(f"[UNWRAP_JSON] Answer field is JSON string, attempting unwrap: {answer[:100]}")
-                try:
-                    inner_json = json.loads(answer)
-                    if isinstance(inner_json, dict) and "answer" in inner_json:
-                        answer = inner_json["answer"]
-                        logger.info(f"[UNWRAP_SUCCESS] Double-wrapped answer extracted: {len(answer)} chars")
-                    else:
-                        logger.info(f"[UNWRAP_NO_ANSWER_KEY] Inner JSON has no 'answer' key, keys: {inner_json.keys() if isinstance(inner_json, dict) else 'N/A'}")
-                except json.JSONDecodeError as unwrap_error:
-                    # Not JSON, keep as-is
-                    logger.warning(f"[UNWRAP_FAILED] Could not parse answer field as JSON: {str(unwrap_error)[:100]}")
-                    pass
-        else:
-            # If not in expected JSON format, try to use as-is
-            if isinstance(response_json, dict):
-                logger.debug(f"No 'answer' key found, available keys: {list(response_json.keys())}")
-                logger.warning(f"[JSON_MISSING_ANSWER_KEY] Attempting fallback extraction")
-                # Try fallback: look for any string-like field that looks like an answer
-                for key in ['text', 'content', 'response', 'message']:
-                    if key in response_json and isinstance(response_json[key], str):
-                        answer = response_json[key]
-                        logger.info(f"[JSON_FALLBACK] Using '{key}' field instead: {len(answer)} chars")
-                        break
-                else:
-                    # No suitable field found, use str() as last resort
-                    answer = str(response_json)
-                    logger.warning(f"[JSON_FALLBACK_FAILED] No suitable field found, using str()")
-    except json.JSONDecodeError as e:
-        # Not JSON, treat as plain text response
-        logger.debug(f"JSON parse failed: {e}, treating as plain text")
+    answer = _unwrap_json_answer(answer)
 
     # Strip trailing JSON metadata object before any other processing.
     answer = _strip_json_suffix(answer)
@@ -913,40 +961,25 @@ def _run_llm_attempt(
     max_chunk_idx = len(chunks)
     answer = _fix_out_of_range_citations(answer, max_chunk_idx)
 
-    if validate:
-        logger.debug(f"Validating answer after stripping: {len(answer)} chars, {len(chunks)} chunks")
-        logger.info(f"[VALIDATE=True] Running validation on: {answer[:100]}")
-        try:
-            _validate_citations_to_chunks(answer=answer, chunks=chunks)
-            logger.info("[VALIDATE=True] Citation validation PASSED")
-        except Exception as e:
-            logger.info(f"[VALIDATE=True] Citation validation FAILED: {str(e)[:100]}")
-            raise
-        try:
-            _validate_citation_grounding(answer=answer, chunks=chunks)
-            logger.info("[VALIDATE=True] Grounding validation PASSED")
-        except Exception as e:
-            logger.info(f"[VALIDATE=True] Grounding validation FAILED: {str(e)[:100]}")
-            raise
-        try:
-            _validate_no_raw_filenames(answer=answer, chunks=chunks)
-            logger.info("[VALIDATE=True] Filename validation PASSED")
-        except Exception as e:
-            logger.info(f"[VALIDATE=True] Filename validation FAILED: {str(e)[:100]}")
-            raise
-        try:
-            logger.info(f"[VALIDATE=True] Running specificity validation")
-            _validate_answer_has_specificity(answer=answer)
-            logger.info("[VALIDATE=True] Specificity validation PASSED")
-        except Exception as e:
-            logger.info(f"[VALIDATE=True] Specificity validation FAILED: {str(e)[:100]}")
-            raise
-        logger.info("[VALIDATE=True] All validators PASSED!")
-    else:
-        logger.info(f"[VALIDATE=False] Skipping validation (retry attempt): {answer[:100]}")
-    # Standards validation disabled: too many false positives on file name components
-    # Citation grounding validator already catches real hallucinations
     return answer
+
+
+def _validate_generated_answer(answer: str, chunks: list[dict]) -> None:
+    """Run all grounding validators against a generated answer.
+
+    Raises LLMGenerationError on the first failed check. Standards validation
+    stays disabled: too many false positives on file name components; the
+    citation grounding validator already catches real hallucinations.
+    """
+    try:
+        _validate_citations_to_chunks(answer=answer, chunks=chunks)
+        _validate_citation_grounding(answer=answer, chunks=chunks)
+        _validate_no_raw_filenames(answer=answer, chunks=chunks)
+        _validate_answer_has_specificity(answer=answer)
+    except LLMGenerationError as exc:
+        logger.info(f"[VALIDATE] Validation FAILED: {str(exc)[:150]}")
+        raise
+    logger.info("[VALIDATE] All validators PASSED")
 
 
 def _append_feedback_message(messages: list[dict], rejected_answer: str, error_msg: str) -> list[dict]:
@@ -1053,69 +1086,70 @@ def generate_answer_llm(
     rejected_answer: str | None = None
     rejection_reason: str | None = None
 
-    # First attempt
+    # First attempt: generation and validation run separately so the rejected
+    # answer text (not just the validator's error) is available for retry feedback.
+    answer: str | None = None
     try:
-        answer = _run_llm_attempt(question=question, chunks=chunks, messages=messages, request_targets=request_targets)
+        answer = _generate_answer_text(chunks=chunks, messages=messages, request_targets=request_targets)
+        _validate_generated_answer(answer=answer, chunks=chunks)
     except LLMGenerationError as first_error:
-        rejected_answer = first_error.args[0] if first_error.args else str(first_error)
+        rejected_answer = answer or ""
         rejection_reason = str(first_error)
         logger.warning(
             "LLM first attempt rejected by validator; retrying with feedback. Reason: %s",
             rejection_reason[:200],
             extra={"question": question[:120]},
         )
-        # Second attempt with explicit correction feedback
-        retry_messages = _append_feedback_message(
-            messages=messages,
-            rejected_answer=rejected_answer,
-            error_msg=rejection_reason,
-        )
-        try:
-            # Retry with validation enabled. If it fails validation too, we catch the exception
-            # and return the answer anyway since we've given explicit feedback.
-            answer = _run_llm_attempt(
-                question=question, chunks=chunks, messages=retry_messages, request_targets=request_targets,
-                validate=True
+        # Second attempt with explicit correction feedback. If generation itself
+        # failed (no answer produced), feedback about a rejected answer does not
+        # apply — retry the original prompt instead.
+        if rejected_answer:
+            retry_messages = _append_feedback_message(
+                messages=messages,
+                rejected_answer=rejected_answer,
+                error_msg=rejection_reason,
             )
+        else:
+            retry_messages = messages
+        try:
+            answer = _generate_answer_text(chunks=chunks, messages=retry_messages, request_targets=request_targets)
+        except Exception as fatal_error:
+            # Even the second attempt failed. This is a critical issue.
+            # Return an honest error message instead of letting exception propagate to fallback.
+            logger.error(
+                "FATAL: Both LLM attempts failed. Cannot generate answer. Exception: %s",
+                str(fatal_error)[:200],
+                extra={"question": question[:120]},
+                exc_info=True,
+            )
+            answer = (
+                "I was unable to generate a proper answer due to technical issues with the LLM. "
+                "The evidence retrieval worked, but the answer generation failed. "
+                "Please try again or contact support."
+            )
+            confidence = 0.0
+            # Return immediately to prevent fallback to generic boilerplate
+            return {
+                "answer": answer,
+                "confidence": confidence,
+                "review_required": True,
+                "provider": settings.LLM_PROVIDER,
+                "model": (request_targets[0]["model"]),
+                "rejected_answer": rejected_answer,
+                "rejection_reason": rejection_reason,
+            }
+        try:
+            _validate_generated_answer(answer=answer, chunks=chunks)
         except LLMGenerationError as retry_error:
-            # Retry failed validation too. Log it but return the answer anyway.
-            # The feedback was the best guidance we could provide.
+            # Retry failed validation too, but it did produce an answer. Keep it
+            # as-is rather than paying for a third generation call — the feedback
+            # was the best guidance we could provide.
             logger.warning(
-                "LLM retry failed validation too, but attempting raw retry. Reason: %s",
+                "LLM retry failed validation too; using the retry answer as-is. Reason: %s",
                 str(retry_error)[:200],
                 extra={"question": question[:120]},
             )
-            # Re-run without validation to get the raw answer
-            try:
-                answer = _run_llm_attempt(
-                    question=question, chunks=chunks, messages=retry_messages, request_targets=request_targets,
-                    validate=False
-                )
-            except Exception as fatal_error:
-                # Even the second attempt failed. This is a critical issue.
-                # Return an honest error message instead of letting exception propagate to fallback.
-                logger.error(
-                    "FATAL: Both LLM attempts failed. Cannot generate answer. Exception: %s",
-                    str(fatal_error)[:200],
-                    extra={"question": question[:120]},
-                    exc_info=True,
-                )
-                answer = (
-                    "I was unable to generate a proper answer due to technical issues with the LLM. "
-                    "The evidence retrieval worked, but the answer generation failed. "
-                    "Please try again or contact support."
-                )
-                confidence = 0.0
-                # Return immediately to prevent fallback to generic boilerplate
-                return {
-                    "answer": answer,
-                    "confidence": confidence,
-                    "review_required": True,
-                    "provider": settings.LLM_PROVIDER,
-                    "model": (request_targets[0]["model"]),
-                    "rejected_answer": rejected_answer,
-                    "rejection_reason": rejection_reason,
-                }
+            rejection_reason = f"{rejection_reason} | retry also failed: {retry_error}"[:500]
 
     _validate_grounded_example_output(question=question, answer=answer, chunks=chunks)
 
@@ -1174,27 +1208,66 @@ def _stream_request_chat_completion(
     messages: list[dict],
 ) -> Generator[str, None, None]:
     """Yield raw token delta strings from an OpenAI-compatible streaming chat completion."""
-    body = {
-        "model": model,
-        "messages": messages,
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-        "stream": True,
-        # See _request_chat_completion: avoid reasoning models exhausting the
-        # token budget on hidden chain-of-thought before any content is sent.
-        "chat_template_kwargs": {"enable_thinking": False},
-    }
-    headers = {"Content-Type": "application/json"}
-    if api_key:
-        headers["Authorization"] = f"Bearer {api_key}"
 
-    req = request.Request(
-        url=f"{api_base_url.rstrip('/')}/chat/completions",
-        data=json.dumps(body).encode("utf-8"),
-        method="POST",
-        headers=headers,
+    def _build_request(model_to_use: str) -> request.Request:
+        body = {
+            "model": model_to_use,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "stream": True,
+            # Tokens are fully buffered and validated before any reach the client,
+            # so JSON mode is safe here and keeps output parseable like the sync path.
+            "response_format": {"type": "json_object"},
+            # See _request_chat_completion: avoid reasoning models exhausting the
+            # token budget on hidden chain-of-thought before any content is sent.
+            "chat_template_kwargs": {"enable_thinking": False},
+        }
+        headers = {"Content-Type": "application/json"}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        return request.Request(
+            url=f"{api_base_url.rstrip('/')}/chat/completions",
+            data=json.dumps(body).encode("utf-8"),
+            method="POST",
+            headers=headers,
+        )
+
+    # Resolve drift proactively against the live gateway (cached after the
+    # first check per process) instead of only reacting after a 403.
+    effective_model = resolve_effective_model(
+        api_base_url=api_base_url,
+        api_key=api_key,
+        configured_model=model,
+        verify_ssl=settings.LLM_VERIFY_SSL,
+        ca_bundle=settings.LLM_CA_BUNDLE,
+        source="answer_generation_stream",
     )
-    with request.urlopen(req, timeout=timeout_seconds, context=_build_ssl_context()) as response:
+    try:
+        response = request.urlopen(
+            _build_request(effective_model), timeout=timeout_seconds, context=_build_ssl_context()
+        )
+    except error.HTTPError as exc:
+        if exc.code != 403:
+            raise
+        try:
+            error_body = exc.read().decode("utf-8")
+        except Exception:  # pragma: no cover
+            error_body = ""
+        corrected_model = extract_authorized_model(error_body)
+        if not corrected_model or corrected_model == effective_model:
+            raise
+        remember_correction(
+            api_base_url=api_base_url,
+            configured_model=model,
+            corrected_model=corrected_model,
+            source="answer_generation_stream",
+        )
+        response = request.urlopen(
+            _build_request(corrected_model), timeout=timeout_seconds, context=_build_ssl_context()
+        )
+
+    with response:
         for raw_line in response:
             line = raw_line.decode("utf-8").strip()
             if not line.startswith("data:"):
@@ -1245,6 +1318,11 @@ def stream_answer_llm(
 
     max_chunks = max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 4)))
     max_chars_per_chunk = max(200, int(getattr(settings, "LLM_MAX_EVIDENCE_CHARS_PER_CHUNK", 1200)))
+    # Detect once and share: _build_messages uses it for the prompt's language
+    # instruction, and the _validate_answer_language() calls below compare
+    # against it.
+    detected_language = detect_question_language(question)
+    effective_language = detected_language or language
     messages = _build_messages(
         question=question,
         chunks=chunks,
@@ -1254,12 +1332,8 @@ def stream_answer_llm(
         faq_hint=faq_hint,
         language=language,
         all_candidates=all_candidates,
+        detected_language=detected_language,
     )
-    # Mirror _build_messages' own language detection so the later
-    # _validate_answer_language() calls in this function have a value to
-    # compare against (that detection result is otherwise local to
-    # _build_messages and never returned).
-    effective_language = detect_question_language(question) or language
 
     # Buffer all tokens before yielding any — validation must pass the full
     # answer before the client receives a single character, so a failed check
@@ -1299,41 +1373,15 @@ def stream_answer_llm(
     try:
         full_answer = _collect_stream(messages)
 
-        # CRITICAL: Unwrap JSON response if LLM is in JSON mode
-        # The LLM generates {"answer": "...", "citations_used": [...]} but we need just the text
         logger.info(f"[STREAM_LLM_RAW] Raw response (first 250 chars): {full_answer[:250]}")
-        try:
-            response_json = json.loads(full_answer)
-            logger.info(f"[STREAM_JSON_PARSE] type={type(response_json).__name__}, keys={list(response_json.keys()) if isinstance(response_json, dict) else 'N/A'}")
-            if isinstance(response_json, dict) and "answer" in response_json:
-                full_answer = response_json["answer"]
-                # NOTE: json.loads() already converts \n to actual newlines
-                logger.info(f"[STREAM_JSON_EXTRACT] Extracted answer field: {len(full_answer)} chars, starts_with: {str(full_answer)[:80]}")
-
-                # Handle double-wrapped JSON
-                if isinstance(full_answer, str) and full_answer.strip().startswith("{"):
-                    logger.info(f"[STREAM_UNWRAP_JSON] Answer field is JSON string, attempting unwrap: {full_answer[:100]}")
-                    try:
-                        inner_json = json.loads(full_answer)
-                        if isinstance(inner_json, dict) and "answer" in inner_json:
-                            full_answer = inner_json["answer"]
-                            logger.info(f"[STREAM_UNWRAP_SUCCESS] Double-wrapped answer extracted: {len(full_answer)} chars")
-                    except json.JSONDecodeError as unwrap_error:
-                        logger.warning(f"[STREAM_UNWRAP_FAILED] Could not parse answer field as JSON: {str(unwrap_error)[:100]}")
-        except json.JSONDecodeError as e:
-            # Not JSON, treat as plain text response
-            logger.debug(f"[STREAM_JSON_PARSE_FAILED] JSON parse failed: {e}, treating as plain text")
+        full_answer = _unwrap_json_answer(full_answer)
 
         # Strip hallucinated file names; evidence file names are preserved.
         full_answer = _strip_json_suffix(full_answer)
         full_answer = _strip_raw_filenames(full_answer, chunks)
         full_answer = _strip_stray_list_markers(full_answer)
         _validate_answer_language(answer=full_answer, question=question, target_language=effective_language)
-        _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
-        _validate_citation_grounding(answer=full_answer, chunks=chunks)
-        _validate_no_raw_filenames(answer=full_answer, chunks=chunks)
-        _validate_answer_has_specificity(answer=full_answer)
-        # Standards validation disabled: citation grounding validator catches real issues
+        _validate_generated_answer(answer=full_answer, chunks=chunks)
         _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
     except LLMGenerationError as first_error:
         rejected_answer = full_answer if "full_answer" in dir() else ""
@@ -1350,28 +1398,8 @@ def stream_answer_llm(
         )
         full_answer = _collect_stream(retry_messages)
 
-        # CRITICAL: Unwrap JSON response for retry attempt too
         logger.info(f"[STREAM_RETRY_RAW] Retry response (first 250 chars): {full_answer[:250]}")
-        try:
-            response_json = json.loads(full_answer)
-            logger.info(f"[STREAM_RETRY_JSON_PARSE] type={type(response_json).__name__}, keys={list(response_json.keys()) if isinstance(response_json, dict) else 'N/A'}")
-            if isinstance(response_json, dict) and "answer" in response_json:
-                full_answer = response_json["answer"]
-                # NOTE: json.loads() already converts \n to actual newlines
-                logger.info(f"[STREAM_RETRY_JSON_EXTRACT] Extracted answer field: {len(full_answer)} chars")
-
-                # Handle double-wrapped JSON
-                if isinstance(full_answer, str) and full_answer.strip().startswith("{"):
-                    logger.info(f"[STREAM_RETRY_UNWRAP_JSON] Answer field is JSON string")
-                    try:
-                        inner_json = json.loads(full_answer)
-                        if isinstance(inner_json, dict) and "answer" in inner_json:
-                            full_answer = inner_json["answer"]
-                            logger.info(f"[STREAM_RETRY_UNWRAP_SUCCESS] Double-wrapped answer extracted")
-                    except json.JSONDecodeError:
-                        logger.warning(f"[STREAM_RETRY_UNWRAP_FAILED] Could not parse inner JSON")
-        except json.JSONDecodeError:
-            logger.debug(f"[STREAM_RETRY_JSON_PARSE_FAILED] Not JSON, treating as plain text")
+        full_answer = _unwrap_json_answer(full_answer)
 
         # Strip hallucinated file names; evidence file names are preserved.
         full_answer = _strip_json_suffix(full_answer)
@@ -1379,11 +1407,7 @@ def stream_answer_llm(
         full_answer = _strip_stray_list_markers(full_answer)
         try:
             _validate_answer_language(answer=full_answer, question=question, target_language=effective_language)
-            _validate_citations_to_chunks(answer=full_answer, chunks=chunks)
-            _validate_citation_grounding(answer=full_answer, chunks=chunks)
-            _validate_no_raw_filenames(answer=full_answer, chunks=chunks)
-            _validate_answer_has_specificity(answer=full_answer)
-            # Standards validation disabled: citation grounding validator catches real issues
+            _validate_generated_answer(answer=full_answer, chunks=chunks)
             _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
         except LLMGenerationError as retry_error:
             # Retry failed validation too. A real, on-topic answer that fails a strict
@@ -1401,9 +1425,13 @@ def stream_answer_llm(
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
     confidence = min(0.94, max(0.60, float(top_score)))
 
-    # Validation passed — now yield tokens so the client receives only valid content.
-    for delta in full_answer:
-        yield ("token", delta)
+    # Validation passed — now yield the buffered answer so the client receives
+    # only valid content. Emit multi-character slices, not single characters:
+    # each yield becomes one SSE event, and per-character events inflate the
+    # event count by an order of magnitude for no smoother rendering.
+    chunk_size = 24
+    for start in range(0, len(full_answer), chunk_size):
+        yield ("token", full_answer[start : start + chunk_size])
 
     yield (
         "done",

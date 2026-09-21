@@ -24,7 +24,7 @@ x-backend-base: &backend-base
     DEV_JWT_DEFAULT_SUBJECT: user-local
     DEV_JWT_DEFAULT_ROLES: editor,reviewer,publisher
     DEV_JWT_TTL_MINUTES: "480"
-    ALLOWED_SOURCE_REPOSITORIES: https://github.com/TransmodelEcosystem/NeTEx,https://github.com/SIRI-CEN/SIRI,https://github.com/OpRa-CEN/OpRa
+    ALLOWED_SOURCE_REPOSITORIES: https://github.com/TransmodelEcosystem/NeTEx,https://github.com/SIRI-CEN/SIRI,https://github.com/TransmodelEcosystem/OpRa
     CELERY_BROKER_URL: redis://redis:6379/0
     CELERY_RESULT_BACKEND: redis://redis:6379/1
     GRAPHDB_ENABLED: ${GRAPHDB_ENABLED:-True}
@@ -84,6 +84,8 @@ services:
       - ./backend:/app/backend
       - ./docs:/app/docs:ro
       - ./scripts:/app/scripts:ro
+      - ./api:/app/api:ro
+      - ./VERSION:/app/VERSION:ro
       - ../NeTEx:/app/repos/NeTEx:ro
       - ../OpRa:/app/repos/OpRa:ro
       - ../SIRI:/app/repos/SIRI:ro
@@ -105,6 +107,7 @@ services:
     volumes:
       - ./backend:/app/backend
       - ./docs:/app/docs:ro
+      - ./VERSION:/app/VERSION:ro
     depends_on:
       backend:
         condition: service_started
@@ -117,6 +120,7 @@ services:
     volumes:
       - ./backend:/app/backend
       - ./docs:/app/docs:ro
+      - ./VERSION:/app/VERSION:ro
     depends_on:
       backend:
         condition: service_started

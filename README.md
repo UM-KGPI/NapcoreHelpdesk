@@ -48,3 +48,7 @@ Documentation index:
 Contribution workflow and checks are documented in:
 
 - [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## Production
+
+- [https://kgpi.fgpa.um.si/napcore-helpdesk/](https://kgpi.fgpa.um.si/napcore-helpdesk/)

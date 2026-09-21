@@ -24,7 +24,7 @@
  * Created: 2026-03-28  |  Modified: 2026-06-28
  */
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useSearchParams } from "react-router-dom";
 
 import { HelpdeskApiClient } from "./api";
@@ -77,7 +77,7 @@ const DEFAULT_INDEX_REPO_PRESETS: IndexRepoPreset[] = [
   {
     id: "opra",
     label: "OpRa",
-    repoUrl: "https://github.com/OpRa-CEN/OpRa",
+    repoUrl: "https://github.com/TransmodelEcosystem/OpRa",
     repoPath: "/app/repos/OpRa",
     profile: "opra",
   },
@@ -144,6 +144,7 @@ function UserChatWithQueryParams(
 ) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [enhancedTurns, setEnhancedTurns] = useState<typeof props.chatTurns>(props.chatTurns);
+  const prevChatLengthRef = useRef(props.chatTurns.length);
 
   const loadQuestionDetails = (requestId: string) => {
     if (!props.token) return;
@@ -211,13 +212,20 @@ function UserChatWithQueryParams(
       });
   };
 
-  // Sync with parent chatTurns when no query parameter
+  // Sync with parent chatTurns when no query parameter or when new questions are asked
   useEffect(() => {
     const questionId = searchParams.get("questionId");
-    if (!questionId) {
+
+    // If new turns have been added (user asked a new question), clear the questionId and show new turns
+    if (questionId && props.chatTurns.length > prevChatLengthRef.current) {
+      setSearchParams({});
+      setEnhancedTurns(props.chatTurns);
+    } else if (!questionId) {
       setEnhancedTurns(props.chatTurns);
     }
-  }, [props.chatTurns, searchParams]);
+
+    prevChatLengthRef.current = props.chatTurns.length;
+  }, [props.chatTurns, searchParams, setSearchParams]);
 
   // Load historical question when query parameter present
   useEffect(() => {
@@ -1092,7 +1100,7 @@ export default function App() {
                 />
               }
             />
-            <Route path="about" element={<AboutPage />} />
+            <Route path="about" element={<AboutPage appVersion={frontendVersion} backendBuildRef={backendBuildRef} />} />
           </Route>
         </Routes>
 

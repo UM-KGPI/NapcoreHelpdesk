@@ -5,9 +5,9 @@ Alignment file: `nits-netex-align.ttl`
 
 | Metric | Count |
 |--------|-------|
-| Total classes in netex.ttl | 871 |
-| Already aligned | 62 |
-| **Unaligned (gap)** | **831** |
+| Total classes in netex.ttl | 2939 |
+| Already aligned | 824 |
+| **Unaligned (gap)** | **2115** |
 
 ---
 
@@ -16,7 +16,7 @@ Alignment file: `nits-netex-align.ttl`
 > Copy the TTL block for a category into `nits-netex-align.ttl` after review.
 > Delete or comment out lines you want to skip.
 
-### Skip candidates (94 classes)
+### Skip candidates (533 classes)
 
 These are enumeration types, list containers, or abstract base classes.
 They are typically not useful retrieval targets.
@@ -41,6 +41,7 @@ netex:LightingControlFacilityList  # XSD list container — not a retrieval targ
 netex:LuggageCarriageFacilityList  # XSD list container — not a retrieval target
 netex:LuggageLockerFacilityList  # XSD list container — not a retrieval target
 netex:LuggageServiceFacilityList  # XSD list container — not a retrieval target
+netex:MealFacilityList  # XSD list container — not a retrieval target
 netex:MedicalFacilityList  # XSD list container — not a retrieval target
 netex:MobilityFacilityList  # XSD list container — not a retrieval target
 netex:NuisanceFacilityList  # XSD list container — not a retrieval target
@@ -74,6 +75,7 @@ netex:TypeOfFareContractEntry  # Enumeration/classifier type — bulk-align or s
 netex:TypeOfFareProduct  # Enumeration/classifier type — bulk-align or skip
 netex:TypeOfFareStructureElement  # Enumeration/classifier type — bulk-align or skip
 netex:TypeOfFareStructureFactor  # Enumeration/classifier type — bulk-align or skip
+netex:TypeOfFareTable  # Enumeration/classifier type — bulk-align or skip
 netex:TypeOfFleet  # Enumeration/classifier type — bulk-align or skip
 netex:TypeOfFlexibleService  # Enumeration/classifier type — bulk-align or skip
 netex:TypeOfFrame  # Enumeration/classifier type — bulk-align or skip
@@ -114,1259 +116,3488 @@ netex:TypeOfValidity  # Enumeration/classifier type — bulk-align or skip
 netex:TypeOfValue  # Enumeration/classifier type — bulk-align or skip
 netex:TypeOfVersion  # Enumeration/classifier type — bulk-align or skip
 netex:TypeOfWheelchair  # Enumeration/classifier type — bulk-align or skip
+netex:TypeOfZone  # Enumeration/classifier type — bulk-align or skip
 netex:UicProductCharacteristicList  # XSD list container — not a retrieval target
 netex:VehicleAccessFacilityList  # XSD list container — not a retrieval target
+netex:accessFacilityList  # XSD list container — not a retrieval target
+netex:accessFeatureList  # XSD list container — not a retrieval target
+netex:accessibilityAssessmentRef  # XSD reference element — not a standalone concept
+netex:accessibilityInfoFacilityList  # XSD list container — not a retrieval target
+netex:accessibilityToolList  # XSD list container — not a retrieval target
+netex:accommodationAccessList  # XSD list container — not a retrieval target
+netex:accommodationFacilityList  # XSD list container — not a retrieval target
+netex:accountingStopPointRef  # XSD reference element — not a standalone concept
+netex:addressablePlaceRef  # XSD reference element — not a standalone concept
+netex:adjacentPointRef  # XSD reference element — not a standalone concept
+netex:adjacentStopPlaceRef  # XSD reference element — not a standalone concept
+netex:adjacentStopPointRef  # XSD reference element — not a standalone concept
+netex:administrativeZoneRef  # XSD reference element — not a standalone concept
+netex:againstVehicleTypeRef  # XSD reference element — not a standalone concept
+netex:alternativeJourneyRef  # XSD reference element — not a standalone concept
+netex:assistanceFacilityList  # XSD list container — not a retrieval target
+netex:atStopPointRef  # XSD reference element — not a standalone concept
+netex:authorityRef  # XSD reference element — not a standalone concept
+netex:availabilityConditionRef  # XSD reference element — not a standalone concept
+netex:baseUserProfileRef  # XSD reference element — not a standalone concept
+netex:baselineVersionFrameRef  # XSD reference element — not a standalone concept
+netex:blockPartRef  # XSD reference element — not a standalone concept
+netex:blockRef  # XSD reference element — not a standalone concept
+netex:boardingPositionRef  # XSD reference element — not a standalone concept
+netex:bookingProcessFacilityList  # XSD list container — not a retrieval target
+netex:borderPointRef  # XSD reference element — not a standalone concept
+netex:brandingRef  # XSD reference element — not a standalone concept
+netex:cappedDiscountRightRef  # XSD reference element — not a standalone concept
+netex:cappingRuleRef  # XSD reference element — not a standalone concept
+netex:carServiceFacilityList  # XSD list container — not a retrieval target
+netex:cateringFacilityList  # XSD list container — not a retrieval target
+netex:chargingMomentRef  # XSD reference element — not a standalone concept
+netex:checkConstraintRef  # XSD reference element — not a standalone concept
+netex:classOfUseRef  # XSD reference element — not a standalone concept
+netex:classifiedAsRef  # XSD reference element — not a standalone concept
+netex:climateControlList  # XSD list container — not a retrieval target
+netex:codespaceRef  # XSD reference element — not a standalone concept
+netex:collectionPointRef  # XSD reference element — not a standalone concept
+netex:columnRef  # XSD reference element — not a standalone concept
+netex:commercialProfileRef  # XSD reference element — not a standalone concept
+netex:commonVehicleServiceRef  # XSD reference element — not a standalone concept
+netex:complexFeatureRef  # XSD reference element — not a standalone concept
+netex:compoundBlockRef  # XSD reference element — not a standalone concept
+netex:compoundTrainRef  # XSD reference element — not a standalone concept
+netex:connectingStopPointRef  # XSD reference element — not a standalone concept
+netex:connectionRef  # XSD reference element — not a standalone concept
+netex:connectionZoneRef  # XSD reference element — not a standalone concept
+netex:contactRef  # XSD reference element — not a standalone concept
+netex:controlCentreRef  # XSD reference element — not a standalone concept
+netex:controllableElementRef  # XSD reference element — not a standalone concept
+netex:couchetteFacilityList  # XSD list container — not a retrieval target
+netex:countryRef  # XSD reference element — not a standalone concept
+netex:courseOfJourneysRef  # XSD reference element — not a standalone concept
+netex:crewBaseRef  # XSD reference element — not a standalone concept
+netex:customerAccountRef  # XSD reference element — not a standalone concept
+netex:customerAccountStatusRef  # XSD reference element — not a standalone concept
+netex:customerPaymentMeansRef  # XSD reference element — not a standalone concept
+netex:customerPurchasePackageElementRef  # XSD reference element — not a standalone concept
+netex:customerPurchasePackageRef  # XSD reference element — not a standalone concept
+netex:customerRef  # XSD reference element — not a standalone concept
+netex:datedJourneyPatternRef  # XSD reference element — not a standalone concept
+netex:datedVehicleJourneyRef  # XSD reference element — not a standalone concept
+netex:dayTypeRef  # XSD reference element — not a standalone concept
+netex:deadRunRef  # XSD reference element — not a standalone concept
+netex:deckEntranceRef  # XSD reference element — not a standalone concept
+netex:deckLevelRef  # XSD reference element — not a standalone concept
+netex:deckPlanRef  # XSD reference element — not a standalone concept
+netex:deckRef  # XSD reference element — not a standalone concept
+netex:deckSpaceRef  # XSD reference element — not a standalone concept
+netex:deltaRef  # XSD reference element — not a standalone concept
+netex:departmentRef  # XSD reference element — not a standalone concept
+netex:derivedFromVersionRef  # XSD reference element — not a standalone concept
+netex:destinationDisplayRef  # XSD reference element — not a standalone concept
+netex:directionRef  # XSD reference element — not a standalone concept
+netex:distanceMatrixElementRef  # XSD reference element — not a standalone concept
+netex:distributionAssignmentRef  # XSD reference element — not a standalone concept
+netex:distributionChannelRef  # XSD reference element — not a standalone concept
+netex:driverTripRef  # XSD reference element — not a standalone concept
+netex:dutyRef  # XSD reference element — not a standalone concept
+netex:emergencyServiceList  # XSD list container — not a retrieval target
+netex:endMeetingPointRef  # XSD reference element — not a standalone concept
+netex:endPointOnLinkRef  # XSD reference element — not a standalone concept
+netex:endPointRef  # XSD reference element — not a standalone concept
+netex:endStopPointRef  # XSD reference element — not a standalone concept
+netex:endTariffZoneRef  # XSD reference element — not a standalone concept
+netex:entranceSensorRef  # XSD reference element — not a standalone concept
+netex:equipmentPlaceRef  # XSD reference element — not a standalone concept
+netex:equipmentRef  # XSD reference element — not a standalone concept
+netex:exchangableFromIntervalRef  # XSD reference element — not a standalone concept
+netex:exchangableUntilIntervalRef  # XSD reference element — not a standalone concept
+netex:excludingJourneyPatternRef  # XSD reference element — not a standalone concept
+netex:facilitySetRef  # XSD reference element — not a standalone concept
+netex:familyFacilityList  # XSD list container — not a retrieval target
+netex:fareContractRef  # XSD reference element — not a standalone concept
+netex:fareDemandFactorRef  # XSD reference element — not a standalone concept
+netex:fareElementInSequenceRef  # XSD reference element — not a standalone concept
+netex:farePriceRef  # XSD reference element — not a standalone concept
+netex:fareProductRef  # XSD reference element — not a standalone concept
+netex:fareSectionRef  # XSD reference element — not a standalone concept
+netex:fareStructureElementInSequenceRef  # XSD reference element — not a standalone concept
+netex:fareStructureElementRef  # XSD reference element — not a standalone concept
+netex:fareTableRef  # XSD reference element — not a standalone concept
+netex:flexibleQuayRef  # XSD reference element — not a standalone concept
+netex:flexibleServicePropertiesRef  # XSD reference element — not a standalone concept
+netex:flexibleStopPlaceRef  # XSD reference element — not a standalone concept
+netex:forVehicleTypeRef  # XSD reference element — not a standalone concept
+netex:fromConnectionRef  # XSD reference element — not a standalone concept
+netex:fromDeckEntranceRef  # XSD reference element — not a standalone concept
+netex:fromFarePointInPatternRef  # XSD reference element — not a standalone concept
+netex:fromFareSectionRef  # XSD reference element — not a standalone concept
+netex:fromJourneyPatternRef  # XSD reference element — not a standalone concept
+netex:fromJourneyRef  # XSD reference element — not a standalone concept
+netex:fromLinkRef  # XSD reference element — not a standalone concept
+netex:fromOperatingDayRef  # XSD reference element — not a standalone concept
+netex:fromPointInJourneyPatternRef  # XSD reference element — not a standalone concept
+netex:fromPointInPatternRef  # XSD reference element — not a standalone concept
+netex:fromPointRef  # XSD reference element — not a standalone concept
+netex:fromServiceJourneyPatternRef  # XSD reference element — not a standalone concept
+netex:fromServiceJourneyRef  # XSD reference element — not a standalone concept
+netex:fromStopPointInJourneyPatternRef  # XSD reference element — not a standalone concept
+netex:fromStopPointRef  # XSD reference element — not a standalone concept
+netex:fulfilmentMethodRef  # XSD reference element — not a standalone concept
+netex:generalGroupOfEntitiesRef  # XSD reference element — not a standalone concept
+netex:generalOrganisationRef  # XSD reference element — not a standalone concept
+netex:genericPathLinkRef  # XSD reference element — not a standalone concept
+netex:geographicalIntervalRef  # XSD reference element — not a standalone concept
+netex:geographicalStructureFactorRef  # XSD reference element — not a standalone concept
+netex:geographicalUnitRef  # XSD reference element — not a standalone concept
+netex:gisFeatureRef  # XSD reference element — not a standalone concept
+netex:groupOfDistanceMatrixElementsRef  # XSD reference element — not a standalone concept
+netex:groupOfDistributionChannelsRef  # XSD reference element — not a standalone concept
+netex:groupOfEntitiesRef  # XSD reference element — not a standalone concept
+netex:groupOfLinesRef  # XSD reference element — not a standalone concept
+netex:groupOfNoticesRef  # XSD reference element — not a standalone concept
+netex:groupOfOperatorsRef  # XSD reference element — not a standalone concept
+netex:groupOfSalesOfferPackagesRef  # XSD reference element — not a standalone concept
+netex:groupOfServicesRef  # XSD reference element — not a standalone concept
+netex:groupOfSingleJourneysRef  # XSD reference element — not a standalone concept
+netex:groupOfTimingLinksRef  # XSD reference element — not a standalone concept
+netex:hostUserProfileRef  # XSD reference element — not a standalone concept
+netex:identityDocumentRef  # XSD reference element — not a standalone concept
+netex:individualTravellerRef  # XSD reference element — not a standalone concept
+netex:infrastructureLinkRef  # XSD reference element — not a standalone concept
+netex:infrastructurePointRef  # XSD reference element — not a standalone concept
+netex:inverseRouteRef  # XSD reference element — not a standalone concept
+netex:journeyFrequencyGroupRef  # XSD reference element — not a standalone concept
+netex:journeyPartCoupleRef  # XSD reference element — not a standalone concept
+netex:journeyPartRef  # XSD reference element — not a standalone concept
+netex:journeyPatternRef  # XSD reference element — not a standalone concept
+netex:journeyRef  # XSD reference element — not a standalone concept
 netex:keyList  # XSD list container — not a retrieval target
+netex:layerRef  # XSD reference element — not a standalone concept
+netex:levelRef  # XSD reference element — not a standalone concept
+netex:lightingControlFacilityList  # XSD list container — not a retrieval target
+netex:lineRef  # XSD reference element — not a standalone concept
+netex:linkRef  # XSD reference element — not a standalone concept
+netex:linkSequenceProjectionRef  # XSD reference element — not a standalone concept
+netex:linkSequenceRef  # XSD reference element — not a standalone concept
+netex:localServiceRef  # XSD reference element — not a standalone concept
+netex:locatableSpotRef  # XSD reference element — not a standalone concept
+netex:locatingSystemRef  # XSD reference element — not a standalone concept
+netex:logicalDisplayRef  # XSD reference element — not a standalone concept
+netex:luggageCarriageFacilityList  # XSD list container — not a retrieval target
+netex:luggageLockerFacilityList  # XSD list container — not a retrieval target
+netex:luggageServiceFacilityList  # XSD list container — not a retrieval target
+netex:mainLineRef  # XSD reference element — not a standalone concept
+netex:mainPartRef  # XSD reference element — not a standalone concept
+netex:mainPlaceRef  # XSD reference element — not a standalone concept
+netex:maximumPeriodIntervalRef  # XSD reference element — not a standalone concept
+netex:mealFacilityList  # XSD list container — not a retrieval target
+netex:medicalFacilityList  # XSD list container — not a retrieval target
+netex:mediumAccessDeviceRef  # XSD reference element — not a standalone concept
+netex:mediumApplicationInstanceRef  # XSD reference element — not a standalone concept
+netex:memberTypeOfValueRef  # XSD reference element — not a standalone concept
+netex:minimumPeriodIntervalRef  # XSD reference element — not a standalone concept
+netex:mobilityFacilityList  # XSD list container — not a retrieval target
+netex:mobilityServiceConstraintZoneRef  # XSD reference element — not a standalone concept
+netex:mobilityServiceRef  # XSD reference element — not a standalone concept
+netex:modeOfOperationRef  # XSD reference element — not a standalone concept
+netex:navigationPathRef  # XSD reference element — not a standalone concept
+netex:noticeRef  # XSD reference element — not a standalone concept
+netex:nuisanceFacilityList  # XSD list container — not a retrieval target
+netex:onboardSpaceRef  # XSD reference element — not a standalone concept
+netex:ontoFeatureRef  # XSD reference element — not a standalone concept
+netex:onwardRouteLinkRef  # XSD reference element — not a standalone concept
+netex:onwardServiceLinkRef  # XSD reference element — not a standalone concept
+netex:onwardTimingLinkRef  # XSD reference element — not a standalone concept
+netex:operatingDayRef  # XSD reference element — not a standalone concept
+netex:operatingPeriodRef  # XSD reference element — not a standalone concept
+netex:operationalContextRef  # XSD reference element — not a standalone concept
+netex:operatorRef  # XSD reference element — not a standalone concept
+netex:oppositeDirectionRef  # XSD reference element — not a standalone concept
+netex:organisationPartRef  # XSD reference element — not a standalone concept
+netex:organisationalUnitRef  # XSD reference element — not a standalone concept
+netex:overtakenVehicleTypeRef  # XSD reference element — not a standalone concept
+netex:overtakingAtPointRef  # XSD reference element — not a standalone concept
+netex:overtakingOnLinkRef  # XSD reference element — not a standalone concept
+netex:overtakingVehicleTypeRef  # XSD reference element — not a standalone concept
+netex:parentAccessSpaceRef  # XSD reference element — not a standalone concept
+netex:parentDeckSpaceRef  # XSD reference element — not a standalone concept
+netex:parentFareZoneRef  # XSD reference element — not a standalone concept
+netex:parentJourneyPartRef  # XSD reference element — not a standalone concept
+netex:parentJourneyRef  # XSD reference element — not a standalone concept
+netex:parentPointOfInterestSpaceRef  # XSD reference element — not a standalone concept
+netex:parentQuayRef  # XSD reference element — not a standalone concept
+netex:parentRef  # XSD reference element — not a standalone concept
+netex:parentStopAreaRef  # XSD reference element — not a standalone concept
+netex:parentTopographicPlaceRef  # XSD reference element — not a standalone concept
+netex:parentZoneRef  # XSD reference element — not a standalone concept
+netex:parkingAreaRef  # XSD reference element — not a standalone concept
+netex:parkingBayRef  # XSD reference element — not a standalone concept
+netex:parkingBayStatusRef  # XSD reference element — not a standalone concept
+netex:parkingFacilityList  # XSD list container — not a retrieval target
+netex:parkingPropertiesRef  # XSD reference element — not a standalone concept
+netex:parkingRef  # XSD reference element — not a standalone concept
+netex:parkingStayList  # XSD list container — not a retrieval target
+netex:parkingTariffRef  # XSD reference element — not a standalone concept
+netex:passengerCarryingRequirementRef  # XSD reference element — not a standalone concept
+netex:passengerCommsFacilityList  # XSD list container — not a retrieval target
+netex:passengerInformationEquipmentList  # XSD list container — not a retrieval target
+netex:passengerInformationFacilityList  # XSD list container — not a retrieval target
+netex:passengerStopAssignmentRef  # XSD reference element — not a standalone concept
+netex:placeRef  # XSD reference element — not a standalone concept
+netex:pointInJourneyPatternRef  # XSD reference element — not a standalone concept
+netex:pointOnRouteRef  # XSD reference element — not a standalone concept
+netex:pointRef  # XSD reference element — not a standalone concept
+netex:preassignedFareProductRef  # XSD reference element — not a standalone concept
+netex:priceGroupRef  # XSD reference element — not a standalone concept
+netex:priceUnitRef  # XSD reference element — not a standalone concept
+netex:priceableObjectRef  # XSD reference element — not a standalone concept
+netex:pricingRuleRef  # XSD reference element — not a standalone concept
+netex:pricingServiceRef  # XSD reference element — not a standalone concept
+netex:projectToLinkRef  # XSD reference element — not a standalone concept
+netex:projectToPointRef  # XSD reference element — not a standalone concept
+netex:projectToZoneRef  # XSD reference element — not a standalone concept
+netex:projectedFeatureRef  # XSD reference element — not a standalone concept
+netex:projectedLinkRef  # XSD reference element — not a standalone concept
+netex:projectedLinkSequenceRef  # XSD reference element — not a standalone concept
+netex:projectedPointRef  # XSD reference element — not a standalone concept
+netex:projectedZoneRef  # XSD reference element — not a standalone concept
+netex:providedByRef  # XSD reference element — not a standalone concept
+netex:purposeOfEquipmentProfileRef  # XSD reference element — not a standalone concept
+netex:purposeOfGroupingRef  # XSD reference element — not a standalone concept
+netex:purposeOfJourneyPartitionRef  # XSD reference element — not a standalone concept
+netex:qualityStructureFactorRef  # XSD reference element — not a standalone concept
+netex:quayRef  # XSD reference element — not a standalone concept
+netex:rechargingEquipmentProfileRef  # XSD reference element — not a standalone concept
+netex:referencePointRef  # XSD reference element — not a standalone concept
+netex:reliefPointRef  # XSD reference element — not a standalone concept
+netex:representedByGroupRef  # XSD reference element — not a standalone concept
+netex:residentialQualificationRef  # XSD reference element — not a standalone concept
+netex:responsibilityRoleRef  # XSD reference element — not a standalone concept
+netex:responsibilitySetRef  # XSD reference element — not a standalone concept
+netex:responsibleAreaRef  # XSD reference element — not a standalone concept
+netex:responsibleOrganisationRef  # XSD reference element — not a standalone concept
+netex:responsiblePartRef  # XSD reference element — not a standalone concept
+netex:retailDeviceRef  # XSD reference element — not a standalone concept
+netex:retailFacilityList  # XSD list container — not a retrieval target
+netex:retailingOrganizationRef  # XSD reference element — not a standalone concept
+netex:roadAddressRef  # XSD reference element — not a standalone concept
+netex:roundingRef  # XSD reference element — not a standalone concept
+netex:roundingStepRef  # XSD reference element — not a standalone concept
+netex:routePointRef  # XSD reference element — not a standalone concept
+netex:routeRef  # XSD reference element — not a standalone concept
+netex:rowRef  # XSD reference element — not a standalone concept
+netex:safetyFacilityList  # XSD list container — not a retrieval target
+netex:salesOfferPackageElementRef  # XSD reference element — not a standalone concept
+netex:salesOfferPackageRef  # XSD reference element — not a standalone concept
+netex:salesTransactionRef  # XSD reference element — not a standalone concept
+netex:sanitaryFacilityList  # XSD list container — not a retrieval target
+netex:scheduledStopPointRef  # XSD reference element — not a standalone concept
+netex:sectionRef  # XSD reference element — not a standalone concept
+netex:securityListRef  # XSD reference element — not a standalone concept
+netex:seriesConstraintRef  # XSD reference element — not a standalone concept
+netex:serviceAccessCodeRef  # XSD reference element — not a standalone concept
+netex:serviceAccessRightRef  # XSD reference element — not a standalone concept
+netex:serviceCalendarRef  # XSD reference element — not a standalone concept
+netex:serviceFacilitySetRef  # XSD reference element — not a standalone concept
+netex:serviceJourneyPatternInterchangeRef  # XSD reference element — not a standalone concept
+netex:serviceJourneyRef  # XSD reference element — not a standalone concept
+netex:serviceLinkRef  # XSD reference element — not a standalone concept
+netex:serviceList  # XSD list container — not a retrieval target
+netex:serviceReservationFacilityList  # XSD list container — not a retrieval target
+netex:simpleFeatureRef  # XSD reference element — not a standalone concept
+netex:singleJourneyPathRef  # XSD reference element — not a standalone concept
+netex:singleJourneyRef  # XSD reference element — not a standalone concept
+netex:siteComponentRef  # XSD reference element — not a standalone concept
+netex:siteElementRef  # XSD reference element — not a standalone concept
+netex:siteFacilitySetRef  # XSD reference element — not a standalone concept
+netex:siteNavigationPathRef  # XSD reference element — not a standalone concept
+netex:siteRef  # XSD reference element — not a standalone concept
+netex:spatialFeatureRef  # XSD reference element — not a standalone concept
+netex:spotColumnRef  # XSD reference element — not a standalone concept
+netex:spotRowRef  # XSD reference element — not a standalone concept
+netex:spotSensorRef  # XSD reference element — not a standalone concept
+netex:startMeetingPointRef  # XSD reference element — not a standalone concept
+netex:startPointOnLinkRef  # XSD reference element — not a standalone concept
+netex:startPointRef  # XSD reference element — not a standalone concept
+netex:startStopPointRef  # XSD reference element — not a standalone concept
+netex:startTariffZoneRef  # XSD reference element — not a standalone concept
+netex:stopAreaRef  # XSD reference element — not a standalone concept
+netex:stopPlaceEntranceRef  # XSD reference element — not a standalone concept
+netex:stopPlaceRef  # XSD reference element — not a standalone concept
+netex:submodeRef  # XSD reference element — not a standalone concept
+netex:supplementToFareProductRef  # XSD reference element — not a standalone concept
+netex:tariffRef  # XSD reference element — not a standalone concept
+netex:tariffZoneRef  # XSD reference element — not a standalone concept
+netex:taxiParkingAreaRef  # XSD reference element — not a standalone concept
+netex:taxiServiceRef  # XSD reference element — not a standalone concept
+netex:taxiStandRef  # XSD reference element — not a standalone concept
+netex:ticketTypeList  # XSD list container — not a retrieval target
+netex:ticketingFacilityList  # XSD list container — not a retrieval target
+netex:ticketingServiceFacilityList  # XSD list container — not a retrieval target
+netex:ticketingServiceList  # XSD list container — not a retrieval target
+netex:timeDemandTypeRef  # XSD reference element — not a standalone concept
+netex:timeIntervalRef  # XSD reference element — not a standalone concept
+netex:timeStructureFactorRef  # XSD reference element — not a standalone concept
+netex:timeUnitRef  # XSD reference element — not a standalone concept
+netex:timebandRef  # XSD reference element — not a standalone concept
+netex:timetableFrameRef  # XSD reference element — not a standalone concept
+netex:timingAlgorithmTypeRef  # XSD reference element — not a standalone concept
+netex:timingLinkRef  # XSD reference element — not a standalone concept
+netex:timingPatternRef  # XSD reference element — not a standalone concept
+netex:timingPointInJourneyPatternRef  # XSD reference element — not a standalone concept
+netex:timingPointRef  # XSD reference element — not a standalone concept
+netex:toClassOfUseRef  # XSD reference element — not a standalone concept
+netex:toConnectionRef  # XSD reference element — not a standalone concept
+netex:toDeckEntranceRef  # XSD reference element — not a standalone concept
+netex:toFarePointInPatternRef  # XSD reference element — not a standalone concept
+netex:toFareSectionRef  # XSD reference element — not a standalone concept
+netex:toJourneyPatternRef  # XSD reference element — not a standalone concept
+netex:toJourneyRef  # XSD reference element — not a standalone concept
+netex:toLinkRef  # XSD reference element — not a standalone concept
+netex:toOperatingDayRef  # XSD reference element — not a standalone concept
+netex:toPointInJourneyPatternRef  # XSD reference element — not a standalone concept
+netex:toPointInPatternRef  # XSD reference element — not a standalone concept
+netex:toPointRef  # XSD reference element — not a standalone concept
+netex:toServiceJourneyPatternRef  # XSD reference element — not a standalone concept
+netex:toServiceJourneyRef  # XSD reference element — not a standalone concept
+netex:toStopPointInJourneyPatternRef  # XSD reference element — not a standalone concept
+netex:toStopPointRef  # XSD reference element — not a standalone concept
+netex:topographicPlaceRef  # XSD reference element — not a standalone concept
+netex:tractiveElementTypeRef  # XSD reference element — not a standalone concept
+netex:trafficControlPointRef  # XSD reference element — not a standalone concept
+netex:trailingElementTypeRef  # XSD reference element — not a standalone concept
+netex:trainBlockRef  # XSD reference element — not a standalone concept
+netex:trainComponentRef  # XSD reference element — not a standalone concept
+netex:trainElementRef  # XSD reference element — not a standalone concept
+netex:trainElementTypeRef  # XSD reference element — not a standalone concept
+netex:trainNumberRef  # XSD reference element — not a standalone concept
+netex:trainRef  # XSD reference element — not a standalone concept
+netex:transportOrganisationRef  # XSD reference element — not a standalone concept
+netex:transportTypeRef  # XSD reference element — not a standalone concept
+netex:travelDocumentRef  # XSD reference element — not a standalone concept
+netex:typeOfAccessRightAssignmentRef  # XSD reference element — not a standalone concept
+netex:typeOfActivationRef  # XSD reference element — not a standalone concept
+netex:typeOfBatteryChemistryRef  # XSD reference element — not a standalone concept
+netex:typeOfConcessionRef  # XSD reference element — not a standalone concept
+netex:typeOfCongestionRef  # XSD reference element — not a standalone concept
+netex:typeOfCustomerAccountRef  # XSD reference element — not a standalone concept
+netex:typeOfDeckEntranceUsageRef  # XSD reference element — not a standalone concept
+netex:typeOfDeckSpaceRef  # XSD reference element — not a standalone concept
+netex:typeOfDeliveryVariantRef  # XSD reference element — not a standalone concept
+netex:typeOfDriverPermitRef  # XSD reference element — not a standalone concept
+netex:typeOfEquipmentRef  # XSD reference element — not a standalone concept
+netex:typeOfFacilityRef  # XSD reference element — not a standalone concept
+netex:typeOfFareContractEntryRef  # XSD reference element — not a standalone concept
+netex:typeOfFareContractRef  # XSD reference element — not a standalone concept
+netex:typeOfFareProductRef  # XSD reference element — not a standalone concept
+netex:typeOfFareStructureElementRef  # XSD reference element — not a standalone concept
+netex:typeOfFareStructureFactorRef  # XSD reference element — not a standalone concept
+netex:typeOfFareTableRef  # XSD reference element — not a standalone concept
+netex:typeOfFleetRef  # XSD reference element — not a standalone concept
+netex:typeOfFlexibleServiceRef  # XSD reference element — not a standalone concept
+netex:typeOfFrameRef  # XSD reference element — not a standalone concept
+netex:typeOfJourneyPatternRef  # XSD reference element — not a standalone concept
+netex:typeOfLineRef  # XSD reference element — not a standalone concept
+netex:typeOfLocatableSpotRef  # XSD reference element — not a standalone concept
+netex:typeOfMachineReadabilityRef  # XSD reference element — not a standalone concept
+netex:typeOfMediumAccessDeviceRef  # XSD reference element — not a standalone concept
+netex:typeOfModeOfOperationRef  # XSD reference element — not a standalone concept
+netex:typeOfNoticeRef  # XSD reference element — not a standalone concept
+netex:typeOfOperationRef  # XSD reference element — not a standalone concept
+netex:typeOfOrganisationPartRef  # XSD reference element — not a standalone concept
+netex:typeOfParkingRef  # XSD reference element — not a standalone concept
+netex:typeOfPassengerInformationEquipmentRef  # XSD reference element — not a standalone concept
+netex:typeOfPaymentMethodRef  # XSD reference element — not a standalone concept
+netex:typeOfPlugRef  # XSD reference element — not a standalone concept
+netex:typeOfPricingRuleRef  # XSD reference element — not a standalone concept
+netex:typeOfProductCategoryRef  # XSD reference element — not a standalone concept
+netex:typeOfProjectionRef  # XSD reference element — not a standalone concept
+netex:typeOfRetailDeviceRef  # XSD reference element — not a standalone concept
+netex:typeOfRollingStockRef  # XSD reference element — not a standalone concept
+netex:typeOfSalesOfferPackageRef  # XSD reference element — not a standalone concept
+netex:typeOfSecurityListRef  # XSD reference element — not a standalone concept
+netex:typeOfServiceRef  # XSD reference element — not a standalone concept
+netex:typeOfTariffRef  # XSD reference element — not a standalone concept
+netex:typeOfTransferRef  # XSD reference element — not a standalone concept
+netex:typeOfTravelDocumentRef  # XSD reference element — not a standalone concept
+netex:typeOfUsageParameterRef  # XSD reference element — not a standalone concept
+netex:typeOfValidityRef  # XSD reference element — not a standalone concept
+netex:typeOfVersionRef  # XSD reference element — not a standalone concept
+netex:typesOfPaymentMethodRef  # XSD reference element — not a standalone concept
+netex:typesOfProofAcceptedRef  # XSD reference element — not a standalone concept
+netex:typesOfProofRequiredRef  # XSD reference element — not a standalone concept
+netex:uicProductCharacteristicList  # XSD list container — not a retrieval target
+netex:usageParameterRef  # XSD reference element — not a standalone concept
+netex:userProfileRef  # XSD reference element — not a standalone concept
+netex:validableElementRef  # XSD reference element — not a standalone concept
+netex:vehicleAccessCredentialsAssignmentRef  # XSD reference element — not a standalone concept
+netex:vehicleAccessFacilityList  # XSD list container — not a retrieval target
+netex:vehicleChargingEquipmentRef  # XSD reference element — not a standalone concept
+netex:vehicleEquipmentProfileRef  # XSD reference element — not a standalone concept
+netex:vehicleJourneyRef  # XSD reference element — not a standalone concept
+netex:vehicleMeetingPlaceRef  # XSD reference element — not a standalone concept
+netex:vehicleMeetingPointAssignmentRef  # XSD reference element — not a standalone concept
+netex:vehicleMeetingPointRef  # XSD reference element — not a standalone concept
+netex:vehicleModelProfileRef  # XSD reference element — not a standalone concept
+netex:vehicleModelRef  # XSD reference element — not a standalone concept
+netex:vehiclePoolingDriverInfoRef  # XSD reference element — not a standalone concept
+netex:vehiclePoolingMeetingPlaceRef  # XSD reference element — not a standalone concept
+netex:vehiclePoolingParkingAreaRef  # XSD reference element — not a standalone concept
+netex:vehiclePoolingRef  # XSD reference element — not a standalone concept
+netex:vehiclePoolingServiceRef  # XSD reference element — not a standalone concept
+netex:vehicleRef  # XSD reference element — not a standalone concept
+netex:vehicleRentalRef  # XSD reference element — not a standalone concept
+netex:vehicleServicePartRef  # XSD reference element — not a standalone concept
+netex:vehicleServiceRef  # XSD reference element — not a standalone concept
+netex:vehicleSharingParkingAreaRef  # XSD reference element — not a standalone concept
+netex:vehicleSharingRef  # XSD reference element — not a standalone concept
+netex:vehicleStoppingPlaceRef  # XSD reference element — not a standalone concept
+netex:vehicleStoppingPositionRef  # XSD reference element — not a standalone concept
+netex:vehicleTypeRef  # XSD reference element — not a standalone concept
+netex:versionFrameRef  # XSD reference element — not a standalone concept
+netex:withConditionRef  # XSD reference element — not a standalone concept
+netex:withSalesOfferPackageRef  # XSD reference element — not a standalone concept
+netex:zoneRef  # XSD reference element — not a standalone concept
 ```
 
-### nits:DataArtifact (552 classes)
+### nits:DataArtifact (1494 classes)
 
 Suggested alignment: `rdfs:subClassOf nits:DataArtifact`
 
 ```turtle
 # NETEX → nits:DataArtifact
-netex:AcceptedDriverPermit
+netex:abbreviation
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Access
+netex:abridgementRanking
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:AccessFacility
+netex:acceptedDriverPermits
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:AccessMode
+netex:accessCode
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:AccessRightInProduct
+netex:accessFeatureType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:AccessRightParameterAssignment
+netex:accessModes
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:AccessSummary
+netex:accessNumber
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:AccessVehicleEquipment
+netex:accessNumberIsLimited
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:AccessibilityInfoFacility
+netex:accessRightsInProduct
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:AccessibilityLimitation
+netex:accessSpaceType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:AccessibilityTool
+netex:accessSpaces
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Accommodation
+netex:accesses
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:AccommodationAccess
+netex:accessibilityAssessment
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:AccommodationFacility
+netex:accessibilityTrainedStaff
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:AccountableElement
+netex:accommodationFacility
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ActivatedEquipment
+netex:accommodations
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ActivationAssignment
+netex:accompaniedByCarer
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ActualVehicleEquipment
+netex:accountingCode
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:AdditionalDriverOption
+netex:accountingFactor
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:AllVehicleModes
+netex:accountingTime
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:AllowedLineDirection
+netex:accountingType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:AlternativeModeOfOperation
+netex:accousticAnnouncements
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:AlternativeQuayDescriptor
+netex:acousticAnnouncements
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:AmountOfPriceUnitProduct
+netex:acousticCrossingAids
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Assignment
+netex:acousticDeviceSensors
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:AssistanceBookingService
+netex:acousticSensor
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:AssistanceFacility
+netex:activationPointNumber
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:AssistanceService
+netex:actualVehicleEquipments
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:AudibleSignalsAvailable
+netex:additionalDriver
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:AvailabilityCondition
+netex:additionalTax
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:BatteryEquipment
+netex:address
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:BedEquipment
+netex:addressLine1
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:BerthFacility
+netex:addressLine2
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Blacklist
+netex:addresses
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Block
+netex:adjacentPlaces
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:BoardingPermission
+netex:adjustmentUnits
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:BoardingPosition
+netex:advertised
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:BookingArrangement
+netex:aimedArrivalTime
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:BookingDebit
+netex:aimedDepartureTime
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:BookingPolicy
+netex:aimedNonstopPassingTime
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:BookingProcessFacility
+netex:aimedWaitingTime
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Branding
+netex:airConditioned
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Call
+netex:airConditioning
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Cancelling
+netex:airSubmode
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CappedDiscountRight
+netex:airlock
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CappingRule
+netex:alarmButton
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CappingRulePrice
+netex:alightingRequestMethod
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CarModelProfile
+netex:alightingSideInDirectionOfTravel
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CarPoolingService
+netex:alightingUse
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CarServiceFacility
+netex:allLines
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CateringFacility
+netex:allowAdditionalDiscounts
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CateringService
+netex:allowCompanionDiscounts
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Cell
+netex:allowCumulativeDiscounts
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ChargingMoment
+netex:allowed
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ChargingPolicy
+netex:allowedDirections
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ChauffeuredVehicleService
+netex:allowedForWaitTime
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CheckConstraint
+netex:allowedInChannel
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CheckConstraintDelay
+netex:allowedInCountry
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CheckConstraintThroughput
+netex:allowedUse
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ClassOfUse
+netex:alternativeDescriptors
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ClimateControl
+netex:alternativeNames
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CoachSubmode
+netex:alternativeTexts
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CommercialProfile
+netex:alwaysLit
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CommercialProfileEligibility
+netex:amount
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CommonFrame
+netex:amountFactor
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CommonSectionPointMember
+netex:amountOfPriceUnits
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CommonVehicleService
+netex:applicationInstances
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CommunicationService
+netex:appliesTo
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CompanionProfile
+netex:areas
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ComplaintsService
+netex:armRest
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ComplexFeature
+netex:arrivalDayOffset
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ComplexFeatureProjection
+netex:arrivalTime
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CompositeFrame
+netex:arrivesForwards
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CompoundBlock
+netex:arrivesFromLeft
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CompoundTrain
+netex:asBraille
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ConditionSummary
+netex:assignments
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Connection
+netex:assistanceAvailability
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Contact
+netex:assistanceNeeded
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Contract
+netex:assistedBoardingLocation
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ControlCentre
+netex:associatedContract
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ControllableElement
+netex:atCentre
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ControllableElementInSequence
+netex:attendant
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ControllableElementPrice
+netex:attributeName
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ConventionalModeOfOperation
+netex:attributeValue
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CouchetteFacility
+netex:audibleSignalsAvailable
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Country
+netex:audioAnnouncementType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CrewBase
+netex:audioAnnouncements
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CrossingEquipment
+netex:audioAnnouncementsTrigger
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Customer
+netex:audioInterfaceAvailable
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CustomerAccount
+netex:audioOrVideoIntercom
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CustomerAccountSecurityListing
+netex:audioPassthroughIndicator
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CustomerAccountStatus
+netex:audioTriggerMethod
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CustomerEligibility
+netex:audioValidationFeedback
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CustomerPaymentMeans
+netex:authorityTypes
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CustomerPurchasePackage
+netex:automatedUse
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CustomerPurchasePackageElement
+netex:automatic
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CustomerPurchasePackageElementAccess
+netex:automaticDoor
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CustomerPurchasePackagePrice
+netex:automaticDoors
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CustomerPurchaseParameterAssignment
+netex:availableDocks
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CustomerSecurityListing
+netex:availableOnSubscription
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CustomerService
+netex:availableVehicles
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CycleModelProfile
+netex:averageDelay
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:CycleStorageEquipment
+netex:averagePassengers
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DataManagedObject
+netex:back
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DataObjectCapabilitiesRequest
+netex:backRest
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DataObjectCapabilitiesResponse
+netex:baggageType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DataObjectDelivery
+netex:baggageUseType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DataObjectPermissions
+netex:barrier
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DataObjectRequest
+netex:basket
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DataObjectServiceCapabilities
+netex:battery
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DataObjectSubscriptionRequest
+netex:batteryCapacity
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DataSource
+netex:batteryUsableCapacity
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DatedSpecialService
+netex:bayGeometry
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Deck
+netex:bays
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DeckComponent
+netex:beaconBackendUrl
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DeckLevel
+netex:beaconDirection
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DeckPlaceInSequence
+netex:beaconProtocol
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DeckPlan
+netex:beaconType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DeckPlanAssignment
+netex:bearing
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DeckSpaceCapacity
+netex:bearingCapacity
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DeckWindow
+netex:bearingCompass
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DefaultConnection
+netex:bearingDegrees
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DefaultDeadRunRunTime
+netex:bedLength
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DefaultInterchange
+netex:bedType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DeliveryVariant
+netex:berthFacility
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Delta
+netex:bicycleRackCapacity
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DeltaValue
+netex:billingPolicy
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Department
+netex:blacklistRefs
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DestinationDisplay
+netex:blacklists
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DestinationDisplayVariant
+netex:blindAccessible
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Direction
+netex:blockParts
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DiscountingRule
+netex:blockRefs
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DisplayAssignment
+netex:blocked
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DistanceMatrixElementPrice
+netex:boardingHeight
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DistributionAssignment
+netex:boardingPermission
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DistributionChannel
+netex:boardingPosition
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DriverScheduleFrame
+netex:boardingPositionType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DriverTrip
+netex:boardingPositions
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DriverTripTime
+netex:boardingRequestMethod
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Duty
+netex:boardingSideInDirectionOfTravel
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DutyPart
+netex:boardingUse
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DynamicDistanceMatrixElement
+netex:bollardCrossing
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DynamicStopAssignment
+netex:bookWhen
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:DynamicVehicleMeetingPointAssignment
+netex:bookingAccess
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:EligibilityChangePolicy
+netex:bookingArrangements
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:EmergencyService
+netex:bookingChargeType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:EmvCard
+netex:bookingContact
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:EntitlementGiven
+netex:bookingDepositRefundable
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:EntitlementProduct
+netex:bookingMethods
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:EntitlementRequired
+netex:bookingNote
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Entity
+netex:bookingRequired
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:EntityInVersion
+netex:bookingUrl
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Equipment
+netex:borderCrossing
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:EquipmentPosition
+netex:borderPoints
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:EscalatorEquipment
+netex:bothWays
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:EscalatorFreeAccess
+netex:brailleButtons
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Exchanging
+netex:branchLevel
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Extensions
+netex:brandGraphic
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FacilityRequirement
+netex:broadType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FacilitySet
+netex:buildDate
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FamilyFacility
+netex:buildingName
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FareClass
+netex:bumpCrossing
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FareContract
+netex:busSubmode
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FareContractEntry
+netex:buttonsHeight
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FareContractSecurityListing
+netex:buyWhen
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FareDebit
+netex:cage
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FareDemandFactor
+netex:calendarDate
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FareElementInSequence
+netex:callButtonAvailable
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FareInterval
+netex:callButtonHeight
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FarePrice
+netex:calls
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FarePriceFrame
+netex:canBeAdvertised
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FareProductPrice
+netex:canBeCumulative
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FareProductSaleDebit
+netex:canBeOpened
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FareQuotaFactor
+netex:canCarry
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FareStructureElementInSequence
+netex:canChangeClass
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FareStructureElementPrice
+netex:canInterchange
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FareStructureFactor
+netex:canManoeuvre
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FareTableColumn
+netex:canRotate
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FareTableInContext
+netex:canTransfer
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FareTableRow
+netex:cancellationAllowed
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FareUnit
+netex:cancellationPossible
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Fleet
+netex:capacities
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FlexibleLine
+netex:capacity
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FlexibleLinkProperties
+netex:cappingRules
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FlexibleOperation
+netex:cardNumber
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FlexiblePointProperties
+netex:cardsAccepted
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FlexibleServiceProperties
+netex:cctv
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FlexibleStopAssignment
+netex:cellPrice
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FrequencyOfUse
+netex:cells
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FulfilmentMethod
+netex:centroid
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FulfilmentMethodPrice
+netex:chains
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:FunicularSubmode
+netex:changeAvailable
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Garage
+netex:changeOfDestinationDisplay
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GenderLimitation
+netex:changeOfServiceRequirements
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GeneralFrame
+netex:changeOfTimePossible
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GeneralFrameMember
+netex:changedAt
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GeneralGroupOfEntities
+netex:changedBy
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GeneralSign
+netex:changedSince
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GenericParameterAssignmentInContext
+netex:charge
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GeographicalIntervalPrice
+netex:chargeEnergy
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GeographicalStructureFactor
+netex:chargingBasis
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GeographicalUnit
+netex:chargingDuration
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GeographicalUnitPrice
+netex:chargingMomentType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GroupBookingFacility
+netex:chargingVoltage
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GroupConstraintMember
+netex:chassisNumber
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GroupMember
+netex:checkConstraintDelays
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GroupOfDistanceMatrixElements
+netex:checkConstraintProcess
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GroupOfDistributionChannels
+netex:checkConstraintThroughputs
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GroupOfEntities
+netex:checkConstraints
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GroupOfLines
+netex:checkDirection
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GroupOfLinkSequences
+netex:checkProcess
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GroupOfPlaces
+netex:checkService
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GroupOfSalesOfferPackages
+netex:childSeat
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GroupOfServices
+netex:classifications
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GroupOfSites
+netex:client
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GroupOfTimebands
+netex:coachSubmode
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GroupOfTimingLinks
+netex:codePrefix
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GroupTicket
+netex:codespace
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:GuideDogAccess
+netex:codespaceAssignments
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:HeadingSign
+netex:codespaces
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:HelpPointEquipment
+netex:collectionNote
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:HireFacility
+netex:columns
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:HireService
+netex:comment
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:IndividualPassengerInfo
+netex:commentsAbout
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:IndividualTraveller
+netex:communicationMethod
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:InfrastructureFrame
+netex:companionProfiles
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:InfrastructureLinkRestriction
+netex:companionRelationshipType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:InstalledEquipment
+netex:companionSeat
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Interchange
+netex:companyNumber
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:InterchangeRule
+netex:compassBearing
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:InterchangeRuleFilter
+netex:compassOctant
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:InterchangeRuleTiming
+netex:compatibleWith
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Interchanging
+netex:components
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Layer
+netex:conditionSummary
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LeftLuggageService
+netex:configurationConditions
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Level
+netex:congestion
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LevelAccessIntoVehicle
+netex:connectingStopPointName
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LiftCallEquipment
+netex:connectingVehicleModes
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LiftEquipment
+netex:connectionCertainty
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LiftFreeAccess
+netex:consumptionAmount
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LightingControlFacility
+netex:consumptionUnits
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LimitingRule
+netex:contactDetails
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LimitingRuleInContext
+netex:contacts
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LinkInLinkSequence
+netex:containedIn
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LinkProjection
+netex:content
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LinkSequence
+netex:contentValidityConditions
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LinkSequenceProjection
+netex:continuousHandrail
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LocalService
+netex:contractGoverningLaw
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Locale
+netex:contractType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LocatableSpot
+netex:contracts
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Log
+netex:contrast
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LogEntry
+netex:controlCentreCode
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LogicalDisplay
+netex:controlCentreNotifyThreshold
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LostPropertyService
+netex:controlCentres
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LuggageAllowance
+netex:controllableElements
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LuggageCarriageFacility
+netex:controllableElementsInSequence
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LuggageLockerEquipment
+netex:controlled
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LuggageLockerFacility
+netex:controlledLocking
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LuggageService
+netex:convertible
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LuggageServiceFacility
+netex:couchetteFacility
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LuggageSpot
+netex:count
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:LuggageSpotEquipment
+netex:counterService
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ManagementAgent
+netex:countries
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:MealFacility
+netex:countryName
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:MedicalFacility
+netex:covered
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:MediumAccessDevice
+netex:creditPolicy
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:MediumAccessDeviceSecurityListing
+netex:crewBases
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:MediumApplicationInstance
+netex:crossBorder
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:MeetingPointService
+netex:crossRoad
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:MeetingRestriction
+netex:crowding
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:MetroSubmode
+netex:cruiseControl
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:MinimumStay
+netex:currenciesAccepted
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:MobileDevice
+netex:currency
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:MobilityFacility
+netex:current
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:MobilityService
+netex:currentAt
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:MobilityServiceFrame
+netex:currentType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ModeOfOperation
+netex:customerAccountEntries
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ModeRestrictionAssessment
+netex:customerAccountStatusType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:MoneyFacility
+netex:customerAccounts
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:MoneyService
+netex:customerPurchasePackageElements
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:MonthValidityOffset
+netex:customerPurchasePackageEntries
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Notice
+netex:customerPurchasePackageStatus
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:NoticeAssignment
+netex:customerPurchasePackages
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:NuisanceFacility
+netex:customerServiceContactDetails
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:OffenceDebit
+netex:customers
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:OfferedTravelSpecification
+netex:cycleRack
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:OnboardStay
+netex:cycleStorageType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:OnlineService
+netex:dataLicenceUrl
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:OpenTransportMode
+netex:dataObjectPermissions
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:OperatingDay
+netex:dataObjectRequest
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:OperatingDepartment
+netex:dataObjectServiceCapabilities
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:OperationalContext
+netex:dataRoleType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:OtherDebit
+netex:dataSources
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:OtherPlaceEquipment
+netex:date
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:OvertakingPossibility
+netex:dateOfBirth
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Parking
+netex:datedCalls
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ParkingBay
+netex:datedPassingTimes
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ParkingBayCondition
+netex:dayEvent
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ParkingBayStatus
+netex:dayLength
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ParkingChargeBand
+netex:dayNumber
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ParkingComponent
+netex:dayOfMonth
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ParkingFacility
+netex:dayOfYear
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ParkingPrice
+netex:dayOffset
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ParkingTariff
+netex:dayOffsetRelativeToMainPart
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PassengerAccessibilityNeeds
+netex:dayTypeAssignments
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PassengerAtStopTime
+netex:dayTypes
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PassengerBeaconEquipment
+netex:daysOfWeek
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PassengerBoardingPositionAssignment
+netex:deadRunType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PassengerCapacity
+netex:deckLevels
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PassengerCarryingRequirement
+netex:deckNavigationType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PassengerCommsFacility
+netex:deckPlacesInSequence
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PassengerInformationEquipment
+netex:deckPlans
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PassengerInformationFacility
+netex:deckSpaceCapacities
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PassengerSafetyEquipment
+netex:deckSpaces
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PassengerSpot
+netex:deckWindowType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PassengerSpotAllocation
+netex:deckWindows
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PassengerStopAssignment
+netex:decks
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PassengerVehicleCapacity
+netex:defaultCurrency
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PassengerVehicleSpot
+netex:defaultDuration
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PenaltyPolicy
+netex:defaultLanguage
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PersonalModeOfOperation
+netex:delegatedResponsibilitySets
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PointInLinkSequence
+netex:deliveryVariantMediaType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PointOfInterest
+netex:delta
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PointOfInterestClassification
+netex:deltaValues
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PointOfInterestClassificationHierarchy
+netex:departments
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PointOfInterestComponent
+netex:departsForwards
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PointProjection
+netex:departsToRight
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PoolOfVehicles
+netex:departureDayOffset
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PostalAddress
+netex:departureTime
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PoweredTrain
+netex:depositPolicy
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PreviousCall
+netex:depositRequired
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PriceUnit
+netex:depth
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PriceableObject
+netex:description
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PricingParameterSet
+netex:descriptor
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PricingService
+netex:destinationDisplayContext
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Projection
+netex:destinationDisplayVariantMediaType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PropertyOfDay
+netex:destinationDisplays
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PurchaseWindow
+netex:destinations
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PurposeOfEquipmentProfile
+netex:detourAccepted
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:PurposeOfGrouping
+netex:directionButtonHeight
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:QualityStructureFactor
+netex:directionName
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:QualityStructureFactorPrice
+netex:directionOfUse
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:QueueingEquipment
+netex:directionType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RailSubmode
+netex:disabledDocks
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RailwayElement
+netex:disabledPriority
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RailwayJunction
+netex:disabledVehicles
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RampEquipment
+netex:disbarring
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RampFreeAccess
+netex:discountAsPercentage
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RechargingBay
+netex:discountAsValue
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RechargingEquipmentProfile
+netex:discountBasis
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RechargingPlan
+netex:discountOnlyForFirstPerson
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RechargingPointAssignment
+netex:discountRights
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RechargingStation
+netex:discrete
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RechargingStep
+netex:displayAsIcon
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ReliefOpportunity
+netex:displayAssignmentType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RentalAvailability
+netex:displayAssignments
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RentalOption
+netex:displayPriority
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RentalPenaltyPolicy
+netex:distance
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Replacing
+netex:distanceFromFront
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RequestedTravelSpecification
+netex:distanceFromNearestKerb
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Reselling
+netex:distanceFromStart
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ReservedSpaceFacility
+netex:distanceMatrixElements
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Reserving
+netex:distributionAssignments
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ResidentialQualification
+netex:distributionChannelType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ResidentialQualificationEligibility
+netex:distributionChannels
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ResourceFrame
+netex:distributionPoints
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ResponsibilitySet
+netex:distributionRights
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RestrictedManoeuvre
+netex:documentLinks
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RestrictedServiceFacilitySet
+netex:dogsMustBeCarried
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RetailConsortium
+netex:door
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RetailDevice
+netex:doorControlElementHeight
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RetailDeviceSecurityListing
+netex:doorHandleInside
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RetailFacility
+netex:doorHandleOutside
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RetailService
+netex:doorOrientation
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Review
+netex:doorType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RoadAddress
+netex:doors
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RoadElement
+netex:doorstepMark
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RoadJunction
+netex:doubleSingleFare
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RoadVehicleMode
+netex:drinkingWater
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RollingStockInventory
+netex:driverAccessDuration
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RollingStockItem
+netex:driverDisplayText
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RoughSurface
+netex:driverFeeBasis
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RoundTrip
+netex:driverReturnDuration
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Rounding
+netex:drivingLicenceVerified
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RoundingStep
+netex:drivingStyle
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RouteInstruction
+netex:dropKerbOutside
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Routing
+netex:droppedKerb
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:RubbishDisposalEquipment
+netex:duration
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SafetyFacility
+netex:dutyParts
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SaleDiscountRight
+netex:dynamic
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SalesNoticeAssignment
+netex:dynamicDistanceMatrixElement
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SalesOfferPackageEntitlementGiven
+netex:earliestDayOffset
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SalesOfferPackageEntitlementRequired
+netex:earliestDepartureDayOffset
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SalesOfferPackagePrice
+netex:earliestDepartureTime
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SalesOfferPackageSubstitution
+netex:earliestTime
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SalesTransaction
+netex:earliestTimeDayOffset
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SalesTransactionFrame
+netex:edgeToTrackCenterDistance
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SanitaryEquipment
+netex:effectiveFrom
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SanitaryFacility
+netex:elementAccesses
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ScheduledOperation
+netex:email
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SchematicMap
+netex:emailVerified
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ScopeOfTicket
+netex:embargoUntil
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SeatEquipment
+netex:enclosed
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SeatingEquipment
+netex:encumbranceNeed
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SecurityListing
+netex:endDate
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SelfDriveSubmode
+netex:endDayOffset
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SensorEquipment
+netex:endEvent
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SensorInSpot
+netex:endGeographicalValue
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SeriesConstraint
+netex:endOfValidity
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SeriesConstraintPrice
+netex:endTime
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ShelterEquipment
+netex:endTimeDayOffset
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SignEquipment
+netex:endValue
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SimpleAvailabilityCondition
+netex:energySaving
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SimpleFeature
+netex:entitlementType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SimpleValidityCondition
+netex:entranceAttention
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Site
+netex:entranceRequiresPassport
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SiteComponent
+netex:entranceRequiresStaffing
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SiteConnection
+netex:entranceRequiresTicket
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SiteElement
+netex:entranceSetting
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SiteEquipment
+netex:entranceToVehicle
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SiteFacilitySet
+netex:entranceUsageType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SiteFrame
+netex:entrances
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Smartcard
+netex:equipmentLength
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SpecialService
+netex:equipmentPlaces
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SpecificParameterAssignment
+netex:equipmentPositions
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SpotAffinity
+netex:equipmentProfiles
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SpotColumn
+netex:equipmentWidth
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SpotEquipment
+netex:equipments
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SpotRow
+netex:escalatorFreeAccess
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SpotSensor
+netex:escalatorWithLanding
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SrsName
+netex:euroClass
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Staffing
+netex:exchangableFromAnyTime
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:StairEquipment
+netex:exchangableFromDuration
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:StairFlight
+netex:exchangableFromPercentUse
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:StairFreeAccess
+netex:exchangableTo
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:StaircaseEquipment
+netex:exchangableUntilAnyTime
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:StandardFareTable
+netex:exchangableUntilDuration
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:StepFreeAccess
+netex:exchangableUntilPercentUse
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:StepLimit
+netex:exclude
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Submode
+netex:excluded
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Subscribing
+netex:expiryDate
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Suitability
+netex:extensions
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:SupplementProduct
+netex:externalFloorSelection
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Suspending
+netex:facilities
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TactileGuidanceAvailable
+netex:facilitySets
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TaxiRank
+netex:factor
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TaxiService
+netex:fareBasis
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TaxiServicePlaceAssignment
+netex:fareClass
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TaxiStand
+netex:fareClasses
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TelecabinSubmode
+netex:fareContractEntries
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ThirdPartyProduct
+netex:fareContracts
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TicketValidatorEquipment
+netex:fareDemandType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TicketingEquipment
+netex:fareElementsInSequence
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TicketingFacility
+netex:fareScheduledStopPoints
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TicketingService
+netex:fareSections
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TicketingServiceFacility
+netex:fareStructureElements
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TimeDemandProfileMember
+netex:fareStructureElementsInSequence
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TimeDemandTypeAssignment
+netex:fareStructureType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TimeIntervalPrice
+netex:fareTables
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TimeStructureFactor
+netex:featureMembers
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TimeUnit
+netex:features
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TimeUnitPrice
+netex:feeBasis
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Timeband
+netex:feePerBag
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TopographicProjection
+netex:finalCarrier
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Trace
+netex:finalisationDuration
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TractiveRollingStockItem
+netex:finishingDuration
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TrailingRollingStockItem
+netex:firstArrivalTime
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Train
+netex:firstAxleHeight
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TrainBlock
+netex:firstClassDistance
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TrainBlockPart
+netex:firstClassReturn
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TrainComponent
+netex:firstClassSingle
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TrainComponentLabelAssignment
+netex:firstDayOffset
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TrainComponentStopAssignment
+netex:firstDepartureTime
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TrainElement
+netex:firstName
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TrainNumber
+netex:fixed
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TrainSize
+netex:fleets
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TrainStopAssignment
+netex:flexibleLineType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Transfer
+netex:flexibleLinkType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TransferDuration
+netex:flexiblePointProperties
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TransferRestriction
+netex:flexibleRouteType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Transferability
+netex:flexibleServiceProperties
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TransportSubmode
+netex:flexibleServiceType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TravelAgent
+netex:flexibleStopPlaces
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TravelDocument
+netex:flights
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TravelDocumentSecurityListing
+netex:floatingVehicles
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TravelSpecification
+netex:flooringStatus
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TravelatorEquipment
+netex:flooringType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TripDebit
+netex:fontSize
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TrolleyStandEquipment
+netex:forAdvertisement
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:TurnaroundTimeLimitTime
+netex:forAlighting
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:UicProductCharacteristic
+netex:forBoarding
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:UicTrainRate
+netex:forProduction
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:UnpoweredTrain
+netex:formula
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:UsageDiscountRight
+netex:forwardsOnly
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:UsageParameter
+netex:freeParkingOutOfHours
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:UsageParameterPrice
+netex:freeRecharging
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:UserNeed
+netex:freeToUse
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:UserProfileEligibility
+netex:frequencyGroups
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ValidBetween
+netex:frequencyInterval
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ValidDuring
+netex:frequencyOfUseType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ValidableElementPrice
+netex:frequentTravellerDuration
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ValidityCondition
+netex:fromCall
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ValidityParameterAssignment
+netex:fromDate
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ValidityRuleParameter
+netex:fromMode
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ValidityTrigger
+netex:fromVisitNumber
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:ValueSet
+netex:frontText
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleAccessCredentialsAssignment
+netex:fuelType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleAccessFacility
+netex:fuelTypes
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleChargingEquipment
+netex:fulfilmentMethodType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleEquipmentProfile
+netex:fulfilmentMethods
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleEquipmentProfileMember
+netex:fullCharge
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleManoeuvringRequirement
+netex:funicularSubmode
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleMeetingPointAssignment
+netex:gapToPlatform
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleMode
+netex:garagePoints
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleModel
+netex:garages
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleModelProfile
+netex:gated
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehiclePoolerProfile
+netex:gearTypeDescriotion
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehiclePooling
+netex:gender
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehiclePoolingDriverInfo
+netex:genderLimitation
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehiclePoolingParkingBay
+netex:generalGroupOfEntities
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehiclePoolingPlaceAssignment
+netex:genericParameterAssignment
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehiclePoolingService
+netex:genericParameterAssignmentInContext
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehiclePositionAlignment
+netex:geographicalIntervals
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleQuayAlignment
+netex:geographicalStructureFactors
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleReleaseEquipment
+netex:geographicalUnits
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleRental
+netex:givesEntitlement
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleRentalService
+netex:glassDoor
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleScheduleFrame
+netex:goesOnCard
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleService
+netex:gradient
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleServicePart
+netex:gradientType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleServicePlaceAssignment
+netex:gridVoltage
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleSharing
+netex:groundMarkAlignedWithButton
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleSharingParkingBay
+netex:groupBookingFacility
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleSharingPlaceAssignment
+netex:groupOfDistanceMatrixElements
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleSharingService
+netex:groupOfLinesType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleStoppingPosition
+netex:groupOfTimebands
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleTypePreference
+netex:groupSizeChanges
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VehicleTypeStopAssignment
+netex:groupsOfDistanceMatrixElements
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Version
+netex:groupsOfDistributionChannels
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VersionFrame
+netex:groupsOfEntities
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VersionedChild
+netex:groupsOfLines
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:VisualSignsAvailable
+netex:groupsOfSaleOfferPackages
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:WaitingEquipment
+netex:groupsOfSalesOfferPackages
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:WaitingRoomEquipment
+netex:groupsOfServices
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:WaterSubmode
+netex:groupsOfSites
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:WheelchairAccess
+netex:guaranteed
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:WheelchairVehicleEquipment
+netex:guideDogAccess
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:Whitelist
+netex:guideDogsAllowed
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:WireElement
+netex:handWashing
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:WireJunction
+netex:handrailHeight
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:appliesOnOperatingDay
+netex:handrailType
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
-netex:onLine
+netex:hasArmrest
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hasBlind
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hasDiscountedFares
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hasDoor
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hasDynamicPricing
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hasExchangeFee
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hasFee
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hasFreeConnectingReservations
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hasHoist
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hasLiftOrRamp
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hasMinimumPrice
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hasNotices
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hasPhoto
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hasPower
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hasPowerSupply
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hasPurchaseConditions
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hasQuota
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hasReservationFee
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hasRouteRestrictions
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hasTransferFee
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hasTravelTimeRestrictions
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hasUsbPowerSocket
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hasWheelchairSpaces
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:heading
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:headroom
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:headroomForLuggage
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:headwayDisplay
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:headways
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:heated
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:height
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:heightFromFloor
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:heightFromGround
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:heightOfLowCounter
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:heightOfMachineInterface
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:heightOfSosPanel
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:helmet
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hide
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:highFloor
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hoist
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:hoistOperatingRadius
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:holidayType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:holidayTypes
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:houseNumber
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:identityToken
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:identityVerified
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:image
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:imageUri
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:immobilisation
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:includedIn
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:includes
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:includesGroupingType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:individualPassengerInfos
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:inductionLoop
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:inductionLoopSign
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:inductionLoops
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:infoLinks
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:infoUrl
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:initialCarrier
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:installmentPaymentMethods
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:installmentTypesOfPaymentMethod
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:instruction
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:insuranceVerified
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:integratesAnEscalatorPart
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:interchangeAllowed
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:internalHeight
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:internalWidth
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:intervalType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:inverseAllowed
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isAcceptingReturns
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isAccessibleOnVoyage
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isAllowed
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isAutomatic
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isAvailable
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isBetweenSeats
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isByAisle
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isByWindow
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isCard
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isDirect
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isEmergencyExit
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isExchangable
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isFacingAisle
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isFacingWindow
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isFareStage
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isFeeRefundable
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isFirstInSequence
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isFoldup
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isForbidden
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isInEndRow
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isInFrontRow
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isLastInSequence
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isLockable
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isObligatory
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isOperational
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isPersonal
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isPortable
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isReclining
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isRefundable
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isRenting
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isRequired
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isRestricted
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isReversible
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isSmartCard
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isStowable
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isSupplement
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isValid
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:isoCode
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:itinerary
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:jointCheckIn
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:journeyAccountings
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:journeyDesignator
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:journeyDuration
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:journeyPartPositions
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:journeyParts
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:journeyPatternRunTime
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:journeyPatterns
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:journeys
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:keptOpen
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:keyScheme
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:label
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lamps
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:landmark
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lang
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:languages
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lastArrivalTime
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lastDayOffset
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lastDepartureTime
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lastTripDate
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lastUpdated
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lastVerifiedDate
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:latestArrivalDayOffset
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:latestArrivalTime
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:latestBookingTime
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:latestDayOffset
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:latestTime
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:latestTimeDayOffset
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:layers
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:layover
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:layovers
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:leftSideBorder
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:legalName
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:legalStatus
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:length
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:levelAccessIntoVehicle
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:liftFreeAccess
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lighting
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lightingOnMethod
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:likeForLikeRefuelling
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:limitationGroupingType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:limitationSetSelectionType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:limitations
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:limitedUse
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lineDirections
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lineMap
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lineName
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lineSectionPointType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lineType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lines
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:linesInDirectionRefs
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:link
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:linkSequenceProjection
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:links
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:linksInSequence
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:localControl
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:localResident
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:localServices
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:locale
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:locatableSpotType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:locationSystem
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lock
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lockedAccess
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:locker
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lockerDepth
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lockerFee
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lockerHeight
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lockerType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lockerWidth
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lockingMechanism
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lockingType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:logEntries
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:logInRequired
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lowCounterAccess
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lowFloor
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:lowerHandrailHeight
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:luggageAllowanceType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:luggageAllowed
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:luggageChargingBasis
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:luggageMaximalWeigth
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:luggageSpotType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:luggageSpots
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:luggageTrolleys
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:machineReadable
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:magneticInductionLoop
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:mainTerminusForPlaces
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:mandatoryProduct
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:manufacturer
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:mark
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:markUrl
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:markedAs
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:markingStatus
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximalFrequency
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumAccess
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumAge
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumAutomaticWaitTime
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumBagDepth
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumBagHeight
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumBagWeight
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumBagWidth
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumBookingDuration
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumChargingPower
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumDistance
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumDuration
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumFlowPerMinute
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumHeadwayInterval
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumHeight
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumInterchangeWindow
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumLength
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumLikelyDelay
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumLimitPrice
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumLimitPriceAsPercentage
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumLoad
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumNumberItems
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumNumberOfBerths
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumNumberOfFailToCheckOutEvents
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumNumberOfInterchanges
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumNumberOfNamedTransferees
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumNumberOfNightsAway
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumNumberOfPersons
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumNumberOfSteps
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumNumberOfSuspensionsPerTerm
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumNumberOfTrips
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumNumberToReserve
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumPassengers
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumPeriodBeforeDeparture
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumPersonsDiscounted
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumPersonsFree
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumPower
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumPowerAvailable
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumPrice
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumPriceAsMultiple
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumPriceAsPercentage
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumRange
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumRecline
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumSpeed
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumSpots
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumStandingDuration
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumStay
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumTimeToMakeATransfer
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumTransferTime
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumVelocity
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumWaitTime
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumWeight
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:maximumWidth
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:mayBeSkipped
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:mediaType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:mediumAccessDevices
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:meetingPointAssignments
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:meetingPointServiceType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:members
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:method
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:methodName
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:metroSubmode
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimalFrequency
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumAccess
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumAge
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumBookingDuration
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumDuration
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumHeadwayInterval
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumHeight
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumLength
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumLikelyDelay
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumLimitPrice
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumLimitPriceAsPercentage
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumNumberOfCardHolders
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumNumberOfNightsAway
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumNumberOfPassengers
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumNumberOfPersons
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumNumberOfSteps
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumNumberToReserve
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumOvertakingWidth
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumPeriodBeforeDeparture
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumPrice
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumPriceAsMultiple
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumPriceAsPercentage
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumStayType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumTimeBeforeReentry
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumTransferTime
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumTurningCircle
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumUnits
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:minimumWidth
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:mirrorOnOppositeSide
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:mobileDeviceTickets
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:mobilePhoneCoverage
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:mobilityImpairedAccess
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:mobilityNeed
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:mobilityRestrictedTravellerDuration
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:mode
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:modeRestrictionAssessments
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:modification
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:modificationSet
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:monitored
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:monitoredBays
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:monitoringRemoteControl
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:month
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:monthDayOnWhichAgeApplies
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:monthOfYear
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:monthValidityOffsets
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:mustCarry
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:mustReserveWholeCompartment
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:mustReside
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:mustReturnToSameBay
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:name
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:nameOfClass
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:nameOnRouting
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:nameSuffix
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:nameType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:nature
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:navigationType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:nearTopographicPlaces
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:necessaryForceToOpen
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:needRanking
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:neighbours
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:newValue
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:nightTrain
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:noCashPayment
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:nominalVoltage
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:note
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:notice
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:notices
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:number
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:numberOFDrivers
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:numberOfBaysWithRecharging
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:numberOfCars
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:numberOfExchangesAllowed
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:numberOfFlights
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:numberOfFreeConnectingReservations
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:numberOfGates
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:numberOfGears
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:numberOfLockers
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:numberOfMachines
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:numberOfParkingLevels
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:numberOfProposedTrips
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:numberOfServers
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:numberOfSpaces
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:numberOfSteps
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:numberOfTills
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:numberOfToilets
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:numberOfTravellersCarried
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:numberOfUnits
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:numberingFromFront
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:numberingFromLeft
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:occasionalTravellerDuration
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:oldValue
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:onBecomingEligiblePolicy
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:onCeasingToBeEligiblePolicy
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:onboardStays
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:oneForNPersons
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:onlinePurchaseForCollection
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:onlinePurchaseForETicket
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:onlinePurchaseForSelfPrintTicket
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:onlineServices
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:onlyAtCertainDistributionPoints
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:onwardCalls
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:onwardLinks
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:operatingDays
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:operatingPeriods
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:operationalContexts
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:operationalNumber
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:operationalOrientation
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:operatorActivities
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:operators
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:organisationRoleType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:organisationType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:orientation
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:otherCountries
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:otherFacilities
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:otherModes
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:otherTransportModes
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:outOfService
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:overnightParkingPermitted
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:overtakingWidth
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:ownResponsibilitySets
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:panicButton
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:parkingChargeBand
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:parkingChargeBands
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:parkingComponents
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:parkingLayout
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:parkingPaymentCode
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:parkingPaymentProcess
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:parkingProperties
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:parkingReservation
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:parkingStayType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:parkingType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:parkingUserType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:parkingUserTypes
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:parkingVehicleType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:parkingVehicleTypes
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:parkingVisibility
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:partial
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:parts
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:passageType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:passengerAtStopTimes
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:passengerCapacity
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:passengerSpaceType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:passengerSpotAllocations
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:passengerSpots
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:passengerVehicleSpots
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:passengersPerMinute
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:passingThrough
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:passingTimeDayOffset
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:passingTimes
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:pathHeading
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:pathInstructions
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:pathJunctions
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:pathLinks
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:pathLinksInSequence
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:paymentMeans
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:paymentMethod
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:paymentMethods
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:pedestal
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:pedestrianLights
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:penaltyFee
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:penaltyIfWithoutTicket
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:penaltyPolicyType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:period
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:periodicity
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:personCapacity
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:personalOperationType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:petsAllowed
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:phone
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:phoneVerified
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:photo
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:placeCentre
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:placeEquipments
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:placeName
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:placeTypes
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:placement
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:placesInSequence
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:planned
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:plateCode
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:platformHeight
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:plugType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:point
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:pointNumber
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:pointOfInterestClassificationHierarchies
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:pointOfInterestSpaceType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:points
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:pointsInSequence
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:pointsOfInterest
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:poolingPolicyUrl
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:poolsOfVehicles
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:positionInTrain
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:positionOfTrainElement
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:possibleInstallmenttIntervals
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:postCode
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:postCodeExtension
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:postalAddress
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:postalRegion
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:powerCouplingType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:pramPlaceCapacity
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:precision
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:preparationDuration
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:prerequisites
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:presentationPosition
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:previousCalls
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:priceGroups
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:priceUnits
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:prices
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:pricesFor
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:pricingBasis
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:pricingParameterSet
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:pricingServices
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:primaryMode
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:primaryOrientation
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:principalCapacity
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:print
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:priority
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:privateCode
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:privateContactDetails
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:productType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:prohibitedForHazardousMaterials
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:projection
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:projections
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:proofRequired
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:properties
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:propertyKeptForDuration
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:proposedByServices
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:proposingServices
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:propulsionType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:propulsionTypes
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:providesCard
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:province
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:psychosensoryNeed
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:public
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:publicUse
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:publicityChannel
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:pump
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:purchaseAction
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:purchaseMoment
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:purchaseWhen
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:pushchairCapacity
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:qualificationPercent
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:qualifierName
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:qualityStructureFactors
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:quay
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:quayAlignments
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:quayType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:quays
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:queueManagement
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:queuingSeatedPossible
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:railSubmode
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:railedQueue
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:raisedButtons
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:ramp
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:rampDoorbell
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:rampFreeAccess
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:range
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:rangeBetweenRefuelling
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:rank
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:ranking
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:reachedFloorAnnouncement
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:realTimeOccupancyAvailable
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:reason
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:rechargingAvailable
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:rechargingPointAssignments
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:rechargingProcessType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:rechargingSteps
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:recognizable
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:recycling
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:refundBasis
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:registrationDate
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:registrationNumber
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:registrationRequired
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:relationToVehicle
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:relativeLevelOrder
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:relativeRanking
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:relativeWeighting
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:reliefOpportunities
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:remarks
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:remoteControl
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:rentalPenaltyPolicyType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:rentalPolicyUrl
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:replaces
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:requestMethod
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:requestMethodType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:requestStop
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:requiresAccount
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:requiresBookingReference
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:requiresCard
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:requiresDeposit
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:requiresEmailAddress
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:requiresEntitlement
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:requiresNightsAway
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:requiresPhoto
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:requiresPositiveBalance
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:requiresRegistration
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:requiresReservation
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:requiresValidation
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:resellWhen
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:reservationChargeType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:reservationRequired
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:reservationUrl
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:reservingRequirements
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:residenceType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:residencyType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:resides
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:responsibilities
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:responsibilityRoles
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:responsibilitySets
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:restStopDistance
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:restricted
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:restrictedLine
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:restrictedToChannel
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:restrictionType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:retailConsortiums
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:retailDevices
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:returnFareTwiceSingle
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:returnRouteIdentical
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:returnTripsOnly
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:reverse
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:reverseMembers
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:reversedOrientation
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:reversible
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:reversingDirection
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:reviews
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:revolvingDoor
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:rightSideBorder
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:roadAddress
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:roadName
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:roadNumber
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:roles
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:rollingStockInventories
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:rollingStockItems
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:rollingStockType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:roofRack
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:roundIfGreaterThan
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:roundTo
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:roundingMethod
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:roundingModulus
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:roundingSteps
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:roundings
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:routeInstructions
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:routes
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:routingType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:rows
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:ruleApplicability
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:ruleStepResults
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:runTime
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:runTimes
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:safeForGuideDog
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:safetyEdge
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:salesOfferPackageElements
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:salesOfferPackageSubstitutions
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:salesOfferPackages
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:salesTransactions
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:sameStationRentryPolicy
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:sanitary
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:satNav
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:satisfiesFacilityRequirements
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:scheduledHeadwayInterval
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:schematicMaps
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:scopeOfTicketsAvailable
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:scopingMethod
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:season
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:seasons
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:seatAllocationMethod
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:seatBackHeight
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:seatDepth
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:seatHeight
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:seatingCapacity
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:seats
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:secondClassDistance
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:secondClassReturn
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:secondClassSingle
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:sectionType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:sections
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:sectionsInSequence
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:secure
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:secureParking
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:selfDriveSubmode
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:selfPropelled
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:selfServiceLockers
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:sensorsInSpot
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:sequenceFromFront
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:seriesConstraints
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:seriesType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:servedPlaces
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:servedScheduledStopPoints
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:serviceAlteration
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:serviceAlterationType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:serviceBookingArrangements
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:serviceDesignator
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:serviceFacilitySets
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:services
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:sharedUsage
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:sharingPolicyUrl
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:sharpsDisposal
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:shortCode
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:shortName
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:shortStopCode
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:shortTrip
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:showAsAccessible
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:showerFacility
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:sideText
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:signContentType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:signGraphic
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:signageToLift
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:siteFacilitySet
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:siteFacilitySets
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:skiRack
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:smoker
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:smokingAllowed
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:snowAndIceSubmode
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:sosPanel
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:spaces
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:specialPlaceCapacity
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:specificParameterAssignments
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:speed
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:spiralStair
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:spotAffinities
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:spotAffinityType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:spotAllocations
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:spotAvailabilityStatus
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:spotColumns
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:spotRows
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:staffing
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:stairFreeAccess
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:stairRamp
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:stakeholderRoleType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:standardTransferTime
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:standardWaitTime
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:standingAllowed
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:standingCapacity
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:startDate
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:startEvent
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:startGeographicalValue
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:startOfValidity
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:startTime
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:startTimeDayOffset
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:startTimeInBlock
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:startTimesAtStopPoints
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:startValue
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:status
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:staySeated
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:stepColourContrast
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:stepCondition
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:stepFree
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:stepFreeAccess
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:stepHeight
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:stepLength
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:stopPlaceType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:stopPlaceWeight
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:stopPlaces
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:stopRequestButton
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:stopRequestTimeout
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:stopType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:stopUse
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:stopUseConstraint
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:street
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:structureFactors
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:submodes
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:subscriptionRenewalPolicy
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:subscriptionTermType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:suburb
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:subzones
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:suitabilities
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:suitable
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:suitableFor
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:suitableForCycles
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:summaries
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:supplementProductType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:supplementTo
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:supportBarHeight
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:surfaceType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:surname
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:suspension
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:suspensionPolicy
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:tableType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:tactileActuators
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:tactileGroundFloorButton
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:tactileGuidanceAvailable
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:tactileGuidanceStrips
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:tactileGuidingStrip
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:tactileGuidingStripStatus
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:tactileInterfaceAvailable
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:tactileValidationFeedback
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:tactileWarningStrip
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:tactileWarningStripContrast
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:tactileWriting
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:talkative
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:targetEnergy
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:tariffBasis
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:tariffs
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:taxCategory
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:taxiRanks
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:taxiStands
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:taxiSubmode
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:telecabinSubmode
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:temporary
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:text
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:thirdPartyProducts
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:throughLoader
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:ticketCounter
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:ticketCounterService
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:ticketMachines
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:ticketOffice
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:ticketTypesAvailable
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:ticketValidatorType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:ticketedQueue
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:ticketing
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:tides
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:tiltAngle
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:tiltType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:time
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:timeDemandTypes
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:timeIntervals
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:timeStructureFactors
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:timeUnits
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:timebands
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:timingPointStatus
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:timings
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:title
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:toCall
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:toDate
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:toFareClass
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:toMode
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:toVisitNumber
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:toiletFacility
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:toiletsType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:topographicPlaceType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:topographicPlaces
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:totalCapacity
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:totalChargeEnergy
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:totalPower
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:totalWeight
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:towards
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:town
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:traces
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:tradingName
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:trailerHitch
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:trainComponentLabelAssignments
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:trainElement
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:trainElementType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:trainElementTypes
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:trainElements
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:trainNumbers
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:trainRestrictions
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:trainSize
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:trainSizeType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:tramSubmode
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:transferDuration
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:transferMode
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:transferModes
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:transferOnly
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:transfers
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:transitCarrier
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:transition
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:transmission
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:transportMode
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:transportModes
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:transportSubmode
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:transportTypes
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:travelDocuments
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:travelSpecifications
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:travellingWithPet
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:tripTimes
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:tripType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:turningSpacePosition
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:type
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:typeOfCoupling
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:typeOfEntity
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:typeOfFuel
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:typeOfName
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:types
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:typesOfEntity
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:typesOfFareProduct
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:typesOfMachineReadabilities
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:typesOfPaymentMethod
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:typesOfRetailDevice
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:typesOfServiceFeature
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:typesOfTravelDocument
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:typesOfTravelDocuments
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:typesOfValue
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:uicCode
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:uicTrainRate
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:units
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:unlimitedMileage
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:unlocalisedEquipments
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:unusedTicketsOnly
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:url
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:usage
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:usbPowerSockets
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:useToExclude
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:usedIn
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:userAcronym
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:userTypes
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vATNumber
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:validBetween
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:validDayBits
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:validableElements
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:validationGuidance
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:validityConditions
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:validityParameterAssignmentType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:validityParameterAssignments
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:validityParameterGroupingType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:validityParameterSetSelectionType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:value
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:valueName
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:values
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:variantText
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:variants
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vehicleCapacity
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vehicleCategories
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vehicleCollection
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vehicleEquipmentProfileMembers
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vehicleEquipmentProfiles
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vehicleMeetingLinks
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vehicleMeetingPlaceAssignments
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vehicleMeetingPointAssignments
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vehicleMeetingPoints
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vehicleMode
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vehicleModelProfiles
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vehicleModels
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vehicleModes
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vehicleOrientation
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vehiclePoolingDriverInfos
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vehiclePositionAlignments
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vehiclePreferences
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vehicleRestrictions
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vehicleServiceParts
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vehicleSide
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vehicleStoppingPlaces
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vehicleStoppingPositions
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vehicleTypes
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vehicles
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:versionFrames
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:versionType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:versions
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:viaFlag
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:viaType
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vias
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:vibratingCrossingAids
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:visitNumber
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:visualContrast
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:visualGuidanceBands
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:visualObstacle
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:visualSignsAvailable
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:visualValidationFeedback
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:waitTime
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:waitTimes
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:waitingTime
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:walkTransferDuration
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:waterSubmode
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:weeksOfMonth
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:weight
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:weighting
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:wheelchairAccepted
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:wheelchairAccess
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:wheelchairBookingRequired
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:wheelchairLuggageTrolleys
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:wheelchairPassable
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:wheelchairPassengers
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:wheelchairPlaceCapacity
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:wheelchairSuitable
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:wheelchairTurningCircle
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:wheelchairUnaided
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:whitelistRefs
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:whitelists
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:width
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:winterTyres
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:withoutRiser
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:womenOnly
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:x
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:xOffset
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:xmlns
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:xmlnsUrl
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:y
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:yOffset
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:zebraCrossing
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:zoneContainingStops
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:zoneTopology
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:zoneUse
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:zones
+    rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
+netex:zonesInSeries
     rdfs:subClassOf nits:DataArtifact .  # Default: treat as DataArtifact
 ```
 
-### nits:Journey (52 classes)
+### nits:Journey (19 classes)
 
 Suggested alignment: `rdfs:subClassOf nits:Journey`
 
 ```turtle
 # NETEX → nits:Journey
-netex:CoupledJourney
+netex:canBreakJourney
     rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:CourseOfJourneys
+netex:coupledJourneys
     rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:DatedServiceJourney
+netex:courseOfJourneysNumber
     rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:DatedVehicleJourney
+netex:coursesOfJourneys
     rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:DeadRunJourneyPattern
+netex:excludedJourneyPatternRefs
     rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:DefaultServiceJourneyRunTime
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:FarePointInPattern
+netex:farePointsInPattern
     rdfs:subClassOf nits:Journey .  # Ends with 'Pattern' (journey/service pattern)
-netex:FlexibleRoute
-    rdfs:subClassOf nits:Journey .  # Ends with 'Route'
-netex:GroupOfSingleJourneys
+netex:fromStopPointInJourneyPattern
     rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:JourneyAccounting
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:JourneyDesignator
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:JourneyHeadway
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:JourneyLayover
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:JourneyMeeting
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:JourneyPart
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:JourneyPartCouple
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:JourneyPartPosition
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:JourneyPatternHeadway
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:JourneyPatternLayover
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:JourneyPatternRunTime
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:JourneyPatternWaitTime
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:JourneyRunTime
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:JourneyTiming
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:JourneyWaitTime
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:LinkInJourneyPattern
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:MobilityJourneyFrame
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:NormalDatedVehicleJourney
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:PointInJourneyPattern
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:PointOnRoute
-    rdfs:subClassOf nits:Journey .  # Ends with 'Route'
-netex:PurposeOfJourneyPartition
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:ServiceJourneyInterchange
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:ServiceJourneyPatternInterchange
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:ServiceLinkInJourneyPattern
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:ServicePattern
+netex:journeyPattern
     rdfs:subClassOf nits:Journey .  # Ends with 'Pattern' (journey/service pattern)
-netex:SingleJourney
+netex:numberOfJourneysToShow
     rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:StopPointInJourneyPattern
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:TemplateServiceJourney
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:TemplateVehicleJourney
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:TimingLinkInJourneyPattern
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:TimingPattern
-    rdfs:subClassOf nits:Journey .  # Ends with 'Pattern' (journey/service pattern)
-netex:TimingPointInJourneyPattern
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:VehicleJourney
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:VehicleJourneyHeadway
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:VehicleJourneyLayover
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:VehicleJourneyRunTime
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:VehicleJourneySpotAllocation
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:VehicleJourneyStopAssignment
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:VehicleJourneyWaitTime
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:hasJourneyPattern
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:hasPointInJourneyPattern
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:hasServiceJourney
-    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
-netex:usesRoute
+netex:onMainRoute
     rdfs:subClassOf nits:Journey .  # Ends with 'Route'
-```
-
-### nits:Line (2 classes)
-
-Suggested alignment: `rdfs:subClassOf nits:Line`
-
-```turtle
-# NETEX → nits:Line
-netex:LineSectionPointMember
-    rdfs:subClassOf nits:Line .  # Starts with 'Line'
-netex:LineShape
-    rdfs:subClassOf nits:Line .  # Starts with 'Line'
-```
-
-### nits:Network (3 classes)
-
-Suggested alignment: `rdfs:subClassOf nits:Network`
-
-```turtle
-# NETEX → nits:Network
-netex:LineNetwork
-    rdfs:subClassOf nits:Network .  # Contains 'Network'
-netex:NetworkFrameTopic
-    rdfs:subClassOf nits:Network .  # Contains 'Network'
-netex:NetworkRestriction
-    rdfs:subClassOf nits:Network .  # Contains 'Network'
+netex:pointsInPattern
+    rdfs:subClassOf nits:Journey .  # Ends with 'Pattern' (journey/service pattern)
+netex:registerBreakOfJourney
+    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
+netex:replacedJourneys
+    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
+netex:serviceJourneyPatternType
+    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
+netex:symbolMarkingUsualRoute
+    rdfs:subClassOf nits:Journey .  # Ends with 'Route'
+netex:templateVehicleJourneyType
+    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
+netex:toStopPointInJourneyPattern
+    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
+netex:vehicleJourneySpotAllocations
+    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
+netex:vehicleJourneyStopAssignments
+    rdfs:subClassOf nits:Journey .  # Contains 'Journey'
 ```
 
 ### nits:Organisation (8 classes)
@@ -1375,310 +3606,160 @@ Suggested alignment: `rdfs:subClassOf nits:Organisation`
 
 ```turtle
 # NETEX → nits:Organisation
-netex:GeneralOrganisation
-    rdfs:subClassOf nits:Organisation .  # Contains 'Organisation'
-netex:OnlineServiceOperator
+netex:additionalOperators
     rdfs:subClassOf nits:Organisation .  # Contains 'Operator'
-netex:OrganisationPart
+netex:comparisonOperator
+    rdfs:subClassOf nits:Organisation .  # Contains 'Operator'
+netex:groupOfOperators
+    rdfs:subClassOf nits:Organisation .  # Contains 'Operator'
+netex:groupsOfOperators
+    rdfs:subClassOf nits:Organisation .  # Contains 'Operator'
+netex:hasOperatorRestrictions
+    rdfs:subClassOf nits:Organisation .  # Contains 'Operator'
+netex:relatedOrganisations
     rdfs:subClassOf nits:Organisation .  # Contains 'Organisation'
-netex:OrganisationalUnit
+netex:servicedOrganisationType
     rdfs:subClassOf nits:Organisation .  # Contains 'Organisation'
-netex:OtherOrganisation
-    rdfs:subClassOf nits:Organisation .  # Contains 'Organisation'
-netex:RelatedOrganisation
-    rdfs:subClassOf nits:Organisation .  # Contains 'Organisation'
-netex:ServicedOrganisation
-    rdfs:subClassOf nits:Organisation .  # Contains 'Organisation'
-netex:TransportOrganisation
+netex:typesOfOrganisation
     rdfs:subClassOf nits:Organisation .  # Contains 'Organisation'
 ```
 
-### nits:RealTimeInformation (2 classes)
-
-Suggested alignment: `rdfs:subClassOf nits:RealTimeInformation`
-
-```turtle
-# NETEX → nits:RealTimeInformation
-netex:MonitoredCall
-    rdfs:subClassOf nits:RealTimeInformation .  # Contains 'Monitored'
-netex:MonitoredVehicleSharingParkingBay
-    rdfs:subClassOf nits:RealTimeInformation .  # Contains 'Monitored'
-```
-
-### nits:Service (8 classes)
-
-Suggested alignment: `rdfs:subClassOf nits:Service`
-
-```turtle
-# NETEX → nits:Service
-netex:ServiceAccessRight
-    rdfs:subClassOf nits:Service .  # Starts with 'Service'
-netex:ServiceBookingArrangement
-    rdfs:subClassOf nits:Service .  # Starts with 'Service'
-netex:ServiceDesignator
-    rdfs:subClassOf nits:Service .  # Starts with 'Service'
-netex:ServiceExclusion
-    rdfs:subClassOf nits:Service .  # Starts with 'Service'
-netex:ServiceFacilitySet
-    rdfs:subClassOf nits:Service .  # Starts with 'Service'
-netex:ServiceFrame
-    rdfs:subClassOf nits:Service .  # Starts with 'Service'
-netex:ServiceReservationFacility
-    rdfs:subClassOf nits:Service .  # Starts with 'Service'
-netex:ServiceSite
-    rdfs:subClassOf nits:Service .  # Starts with 'Service'
-```
-
-### nits:SpatialEntity (101 classes)
+### nits:SpatialEntity (42 classes)
 
 Suggested alignment: `rdfs:subClassOf nits:SpatialEntity`
 
 ```turtle
 # NETEX → nits:SpatialEntity
-netex:AccessSpace
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Space'
-netex:AccessZone
+netex:administrativeZones
     rdfs:subClassOf nits:SpatialEntity .  # Contains 'Zone'
-netex:ActivationLink
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Link' (path/access link)
-netex:ActivationPoint
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Point'
-netex:AddressablePlace
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Place'
-netex:AdministrativeZone
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Zone'
-netex:BeaconPoint
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Point'
-netex:CommonSection
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Section'
-netex:DeckEntrance
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
-netex:DeckEntranceAssignment
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
-netex:DeckEntranceCouple
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
-netex:DeckEntranceUsage
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
-netex:DeckNavigationPath
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Path'
-netex:DeckPathJunction
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Path'
-netex:DeckPathLink
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Link' (path/access link)
-netex:DeckSpace
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Space'
-netex:DeckVehicleEntrance
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
-netex:Entrance
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
-netex:EntranceEquipment
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
-netex:EntranceSensor
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
-netex:EquipmentPlace
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Place'
-netex:FareScheduledStopPoint
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Point'
-netex:FlexibleArea
+netex:allAreasWheelchairAccessible
     rdfs:subClassOf nits:SpatialEntity .  # Contains 'Area'
-netex:FlexibleStopPlace
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Place'
-netex:GaragePoint
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Point'
-netex:GeneralSection
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Section'
-netex:GeneralZone
+netex:boardingPositionEntrances
+    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
+netex:deckEntranceAssignments
+    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
+netex:deckEntranceCouples
+    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
+netex:deckEntranceType
+    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
+netex:deckEntranceUsages
+    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
+netex:deckEntrances
+    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
+netex:deckNavigationPaths
+    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Path'
+netex:deckPathJunction
+    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Path'
+netex:deckPathJunctions
+    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Path'
+netex:deckPathLinks
+    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Path'
+netex:fareZones
     rdfs:subClassOf nits:SpatialEntity .  # Contains 'Zone'
-netex:GenericNavigationPath
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Path'
-netex:GenericPathJunction
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Path'
-netex:GenericPathLink
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Link' (path/access link)
-netex:HailAndRideArea
+netex:groupsOfTariffZones
+    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Zone'
+netex:hasZoneRestrictions
+    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Zone'
+netex:heightOfAccessArea
     rdfs:subClassOf nits:SpatialEntity .  # Contains 'Area'
-netex:InfoLink
+netex:infoLink
     rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Link' (path/access link)
-netex:InfrastructureLink
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Link' (path/access link)
-netex:InfrastructurePoint
+netex:isWaitPoint
     rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Point'
-netex:LineSection
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Section'
-netex:Link
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Link' (path/access link)
-netex:MobilityServiceConstraintZone
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Zone'
-netex:NavigationPath
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Path'
-netex:NavigationPathAssignment
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Path'
-netex:OffSitePathLink
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Link' (path/access link)
-netex:OnboardSpace
+netex:legSpace
     rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Space'
-netex:OtherDeckEntrance
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
-netex:OtherDeckSpace
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Space'
-netex:ParkingEntranceForVehicles
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
-netex:ParkingPassengerEntrance
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
-netex:ParkingPoint
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Point'
-netex:PassengerEntrance
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
-netex:PassengerSpace
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Space'
-netex:PathInstruction
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Path'
-netex:PathJunction
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Path'
-netex:PathLink
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Link' (path/access link)
-netex:PathLinkInSequence
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Path'
-netex:Place
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Place'
-netex:PlaceEquipment
-    rdfs:subClassOf nits:SpatialEntity .  # Starts with 'Place'
-netex:PlaceInSequence
-    rdfs:subClassOf nits:SpatialEntity .  # Starts with 'Place'
-netex:PlaceLighting
-    rdfs:subClassOf nits:SpatialEntity .  # Starts with 'Place'
-netex:PlaceSign
-    rdfs:subClassOf nits:SpatialEntity .  # Starts with 'Place'
-netex:Point
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Point'
-netex:PointOfInterestEntrance
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
-netex:PointOfInterestSpace
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Space'
-netex:PointOfInterestVehicleEntrance
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
-netex:PointOnLineSection
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Section'
-netex:PointOnLink
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Link' (path/access link)
-netex:PointOnSection
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Section'
-netex:ReliefPoint
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Point'
-netex:RouteLink
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Link' (path/access link)
-netex:RoutePoint
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Point'
-netex:RoutingConstraintZone
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Zone'
-netex:Section
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Section'
-netex:SensorInEntrance
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
-netex:ServiceLink
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Link' (path/access link)
-netex:SingleJourneyPath
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Path'
-netex:SiteNavigationPath
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Path'
-netex:SitePathJunction
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Path'
-netex:SitePathLink
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Link' (path/access link)
-netex:StartTimeAtStopPoint
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Point'
-netex:StopPlaceEntrance
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
-netex:StopPlaceSpace
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Space'
-netex:StopPlaceVehicleEntrance
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
-netex:TaxiParkingArea
+netex:lengthOfAccessArea
     rdfs:subClassOf nits:SpatialEntity .  # Contains 'Area'
-netex:TimingLink
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Link' (path/access link)
-netex:TimingPoint
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Point'
-netex:TopographicPlace
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Place'
-netex:TrafficControlPoint
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Point'
-netex:TransportAdministrativeZone
+netex:linksOnSection
+    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Section'
+netex:mobilityServiceConstraintZones
     rdfs:subClassOf nits:SpatialEntity .  # Contains 'Zone'
-netex:VehicleEntrance
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
-netex:VehicleMeetingLink
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Link' (path/access link)
-netex:VehicleMeetingPlace
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Place'
-netex:VehicleMeetingPoint
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Point'
-netex:VehicleMeetingPointInPath
+netex:navigationPaths
     rdfs:subClassOf nits:SpatialEntity .  # Contains 'Path'
-netex:VehiclePoolingMeetingPlace
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Place'
-netex:VehiclePoolingParkingArea
+netex:numberOfWheelchairAreas
     rdfs:subClassOf nits:SpatialEntity .  # Contains 'Area'
-netex:VehicleSharingParkingArea
+netex:parkingAreas
     rdfs:subClassOf nits:SpatialEntity .  # Contains 'Area'
-netex:VehicleStoppingPlace
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Place'
-netex:VehicleTypeAtPoint
+netex:pointStandingForAZone
+    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Zone'
+netex:pointsOnSection
+    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Section'
+netex:reversePointsOnSection
+    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Section'
+netex:scheduledStopPoint
     rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Point'
-netex:VehicleTypeZoneRestriction
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Zone'
-netex:Zone
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Zone'
-netex:ZoneInSeries
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Zone'
-netex:ZoneProjection
-    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Zone'
-netex:inStopPlace
+netex:sensorsInEntrance
+    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
+netex:stopAreas
+    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Area'
+netex:stopPlace
     rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Place'
-netex:servesScheduledStopPoint
-    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Point'
+netex:summerTimeZone
+    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Zone'
+netex:summerTimeZoneOffset
+    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Zone'
+netex:timeZone
+    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Zone'
+netex:timeZoneOffset
+    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Zone'
+netex:turningSpace
+    rdfs:subClassOf nits:SpatialEntity .  # Ends with 'Space'
+netex:unscheduledPath
+    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Path'
+netex:vehicleEntrances
+    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Entrance'
+netex:wheelchairAreaLength
+    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Area'
+netex:wheelchairAreaWidth
+    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Area'
+netex:widthOfAccessArea
+    rdfs:subClassOf nits:SpatialEntity .  # Contains 'Area'
 ```
 
-### nits:Stop (3 classes)
-
-Suggested alignment: `rdfs:subClassOf nits:Stop`
-
-```turtle
-# NETEX → nits:Stop
-netex:FlexibleQuay
-    rdfs:subClassOf nits:Stop .  # Ends with 'Quay'
-netex:StopAssignment
-    rdfs:subClassOf nits:Stop .  # Starts with 'Stop'
-netex:StopPlaceComponent
-    rdfs:subClassOf nits:Stop .  # Starts with 'Stop'
-```
-
-### nits:TemporalEntity (3 classes)
+### nits:TemporalEntity (19 classes)
 
 Suggested alignment: `rdfs:subClassOf nits:TemporalEntity`
 
 ```turtle
 # NETEX → nits:TemporalEntity
-netex:DayTypeAssignment
-    rdfs:subClassOf nits:TemporalEntity .  # DayType scheduling concept
-netex:ServiceCalendarFrame
+netex:cappingPeriod
+    rdfs:subClassOf nits:TemporalEntity .  # Ends with 'Period'
+netex:expireAfterPeriod
+    rdfs:subClassOf nits:TemporalEntity .  # Ends with 'Period'
+netex:maximumBookingPeriod
+    rdfs:subClassOf nits:TemporalEntity .  # Ends with 'Period'
+netex:maximumRentalPeriod
+    rdfs:subClassOf nits:TemporalEntity .  # Ends with 'Period'
+netex:maximumSharingPeriod
+    rdfs:subClassOf nits:TemporalEntity .  # Ends with 'Period'
+netex:maximumSubscriptionPeriod
+    rdfs:subClassOf nits:TemporalEntity .  # Ends with 'Period'
+netex:maximumSuspensionPeriod
+    rdfs:subClassOf nits:TemporalEntity .  # Ends with 'Period'
+netex:minimumBookingPeriod
+    rdfs:subClassOf nits:TemporalEntity .  # Ends with 'Period'
+netex:minimumQualificationPeriod
+    rdfs:subClassOf nits:TemporalEntity .  # Ends with 'Period'
+netex:minimumRentalPeriod
+    rdfs:subClassOf nits:TemporalEntity .  # Ends with 'Period'
+netex:minimumSharingPeriod
+    rdfs:subClassOf nits:TemporalEntity .  # Ends with 'Period'
+netex:minimumSubscriptionPeriod
+    rdfs:subClassOf nits:TemporalEntity .  # Ends with 'Period'
+netex:minimumSuspensionPeriod
+    rdfs:subClassOf nits:TemporalEntity .  # Ends with 'Period'
+netex:notificationPeriod
+    rdfs:subClassOf nits:TemporalEntity .  # Ends with 'Period'
+netex:paymentGracePeriod
+    rdfs:subClassOf nits:TemporalEntity .  # Ends with 'Period'
+netex:qualificationPeriod
+    rdfs:subClassOf nits:TemporalEntity .  # Ends with 'Period'
+netex:reservationExpiryPeriod
+    rdfs:subClassOf nits:TemporalEntity .  # Ends with 'Period'
+netex:serviceCalendar
     rdfs:subClassOf nits:TemporalEntity .  # Contains 'Calendar'
-netex:hasDayTypeAssignment
-    rdfs:subClassOf nits:TemporalEntity .  # DayType scheduling concept
-```
-
-### nits:Timetable (3 classes)
-
-Suggested alignment: `rdfs:subClassOf nits:Timetable`
-
-```turtle
-# NETEX → nits:Timetable
-netex:TimetableFrame
-    rdfs:subClassOf nits:Timetable .  # Contains 'Timetable'
-netex:TimetabledPassingTime
-    rdfs:subClassOf nits:Timetable .  # Contains 'Timetable'
-netex:hasTimetabledPassingTime
-    rdfs:subClassOf nits:Timetable .  # Contains 'Timetable'
+netex:uicOperatingPeriod
+    rdfs:subClassOf nits:TemporalEntity .  # Ends with 'Period'
 ```
 
 ---
@@ -1687,2226 +3768,4755 @@ netex:hasTimetabledPassingTime
 
 ```turtle
 # nits:DataArtifact
-netex:AcceptedDriverPermit
+netex:abbreviation
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Access
+netex:abridgementRanking
     rdfs:subClassOf nits:DataArtifact .
 
-netex:AccessFacility
+netex:acceptedDriverPermits
     rdfs:subClassOf nits:DataArtifact .
 
-netex:AccessMode
+netex:accessCode
     rdfs:subClassOf nits:DataArtifact .
 
-netex:AccessRightInProduct
+netex:accessFeatureType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:AccessRightParameterAssignment
+netex:accessModes
     rdfs:subClassOf nits:DataArtifact .
 
-netex:AccessSummary
+netex:accessNumber
     rdfs:subClassOf nits:DataArtifact .
 
-netex:AccessVehicleEquipment
+netex:accessNumberIsLimited
     rdfs:subClassOf nits:DataArtifact .
 
-netex:AccessibilityInfoFacility
+netex:accessRightsInProduct
     rdfs:subClassOf nits:DataArtifact .
 
-netex:AccessibilityLimitation
+netex:accessSpaceType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:AccessibilityTool
+netex:accessSpaces
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Accommodation
+netex:accesses
     rdfs:subClassOf nits:DataArtifact .
 
-netex:AccommodationAccess
+netex:accessibilityAssessment
     rdfs:subClassOf nits:DataArtifact .
 
-netex:AccommodationFacility
+netex:accessibilityTrainedStaff
     rdfs:subClassOf nits:DataArtifact .
 
-netex:AccountableElement
+netex:accommodationFacility
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ActivatedEquipment
+netex:accommodations
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ActivationAssignment
+netex:accompaniedByCarer
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ActualVehicleEquipment
+netex:accountingCode
     rdfs:subClassOf nits:DataArtifact .
 
-netex:AdditionalDriverOption
+netex:accountingFactor
     rdfs:subClassOf nits:DataArtifact .
 
-netex:AllVehicleModes
+netex:accountingTime
     rdfs:subClassOf nits:DataArtifact .
 
-netex:AllowedLineDirection
+netex:accountingType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:AlternativeModeOfOperation
+netex:accousticAnnouncements
     rdfs:subClassOf nits:DataArtifact .
 
-netex:AlternativeQuayDescriptor
+netex:acousticAnnouncements
     rdfs:subClassOf nits:DataArtifact .
 
-netex:AmountOfPriceUnitProduct
+netex:acousticCrossingAids
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Assignment
+netex:acousticDeviceSensors
     rdfs:subClassOf nits:DataArtifact .
 
-netex:AssistanceBookingService
+netex:acousticSensor
     rdfs:subClassOf nits:DataArtifact .
 
-netex:AssistanceFacility
+netex:activationPointNumber
     rdfs:subClassOf nits:DataArtifact .
 
-netex:AssistanceService
+netex:actualVehicleEquipments
     rdfs:subClassOf nits:DataArtifact .
 
-netex:AudibleSignalsAvailable
+netex:additionalDriver
     rdfs:subClassOf nits:DataArtifact .
 
-netex:AvailabilityCondition
+netex:additionalTax
     rdfs:subClassOf nits:DataArtifact .
 
-netex:BatteryEquipment
+netex:address
     rdfs:subClassOf nits:DataArtifact .
 
-netex:BedEquipment
+netex:addressLine1
     rdfs:subClassOf nits:DataArtifact .
 
-netex:BerthFacility
+netex:addressLine2
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Blacklist
+netex:addresses
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Block
+netex:adjacentPlaces
     rdfs:subClassOf nits:DataArtifact .
 
-netex:BoardingPermission
+netex:adjustmentUnits
     rdfs:subClassOf nits:DataArtifact .
 
-netex:BoardingPosition
+netex:advertised
     rdfs:subClassOf nits:DataArtifact .
 
-netex:BookingArrangement
+netex:aimedArrivalTime
     rdfs:subClassOf nits:DataArtifact .
 
-netex:BookingDebit
+netex:aimedDepartureTime
     rdfs:subClassOf nits:DataArtifact .
 
-netex:BookingPolicy
+netex:aimedNonstopPassingTime
     rdfs:subClassOf nits:DataArtifact .
 
-netex:BookingProcessFacility
+netex:aimedWaitingTime
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Branding
+netex:airConditioned
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Call
+netex:airConditioning
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Cancelling
+netex:airSubmode
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CappedDiscountRight
+netex:airlock
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CappingRule
+netex:alarmButton
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CappingRulePrice
+netex:alightingRequestMethod
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CarModelProfile
+netex:alightingSideInDirectionOfTravel
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CarPoolingService
+netex:alightingUse
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CarServiceFacility
+netex:allLines
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CateringFacility
+netex:allowAdditionalDiscounts
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CateringService
+netex:allowCompanionDiscounts
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Cell
+netex:allowCumulativeDiscounts
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ChargingMoment
+netex:allowed
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ChargingPolicy
+netex:allowedDirections
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ChauffeuredVehicleService
+netex:allowedForWaitTime
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CheckConstraint
+netex:allowedInChannel
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CheckConstraintDelay
+netex:allowedInCountry
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CheckConstraintThroughput
+netex:allowedUse
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ClassOfUse
+netex:alternativeDescriptors
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ClimateControl
+netex:alternativeNames
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CoachSubmode
+netex:alternativeTexts
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CommercialProfile
+netex:alwaysLit
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CommercialProfileEligibility
+netex:amount
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CommonFrame
+netex:amountFactor
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CommonSectionPointMember
+netex:amountOfPriceUnits
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CommonVehicleService
+netex:applicationInstances
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CommunicationService
+netex:appliesTo
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CompanionProfile
+netex:areas
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ComplaintsService
+netex:armRest
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ComplexFeature
+netex:arrivalDayOffset
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ComplexFeatureProjection
+netex:arrivalTime
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CompositeFrame
+netex:arrivesForwards
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CompoundBlock
+netex:arrivesFromLeft
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CompoundTrain
+netex:asBraille
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ConditionSummary
+netex:assignments
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Connection
+netex:assistanceAvailability
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Contact
+netex:assistanceNeeded
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Contract
+netex:assistedBoardingLocation
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ControlCentre
+netex:associatedContract
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ControllableElement
+netex:atCentre
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ControllableElementInSequence
+netex:attendant
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ControllableElementPrice
+netex:attributeName
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ConventionalModeOfOperation
+netex:attributeValue
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CouchetteFacility
+netex:audibleSignalsAvailable
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Country
+netex:audioAnnouncementType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CrewBase
+netex:audioAnnouncements
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CrossingEquipment
+netex:audioAnnouncementsTrigger
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Customer
+netex:audioInterfaceAvailable
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CustomerAccount
+netex:audioOrVideoIntercom
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CustomerAccountSecurityListing
+netex:audioPassthroughIndicator
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CustomerAccountStatus
+netex:audioTriggerMethod
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CustomerEligibility
+netex:audioValidationFeedback
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CustomerPaymentMeans
+netex:authorityTypes
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CustomerPurchasePackage
+netex:automatedUse
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CustomerPurchasePackageElement
+netex:automatic
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CustomerPurchasePackageElementAccess
+netex:automaticDoor
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CustomerPurchasePackagePrice
+netex:automaticDoors
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CustomerPurchaseParameterAssignment
+netex:availableDocks
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CustomerSecurityListing
+netex:availableOnSubscription
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CustomerService
+netex:availableVehicles
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CycleModelProfile
+netex:averageDelay
     rdfs:subClassOf nits:DataArtifact .
 
-netex:CycleStorageEquipment
+netex:averagePassengers
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DataManagedObject
+netex:back
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DataObjectCapabilitiesRequest
+netex:backRest
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DataObjectCapabilitiesResponse
+netex:baggageType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DataObjectDelivery
+netex:baggageUseType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DataObjectPermissions
+netex:barrier
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DataObjectRequest
+netex:basket
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DataObjectServiceCapabilities
+netex:battery
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DataObjectSubscriptionRequest
+netex:batteryCapacity
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DataSource
+netex:batteryUsableCapacity
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DatedSpecialService
+netex:bayGeometry
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Deck
+netex:bays
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DeckComponent
+netex:beaconBackendUrl
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DeckLevel
+netex:beaconDirection
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DeckPlaceInSequence
+netex:beaconProtocol
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DeckPlan
+netex:beaconType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DeckPlanAssignment
+netex:bearing
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DeckSpaceCapacity
+netex:bearingCapacity
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DeckWindow
+netex:bearingCompass
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DefaultConnection
+netex:bearingDegrees
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DefaultDeadRunRunTime
+netex:bedLength
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DefaultInterchange
+netex:bedType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DeliveryVariant
+netex:berthFacility
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Delta
+netex:bicycleRackCapacity
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DeltaValue
+netex:billingPolicy
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Department
+netex:blacklistRefs
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DestinationDisplay
+netex:blacklists
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DestinationDisplayVariant
+netex:blindAccessible
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Direction
+netex:blockParts
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DiscountingRule
+netex:blockRefs
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DisplayAssignment
+netex:blocked
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DistanceMatrixElementPrice
+netex:boardingHeight
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DistributionAssignment
+netex:boardingPermission
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DistributionChannel
+netex:boardingPosition
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DriverScheduleFrame
+netex:boardingPositionType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DriverTrip
+netex:boardingPositions
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DriverTripTime
+netex:boardingRequestMethod
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Duty
+netex:boardingSideInDirectionOfTravel
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DutyPart
+netex:boardingUse
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DynamicDistanceMatrixElement
+netex:bollardCrossing
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DynamicStopAssignment
+netex:bookWhen
     rdfs:subClassOf nits:DataArtifact .
 
-netex:DynamicVehicleMeetingPointAssignment
+netex:bookingAccess
     rdfs:subClassOf nits:DataArtifact .
 
-netex:EligibilityChangePolicy
+netex:bookingArrangements
     rdfs:subClassOf nits:DataArtifact .
 
-netex:EmergencyService
+netex:bookingChargeType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:EmvCard
+netex:bookingContact
     rdfs:subClassOf nits:DataArtifact .
 
-netex:EntitlementGiven
+netex:bookingDepositRefundable
     rdfs:subClassOf nits:DataArtifact .
 
-netex:EntitlementProduct
+netex:bookingMethods
     rdfs:subClassOf nits:DataArtifact .
 
-netex:EntitlementRequired
+netex:bookingNote
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Entity
+netex:bookingRequired
     rdfs:subClassOf nits:DataArtifact .
 
-netex:EntityInVersion
+netex:bookingUrl
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Equipment
+netex:borderCrossing
     rdfs:subClassOf nits:DataArtifact .
 
-netex:EquipmentPosition
+netex:borderPoints
     rdfs:subClassOf nits:DataArtifact .
 
-netex:EscalatorEquipment
+netex:bothWays
     rdfs:subClassOf nits:DataArtifact .
 
-netex:EscalatorFreeAccess
+netex:brailleButtons
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Exchanging
+netex:branchLevel
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Extensions
+netex:brandGraphic
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FacilityRequirement
+netex:broadType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FacilitySet
+netex:buildDate
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FamilyFacility
+netex:buildingName
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FareClass
+netex:bumpCrossing
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FareContract
+netex:busSubmode
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FareContractEntry
+netex:buttonsHeight
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FareContractSecurityListing
+netex:buyWhen
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FareDebit
+netex:cage
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FareDemandFactor
+netex:calendarDate
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FareElementInSequence
+netex:callButtonAvailable
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FareInterval
+netex:callButtonHeight
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FarePrice
+netex:calls
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FarePriceFrame
+netex:canBeAdvertised
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FareProductPrice
+netex:canBeCumulative
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FareProductSaleDebit
+netex:canBeOpened
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FareQuotaFactor
+netex:canCarry
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FareStructureElementInSequence
+netex:canChangeClass
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FareStructureElementPrice
+netex:canInterchange
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FareStructureFactor
+netex:canManoeuvre
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FareTableColumn
+netex:canRotate
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FareTableInContext
+netex:canTransfer
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FareTableRow
+netex:cancellationAllowed
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FareUnit
+netex:cancellationPossible
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Fleet
+netex:capacities
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FlexibleLine
+netex:capacity
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FlexibleLinkProperties
+netex:cappingRules
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FlexibleOperation
+netex:cardNumber
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FlexiblePointProperties
+netex:cardsAccepted
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FlexibleServiceProperties
+netex:cctv
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FlexibleStopAssignment
+netex:cellPrice
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FrequencyOfUse
+netex:cells
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FulfilmentMethod
+netex:centroid
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FulfilmentMethodPrice
+netex:chains
     rdfs:subClassOf nits:DataArtifact .
 
-netex:FunicularSubmode
+netex:changeAvailable
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Garage
+netex:changeOfDestinationDisplay
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GenderLimitation
+netex:changeOfServiceRequirements
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GeneralFrame
+netex:changeOfTimePossible
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GeneralFrameMember
+netex:changedAt
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GeneralGroupOfEntities
+netex:changedBy
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GeneralSign
+netex:changedSince
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GenericParameterAssignmentInContext
+netex:charge
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GeographicalIntervalPrice
+netex:chargeEnergy
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GeographicalStructureFactor
+netex:chargingBasis
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GeographicalUnit
+netex:chargingDuration
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GeographicalUnitPrice
+netex:chargingMomentType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GroupBookingFacility
+netex:chargingVoltage
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GroupConstraintMember
+netex:chassisNumber
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GroupMember
+netex:checkConstraintDelays
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GroupOfDistanceMatrixElements
+netex:checkConstraintProcess
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GroupOfDistributionChannels
+netex:checkConstraintThroughputs
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GroupOfEntities
+netex:checkConstraints
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GroupOfLines
+netex:checkDirection
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GroupOfLinkSequences
+netex:checkProcess
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GroupOfPlaces
+netex:checkService
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GroupOfSalesOfferPackages
+netex:childSeat
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GroupOfServices
+netex:classifications
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GroupOfSites
+netex:client
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GroupOfTimebands
+netex:coachSubmode
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GroupOfTimingLinks
+netex:codePrefix
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GroupTicket
+netex:codespace
     rdfs:subClassOf nits:DataArtifact .
 
-netex:GuideDogAccess
+netex:codespaceAssignments
     rdfs:subClassOf nits:DataArtifact .
 
-netex:HeadingSign
+netex:codespaces
     rdfs:subClassOf nits:DataArtifact .
 
-netex:HelpPointEquipment
+netex:collectionNote
     rdfs:subClassOf nits:DataArtifact .
 
-netex:HireFacility
+netex:columns
     rdfs:subClassOf nits:DataArtifact .
 
-netex:HireService
+netex:comment
     rdfs:subClassOf nits:DataArtifact .
 
-netex:IndividualPassengerInfo
+netex:commentsAbout
     rdfs:subClassOf nits:DataArtifact .
 
-netex:IndividualTraveller
+netex:communicationMethod
     rdfs:subClassOf nits:DataArtifact .
 
-netex:InfrastructureFrame
+netex:companionProfiles
     rdfs:subClassOf nits:DataArtifact .
 
-netex:InfrastructureLinkRestriction
+netex:companionRelationshipType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:InstalledEquipment
+netex:companionSeat
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Interchange
+netex:companyNumber
     rdfs:subClassOf nits:DataArtifact .
 
-netex:InterchangeRule
+netex:compassBearing
     rdfs:subClassOf nits:DataArtifact .
 
-netex:InterchangeRuleFilter
+netex:compassOctant
     rdfs:subClassOf nits:DataArtifact .
 
-netex:InterchangeRuleTiming
+netex:compatibleWith
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Interchanging
+netex:components
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Layer
+netex:conditionSummary
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LeftLuggageService
+netex:configurationConditions
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Level
+netex:congestion
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LevelAccessIntoVehicle
+netex:connectingStopPointName
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LiftCallEquipment
+netex:connectingVehicleModes
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LiftEquipment
+netex:connectionCertainty
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LiftFreeAccess
+netex:consumptionAmount
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LightingControlFacility
+netex:consumptionUnits
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LimitingRule
+netex:contactDetails
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LimitingRuleInContext
+netex:contacts
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LinkInLinkSequence
+netex:containedIn
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LinkProjection
+netex:content
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LinkSequence
+netex:contentValidityConditions
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LinkSequenceProjection
+netex:continuousHandrail
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LocalService
+netex:contractGoverningLaw
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Locale
+netex:contractType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LocatableSpot
+netex:contracts
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Log
+netex:contrast
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LogEntry
+netex:controlCentreCode
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LogicalDisplay
+netex:controlCentreNotifyThreshold
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LostPropertyService
+netex:controlCentres
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LuggageAllowance
+netex:controllableElements
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LuggageCarriageFacility
+netex:controllableElementsInSequence
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LuggageLockerEquipment
+netex:controlled
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LuggageLockerFacility
+netex:controlledLocking
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LuggageService
+netex:convertible
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LuggageServiceFacility
+netex:couchetteFacility
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LuggageSpot
+netex:count
     rdfs:subClassOf nits:DataArtifact .
 
-netex:LuggageSpotEquipment
+netex:counterService
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ManagementAgent
+netex:countries
     rdfs:subClassOf nits:DataArtifact .
 
-netex:MealFacility
+netex:countryName
     rdfs:subClassOf nits:DataArtifact .
 
-netex:MedicalFacility
+netex:covered
     rdfs:subClassOf nits:DataArtifact .
 
-netex:MediumAccessDevice
+netex:creditPolicy
     rdfs:subClassOf nits:DataArtifact .
 
-netex:MediumAccessDeviceSecurityListing
+netex:crewBases
     rdfs:subClassOf nits:DataArtifact .
 
-netex:MediumApplicationInstance
+netex:crossBorder
     rdfs:subClassOf nits:DataArtifact .
 
-netex:MeetingPointService
+netex:crossRoad
     rdfs:subClassOf nits:DataArtifact .
 
-netex:MeetingRestriction
+netex:crowding
     rdfs:subClassOf nits:DataArtifact .
 
-netex:MetroSubmode
+netex:cruiseControl
     rdfs:subClassOf nits:DataArtifact .
 
-netex:MinimumStay
+netex:currenciesAccepted
     rdfs:subClassOf nits:DataArtifact .
 
-netex:MobileDevice
+netex:currency
     rdfs:subClassOf nits:DataArtifact .
 
-netex:MobilityFacility
+netex:current
     rdfs:subClassOf nits:DataArtifact .
 
-netex:MobilityService
+netex:currentAt
     rdfs:subClassOf nits:DataArtifact .
 
-netex:MobilityServiceFrame
+netex:currentType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ModeOfOperation
+netex:customerAccountEntries
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ModeRestrictionAssessment
+netex:customerAccountStatusType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:MoneyFacility
+netex:customerAccounts
     rdfs:subClassOf nits:DataArtifact .
 
-netex:MoneyService
+netex:customerPurchasePackageElements
     rdfs:subClassOf nits:DataArtifact .
 
-netex:MonthValidityOffset
+netex:customerPurchasePackageEntries
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Notice
+netex:customerPurchasePackageStatus
     rdfs:subClassOf nits:DataArtifact .
 
-netex:NoticeAssignment
+netex:customerPurchasePackages
     rdfs:subClassOf nits:DataArtifact .
 
-netex:NuisanceFacility
+netex:customerServiceContactDetails
     rdfs:subClassOf nits:DataArtifact .
 
-netex:OffenceDebit
+netex:customers
     rdfs:subClassOf nits:DataArtifact .
 
-netex:OfferedTravelSpecification
+netex:cycleRack
     rdfs:subClassOf nits:DataArtifact .
 
-netex:OnboardStay
+netex:cycleStorageType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:OnlineService
+netex:dataLicenceUrl
     rdfs:subClassOf nits:DataArtifact .
 
-netex:OpenTransportMode
+netex:dataObjectPermissions
     rdfs:subClassOf nits:DataArtifact .
 
-netex:OperatingDay
+netex:dataObjectRequest
     rdfs:subClassOf nits:DataArtifact .
 
-netex:OperatingDepartment
+netex:dataObjectServiceCapabilities
     rdfs:subClassOf nits:DataArtifact .
 
-netex:OperationalContext
+netex:dataRoleType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:OtherDebit
+netex:dataSources
     rdfs:subClassOf nits:DataArtifact .
 
-netex:OtherPlaceEquipment
+netex:date
     rdfs:subClassOf nits:DataArtifact .
 
-netex:OvertakingPossibility
+netex:dateOfBirth
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Parking
+netex:datedCalls
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ParkingBay
+netex:datedPassingTimes
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ParkingBayCondition
+netex:dayEvent
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ParkingBayStatus
+netex:dayLength
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ParkingChargeBand
+netex:dayNumber
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ParkingComponent
+netex:dayOfMonth
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ParkingFacility
+netex:dayOfYear
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ParkingPrice
+netex:dayOffset
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ParkingTariff
+netex:dayOffsetRelativeToMainPart
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PassengerAccessibilityNeeds
+netex:dayTypeAssignments
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PassengerAtStopTime
+netex:dayTypes
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PassengerBeaconEquipment
+netex:daysOfWeek
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PassengerBoardingPositionAssignment
+netex:deadRunType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PassengerCapacity
+netex:deckLevels
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PassengerCarryingRequirement
+netex:deckNavigationType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PassengerCommsFacility
+netex:deckPlacesInSequence
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PassengerInformationEquipment
+netex:deckPlans
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PassengerInformationFacility
+netex:deckSpaceCapacities
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PassengerSafetyEquipment
+netex:deckSpaces
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PassengerSpot
+netex:deckWindowType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PassengerSpotAllocation
+netex:deckWindows
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PassengerStopAssignment
+netex:decks
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PassengerVehicleCapacity
+netex:defaultCurrency
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PassengerVehicleSpot
+netex:defaultDuration
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PenaltyPolicy
+netex:defaultLanguage
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PersonalModeOfOperation
+netex:delegatedResponsibilitySets
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PointInLinkSequence
+netex:deliveryVariantMediaType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PointOfInterest
+netex:delta
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PointOfInterestClassification
+netex:deltaValues
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PointOfInterestClassificationHierarchy
+netex:departments
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PointOfInterestComponent
+netex:departsForwards
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PointProjection
+netex:departsToRight
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PoolOfVehicles
+netex:departureDayOffset
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PostalAddress
+netex:departureTime
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PoweredTrain
+netex:depositPolicy
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PreviousCall
+netex:depositRequired
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PriceUnit
+netex:depth
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PriceableObject
+netex:description
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PricingParameterSet
+netex:descriptor
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PricingService
+netex:destinationDisplayContext
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Projection
+netex:destinationDisplayVariantMediaType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PropertyOfDay
+netex:destinationDisplays
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PurchaseWindow
+netex:destinations
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PurposeOfEquipmentProfile
+netex:detourAccepted
     rdfs:subClassOf nits:DataArtifact .
 
-netex:PurposeOfGrouping
+netex:directionButtonHeight
     rdfs:subClassOf nits:DataArtifact .
 
-netex:QualityStructureFactor
+netex:directionName
     rdfs:subClassOf nits:DataArtifact .
 
-netex:QualityStructureFactorPrice
+netex:directionOfUse
     rdfs:subClassOf nits:DataArtifact .
 
-netex:QueueingEquipment
+netex:directionType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RailSubmode
+netex:disabledDocks
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RailwayElement
+netex:disabledPriority
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RailwayJunction
+netex:disabledVehicles
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RampEquipment
+netex:disbarring
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RampFreeAccess
+netex:discountAsPercentage
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RechargingBay
+netex:discountAsValue
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RechargingEquipmentProfile
+netex:discountBasis
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RechargingPlan
+netex:discountOnlyForFirstPerson
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RechargingPointAssignment
+netex:discountRights
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RechargingStation
+netex:discrete
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RechargingStep
+netex:displayAsIcon
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ReliefOpportunity
+netex:displayAssignmentType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RentalAvailability
+netex:displayAssignments
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RentalOption
+netex:displayPriority
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RentalPenaltyPolicy
+netex:distance
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Replacing
+netex:distanceFromFront
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RequestedTravelSpecification
+netex:distanceFromNearestKerb
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Reselling
+netex:distanceFromStart
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ReservedSpaceFacility
+netex:distanceMatrixElements
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Reserving
+netex:distributionAssignments
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ResidentialQualification
+netex:distributionChannelType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ResidentialQualificationEligibility
+netex:distributionChannels
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ResourceFrame
+netex:distributionPoints
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ResponsibilitySet
+netex:distributionRights
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RestrictedManoeuvre
+netex:documentLinks
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RestrictedServiceFacilitySet
+netex:dogsMustBeCarried
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RetailConsortium
+netex:door
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RetailDevice
+netex:doorControlElementHeight
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RetailDeviceSecurityListing
+netex:doorHandleInside
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RetailFacility
+netex:doorHandleOutside
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RetailService
+netex:doorOrientation
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Review
+netex:doorType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RoadAddress
+netex:doors
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RoadElement
+netex:doorstepMark
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RoadJunction
+netex:doubleSingleFare
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RoadVehicleMode
+netex:drinkingWater
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RollingStockInventory
+netex:driverAccessDuration
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RollingStockItem
+netex:driverDisplayText
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RoughSurface
+netex:driverFeeBasis
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RoundTrip
+netex:driverReturnDuration
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Rounding
+netex:drivingLicenceVerified
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RoundingStep
+netex:drivingStyle
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RouteInstruction
+netex:dropKerbOutside
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Routing
+netex:droppedKerb
     rdfs:subClassOf nits:DataArtifact .
 
-netex:RubbishDisposalEquipment
+netex:duration
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SafetyFacility
+netex:dutyParts
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SaleDiscountRight
+netex:dynamic
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SalesNoticeAssignment
+netex:dynamicDistanceMatrixElement
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SalesOfferPackageEntitlementGiven
+netex:earliestDayOffset
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SalesOfferPackageEntitlementRequired
+netex:earliestDepartureDayOffset
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SalesOfferPackagePrice
+netex:earliestDepartureTime
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SalesOfferPackageSubstitution
+netex:earliestTime
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SalesTransaction
+netex:earliestTimeDayOffset
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SalesTransactionFrame
+netex:edgeToTrackCenterDistance
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SanitaryEquipment
+netex:effectiveFrom
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SanitaryFacility
+netex:elementAccesses
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ScheduledOperation
+netex:email
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SchematicMap
+netex:emailVerified
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ScopeOfTicket
+netex:embargoUntil
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SeatEquipment
+netex:enclosed
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SeatingEquipment
+netex:encumbranceNeed
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SecurityListing
+netex:endDate
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SelfDriveSubmode
+netex:endDayOffset
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SensorEquipment
+netex:endEvent
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SensorInSpot
+netex:endGeographicalValue
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SeriesConstraint
+netex:endOfValidity
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SeriesConstraintPrice
+netex:endTime
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ShelterEquipment
+netex:endTimeDayOffset
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SignEquipment
+netex:endValue
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SimpleAvailabilityCondition
+netex:energySaving
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SimpleFeature
+netex:entitlementType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SimpleValidityCondition
+netex:entranceAttention
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Site
+netex:entranceRequiresPassport
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SiteComponent
+netex:entranceRequiresStaffing
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SiteConnection
+netex:entranceRequiresTicket
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SiteElement
+netex:entranceSetting
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SiteEquipment
+netex:entranceToVehicle
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SiteFacilitySet
+netex:entranceUsageType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SiteFrame
+netex:entrances
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Smartcard
+netex:equipmentLength
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SpecialService
+netex:equipmentPlaces
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SpecificParameterAssignment
+netex:equipmentPositions
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SpotAffinity
+netex:equipmentProfiles
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SpotColumn
+netex:equipmentWidth
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SpotEquipment
+netex:equipments
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SpotRow
+netex:escalatorFreeAccess
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SpotSensor
+netex:escalatorWithLanding
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SrsName
+netex:euroClass
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Staffing
+netex:exchangableFromAnyTime
     rdfs:subClassOf nits:DataArtifact .
 
-netex:StairEquipment
+netex:exchangableFromDuration
     rdfs:subClassOf nits:DataArtifact .
 
-netex:StairFlight
+netex:exchangableFromPercentUse
     rdfs:subClassOf nits:DataArtifact .
 
-netex:StairFreeAccess
+netex:exchangableTo
     rdfs:subClassOf nits:DataArtifact .
 
-netex:StaircaseEquipment
+netex:exchangableUntilAnyTime
     rdfs:subClassOf nits:DataArtifact .
 
-netex:StandardFareTable
+netex:exchangableUntilDuration
     rdfs:subClassOf nits:DataArtifact .
 
-netex:StepFreeAccess
+netex:exchangableUntilPercentUse
     rdfs:subClassOf nits:DataArtifact .
 
-netex:StepLimit
+netex:exclude
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Submode
+netex:excluded
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Subscribing
+netex:expiryDate
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Suitability
+netex:extensions
     rdfs:subClassOf nits:DataArtifact .
 
-netex:SupplementProduct
+netex:externalFloorSelection
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Suspending
+netex:facilities
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TactileGuidanceAvailable
+netex:facilitySets
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TaxiRank
+netex:factor
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TaxiService
+netex:fareBasis
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TaxiServicePlaceAssignment
+netex:fareClass
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TaxiStand
+netex:fareClasses
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TelecabinSubmode
+netex:fareContractEntries
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ThirdPartyProduct
+netex:fareContracts
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TicketValidatorEquipment
+netex:fareDemandType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TicketingEquipment
+netex:fareElementsInSequence
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TicketingFacility
+netex:fareScheduledStopPoints
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TicketingService
+netex:fareSections
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TicketingServiceFacility
+netex:fareStructureElements
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TimeDemandProfileMember
+netex:fareStructureElementsInSequence
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TimeDemandTypeAssignment
+netex:fareStructureType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TimeIntervalPrice
+netex:fareTables
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TimeStructureFactor
+netex:featureMembers
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TimeUnit
+netex:features
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TimeUnitPrice
+netex:feeBasis
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Timeband
+netex:feePerBag
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TopographicProjection
+netex:finalCarrier
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Trace
+netex:finalisationDuration
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TractiveRollingStockItem
+netex:finishingDuration
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TrailingRollingStockItem
+netex:firstArrivalTime
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Train
+netex:firstAxleHeight
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TrainBlock
+netex:firstClassDistance
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TrainBlockPart
+netex:firstClassReturn
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TrainComponent
+netex:firstClassSingle
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TrainComponentLabelAssignment
+netex:firstDayOffset
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TrainComponentStopAssignment
+netex:firstDepartureTime
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TrainElement
+netex:firstName
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TrainNumber
+netex:fixed
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TrainSize
+netex:fleets
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TrainStopAssignment
+netex:flexibleLineType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Transfer
+netex:flexibleLinkType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TransferDuration
+netex:flexiblePointProperties
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TransferRestriction
+netex:flexibleRouteType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Transferability
+netex:flexibleServiceProperties
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TransportSubmode
+netex:flexibleServiceType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TravelAgent
+netex:flexibleStopPlaces
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TravelDocument
+netex:flights
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TravelDocumentSecurityListing
+netex:floatingVehicles
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TravelSpecification
+netex:flooringStatus
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TravelatorEquipment
+netex:flooringType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TripDebit
+netex:fontSize
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TrolleyStandEquipment
+netex:forAdvertisement
     rdfs:subClassOf nits:DataArtifact .
 
-netex:TurnaroundTimeLimitTime
+netex:forAlighting
     rdfs:subClassOf nits:DataArtifact .
 
-netex:UicProductCharacteristic
+netex:forBoarding
     rdfs:subClassOf nits:DataArtifact .
 
-netex:UicTrainRate
+netex:forProduction
     rdfs:subClassOf nits:DataArtifact .
 
-netex:UnpoweredTrain
+netex:formula
     rdfs:subClassOf nits:DataArtifact .
 
-netex:UsageDiscountRight
+netex:forwardsOnly
     rdfs:subClassOf nits:DataArtifact .
 
-netex:UsageParameter
+netex:freeParkingOutOfHours
     rdfs:subClassOf nits:DataArtifact .
 
-netex:UsageParameterPrice
+netex:freeRecharging
     rdfs:subClassOf nits:DataArtifact .
 
-netex:UserNeed
+netex:freeToUse
     rdfs:subClassOf nits:DataArtifact .
 
-netex:UserProfileEligibility
+netex:frequencyGroups
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ValidBetween
+netex:frequencyInterval
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ValidDuring
+netex:frequencyOfUseType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ValidableElementPrice
+netex:frequentTravellerDuration
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ValidityCondition
+netex:fromCall
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ValidityParameterAssignment
+netex:fromDate
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ValidityRuleParameter
+netex:fromMode
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ValidityTrigger
+netex:fromVisitNumber
     rdfs:subClassOf nits:DataArtifact .
 
-netex:ValueSet
+netex:frontText
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleAccessCredentialsAssignment
+netex:fuelType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleAccessFacility
+netex:fuelTypes
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleChargingEquipment
+netex:fulfilmentMethodType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleEquipmentProfile
+netex:fulfilmentMethods
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleEquipmentProfileMember
+netex:fullCharge
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleManoeuvringRequirement
+netex:funicularSubmode
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleMeetingPointAssignment
+netex:gapToPlatform
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleMode
+netex:garagePoints
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleModel
+netex:garages
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleModelProfile
+netex:gated
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehiclePoolerProfile
+netex:gearTypeDescriotion
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehiclePooling
+netex:gender
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehiclePoolingDriverInfo
+netex:genderLimitation
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehiclePoolingParkingBay
+netex:generalGroupOfEntities
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehiclePoolingPlaceAssignment
+netex:genericParameterAssignment
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehiclePoolingService
+netex:genericParameterAssignmentInContext
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehiclePositionAlignment
+netex:geographicalIntervals
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleQuayAlignment
+netex:geographicalStructureFactors
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleReleaseEquipment
+netex:geographicalUnits
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleRental
+netex:givesEntitlement
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleRentalService
+netex:glassDoor
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleScheduleFrame
+netex:goesOnCard
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleService
+netex:gradient
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleServicePart
+netex:gradientType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleServicePlaceAssignment
+netex:gridVoltage
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleSharing
+netex:groundMarkAlignedWithButton
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleSharingParkingBay
+netex:groupBookingFacility
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleSharingPlaceAssignment
+netex:groupOfDistanceMatrixElements
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleSharingService
+netex:groupOfLinesType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleStoppingPosition
+netex:groupOfTimebands
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleTypePreference
+netex:groupSizeChanges
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VehicleTypeStopAssignment
+netex:groupsOfDistanceMatrixElements
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Version
+netex:groupsOfDistributionChannels
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VersionFrame
+netex:groupsOfEntities
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VersionedChild
+netex:groupsOfLines
     rdfs:subClassOf nits:DataArtifact .
 
-netex:VisualSignsAvailable
+netex:groupsOfSaleOfferPackages
     rdfs:subClassOf nits:DataArtifact .
 
-netex:WaitingEquipment
+netex:groupsOfSalesOfferPackages
     rdfs:subClassOf nits:DataArtifact .
 
-netex:WaitingRoomEquipment
+netex:groupsOfServices
     rdfs:subClassOf nits:DataArtifact .
 
-netex:WaterSubmode
+netex:groupsOfSites
     rdfs:subClassOf nits:DataArtifact .
 
-netex:WheelchairAccess
+netex:guaranteed
     rdfs:subClassOf nits:DataArtifact .
 
-netex:WheelchairVehicleEquipment
+netex:guideDogAccess
     rdfs:subClassOf nits:DataArtifact .
 
-netex:Whitelist
+netex:guideDogsAllowed
     rdfs:subClassOf nits:DataArtifact .
 
-netex:WireElement
+netex:handWashing
     rdfs:subClassOf nits:DataArtifact .
 
-netex:WireJunction
+netex:handrailHeight
     rdfs:subClassOf nits:DataArtifact .
 
-netex:appliesOnOperatingDay
+netex:handrailType
     rdfs:subClassOf nits:DataArtifact .
 
-netex:onLine
+netex:hasArmrest
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hasBlind
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hasDiscountedFares
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hasDoor
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hasDynamicPricing
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hasExchangeFee
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hasFee
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hasFreeConnectingReservations
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hasHoist
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hasLiftOrRamp
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hasMinimumPrice
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hasNotices
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hasPhoto
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hasPower
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hasPowerSupply
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hasPurchaseConditions
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hasQuota
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hasReservationFee
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hasRouteRestrictions
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hasTransferFee
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hasTravelTimeRestrictions
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hasUsbPowerSocket
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hasWheelchairSpaces
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:heading
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:headroom
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:headroomForLuggage
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:headwayDisplay
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:headways
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:heated
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:height
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:heightFromFloor
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:heightFromGround
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:heightOfLowCounter
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:heightOfMachineInterface
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:heightOfSosPanel
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:helmet
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hide
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:highFloor
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hoist
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:hoistOperatingRadius
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:holidayType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:holidayTypes
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:houseNumber
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:identityToken
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:identityVerified
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:image
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:imageUri
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:immobilisation
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:includedIn
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:includes
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:includesGroupingType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:individualPassengerInfos
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:inductionLoop
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:inductionLoopSign
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:inductionLoops
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:infoLinks
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:infoUrl
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:initialCarrier
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:installmentPaymentMethods
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:installmentTypesOfPaymentMethod
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:instruction
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:insuranceVerified
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:integratesAnEscalatorPart
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:interchangeAllowed
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:internalHeight
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:internalWidth
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:intervalType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:inverseAllowed
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isAcceptingReturns
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isAccessibleOnVoyage
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isAllowed
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isAutomatic
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isAvailable
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isBetweenSeats
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isByAisle
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isByWindow
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isCard
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isDirect
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isEmergencyExit
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isExchangable
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isFacingAisle
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isFacingWindow
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isFareStage
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isFeeRefundable
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isFirstInSequence
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isFoldup
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isForbidden
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isInEndRow
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isInFrontRow
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isLastInSequence
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isLockable
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isObligatory
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isOperational
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isPersonal
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isPortable
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isReclining
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isRefundable
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isRenting
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isRequired
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isRestricted
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isReversible
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isSmartCard
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isStowable
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isSupplement
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isValid
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:isoCode
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:itinerary
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:jointCheckIn
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:journeyAccountings
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:journeyDesignator
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:journeyDuration
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:journeyPartPositions
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:journeyParts
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:journeyPatternRunTime
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:journeyPatterns
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:journeys
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:keptOpen
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:keyScheme
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:label
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lamps
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:landmark
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lang
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:languages
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lastArrivalTime
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lastDayOffset
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lastDepartureTime
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lastTripDate
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lastUpdated
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lastVerifiedDate
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:latestArrivalDayOffset
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:latestArrivalTime
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:latestBookingTime
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:latestDayOffset
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:latestTime
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:latestTimeDayOffset
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:layers
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:layover
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:layovers
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:leftSideBorder
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:legalName
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:legalStatus
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:length
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:levelAccessIntoVehicle
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:liftFreeAccess
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lighting
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lightingOnMethod
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:likeForLikeRefuelling
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:limitationGroupingType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:limitationSetSelectionType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:limitations
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:limitedUse
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lineDirections
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lineMap
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lineName
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lineSectionPointType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lineType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lines
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:linesInDirectionRefs
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:link
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:linkSequenceProjection
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:links
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:linksInSequence
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:localControl
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:localResident
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:localServices
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:locale
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:locatableSpotType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:locationSystem
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lock
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lockedAccess
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:locker
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lockerDepth
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lockerFee
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lockerHeight
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lockerType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lockerWidth
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lockingMechanism
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lockingType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:logEntries
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:logInRequired
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lowCounterAccess
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lowFloor
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:lowerHandrailHeight
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:luggageAllowanceType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:luggageAllowed
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:luggageChargingBasis
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:luggageMaximalWeigth
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:luggageSpotType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:luggageSpots
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:luggageTrolleys
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:machineReadable
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:magneticInductionLoop
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:mainTerminusForPlaces
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:mandatoryProduct
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:manufacturer
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:mark
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:markUrl
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:markedAs
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:markingStatus
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximalFrequency
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumAccess
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumAge
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumAutomaticWaitTime
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumBagDepth
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumBagHeight
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumBagWeight
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumBagWidth
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumBookingDuration
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumChargingPower
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumDistance
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumDuration
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumFlowPerMinute
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumHeadwayInterval
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumHeight
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumInterchangeWindow
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumLength
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumLikelyDelay
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumLimitPrice
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumLimitPriceAsPercentage
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumLoad
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumNumberItems
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumNumberOfBerths
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumNumberOfFailToCheckOutEvents
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumNumberOfInterchanges
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumNumberOfNamedTransferees
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumNumberOfNightsAway
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumNumberOfPersons
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumNumberOfSteps
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumNumberOfSuspensionsPerTerm
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumNumberOfTrips
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumNumberToReserve
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumPassengers
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumPeriodBeforeDeparture
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumPersonsDiscounted
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumPersonsFree
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumPower
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumPowerAvailable
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumPrice
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumPriceAsMultiple
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumPriceAsPercentage
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumRange
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumRecline
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumSpeed
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumSpots
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumStandingDuration
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumStay
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumTimeToMakeATransfer
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumTransferTime
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumVelocity
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumWaitTime
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumWeight
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:maximumWidth
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:mayBeSkipped
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:mediaType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:mediumAccessDevices
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:meetingPointAssignments
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:meetingPointServiceType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:members
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:method
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:methodName
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:metroSubmode
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimalFrequency
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumAccess
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumAge
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumBookingDuration
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumDuration
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumHeadwayInterval
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumHeight
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumLength
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumLikelyDelay
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumLimitPrice
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumLimitPriceAsPercentage
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumNumberOfCardHolders
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumNumberOfNightsAway
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumNumberOfPassengers
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumNumberOfPersons
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumNumberOfSteps
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumNumberToReserve
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumOvertakingWidth
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumPeriodBeforeDeparture
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumPrice
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumPriceAsMultiple
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumPriceAsPercentage
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumStayType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumTimeBeforeReentry
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumTransferTime
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumTurningCircle
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumUnits
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:minimumWidth
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:mirrorOnOppositeSide
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:mobileDeviceTickets
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:mobilePhoneCoverage
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:mobilityImpairedAccess
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:mobilityNeed
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:mobilityRestrictedTravellerDuration
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:mode
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:modeRestrictionAssessments
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:modification
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:modificationSet
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:monitored
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:monitoredBays
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:monitoringRemoteControl
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:month
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:monthDayOnWhichAgeApplies
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:monthOfYear
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:monthValidityOffsets
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:mustCarry
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:mustReserveWholeCompartment
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:mustReside
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:mustReturnToSameBay
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:name
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:nameOfClass
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:nameOnRouting
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:nameSuffix
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:nameType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:nature
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:navigationType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:nearTopographicPlaces
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:necessaryForceToOpen
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:needRanking
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:neighbours
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:newValue
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:nightTrain
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:noCashPayment
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:nominalVoltage
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:note
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:notice
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:notices
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:number
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:numberOFDrivers
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:numberOfBaysWithRecharging
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:numberOfCars
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:numberOfExchangesAllowed
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:numberOfFlights
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:numberOfFreeConnectingReservations
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:numberOfGates
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:numberOfGears
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:numberOfLockers
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:numberOfMachines
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:numberOfParkingLevels
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:numberOfProposedTrips
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:numberOfServers
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:numberOfSpaces
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:numberOfSteps
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:numberOfTills
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:numberOfToilets
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:numberOfTravellersCarried
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:numberOfUnits
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:numberingFromFront
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:numberingFromLeft
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:occasionalTravellerDuration
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:oldValue
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:onBecomingEligiblePolicy
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:onCeasingToBeEligiblePolicy
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:onboardStays
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:oneForNPersons
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:onlinePurchaseForCollection
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:onlinePurchaseForETicket
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:onlinePurchaseForSelfPrintTicket
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:onlineServices
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:onlyAtCertainDistributionPoints
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:onwardCalls
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:onwardLinks
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:operatingDays
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:operatingPeriods
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:operationalContexts
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:operationalNumber
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:operationalOrientation
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:operatorActivities
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:operators
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:organisationRoleType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:organisationType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:orientation
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:otherCountries
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:otherFacilities
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:otherModes
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:otherTransportModes
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:outOfService
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:overnightParkingPermitted
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:overtakingWidth
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:ownResponsibilitySets
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:panicButton
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:parkingChargeBand
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:parkingChargeBands
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:parkingComponents
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:parkingLayout
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:parkingPaymentCode
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:parkingPaymentProcess
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:parkingProperties
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:parkingReservation
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:parkingStayType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:parkingType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:parkingUserType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:parkingUserTypes
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:parkingVehicleType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:parkingVehicleTypes
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:parkingVisibility
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:partial
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:parts
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:passageType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:passengerAtStopTimes
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:passengerCapacity
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:passengerSpaceType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:passengerSpotAllocations
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:passengerSpots
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:passengerVehicleSpots
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:passengersPerMinute
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:passingThrough
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:passingTimeDayOffset
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:passingTimes
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:pathHeading
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:pathInstructions
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:pathJunctions
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:pathLinks
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:pathLinksInSequence
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:paymentMeans
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:paymentMethod
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:paymentMethods
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:pedestal
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:pedestrianLights
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:penaltyFee
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:penaltyIfWithoutTicket
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:penaltyPolicyType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:period
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:periodicity
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:personCapacity
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:personalOperationType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:petsAllowed
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:phone
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:phoneVerified
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:photo
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:placeCentre
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:placeEquipments
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:placeName
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:placeTypes
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:placement
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:placesInSequence
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:planned
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:plateCode
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:platformHeight
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:plugType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:point
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:pointNumber
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:pointOfInterestClassificationHierarchies
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:pointOfInterestSpaceType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:points
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:pointsInSequence
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:pointsOfInterest
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:poolingPolicyUrl
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:poolsOfVehicles
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:positionInTrain
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:positionOfTrainElement
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:possibleInstallmenttIntervals
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:postCode
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:postCodeExtension
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:postalAddress
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:postalRegion
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:powerCouplingType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:pramPlaceCapacity
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:precision
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:preparationDuration
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:prerequisites
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:presentationPosition
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:previousCalls
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:priceGroups
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:priceUnits
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:prices
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:pricesFor
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:pricingBasis
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:pricingParameterSet
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:pricingServices
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:primaryMode
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:primaryOrientation
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:principalCapacity
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:print
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:priority
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:privateCode
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:privateContactDetails
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:productType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:prohibitedForHazardousMaterials
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:projection
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:projections
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:proofRequired
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:properties
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:propertyKeptForDuration
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:proposedByServices
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:proposingServices
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:propulsionType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:propulsionTypes
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:providesCard
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:province
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:psychosensoryNeed
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:public
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:publicUse
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:publicityChannel
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:pump
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:purchaseAction
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:purchaseMoment
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:purchaseWhen
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:pushchairCapacity
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:qualificationPercent
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:qualifierName
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:qualityStructureFactors
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:quay
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:quayAlignments
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:quayType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:quays
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:queueManagement
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:queuingSeatedPossible
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:railSubmode
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:railedQueue
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:raisedButtons
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:ramp
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:rampDoorbell
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:rampFreeAccess
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:range
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:rangeBetweenRefuelling
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:rank
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:ranking
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:reachedFloorAnnouncement
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:realTimeOccupancyAvailable
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:reason
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:rechargingAvailable
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:rechargingPointAssignments
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:rechargingProcessType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:rechargingSteps
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:recognizable
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:recycling
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:refundBasis
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:registrationDate
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:registrationNumber
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:registrationRequired
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:relationToVehicle
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:relativeLevelOrder
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:relativeRanking
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:relativeWeighting
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:reliefOpportunities
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:remarks
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:remoteControl
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:rentalPenaltyPolicyType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:rentalPolicyUrl
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:replaces
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:requestMethod
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:requestMethodType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:requestStop
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:requiresAccount
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:requiresBookingReference
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:requiresCard
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:requiresDeposit
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:requiresEmailAddress
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:requiresEntitlement
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:requiresNightsAway
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:requiresPhoto
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:requiresPositiveBalance
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:requiresRegistration
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:requiresReservation
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:requiresValidation
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:resellWhen
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:reservationChargeType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:reservationRequired
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:reservationUrl
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:reservingRequirements
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:residenceType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:residencyType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:resides
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:responsibilities
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:responsibilityRoles
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:responsibilitySets
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:restStopDistance
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:restricted
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:restrictedLine
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:restrictedToChannel
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:restrictionType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:retailConsortiums
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:retailDevices
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:returnFareTwiceSingle
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:returnRouteIdentical
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:returnTripsOnly
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:reverse
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:reverseMembers
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:reversedOrientation
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:reversible
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:reversingDirection
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:reviews
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:revolvingDoor
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:rightSideBorder
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:roadAddress
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:roadName
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:roadNumber
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:roles
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:rollingStockInventories
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:rollingStockItems
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:rollingStockType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:roofRack
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:roundIfGreaterThan
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:roundTo
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:roundingMethod
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:roundingModulus
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:roundingSteps
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:roundings
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:routeInstructions
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:routes
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:routingType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:rows
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:ruleApplicability
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:ruleStepResults
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:runTime
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:runTimes
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:safeForGuideDog
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:safetyEdge
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:salesOfferPackageElements
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:salesOfferPackageSubstitutions
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:salesOfferPackages
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:salesTransactions
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:sameStationRentryPolicy
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:sanitary
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:satNav
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:satisfiesFacilityRequirements
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:scheduledHeadwayInterval
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:schematicMaps
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:scopeOfTicketsAvailable
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:scopingMethod
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:season
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:seasons
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:seatAllocationMethod
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:seatBackHeight
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:seatDepth
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:seatHeight
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:seatingCapacity
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:seats
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:secondClassDistance
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:secondClassReturn
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:secondClassSingle
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:sectionType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:sections
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:sectionsInSequence
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:secure
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:secureParking
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:selfDriveSubmode
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:selfPropelled
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:selfServiceLockers
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:sensorsInSpot
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:sequenceFromFront
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:seriesConstraints
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:seriesType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:servedPlaces
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:servedScheduledStopPoints
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:serviceAlteration
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:serviceAlterationType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:serviceBookingArrangements
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:serviceDesignator
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:serviceFacilitySets
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:services
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:sharedUsage
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:sharingPolicyUrl
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:sharpsDisposal
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:shortCode
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:shortName
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:shortStopCode
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:shortTrip
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:showAsAccessible
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:showerFacility
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:sideText
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:signContentType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:signGraphic
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:signageToLift
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:siteFacilitySet
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:siteFacilitySets
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:skiRack
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:smoker
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:smokingAllowed
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:snowAndIceSubmode
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:sosPanel
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:spaces
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:specialPlaceCapacity
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:specificParameterAssignments
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:speed
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:spiralStair
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:spotAffinities
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:spotAffinityType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:spotAllocations
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:spotAvailabilityStatus
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:spotColumns
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:spotRows
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:staffing
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:stairFreeAccess
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:stairRamp
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:stakeholderRoleType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:standardTransferTime
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:standardWaitTime
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:standingAllowed
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:standingCapacity
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:startDate
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:startEvent
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:startGeographicalValue
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:startOfValidity
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:startTime
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:startTimeDayOffset
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:startTimeInBlock
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:startTimesAtStopPoints
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:startValue
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:status
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:staySeated
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:stepColourContrast
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:stepCondition
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:stepFree
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:stepFreeAccess
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:stepHeight
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:stepLength
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:stopPlaceType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:stopPlaceWeight
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:stopPlaces
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:stopRequestButton
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:stopRequestTimeout
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:stopType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:stopUse
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:stopUseConstraint
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:street
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:structureFactors
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:submodes
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:subscriptionRenewalPolicy
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:subscriptionTermType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:suburb
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:subzones
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:suitabilities
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:suitable
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:suitableFor
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:suitableForCycles
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:summaries
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:supplementProductType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:supplementTo
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:supportBarHeight
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:surfaceType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:surname
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:suspension
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:suspensionPolicy
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:tableType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:tactileActuators
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:tactileGroundFloorButton
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:tactileGuidanceAvailable
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:tactileGuidanceStrips
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:tactileGuidingStrip
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:tactileGuidingStripStatus
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:tactileInterfaceAvailable
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:tactileValidationFeedback
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:tactileWarningStrip
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:tactileWarningStripContrast
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:tactileWriting
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:talkative
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:targetEnergy
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:tariffBasis
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:tariffs
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:taxCategory
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:taxiRanks
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:taxiStands
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:taxiSubmode
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:telecabinSubmode
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:temporary
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:text
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:thirdPartyProducts
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:throughLoader
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:ticketCounter
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:ticketCounterService
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:ticketMachines
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:ticketOffice
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:ticketTypesAvailable
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:ticketValidatorType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:ticketedQueue
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:ticketing
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:tides
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:tiltAngle
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:tiltType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:time
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:timeDemandTypes
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:timeIntervals
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:timeStructureFactors
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:timeUnits
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:timebands
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:timingPointStatus
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:timings
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:title
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:toCall
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:toDate
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:toFareClass
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:toMode
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:toVisitNumber
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:toiletFacility
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:toiletsType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:topographicPlaceType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:topographicPlaces
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:totalCapacity
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:totalChargeEnergy
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:totalPower
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:totalWeight
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:towards
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:town
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:traces
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:tradingName
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:trailerHitch
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:trainComponentLabelAssignments
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:trainElement
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:trainElementType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:trainElementTypes
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:trainElements
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:trainNumbers
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:trainRestrictions
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:trainSize
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:trainSizeType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:tramSubmode
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:transferDuration
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:transferMode
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:transferModes
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:transferOnly
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:transfers
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:transitCarrier
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:transition
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:transmission
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:transportMode
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:transportModes
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:transportSubmode
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:transportTypes
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:travelDocuments
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:travelSpecifications
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:travellingWithPet
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:tripTimes
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:tripType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:turningSpacePosition
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:type
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:typeOfCoupling
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:typeOfEntity
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:typeOfFuel
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:typeOfName
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:types
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:typesOfEntity
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:typesOfFareProduct
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:typesOfMachineReadabilities
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:typesOfPaymentMethod
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:typesOfRetailDevice
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:typesOfServiceFeature
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:typesOfTravelDocument
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:typesOfTravelDocuments
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:typesOfValue
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:uicCode
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:uicTrainRate
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:units
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:unlimitedMileage
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:unlocalisedEquipments
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:unusedTicketsOnly
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:url
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:usage
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:usbPowerSockets
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:useToExclude
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:usedIn
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:userAcronym
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:userTypes
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vATNumber
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:validBetween
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:validDayBits
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:validableElements
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:validationGuidance
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:validityConditions
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:validityParameterAssignmentType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:validityParameterAssignments
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:validityParameterGroupingType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:validityParameterSetSelectionType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:value
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:valueName
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:values
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:variantText
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:variants
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vehicleCapacity
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vehicleCategories
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vehicleCollection
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vehicleEquipmentProfileMembers
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vehicleEquipmentProfiles
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vehicleMeetingLinks
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vehicleMeetingPlaceAssignments
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vehicleMeetingPointAssignments
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vehicleMeetingPoints
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vehicleMode
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vehicleModelProfiles
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vehicleModels
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vehicleModes
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vehicleOrientation
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vehiclePoolingDriverInfos
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vehiclePositionAlignments
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vehiclePreferences
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vehicleRestrictions
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vehicleServiceParts
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vehicleSide
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vehicleStoppingPlaces
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vehicleStoppingPositions
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vehicleTypes
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vehicles
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:versionFrames
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:versionType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:versions
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:viaFlag
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:viaType
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vias
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:vibratingCrossingAids
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:visitNumber
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:visualContrast
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:visualGuidanceBands
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:visualObstacle
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:visualSignsAvailable
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:visualValidationFeedback
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:waitTime
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:waitTimes
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:waitingTime
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:walkTransferDuration
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:waterSubmode
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:weeksOfMonth
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:weight
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:weighting
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:wheelchairAccepted
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:wheelchairAccess
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:wheelchairBookingRequired
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:wheelchairLuggageTrolleys
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:wheelchairPassable
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:wheelchairPassengers
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:wheelchairPlaceCapacity
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:wheelchairSuitable
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:wheelchairTurningCircle
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:wheelchairUnaided
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:whitelistRefs
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:whitelists
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:width
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:winterTyres
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:withoutRiser
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:womenOnly
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:x
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:xOffset
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:xmlns
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:xmlnsUrl
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:y
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:yOffset
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:zebraCrossing
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:zoneContainingStops
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:zoneTopology
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:zoneUse
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:zones
+    rdfs:subClassOf nits:DataArtifact .
+
+netex:zonesInSeries
     rdfs:subClassOf nits:DataArtifact .
 
 # nits:Journey
-netex:CoupledJourney
+netex:canBreakJourney
     rdfs:subClassOf nits:Journey .
 
-netex:CourseOfJourneys
+netex:coupledJourneys
     rdfs:subClassOf nits:Journey .
 
-netex:DatedServiceJourney
+netex:courseOfJourneysNumber
     rdfs:subClassOf nits:Journey .
 
-netex:DatedVehicleJourney
+netex:coursesOfJourneys
     rdfs:subClassOf nits:Journey .
 
-netex:DeadRunJourneyPattern
+netex:excludedJourneyPatternRefs
     rdfs:subClassOf nits:Journey .
 
-netex:DefaultServiceJourneyRunTime
+netex:farePointsInPattern
     rdfs:subClassOf nits:Journey .
 
-netex:FarePointInPattern
+netex:fromStopPointInJourneyPattern
     rdfs:subClassOf nits:Journey .
 
-netex:FlexibleRoute
+netex:journeyPattern
     rdfs:subClassOf nits:Journey .
 
-netex:GroupOfSingleJourneys
+netex:numberOfJourneysToShow
     rdfs:subClassOf nits:Journey .
 
-netex:JourneyAccounting
+netex:onMainRoute
     rdfs:subClassOf nits:Journey .
 
-netex:JourneyDesignator
+netex:pointsInPattern
     rdfs:subClassOf nits:Journey .
 
-netex:JourneyHeadway
+netex:registerBreakOfJourney
     rdfs:subClassOf nits:Journey .
 
-netex:JourneyLayover
+netex:replacedJourneys
     rdfs:subClassOf nits:Journey .
 
-netex:JourneyMeeting
+netex:serviceJourneyPatternType
     rdfs:subClassOf nits:Journey .
 
-netex:JourneyPart
+netex:symbolMarkingUsualRoute
     rdfs:subClassOf nits:Journey .
 
-netex:JourneyPartCouple
+netex:templateVehicleJourneyType
     rdfs:subClassOf nits:Journey .
 
-netex:JourneyPartPosition
+netex:toStopPointInJourneyPattern
     rdfs:subClassOf nits:Journey .
 
-netex:JourneyPatternHeadway
+netex:vehicleJourneySpotAllocations
     rdfs:subClassOf nits:Journey .
 
-netex:JourneyPatternLayover
+netex:vehicleJourneyStopAssignments
     rdfs:subClassOf nits:Journey .
-
-netex:JourneyPatternRunTime
-    rdfs:subClassOf nits:Journey .
-
-netex:JourneyPatternWaitTime
-    rdfs:subClassOf nits:Journey .
-
-netex:JourneyRunTime
-    rdfs:subClassOf nits:Journey .
-
-netex:JourneyTiming
-    rdfs:subClassOf nits:Journey .
-
-netex:JourneyWaitTime
-    rdfs:subClassOf nits:Journey .
-
-netex:LinkInJourneyPattern
-    rdfs:subClassOf nits:Journey .
-
-netex:MobilityJourneyFrame
-    rdfs:subClassOf nits:Journey .
-
-netex:NormalDatedVehicleJourney
-    rdfs:subClassOf nits:Journey .
-
-netex:PointInJourneyPattern
-    rdfs:subClassOf nits:Journey .
-
-netex:PointOnRoute
-    rdfs:subClassOf nits:Journey .
-
-netex:PurposeOfJourneyPartition
-    rdfs:subClassOf nits:Journey .
-
-netex:ServiceJourneyInterchange
-    rdfs:subClassOf nits:Journey .
-
-netex:ServiceJourneyPatternInterchange
-    rdfs:subClassOf nits:Journey .
-
-netex:ServiceLinkInJourneyPattern
-    rdfs:subClassOf nits:Journey .
-
-netex:ServicePattern
-    rdfs:subClassOf nits:Journey .
-
-netex:SingleJourney
-    rdfs:subClassOf nits:Journey .
-
-netex:StopPointInJourneyPattern
-    rdfs:subClassOf nits:Journey .
-
-netex:TemplateServiceJourney
-    rdfs:subClassOf nits:Journey .
-
-netex:TemplateVehicleJourney
-    rdfs:subClassOf nits:Journey .
-
-netex:TimingLinkInJourneyPattern
-    rdfs:subClassOf nits:Journey .
-
-netex:TimingPattern
-    rdfs:subClassOf nits:Journey .
-
-netex:TimingPointInJourneyPattern
-    rdfs:subClassOf nits:Journey .
-
-netex:VehicleJourney
-    rdfs:subClassOf nits:Journey .
-
-netex:VehicleJourneyHeadway
-    rdfs:subClassOf nits:Journey .
-
-netex:VehicleJourneyLayover
-    rdfs:subClassOf nits:Journey .
-
-netex:VehicleJourneyRunTime
-    rdfs:subClassOf nits:Journey .
-
-netex:VehicleJourneySpotAllocation
-    rdfs:subClassOf nits:Journey .
-
-netex:VehicleJourneyStopAssignment
-    rdfs:subClassOf nits:Journey .
-
-netex:VehicleJourneyWaitTime
-    rdfs:subClassOf nits:Journey .
-
-netex:hasJourneyPattern
-    rdfs:subClassOf nits:Journey .
-
-netex:hasPointInJourneyPattern
-    rdfs:subClassOf nits:Journey .
-
-netex:hasServiceJourney
-    rdfs:subClassOf nits:Journey .
-
-netex:usesRoute
-    rdfs:subClassOf nits:Journey .
-
-# nits:Line
-netex:LineSectionPointMember
-    rdfs:subClassOf nits:Line .
-
-netex:LineShape
-    rdfs:subClassOf nits:Line .
-
-# nits:Network
-netex:LineNetwork
-    rdfs:subClassOf nits:Network .
-
-netex:NetworkFrameTopic
-    rdfs:subClassOf nits:Network .
-
-netex:NetworkRestriction
-    rdfs:subClassOf nits:Network .
 
 # nits:Organisation
-netex:GeneralOrganisation
+netex:additionalOperators
     rdfs:subClassOf nits:Organisation .
 
-netex:OnlineServiceOperator
+netex:comparisonOperator
     rdfs:subClassOf nits:Organisation .
 
-netex:OrganisationPart
+netex:groupOfOperators
     rdfs:subClassOf nits:Organisation .
 
-netex:OrganisationalUnit
+netex:groupsOfOperators
     rdfs:subClassOf nits:Organisation .
 
-netex:OtherOrganisation
+netex:hasOperatorRestrictions
     rdfs:subClassOf nits:Organisation .
 
-netex:RelatedOrganisation
+netex:relatedOrganisations
     rdfs:subClassOf nits:Organisation .
 
-netex:ServicedOrganisation
+netex:servicedOrganisationType
     rdfs:subClassOf nits:Organisation .
 
-netex:TransportOrganisation
+netex:typesOfOrganisation
     rdfs:subClassOf nits:Organisation .
-
-# nits:RealTimeInformation
-netex:MonitoredCall
-    rdfs:subClassOf nits:RealTimeInformation .
-
-netex:MonitoredVehicleSharingParkingBay
-    rdfs:subClassOf nits:RealTimeInformation .
-
-# nits:Service
-netex:ServiceAccessRight
-    rdfs:subClassOf nits:Service .
-
-netex:ServiceBookingArrangement
-    rdfs:subClassOf nits:Service .
-
-netex:ServiceDesignator
-    rdfs:subClassOf nits:Service .
-
-netex:ServiceExclusion
-    rdfs:subClassOf nits:Service .
-
-netex:ServiceFacilitySet
-    rdfs:subClassOf nits:Service .
-
-netex:ServiceFrame
-    rdfs:subClassOf nits:Service .
-
-netex:ServiceReservationFacility
-    rdfs:subClassOf nits:Service .
-
-netex:ServiceSite
-    rdfs:subClassOf nits:Service .
 
 # nits:SpatialEntity
-netex:AccessSpace
+netex:administrativeZones
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:AccessZone
+netex:allAreasWheelchairAccessible
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:ActivationLink
+netex:boardingPositionEntrances
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:ActivationPoint
+netex:deckEntranceAssignments
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:AddressablePlace
+netex:deckEntranceCouples
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:AdministrativeZone
+netex:deckEntranceType
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:BeaconPoint
+netex:deckEntranceUsages
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:CommonSection
+netex:deckEntrances
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:DeckEntrance
+netex:deckNavigationPaths
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:DeckEntranceAssignment
+netex:deckPathJunction
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:DeckEntranceCouple
+netex:deckPathJunctions
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:DeckEntranceUsage
+netex:deckPathLinks
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:DeckNavigationPath
+netex:fareZones
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:DeckPathJunction
+netex:groupsOfTariffZones
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:DeckPathLink
+netex:hasZoneRestrictions
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:DeckSpace
+netex:heightOfAccessArea
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:DeckVehicleEntrance
+netex:infoLink
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:Entrance
+netex:isWaitPoint
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:EntranceEquipment
+netex:legSpace
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:EntranceSensor
+netex:lengthOfAccessArea
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:EquipmentPlace
+netex:linksOnSection
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:FareScheduledStopPoint
+netex:mobilityServiceConstraintZones
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:FlexibleArea
+netex:navigationPaths
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:FlexibleStopPlace
+netex:numberOfWheelchairAreas
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:GaragePoint
+netex:parkingAreas
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:GeneralSection
+netex:pointStandingForAZone
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:GeneralZone
+netex:pointsOnSection
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:GenericNavigationPath
+netex:reversePointsOnSection
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:GenericPathJunction
+netex:scheduledStopPoint
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:GenericPathLink
+netex:sensorsInEntrance
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:HailAndRideArea
+netex:stopAreas
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:InfoLink
+netex:stopPlace
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:InfrastructureLink
+netex:summerTimeZone
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:InfrastructurePoint
+netex:summerTimeZoneOffset
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:LineSection
+netex:timeZone
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:Link
+netex:timeZoneOffset
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:MobilityServiceConstraintZone
+netex:turningSpace
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:NavigationPath
+netex:unscheduledPath
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:NavigationPathAssignment
+netex:vehicleEntrances
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:OffSitePathLink
+netex:wheelchairAreaLength
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:OnboardSpace
+netex:wheelchairAreaWidth
     rdfs:subClassOf nits:SpatialEntity .
 
-netex:OtherDeckEntrance
+netex:widthOfAccessArea
     rdfs:subClassOf nits:SpatialEntity .
-
-netex:OtherDeckSpace
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:ParkingEntranceForVehicles
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:ParkingPassengerEntrance
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:ParkingPoint
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:PassengerEntrance
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:PassengerSpace
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:PathInstruction
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:PathJunction
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:PathLink
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:PathLinkInSequence
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:Place
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:PlaceEquipment
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:PlaceInSequence
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:PlaceLighting
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:PlaceSign
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:Point
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:PointOfInterestEntrance
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:PointOfInterestSpace
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:PointOfInterestVehicleEntrance
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:PointOnLineSection
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:PointOnLink
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:PointOnSection
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:ReliefPoint
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:RouteLink
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:RoutePoint
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:RoutingConstraintZone
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:Section
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:SensorInEntrance
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:ServiceLink
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:SingleJourneyPath
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:SiteNavigationPath
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:SitePathJunction
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:SitePathLink
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:StartTimeAtStopPoint
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:StopPlaceEntrance
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:StopPlaceSpace
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:StopPlaceVehicleEntrance
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:TaxiParkingArea
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:TimingLink
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:TimingPoint
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:TopographicPlace
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:TrafficControlPoint
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:TransportAdministrativeZone
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:VehicleEntrance
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:VehicleMeetingLink
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:VehicleMeetingPlace
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:VehicleMeetingPoint
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:VehicleMeetingPointInPath
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:VehiclePoolingMeetingPlace
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:VehiclePoolingParkingArea
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:VehicleSharingParkingArea
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:VehicleStoppingPlace
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:VehicleTypeAtPoint
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:VehicleTypeZoneRestriction
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:Zone
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:ZoneInSeries
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:ZoneProjection
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:inStopPlace
-    rdfs:subClassOf nits:SpatialEntity .
-
-netex:servesScheduledStopPoint
-    rdfs:subClassOf nits:SpatialEntity .
-
-# nits:Stop
-netex:FlexibleQuay
-    rdfs:subClassOf nits:Stop .
-
-netex:StopAssignment
-    rdfs:subClassOf nits:Stop .
-
-netex:StopPlaceComponent
-    rdfs:subClassOf nits:Stop .
 
 # nits:TemporalEntity
-netex:DayTypeAssignment
+netex:cappingPeriod
     rdfs:subClassOf nits:TemporalEntity .
 
-netex:ServiceCalendarFrame
+netex:expireAfterPeriod
     rdfs:subClassOf nits:TemporalEntity .
 
-netex:hasDayTypeAssignment
+netex:maximumBookingPeriod
     rdfs:subClassOf nits:TemporalEntity .
 
-# nits:Timetable
-netex:TimetableFrame
-    rdfs:subClassOf nits:Timetable .
+netex:maximumRentalPeriod
+    rdfs:subClassOf nits:TemporalEntity .
 
-netex:TimetabledPassingTime
-    rdfs:subClassOf nits:Timetable .
+netex:maximumSharingPeriod
+    rdfs:subClassOf nits:TemporalEntity .
 
-netex:hasTimetabledPassingTime
-    rdfs:subClassOf nits:Timetable .
+netex:maximumSubscriptionPeriod
+    rdfs:subClassOf nits:TemporalEntity .
+
+netex:maximumSuspensionPeriod
+    rdfs:subClassOf nits:TemporalEntity .
+
+netex:minimumBookingPeriod
+    rdfs:subClassOf nits:TemporalEntity .
+
+netex:minimumQualificationPeriod
+    rdfs:subClassOf nits:TemporalEntity .
+
+netex:minimumRentalPeriod
+    rdfs:subClassOf nits:TemporalEntity .
+
+netex:minimumSharingPeriod
+    rdfs:subClassOf nits:TemporalEntity .
+
+netex:minimumSubscriptionPeriod
+    rdfs:subClassOf nits:TemporalEntity .
+
+netex:minimumSuspensionPeriod
+    rdfs:subClassOf nits:TemporalEntity .
+
+netex:notificationPeriod
+    rdfs:subClassOf nits:TemporalEntity .
+
+netex:paymentGracePeriod
+    rdfs:subClassOf nits:TemporalEntity .
+
+netex:qualificationPeriod
+    rdfs:subClassOf nits:TemporalEntity .
+
+netex:reservationExpiryPeriod
+    rdfs:subClassOf nits:TemporalEntity .
+
+netex:serviceCalendar
+    rdfs:subClassOf nits:TemporalEntity .
+
+netex:uicOperatingPeriod
+    rdfs:subClassOf nits:TemporalEntity .
 
 ```
 

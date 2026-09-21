@@ -31,7 +31,7 @@ env = environ.Env(
     DEV_JWT_TTL_MINUTES=(int, 480),
     ALLOWED_SOURCE_REPOSITORIES=(
         str,
-        "https://github.com/TransmodelEcosystem/NeTEx,https://github.com/SIRI-CEN/SIRI,https://github.com/OpRa-CEN/OpRa",
+        "https://github.com/TransmodelEcosystem/NeTEx,https://github.com/SIRI-CEN/SIRI,https://github.com/TransmodelEcosystem/OpRa",
     ),
     INDEX_SCHEDULE_REPO_URL=(str, ""),
     INDEX_SCHEDULE_REPO_PATH=(str, ""),
@@ -56,7 +56,9 @@ env = environ.Env(
     CONTROLLER_LLM_EXECUTABLE=(str, ""),
     CONTROLLER_LLM_MODEL_PATH=(str, ""),
     CONTROLLER_LLM_DEVICE=(str, "none"),
-    CONTROLLER_LLM_TIMEOUT_SECONDS=(int, 20),
+    # Routing decision with graceful fallback: a slow controller must not hold
+    # the request anywhere near as long as answer generation may.
+    CONTROLLER_LLM_TIMEOUT_SECONDS=(int, 5),
     CONTROLLER_LLM_CTX_SIZE=(int, 2048),
     CONTROLLER_LLM_MAX_TOKENS=(int, 96),
     CONTROLLER_LLM_THREADS=(int, 8),
@@ -74,7 +76,7 @@ env = environ.Env(
     EMBEDDING_TIMEOUT_SECONDS=(int, 30),
     SEED_REPO_NETEX=(str, "https://github.com/TransmodelEcosystem/NeTEx"),
     SEED_REPO_SIRI=(str, "https://github.com/SIRI-CEN/SIRI"),
-    SEED_REPO_OPRA=(str, "https://github.com/OpRa-CEN/OpRa"),
+    SEED_REPO_OPRA=(str, "https://github.com/TransmodelEcosystem/OpRa"),
     GRAPH_RAG_ENABLED=(bool, False),
     SEMANTIC_LOW_CONFIDENCE_THRESHOLD=(float, 0.60),
     EVIDENCE_GATE_ENABLED=(bool, False),
@@ -233,7 +235,7 @@ ALLOWED_SOURCE_REPOSITORIES = {
     value.strip()
     for value in env(
         "ALLOWED_SOURCE_REPOSITORIES",
-        default="https://github.com/TransmodelEcosystem/NeTEx,https://github.com/SIRI-CEN/SIRI,https://github.com/OpRa-CEN/OpRa",
+        default="https://github.com/TransmodelEcosystem/NeTEx,https://github.com/SIRI-CEN/SIRI,https://github.com/TransmodelEcosystem/OpRa",
     ).split(",")
     if value.strip()
 }
@@ -282,7 +284,7 @@ EMBEDDING_MODEL = env("EMBEDDING_MODEL").strip() or "text-embedding-3-small"
 EMBEDDING_TIMEOUT_SECONDS = env("EMBEDDING_TIMEOUT_SECONDS")
 SEED_REPO_NETEX = env("SEED_REPO_NETEX").strip() or "https://github.com/TransmodelEcosystem/NeTEx"
 SEED_REPO_SIRI = env("SEED_REPO_SIRI").strip() or "https://github.com/SIRI-CEN/SIRI"
-SEED_REPO_OPRA = env("SEED_REPO_OPRA").strip() or "https://github.com/OpRa-CEN/OpRa"
+SEED_REPO_OPRA = env("SEED_REPO_OPRA").strip() or "https://github.com/TransmodelEcosystem/OpRa"
 ALLOWED_SOURCE_REPOSITORIES |= {
     SEED_REPO_NETEX,
     SEED_REPO_SIRI,

@@ -12,6 +12,10 @@ echo "==> Pulling latest code"
 git pull origin main
 
 echo "==> Building images"
+# Without this, docker-compose.prod.yml's VITE_APP_VERSION build arg falls
+# back to its hardcoded "0.6.1" default, and the deployed frontend shows the
+# wrong version regardless of the actual VERSION file content.
+export VITE_APP_VERSION="$(bash scripts/app_version.sh)"
 ${COMPOSE} build --pull
 
 echo "==> Starting services"

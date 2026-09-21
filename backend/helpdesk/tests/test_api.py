@@ -154,9 +154,9 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(response.data["version"], settings.SERVICE_VERSION)
         self.assertEqual(response.data["buildRef"], settings.SERVICE_BUILD_REF)
 
-    @override_settings(DEBUG=True, DEV_JWT_AUTO_ISSUE=True)
-    def test_dev_token_endpoint_issues_token_in_debug(self):
-        """Ensure local development can mint a JWT without manual shell commands."""
+    @override_settings(DEV_JWT_AUTO_ISSUE=True)
+    def test_dev_token_endpoint_issues_token_when_auto_issue_enabled(self):
+        """Ensure auto-issued tokens work regardless of DEBUG (needed in production too)."""
         response = self.client.post(reverse("auth-dev-token"), {}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -164,9 +164,9 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(response.data["tokenType"], "Bearer")
         self.assertGreater(response.data["expiresInSeconds"], 0)
 
-    @override_settings(DEBUG=False, DEV_JWT_AUTO_ISSUE=True)
-    def test_dev_token_endpoint_rejects_when_not_debug(self):
-        """Ensure dev token mint endpoint cannot be used when debug mode is off."""
+    @override_settings(DEV_JWT_AUTO_ISSUE=False)
+    def test_dev_token_endpoint_rejects_when_auto_issue_disabled(self):
+        """Ensure dev token mint endpoint cannot be used when auto-issue is off."""
         response = self.client.post(reverse("auth-dev-token"), {}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -199,8 +199,13 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(response.data["error"]["code"], "FORBIDDEN")
         self.assertEqual(response.data["error"]["requestId"], "req-forbidden")
 
+    @override_settings(CONTROLLER_LLM_ENABLED=False)
     def test_answer_returns_faq_mode_for_known_question(self):
-        """Ensure known FAQ intent follows the FAQ-first path with citations."""
+        """Ensure known FAQ intent follows the FAQ-first path with citations.
+
+        The controller is disabled so a locally configured live controller
+        endpoint cannot veto the FAQ route and make this test nondeterministic.
+        """
         response = self.client.post(
             reverse("answer-question"),
             {
@@ -629,7 +634,7 @@ class HelpdeskApiTests(APITestCase):
                 {
                     "text": "OpRa MAY exchange delayed journey reporting as optional extensions.",
                     "score": 0.81,
-                    "repositoryUrl": "https://github.com/OpRa-CEN/OpRa",
+                    "repositoryUrl": "https://github.com/TransmodelEcosystem/OpRa",
                     "commitSha": "def456",
                     "sourcePath": "docs/opra-delay.md",
                     "chunkId": "chunk-conflict-2",
@@ -1032,7 +1037,7 @@ class HelpdeskApiTests(APITestCase):
 
         self.assertEqual(
             url,
-            "https://github.com/OpRa-CEN/OpRa/blob/1.0rc/examples/CancelledAndLateDatedVehicleJourneys.xml",
+            "https://github.com/TransmodelEcosystem/OpRa/blob/1.0rc/examples/CancelledAndLateDatedVehicleJourneys.xml",
         )
         resolve_commit_sha_mock.assert_called_once_with(
             repo_url="https://github.com/OpRa-CEN/OpRa",
@@ -1465,19 +1470,28 @@ class HelpdeskApiTests(APITestCase):
 
     def test_editorial_queue_list_returns_board_items_with_filters(self):
         """Ensure editorial board endpoint returns paginated queue rows and supports filters."""
-        answer_response = self.client.post(
+        answer_response_1 = self.client.post(
             reverse("answer-question"),
             {"question": "Explain OpRa operational exchange setup sequence."},
             format="json",
             HTTP_X_REQUEST_ID="req-board-source-1",
             **self.auth_headers(),
         )
-        question_event_id = answer_response.data["trace"]["questionEventId"]
+        question_event_id_1 = answer_response_1.data["trace"]["questionEventId"]
+
+        answer_response_2 = self.client.post(
+            reverse("answer-question"),
+            {"question": "What is NeTEx operational model?"},
+            format="json",
+            HTTP_X_REQUEST_ID="req-board-source-2",
+            **self.auth_headers(),
+        )
+        question_event_id_2 = answer_response_2.data["trace"]["questionEventId"]
 
         self.client.post(
             reverse("editorial-queue"),
             {
-                "questionEventId": question_event_id,
+                "questionEventId": question_event_id_1,
                 "reason": "LOW_CONFIDENCE",
                 "priority": "normal",
             },
@@ -1488,7 +1502,7 @@ class HelpdeskApiTests(APITestCase):
         self.client.post(
             reverse("editorial-queue"),
             {
-                "questionEventId": question_event_id,
+                "questionEventId": question_event_id_2,
                 "reason": "POLICY_REVIEW",
                 "priority": "high",
             },
@@ -1501,7 +1515,7 @@ class HelpdeskApiTests(APITestCase):
             {
                 "status": "in_review",
                 "priority": "high",
-                "search": "operational exchange",
+                "search": "operational",
                 "page": 1,
                 "pageSize": 10,
             },
@@ -1566,19 +1580,28 @@ class HelpdeskApiTests(APITestCase):
 
     def test_editorial_queue_metrics_returns_kpi_distributions_and_aging(self):
         """Ensure board metrics endpoint returns status and aging aggregates."""
-        answer_response = self.client.post(
+        answer_response_1 = self.client.post(
             reverse("answer-question"),
             {"question": "Explain OpRa operational exchange setup sequence."},
             format="json",
             HTTP_X_REQUEST_ID="req-metrics-source-1",
             **self.auth_headers(),
         )
-        question_event_id = answer_response.data["trace"]["questionEventId"]
+        question_event_id_1 = answer_response_1.data["trace"]["questionEventId"]
+
+        answer_response_2 = self.client.post(
+            reverse("answer-question"),
+            {"question": "What is NeTEx semantic definition?"},
+            format="json",
+            HTTP_X_REQUEST_ID="req-metrics-source-2",
+            **self.auth_headers(),
+        )
+        question_event_id_2 = answer_response_2.data["trace"]["questionEventId"]
 
         first_response = self.client.post(
             reverse("editorial-queue"),
             {
-                "questionEventId": question_event_id,
+                "questionEventId": question_event_id_1,
                 "priority": "normal",
             },
             format="json",
@@ -1588,7 +1611,7 @@ class HelpdeskApiTests(APITestCase):
         second_response = self.client.post(
             reverse("editorial-queue"),
             {
-                "questionEventId": question_event_id,
+                "questionEventId": question_event_id_2,
                 "reason": "POLICY_REVIEW",
                 "priority": "high",
             },

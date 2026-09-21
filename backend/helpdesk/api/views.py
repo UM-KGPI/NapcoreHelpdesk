@@ -22,6 +22,7 @@ from datetime import timedelta
 import json
 import logging
 from pathlib import Path
+import re
 import subprocess
 from urllib.parse import quote
 from uuid import uuid4
@@ -55,6 +56,7 @@ from helpdesk.services.faq_matcher import match_faq
 from helpdesk.services.faq_publication import publish_queue_item_to_faq
 from helpdesk.services.grounded_generator import generate_answer
 from helpdesk.services.llm_generator import LLMGenerationError, generate_answer_llm, stream_answer_llm
+from helpdesk.services.llm_model_recovery import check_gateway_models, get_cached_correction
 from helpdesk.services.ontology_registry import current_ontology_version_payload
 from helpdesk.services.policy_guard import evaluate_policy
 from helpdesk.services.provenance_mapper import persist_evidence_provenance
@@ -148,8 +150,12 @@ def _build_file_url(repo_url: str, commit_sha: str, source_path: str) -> str:
                 "https://github.com/TransmodelEcosystem/SIRI",
                 "v2.2",
             ),
+            "https://github.com/transmodelecosystem/opra": (
+                "https://github.com/TransmodelEcosystem/OpRa",
+                "1.0rc",
+            ),
             "https://github.com/opra-cen/opra": (
-                "https://github.com/OpRa-CEN/OpRa",
+                "https://github.com/TransmodelEcosystem/OpRa",
                 "1.0rc",
             ),
         }
@@ -354,6 +360,48 @@ def _select_citations(chunks: list[dict], max_citations: int) -> list[dict]:
             break
 
     return selected
+
+
+def _citations_from_prompt_order(chunks: list[dict], answer_text: str) -> list[dict]:
+    """Build the citation list mirroring the LLM prompt's [E#] numbering.
+
+    generate_answer_llm labels evidence blocks [E1]..[EN] as the first
+    LLM_MAX_EVIDENCE_CHUNKS chunks in retrieval order, so the citation list
+    must preserve exactly that order and length for the answer's [E#] markers
+    to point at the right sources. Uncited trailing entries are trimmed so the
+    list does not advertise references the answer never uses; interior entries
+    are kept so positions still match labels for position-based consumers.
+    """
+    max_chunks = max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 4)))
+    prompt_chunks = chunks[:max_chunks]
+    cited = {
+        int(num)
+        for num in re.findall(r"\[E(\d+)\]", answer_text or "")
+        if 1 <= int(num) <= len(prompt_chunks)
+    }
+    keep_until = max(cited) if cited else len(prompt_chunks)
+
+    citations: list[dict] = []
+    for index, chunk in enumerate(prompt_chunks[:keep_until], start=1):
+        repository_url = chunk.get("repositoryUrl", "")
+        if "/tree/" in repository_url or "/blob/" in repository_url:
+            final_url = repository_url
+        else:
+            final_url = _build_file_url(
+                repo_url=repository_url,
+                commit_sha=chunk["commitSha"],
+                source_path=chunk.get("sourcePath", ""),
+            )
+        citations.append(
+            {
+                "repositoryUrl": final_url,
+                "commitSha": chunk["commitSha"],
+                "sourcePath": chunk.get("sourcePath", ""),
+                "chunkId": chunk["chunkId"],
+                "label": f"E{index}",
+            }
+        )
+    return citations
 
 
 def _rewrite_source_paths_as_evidence_markers(answer_text: str, citations: list[dict]) -> str:
@@ -696,6 +744,116 @@ class HealthReadyView(APIView):
         )
 
 
+def _describe_llm_provider(
+    *, label: str, enabled: bool, base_url: str, configured_model: str, api_key: str, verify_ssl: bool, ca_bundle: str, live: bool
+) -> dict:
+    """Build one provider's status block: config, cached self-heal state, and an optional live gateway probe."""
+    if not enabled:
+        return {"provider": label, "enabled": False, "status": "disabled"}
+
+    cached_correction = get_cached_correction(base_url, configured_model)
+    block = {
+        "provider": label,
+        "enabled": True,
+        "apiBaseUrl": base_url,
+        "configuredModel": configured_model,
+        "activeModel": cached_correction or configured_model,
+        "autoCorrected": cached_correction is not None,
+    }
+
+    if not live:
+        block["status"] = "unknown" if cached_correction is None else "degraded"
+        return block
+
+    probe = check_gateway_models(api_base_url=base_url, api_key=api_key, verify_ssl=verify_ssl, ca_bundle=ca_bundle)
+    block["gatewayReachable"] = probe["reachable"]
+    if probe["error"]:
+        block["probeError"] = probe["error"]
+
+    if not probe["reachable"]:
+        block["status"] = "degraded"
+    elif probe["modelIds"] is None:
+        # Gateway responded but the /models body couldn't be parsed for IDs -- can't confirm authorization.
+        block["status"] = "degraded" if cached_correction else "unknown"
+    else:
+        block["authorizedModels"] = probe["modelIds"]
+        configured_authorized = configured_model in probe["modelIds"]
+        block["configuredModelAuthorized"] = configured_authorized
+        if configured_authorized:
+            block["status"] = "ok"
+        elif cached_correction and cached_correction in probe["modelIds"]:
+            # Configured model is drifted but the self-heal has already found and is using a valid one.
+            block["status"] = "degraded"
+        else:
+            block["status"] = "error"
+
+    return block
+
+
+class HealthLLMView(APIView):
+    # AllowAny to match HealthLiveView/HealthReadyView: health checks are meant
+    # to be viewable directly in a browser (or by infra probes) without a
+    # bearer token, same as the other /health/* endpoints. No secret ever
+    # appears in the payload -- base URL, model names, and reachability only.
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        # Diagnostic status for the answer-generation and controller-routing LLM providers:
+        # configured vs. actually-authorized model, and whether the self-heal in
+        # llm_model_recovery has already had to correct a drifted gateway alias.
+        # Pass ?live=false to skip the network probe and report cached state only.
+        live = request.query_params.get("live", "true").strip().lower() not in ("false", "0", "no")
+
+        llm_block = _describe_llm_provider(
+            label="answer_generation",
+            enabled=settings.LLM_ENABLED,
+            base_url=settings.LLM_API_BASE_URL,
+            configured_model=settings.LLM_MODEL,
+            api_key=settings.LLM_API_KEY,
+            verify_ssl=settings.LLM_VERIFY_SSL,
+            ca_bundle=settings.LLM_CA_BUNDLE,
+            live=live,
+        )
+        controller_block = _describe_llm_provider(
+            label="controller_routing",
+            enabled=settings.CONTROLLER_LLM_ENABLED and settings.CONTROLLER_LLM_PROVIDER == "openai-compatible",
+            base_url=settings.CONTROLLER_LLM_API_BASE_URL,
+            configured_model=settings.CONTROLLER_LLM_API_MODEL,
+            api_key=settings.CONTROLLER_LLM_API_KEY,
+            verify_ssl=settings.CONTROLLER_LLM_VERIFY_SSL,
+            ca_bundle=settings.CONTROLLER_LLM_CA_BUNDLE,
+            live=live,
+        )
+
+        statuses = {llm_block["status"], controller_block["status"]}
+        if statuses <= {"disabled"}:
+            overall = "disabled"
+        elif "error" in statuses:
+            overall = "error"
+        elif "degraded" in statuses:
+            overall = "degraded"
+        elif "unknown" in statuses:
+            overall = "unknown"
+        else:
+            overall = "ok"
+
+        # Unlike /health/ready, this endpoint isn't a traffic-gating readiness
+        # probe -- it's a diagnostic dashboard for humans/tooling to read.
+        # Always return 200 so the body's own `status` field (ok/degraded/
+        # error/disabled/unknown) is the single source of truth, and callers
+        # (including the frontend status page) don't need special-case
+        # handling for a non-2xx response that still carries useful data.
+        return Response(
+            _service_health_payload(
+                check="llm",
+                status_value=overall,
+                llm=llm_block,
+                controllerLlm=controller_block,
+            ),
+            status=status.HTTP_200_OK,
+        )
+
+
 class DevTokenView(APIView):
     permission_classes = [AllowAny]
 
@@ -805,18 +963,6 @@ class QuestionAnswerView(APIView):
         faq_match = None
         controller_route = None
 
-        # Optional controller model decides FAQ-first vs RAG route. Any failure falls back to current deterministic flow.
-        if controller_profile == "llm-ready":
-            try:
-                controller_decision = decide_route_with_controller_llm(
-                    question=question,
-                    requested_scope=effective_scope,
-                    semantic_query=semantic_query_dict,
-                )
-                controller_route = controller_decision.route if controller_decision else None
-            except ControllerLLMError:
-                controller_route = None
-
         # 1) FAQ-first: fast, deterministic, and usually high confidence.
         if not scope and semantic_query.ambiguous_core_concept and len(effective_scope) > 1:
             # Ambiguity fallback: reduce reasoning scope and ask for clarification.
@@ -838,12 +984,28 @@ class QuestionAnswerView(APIView):
         )
 
         faq_match = match_faq(question=question, scope=effective_scope)
-        if (
-            controller_route != "rag"
-            and faq_match
+        qualifying_faq_match = bool(
+            faq_match
             and faq_match["confidence"] >= faq_min_confidence
             and faq_match.get("scope_match", True)
-        ):
+        )
+
+        # Optional controller model can veto the FAQ route in favour of RAG. Its
+        # decision only matters when a qualifying FAQ match exists, so the
+        # controller LLM call is skipped entirely otherwise. Any failure falls
+        # back to the current deterministic flow.
+        if qualifying_faq_match and controller_profile == "llm-ready":
+            try:
+                controller_decision = decide_route_with_controller_llm(
+                    question=question,
+                    requested_scope=effective_scope,
+                    semantic_query=semantic_query_dict,
+                )
+                controller_route = controller_decision.route if controller_decision else None
+            except ControllerLLMError:
+                controller_route = None
+
+        if qualifying_faq_match and controller_route != "rag":
             # FAQ match identifies the intent and scope. Run retrieval + LLM to
             # produce a grounded answer enriched from actual source evidence.
             # The stored FAQ answer is passed as a directional hint to the LLM.
@@ -999,9 +1161,11 @@ class QuestionAnswerView(APIView):
                 answer_text = "I do not have sufficient approved-source evidence to answer this safely."
             else:
                 use_llm = generation_profile == "llm-ready" and settings.LLM_ENABLED
+                llm_generated = False
                 if use_llm:
                     try:
                         generated = generate_answer_llm(question=question, chunks=chunks, scope=effective_scope, language=language, all_candidates=all_candidates)
+                        llm_generated = True
                     except LLMGenerationError:
                         logger.warning(
                             "LLM generation failed; falling back to deterministic answer",
@@ -1020,7 +1184,12 @@ class QuestionAnswerView(APIView):
                 answer_text = generated["answer"]
                 confidence = generated["confidence"]
                 review_required = generated["review_required"]
-                citations = _select_citations(chunks=chunks, max_citations=max_citations)
+                if llm_generated:
+                    # LLM answers cite [E#] by prompt order; the citation list
+                    # must mirror that numbering exactly (see _citations_from_prompt_order).
+                    citations = _citations_from_prompt_order(chunks=chunks, answer_text=answer_text)
+                else:
+                    citations = _select_citations(chunks=chunks, max_citations=max_citations)
                 policy = evaluate_policy(answer_text=answer_text, citations=citations)
                 if not policy["allowed"]:
                     if allow_abstain:
@@ -1276,17 +1445,6 @@ class QuestionAnswerStreamView(APIView):
         }
         controller_route = None
 
-        if controller_profile == "llm-ready":
-            try:
-                controller_decision = decide_route_with_controller_llm(
-                    question=question,
-                    requested_scope=effective_scope,
-                    semantic_query=semantic_query_dict,
-                )
-                controller_route = controller_decision.route if controller_decision else None
-            except ControllerLLMError:
-                controller_route = None
-
         if not scope and semantic_query.ambiguous_core_concept and len(effective_scope) > 1:
             effective_scope = [effective_scope[0]]
             semantic_disambiguation_required = True
@@ -1308,12 +1466,28 @@ class QuestionAnswerStreamView(APIView):
         faq_match = match_faq(question=question, scope=effective_scope)
         answer_text = ""
 
-        if (
-            controller_route != "rag"
-            and faq_match
+        qualifying_faq_match = bool(
+            faq_match
             and faq_match["confidence"] >= faq_min_confidence
             and faq_match.get("scope_match", True)
-        ):
+        )
+
+        # Optional controller model can veto the FAQ route in favour of RAG. Its
+        # decision only matters when a qualifying FAQ match exists, so the
+        # controller LLM call is skipped entirely otherwise. Any failure falls
+        # back to the current deterministic flow.
+        if qualifying_faq_match and controller_profile == "llm-ready":
+            try:
+                controller_decision = decide_route_with_controller_llm(
+                    question=question,
+                    requested_scope=effective_scope,
+                    semantic_query=semantic_query_dict,
+                )
+                controller_route = controller_decision.route if controller_decision else None
+            except ControllerLLMError:
+                controller_route = None
+
+        if qualifying_faq_match and controller_route != "rag":
             # FAQ match identifies the intent and scope. Run retrieval + LLM to
             # produce a grounded answer enriched from actual source evidence.
             # The stored FAQ answer is passed as a directional hint to the LLM.
@@ -1465,6 +1639,7 @@ class QuestionAnswerStreamView(APIView):
                 answer_text = "I do not have sufficient approved-source evidence to answer this safely."
             else:
                 use_llm = generation_profile == "llm-ready" and settings.LLM_ENABLED
+                llm_generated = False
                 if use_llm:
                     # Stream tokens to the client; accumulate for post-stream processing.
                     generated = None
@@ -1480,6 +1655,7 @@ class QuestionAnswerStreamView(APIView):
                                 yield self._sse({"type": "token", "delta": payload})
                             elif event_type == "done":
                                 generated = payload
+                                llm_generated = True
                     except LLMGenerationError as exc:
                         logger.warning(
                             "LLM stream generation failed; falling back to deterministic answer",
@@ -1489,6 +1665,7 @@ class QuestionAnswerStreamView(APIView):
                         # Tokens may have been partially emitted; signal client to discard them.
                         yield self._sse({"type": "llm_fallback", "message": str(exc)})
                         generated = generate_answer(question=question, chunks=chunks)
+                        llm_generated = False
 
                     answer_text = generated["answer"]
                     confidence = generated["confidence"]
@@ -1499,7 +1676,12 @@ class QuestionAnswerStreamView(APIView):
                     confidence = generated["confidence"]
                     review_required = generated["review_required"]
 
-                citations = _select_citations(chunks=chunks, max_citations=max_citations)
+                if llm_generated:
+                    # LLM answers cite [E#] by prompt order; the citation list
+                    # must mirror that numbering exactly (see _citations_from_prompt_order).
+                    citations = _citations_from_prompt_order(chunks=chunks, answer_text=answer_text)
+                else:
+                    citations = _select_citations(chunks=chunks, max_citations=max_citations)
                 policy = evaluate_policy(answer_text=answer_text, citations=citations)
                 if not policy["allowed"]:
                     if allow_abstain:

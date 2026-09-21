@@ -9,7 +9,7 @@
  * Created: 2026-03-29  |  Modified: 2026-06-28
  */
 
-import { Outlet, NavLink } from "react-router-dom";
+import { Outlet, NavLink, Link } from "react-router-dom";
 
 import { useAuth } from "../auth-context";
 
@@ -18,26 +18,21 @@ interface SharedAppLayoutProps {
   backendBuildRef: string;
 }
 
-function formatAppVersion(appVersion: string): string {
-  const [baseVersion, buildMetadata] = appVersion.split("+", 2);
-  if (!buildMetadata) {
-    return appVersion;
-  }
-  return `${baseVersion} (${buildMetadata})`;
+function extractBaseVersion(appVersion: string): string {
+  const [baseVersion] = appVersion.split("+", 2);
+  return baseVersion;
 }
 
-export default function SharedAppLayout({ appVersion, backendBuildRef }: SharedAppLayoutProps) {
+export default function SharedAppLayout({ appVersion }: SharedAppLayoutProps) {
   useAuth();
 
   return (
     <div className="page-shell">
       <header className="app-title-header">
-        <h1>NAPCORE Helpdesk</h1>
+        <h1><Link to="/" className="app-title-link">NAPCORE Helpdesk</Link></h1>
         <p className="app-subtitle">Source-Grounded Q&A Assistant with Editorial knowledge building for Transmodel ecosystem</p>
         <p className="app-version-line">
-          Frontend {formatAppVersion(appVersion)}
-          {backendBuildRef && ` · Backend ${backendBuildRef}`}
-          {" · "}
+          v{extractBaseVersion(appVersion)} · {" "}
           <NavLink to="/about" className="app-about-link">
             About this project
           </NavLink>

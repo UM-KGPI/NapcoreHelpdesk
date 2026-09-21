@@ -11,10 +11,11 @@
  * Created: 2026-03-29  |  Modified: 2026-06-28
  */
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
 import type { AnswerResponse } from "../types";
+import { citationDisplayName, citationMarker, groupCitationsBySource } from "../citationLabels";
 import AnswerMarkdown from "./AnswerMarkdown";
 import InspiredByOthersPanel from "./InspiredByOthersPanel";
 
@@ -76,9 +77,8 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
       lines.push("");
       lines.push("Evidence list:");
       turn.answer.citations.forEach((citation, index) => {
-        const label = citation.label ?? citation.sourcePath;
         lines.push(
-          `- [E${index + 1}] ${label} | ${citation.sourcePath} | ${citation.repositoryUrl}`
+          `- ${citationMarker(citation, index)} ${citationDisplayName(citation)} | ${citation.sourcePath} | ${citation.repositoryUrl}`
         );
       });
     }
@@ -149,9 +149,8 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
         lines.push("");
         lines.push("### Evidence list");
         turn.answer.citations.forEach((citation, index) => {
-          const label = citation.label ?? citation.sourcePath;
           lines.push(
-            `- [E${index + 1}] ${label} | ${citation.sourcePath} | ${citation.repositoryUrl}`
+            `- ${citationMarker(citation, index)} ${citationDisplayName(citation)} | ${citation.sourcePath} | ${citation.repositoryUrl}`
           );
         });
       }
@@ -213,26 +212,14 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
   };
 
   useLayoutEffect(() => {
-    if (!busy || !latestUserTurnRef.current || !chatLogRef.current) {
+    if (!latestUserTurnRef.current || !chatLogRef.current) {
       return;
     }
 
     alignLatestUserBubbleToTop();
     const frameId = window.requestAnimationFrame(alignLatestUserBubbleToTop);
     return () => window.cancelAnimationFrame(frameId);
-  }, [busy, latestUserTurnId, chatTurns.length]);
-
-  useEffect(() => {
-    if (!busy) {
-      return;
-    }
-
-    const intervalId = window.setInterval(() => {
-      alignLatestUserBubbleToTop();
-    }, 60);
-
-    return () => window.clearInterval(intervalId);
-  }, [busy, latestUserTurnId]);
+  }, [latestUserTurnId, chatTurns.length]);
 
   return (
     <section className="panel chat-panel user-workspace">
@@ -346,11 +333,11 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                     <>
                       <p className="tiny"><strong>Evidence list</strong></p>
                       <ul>
-                        {turn.answer.citations.map((citation, index) => (
-                          <li key={`${turn.id}-${citation.chunkId}`}>
-                            <strong>{`[E${index + 1}]`}</strong>{" "}
+                        {groupCitationsBySource(turn.answer.citations).map((group) => (
+                          <li key={`${turn.id}-${group.primary.chunkId}`}>
+                            <strong>{group.markers.join(" ")}</strong>{" "}
                             <a
-                              href={citation.repositoryUrl}
+                              href={group.primary.repositoryUrl}
                               target="_blank"
                               rel="noreferrer"
                               onClick={() => {
@@ -361,10 +348,10 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                                 void onSetAnswerFeedback(requestId, { citationClicksDelta: 1 });
                               }}
                             >
-                              {citation.label ?? citation.sourcePath.split("/").pop()}
+                              {citationDisplayName(group.primary)}
                             </a>
-                            {citation.label && citation.label !== citation.sourcePath && (
-                              <span className="muted"> · {citation.sourcePath}</span>
+                            {citationDisplayName(group.primary) !== group.primary.sourcePath && (
+                              <span className="muted"> · {group.primary.sourcePath}</span>
                             )}
                           </li>
                         ))}

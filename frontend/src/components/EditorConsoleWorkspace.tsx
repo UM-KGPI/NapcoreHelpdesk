@@ -25,6 +25,7 @@
  */
 
 import React, { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { citationDisplayName, groupCitationsBySource } from "../citationLabels";
 import AnswerMarkdown from "./AnswerMarkdown";
 
 import type {
@@ -351,11 +352,11 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                   {answerResult.citations.length === 0 && <p className="muted">No citations returned.</p>}
                   {answerResult.citations.length > 0 && (
                     <ul>
-                      {answerResult.citations.map((citation, index) => (
-                        <li key={`${citation.chunkId}-${citation.sourcePath}`}>
-                          <strong>{`[E${index + 1}]`}</strong>{" "}
-                          <a href={citation.repositoryUrl} target="_blank" rel="noreferrer">{citation.label ?? citation.sourcePath}</a>
-                          <span className="muted"> · {citation.sourcePath}</span>
+                      {groupCitationsBySource(answerResult.citations).map((group) => (
+                        <li key={`${group.primary.chunkId}-${group.primary.sourcePath}`}>
+                          <strong>{group.markers.join(" ")}</strong>{" "}
+                          <a href={group.primary.repositoryUrl} target="_blank" rel="noreferrer">{citationDisplayName(group.primary)}</a>
+                          <span className="muted"> · {group.primary.sourcePath}</span>
                         </li>
                       ))}
                     </ul>

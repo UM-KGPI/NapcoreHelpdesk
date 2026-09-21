@@ -24,3 +24,18 @@ LLM usage in this project is intentionally limited.
 - Citation-required responses for grounded output.
 - Abstention when evidence is insufficient.
 - Editorial review workflow for quality control before publication.
+
+## Operational resilience
+
+Both LLM paths call through a shared model-recovery layer
+(`backend/helpdesk/services/llm_model_recovery.py`) that self-heals from
+gateway model-alias drift: it proactively checks the gateway's live model
+list before the first call in a process, and falls back to parsing the
+gateway's own rejection error on any call that still fails. See
+[Recent updates](recent-updates.md) for the incident this was built to
+prevent.
+
+Check current status — configured vs. gateway-authorized model, live
+reachability, and whether the self-heal has already corrected anything —
+at `GET /health/llm`. Public, unauthenticated, same as `/health/live` and
+`/health/ready`.
