@@ -1,6 +1,6 @@
 # Recent Updates & API Changes
 
-**Last Updated:** June 30, 2026
+**Last Updated:** September 21, 2026
 
 This document covers recent feature additions, API improvements, and deployment changes.
 
@@ -301,6 +301,47 @@ Automatically applied in answer orchestration; no frontend changes needed.
 
 ---
 
+## 10. LLM Model Alias Fix (litellm gateway)
+
+**Root cause:** the shared litellm gateway (`https://litellm.lhrs.si/v1`) renamed/rescoped the
+model alias this deployment used. The API key is now only authorized for
+`nvidia/Qwen3.6-35B-A3B-NVFP4`; requests for the old alias `qwen36-35b-a3b` returned
+`403 key_model_access_denied`.
+
+### Symptom
+
+The failure was silent from a user's perspective: `llm_generator.py` catches the LLM error and
+falls back to the deterministic `grounded_generator` template, so every answer looked like
+generic boilerplate ("Based on retrieved approved-source evidence [E1] [E2], follow the relevant
+profile specification...") regardless of the question, with no visible error in the UI. Only
+`docker logs` showed the real cause:
+
+```
+LLM HTTP error: 403 - {"error":{"message":"key not allowed to access model.
+This key can only access models=['nvidia/Qwen3.6-35B-A3B-NVFP4']. ...
+```
+
+### Fix
+
+```bash
+LLM_MODEL=nvidia/Qwen3.6-35B-A3B-NVFP4
+CONTROLLER_LLM_API_MODEL=nvidia/Qwen3.6-35B-A3B-NVFP4
+```
+
+Applied to local `backend/.env` (gitignored, not tracked) and to the `backend/.env.prod.example`
+template so new deployments don't inherit the stale alias. Verified end-to-end after the fix: a
+real question through the frontend now returns a genuine LLM-composed, cited answer instead of
+the fallback template, with no errors in `docker logs` or the browser console.
+
+### Related Settings
+
+- `LLM_ENABLED` / `CONTROLLER_LLM_ENABLED` must both be `True` for this path to be exercised at
+  all; when either is `False`, the same fallback template is used by design, not by failure.
+- If this alias changes again, `docker logs <backend-container> | grep "403\|fallback"` is the
+  fastest way to confirm it's the same failure mode.
+
+---
+
 ## Configuration Reference
 
 ### Production Environment Variables (`.env.prod`)
@@ -394,6 +435,14 @@ docker compose -f docker-compose.prod.yml up -d
 
 **Cause:** Question ID doesn't exist or was deleted
 **Fix:** Navigate through "Asked Questions" list to find valid IDs
+
+### Answers look like generic boilerplate regardless of the question
+
+**Cause:** `LLM_MODEL`/`CONTROLLER_LLM_API_MODEL` alias no longer valid on the litellm gateway
+(403, silently caught, falls back to the deterministic template — see
+[§10](#10-llm-model-alias-fix-litellm-gateway)).
+**Fix:** `docker logs <backend-container> | grep "403\|fallback"`, then update the model alias to
+whatever the gateway currently authorizes for the key.
 
 ---
 
