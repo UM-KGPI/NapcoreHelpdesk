@@ -1,6 +1,6 @@
 ---
 name: napcore-faq-helpdesk-workflow
-description: "Build and operate a NAPCORE FAQ helpdesk workflow from GitHub standards sources (especially NeTEx-CEN/NeTEx), generate traceable answers, support GUI-based user questions, and store high-frequency FAQs in a database with human editorial review. Use for FAQ ingestion pipelines, answer quality controls, curation operations, and release-readiness checks."
+description: "Build and operate a NAPCORE FAQ helpdesk workflow from GitHub standards sources (especially TransmodelEcosystem/NeTEx), generate traceable answers, support GUI-based user questions, and store high-frequency FAQs in a database with human editorial review. Use for FAQ ingestion pipelines, answer quality controls, curation operations, and release-readiness checks."
 argument-hint: "Describe your target standards, source repositories, GUI channel, and storage backend; include whether you need setup, curation, or operations mode."
 user-invocable: true
 ---
@@ -9,7 +9,7 @@ user-invocable: true
 
 ## Outcome
 Create and run a repeatable process that:
-1. Ingests and normalizes source content from GitHub repositories, prioritizing NeTEx-CEN/NeTEx.
+1. Ingests and normalizes source content from GitHub repositories, prioritizing TransmodelEcosystem/NeTEx.
 2. Produces relevant helpdesk answers with traceable source grounding.
 3. Lets users ask questions through a GUI.
 4. Captures and promotes frequently asked questions into a curated FAQ database.
@@ -41,7 +41,7 @@ Create and run a repeatable process that:
    - Decide whether this run is setup mode or daily operations mode.
 
 2. Build source inventory.
-   - Start from NeTEx-CEN/NeTEx, then add required companion repositories.
+   - Start from TransmodelEcosystem/NeTEx, then add required companion repositories.
    - For each source, register URL, branch/tag policy, and document type.
    - Maintain an allowlist of approved GitHub repositories; block all non-allowlisted sources.
    - Reject sources with unclear provenance.
