@@ -22,6 +22,7 @@ class ControllerLLMServiceTests(SimpleTestCase):
         # provider responses cannot leak across test cases.
         _decide_route_cached.cache_clear()
         llm_model_recovery._corrected_model_cache.clear()
+        llm_model_recovery._verified_ok_cache.clear()
     @override_settings(CONTROLLER_LLM_ENABLED=False)
     def test_returns_none_when_disabled(self):
         decision = decide_route_with_controller_llm(
@@ -110,8 +111,10 @@ class ControllerLLMServiceTests(SimpleTestCase):
         CONTROLLER_LLM_API_BASE_URL="https://llm.example.test/v1",
         CONTROLLER_LLM_API_MODEL="qwen3",
     )
+    @patch("helpdesk.services.llm_model_recovery.check_gateway_models")
     @patch("helpdesk.services.controller_llm.request.urlopen")
-    def test_http_provider_disables_thinking_and_requests_json(self, urlopen_mock):
+    def test_http_provider_disables_thinking_and_requests_json(self, urlopen_mock, check_gateway_models_mock):
+        check_gateway_models_mock.return_value = {"reachable": False, "modelIds": None, "error": "probe disabled for test"}
         response_mock = MagicMock()
         response_mock.read.return_value = json.dumps(
             {
@@ -144,8 +147,10 @@ class ControllerLLMServiceTests(SimpleTestCase):
         CONTROLLER_LLM_API_BASE_URL="https://litellm.lhrs.si/v1",
         CONTROLLER_LLM_API_MODEL="old-model-alias",
     )
+    @patch("helpdesk.services.llm_model_recovery.check_gateway_models")
     @patch("helpdesk.services.controller_llm.request.urlopen")
-    def test_http_provider_self_heals_on_model_access_denied_403(self, urlopen_mock):
+    def test_http_provider_self_heals_on_model_access_denied_403(self, urlopen_mock, check_gateway_models_mock):
+        check_gateway_models_mock.return_value = {"reachable": False, "modelIds": None, "error": "probe disabled for test"}
         error_body = (
             '{"error":{"message":"key not allowed to access model. This key can only '
             "access models=['nvidia/Qwen3.6-35B-A3B-NVFP4']. Tried to access "

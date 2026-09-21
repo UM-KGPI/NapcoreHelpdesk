@@ -25,8 +25,8 @@ from django.conf import settings
 
 from helpdesk.services.llm_model_recovery import (
     extract_authorized_model,
-    get_cached_correction,
     remember_correction,
+    resolve_effective_model,
 )
 
 
@@ -168,9 +168,16 @@ def _decide_via_http(*, question: str, requested_scope: list[str], semantic_quer
         ) as response:
             return json.loads(response.read().decode("utf-8"))
 
-    # If a prior call already discovered the gateway rejects `model`, skip
-    # straight to the known-good one instead of paying the 403 round trip again.
-    effective_model = get_cached_correction(base_url, model) or model
+    # Resolve drift proactively against the live gateway (cached after the
+    # first check per process) instead of only reacting after a 403.
+    effective_model = resolve_effective_model(
+        api_base_url=base_url,
+        api_key=api_key,
+        configured_model=model,
+        verify_ssl=getattr(settings, "CONTROLLER_LLM_VERIFY_SSL", True),
+        ca_bundle=getattr(settings, "CONTROLLER_LLM_CA_BUNDLE", "").strip(),
+        source="controller_routing",
+    )
     try:
         payload = _send(effective_model)
     except error.HTTPError as exc:

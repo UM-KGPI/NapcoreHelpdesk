@@ -20,6 +20,7 @@ from .views import (
     EditorialQueueView,
     EditorialQueueTransitionView,
     HealthLiveView,
+    HealthLLMView,
     HealthReadyView,
     IndexRepositoryView,
     PromotionCandidatesView,
@@ -34,6 +35,7 @@ from .views import (
 urlpatterns = [
     path("health/live", HealthLiveView.as_view(), name="health-live"),
     path("health/ready", HealthReadyView.as_view(), name="health-ready"),
+    path("health/llm", HealthLLMView.as_view(), name="health-llm"),
     path("auth/dev-token", DevTokenView.as_view(), name="auth-dev-token"),
     path("questions/answer", QuestionAnswerView.as_view(), name="answer-question"),
     path("questions/answer/stream", QuestionAnswerStreamView.as_view(), name="answer-question-stream"),

@@ -26,8 +26,8 @@ logger = logging.getLogger(__name__)
 from helpdesk.services.question_preprocessor import detect_question_language
 from helpdesk.services.llm_model_recovery import (
     extract_authorized_model,
-    get_cached_correction,
     remember_correction,
+    resolve_effective_model,
 )
 
 
@@ -862,9 +862,16 @@ def _request_chat_completion(
         ) as response:
             return json.loads(response.read().decode("utf-8"))
 
-    # If a prior call already discovered the gateway rejects `model`, skip
-    # straight to the known-good one instead of paying the 403 round trip again.
-    effective_model = get_cached_correction(api_base_url, model) or model
+    # Resolve drift proactively against the live gateway (cached after the
+    # first check per process) instead of only reacting after a 403.
+    effective_model = resolve_effective_model(
+        api_base_url=api_base_url,
+        api_key=api_key,
+        configured_model=model,
+        verify_ssl=settings.LLM_VERIFY_SSL,
+        ca_bundle=settings.LLM_CA_BUNDLE,
+        source="answer_generation",
+    )
     try:
         return _send(effective_model)
     except error.HTTPError as exc:
@@ -1226,9 +1233,16 @@ def _stream_request_chat_completion(
             headers=headers,
         )
 
-    # If a prior call already discovered the gateway rejects `model`, skip
-    # straight to the known-good one instead of paying the 403 round trip again.
-    effective_model = get_cached_correction(api_base_url, model) or model
+    # Resolve drift proactively against the live gateway (cached after the
+    # first check per process) instead of only reacting after a 403.
+    effective_model = resolve_effective_model(
+        api_base_url=api_base_url,
+        api_key=api_key,
+        configured_model=model,
+        verify_ssl=settings.LLM_VERIFY_SSL,
+        ca_bundle=settings.LLM_CA_BUNDLE,
+        source="answer_generation_stream",
+    )
     try:
         response = request.urlopen(
             _build_request(effective_model), timeout=timeout_seconds, context=_build_ssl_context()

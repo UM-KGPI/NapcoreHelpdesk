@@ -37,6 +37,7 @@ class LLMGeneratorTests(SimpleTestCase):
         # process; reset it so a correction discovered in one test doesn't
         # leak into the next.
         llm_model_recovery._corrected_model_cache.clear()
+        llm_model_recovery._verified_ok_cache.clear()
 
     def test_build_messages_requests_single_block_verbatim_snippet_when_available(self):
         messages = _build_messages(
@@ -58,12 +59,17 @@ class LLMGeneratorTests(SimpleTestCase):
         self.assertIn("fenced code block", messages[0]["content"])
         self.assertIn("single evidence block", messages[0]["content"])
 
+    @patch("helpdesk.services.llm_model_recovery.check_gateway_models")
     @patch("helpdesk.services.llm_generator.request.urlopen")
     @patch("helpdesk.services.llm_generator._build_ssl_context")
     @patch("helpdesk.services.llm_generator.settings")
     def test_generate_answer_llm_retries_with_github_token_on_models_401(
-        self, settings_mock, ssl_context_mock, urlopen_mock
+        self, settings_mock, ssl_context_mock, urlopen_mock, check_gateway_models_mock
     ):
+        # This test is about the 401/GitHub-token fallback, not model-drift
+        # preflight resolution -- keep the proactive probe out of the way so
+        # it doesn't reach the network or interfere with the urlopen mock.
+        check_gateway_models_mock.return_value = {"reachable": False, "modelIds": None, "error": "probe disabled for test"}
         settings_mock.LLM_ENABLED = True
         settings_mock.LLM_PROVIDER = "openai-compatible"
         settings_mock.LLM_API_KEY = "primary-key-without-models-permission"
@@ -141,12 +147,17 @@ class LLMGeneratorTests(SimpleTestCase):
         ).encode("utf-8")
         return error.HTTPError(url=url, code=403, msg="Forbidden", hdrs=None, fp=io.BytesIO(body))
 
+    @patch("helpdesk.services.llm_model_recovery.check_gateway_models")
     @patch("helpdesk.services.llm_generator.request.urlopen")
     @patch("helpdesk.services.llm_generator._build_ssl_context")
     @patch("helpdesk.services.llm_generator.settings")
     def test_generate_answer_llm_self_heals_on_model_access_denied_403(
-        self, settings_mock, ssl_context_mock, urlopen_mock
+        self, settings_mock, ssl_context_mock, urlopen_mock, check_gateway_models_mock
     ):
+        # This test covers the reactive (403-triggered) self-heal path; make
+        # the proactive gateway probe report "unreachable" so resolution
+        # falls through to it unchanged instead of hitting the network.
+        check_gateway_models_mock.return_value = {"reachable": False, "modelIds": None, "error": "probe disabled for test"}
         settings_mock.LLM_ENABLED = True
         settings_mock.LLM_PROVIDER = "openai-compatible"
         settings_mock.LLM_API_KEY = "sk-shared-key"
@@ -225,11 +236,13 @@ class LLMGeneratorTests(SimpleTestCase):
         only_body = json.loads(urlopen_mock.call_args_list[0].args[0].data)
         self.assertEqual(only_body["model"], "nvidia/Qwen3.6-35B-A3B-NVFP4")
 
+    @patch("helpdesk.services.llm_model_recovery.check_gateway_models")
     @patch("helpdesk.services.llm_generator.request.urlopen")
     @patch("helpdesk.services.llm_generator._build_ssl_context")
     def test_stream_request_chat_completion_self_heals_on_model_access_denied_403(
-        self, ssl_context_mock, urlopen_mock
+        self, ssl_context_mock, urlopen_mock, check_gateway_models_mock
     ):
+        check_gateway_models_mock.return_value = {"reachable": False, "modelIds": None, "error": "probe disabled for test"}
         ssl_context_mock.return_value = object()
         url = "https://litellm.lhrs.si/v1/chat/completions"
 
@@ -274,10 +287,14 @@ class LLMGeneratorTests(SimpleTestCase):
         self.assertEqual(first_body["model"], "old-model-alias")
         self.assertEqual(second_body["model"], "nvidia/Qwen3.6-35B-A3B-NVFP4")
 
+    @patch("helpdesk.services.llm_model_recovery.check_gateway_models")
     @patch("helpdesk.services.llm_generator.request.urlopen")
     @patch("helpdesk.services.llm_generator._build_ssl_context")
     @patch("helpdesk.services.llm_generator.settings")
-    def test_generate_answer_llm_rejects_fabricated_xml_example(self, settings_mock, ssl_context_mock, urlopen_mock):
+    def test_generate_answer_llm_rejects_fabricated_xml_example(
+        self, settings_mock, ssl_context_mock, urlopen_mock, check_gateway_models_mock
+    ):
+        check_gateway_models_mock.return_value = {"reachable": False, "modelIds": None, "error": "probe disabled for test"}
         settings_mock.LLM_ENABLED = True
         settings_mock.LLM_PROVIDER = "openai-compatible"
         settings_mock.LLM_API_KEY = "test-key"

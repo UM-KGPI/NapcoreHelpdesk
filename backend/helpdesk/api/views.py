@@ -56,6 +56,7 @@ from helpdesk.services.faq_matcher import match_faq
 from helpdesk.services.faq_publication import publish_queue_item_to_faq
 from helpdesk.services.grounded_generator import generate_answer
 from helpdesk.services.llm_generator import LLMGenerationError, generate_answer_llm, stream_answer_llm
+from helpdesk.services.llm_model_recovery import check_gateway_models, get_cached_correction
 from helpdesk.services.ontology_registry import current_ontology_version_payload
 from helpdesk.services.policy_guard import evaluate_policy
 from helpdesk.services.provenance_mapper import persist_evidence_provenance
@@ -740,6 +741,107 @@ class HealthReadyView(APIView):
         return Response(
             _service_health_payload(check="ready", status_value="ok", database="ok"),
             status=status.HTTP_200_OK,
+        )
+
+
+def _describe_llm_provider(
+    *, label: str, enabled: bool, base_url: str, configured_model: str, api_key: str, verify_ssl: bool, ca_bundle: str, live: bool
+) -> dict:
+    """Build one provider's status block: config, cached self-heal state, and an optional live gateway probe."""
+    if not enabled:
+        return {"provider": label, "enabled": False, "status": "disabled"}
+
+    cached_correction = get_cached_correction(base_url, configured_model)
+    block = {
+        "provider": label,
+        "enabled": True,
+        "apiBaseUrl": base_url,
+        "configuredModel": configured_model,
+        "activeModel": cached_correction or configured_model,
+        "autoCorrected": cached_correction is not None,
+    }
+
+    if not live:
+        block["status"] = "unknown" if cached_correction is None else "degraded"
+        return block
+
+    probe = check_gateway_models(api_base_url=base_url, api_key=api_key, verify_ssl=verify_ssl, ca_bundle=ca_bundle)
+    block["gatewayReachable"] = probe["reachable"]
+    if probe["error"]:
+        block["probeError"] = probe["error"]
+
+    if not probe["reachable"]:
+        block["status"] = "degraded"
+    elif probe["modelIds"] is None:
+        # Gateway responded but the /models body couldn't be parsed for IDs -- can't confirm authorization.
+        block["status"] = "degraded" if cached_correction else "unknown"
+    else:
+        block["authorizedModels"] = probe["modelIds"]
+        configured_authorized = configured_model in probe["modelIds"]
+        block["configuredModelAuthorized"] = configured_authorized
+        if configured_authorized:
+            block["status"] = "ok"
+        elif cached_correction and cached_correction in probe["modelIds"]:
+            # Configured model is drifted but the self-heal has already found and is using a valid one.
+            block["status"] = "degraded"
+        else:
+            block["status"] = "error"
+
+    return block
+
+
+class HealthLLMView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Diagnostic status for the answer-generation and controller-routing LLM providers:
+        # configured vs. actually-authorized model, and whether the self-heal in
+        # llm_model_recovery has already had to correct a drifted gateway alias.
+        # Pass ?live=false to skip the network probe and report cached state only.
+        live = request.query_params.get("live", "true").strip().lower() not in ("false", "0", "no")
+
+        llm_block = _describe_llm_provider(
+            label="answer_generation",
+            enabled=settings.LLM_ENABLED,
+            base_url=settings.LLM_API_BASE_URL,
+            configured_model=settings.LLM_MODEL,
+            api_key=settings.LLM_API_KEY,
+            verify_ssl=settings.LLM_VERIFY_SSL,
+            ca_bundle=settings.LLM_CA_BUNDLE,
+            live=live,
+        )
+        controller_block = _describe_llm_provider(
+            label="controller_routing",
+            enabled=settings.CONTROLLER_LLM_ENABLED and settings.CONTROLLER_LLM_PROVIDER == "openai-compatible",
+            base_url=settings.CONTROLLER_LLM_API_BASE_URL,
+            configured_model=settings.CONTROLLER_LLM_API_MODEL,
+            api_key=settings.CONTROLLER_LLM_API_KEY,
+            verify_ssl=settings.CONTROLLER_LLM_VERIFY_SSL,
+            ca_bundle=settings.CONTROLLER_LLM_CA_BUNDLE,
+            live=live,
+        )
+
+        statuses = {llm_block["status"], controller_block["status"]}
+        if statuses <= {"disabled"}:
+            overall = "disabled"
+        elif "error" in statuses:
+            overall = "error"
+        elif "degraded" in statuses:
+            overall = "degraded"
+        elif "unknown" in statuses:
+            overall = "unknown"
+        else:
+            overall = "ok"
+
+        http_status = status.HTTP_200_OK if overall in ("ok", "disabled", "unknown", "degraded") else status.HTTP_503_SERVICE_UNAVAILABLE
+        return Response(
+            _service_health_payload(
+                check="llm",
+                status_value=overall,
+                llm=llm_block,
+                controllerLlm=controller_block,
+            ),
+            status=http_status,
         )
 
 
