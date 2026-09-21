@@ -340,6 +340,62 @@ the fallback template, with no errors in `docker logs` or the browser console.
 - If this alias changes again, `docker logs <backend-container> | grep "403\|fallback"` is the
   fastest way to confirm it's the same failure mode.
 
+**Follow-up (same day):** the identical break recurred independently in **production**, because
+`/opt/napcore-helpdesk/backend/.env.prod` is a file that exists only on the deploy VM -- fixing
+`backend/.env.prod.example` (a template used only when setting up a *new* deployment) never
+touches it. Production and dev share the same litellm key, so the same fix value applied, but it
+had to be made by hand over SSH. See §11 for the mechanism added so a third recurrence -- on
+either dev or production -- doesn't require this again.
+
+---
+
+## 11. Self-Healing LLM Model Recovery
+
+**Problem this closes:** §10 happened twice (dev, then production) from the same underlying
+cause -- the litellm gateway renaming/rescoping the authorized model alias without notice -- and
+each time required a human to notice a degraded answer, read `docker logs`, and hand-edit an env
+file. Nothing detected the drift automatically, and a config fix pushed to git doesn't reach an
+already-running deployment's `.env`/`.env.prod` on its own.
+
+### How it works
+
+The gateway's own `403 key_model_access_denied` response body already names the model the key
+*is* authorized for:
+
+```
+{"error":{"message":"key not allowed to access model. This key can only
+access models=['nvidia/Qwen3.6-35B-A3B-NVFP4']. Tried to access ...
+```
+
+`backend/helpdesk/services/llm_model_recovery.py` parses that name out, retries the same request
+once with the corrected model, and caches the correction in-process so subsequent calls skip
+straight to it instead of paying the 403 round trip every time. Wired into all three places that
+call the gateway: streaming answer generation (the live frontend path), non-streaming answer
+generation, and the routing controller.
+
+It always logs loudly -- `WARNING` the first time, tagged `LLM_MODEL_AUTO_CORRECTED` so it's easy
+to `grep`/alert on:
+
+```
+docker logs <backend-container> | grep LLM_MODEL_AUTO_CORRECTED
+```
+
+### What this is, and isn't
+
+This is a live workaround that keeps the app answering through a gateway rename, **not** a
+substitute for fixing `LLM_MODEL` / `CONTROLLER_LLM_API_MODEL` in the environment -- every request
+before the correction is cached pays an extra round trip, and the cache is per-process (per
+worker), so a multi-worker production deployment rediscovers it once per worker rather than once
+globally. It also doesn't help if the gateway is down entirely, or if the 403 body format changes
+in a way the parser doesn't recognize -- in either case behavior falls back to §10's original
+failure mode (silent fallback to the deterministic template), not a new failure.
+
+**Verified two ways:** 6 new unit tests (parser, cache, and each of the three call sites), plus a
+live end-to-end reproduction -- the old broken model alias was put back into the running dev
+backend, the container recreated, and a real question asked through the frontend. It answered
+correctly with proper citations despite the wrong configured model, and the logs showed
+`LLM_MODEL_AUTO_CORRECTED` firing on the live streaming path.
+
 ---
 
 ## Configuration Reference
@@ -438,11 +494,15 @@ docker compose -f docker-compose.prod.yml up -d
 
 ### Answers look like generic boilerplate regardless of the question
 
-**Cause:** `LLM_MODEL`/`CONTROLLER_LLM_API_MODEL` alias no longer valid on the litellm gateway
-(403, silently caught, falls back to the deterministic template — see
-[§10](#10-llm-model-alias-fix-litellm-gateway)).
-**Fix:** `docker logs <backend-container> | grep "403\|fallback"`, then update the model alias to
-whatever the gateway currently authorizes for the key.
+**As of §11, this should now be rare** — a wrong `LLM_MODEL`/`CONTROLLER_LLM_API_MODEL` alias
+self-corrects at runtime instead of falling back silently. If you still see this:
+**Cause:** either the self-heal's parser didn't recognize the gateway's error format, or the
+gateway is down/erroring for a different reason entirely (see [§10](#10-llm-model-alias-fix-litellm-gateway),
+[§11](#11-self-healing-llm-model-recovery)).
+**Fix:** `docker logs <backend-container> | grep "403\|fallback\|LLM_MODEL_AUTO_CORRECTED"` — if
+`LLM_MODEL_AUTO_CORRECTED` is present, the alias was already fixed automatically and the boilerplate
+answer predates that; if a `403` appears with no `LLM_MODEL_AUTO_CORRECTED` line, the gateway's error
+body changed shape and the parser in `llm_model_recovery.py` needs updating.
 
 ---
 
