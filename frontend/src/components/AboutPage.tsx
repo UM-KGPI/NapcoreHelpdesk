@@ -113,6 +113,17 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
              community contribution pathway via GitHub; performance optimizations;
              quality gate improvements and ongoing refinements.</li>
         </ol>
+        <p>
+          See{" "}
+          <a
+            href="https://github.com/UM-KGPI/NapcoreHelpdesk/blob/main/docs/recent-updates.md"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Recent updates
+          </a>{" "}
+          for a detailed log of the latest phase.
+        </p>
       </section>
 
       <section className="panel">
