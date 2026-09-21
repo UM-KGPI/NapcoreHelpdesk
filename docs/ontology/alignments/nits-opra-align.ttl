@@ -14,126 +14,349 @@
 <https://napcore.eu/ontology/nits/align/opra>
     a owl:Ontology ;
     dct:title "NITS–OpRa Alignment Ontology"@en ;
-    dct:description "Alignment ontology connecting OpRa journey planning concepts to abstract core concepts defined in the NAPCORE ITS Core Ontology. Enables cross-standard reasoning and journey planning discovery."@en ;
+    dct:description "Alignment ontology connecting XSD-derived OpRa concepts to abstract core concepts defined in the NAPCORE ITS Core Ontology. Enables cross-standard reasoning over OpRa operational raw data (capacity, service intensity, delay, and indicator concepts)."@en ;
     dct:creator "NAPCORE Working Group" ;
     dct:created "2026-04-17"^^xsd:date ;
-    owl:versionIRI <https://napcore.eu/ontology/nits/align/opra/0.1> ;
-    owl:versionInfo "0.1-draft" ;
+    owl:versionIRI <https://napcore.eu/ontology/nits/align/opra/0.2> ;
+    owl:versionInfo "0.2-xsd-rebuild-realignment" ;
     owl:imports <https://napcore.eu/ontology/nits/core> ;
     owl:imports <https://transmodel-cen.eu/opra/1.0> ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
+# Superseded 0.1-draft note: the previous version of this file aligned a
+# hand-modeled "journey planning" vocabulary (opra:JourneyPlan, opra:Trip,
+# opra:Leg, opra:Vehicle, opra:BookingArrangement, ...) that has zero overlap
+# with the concepts actually present in standards/opra.ttl once that ontology
+# was rebuilt from the OpRa XSD schemas. OpRa ("Operational Raw Data") is a
+# KPI/indicator reporting standard, not a journey-planning standard, so that
+# vocabulary never matched the real schema. This version aligns the 106
+# concepts that are actually extracted from the current OpRa XSD tree.
+
 #################################################################
-# Journey Planning Concept Alignments
+# Journey/Service-scoped Indicators -> nits:Journey / nits:Service / nits:Network
 #################################################################
 
-opra:JourneyPlan
-    owl:equivalentClass nits:Journey .
-
-opra:Trip
+opra:CancelledDatedVehicleJourneyCount
     rdfs:subClassOf nits:Journey .
 
-opra:Leg
-    rdfs:subClassOf nits:JourneyComponent .
+opra:CancelledDatedVehicleJourneyDiscoveryDelivery
+    rdfs:subClassOf nits:Journey .
 
-opra:TimingLeg
-    rdfs:subClassOf opra:Leg ;
-    rdfs:subClassOf nits:JourneyComponent .
+opra:CancelledDatedVehicleJourneyDiscoveryRequest
+    rdfs:subClassOf nits:Journey .
 
-opra:PublicTransportService
-    owl:equivalentClass nits:Service .
+opra:CancelledDatedVehicleJourneysRequest
+    rdfs:subClassOf nits:Journey .
 
-opra:OperatedService
+opra:LateDatedVehicleJourneyCount
+    rdfs:subClassOf nits:Journey .
+
+opra:LateDatedVehicleJourneyDiscoveryDelivery
+    rdfs:subClassOf nits:Journey .
+
+opra:LateDatedVehicleJourneyDiscoveryRequest
+    rdfs:subClassOf nits:Journey .
+
+opra:LateDatedVehicleJourneysRequest
+    rdfs:subClassOf nits:Journey .
+
+opra:LoadOverJourneyDistance
+    rdfs:subClassOf nits:Journey .
+
+opra:MeanCapacityOverJourneyDistance
+    rdfs:subClassOf nits:Journey .
+
+opra:MeanCapacityOverNetworkDistance
+    rdfs:subClassOf nits:Network .
+
+opra:ServiceDelivery
     rdfs:subClassOf nits:Service .
 
-opra:ServiceIntensity
-    owl:equivalentClass nits:ServiceIntensity ;
-    rdfs:subClassOf nits:ServiceMetric .
+opra:ServiceRequest
+    rdfs:subClassOf nits:Service .
 
 #################################################################
-# Location Concept Alignments
+# Capacity, Indicator, Log, and Performance Concepts -> nits:DataArtifact
+#
+# nits:DataArtifact is the core ontology's abstract root for reported/derived
+# data records; used here as the default anchor for OpRa's capacity,
+# indicator, log-entry, and performance-reporting concepts, which do not map
+# more specifically onto another nits: category.
 #################################################################
 
-opra:Place
-    owl:equivalentClass nits:Location .
-
-opra:StopPoint
-    owl:equivalentClass nits:Stop .
-
-opra:Address
-    rdfs:subClassOf nits:Location .
-
-#################################################################
-# Vehicle & Service Alignments
-#################################################################
-
-opra:Vehicle
-    rdfs:subClassOf nits:System .
-
-opra:VehicleType
+opra:ActualCapacity
     rdfs:subClassOf nits:DataArtifact .
 
-opra:Operator
-    owl:equivalentClass nits:Actor ;
-    rdfs:subClassOf nits:Organisation .
-
-opra:Authority
-    owl:equivalentClass nits:Authority .
-
-#################################################################
-# Booking & Realtime Alignments
-#################################################################
-
-opra:BookingArrangement
-    rdfs:subClassOf nits:Process .
-
-opra:RealtimeStatus
+opra:ActualCapacityDiscoveryDelivery
     rdfs:subClassOf nits:DataArtifact .
 
-opra:Delay
-    rdfs:subClassOf nits:TemporalEntity .
-
-#################################################################
-# Passenger Information Alignments
-#################################################################
-
-opra:PassengerInformation
+opra:ActualCapacityDiscoveryRequest
     rdfs:subClassOf nits:DataArtifact .
 
-opra:AccessibilityInfo
+opra:ActualCapacityRequest
     rdfs:subClassOf nits:DataArtifact .
 
-opra:Facility
+opra:ActualFleetDimensions
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ActualFleetDimensionsDiscoveryDelivery
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ActualFleetDimensionsDiscoveryRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ActualFleetDimensionsRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ActualFrame
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ActualFrameRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ActualServiceDimensions
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ActualServiceDimensionsDiscoveryDelivery
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ActualServiceDimensionsDiscoveryRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ActualServiceDimensionsRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ActualServiceIntensity
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ActualServiceIntensityDiscoveryDelivery
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ActualServiceIntensityDiscoveryRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ActualServiceIntensityRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:AverageCommercialSpeed
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:CapabilitiesRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:CapabilitiesResponse
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:CapacitySpecification
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ContextualIndicatorDiscoveryDelivery
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ContextualIndicatorDiscoveryRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ContextualIndicatorFrame
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ContextualIndicatorRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:DurationInterval
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ExpectedPassengerCount
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ExpectedPassengerCountDiscoveryDelivery
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ExpectedPassengerCountDiscoveryRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ExpectedPassengerCountRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ExpectedServiceIntensity
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ExternalPassengerCount
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ExternalPassengerCountDiscoveryDelivery
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ExternalPassengerCountDiscoveryRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:ExternalPassengerCountRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:GeneralLogEntry
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:GenericContextualIndicator
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:IndicatorFrame
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:LogEntryValue
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:LoggableObject
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:MeanCapacityOverRouteDistance
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:OnboardDeviceBasedPassengerCount
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:OnboardDeviceBasedPassengerCountDiscoveryDelivery
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:OnboardDeviceBasedPassengerCountDiscoveryRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:OnboardDeviceBasedPassengerCountRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:Opra
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:OpraDiscoveryDelivery
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:OpraDiscoveryRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:OpraError
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:OpraFunctionalDelivery
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:OpraFunctionalRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:OpraPayloadDelivery
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:OpraSubscriptionRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:PlannedCapacity
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:PlannedCapacityDiscoveryDelivery
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:PlannedCapacityDiscoveryRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:PlannedCapacityRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:PlannedFleetDimensions
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:PlannedFleetDimensionsDiscoveryDelivery
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:PlannedFleetDimensionsDiscoveryRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:PlannedFleetDimensionsRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:PlannedFrame
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:PlannedFrameRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:PlannedServiceDimensions
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:PlannedServiceDimensionsDiscoveryDelivery
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:PlannedServiceDimensionsDiscoveryRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:PlannedServiceDimensionsRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:PlannedServiceIntensity
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:PlannedServiceIntensityDiscoveryDelivery
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:PlannedServiceIntensityDiscoveryRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:PlannedServiceIntensityRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:PreparednessLevel
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:PublicationDelivery
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:PublicationRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:SubscriptionRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:TicketingBasedPassengerCount
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:TicketingBasedPassengerCountDiscoveryDelivery
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:TicketingBasedPassengerCountDiscoveryRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:TicketingBasedPassengerCountRequest
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:TransportPerformance
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:TransportPerformancePerVehicle
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:VehicleLoadEntry
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:VehicleTypeCapacity
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:opraDiscoveryDeliveries
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:opraDiscoveryRequests
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:opraFunctionalDeliveries
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:opraFunctionalRequests
+    rdfs:subClassOf nits:DataArtifact .
+
+opra:opraSubscriptionRequests
     rdfs:subClassOf nits:DataArtifact .
 
 #################################################################
-# Property Alignments
+# Abstract base classes (left unaligned; alignment is inherited from
+# whichever concrete subclass anchors it, per docs/ontology/README.md's
+# modeling conventions)
 #################################################################
 
-opra:hasTrip
-    rdfs:subPropertyOf nits:involves .
-
-opra:hasLeg
-    rdfs:subPropertyOf nits:involves .
-
-opra:departFrom
-    rdfs:subPropertyOf nits:involves .
-
-opra:arriveAt
-    rdfs:subPropertyOf nits:involves .
-
-opra:usesService
-    rdfs:subPropertyOf nits:involves .
-
-opra:operatedBy
-    rdfs:subPropertyOf nits:involves .
-
-opra:hasServiceIntensity
-    rdfs:subPropertyOf nits:involves ;
-    rdfs:subPropertyOf nits:characterisesService .
-
-opra:hasAccessibility
-    rdfs:subPropertyOf nits:involves .
-
-opra:hasBookingArrangement
-    rdfs:subPropertyOf nits:involves .
+# opra:AbstractCtxIndicator, opra:AbstractLogEntry, opra:AbstractLoggableObject,
+# opra:TypeOfDelay: skipped (enumeration/abstract base class, not a
+# standalone retrieval target).
