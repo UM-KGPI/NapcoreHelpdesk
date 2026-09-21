@@ -54,22 +54,33 @@ history is iterative rather than big-upfront-design:
 The project started on 2026-03-28 and has had continuous, active development
 since. Broad phases, in order:
 
-1. **Foundations** — initial project import; hybrid lexical+vector retrieval
-   on PostgreSQL/pgvector; FAQ and RAG persistence aligned to the C4
-   architecture.
-2. **Editorial workflow** — RBAC-based draft → review → approved/rejected →
-   published queue, KPI widgets, and board UI.
-3. **CI/ops hardening** — backend, OpenAPI, and C4 quality gates; health
-   probes; security and release automation.
-4. **Pilot testing** — first-user testing pack and feedback workflow.
-5. **Production deployment & GraphRAG** — Fedora VM + Docker Compose
-   deployment; GraphDB-backed concept expansion; XSD-to-ontology extraction
-   pipeline providing authoritative concept definitions; multilingual
-   question support; deep-linking to individual Q&A exchanges.
-6. **UI/UX Refinement & Community Engagement** — User discovery features
-   (Inspiring questions panel with smart caching); streamlined version display;
-   community contribution pathway via GitHub; performance optimizations;
-   quality gate improvements and ongoing refinements.
+1. **Foundations** (Mar 2026) — initial project import; hybrid lexical+vector
+   retrieval on PostgreSQL/pgvector; FAQ and RAG persistence and editorial
+   RBAC scaffolding aligned to the C4 architecture.
+2. **Ontology, GraphRAG & editorial maturation** (Apr–Jun 2026) —
+   XSD-to-ontology extraction pipeline and GraphDB-backed concept expansion;
+   FAQ-first/RAG-fallback answer strategy; the editorial draft → review →
+   approved/rejected → published workflow, KPI widgets, and board UI; Fedora
+   VM + Docker Compose deployment automation.
+3. **Answer-quality & reasoning-model hardening** (Jul 2026 — the single
+   largest push, over half of all commits to date) — citation-grounding
+   correctness (stop false rejections, prevent hallucinated [E#] references,
+   lenient handling for code blocks); Qwen reasoning-model controller
+   tuning; prompt-constraint and markdown-formatting fixes; multilingual
+   abstain/insufficient-evidence phrasing.
+4. **UI/UX refinement & release cadence** (Jul 2026, ongoing) — user
+   discovery features (Inspiring questions panel with smart caching);
+   streamlined version display and deep-linking to individual Q&A
+   exchanges; frequent patch releases; C4 diagram maintenance;
+   Dependabot/security fixes; community contribution pathway via GitHub.
+5. **Cross-standard ontology alignment & production readiness** (Sep 2026)
+   — migrated NeTEx/OpRa/SIRI source repositories to their current
+   canonical GitHub orgs and reindexed; rewrote stale ontology alignments
+   (825 NeTEx, 297 SIRI, 102 OpRa concepts now correctly mapped to the
+   shared core ontology); fixed the GraphDB query structure that had
+   silently prevented cross-standard concept expansion from ever working;
+   corrected a production LLM model-alias regression; dependency upgrades
+   (React Router v7, Vitest v4).
 
 See [Recent updates](recent-updates.md) for a detailed log of the latest
 phase.

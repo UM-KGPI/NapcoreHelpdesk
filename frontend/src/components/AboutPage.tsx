@@ -5,7 +5,7 @@
  *
  * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
  * Crafted by: AI coding agents
- * Created: 2026-07-02  |  Modified: 2026-07-05
+ * Created: 2026-07-02  |  Modified: 2026-09-21
  */
 
 interface AboutPageProps {
@@ -96,22 +96,32 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           since. Broad phases, in order:
         </p>
         <ol>
-          <li><strong>Foundations</strong> — initial project import; hybrid lexical+vector retrieval
-             on PostgreSQL/pgvector; FAQ and RAG persistence aligned to the C4
-             architecture.</li>
-          <li><strong>Editorial workflow</strong> — RBAC-based draft → review → approved/rejected →
-             published queue, KPI widgets, and board UI.</li>
-          <li><strong>CI/ops hardening</strong> — backend, OpenAPI, and C4 quality gates; health
-             probes; security and release automation.</li>
-          <li><strong>Pilot testing</strong> — first-user testing pack and feedback workflow.</li>
-          <li><strong>Production deployment &amp; GraphRAG</strong> — Fedora VM + Docker Compose
-             deployment; GraphDB-backed concept expansion; XSD-to-ontology extraction
-             pipeline providing authoritative concept definitions; multilingual
-             question support; deep-linking to individual Q&amp;A exchanges.</li>
-          <li><strong>UI/UX Refinement &amp; Community Engagement</strong> — User discovery features
-             (Inspiring questions panel with smart caching); streamlined version display;
-             community contribution pathway via GitHub; performance optimizations;
-             quality gate improvements and ongoing refinements.</li>
+          <li><strong>Foundations</strong> (Mar 2026) — initial project import; hybrid
+             lexical+vector retrieval on PostgreSQL/pgvector; FAQ and RAG persistence and
+             editorial RBAC scaffolding aligned to the C4 architecture.</li>
+          <li><strong>Ontology, GraphRAG &amp; editorial maturation</strong> (Apr–Jun 2026) —
+             XSD-to-ontology extraction pipeline and GraphDB-backed concept expansion;
+             FAQ-first/RAG-fallback answer strategy; the editorial draft → review →
+             approved/rejected → published workflow, KPI widgets, and board UI; Fedora VM +
+             Docker Compose deployment automation.</li>
+          <li><strong>Answer-quality &amp; reasoning-model hardening</strong> (Jul 2026 — the
+             single largest push, over half of all commits to date) — citation-grounding
+             correctness (stop false rejections, prevent hallucinated [E#] references, lenient
+             handling for code blocks); Qwen reasoning-model controller tuning; prompt-constraint
+             and markdown-formatting fixes; multilingual abstain/insufficient-evidence
+             phrasing.</li>
+          <li><strong>UI/UX refinement &amp; release cadence</strong> (Jul 2026, ongoing) — user
+             discovery features (Inspiring questions panel with smart caching); streamlined
+             version display and deep-linking to individual Q&amp;A exchanges; frequent patch
+             releases; C4 diagram maintenance; Dependabot/security fixes; community contribution
+             pathway via GitHub.</li>
+          <li><strong>Cross-standard ontology alignment &amp; production readiness</strong> (Sep
+             2026) — migrated NeTEx/OpRa/SIRI source repositories to their current canonical
+             GitHub orgs and reindexed; rewrote stale ontology alignments (825 NeTEx, 297 SIRI,
+             102 OpRa concepts now correctly mapped to the shared core ontology); fixed the
+             GraphDB query structure that had silently prevented cross-standard concept
+             expansion from ever working; corrected a production LLM model-alias regression;
+             dependency upgrades (React Router v7, Vitest v4).</li>
         </ol>
         <p>
           See{" "}
