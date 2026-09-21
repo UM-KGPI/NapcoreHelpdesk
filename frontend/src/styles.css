@@ -378,13 +378,11 @@ h1 {
 
 .chat-actions {
   display: grid;
-  grid-template-columns: 1fr auto auto;
   gap: 0.6rem;
-  align-items: center;
 }
 
 .chat-actions button {
-  width: auto;
+  width: 100%;
 }
 
 .chat-progress {
@@ -1145,11 +1143,4 @@ a {
     width: 100%;
   }
 
-  .chat-actions {
-    grid-template-columns: 1fr;
-  }
-
-  .chat-actions button {
-    width: 100%;
-  }
 }
