@@ -327,7 +327,7 @@ export default function App() {
   const [indexResult, setIndexResult] = useState<IndexRepositoryResponse | null>(null);
   const [indexBusy, setIndexBusy] = useState(false);
 
-  const [chatPrompt, setChatPrompt] = useState("How is a journey departure time represented in NeTEx XML?");
+  const [chatPrompt, setChatPrompt] = useState("");
   const [chatTurns, setChatTurns] = useState<ChatTurn[]>([]);
 
   const [busy, setBusy] = useState(false);
