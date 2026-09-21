@@ -859,6 +859,9 @@ class DevTokenView(APIView):
 
     def post(self, request):
         # Dev convenience endpoint to avoid manual token copy/paste after page reload.
+        # Gated on DEV_JWT_AUTO_ISSUE alone (not DEBUG): this must stay togglable
+        # independent of Django's general debug setting -- see
+        # test_dev_token_endpoint_issues_token_when_auto_issue_enabled.
         if not settings.DEV_JWT_AUTO_ISSUE:
             return Response(
                 {
