@@ -83,6 +83,7 @@ paths:
         corrected anything this process, for both answer generation and
         controller routing.
       operationId: healthLlm
+      security: []
       parameters:
         - name: live
           in: query
@@ -98,12 +99,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LlmStatusResponse'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/auth/dev-token:
     post:
       tags: [Auth]

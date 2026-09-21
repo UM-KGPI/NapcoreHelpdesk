@@ -791,7 +791,11 @@ def _describe_llm_provider(
 
 
 class HealthLLMView(APIView):
-    permission_classes = [IsAuthenticated]
+    # AllowAny to match HealthLiveView/HealthReadyView: health checks are meant
+    # to be viewable directly in a browser (or by infra probes) without a
+    # bearer token, same as the other /health/* endpoints. No secret ever
+    # appears in the payload -- base URL, model names, and reachability only.
+    permission_classes = [AllowAny]
 
     def get(self, request):
         # Diagnostic status for the answer-generation and controller-routing LLM providers:

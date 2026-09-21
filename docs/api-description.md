@@ -77,16 +77,17 @@ Response will be in Slovenian, with technical terms in English.
 ## LLM status page
 
 `GET /health/llm` is a diagnostic endpoint (not a readiness probe — always
-returns 200, with health conveyed via the body's `status` field). It reports,
-for both answer generation and controller routing: configured vs. active
-model, live gateway reachability, the gateway's current authorized-model
-list, and whether the model-drift self-heal has already corrected anything
-this process. Pass `?live=false` to skip the live gateway probe and read
-cached state only.
+returns 200, with health conveyed via the body's `status` field). Like
+`/health/live` and `/health/ready`, it requires no authentication, so it's
+directly viewable by navigating to it in a browser
+(`http://localhost:8000/api/v1/health/llm`). It reports, for both answer
+generation and controller routing: configured vs. active model, live gateway
+reachability, the gateway's current authorized-model list, and whether the
+model-drift self-heal has already corrected anything this process. Pass
+`?live=false` to skip the live gateway probe and read cached state only.
 
-Viewable in the browser at `/napcore-helpdesk/llm-status` (nav link "LLM
-status"), which renders this endpoint's result instead of requiring a manual
-authenticated `curl` call.
+For a nicer rendered view instead of raw JSON, use
+`/napcore-helpdesk/llm-status` (nav link "LLM status") in the frontend app.
 
 ## Frontend Deep-Linking
 

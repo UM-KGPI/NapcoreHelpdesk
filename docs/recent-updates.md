@@ -398,6 +398,86 @@ correctly with proper citations despite the wrong configured model, and the logs
 
 ---
 
+## 12. LLM Status Endpoint + Proactive Self-Heal
+
+**Problem this closes:** §11's self-heal was purely *reactive* — it only discovered a drifted
+model alias after a real answer-generation or routing call had already failed with a 403, and
+there was no way to check "is the LLM actually healthy right now" without asking a real question
+and reading logs. Both gaps came up directly: "Do we have any API endpoint that checks status of
+the LLM and its model?" (there wasn't one), and "now the self-healing fix can use the new api to
+maintain the microservice based logic" (it wasn't using its own status check).
+
+### New endpoint: `GET /api/v1/health/llm`
+
+Diagnostic endpoint (not a traffic-gating readiness probe — always returns `200`, with health
+conveyed only via the body's `status` field). No authentication required, same as `/health/live`
+and `/health/ready` — directly viewable by navigating to it in a browser. For both
+`answer_generation` and `controller_routing`, reports:
+
+- configured model vs. the model actually in use (`activeModel`)
+- whether the gateway is live-reachable right now, and its current authorized-model list
+  (`GET {api_base_url}/models` — a free, read-only OpenAI-compatible call, no completion tokens
+  billed)
+- whether the self-heal has already corrected drift this process
+
+`?live=false` skips the live gateway call and reports cached state only.
+
+### Self-heal now uses that same probe proactively
+
+`backend/helpdesk/services/llm_model_recovery.py` gained `resolve_effective_model()`, which all
+three call sites (streaming answer generation, non-streaming answer generation, controller
+routing) now use in place of the old "cached correction or configured model" lookup. Before the
+first LLM call in a process, it checks the gateway's live model list:
+
+- configured model is in the list → cached as verified, no further probing this process
+- exactly one authorized model, and it differs → treated as the correction (same as the reactive
+  403 path, same `LLM_MODEL_AUTO_CORRECTED` log line, tagged `..._preflight`)
+- ambiguous (zero or multiple candidates) or the probe itself fails → falls through unchanged to
+  §11's existing reactive 403 handler, which still has the last word
+
+Net effect: a fresh deploy with a drifted alias now self-heals **before** the first real user
+request, not after one fails and falls back to the deterministic boilerplate template.
+
+**Verified two ways:** the probe resolved a deliberately stale model name against the real litellm
+gateway with zero prior 403s (confirmed via `get_cached_correction`), and the full test suite
+(24 tests across `test_llm_generator.py`, `test_llm_model_recovery.py`, `test_controller_llm.py`)
+passes with the live network call properly mocked everywhere — 6 pre-existing tests needed a new
+mock added, since without it they'd have started making real HTTP calls during test runs.
+
+---
+
+## 13. Browser-Viewable LLM Status Page
+
+**Problem this closes:** raw JSON from `GET /health/llm` works fine for a quick browser visit, but
+isn't pleasant to read or re-check repeatedly — not something to hand an operator who just wants to
+glance at LLM health.
+
+Adds a "LLM status" nav link (next to "About this project") at `/napcore-helpdesk/llm-status`,
+rendering `GET /health/llm`'s result as a readable page: an overall status pill plus per-provider
+detail (configured vs. active model, gateway reachability, authorized models, auto-corrected flag)
+for both answer generation and controller routing. "Re-check now" re-runs the live gateway probe;
+"Cached only" reads state without a network call.
+
+Live-verified in the browser against the real running dev stack, in both states (`ok` after a
+real gateway check, `unknown` on cached-only).
+
+---
+
+## 14. API Documentation Drift Fix
+
+**Found while adding §12's endpoint:** `docs/api-description.md` and `api/openapi.yaml` (the
+"authoritative contract" the description doc points to) were both already missing several
+endpoints that existed in `urls.py` before this session touched anything — `POST /auth/dev-token`,
+`GET /questions/trending`, and the `GET`/`DELETE` detail routes on `/questions/events/{id}`.
+
+Added those plus `GET /health/llm`, with full OpenAPI request/response schemas
+(`LlmStatusResponse`, `LlmProviderStatus`, `DevTokenResponse`, `TrendingQuestionsResponse`,
+`QuestionEventDetailResponse`). Validated with `npx @redocly/cli lint api/openapi.yaml` — 0
+errors; the 2 remaining warnings (missing `info.license`, a `localhost` server entry) predate this
+fix and are unrelated.
+
+---
+
 ## Configuration Reference
 
 ### Production Environment Variables (`.env.prod`)
@@ -494,11 +574,15 @@ docker compose -f docker-compose.prod.yml up -d
 
 ### Answers look like generic boilerplate regardless of the question
 
-**As of §11, this should now be rare** — a wrong `LLM_MODEL`/`CONTROLLER_LLM_API_MODEL` alias
-self-corrects at runtime instead of falling back silently. If you still see this:
+**As of §11–§12, this should now be rare** — a wrong `LLM_MODEL`/`CONTROLLER_LLM_API_MODEL` alias
+self-corrects at runtime (proactively as of §12, not just reactively after a failed call) instead
+of falling back silently. **First check** [`/napcore-helpdesk/llm-status`](#13-browser-viewable-llm-status-page)
+(§13) or `GET /health/llm` (§12) — it shows the configured vs. active model and whether the
+gateway currently authorizes the configured one, without needing to ask a real question first. If
+it reports `error` or `degraded`, or the boilerplate persists despite an `ok` status:
 **Cause:** either the self-heal's parser didn't recognize the gateway's error format, or the
 gateway is down/erroring for a different reason entirely (see [§10](#10-llm-model-alias-fix-litellm-gateway),
-[§11](#11-self-healing-llm-model-recovery)).
+[§11](#11-self-healing-llm-model-recovery), [§12](#12-llm-status-endpoint--proactive-self-heal)).
 **Fix:** `docker logs <backend-container> | grep "403\|fallback\|LLM_MODEL_AUTO_CORRECTED"` — if
 `LLM_MODEL_AUTO_CORRECTED` is present, the alias was already fixed automatically and the boilerplate
 answer predates that; if a `403` appears with no `LLM_MODEL_AUTO_CORRECTED` line, the gateway's error

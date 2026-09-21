@@ -120,7 +120,10 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
              GitHub orgs and reindexed; rewrote stale ontology alignments (825 NeTEx, 297 SIRI,
              102 OpRa concepts now correctly mapped to the shared core ontology); fixed the
              GraphDB query structure that had silently prevented cross-standard concept
-             expansion from ever working; corrected a production LLM model-alias regression;
+             expansion from ever working; corrected a production LLM model-alias regression and
+             built a self-healing recovery mechanism, plus a live LLM status endpoint and
+             browser page, so future gateway drift no longer breaks answers silently; closed
+             drift between the API and its documentation (OpenAPI spec, endpoint reference);
              dependency upgrades (React Router v7, Vitest v4).</li>
         </ol>
         <p>
