@@ -40,6 +40,11 @@ DEFAULT_NAMESPACES = {
     "nits": "https://napcore.eu/ontology/nits#",
     "netex": "https://netex.org.uk/netex/2.0#",
     "opra": "https://transmodel-cen.eu/opra/1.0#",
+    # Matches standards/siri.ttl's actual @prefix (confirmed against what's
+    # really loaded in GraphDB: https://siri.org.uk/siri/2.1# has zero
+    # declared classes anywhere -- that was this module's prior value here,
+    # and nits-siri-align.ttl's own prefix, both wrong).
+    "siri": "https://siri.org.uk/siri/1.3#",
     "transmodel": "https://transmodel-cen.eu/6.2/",
     "nch": "https://napcore.eu/ontology/helpdesk#",
 }
@@ -250,14 +255,38 @@ def query_graphdb_concept_expansion(
     quant = "" if safe_hops == 1 else "+"
     if graph_uris:
         graph_values = " ".join(f"<{iri}>" for iri in graph_uris)
+        # A property path inside `GRAPH ?g { ?seed path ?related }` must resolve
+        # entirely within one graph per solution -- it cannot hop from an edge in
+        # e.g. alignments/opra to an edge in alignments/netex, even though both
+        # are in `graph_uris`. That breaks the one thing the shared nits: hub
+        # exists for: a seed in one standard's alignment graph reaching a sibling
+        # concept declared in a different standard's alignment graph.
+        # Second UNION branch below handles that case explicitly as two single-
+        # graph hops: seed -> nits concept (in the seed's own graph), then
+        # nits concept <- sibling concepts (searched across all scoped graphs).
         query = (
             "SELECT DISTINCT ?related WHERE { "
+            "{ "
             f"VALUES ?seed {{ {values} }} "
             f"VALUES ?g {{ {graph_values} }} "
             "GRAPH ?g { "
             f"?seed (({relation_paths})|^({relation_paths})){quant} ?related . "
             "} "
             "FILTER(isIRI(?related)) "
+            "} UNION { "
+            f"VALUES ?seed {{ {values} }} "
+            f"VALUES ?gPivot {{ {graph_values} }} "
+            "GRAPH ?gPivot { "
+            f"?seed ({relation_paths}) ?pivot . "
+            "} "
+            "FILTER(CONTAINS(STR(?pivot), 'napcore.eu/ontology/nits')) "
+            f"VALUES ?gSibling {{ {graph_values} }} "
+            "GRAPH ?gSibling { "
+            f"?related ({relation_paths}) ?pivot . "
+            "} "
+            "FILTER(isIRI(?related)) "
+            "FILTER(!CONTAINS(STR(?related), 'napcore.eu/ontology/nits')) "
+            "} "
             "}"
         )
     else:

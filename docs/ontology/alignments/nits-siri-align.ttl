@@ -6,7 +6,7 @@
 @prefix dct:  <http://purl.org/dc/terms/> .
 
 @prefix nits: <https://napcore.eu/ontology/nits#> .
-@prefix siri: <http://www.siri.org.uk/siri/2.1#> .
+@prefix siri: <https://siri.org.uk/siri/1.3#> .
 
 #################################################################
 # Ontology Header
@@ -21,7 +21,7 @@
     owl:versionIRI <https://napcore.eu/ontology/nits/align/siri/0.3> ;
     owl:versionInfo "0.3-full-heuristic-pipeline" ;
     owl:imports <https://napcore.eu/ontology/nits/core> ;
-    owl:imports <http://www.siri.org.uk/siri/2.1> ;
+    owl:imports <https://siri.org.uk/siri/1.3> ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
 
 #################################################################

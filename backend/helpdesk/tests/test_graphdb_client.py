@@ -91,6 +91,82 @@ class GraphDbClientTests(TestCase):
         self.assertIn("VALUES ?g", sent_query)
         self.assertIn("GRAPH ?g", sent_query)
 
+    def test_query_graphdb_concept_expansion_scoped_query_includes_cross_standard_pivot(self):
+        """Regression test for the cross-graph pivot bug.
+
+        A property path inside `GRAPH ?g { ?seed path ?related }` resolves
+        entirely within one graph per solution, so it can never connect a
+        seed in one standard's alignment graph to a sibling concept in a
+        different standard's alignment graph, even when both are in
+        `graph_uris`. The scoped query must include a second, explicit
+        two-hop branch (seed -> nits concept, then nits concept <- sibling
+        concepts) that is not constrained to a single graph binding for
+        both hops, or cross-standard concepts are silently unreachable.
+        """
+        graphdb_response = {"head": {"vars": ["related"]}, "results": {"bindings": []}}
+        mock_response = MagicMock()
+        mock_response.read.return_value = json.dumps(graphdb_response).encode("utf-8")
+        mock_response.__enter__ = lambda self: self
+        mock_response.__exit__ = MagicMock(return_value=False)
+
+        with patch("helpdesk.services.graphdb_client.urlopen", return_value=mock_response) as urlopen_mock:
+            query_graphdb_concept_expansion(
+                concept_ids={"opra:CancelledDatedVehicleJourneyCount"},
+                hops=1,
+                endpoint="http://localhost:7200",
+                repository="napcore",
+                graph_uris=[
+                    "https://napcore.eu/graph/alignments/opra",
+                    "https://napcore.eu/graph/alignments/netex",
+                    "https://napcore.eu/graph/alignments/siri",
+                ],
+            )
+
+        sent_query = urlopen_mock.call_args[0][0].data.decode("utf-8")
+        self.assertIn("UNION", sent_query)
+        self.assertIn("?pivot", sent_query)
+        self.assertIn("napcore.eu/ontology/nits", sent_query)
+        # The two hops of the pivot branch must use independently-bound graph
+        # variables (not both constrained to the same single ?g), otherwise
+        # they collapse back into the single-graph-only bug this guards against.
+        self.assertIn("?gPivot", sent_query)
+        self.assertIn("?gSibling", sent_query)
+
+    def test_query_graphdb_concept_expansion_pivot_branch_reaches_other_standards(self):
+        """Simulates GraphDB returning results only from the pivot UNION branch
+        (as if the direct-relation branch found nothing, which is the real-world
+        case when a seed's only path to a sibling standard is through nits:)."""
+        graphdb_response = {
+            "head": {"vars": ["related"]},
+            "results": {
+                "bindings": [
+                    {"related": {"type": "uri", "value": "https://napcore.eu/ontology/nits#Journey"}},
+                    {"related": {"type": "uri", "value": "https://netex.org.uk/netex/2.0#VehicleJourney"}},
+                    {"related": {"type": "uri", "value": "https://siri.org.uk/siri/1.3#EstimatedVehicleJourney"}},
+                ]
+            },
+        }
+        mock_response = MagicMock()
+        mock_response.read.return_value = json.dumps(graphdb_response).encode("utf-8")
+        mock_response.__enter__ = lambda self: self
+        mock_response.__exit__ = MagicMock(return_value=False)
+
+        with patch("helpdesk.services.graphdb_client.urlopen", return_value=mock_response):
+            result = query_graphdb_concept_expansion(
+                concept_ids={"opra:CancelledDatedVehicleJourneyCount"},
+                hops=1,
+                endpoint="http://localhost:7200",
+                repository="napcore",
+                graph_uris=[
+                    "https://napcore.eu/graph/alignments/opra",
+                    "https://napcore.eu/graph/alignments/netex",
+                    "https://napcore.eu/graph/alignments/siri",
+                ],
+            )
+
+        self.assertIn("netex:VehicleJourney", result)
+        self.assertIn("siri:EstimatedVehicleJourney", result)
+
     def test_build_graph_scope_for_standards_adds_artifact_rules_only_when_requested(self):
         scoped_without_rules = build_graph_scope_for_standards(
             {"NeTEx", "SIRI"},
