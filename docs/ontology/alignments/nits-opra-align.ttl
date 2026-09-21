@@ -1,6 +1,7 @@
 @prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 @prefix dct:  <http://purl.org/dc/terms/> .
 
@@ -17,8 +18,8 @@
     dct:description "Alignment ontology connecting XSD-derived OpRa concepts to abstract core concepts defined in the NAPCORE ITS Core Ontology. Enables cross-standard reasoning over OpRa operational raw data (capacity, service intensity, delay, and indicator concepts)."@en ;
     dct:creator "NAPCORE Working Group" ;
     dct:created "2026-04-17"^^xsd:date ;
-    owl:versionIRI <https://napcore.eu/ontology/nits/align/opra/0.2> ;
-    owl:versionInfo "0.2-xsd-rebuild-realignment" ;
+    owl:versionIRI <https://napcore.eu/ontology/nits/align/opra/0.3> ;
+    owl:versionInfo "0.3-closematch-consistency" ;
     owl:imports <https://napcore.eu/ontology/nits/core> ;
     owl:imports <https://transmodel-cen.eu/opra/1.0> ;
     dct:license <https://creativecommons.org/licenses/by/4.0/> .
@@ -31,49 +32,56 @@
 # KPI/indicator reporting standard, not a journey-planning standard, so that
 # vocabulary never matched the real schema. This version aligns the 106
 # concepts that are actually extracted from the current OpRa XSD tree.
+#
+# 0.3 note: every entry below is a blind name-pattern heuristic guess (same
+# categorizer as nits-netex-align.ttl's bulk pass), not a verified semantic
+# claim, so they use skos:closeMatch rather than rdfs:subClassOf -- 0.2
+# originally used rdfs:subClassOf, which overstated confidence relative to
+# nits-netex-align.ttl's convention for equivalent-confidence heuristic
+# matches. Tighten to owl:equivalentClass or correct on human review.
 
 #################################################################
 # Journey/Service-scoped Indicators -> nits:Journey / nits:Service / nits:Network
 #################################################################
 
 opra:CancelledDatedVehicleJourneyCount
-    rdfs:subClassOf nits:Journey .
+    skos:closeMatch nits:Journey .
 
 opra:CancelledDatedVehicleJourneyDiscoveryDelivery
-    rdfs:subClassOf nits:Journey .
+    skos:closeMatch nits:Journey .
 
 opra:CancelledDatedVehicleJourneyDiscoveryRequest
-    rdfs:subClassOf nits:Journey .
+    skos:closeMatch nits:Journey .
 
 opra:CancelledDatedVehicleJourneysRequest
-    rdfs:subClassOf nits:Journey .
+    skos:closeMatch nits:Journey .
 
 opra:LateDatedVehicleJourneyCount
-    rdfs:subClassOf nits:Journey .
+    skos:closeMatch nits:Journey .
 
 opra:LateDatedVehicleJourneyDiscoveryDelivery
-    rdfs:subClassOf nits:Journey .
+    skos:closeMatch nits:Journey .
 
 opra:LateDatedVehicleJourneyDiscoveryRequest
-    rdfs:subClassOf nits:Journey .
+    skos:closeMatch nits:Journey .
 
 opra:LateDatedVehicleJourneysRequest
-    rdfs:subClassOf nits:Journey .
+    skos:closeMatch nits:Journey .
 
 opra:LoadOverJourneyDistance
-    rdfs:subClassOf nits:Journey .
+    skos:closeMatch nits:Journey .
 
 opra:MeanCapacityOverJourneyDistance
-    rdfs:subClassOf nits:Journey .
+    skos:closeMatch nits:Journey .
 
 opra:MeanCapacityOverNetworkDistance
-    rdfs:subClassOf nits:Network .
+    skos:closeMatch nits:Network .
 
 opra:ServiceDelivery
-    rdfs:subClassOf nits:Service .
+    skos:closeMatch nits:Service .
 
 opra:ServiceRequest
-    rdfs:subClassOf nits:Service .
+    skos:closeMatch nits:Service .
 
 #################################################################
 # Capacity, Indicator, Log, and Performance Concepts -> nits:DataArtifact
@@ -85,271 +93,271 @@ opra:ServiceRequest
 #################################################################
 
 opra:ActualCapacity
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ActualCapacityDiscoveryDelivery
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ActualCapacityDiscoveryRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ActualCapacityRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ActualFleetDimensions
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ActualFleetDimensionsDiscoveryDelivery
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ActualFleetDimensionsDiscoveryRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ActualFleetDimensionsRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ActualFrame
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ActualFrameRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ActualServiceDimensions
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ActualServiceDimensionsDiscoveryDelivery
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ActualServiceDimensionsDiscoveryRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ActualServiceDimensionsRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ActualServiceIntensity
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ActualServiceIntensityDiscoveryDelivery
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ActualServiceIntensityDiscoveryRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ActualServiceIntensityRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:AverageCommercialSpeed
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:CapabilitiesRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:CapabilitiesResponse
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:CapacitySpecification
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ContextualIndicatorDiscoveryDelivery
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ContextualIndicatorDiscoveryRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ContextualIndicatorFrame
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ContextualIndicatorRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:DurationInterval
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ExpectedPassengerCount
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ExpectedPassengerCountDiscoveryDelivery
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ExpectedPassengerCountDiscoveryRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ExpectedPassengerCountRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ExpectedServiceIntensity
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ExternalPassengerCount
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ExternalPassengerCountDiscoveryDelivery
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ExternalPassengerCountDiscoveryRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:ExternalPassengerCountRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:GeneralLogEntry
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:GenericContextualIndicator
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:IndicatorFrame
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:LogEntryValue
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:LoggableObject
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:MeanCapacityOverRouteDistance
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:OnboardDeviceBasedPassengerCount
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:OnboardDeviceBasedPassengerCountDiscoveryDelivery
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:OnboardDeviceBasedPassengerCountDiscoveryRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:OnboardDeviceBasedPassengerCountRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:Opra
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:OpraDiscoveryDelivery
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:OpraDiscoveryRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:OpraError
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:OpraFunctionalDelivery
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:OpraFunctionalRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:OpraPayloadDelivery
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:OpraSubscriptionRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:PlannedCapacity
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:PlannedCapacityDiscoveryDelivery
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:PlannedCapacityDiscoveryRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:PlannedCapacityRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:PlannedFleetDimensions
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:PlannedFleetDimensionsDiscoveryDelivery
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:PlannedFleetDimensionsDiscoveryRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:PlannedFleetDimensionsRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:PlannedFrame
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:PlannedFrameRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:PlannedServiceDimensions
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:PlannedServiceDimensionsDiscoveryDelivery
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:PlannedServiceDimensionsDiscoveryRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:PlannedServiceDimensionsRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:PlannedServiceIntensity
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:PlannedServiceIntensityDiscoveryDelivery
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:PlannedServiceIntensityDiscoveryRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:PlannedServiceIntensityRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:PreparednessLevel
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:PublicationDelivery
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:PublicationRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:SubscriptionRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:TicketingBasedPassengerCount
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:TicketingBasedPassengerCountDiscoveryDelivery
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:TicketingBasedPassengerCountDiscoveryRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:TicketingBasedPassengerCountRequest
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:TransportPerformance
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:TransportPerformancePerVehicle
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:VehicleLoadEntry
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:VehicleTypeCapacity
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:opraDiscoveryDeliveries
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:opraDiscoveryRequests
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:opraFunctionalDeliveries
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:opraFunctionalRequests
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 opra:opraSubscriptionRequests
-    rdfs:subClassOf nits:DataArtifact .
+    skos:closeMatch nits:DataArtifact .
 
 #################################################################
 # Abstract base classes (left unaligned; alignment is inherited from
