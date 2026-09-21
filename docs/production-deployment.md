@@ -218,6 +218,9 @@ have not been built yet and GitHub Actions cannot verify the host key.
 # On the server
 cd /opt/napcore-helpdesk
 
+# Without VITE_APP_VERSION set, the frontend build falls back to a
+# hardcoded default version instead of the real one in VERSION.
+export VITE_APP_VERSION="$(bash scripts/app_version.sh)"
 docker compose -f docker-compose.prod.yml build
 docker compose -f docker-compose.prod.yml up -d
 
