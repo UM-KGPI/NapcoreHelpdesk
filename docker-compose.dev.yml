@@ -84,6 +84,7 @@ services:
       - ./backend:/app/backend
       - ./docs:/app/docs:ro
       - ./scripts:/app/scripts:ro
+      - ./VERSION:/app/VERSION:ro
       - ../NeTEx:/app/repos/NeTEx:ro
       - ../OpRa:/app/repos/OpRa:ro
       - ../SIRI:/app/repos/SIRI:ro
@@ -105,6 +106,7 @@ services:
     volumes:
       - ./backend:/app/backend
       - ./docs:/app/docs:ro
+      - ./VERSION:/app/VERSION:ro
     depends_on:
       backend:
         condition: service_started
@@ -117,6 +119,7 @@ services:
     volumes:
       - ./backend:/app/backend
       - ./docs:/app/docs:ro
+      - ./VERSION:/app/VERSION:ro
     depends_on:
       backend:
         condition: service_started
