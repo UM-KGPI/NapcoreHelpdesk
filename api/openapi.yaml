@@ -18,6 +18,8 @@ security:
 tags:
   - name: Operations
     description: Operational health and readiness checks
+  - name: Auth
+    description: Development authentication helpers
   - name: QnA
     description: Question answering and orchestration
   - name: FAQOps
@@ -69,6 +71,61 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+  /api/v1/health/llm:
+    get:
+      tags: [Operations]
+      summary: LLM gateway status (configured vs. gateway-authorized model)
+      description: |
+        Diagnostic endpoint, not a traffic-gating readiness probe: always
+        returns 200, with health conveyed only through the body's `status`
+        field. Reports configured vs. active model, live gateway
+        reachability, and whether the model-drift self-heal has already
+        corrected anything this process, for both answer generation and
+        controller routing.
+      operationId: healthLlm
+      parameters:
+        - name: live
+          in: query
+          required: false
+          description: When false, skips the live gateway probe and reports cached state only
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: LLM status returned (body status may be ok, degraded, error, disabled, or unknown)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LlmStatusResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/auth/dev-token:
+    post:
+      tags: [Auth]
+      summary: Issue a short-lived development JWT
+      description: |
+        Convenience endpoint for local development only; returns 403 unless
+        DEV_JWT_AUTO_ISSUE is enabled in the deployment's configuration.
+      operationId: issueDevToken
+      security: []
+      responses:
+        '200':
+          description: Development token issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DevTokenResponse'
+        '403':
+          description: Dev token endpoint is disabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/questions/answer:
     post:
       tags: [QnA]
@@ -307,6 +364,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/questions/trending:
+    get:
+      tags: [QnA]
+      summary: List top user-liked questions
+      operationId: listTrendingQuestions
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+            default: 3
+      responses:
+        '200':
+          description: Trending questions returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrendingQuestionsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/v1/questions/feedback:
     post:
       tags: [QnA]
@@ -415,6 +505,77 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/questions/events/{questionEventId}:
+    get:
+      tags: [QnA]
+      summary: Get full detail for one question event
+      description: |
+        Accepts either the numeric database ID or the request ID (req-...)
+        as the path parameter.
+      operationId: getQuestionEventDetail
+      parameters:
+        - name: questionEventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Question event detail returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionEventDetailResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Question event not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [QnA]
+      summary: Delete a question event
+      operationId: deleteQuestionEvent
+      parameters:
+        - name: questionEventId
+          in: path
+          required: true
+          description: Numeric database ID
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Question event deleted
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Question event not found
           content:
             application/json:
               schema:
@@ -828,6 +989,77 @@ components:
         database:
           type: string
       additionalProperties: false
+    LlmProviderStatus:
+      type: object
+      required: [provider, enabled, status]
+      properties:
+        provider:
+          type: string
+          enum: [answer_generation, controller_routing]
+        enabled:
+          type: boolean
+        status:
+          type: string
+          enum: [ok, degraded, error, disabled, unknown]
+        apiBaseUrl:
+          type: string
+        configuredModel:
+          type: string
+        activeModel:
+          type: string
+        autoCorrected:
+          type: boolean
+        gatewayReachable:
+          type: boolean
+        authorizedModels:
+          type: array
+          items:
+            type: string
+        configuredModelAuthorized:
+          type: boolean
+        probeError:
+          type: string
+      additionalProperties: false
+    LlmStatusResponse:
+      type: object
+      required: [status, service, check, version, buildRef, llm, controllerLlm]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded, error, disabled, unknown]
+        service:
+          type: string
+        check:
+          type: string
+          enum: [llm]
+        version:
+          type: string
+        buildRef:
+          type: string
+        llm:
+          $ref: '#/components/schemas/LlmProviderStatus'
+        controllerLlm:
+          $ref: '#/components/schemas/LlmProviderStatus'
+      additionalProperties: false
+    DevTokenResponse:
+      type: object
+      required: [token, tokenType, expiresInSeconds, subject, roles]
+      properties:
+        token:
+          type: string
+        tokenType:
+          type: string
+          enum: [Bearer]
+        expiresInSeconds:
+          type: integer
+          minimum: 0
+        subject:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+      additionalProperties: false
     AnswerOptions:
       type: object
       properties:
@@ -1084,6 +1316,69 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AskedQuestionRow'
+      additionalProperties: false
+    TrendingQuestionItem:
+      type: object
+      required: [question, answer, askedAt, requestId, questionEventId, mode, confidence]
+      properties:
+        question:
+          type: string
+        answer:
+          type: string
+        askedAt:
+          type: string
+          format: date-time
+        requestId:
+          type: string
+        questionEventId:
+          type: string
+        mode:
+          type: string
+          enum: [faq, rag, abstain]
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+      additionalProperties: false
+    TrendingQuestionsResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrendingQuestionItem'
+      additionalProperties: false
+    QuestionEventDetailResponse:
+      type: object
+      required: [questionEventId, requestId, question, answer, mode, confidence, citations, trace, createdAt]
+      properties:
+        questionEventId:
+          type: string
+        requestId:
+          type: string
+        question:
+          type: string
+        answer:
+          type: string
+        mode:
+          type: string
+          enum: [faq, rag, abstain]
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        citations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Citation'
+        trace:
+          type: object
+          description: Same shape as AnswerTrace, persisted at answer time
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
       additionalProperties: false
     SemanticQuery:
       type: object

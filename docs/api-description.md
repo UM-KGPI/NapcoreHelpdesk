@@ -12,14 +12,22 @@ Authoritative contract: [api/openapi.yaml](../api/openapi.yaml)
 
 - `GET /health/live`
 - `GET /health/ready`
+- `GET /health/llm` — configured vs. gateway-authorized model status for answer generation and controller routing (see [LLM status page](#llm-status-page) below)
 - `POST /admin/index`
+
+### Auth
+
+- `POST /auth/dev-token` — local-development-only short-lived JWT issuance (disabled unless `DEV_JWT_AUTO_ISSUE` is set)
 
 ### QnA
 
 - `POST /questions/answer`
 - `POST /questions/answer/stream`
+- `GET /questions/trending`
 - `POST /questions/feedback`
 - `GET /questions/events`
+- `GET /questions/events/{questionEventId}` — full detail by numeric ID or request ID
+- `DELETE /questions/events/{questionEventId}`
 
 ### FAQOps
 
@@ -65,6 +73,20 @@ Response will be in Slovenian, with technical terms in English.
 - Policy can block unsupported answers
 - Insufficient evidence returns explicit abstention
 - Evidence display improved: no duplicate file paths
+
+## LLM status page
+
+`GET /health/llm` is a diagnostic endpoint (not a readiness probe — always
+returns 200, with health conveyed via the body's `status` field). It reports,
+for both answer generation and controller routing: configured vs. active
+model, live gateway reachability, the gateway's current authorized-model
+list, and whether the model-drift self-heal has already corrected anything
+this process. Pass `?live=false` to skip the live gateway probe and read
+cached state only.
+
+Viewable in the browser at `/napcore-helpdesk/llm-status` (nav link "LLM
+status"), which renders this endpoint's result instead of requiring a manual
+authenticated `curl` call.
 
 ## Frontend Deep-Linking
 
