@@ -514,7 +514,7 @@ CONTROLLER_LLM_MAX_TOKENS=96
 ### Local Development (`.env`)
 
 Already configured; uses:
-- Qwen3 35B quantized (a3b variant) via litellm.lhrs.si
+- `nvidia/Qwen3.6-35B-A3B-NVFP4` (Qwen3.6, 35B total / 3B active MoE, NVFP4 quantization) via litellm.lhrs.si — see [§10](#10-llm-model-alias-fix-litellm-gateway) for why the exact model string matters
 - `LLM_MAX_TOKENS=4000` (generous for testing)
 - CORS allows `localhost:5173`
 
