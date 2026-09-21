@@ -16,8 +16,17 @@ A concept not covered by these layers is invisible to GraphRAG. Retrieval falls 
 
 ## Coverage baseline (NeTEx, 2026-09)
 
-- 922 NeTEx classes defined in `netex.ttl`
-- 829 aligned in `nits-netex-align.ttl` (~90%, `owl:versionInfo "0.3-realignment-pass"`) — up from 62 (~7%) after a September 2026 realignment pass combining hand-curated entries with a heuristic NITS-category pass over the remaining unaligned classes; see [Recent updates](recent-updates.md)
+- Per `make ontology-alignment-gap` (`docs/ontology/alignments/netex-alignment-gap.md`), the
+  authoritative source for this figure: 824 of 2939 NeTEx terms aligned (~28%) in
+  `nits-netex-align.ttl` (`owl:versionInfo "0.3-realignment-pass"`) — up from 62/872 (~7%) before a
+  September 2026 realignment pass that combined hand-curated entries with a heuristic
+  NITS-category pass over the remaining unaligned classes; see
+  [Recent updates](recent-updates.md).
+  Note: despite the report's "classes" label, that 2939 figure counts every `netex:`-prefixed
+  term the extraction regex matches at line-start — both `owl:Class` declarations (922 of them)
+  and lowercase-first `netex:` *properties* (~2017). Of the true `owl:Class` subset, 829/922
+  (~90%) are aligned. The two percentages measure different things; the gap-report tool's own
+  number is what `make ontology-alignment-gap` and the workflow below actually operate on.
 - ~287 XML examples in the NeTEx repository
 - ~19 registered in `netex-examples.ttl` before the first enrichment session (example-artifact coverage was not re-scanned as part of the September realignment pass, so this figure is not re-verified)
 

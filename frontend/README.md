@@ -3,7 +3,7 @@
 This folder contains the C4 Web GUI container for NAPCORE Helpdesk.
 
 ## Features in current slice
-- Route-based split UX: `/user` for chat and `/operator` for editorial/orchestration console.
+- Route-based split UX: `/user` for chat, `/editor` for editorial/orchestration console, `/about` for project info.
 - Shared connection shell with route switcher and common JWT/API configuration.
 - Chat-style session UX with multi-turn history, per-turn evidence, and request IDs.
 - `Generation Profile` selector for deterministic grounded mode and LLM-ready backend mode.
@@ -35,22 +35,23 @@ This folder contains the C4 Web GUI container for NAPCORE Helpdesk.
    `npm run build`
 
 ## Demo routes
-- `http://localhost:5173/user` for the user-facing chat surface.
-- `http://localhost:5173/operator` for the operator console surface.
-- `http://localhost:5173/` redirects to `/user`.
+- `http://localhost:5173/napcore-helpdesk/user` for the user-facing chat surface.
+- `http://localhost:5173/napcore-helpdesk/editor` for the editorial console surface.
+- `http://localhost:5173/napcore-helpdesk/about` for project info.
+- `http://localhost:5173/napcore-helpdesk/` redirects to `/user`.
 
 ## API expectations
 - Backend default base URL in local dev is `/api/v1` via Vite proxy to `http://localhost:8000/api/v1`.
 - Endpoints require a JWT bearer token.
 - `POST /questions/answer` also requires `X-Request-Id` (auto-generated in UI).
-- Health probes are available without auth: `GET /health/live`, `GET /health/ready`.
+- Health probes are available without auth: `GET /health/live`, `GET /health/ready`, `GET /health/llm`.
 
 Local auth convenience in the UI:
 - JWT token is persisted in browser localStorage.
 - `auto-create dev JWT on page reload` is enabled by default.
 - When enabled and token is empty, frontend calls `POST /api/v1/auth/dev-token` and auto-fills the bearer token.
 - If the dev-token endpoint is disabled, manual token paste still works.
-- The shared connection panel applies to both `/user` and `/operator` routes.
+- The shared connection panel applies to both `/user` and `/editor` routes.
 
 `POST /questions/answer` accepts:
 - `sessionId`
@@ -63,8 +64,10 @@ Current backend behavior:
 - `llm-ready` works when backend `LLM_ENABLED=True`; otherwise the backend falls back safely.
 
 ## Pilot operations
-- Local run quickstart: `../docs/testing/local-run-quickstart.md`
-- Console usage steps: `../docs/testing/console-usage-steps.md`
-- Scenario matrix and acceptance criteria: `../docs/testing/first-user-testing-pack.md`
-- Live session worksheet: `../docs/testing/day-1-execution-sheet.md`
-- Feedback issue form: `../.github/ISSUE_TEMPLATE/pilot-feedback.yml`
+
+`../docs/testing/` is a local-only path (symlinked to `.mylocal/docs/testing/`, gitignored — not
+part of this repository's git history). The quickstart, console usage steps, scenario matrix, and
+session worksheet that used to be linked here only exist on the machine(s) that ran the original
+pilot; they are not available from a fresh clone.
+
+- Feedback issue form (tracked in git): `../.github/ISSUE_TEMPLATE/pilot-feedback.yml`

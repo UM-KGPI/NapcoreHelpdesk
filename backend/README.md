@@ -9,15 +9,9 @@ This folder contains the initial backend scaffold for NAPCORE Helpdesk.
 - Retrieval and evidence audit persistence (`RetrievalEvent`, `AnswerEvidenceLink`).
 - Chat-session compatible answer orchestration keyed by `sessionId` / `userId`.
 - Deterministic grounded generation plus optional LLM-ready provider adapter with safe fallback.
-- DRF endpoints for:
-  - `GET /api/v1/health/live`
-  - `GET /api/v1/health/ready`
-  - `POST /api/v1/questions/answer`
-  - `GET /api/v1/faqs/promotion-candidates`
-  - `POST /api/v1/editorial/queue`
-  - `GET /api/v1/editorial/queue`
-  - `GET /api/v1/editorial/queue/metrics`
-  - `POST /api/v1/editorial/queue/transition`
+- Full REST API surface: [docs/api-description.md](../docs/api-description.md) (human-readable) or
+  [api/openapi.yaml](../api/openapi.yaml) (authoritative contract). Not re-listed here to avoid a
+  third copy drifting out of sync with the other two.
 - FAQ-first plus RAG-fallback orchestration in service modules aligned with C4 Level 3 mapping.
 - JWT bearer authentication (`Authorization: Bearer <jwt>`) validated with `JWT_SECRET_KEY` and `JWT_ALGORITHM`.
 
@@ -62,7 +56,11 @@ Version bump workflow:
 2. Set `SERVICE_BUILD_REF` for the deployment/build.
 3. Rebuild frontend and restart backend containers/services.
 
-### Latest narration improvements (2026-05-13)
+### Narration improvements (2026-05-13)
+
+For newer changes (LLM model-alias self-heal, `GET /health/llm`, and more), see
+[docs/recent-updates.md](../docs/recent-updates.md).
+
 - For XML/JSON/YAML example requests, the narration prompt now asks for one short verbatim fenced snippet from a single retrieved evidence block when available.
 - Fabricated example protection is enforced: generated structured code blocks are validated against retrieved evidence lines and rejected when unsupported.
 - If no safe verbatim snippet exists in evidence, narration must explicitly state that an embedded example cannot be provided safely.

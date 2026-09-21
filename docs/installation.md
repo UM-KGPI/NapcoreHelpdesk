@@ -31,8 +31,8 @@ make frontend-dev
 ```
 
 4. Open:
-- Frontend user UI: `http://localhost:5173/user`
-- Frontend editor UI: `http://localhost:5173/editor`
+- Frontend user UI: `http://localhost:5173/napcore-helpdesk/user`
+- Frontend editor UI: `http://localhost:5173/napcore-helpdesk/editor`
 - Backend API: `http://localhost:8000/api/v1`
 
 ## Docker installation
@@ -44,7 +44,7 @@ make docker-dev-up
 ```
 
 2. Open:
-- Frontend: `http://localhost:5173`
+- Frontend: `http://localhost:5173/napcore-helpdesk/user`
 - Backend API: `http://localhost:8000/api/v1`
 - GraphDB: `http://localhost:7200`
 
