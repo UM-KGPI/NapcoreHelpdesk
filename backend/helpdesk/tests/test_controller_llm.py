@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import io
 import json
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
+from urllib import error
 
 from django.test import SimpleTestCase, override_settings
 
+from helpdesk.services import llm_model_recovery
 from helpdesk.services.controller_llm import (
     ControllerLLMError,
     _decide_route_cached,
@@ -18,6 +21,7 @@ class ControllerLLMServiceTests(SimpleTestCase):
         # Decisions are cached in-process; clear between tests so mocked
         # provider responses cannot leak across test cases.
         _decide_route_cached.cache_clear()
+        llm_model_recovery._corrected_model_cache.clear()
     @override_settings(CONTROLLER_LLM_ENABLED=False)
     def test_returns_none_when_disabled(self):
         decision = decide_route_with_controller_llm(
@@ -133,3 +137,46 @@ class ControllerLLMServiceTests(SimpleTestCase):
         # chain-of-thought, and the reply must be parseable JSON.
         self.assertEqual(sent_body["chat_template_kwargs"], {"enable_thinking": False})
         self.assertEqual(sent_body["response_format"], {"type": "json_object"})
+
+    @override_settings(
+        CONTROLLER_LLM_ENABLED=True,
+        CONTROLLER_LLM_PROVIDER="openai-compatible",
+        CONTROLLER_LLM_API_BASE_URL="https://litellm.lhrs.si/v1",
+        CONTROLLER_LLM_API_MODEL="old-model-alias",
+    )
+    @patch("helpdesk.services.controller_llm.request.urlopen")
+    def test_http_provider_self_heals_on_model_access_denied_403(self, urlopen_mock):
+        error_body = (
+            '{"error":{"message":"key not allowed to access model. This key can only '
+            "access models=['nvidia/Qwen3.6-35B-A3B-NVFP4']. Tried to access "
+            'old-model-alias","type":"key_model_access_denied","param":"model","code":"403"}}'
+        ).encode("utf-8")
+        forbidden = error.HTTPError(
+            url="https://litellm.lhrs.si/v1/chat/completions",
+            code=403,
+            msg="Forbidden",
+            hdrs=None,
+            fp=io.BytesIO(error_body),
+        )
+        response_mock = MagicMock()
+        response_mock.read.return_value = json.dumps(
+            {"choices": [{"message": {"content": '{"route":"rag","intent":"definition","confidence":0.8}'}}]}
+        ).encode("utf-8")
+        success = MagicMock()
+        success.__enter__.return_value = response_mock
+        success.__exit__.return_value = False
+        urlopen_mock.side_effect = [forbidden, success]
+
+        decision = decide_route_with_controller_llm(
+            question="What is a NeTEx ScheduledStopPoint?",
+            requested_scope=["NeTEx"],
+            semantic_query={"intent": "definition"},
+        )
+
+        self.assertIsNotNone(decision)
+        self.assertEqual(decision.route, "rag")
+        self.assertEqual(urlopen_mock.call_count, 2)
+        first_body = json.loads(urlopen_mock.call_args_list[0].args[0].data)
+        second_body = json.loads(urlopen_mock.call_args_list[1].args[0].data)
+        self.assertEqual(first_body["model"], "old-model-alias")
+        self.assertEqual(second_body["model"], "nvidia/Qwen3.6-35B-A3B-NVFP4")

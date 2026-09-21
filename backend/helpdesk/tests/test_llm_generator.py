@@ -7,8 +7,14 @@ from urllib import error
 
 from django.test import SimpleTestCase
 
+from helpdesk.services import llm_model_recovery
 from helpdesk.services.grounded_generator import generate_answer
-from helpdesk.services.llm_generator import LLMGenerationError, _build_messages, generate_answer_llm
+from helpdesk.services.llm_generator import (
+    LLMGenerationError,
+    _build_messages,
+    _stream_request_chat_completion,
+    generate_answer_llm,
+)
 
 
 class _FakeResponse:
@@ -26,6 +32,12 @@ class _FakeResponse:
 
 
 class LLMGeneratorTests(SimpleTestCase):
+    def setUp(self):
+        # The model-recovery cache is a module-level dict shared across the
+        # process; reset it so a correction discovered in one test doesn't
+        # leak into the next.
+        llm_model_recovery._corrected_model_cache.clear()
+
     def test_build_messages_requests_single_block_verbatim_snippet_when_available(self):
         messages = _build_messages(
             question="Show me a NeTEx XML example for stop points.",
@@ -120,6 +132,147 @@ class LLMGeneratorTests(SimpleTestCase):
             second_request.headers.get("Authorization"),
             "Bearer github-token-with-models-permission",
         )
+
+    def _key_model_access_denied_error(self, url: str, authorized_model: str) -> error.HTTPError:
+        body = (
+            '{"error":{"message":"key not allowed to access model. This key can only '
+            f"access models=['{authorized_model}']. Tried to access old-model-alias\","
+            '"type":"key_model_access_denied","param":"model","code":"403"}}'
+        ).encode("utf-8")
+        return error.HTTPError(url=url, code=403, msg="Forbidden", hdrs=None, fp=io.BytesIO(body))
+
+    @patch("helpdesk.services.llm_generator.request.urlopen")
+    @patch("helpdesk.services.llm_generator._build_ssl_context")
+    @patch("helpdesk.services.llm_generator.settings")
+    def test_generate_answer_llm_self_heals_on_model_access_denied_403(
+        self, settings_mock, ssl_context_mock, urlopen_mock
+    ):
+        settings_mock.LLM_ENABLED = True
+        settings_mock.LLM_PROVIDER = "openai-compatible"
+        settings_mock.LLM_API_KEY = "sk-shared-key"
+        settings_mock.GITHUB_API_TOKEN = ""
+        settings_mock.LLM_API_BASE_URL = "https://litellm.lhrs.si/v1"
+        settings_mock.LLM_TEMPERATURE = 0.0
+        settings_mock.LLM_MAX_TOKENS = 220
+        settings_mock.LLM_TIMEOUT_SECONDS = 4
+        settings_mock.LLM_MODEL = "old-model-alias"
+        settings_mock.LLM_VERIFY_SSL = True
+        settings_mock.LLM_CA_BUNDLE = ""
+
+        ssl_context_mock.return_value = object()
+        url = "https://litellm.lhrs.si/v1/chat/completions"
+        urlopen_mock.side_effect = [
+            self._key_model_access_denied_error(url, "nvidia/Qwen3.6-35B-A3B-NVFP4"),
+            _FakeResponse(
+                {
+                    "model": "nvidia/Qwen3.6-35B-A3B-NVFP4",
+                    "choices": [{"message": {"content": "Use ServiceFrame with profile validation [E1]."}}],
+                }
+            ),
+        ]
+
+        result = generate_answer_llm(
+            question="How do I exchange timetables in NeTEx?",
+            chunks=[
+                {
+                    "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx",
+                    "commitSha": "abc",
+                    "sourcePath": "README.md",
+                    "chunkId": "chunk-1",
+                    "text": "Use ServiceFrame with profile validation.",
+                    "score": 0.88,
+                }
+            ],
+            scope=["NeTEx"],
+        )
+
+        self.assertIn("ServiceFrame", result["answer"])
+        self.assertEqual(urlopen_mock.call_count, 2)
+        first_body = json.loads(urlopen_mock.call_args_list[0].args[0].data)
+        second_body = json.loads(urlopen_mock.call_args_list[1].args[0].data)
+        self.assertEqual(first_body["model"], "old-model-alias")
+        self.assertEqual(second_body["model"], "nvidia/Qwen3.6-35B-A3B-NVFP4")
+
+        # A second call should skip straight to the corrected model -- no
+        # second 403 round trip -- because the correction is now cached.
+        # Echo the chunk's own wording so citation-grounding validation
+        # passes cleanly on the first attempt (an unrelated rejection would
+        # trigger an internal retry this test isn't mocking a response for).
+        urlopen_mock.reset_mock()
+        urlopen_mock.side_effect = [
+            _FakeResponse(
+                {
+                    "model": "nvidia/Qwen3.6-35B-A3B-NVFP4",
+                    "choices": [{"message": {"content": "Stops are represented as ScheduledStopPoint [E1]."}}],
+                }
+            ),
+        ]
+        generate_answer_llm(
+            question="A different question about NeTEx stops?",
+            chunks=[
+                {
+                    "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx",
+                    "commitSha": "abc",
+                    "sourcePath": "README.md",
+                    "chunkId": "chunk-1",
+                    "text": "Stops are represented as ScheduledStopPoint.",
+                    "score": 0.88,
+                }
+            ],
+            scope=["NeTEx"],
+        )
+        self.assertEqual(urlopen_mock.call_count, 1)
+        only_body = json.loads(urlopen_mock.call_args_list[0].args[0].data)
+        self.assertEqual(only_body["model"], "nvidia/Qwen3.6-35B-A3B-NVFP4")
+
+    @patch("helpdesk.services.llm_generator.request.urlopen")
+    @patch("helpdesk.services.llm_generator._build_ssl_context")
+    def test_stream_request_chat_completion_self_heals_on_model_access_denied_403(
+        self, ssl_context_mock, urlopen_mock
+    ):
+        ssl_context_mock.return_value = object()
+        url = "https://litellm.lhrs.si/v1/chat/completions"
+
+        class _FakeStreamResponse:
+            def __init__(self, lines: list[bytes]):
+                self._lines = lines
+
+            def __iter__(self):
+                return iter(self._lines)
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+        stream_lines = [
+            b'data: {"choices":[{"delta":{"content":"Hello"}}]}\n',
+            b"data: [DONE]\n",
+        ]
+        urlopen_mock.side_effect = [
+            self._key_model_access_denied_error(url, "nvidia/Qwen3.6-35B-A3B-NVFP4"),
+            _FakeStreamResponse(stream_lines),
+        ]
+
+        deltas = list(
+            _stream_request_chat_completion(
+                api_base_url="https://litellm.lhrs.si/v1",
+                api_key="sk-shared-key",
+                model="old-model-alias",
+                timeout_seconds=4,
+                temperature=0.0,
+                max_tokens=220,
+                messages=[{"role": "user", "content": "hi"}],
+            )
+        )
+
+        self.assertEqual(deltas, ["Hello"])
+        self.assertEqual(urlopen_mock.call_count, 2)
+        first_body = json.loads(urlopen_mock.call_args_list[0].args[0].data)
+        second_body = json.loads(urlopen_mock.call_args_list[1].args[0].data)
+        self.assertEqual(first_body["model"], "old-model-alias")
+        self.assertEqual(second_body["model"], "nvidia/Qwen3.6-35B-A3B-NVFP4")
 
     @patch("helpdesk.services.llm_generator.request.urlopen")
     @patch("helpdesk.services.llm_generator._build_ssl_context")

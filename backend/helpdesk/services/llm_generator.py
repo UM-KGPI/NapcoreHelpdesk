@@ -24,6 +24,11 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 from helpdesk.services.question_preprocessor import detect_question_language
+from helpdesk.services.llm_model_recovery import (
+    extract_authorized_model,
+    get_cached_correction,
+    remember_correction,
+)
 
 
 class LLMGenerationError(Exception):
@@ -822,39 +827,63 @@ def _request_chat_completion(
     max_tokens: int,
     messages: list[dict],
 ) -> dict:
-    body = {
-        "model": model,
-        "messages": messages,
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-        # Enforce JSON output to prevent hallucinations: model MUST output valid JSON
-        # with citations constrained to valid evidence indices
-        "response_format": {"type": "json_object"},
-        # Reasoning models (e.g. qwen3) can consume the entire token budget on
-        # hidden chain-of-thought before emitting any answer content, leaving
-        # the response empty. Disable thinking mode to get direct answers.
-        "chat_template_kwargs": {"enable_thinking": False},
-    }
+    def _send(model_to_use: str) -> dict:
+        body = {
+            "model": model_to_use,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            # Enforce JSON output to prevent hallucinations: model MUST output valid JSON
+            # with citations constrained to valid evidence indices
+            "response_format": {"type": "json_object"},
+            # Reasoning models (e.g. qwen3) can consume the entire token budget on
+            # hidden chain-of-thought before emitting any answer content, leaving
+            # the response empty. Disable thinking mode to get direct answers.
+            "chat_template_kwargs": {"enable_thinking": False},
+        }
 
-    headers = {
-        "Content-Type": "application/json",
-    }
-    if api_key:
-        headers["Authorization"] = f"Bearer {api_key}"
+        headers = {
+            "Content-Type": "application/json",
+        }
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
 
-    req = request.Request(
-        url=f"{api_base_url.rstrip('/')}/chat/completions",
-        data=json.dumps(body).encode("utf-8"),
-        method="POST",
-        headers=headers,
-    )
+        req = request.Request(
+            url=f"{api_base_url.rstrip('/')}/chat/completions",
+            data=json.dumps(body).encode("utf-8"),
+            method="POST",
+            headers=headers,
+        )
 
-    with request.urlopen(
-        req,
-        timeout=timeout_seconds,
-        context=_build_ssl_context(),
-    ) as response:
-        return json.loads(response.read().decode("utf-8"))
+        with request.urlopen(
+            req,
+            timeout=timeout_seconds,
+            context=_build_ssl_context(),
+        ) as response:
+            return json.loads(response.read().decode("utf-8"))
+
+    # If a prior call already discovered the gateway rejects `model`, skip
+    # straight to the known-good one instead of paying the 403 round trip again.
+    effective_model = get_cached_correction(api_base_url, model) or model
+    try:
+        return _send(effective_model)
+    except error.HTTPError as exc:
+        if exc.code != 403:
+            raise
+        try:
+            error_body = exc.read().decode("utf-8")
+        except Exception:  # pragma: no cover
+            error_body = ""
+        corrected_model = extract_authorized_model(error_body)
+        if not corrected_model or corrected_model == effective_model:
+            raise
+        remember_correction(
+            api_base_url=api_base_url,
+            configured_model=model,
+            corrected_model=corrected_model,
+            source="answer_generation",
+        )
+        return _send(corrected_model)
 
 
 def _generate_answer_text(
@@ -1172,30 +1201,59 @@ def _stream_request_chat_completion(
     messages: list[dict],
 ) -> Generator[str, None, None]:
     """Yield raw token delta strings from an OpenAI-compatible streaming chat completion."""
-    body = {
-        "model": model,
-        "messages": messages,
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-        "stream": True,
-        # Tokens are fully buffered and validated before any reach the client,
-        # so JSON mode is safe here and keeps output parseable like the sync path.
-        "response_format": {"type": "json_object"},
-        # See _request_chat_completion: avoid reasoning models exhausting the
-        # token budget on hidden chain-of-thought before any content is sent.
-        "chat_template_kwargs": {"enable_thinking": False},
-    }
-    headers = {"Content-Type": "application/json"}
-    if api_key:
-        headers["Authorization"] = f"Bearer {api_key}"
 
-    req = request.Request(
-        url=f"{api_base_url.rstrip('/')}/chat/completions",
-        data=json.dumps(body).encode("utf-8"),
-        method="POST",
-        headers=headers,
-    )
-    with request.urlopen(req, timeout=timeout_seconds, context=_build_ssl_context()) as response:
+    def _build_request(model_to_use: str) -> request.Request:
+        body = {
+            "model": model_to_use,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "stream": True,
+            # Tokens are fully buffered and validated before any reach the client,
+            # so JSON mode is safe here and keeps output parseable like the sync path.
+            "response_format": {"type": "json_object"},
+            # See _request_chat_completion: avoid reasoning models exhausting the
+            # token budget on hidden chain-of-thought before any content is sent.
+            "chat_template_kwargs": {"enable_thinking": False},
+        }
+        headers = {"Content-Type": "application/json"}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        return request.Request(
+            url=f"{api_base_url.rstrip('/')}/chat/completions",
+            data=json.dumps(body).encode("utf-8"),
+            method="POST",
+            headers=headers,
+        )
+
+    # If a prior call already discovered the gateway rejects `model`, skip
+    # straight to the known-good one instead of paying the 403 round trip again.
+    effective_model = get_cached_correction(api_base_url, model) or model
+    try:
+        response = request.urlopen(
+            _build_request(effective_model), timeout=timeout_seconds, context=_build_ssl_context()
+        )
+    except error.HTTPError as exc:
+        if exc.code != 403:
+            raise
+        try:
+            error_body = exc.read().decode("utf-8")
+        except Exception:  # pragma: no cover
+            error_body = ""
+        corrected_model = extract_authorized_model(error_body)
+        if not corrected_model or corrected_model == effective_model:
+            raise
+        remember_correction(
+            api_base_url=api_base_url,
+            configured_model=model,
+            corrected_model=corrected_model,
+            source="answer_generation_stream",
+        )
+        response = request.urlopen(
+            _build_request(corrected_model), timeout=timeout_seconds, context=_build_ssl_context()
+        )
+
+    with response:
         for raw_line in response:
             line = raw_line.decode("utf-8").strip()
             if not line.startswith("data:"):

@@ -23,6 +23,12 @@ from urllib import error, request
 
 from django.conf import settings
 
+from helpdesk.services.llm_model_recovery import (
+    extract_authorized_model,
+    get_cached_correction,
+    remember_correction,
+)
+
 
 class ControllerLLMError(Exception):
     """Raised when controller decisioning cannot be completed safely."""
@@ -120,49 +126,75 @@ def _decide_via_http(*, question: str, requested_scope: list[str], semantic_quer
     if not base_url or not model:
         raise ControllerLLMError("Controller HTTP provider requires base URL and model.")
 
-    body = {
-        "model": model,
-        "messages": [
-            {
-                "role": "user",
-                "content": _build_prompt(
-                    question=question,
-                    requested_scope=requested_scope,
-                    semantic_query=semantic_query,
-                ),
-            }
-        ],
-        "temperature": float(getattr(settings, "CONTROLLER_LLM_TEMPERATURE", 0.0)),
-        "max_tokens": int(getattr(settings, "CONTROLLER_LLM_MAX_TOKENS", 96)),
-        "response_format": {"type": "json_object"},
-        # Reasoning models (e.g. qwen3) can spend the whole small token budget
-        # on hidden chain-of-thought and emit no JSON at all. Disable thinking
-        # so the routing decision is returned directly.
-        "chat_template_kwargs": {"enable_thinking": False},
-    }
-
-    headers = {"Content-Type": "application/json"}
     api_key = getattr(settings, "CONTROLLER_LLM_API_KEY", "").strip()
-    if api_key:
-        headers["Authorization"] = f"Bearer {api_key}"
+    timeout_seconds = int(getattr(settings, "CONTROLLER_LLM_TIMEOUT_SECONDS", 5))
 
-    req = request.Request(
-        url=f"{base_url.rstrip('/')}/chat/completions",
-        data=json.dumps(body).encode("utf-8"),
-        method="POST",
-        headers=headers,
-    )
+    def _build_request(model_to_use: str) -> request.Request:
+        body = {
+            "model": model_to_use,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": _build_prompt(
+                        question=question,
+                        requested_scope=requested_scope,
+                        semantic_query=semantic_query,
+                    ),
+                }
+            ],
+            "temperature": float(getattr(settings, "CONTROLLER_LLM_TEMPERATURE", 0.0)),
+            "max_tokens": int(getattr(settings, "CONTROLLER_LLM_MAX_TOKENS", 96)),
+            "response_format": {"type": "json_object"},
+            # Reasoning models (e.g. qwen3) can spend the whole small token budget
+            # on hidden chain-of-thought and emit no JSON at all. Disable thinking
+            # so the routing decision is returned directly.
+            "chat_template_kwargs": {"enable_thinking": False},
+        }
+        headers = {"Content-Type": "application/json"}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        return request.Request(
+            url=f"{base_url.rstrip('/')}/chat/completions",
+            data=json.dumps(body).encode("utf-8"),
+            method="POST",
+            headers=headers,
+        )
 
-    try:
+    def _send(model_to_use: str) -> dict:
         with request.urlopen(
-            req,
-            timeout=int(getattr(settings, "CONTROLLER_LLM_TIMEOUT_SECONDS", 5)),
+            _build_request(model_to_use),
+            timeout=timeout_seconds,
             context=_build_ssl_context(),
         ) as response:
-            payload = json.loads(response.read().decode("utf-8"))
+            return json.loads(response.read().decode("utf-8"))
+
+    # If a prior call already discovered the gateway rejects `model`, skip
+    # straight to the known-good one instead of paying the 403 round trip again.
+    effective_model = get_cached_correction(base_url, model) or model
+    try:
+        payload = _send(effective_model)
     except error.HTTPError as exc:
-        detail = f"Controller HTTP error: {exc.code}"
-        raise ControllerLLMError(detail) from exc
+        if exc.code != 403:
+            raise ControllerLLMError(f"Controller HTTP error: {exc.code}") from exc
+        try:
+            error_body = exc.read().decode("utf-8")
+        except Exception:  # pragma: no cover
+            error_body = ""
+        corrected_model = extract_authorized_model(error_body)
+        if not corrected_model or corrected_model == effective_model:
+            raise ControllerLLMError(f"Controller HTTP error: {exc.code}") from exc
+        remember_correction(
+            api_base_url=base_url,
+            configured_model=model,
+            corrected_model=corrected_model,
+            source="controller_routing",
+        )
+        try:
+            payload = _send(corrected_model)
+        except error.HTTPError as retry_exc:
+            raise ControllerLLMError(f"Controller HTTP error: {retry_exc.code}") from retry_exc
+        except Exception as retry_exc:
+            raise ControllerLLMError(f"Controller HTTP request failed: {retry_exc}") from retry_exc
     except Exception as exc:
         raise ControllerLLMError(f"Controller HTTP request failed: {exc}") from exc
 
