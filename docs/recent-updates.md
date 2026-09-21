@@ -471,6 +471,21 @@ fix and are unrelated.
 
 ---
 
+## 15. C4 Diagrams Updated for LLM Model Recovery
+
+The Level 2 container diagram and Level 3 orchestrator-components diagram
+([docs/diagrams/c4-container.svg](diagrams/c4-container.svg),
+[docs/diagrams/c4-orchestrator-components.svg](diagrams/c4-orchestrator-components.svg)) now
+reflect §12: a new **LLM Model Recovery** domain component (`llm_model_recovery.py`) sitting
+between the Controller/Narration components and their respective model runtimes, and a new
+**LLM Health Check** REST controller for `GET /health/llm`, explicitly noted as public,
+unauthenticated, and outside the question-answering pipeline. The container-level relationships to
+both model runtimes are annotated "(self-heals model-alias drift)", with a note pointing to the
+Level 3 diagram for detail. The Level 1 system-context diagram is unchanged — this is an internal
+implementation detail below that level of abstraction.
+
+---
+
 ## Configuration Reference
 
 ### Production Environment Variables (`.env.prod`)
