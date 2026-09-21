@@ -250,8 +250,11 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
           onLoadQuestion={onLoadHistoricalQuestion}
         />
 
-        <div className="chat-log" aria-live="polite" ref={chatLogRef}>
-          {chatTurns.length === 0 && <p className="muted">Start a conversation.</p>}
+        <div
+          className={`chat-log ${chatTurns.length === 0 ? "chat-log-empty" : ""}`}
+          aria-live="polite"
+          ref={chatLogRef}
+        >
           {chatTurns.map((turn) => (
             <article
               key={turn.id}
@@ -372,7 +375,11 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
             value={chatPrompt}
             onChange={(event) => setChatPrompt(event.target.value)}
             rows={3}
-            placeholder="Ask a question..."
+            placeholder={
+              chatTurns.length === 0
+                ? "Ask a question here, e.g. How is a journey departure time represented in NeTEx XML?"
+                : "Ask a question here"
+            }
             required
             aria-label="Question input"
           />
