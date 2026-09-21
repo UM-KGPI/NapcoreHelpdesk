@@ -14,12 +14,12 @@ GraphRAG retrieval uses three ontology layers to expand and rank evidence:
 
 A concept not covered by these layers is invisible to GraphRAG. Retrieval falls back to lexical/vector matching only, which can miss structurally correct examples that use domain vocabulary.
 
-## Coverage baseline (NeTEx, 2026-06)
+## Coverage baseline (NeTEx, 2026-09)
 
-- 872 NeTEx classes defined in `netex.ttl`
-- 62 aligned in `nits-netex-align.ttl` (~7%)
+- 922 NeTEx classes defined in `netex.ttl`
+- 829 aligned in `nits-netex-align.ttl` (~90%, `owl:versionInfo "0.3-realignment-pass"`) — up from 62 (~7%) after a September 2026 realignment pass combining hand-curated entries with a heuristic NITS-category pass over the remaining unaligned classes; see [Recent updates](recent-updates.md)
 - ~287 XML examples in the NeTEx repository
-- ~19 registered in `netex-examples.ttl` before the first enrichment session
+- ~19 registered in `netex-examples.ttl` before the first enrichment session (example-artifact coverage was not re-scanned as part of the September realignment pass, so this figure is not re-verified)
 
 ## Scan commands
 
