@@ -45,7 +45,7 @@ Faculty of Civil Engineering,
 Transportation Engineering and Architecture,
 Chair of Construction and Transportation Informatics (https://kgpi.fgpa.um.si/). They defined the standards scope (NeTEx/SIRI/OpRa/
 Transmodel), the FAQ-first/RAG-fallback answer strategy, the citation and
-abstention rules, and the editorial review workflow. The work is part of NAPCORE Task 4.3 Multimodal standards, led by Jorge Gonzalez. Active task partners are contributing during the pilot phase.
+abstention rules, and the editorial review workflow. The work is part of NAPCORE Task 4.3 Multimodal standards, led by Jorge Gonzalez, Multimodal and Digital Policy Officer at the French Ministry of Transport (DGITM). Active task partners are contributing during the pilot phase.
 
 ## Development approach
 
