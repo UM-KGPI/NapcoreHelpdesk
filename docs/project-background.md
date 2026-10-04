@@ -15,6 +15,9 @@ and OpRa.
 
 - **Grounded answers:** responses are based only on approved source
   repositories and cite the evidence they use.
+- **Knowledge graph:** ontologies of the standards, linked through a shared
+  core ontology and stored in a GraphDB knowledge graph, help the assistant
+  find related concepts across standards.
 - **Honest about gaps:** when the evidence is insufficient, the assistant says
   so instead of guessing.
 - **Curated knowledge:** editorially reviewed FAQ answers are used
