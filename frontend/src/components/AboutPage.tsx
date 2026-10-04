@@ -70,7 +70,7 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           Faculty of Civil Engineering,
           Transportation Engineering and Architecture,
           Chair of Construction and Transportation Informatics (<a href="https://kgpi.fgpa.um.si/" target="_blank" rel="noreferrer">kgpi.fgpa.um.si</a>). They defined the standards scope (NeTEx/SIRI/OpRa/Transmodel), the FAQ-first/RAG-fallback answer strategy, the citation and
-          abstention rules, and the editorial review workflow. The work is part of the NAPCORE Task 4.3 Multimodal standards. Active task partners are contributing during the pilot phase.
+          abstention rules, and the editorial review workflow. The work is part of NAPCORE Task 4.3 Multimodal standards, led by Jorge Gonzalez. Active task partners are contributing during the pilot phase.
         </p>
       </section>
 
