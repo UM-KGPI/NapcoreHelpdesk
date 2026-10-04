@@ -28,7 +28,7 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
     <section className="about-page">
       <section className="panel status-banner">
         <p>
-          <strong>Status:</strong> This project is actively in development. The core functionality is stable and in pilot testing, but new features, refinements, and integrations are ongoing. The work is part of the NAPCORE Task 4.3 Multimodal Standards, with active contributions from task members.
+          <strong>Work in progress:</strong> NAPCORE Helpdesk is under active development and currently in pilot testing. Answers may be incomplete or occasionally inaccurate — always check them against the cited sources and the official standard documentation. Coverage, features, and behaviour may change between releases, and your feedback directly shapes what comes next. The work is part of the NAPCORE Task 4.3 Multimodal Standards, with active contributions from task members.
         </p>
       </section>
 
@@ -37,10 +37,10 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           <h2>Purpose</h2>
         </div>
         <p>
-          NAPCORE Helpdesk is a multilingual Q&amp;A assistant for implementer questions
-          about European public transport data standards — Transmodel, NeTEx, SIRI, and
-          OpRa — grounded only in approved source repositories, with citations and an
-          abstain path when evidence is insufficient. Questions can be asked in any of
+          NAPCORE Helpdesk is a multilingual Q&amp;A assistant, still in development, for
+          implementer questions about European public transport data standards — Transmodel,
+          NeTEx, SIRI, and OpRa. It is designed to answer only from approved source
+          repositories, with citations, and to abstain when evidence is insufficient. Questions can be asked in any of
           the supported languages and are answered in that same language, so
           implementers are not required to work in English. The name reflects NAPCORE,
           the EU coordination initiative for National Access Points to transport data,
@@ -53,8 +53,7 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           <h2>Requirements &amp; design</h2>
         </div>
         <p>
-          The requirements and domain design are credited throughout the codebase (see
-          the header comment of most backend service modules) to:
+          The requirements and domain design are by:
         </p>
         <ul>
           <li>Andrej Tibaut</li>
@@ -65,7 +64,7 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           Faculty of Civil Engineering,
           Transportation Engineering and Architecture,
           Chair of Construction and Transportation Informatics (<a href="https://kgpi.fgpa.um.si/" target="_blank" rel="noreferrer">kgpi.fgpa.um.si</a>). They defined the standards scope (NeTEx/SIRI/OpRa/Transmodel), the FAQ-first/RAG-fallback answer strategy, the citation and
-          abstention guarantees, and the editorial review workflow. The work is part of the NAPCORE Task 4.3. Active task partners are contributing after the app launch.
+          abstention rules, and the editorial review workflow. The work is part of the NAPCORE Task 4.3. Active task partners are contributing during the pilot phase.
         </p>
       </section>
 
@@ -74,11 +73,9 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           <h2>Development approach</h2>
         </div>
         <p>
-          Implementation was carried out by humans and by AI coding agents working under human
-          direction — every service module in <code>backend/helpdesk/services/</code> and
-          <code>backend/helpdesk/management/commands/</code> states this explicitly in its header
-          (<code>Crafted by: AI coding agents</code>). The development style visible in the commit
-          history is iterative rather than big-upfront-design:
+          Implementation was led by the project team, with AI-assisted coding tools used as part
+          of the workflow. The development style visible in the commit history is iterative rather
+          than big-upfront-design:
         </p>
         <ul>
           <li>Small, scoped, conventionally-named commits (<code>feat(...)</code>, <code>fix(...)</code>, <code>chore(...)</code>, <code>docs(...)</code>).</li>
@@ -115,14 +112,14 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
              version display and deep-linking to individual Q&amp;A exchanges; frequent patch
              releases; C4 diagram maintenance; Dependabot/security fixes; community contribution
              pathway via GitHub.</li>
-          <li><strong>Cross-standard ontology alignment &amp; production readiness</strong> (Sep
-             2026) — migrated NeTEx/OpRa/SIRI source repositories to their current canonical
+          <li><strong>Cross-standard ontology alignment &amp; robustness</strong> (Sep
+             2026, ongoing) —migrated NeTEx/OpRa/SIRI source repositories to their current canonical
              GitHub orgs and reindexed; rewrote stale ontology alignments (825 NeTEx, 297 SIRI,
              102 OpRa concepts now correctly mapped to the shared core ontology); fixed the
              GraphDB query structure that had silently prevented cross-standard concept
              expansion from ever working; corrected a production LLM model-alias regression and
              built a self-healing recovery mechanism, plus a public, browser-viewable LLM
-             status endpoint, so future gateway drift no longer breaks answers silently; closed
+             status endpoint, to make gateway drift visible instead of silently breaking answers; closed
              drift between the API and its documentation (OpenAPI spec, endpoint reference);
              dependency upgrades (React Router v7, Vitest v4).</li>
         </ol>
@@ -135,7 +132,8 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           >
             Recent updates
           </a>{" "}
-          for a detailed log of the latest phase.
+          for a detailed log of the latest phase. Development is ongoing, and this timeline will
+          grow as the project evolves.
         </p>
       </section>
 
@@ -144,7 +142,7 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           <h2>Contributing</h2>
         </div>
         <p>
-          NAPCORE Helpdesk is open-source and developed collaboratively. We welcome contributions, feedback, and ideas from the community.
+          NAPCORE Helpdesk is open-source and developed collaboratively. We welcome contributions, feedback, and ideas from the community. Because the project is a work in progress, reports of incorrect, incomplete, or missing answers are especially valuable.
         </p>
         <p>
           Visit the <a href="https://github.com/UM-KGPI/NapcoreHelpdesk" target="_blank" rel="noreferrer">GitHub repository</a> to:
@@ -168,6 +166,9 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           <dt>Build:</dt>
           <dd>{extractBuildInfo(appVersion)}</dd>
         </dl>
+        {extractBaseVersion(appVersion).startsWith("0.") && (
+          <p>Pre-1.0 release — features and behaviour may still change.</p>
+        )}
       </section>
     </section>
   );
