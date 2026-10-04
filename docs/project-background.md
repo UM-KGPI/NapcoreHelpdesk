@@ -21,7 +21,10 @@ and OpRa.
 - **AI as controller and narrator:** when a question matches a reviewed FAQ, a
   controller model checks whether that FAQ really fits or whether the sources
   should be searched instead. A narration model then writes the answer from
-  the retrieved evidence, using a matching FAQ answer as guidance.
+  the retrieved evidence, using a matching FAQ answer as guidance. Both roles
+  run on an open-weight model (`nvidia/Qwen3.6-35B-A3B-NVFP4`) hosted at the
+  University of Maribor, Faculty of Electrical Engineering and Computer
+  Science.
 - **Honest about gaps:** when the evidence is insufficient, the assistant says
   so instead of guessing.
 - **Curated knowledge:** editorially reviewed FAQ answers are used
