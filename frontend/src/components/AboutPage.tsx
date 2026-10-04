@@ -42,7 +42,7 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
         </p>
         <ul>
           <li><strong>Grounded answers:</strong> responses are based only on approved source repositories and cite the evidence they use.</li>
-          <li><strong>Semantic technologies and linked data:</strong> the standards are modelled as linked data (RDF/OWL ontologies with SKOS labels, definitions, and cross-standard mappings), aligned to a shared core ontology and stored in a GraphDB knowledge graph. SPARQL queries over this graph help the assistant find related concepts across standards.</li>
+          <li><strong>Semantic technologies:</strong> the standards are modelled as linked data and stored in a GraphDB knowledge graph, helping the assistant find related concepts across standards.</li>
           <li><strong>Honest about gaps:</strong> when the evidence is insufficient, the assistant says so instead of guessing.</li>
           <li><strong>Curated knowledge:</strong> editorially reviewed FAQ answers are used first, with search across the source repositories as a fallback.</li>
           <li><strong>Your language:</strong> ask in any supported language and get the answer in the same language, so working in English is not required.</li>
