@@ -77,10 +77,9 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           <h2>Development approach</h2>
         </div>
         <p>
-          Implementation was led by the project team, with Andrej Tibaut also contributing
-          directly to code development and AI-assisted coding tools used as part of the
-          workflow. The development style visible in the commit history is iterative rather
-          than big-upfront-design:
+          The project team led the implementation, with Andrej Tibaut contributing directly to
+          the code and AI-assisted coding tools supporting the day-to-day work. As the commit
+          history shows, development has been iterative rather than planned in full up front:
         </p>
         <ul>
           <li>Small, scoped, conventionally-named commits (<code>feat(...)</code>, <code>fix(...)</code>, <code>chore(...)</code>, <code>docs(...)</code>).</li>
