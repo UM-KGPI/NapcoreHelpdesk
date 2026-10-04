@@ -77,9 +77,10 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           <h2>Development approach</h2>
         </div>
         <p>
-          The project team led the implementation, with Andrej Tibaut contributing directly to
-          the code and AI-assisted coding tools supporting the day-to-day work. As the commit
-          history shows, development has been iterative rather than planned in full up front:
+          Development is led by Andrej Tibaut, who directs the implementation and also
+          contributes directly to the code. AI-assisted coding tools support the day-to-day
+          work. As the commit history shows, development has been iterative rather than
+          planned in full up front:
         </p>
         <ul>
           <li>Small, scoped, conventionally-named commits (<code>feat(...)</code>, <code>fix(...)</code>, <code>chore(...)</code>, <code>docs(...)</code>).</li>
