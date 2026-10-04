@@ -1,6 +1,6 @@
 # Project Background
 
-> **Work in progress:** NAPCORE Helpdesk is under active development and currently in pilot testing. Answers may be incomplete or occasionally inaccurate. Always check them against the cited sources and the official standard documentation. Coverage, features, and behaviour may change between releases, and your feedback directly shapes what comes next. The work is part of the NAPCORE Task 4.3 Multimodal Standards, with active contributions from task members.
+> **Work in progress:** NAPCORE Helpdesk is under active development and currently in pilot testing. Answers may be incomplete or occasionally inaccurate. Always check them against the cited sources and the official standard documentation. Coverage, features, and behaviour may change between releases, and your feedback directly shapes what comes next. The work is part of the NAPCORE Task 4.3 Multimodal standards, with active contributions from task members.
 
 This page covers where NAPCORE Helpdesk idea came from, who defined it, and how it was
 built. For what the system does and how it's structured today, see
@@ -37,7 +37,7 @@ Faculty of Civil Engineering,
 Transportation Engineering and Architecture,
 Chair of Construction and Transportation Informatics (https://kgpi.fgpa.um.si/). They defined the standards scope (NeTEx/SIRI/OpRa/
 Transmodel), the FAQ-first/RAG-fallback answer strategy, the citation and
-abstention rules, and the editorial review workflow. The work is part of the NAPCORE Task 4.3. Active task partners are contributing during the pilot phase.
+abstention rules, and the editorial review workflow. The work is part of the NAPCORE Task 4.3 Multimodal standards. Active task partners are contributing during the pilot phase.
 
 ## Development approach
 
