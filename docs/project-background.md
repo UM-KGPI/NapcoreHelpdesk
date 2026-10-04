@@ -35,8 +35,9 @@ abstention rules, and the editorial review workflow. The work is part of the NAP
 
 ## Development approach
 
-Implementation was led by the project team, with AI-assisted coding tools used as
-part of the workflow. The development style visible in the commit history is
+Implementation was led by the project team, with Andrej Tibaut also contributing
+directly to code development and AI-assisted coding tools used as part of the
+workflow. The development style visible in the commit history is
 iterative rather than big-upfront-design:
 
 - Small, scoped, conventionally-named commits (`feat(...)`, `fix(...)`,
