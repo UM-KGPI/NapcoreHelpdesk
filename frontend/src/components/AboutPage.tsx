@@ -37,14 +37,18 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           <h2>Purpose</h2>
         </div>
         <p>
-          NAPCORE Helpdesk is a multilingual Q&amp;A assistant, still in development, for
-          implementer questions about European public transport data standards: Transmodel,
-          NeTEx, SIRI, and OpRa. It is designed to answer only from approved source
-          repositories, with citations, and to abstain when evidence is insufficient. Questions can be asked in any of
-          the supported languages and are answered in that same language, so
-          implementers are not required to work in English. The name reflects NAPCORE,
-          the EU coordination initiative for National Access Points to transport data,
-          which these standards serve (<a href="https://www.napcore.eu" target="_blank" rel="noreferrer">www.napcore.eu</a>).
+          NAPCORE Helpdesk helps implementers get reliable answers to their questions about the
+          European public transport data standards Transmodel, NeTEx, SIRI, and OpRa.
+        </p>
+        <ul>
+          <li><strong>Grounded answers:</strong> responses are based only on approved source repositories and cite the evidence they use.</li>
+          <li><strong>Honest about gaps:</strong> when the evidence is insufficient, the assistant says so instead of guessing.</li>
+          <li><strong>Curated knowledge:</strong> editorially reviewed FAQ answers are used first, with search across the source repositories as a fallback.</li>
+          <li><strong>Your language:</strong> ask in any supported language and get the answer in the same language, so working in English is not required.</li>
+        </ul>
+        <p>
+          The name refers to NAPCORE, the EU coordination initiative for National Access Points to
+          transport data, which these standards serve (<a href="https://www.napcore.eu" target="_blank" rel="noreferrer">www.napcore.eu</a>).
         </p>
       </section>
 

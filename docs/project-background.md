@@ -9,15 +9,21 @@ changes, see [Recent updates](recent-updates.md).
 
 ## Purpose
 
-NAPCORE Helpdesk is a multilingual Q&A assistant, still in development, for
-implementer questions about European public transport data standards:
-Transmodel, NeTEx, SIRI, and OpRa. It is designed to answer only from approved
-source repositories, with citations, and to abstain when evidence is
-insufficient. Questions can be asked in any of
-the supported languages and are answered in that same language, so
-implementers are not required to work in English. The name reflects NAPCORE,
-the EU coordination initiative for National Access Points to transport data,
-which these standards serve (www.napcore.eu).
+NAPCORE Helpdesk helps implementers get reliable answers to their questions
+about the European public transport data standards Transmodel, NeTEx, SIRI,
+and OpRa.
+
+- **Grounded answers:** responses are based only on approved source
+  repositories and cite the evidence they use.
+- **Honest about gaps:** when the evidence is insufficient, the assistant says
+  so instead of guessing.
+- **Curated knowledge:** editorially reviewed FAQ answers are used
+  first, with search across the source repositories as a fallback.
+- **Your language:** ask in any supported language and get the answer in the
+  same language, so working in English is not required.
+
+The name refers to NAPCORE, the EU coordination initiative for National Access
+Points to transport data, which these standards serve (www.napcore.eu).
 
 ## Requirements & design
 
