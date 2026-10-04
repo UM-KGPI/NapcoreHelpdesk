@@ -18,6 +18,10 @@ and OpRa.
 - **Semantic technologies:** the standards are modelled as linked data and
   stored in a GraphDB knowledge graph, helping the assistant find related
   concepts across standards.
+- **AI as controller and narrator:** a controller model interprets each
+  question and decides whether to answer from the FAQ, search the sources, or
+  abstain; a narration model then writes the answer from the retrieved
+  evidence.
 - **Honest about gaps:** when the evidence is insufficient, the assistant says
   so instead of guessing.
 - **Curated knowledge:** editorially reviewed FAQ answers are used
