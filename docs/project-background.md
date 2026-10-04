@@ -41,7 +41,7 @@ abstention rules, and the editorial review workflow. The work is part of the NAP
 
 ## Development approach
 
-Development is led by Andrej Tibaut, who directs the implementation and also
+Development is led by Andrej Tibaut, who orchestrates the implementation and also
 contributes directly to the code. AI-assisted coding tools support the
 day-to-day work. As the commit history shows, development has been iterative
 rather than planned in full up front:
