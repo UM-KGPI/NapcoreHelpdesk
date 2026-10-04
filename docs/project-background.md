@@ -15,11 +15,9 @@ and OpRa.
 
 - **Grounded answers:** responses are based only on approved source
   repositories and cite the evidence they use.
-- **Semantic technologies and linked data:** the standards are modelled as
-  linked data (RDF/OWL ontologies with SKOS labels, definitions, and
-  cross-standard mappings), aligned to a shared core ontology and stored in a
-  GraphDB knowledge graph. SPARQL queries over this graph help the assistant
-  find related concepts across standards.
+- **Semantic technologies:** the standards are modelled as linked data and
+  stored in a GraphDB knowledge graph, helping the assistant find related
+  concepts across standards.
 - **Honest about gaps:** when the evidence is insufficient, the assistant says
   so instead of guessing.
 - **Curated knowledge:** editorially reviewed FAQ answers are used
