@@ -1,5 +1,5 @@
 /**
- * Static "About the project" page — origin, requirements authorship, and
+ * Static "About the project" page: origin, requirements authorship, and
  * development approach. Content mirrors docs/project-background.md; keep
  * the two in sync when either changes.
  *
@@ -28,7 +28,7 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
     <section className="about-page">
       <section className="panel status-banner">
         <p>
-          <strong>Work in progress:</strong> NAPCORE Helpdesk is under active development and currently in pilot testing. Answers may be incomplete or occasionally inaccurate — always check them against the cited sources and the official standard documentation. Coverage, features, and behaviour may change between releases, and your feedback directly shapes what comes next. The work is part of the NAPCORE Task 4.3 Multimodal Standards, with active contributions from task members.
+          <strong>Work in progress:</strong> NAPCORE Helpdesk is under active development and currently in pilot testing. Answers may be incomplete or occasionally inaccurate. Always check them against the cited sources and the official standard documentation. Coverage, features, and behaviour may change between releases, and your feedback directly shapes what comes next. The work is part of the NAPCORE Task 4.3 Multimodal Standards, with active contributions from task members.
         </p>
       </section>
 
@@ -38,7 +38,7 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
         </div>
         <p>
           NAPCORE Helpdesk is a multilingual Q&amp;A assistant, still in development, for
-          implementer questions about European public transport data standards — Transmodel,
+          implementer questions about European public transport data standards: Transmodel,
           NeTEx, SIRI, and OpRa. It is designed to answer only from approved source
           repositories, with citations, and to abstain when evidence is insufficient. Questions can be asked in any of
           the supported languages and are answered in that same language, so
@@ -93,27 +93,27 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           since. Broad phases, in order:
         </p>
         <ol>
-          <li><strong>Foundations</strong> (Mar 2026) — initial project import; hybrid
+          <li><strong>Foundations</strong> (Mar 2026): initial project import; hybrid
              lexical+vector retrieval on PostgreSQL/pgvector; FAQ and RAG persistence and
              editorial RBAC scaffolding aligned to the C4 architecture.</li>
-          <li><strong>Ontology, GraphRAG &amp; editorial maturation</strong> (Apr–Jun 2026) —
+          <li><strong>Ontology, GraphRAG &amp; editorial maturation</strong> (Apr to Jun 2026):
              XSD-to-ontology extraction pipeline and GraphDB-backed concept expansion;
              FAQ-first/RAG-fallback answer strategy; the editorial draft → review →
              approved/rejected → published workflow, KPI widgets, and board UI; Fedora VM +
              Docker Compose deployment automation.</li>
-          <li><strong>Answer-quality &amp; reasoning-model hardening</strong> (Jul 2026 — the
-             single largest push, over half of all commits to date) — citation-grounding
+          <li><strong>Answer-quality &amp; reasoning-model hardening</strong> (Jul 2026, the
+             single largest push, over half of all commits to date): citation-grounding
              correctness (stop false rejections, prevent hallucinated [E#] references, lenient
              handling for code blocks); Qwen reasoning-model controller tuning; prompt-constraint
              and markdown-formatting fixes; multilingual abstain/insufficient-evidence
              phrasing.</li>
-          <li><strong>UI/UX refinement &amp; release cadence</strong> (Jul 2026, ongoing) — user
+          <li><strong>UI/UX refinement &amp; release cadence</strong> (Jul 2026, ongoing): user
              discovery features (Inspiring questions panel with smart caching); streamlined
              version display and deep-linking to individual Q&amp;A exchanges; frequent patch
              releases; C4 diagram maintenance; Dependabot/security fixes; community contribution
              pathway via GitHub.</li>
           <li><strong>Cross-standard ontology alignment &amp; robustness</strong> (Sep
-             2026, ongoing) —migrated NeTEx/OpRa/SIRI source repositories to their current canonical
+             2026, ongoing): migrated NeTEx/OpRa/SIRI source repositories to their current canonical
              GitHub orgs and reindexed; rewrote stale ontology alignments (825 NeTEx, 297 SIRI,
              102 OpRa concepts now correctly mapped to the shared core ontology); fixed the
              GraphDB query structure that had silently prevented cross-standard concept
@@ -167,7 +167,7 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           <dd>{extractBuildInfo(appVersion)}</dd>
         </dl>
         {extractBaseVersion(appVersion).startsWith("0.") && (
-          <p>Pre-1.0 release — features and behaviour may still change.</p>
+          <p>Pre-1.0 release: features and behaviour may still change.</p>
         )}
       </section>
     </section>

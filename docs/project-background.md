@@ -1,6 +1,6 @@
 # Project Background
 
-> **Work in progress:** NAPCORE Helpdesk is under active development and currently in pilot testing. Answers may be incomplete or occasionally inaccurate — always check them against the cited sources and the official standard documentation. Coverage, features, and behaviour may change between releases, and your feedback directly shapes what comes next. The work is part of the NAPCORE Task 4.3 Multimodal Standards, with active contributions from task members.
+> **Work in progress:** NAPCORE Helpdesk is under active development and currently in pilot testing. Answers may be incomplete or occasionally inaccurate. Always check them against the cited sources and the official standard documentation. Coverage, features, and behaviour may change between releases, and your feedback directly shapes what comes next. The work is part of the NAPCORE Task 4.3 Multimodal Standards, with active contributions from task members.
 
 This page covers where NAPCORE Helpdesk idea came from, who defined it, and how it was
 built. For what the system does and how it's structured today, see
@@ -10,7 +10,7 @@ changes, see [Recent updates](recent-updates.md).
 ## Purpose
 
 NAPCORE Helpdesk is a multilingual Q&A assistant, still in development, for
-implementer questions about European public transport data standards —
+implementer questions about European public transport data standards:
 Transmodel, NeTEx, SIRI, and OpRa. It is designed to answer only from approved
 source repositories, with citations, and to abstain when evidence is
 insufficient. Questions can be asked in any of
@@ -54,27 +54,27 @@ iterative rather than big-upfront-design:
 The project started on 2026-03-28 and has had continuous, active development
 since. Broad phases, in order:
 
-1. **Foundations** (Mar 2026) — initial project import; hybrid lexical+vector
+1. **Foundations** (Mar 2026): initial project import; hybrid lexical+vector
    retrieval on PostgreSQL/pgvector; FAQ and RAG persistence and editorial
    RBAC scaffolding aligned to the C4 architecture.
-2. **Ontology, GraphRAG & editorial maturation** (Apr–Jun 2026) —
+2. **Ontology, GraphRAG & editorial maturation** (Apr to Jun 2026):
    XSD-to-ontology extraction pipeline and GraphDB-backed concept expansion;
    FAQ-first/RAG-fallback answer strategy; the editorial draft → review →
    approved/rejected → published workflow, KPI widgets, and board UI; Fedora
    VM + Docker Compose deployment automation.
-3. **Answer-quality & reasoning-model hardening** (Jul 2026 — the single
-   largest push, over half of all commits to date) — citation-grounding
+3. **Answer-quality & reasoning-model hardening** (Jul 2026, the single
+   largest push, over half of all commits to date): citation-grounding
    correctness (stop false rejections, prevent hallucinated [E#] references,
    lenient handling for code blocks); Qwen reasoning-model controller
    tuning; prompt-constraint and markdown-formatting fixes; multilingual
    abstain/insufficient-evidence phrasing.
-4. **UI/UX refinement & release cadence** (Jul 2026, ongoing) — user
+4. **UI/UX refinement & release cadence** (Jul 2026, ongoing): user
    discovery features (Inspiring questions panel with smart caching);
    streamlined version display and deep-linking to individual Q&A
    exchanges; frequent patch releases; C4 diagram maintenance;
    Dependabot/security fixes; community contribution pathway via GitHub.
-5. **Cross-standard ontology alignment & robustness** (Sep 2026, ongoing)
-   — migrated NeTEx/OpRa/SIRI source repositories to their current
+5. **Cross-standard ontology alignment & robustness** (Sep 2026, ongoing):
+   migrated NeTEx/OpRa/SIRI source repositories to their current
    canonical GitHub orgs and reindexed; rewrote stale ontology alignments
    (825 NeTEx, 297 SIRI, 102 OpRa concepts now correctly mapped to the
    shared core ontology); fixed the GraphDB query structure that had
@@ -103,8 +103,8 @@ commit conventions.
 
 ## Where to go next
 
-- [Architecture overview](architecture-overview.md) — system design and runtime flow
-- [Recent updates](recent-updates.md) — latest feature and API changes
+- [Architecture overview](architecture-overview.md): system design and runtime flow
+- [Recent updates](recent-updates.md): latest feature and API changes
 - [Installation](installation.md) / [Production deployment](production-deployment.md)
-- [Contributing](../CONTRIBUTING.md) — development flow and commit conventions
-- [GitHub repository](https://github.com/UM-KGPI/NapcoreHelpdesk) — source code and issue tracking
+- [Contributing](../CONTRIBUTING.md): development flow and commit conventions
+- [GitHub repository](https://github.com/UM-KGPI/NapcoreHelpdesk): source code and issue tracking
