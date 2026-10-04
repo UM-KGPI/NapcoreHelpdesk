@@ -1,6 +1,6 @@
 # Project Background
 
-> **Status:** This project is actively in development. The core functionality is stable and in pilot testing, but new features, refinements, and integrations are ongoing. The work is part of the NAPCORE Task 4.3 Multimodal Standards, with active contributions from task members.
+> **Work in progress:** NAPCORE Helpdesk is under active development and currently in pilot testing. Answers may be incomplete or occasionally inaccurate — always check them against the cited sources and the official standard documentation. Coverage, features, and behaviour may change between releases, and your feedback directly shapes what comes next. The work is part of the NAPCORE Task 4.3 Multimodal Standards, with active contributions from task members.
 
 This page covers where NAPCORE Helpdesk idea came from, who defined it, and how it was
 built. For what the system does and how it's structured today, see
@@ -9,10 +9,11 @@ changes, see [Recent updates](recent-updates.md).
 
 ## Purpose
 
-NAPCORE Helpdesk is a multilingual Q&A assistant for implementer questions
-about European public transport data standards — Transmodel, NeTEx, SIRI, and
-OpRa — grounded only in approved source repositories, with citations and an
-abstain path when evidence is insufficient. Questions can be asked in any of
+NAPCORE Helpdesk is a multilingual Q&A assistant, still in development, for
+implementer questions about European public transport data standards —
+Transmodel, NeTEx, SIRI, and OpRa. It is designed to answer only from approved
+source repositories, with citations, and to abstain when evidence is
+insufficient. Questions can be asked in any of
 the supported languages and are answered in that same language, so
 implementers are not required to work in English. The name reflects NAPCORE,
 the EU coordination initiative for National Access Points to transport data,
@@ -20,8 +21,7 @@ which these standards serve (www.napcore.eu).
 
 ## Requirements & design
 
-The requirements and domain design are credited throughout the codebase (see
-the header comment of most backend service modules) to:
+The requirements and domain design are by:
 
 - Andrej Tibaut
 - Sara Guerra de Oliveira
@@ -31,13 +31,13 @@ Faculty of Civil Engineering,
 Transportation Engineering and Architecture,
 Chair of Construction and Transportation Informatics (https://kgpi.fgpa.um.si/). They defined the standards scope (NeTEx/SIRI/OpRa/
 Transmodel), the FAQ-first/RAG-fallback answer strategy, the citation and
-abstention guarantees, and the editorial review workflow. The work is part of the NAPCORE Task 4.3. Active task partners are contributing after the app launch.
+abstention rules, and the editorial review workflow. The work is part of the NAPCORE Task 4.3. Active task partners are contributing during the pilot phase.
 
 ## Development approach
 
-Implementation was carried out by humans and by AI coding agents working under human
-direction. The development style visible in the commit
-history is iterative rather than big-upfront-design:
+Implementation was led by the project team, with AI-assisted coding tools used as
+part of the workflow. The development style visible in the commit history is
+iterative rather than big-upfront-design:
 
 - Small, scoped, conventionally-named commits (`feat(...)`, `fix(...)`,
   `chore(...)`, `docs(...)`).
@@ -73,7 +73,7 @@ since. Broad phases, in order:
    streamlined version display and deep-linking to individual Q&A
    exchanges; frequent patch releases; C4 diagram maintenance;
    Dependabot/security fixes; community contribution pathway via GitHub.
-5. **Cross-standard ontology alignment & production readiness** (Sep 2026)
+5. **Cross-standard ontology alignment & robustness** (Sep 2026, ongoing)
    — migrated NeTEx/OpRa/SIRI source repositories to their current
    canonical GitHub orgs and reindexed; rewrote stale ontology alignments
    (825 NeTEx, 297 SIRI, 102 OpRa concepts now correctly mapped to the
@@ -81,18 +81,21 @@ since. Broad phases, in order:
    silently prevented cross-standard concept expansion from ever working;
    corrected a production LLM model-alias regression and built a
    self-healing recovery mechanism, plus a public, browser-viewable LLM
-   status endpoint, so future gateway drift no longer breaks answers
-   silently; closed drift between the API and its documentation (OpenAPI
+   status endpoint, to make gateway drift visible instead of silently
+   breaking answers; closed drift between the API and its documentation (OpenAPI
    spec, endpoint reference); dependency upgrades (React Router v7,
    Vitest v4).
 
 See [Recent updates](recent-updates.md) for a detailed log of the latest
-phase.
+phase. Development is ongoing, and this timeline will grow as the project
+evolves.
 
 ## Contributing
 
 NAPCORE Helpdesk is open-source and developed collaboratively. We welcome
-contributions, feedback, and ideas from the community. Visit the
+contributions, feedback, and ideas from the community. Because the project is
+a work in progress, reports of incorrect, incomplete, or missing answers are
+especially valuable. Visit the
 [GitHub repository](https://github.com/UM-KGPI/NapcoreHelpdesk) to report
 issues, propose features, submit pull requests, or review the codebase and
 architecture. See [Contributing](../CONTRIBUTING.md) for development flow and
