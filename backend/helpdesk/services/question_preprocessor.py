@@ -11,11 +11,24 @@ Portuguese, Italian, Russian, Ukrainian, Polish, Turkish, Czech, Danish, Swedish
 """
 
 import logging
+import re
 from typing import Optional
 
-from langdetect import detect_langs, LangDetectException
+from langdetect import DetectorFactory, detect_langs, LangDetectException
 
 logger = logging.getLogger(__name__)
+
+# langdetect is randomized by default; seed it so the same question always
+# detects as the same language.
+DetectorFactory.seed = 0
+
+# Once schema identifiers are stripped, a short question leaves only a few
+# words, and langdetect's guess on those is little better than noise
+# ("Does SIRI-PT exist?" -> "Does exist?" -> French at 1.0). Below these
+# thresholds the language is treated as undetected, so callers do not force
+# a non-English answer or spell-check with the wrong dictionary.
+MIN_DETECTION_WORDS = 3
+MIN_DETECTION_CONFIDENCE = 0.90
 
 # Languages supported by pyspellchecker (with local dictionaries)
 SPELLCHECKER_SUPPORTED_LANGS = {
@@ -196,23 +209,28 @@ def _strip_technical_terms(question: str) -> str:
 def _detect_question_language(question: str) -> Optional[str]:
     """
     Detect the actual language of the question text using langdetect.
-    Returns language name (e.g., "Norwegian") or None if detection fails.
+    Returns language name (e.g., "Norwegian") or None if detection fails or
+    there is too little natural-language text to detect reliably.
     """
     # CamelCase technical terms (e.g. "DatedServiceJourney") read as English
     # tokens to langdetect and can dominate the signal in short questions,
     # so strip them before detecting the natural-language portion.
     stripped = _strip_technical_terms(question)
-    detection_input = stripped if stripped.strip() else question
+    word_count = len(re.findall(r"[^\W\d_]+", stripped))
+    if word_count < MIN_DETECTION_WORDS:
+        logger.debug(f"Too few words ({word_count}) to detect question language: {stripped!r}")
+        return None
     try:
         # langdetect returns list of LangDetect objects with probabilities
-        detections = detect_langs(detection_input)
+        detections = detect_langs(stripped)
         if detections:
             detected_code = detections[0].lang  # Best match
             detected_name = LANGDETECT_LANGUAGE_NAMES.get(detected_code)
-            if detected_name:
-                confidence = detections[0].prob
+            confidence = detections[0].prob
+            if detected_name and confidence >= MIN_DETECTION_CONFIDENCE:
                 logger.debug(f"Detected question language: {detected_name} (code={detected_code}, confidence={confidence:.2f})")
                 return detected_name
+            logger.debug(f"Low-confidence language detection ignored: code={detected_code}, confidence={confidence:.2f}")
     except LangDetectException as e:
         logger.debug(f"Language detection failed: {e}")
 
