@@ -703,9 +703,12 @@ def _build_messages(
     # no reasoning step of its own to fall back on for "detect the language"
     # instructions, so an explicit target language must be given here. Callers
     # that already detected the language pass it in to avoid a second detection.
+    # When detection is inconclusive (e.g. a very short question), fall back to
+    # the generic instruction below, not the browser locale: a French-locale
+    # browser asking "Does SIRI-PT exist?" should not get a French answer.
     if detected_language is None:
         detected_language = detect_question_language(question)
-    effective_language = detected_language or language
+    effective_language = detected_language
 
     _lang = (effective_language or "").strip().lower()
     if _lang and _lang not in ("en", "english"):
@@ -781,7 +784,7 @@ def _build_messages(
     )
 
     user_prompt = (
-        f"🌍 RESPOND IN: {effective_language if (effective_language or '').lower() not in ('en', 'english') else 'English (detect question language)'}\n\n"
+        f"🌍 RESPOND IN: {effective_language if (effective_language or '').lower() not in ('', 'en', 'english') else 'English (detect question language)'}\n\n"
         f"Question:\n{question}\n\n"
         f"Requested scope: {scope_text}\n\n"
         f"{faq_section}"
@@ -1322,7 +1325,7 @@ def stream_answer_llm(
     # instruction, and the _validate_answer_language() calls below compare
     # against it.
     detected_language = detect_question_language(question)
-    effective_language = detected_language or language
+    effective_language = detected_language
     messages = _build_messages(
         question=question,
         chunks=chunks,
