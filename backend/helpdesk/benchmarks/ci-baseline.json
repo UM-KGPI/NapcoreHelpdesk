@@ -1,0 +1,33 @@
+{
+  "description": "Reference for the CI retrieval-benchmark gate (run_retrieval_benchmark --gate-against). Regenerate whenever the pinned commits in .github/actions/benchmark-index/action.yml, the questions, or retrieval behaviour intentionally change.",
+  "generated": "2026-10-17",
+  "how_to_regenerate": "Build the index as in .github/actions/benchmark-index/action.yml (EMBEDDING_ENABLED=False, GRAPHDB_ENABLED=False), run `python manage.py run_retrieval_benchmark --quiet --output report.json`, then copy the baseline/graph hit_at_* and mrr_at_* values from report.json['aggregate'].",
+  "environment": {
+    "embedding": "deterministic hash embedding (EMBEDDING_ENABLED=False)",
+    "graphdb": "disabled (in-memory ontology only)",
+    "questions": 100,
+    "top_k": 20,
+    "pinned_commits": {
+      "NeTEx": "24040c18387c7b302a2df071a7e026bf4c134d7b",
+      "SIRI": "7b1463b9b23c4729944de7ecb64f38fd820e9596",
+      "OpRa": "1cf114baa3d44cd4f7548e1556059d90b58110c1"
+    },
+    "generated_with": "postgres pgvector/pgvector:pg17, python 3.13 (CI uses pg16, python 3.11); two consecutive runs gave identical per-question results"
+  },
+  "aggregate": {
+    "baseline": {
+      "hit_at_5": 0.7,
+      "hit_at_10": 0.73,
+      "hit_at_20": 0.78,
+      "mrr_at_10": 0.5327,
+      "mrr_at_20": 0.5366
+    },
+    "graph": {
+      "hit_at_5": 0.71,
+      "hit_at_10": 0.74,
+      "hit_at_20": 0.78,
+      "mrr_at_10": 0.5436,
+      "mrr_at_20": 0.5465
+    }
+  }
+}

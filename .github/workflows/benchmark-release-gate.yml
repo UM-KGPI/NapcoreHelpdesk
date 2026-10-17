@@ -1,131 +1,106 @@
 name: Benchmark Release Gate
 
+# Manual pre-release check: same index and questions as the PR benchmark, with a
+# stricter default tolerance. Not covered: GraphDB-backed retrieval and provider
+# embeddings (see benchmark-regression.yml).
+
 on:
   workflow_dispatch:
     inputs:
       baseline_file:
-        description: 'Baseline JSON file path'
+        description: 'Reference JSON with an aggregate section (repo-relative path)'
         required: false
-        default: 'docs/testing/benchmark-graphrag-ab-2026-05-11.json'
+        default: 'backend/helpdesk/benchmarks/ci-baseline.json'
+      max_drop:
+        description: 'Allowed absolute drop in hit@10 and MRR@10 per mode'
+        required: false
+        default: '0.01'
+
+permissions:
+  contents: read
 
 jobs:
-  full-benchmark:
-    name: Full Benchmark (Release Gate)
+  release-benchmark:
+    name: Retrieval Benchmark (Release Gate)
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    env:
+      DJANGO_SECRET_KEY: ci-secret-key
+      JWT_SECRET_KEY: ci-jwt-secret-key-at-least-32-bytes
+      NAPCORE_SKIP_GRAPHDB_IMPORT: "1"
+      GRAPHDB_ENABLED: "False"
+      GRAPH_RAG_ENABLED: "False"
+      LLM_ENABLED: "False"
+      CONTROLLER_LLM_ENABLED: "False"
+      EMBEDDING_ENABLED: "False"
+      POSTGRES_DB: napcore_helpdesk
+      POSTGRES_USER: napcore
+      POSTGRES_PASSWORD: napcore
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
 
     services:
       postgres:
-        image: pgvector/pgvector:pg16-v0.5.1
+        image: pgvector/pgvector:pg16
         env:
-          POSTGRES_DB: napcore_helpdesk_test
+          POSTGRES_DB: napcore_helpdesk
           POSTGRES_USER: napcore
-          POSTGRES_PASSWORD: test_password
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          POSTGRES_PASSWORD: napcore
         ports:
           - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U napcore -d napcore_helpdesk"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-          cache: 'pip'
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
 
       - name: Install dependencies
-        working-directory: ./backend
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+        working-directory: backend
+        run: pip install -r requirements.txt
 
-      - name: Configure Django database
-        working-directory: ./backend
+      - name: Build benchmark index
+        uses: ./.github/actions/benchmark-index
+
+      - name: Run retrieval benchmark
+        working-directory: backend
         env:
-          DJANGO_SETTINGS_MODULE: config.settings
-          DATABASE_URL: postgresql://napcore:test_password@localhost:5432/napcore_helpdesk_test
-          GRAPHDB_ENABLED: 'False'
-          LLM_ENABLED: 'False'
+          BASELINE_FILE: ${{ github.event.inputs.baseline_file }}
+          MAX_DROP: ${{ github.event.inputs.max_drop }}
         run: |
-          ../.venv/bin/python manage.py migrate --noinput 2>&1 | head -20
+          python manage.py run_retrieval_benchmark \
+            --quiet \
+            --output "$GITHUB_WORKSPACE/benchmark-report.json" \
+            --gate-against "$GITHUB_WORKSPACE/${BASELINE_FILE}" \
+            --max-drop "${MAX_DROP}" | tee "$GITHUB_WORKSPACE/release-summary.txt"
 
-      - name: Run full benchmark
-        working-directory: ./backend
-        env:
-          DJANGO_SETTINGS_MODULE: config.settings
-          DATABASE_URL: postgresql://napcore:test_password@localhost:5432/napcore_helpdesk_test
-          GRAPHDB_ENABLED: 'False'
-          LLM_ENABLED: 'False'
-        run: |
-          ../.venv/bin/python manage.py benchmark_full \
-            --exit-code-on-fail \
-            --baseline-file ../${{ github.event.inputs.baseline_file || 'docs/testing/benchmark-graphrag-ab-2026-05-11.json' }} \
-            --output ./benchmark-full-release-gate.json
-
-      - name: Upload benchmark results
+      - name: Upload benchmark report and summary
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: full-benchmark-results
-          path: backend/benchmark-full-release-gate.json
+          name: release-benchmark
+          path: |
+            benchmark-report.json
+            release-summary.txt
+          if-no-files-found: ignore
 
-      - name: Generate release summary
-        if: always()
+      - name: Publish summary
+        if: always() && hashFiles('release-summary.txt') != ''
         run: |
-          python3 << 'EOF'
-          import json
-          with open('./backend/benchmark-full-release-gate.json', 'r') as f:
-              results = json.load(f)
-
-          summary = results['summary']
-          status = 'PASS' if len(summary['gates_failed']) == 0 else 'FAIL'
-
-          print(f"Release Gate Status: {status}")
-          print(f"Questions: {summary['question_count_ok']}/{summary['question_count_total']}")
-          print(f"Avg Latency: {summary['global_stats']['graph_avg_ms']:.1f} ms")
-          print(f"P95 Latency: {summary['global_stats']['graph_p95_ms']:.1f} ms")
-          print()
-          if summary['gates_failed']:
-              print("FAILED GATES:")
-              for gate in summary['gates_failed']:
-                  print(f"  - {gate}")
-          else:
-              print("ALL GATES PASSED ✅")
-
-          with open('release-summary.txt', 'w') as f:
-              f.write(f"Status: {status}\n")
-              f.write(f"Questions: {summary['question_count_ok']}/{summary['question_count_total']}\n")
-              f.write(f"Avg Latency: {summary['global_stats']['graph_avg_ms']:.1f} ms\n")
-              f.write(f"P95 Latency: {summary['global_stats']['graph_p95_ms']:.1f} ms\n")
-          EOF
-
-      - name: Upload release summary
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-summary
-          path: release-summary.txt
-
-      - name: Comment release PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            const summary = fs.readFileSync('./release-summary.txt', 'utf8');
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `## Release Gate Benchmark\n\n\`\`\`\n${summary}\n\`\`\``
-            });
-
-      - name: Fail if gates failed
-        if: failure()
-        run: exit 1
+          {
+            echo '## Release gate benchmark'
+            echo '```'
+            cat release-summary.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,61 @@
+name: Benchmark index
+description: >-
+  Clone the standards repositories at pinned commits, migrate the database and
+  build the retrieval index with the deterministic hash embedding. The pinned
+  commits and the committed baseline (backend/helpdesk/benchmarks/ci-baseline.json)
+  belong together: change a commit, then regenerate the baseline.
+
+runs:
+  using: composite
+  steps:
+    - name: Clone standards repositories at pinned commits
+      shell: bash
+      env:
+        NETEX_SHA: 24040c18387c7b302a2df071a7e026bf4c134d7b
+        SIRI_SHA: 7b1463b9b23c4729944de7ecb64f38fd820e9596
+        OPRA_SHA: 1cf114baa3d44cd4f7548e1556059d90b58110c1
+      run: |
+        set -euo pipefail
+        clone() {
+          dir="$RUNNER_TEMP/benchmark-repos/$1"
+          mkdir -p "$dir"
+          git -C "$dir" init -q
+          git -C "$dir" remote add origin "https://github.com/TransmodelEcosystem/$1"
+          git -C "$dir" fetch -q --depth 1 origin "$2"
+          git -C "$dir" checkout -q FETCH_HEAD
+          echo "$1 @ $(git -C "$dir" rev-parse HEAD) ($(git -C "$dir" ls-files | wc -l) files)"
+        }
+        clone NeTEx "$NETEX_SHA"
+        clone SIRI "$SIRI_SHA"
+        clone OpRa "$OPRA_SHA"
+
+    - name: Wait for PostgreSQL
+      shell: bash
+      run: |
+        for i in {1..30}; do
+          if PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT 1" >/dev/null 2>&1; then
+            exit 0
+          fi
+          sleep 2
+        done
+        echo "PostgreSQL did not become ready in time" >&2
+        exit 1
+
+    - name: Apply migrations
+      shell: bash
+      working-directory: backend
+      run: python manage.py migrate --noinput
+
+    - name: Build retrieval index
+      shell: bash
+      working-directory: backend
+      run: |
+        set -euo pipefail
+        for spec in "NeTEx netex" "SIRI siri" "OpRa opra"; do
+          set -- $spec
+          python manage.py build_source_index \
+            --repo-url "https://github.com/TransmodelEcosystem/$1" \
+            --repo-path "$RUNNER_TEMP/benchmark-repos/$1" \
+            --profile "$2" --prune
+        done
+        echo "Indexed chunks: $(PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc 'select count(*) from helpdesk_sourcechunk')"
