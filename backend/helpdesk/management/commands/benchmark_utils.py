@@ -6,6 +6,11 @@ import time
 from pathlib import Path
 from django.conf import settings
 
+# Tracked benchmark inputs live next to the app code so CI can read them
+# (docs/testing is a local-only, gitignored symlink).
+BENCHMARKS_DIR = Path(__file__).resolve().parents[2] / 'benchmarks'
+DEFAULT_QUESTIONS_PATH = BENCHMARKS_DIR / 'benchmark-questions.yaml'
+
 
 def load_capability_matrix():
     """Load capability-matrix.yaml into a Python dict."""
@@ -31,8 +36,7 @@ def load_baseline_report(report_path=None):
 def load_benchmark_questions():
     """Load benchmark questions from YAML."""
     import yaml
-    repo_root = Path(settings.BASE_DIR).parent
-    questions_path = repo_root / 'docs/testing/benchmark-questions.yaml'
+    questions_path = DEFAULT_QUESTIONS_PATH
 
     with questions_path.open('r', encoding='utf-8') as f:
         raw = yaml.safe_load(f)
