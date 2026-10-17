@@ -1,0 +1,4 @@
+# Manual corrections to the generated Transmodel alignment (build_transmodel_alignment).
+# action=add: link standard_class to tm_class (Transmodel local name, e.g. STOP_PLACE) where names differ.
+# action=exclude: drop a name match that is not the same concept.
+standard,standard_class,tm_class,action,note
