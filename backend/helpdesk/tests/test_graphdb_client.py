@@ -182,6 +182,41 @@ class GraphDbClientTests(TestCase):
         )
         self.assertIn("https://napcore.eu/graph/artifact-rules/netex/v1.0", scoped_with_rules)
 
+    def test_build_graph_scope_for_standards_always_adds_transmodel_reference(self):
+        """A NeTEx-only question must still reach tm: concepts and the direct
+        Transmodel<->NeTEx alignment, because Transmodel is the reference."""
+        scoped = build_graph_scope_for_standards({"NeTEx"}, include_artifact_rules=False)
+        self.assertIn("https://napcore.eu/graph/standards/transmodel", scoped)
+        self.assertNotIn("https://napcore.eu/graph/alignments/transmodel", scoped)  # retired
+        for standard in ("netex", "siri", "opra"):
+            self.assertIn(f"https://napcore.eu/graph/alignments/transmodel-{standard}", scoped)
+        self.assertEqual(len(scoped), len(set(scoped)))
+
+    def test_build_graph_scope_for_standards_stays_empty_without_standards(self):
+        # Empty scope means "query all graphs"; adding reference graphs would narrow it.
+        self.assertEqual(build_graph_scope_for_standards(set(), include_artifact_rules=False), [])
+
+    def test_query_graphdb_concept_expansion_pivots_through_transmodel_not_abstract_nits(self):
+        graphdb_response = {"head": {"vars": ["related"]}, "results": {"bindings": []}}
+        mock_response = MagicMock()
+        mock_response.read.return_value = json.dumps(graphdb_response).encode("utf-8")
+        mock_response.__enter__ = lambda self: self
+        mock_response.__exit__ = MagicMock(return_value=False)
+
+        with patch("helpdesk.services.graphdb_client.urlopen", return_value=mock_response) as urlopen_mock:
+            query_graphdb_concept_expansion(
+                concept_ids={"netex:StopPlace"},
+                hops=1,
+                endpoint="http://localhost:7200",
+                repository="napcore",
+                graph_uris=build_graph_scope_for_standards({"NeTEx"}, include_artifact_rules=False),
+            )
+
+        sent_query = urlopen_mock.call_args[0][0].data.decode("utf-8")
+        self.assertIn("STRSTARTS(STR(?pivot), 'https://transmodel-cen.eu/6.2/')", sent_query)
+        self.assertIn("NOT IN (", sent_query)
+        self.assertIn("<https://napcore.eu/ontology/nits#DataArtifact>", sent_query)
+
     def test_load_default_ontology_graphs_excludes_artifact_rules_by_default(self):
         with (
             patch("helpdesk.services.graphdb_client.upload_named_graph_turtle") as upload_mock,
@@ -201,8 +236,29 @@ class GraphDbClientTests(TestCase):
             )
 
         graph_uris = {item["graphUri"] for item in results}
-        self.assertEqual(len(results), 10)
+        self.assertEqual(len(results), 12)
+        for standard in ("netex", "siri", "opra"):
+            self.assertIn(f"https://napcore.eu/graph/alignments/transmodel-{standard}", graph_uris)
+        self.assertNotIn("https://napcore.eu/graph/alignments/transmodel", graph_uris)
         self.assertFalse(any("/artifact-rules/" in uri for uri in graph_uris))
+
+    def test_load_default_ontology_graphs_deletes_retired_graphs_on_replace(self):
+        with (
+            patch("helpdesk.services.graphdb_client.upload_named_graph_turtle") as upload_mock,
+            patch("helpdesk.services.graphdb_client.delete_named_graph") as delete_mock,
+            patch("pathlib.Path.exists", return_value=True),
+            patch("pathlib.Path.read_text", return_value=""),
+        ):
+            upload_mock.side_effect = lambda **kwargs: {"graphUri": kwargs["graph_uri"], "replaced": True}
+            results = load_default_ontology_graphs(
+                endpoint="http://localhost:7200",
+                repository="napcore",
+                replace=True,
+            )
+
+        delete_mock.assert_called_once()
+        self.assertEqual(delete_mock.call_args.kwargs["graph_uri"], "https://napcore.eu/graph/alignments/transmodel")
+        self.assertTrue(results[-1]["retired"])
 
     def test_load_default_ontology_graphs_includes_selected_artifact_rules(self):
         with (
