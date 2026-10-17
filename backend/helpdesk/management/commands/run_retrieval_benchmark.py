@@ -8,7 +8,10 @@ from pathlib import Path
 import yaml
 from django.core.management.base import BaseCommand, CommandError
 
+from helpdesk.management.commands.benchmark_utils import DEFAULT_QUESTIONS_PATH
 from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
+
+GATED_METRICS = ("hit_at_10", "mrr_at_10")
 
 
 def _hit_at_k(
@@ -85,10 +88,30 @@ def _aggregate(results: list[dict], field: str) -> float:
     return round(statistics.mean([float(v) for v in vals]), 4)
 
 
+def check_regression(aggregate: dict, reference: dict, max_drop: float) -> list[str]:
+    """Return one message per gated metric that dropped more than `max_drop` (absolute)
+    below the reference, for every retrieval mode present in both aggregates."""
+    failures = []
+    for mode in ("baseline", "graph"):
+        current, expected = aggregate.get(mode), reference.get(mode)
+        if not current or not expected:
+            continue
+        for metric in GATED_METRICS:
+            if metric not in current or metric not in expected:
+                continue
+            drop = round(float(expected[metric]) - float(current[metric]), 4)
+            if drop > max_drop:
+                failures.append(
+                    f"{mode} {metric}: {current[metric]:.3f} vs reference {expected[metric]:.3f} "
+                    f"(dropped {drop:.3f}, allowed {max_drop:.3f})"
+                )
+    return failures
+
+
 class Command(BaseCommand):
     help = (
         "Run the P4 retrieval benchmark comparing graph-RAG vs baseline. "
-        "Loads questions from docs/testing/benchmark-questions.yaml (or --input), "
+        "Loads questions from backend/helpdesk/benchmarks/benchmark-questions.yaml (or --input), "
         "runs each question in both modes, and writes a JSON + summary report."
     )
 
@@ -96,7 +119,7 @@ class Command(BaseCommand):
         repo_root = Path(__file__).resolve().parents[4]
         parser.add_argument(
             "--input",
-            default=str(repo_root / "docs" / "testing" / "benchmark-questions.yaml"),
+            default=str(DEFAULT_QUESTIONS_PATH),
             help="Path to benchmark YAML question file.",
         )
         parser.add_argument(
@@ -143,6 +166,20 @@ class Command(BaseCommand):
             action="store_true",
             help="Suppress per-question progress output.",
         )
+        parser.add_argument(
+            "--gate-against",
+            default=None,
+            help=(
+                "Reference report/baseline JSON with an 'aggregate' section. Exit non-zero if "
+                "hit@10 or MRR@10 dropped by more than --max-drop in any mode present in both."
+            ),
+        )
+        parser.add_argument(
+            "--max-drop",
+            type=float,
+            default=0.03,
+            help="Allowed absolute drop per gated metric (default 0.03).",
+        )
 
     def handle(self, *args, **options):
         input_path = Path(options["input"]).expanduser().resolve()
@@ -154,6 +191,11 @@ class Command(BaseCommand):
         baseline_only: bool = bool(options.get("baseline_only"))
         graph_only: bool = bool(options.get("graph_only"))
         quiet: bool = bool(options.get("quiet"))
+        gate_path = Path(options["gate_against"]).expanduser().resolve() if options.get("gate_against") else None
+        max_drop: float = options["max_drop"]
+
+        if gate_path is not None and not gate_path.exists():
+            raise CommandError(f"Gate reference file not found: {gate_path}")
 
         if not input_path.exists():
             raise CommandError(f"Benchmark question file not found: {input_path}")
@@ -326,3 +368,12 @@ class Command(BaseCommand):
                 f"regressed={d['questions_regressed_by_graph']}"
             )
         self.stdout.write(f"Report written: {output_path}")
+
+        if gate_path is not None:
+            reference = json.loads(gate_path.read_text(encoding="utf-8")).get("aggregate") or {}
+            failures = check_regression(aggregate, reference, max_drop)
+            if failures:
+                for failure in failures:
+                    self.stdout.write(self.style.ERROR(f"REGRESSION {failure}"))
+                raise CommandError(f"{len(failures)} metric(s) regressed against {gate_path.name}")
+            self.stdout.write(self.style.SUCCESS(f"Gate passed against {gate_path.name} (max drop {max_drop})"))
