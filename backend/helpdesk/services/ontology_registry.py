@@ -56,11 +56,14 @@ ONTOLOGY_SPECS = [
         "file_path": "examples/netex-examples.ttl",
         "graph_uri": "https://napcore.eu/graph/examples/netex",
     },
-    {
-        "ontology_key": "nits-transmodel-align",
-        "file_path": "alignments/nits-transmodel-align.ttl",
-        "graph_uri": "https://napcore.eu/graph/alignments/transmodel",
-    },
+    *(
+        {
+            "ontology_key": f"transmodel-{standard}-align",
+            "file_path": f"alignments/transmodel-{standard}-align.ttl",
+            "graph_uri": f"https://napcore.eu/graph/alignments/transmodel-{standard}",
+        }
+        for standard in ("netex", "siri", "opra")
+    ),
     {
         "ontology_key": "nits-netex-align",
         "file_path": "alignments/nits-netex-align.ttl",

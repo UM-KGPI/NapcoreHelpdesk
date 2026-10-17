@@ -107,6 +107,9 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS("GraphDB ontology load completed."))
         for item in results:
+            if item.get("retired"):
+                self.stdout.write(f"deleted retired graph={item['graphUri']}")
+                continue
             self.stdout.write(
                 f"loaded file={item['filePath']} graph={item['graphUri']} replaced={item['replaced']}"
             )

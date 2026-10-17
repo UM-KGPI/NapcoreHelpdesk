@@ -12,7 +12,24 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
+from helpdesk.services.transmodel_alignment import clean_definition
+
 logger = logging.getLogger(__name__)
+
+TRANSMODEL_NAMESPACE = "https://transmodel-cen.eu/6.2/"
+TRANSMODEL_SOURCE_PATH = "docs/ontology/standards/transmodel.ttl"
+TRANSMODEL_SOURCE_URL = (
+    "https://github.com/UM-KGPI/NapcoreHelpdesk/blob/main/docs/ontology/standards/transmodel.ttl"
+)
+
+# Values of nits:transmodelDefinitionStatus (see alignments/transmodel-*-align.ttl).
+_DEFINITION_STATUS_NOTES = {
+    "differs": "The {standard} XSD definition differs from the Transmodel definition; "
+    "use the Transmodel definition as the reference.",
+    "extends": "The {standard} XSD definition repeats the Transmodel definition "
+    "and adds {standard}-specific notes.",
+    "equivalent": "The {standard} XSD definition matches the Transmodel definition.",
+}
 
 
 def retrieve_concept_definitions(
@@ -50,8 +67,10 @@ def retrieve_concept_definitions(
         PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX owl: <http://www.w3.org/2002/07/owl#>
+        PREFIX nits: <https://napcore.eu/ontology/nits#>
 
-        SELECT ?concept ?definition ?prefLabel ?altLabel ?type ?source
+        SELECT ?concept ?definition ?prefLabel ?altLabel ?type ?source ?ownComment
+               ?tmConcept ?tmLabel ?tmDefinition ?tmStatus
         WHERE {{
           VALUES ?concept {{ {concept_uris} }}
           ?concept a ?type .
@@ -59,9 +78,22 @@ def retrieve_concept_definitions(
           OPTIONAL {{ ?concept skos:prefLabel ?prefLabel . }}
           OPTIONAL {{ ?concept skos:altLabel ?altLabel . }}
           OPTIONAL {{ ?concept rdfs:comment ?source . FILTER(CONTAINS(?source, "Extracted from")) }}
+          # Transmodel stores its definitions as rdfs:comment, not skos:definition
+          OPTIONAL {{
+            ?concept rdfs:comment ?ownComment .
+            FILTER(STRSTARTS(STR(?concept), "{TRANSMODEL_NAMESPACE}"))
+          }}
+          # Reference definition of the Transmodel concept this concept implements
+          OPTIONAL {{
+            ?concept skos:exactMatch|^skos:exactMatch ?tmConcept .
+            FILTER(STRSTARTS(STR(?tmConcept), "{TRANSMODEL_NAMESPACE}"))
+            ?tmConcept rdfs:comment ?tmDefinition .
+            OPTIONAL {{ ?tmConcept rdfs:label ?tmLabel . }}
+          }}
+          OPTIONAL {{ ?concept nits:transmodelDefinitionStatus ?tmStatus . }}
         }}
         ORDER BY ?concept
-        LIMIT 50
+        LIMIT 200
         """
 
         results = execute_sparql_query(
@@ -94,9 +126,17 @@ def retrieve_concept_definitions(
 
             row_values = {
                 "type": binding.get("type", {}).get("value", ""),
-                "definition": binding.get("definition", {}).get("value", ""),
+                "definition": (
+                    binding.get("definition", {}).get("value", "")
+                    or clean_definition(binding.get("ownComment", {}).get("value", ""))
+                ),
                 "prefLabel": binding.get("prefLabel", {}).get("value", ""),
                 "xsd_source": xsd_source,  # Store XSD source file path
+                "tm_concept": binding.get("tmConcept", {}).get("value", ""),
+                "tm_label": binding.get("tmLabel", {}).get("value", ""),
+                # Transmodel EA export leaves HTML (<font ...>) in some definitions
+                "tm_definition": clean_definition(binding.get("tmDefinition", {}).get("value", "")),
+                "tm_status": binding.get("tmStatus", {}).get("value", ""),
             }
 
             # OPTIONALs multiply rows (types x altLabels x ...) and a value can be
@@ -127,6 +167,7 @@ def format_definitions_as_chunks(definitions: list[dict]) -> list[dict]:
     Each chunk represents a concept's semantic definition with metadata.
     """
     chunks = []
+    emitted_transmodel: set[str] = set()
 
     for definition in definitions:
         concept = definition.get("concept", "")
@@ -135,13 +176,40 @@ def format_definitions_as_chunks(definitions: list[dict]) -> list[dict]:
         alt_labels = definition.get("altLabels", [])
         concept_type = definition.get("type", "")
         xsd_source = definition.get("xsd_source", "")  # XSD file where definition came from
+        tm_concept = definition.get("tm_concept", "")
+        tm_definition = definition.get("tm_definition", "")
+
+        # Extract standard and concept name from IRI
+        standard, concept_name = _extract_concept_info(concept)
+
+        # Transmodel is the reference: its definition goes before the standard's own
+        if tm_concept and tm_definition and tm_concept not in emitted_transmodel:
+            emitted_transmodel.add(tm_concept)
+            chunks.append(
+                _transmodel_definition_chunk(
+                    tm_concept=tm_concept,
+                    tm_label=definition.get("tm_label", ""),
+                    tm_definition=tm_definition,
+                    implemented_as=f"{standard} {concept_name}",
+                )
+            )
+
+        if standard == "Transmodel":
+            if definition_text and concept not in emitted_transmodel:
+                emitted_transmodel.add(concept)
+                chunks.append(
+                    _transmodel_definition_chunk(
+                        tm_concept=concept,
+                        tm_label=pref_label,
+                        tm_definition=definition_text,
+                        implemented_as="",
+                    )
+                )
+            continue
 
         # Skip if no definition available
         if not definition_text:
             continue
-
-        # Extract standard and concept name from IRI
-        standard, concept_name = _extract_concept_info(concept)
 
         # Build comprehensive chunk text
         chunk_text = f"""
@@ -158,6 +226,13 @@ Definition:
 
         if alt_labels:
             chunk_text += f"Alternative Labels: {', '.join(alt_labels)}\n"
+
+        if tm_concept:
+            tm_name = definition.get("tm_label", "") or tm_concept.rsplit("/", 1)[-1]
+            chunk_text += f"Transmodel concept: {tm_name} (skos:exactMatch)\n"
+            status_note = _DEFINITION_STATUS_NOTES.get(definition.get("tm_status", ""))
+            if status_note:
+                chunk_text += status_note.format(standard=standard) + "\n"
 
         chunk_id_str = f"ontology-def-{concept_name.lower()}"
         chunk_id_int = hash(chunk_id_str) % (10 ** 8)
@@ -220,6 +295,60 @@ Definition:
     return chunks
 
 
+def _transmodel_definition_chunk(
+    *,
+    tm_concept: str,
+    tm_label: str,
+    tm_definition: str,
+    implemented_as: str,
+) -> dict:
+    """Build the evidence chunk for a Transmodel reference definition."""
+    local_name = tm_concept.rsplit("/", 1)[-1]
+    label = tm_label or local_name.replace("_", " ")
+    # Carry the CamelCase spelling too, so citations using either form are grounded
+    camel_name = "".join(part.capitalize() for part in local_name.split("_"))
+
+    chunk_text = f"""
+CONCEPT DEFINITION: {label} ({camel_name})
+Standard: Transmodel (conceptual reference model, v6.2)
+IRI: {tm_concept}
+"""
+    if implemented_as:
+        chunk_text += f"Implemented as: {implemented_as}\n"
+    chunk_text += f"""
+Definition:
+{tm_definition}
+"""
+
+    chunk_id_str = f"ontology-def-tm-{local_name.lower()}"
+    chunk_id_int = hash(chunk_id_str) % (10 ** 8)
+    # One path per concept: all Transmodel definitions live in one file, and the
+    # per-source-path retrieval cap (RETRIEVAL_MAX_SAME_SOURCE_PATH) would
+    # otherwise let only two of them survive.
+    source_path = f"{TRANSMODEL_SOURCE_PATH}#{local_name}"
+    return {
+        "id": chunk_id_int,
+        "chunkId": chunk_id_str,
+        "chunk_id": chunk_id_str,
+        "retrievalEventId": f"ontology-{chunk_id_int}",
+        "sourcePath": source_path,
+        "source_path": source_path,
+        "label": f"Definition: {label} (Transmodel)",
+        "text": chunk_text.strip(),
+        "doc_type": "ontology-definition",
+        "quality_score": 0.99,  # Transmodel is the reference above XSD-derived definitions
+        "standards_scope": ["Transmodel"],
+        "match_type": "semantic_definition",
+        "similarity_reason": "Reference definition from the Transmodel conceptual model",
+        "repositoryUrl": TRANSMODEL_SOURCE_URL,
+        "repository_url": TRANSMODEL_SOURCE_URL,
+        "commitSha": "main",
+        "commit_sha": "main",
+        "embedding_vector": None,
+        "heading": f"{label} - Transmodel Definition",
+    }
+
+
 def _extract_concept_info(concept_iri: str) -> tuple[str, str]:
     """Extract standard and concept name from ontology IRI.
 
@@ -236,7 +365,9 @@ def _extract_concept_info(concept_iri: str) -> tuple[str, str]:
         concept_name = concept_iri.split("/")[-1]
 
     # Extract standard
-    if "netex" in concept_iri.lower():
+    if concept_iri.startswith(TRANSMODEL_NAMESPACE):
+        standard = "Transmodel"
+    elif "netex" in concept_iri.lower():
         standard = "NeTEx"
     elif "opra" in concept_iri.lower():
         standard = "OpRa"
