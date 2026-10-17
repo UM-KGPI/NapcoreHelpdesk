@@ -70,7 +70,7 @@ jobs:
 
       - name: Upload benchmark results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: stratified-benchmark-results
           path: backend/benchmark-stratified-pr-check.json
