@@ -83,29 +83,35 @@ def retrieve_concept_definitions(
             if not concept:
                 continue
 
-            if concept not in concepts_data:
-                # Extract XSD source file from rdfs:comment
-                # Supports formats: "Extracted from: xsd/netex_part_1/..." or "Extracted from NeTEx XSD source: xsd/..."
-                source_comment = binding.get("source", {}).get("value", "")
-                xsd_source = ""
-                if source_comment and "Extracted from" in source_comment:
-                    # Handle both "Extracted from: path" and "Extracted from NeTEx XSD source: path"
-                    if ":" in source_comment:
-                        xsd_source = source_comment.split(":", 1)[1].strip()
+            # Extract XSD source file from rdfs:comment
+            # Supports formats: "Extracted from: xsd/netex_part_1/..." or "Extracted from NeTEx XSD source: xsd/..."
+            source_comment = binding.get("source", {}).get("value", "")
+            xsd_source = ""
+            if source_comment and "Extracted from" in source_comment:
+                # Handle both "Extracted from: path" and "Extracted from NeTEx XSD source: path"
+                if ":" in source_comment:
+                    xsd_source = source_comment.split(":", 1)[1].strip()
 
-                concepts_data[concept] = {
-                    "concept": concept,
-                    "type": binding.get("type", {}).get("value", ""),
-                    "definition": binding.get("definition", {}).get("value", ""),
-                    "prefLabel": binding.get("prefLabel", {}).get("value", ""),
-                    "altLabels": [],
-                    "xsd_source": xsd_source,  # Store XSD source file path
-                }
+            row_values = {
+                "type": binding.get("type", {}).get("value", ""),
+                "definition": binding.get("definition", {}).get("value", ""),
+                "prefLabel": binding.get("prefLabel", {}).get("value", ""),
+                "xsd_source": xsd_source,  # Store XSD source file path
+            }
+
+            # OPTIONALs multiply rows (types x altLabels x ...) and a value can be
+            # missing from the first row, so fill each field from any row that has it.
+            entry = concepts_data.setdefault(
+                concept, {"concept": concept, "altLabels": [], **dict.fromkeys(row_values, "")}
+            )
+            for field, value in row_values.items():
+                if value and not entry[field]:
+                    entry[field] = value
 
             # Collect alternative labels
             alt_label = binding.get("altLabel", {}).get("value", "")
-            if alt_label:
-                concepts_data[concept]["altLabels"].append(alt_label)
+            if alt_label and alt_label not in entry["altLabels"]:
+                entry["altLabels"].append(alt_label)
 
         logger.info(f"Retrieved definitions for {len(concepts_data)} concepts from {len(concept_ids)} requested")
         return list(concepts_data.values())
