@@ -16,18 +16,20 @@ runs:
         OPRA_SHA: 1cf114baa3d44cd4f7548e1556059d90b58110c1
       run: |
         set -euo pipefail
+        # URLs must be on the application's default ALLOWED_SOURCE_REPOSITORIES list
+        # (SIRI is indexed under SIRI-CEN/SIRI, which redirects to TransmodelEcosystem/SIRI).
         clone() {
           dir="$RUNNER_TEMP/benchmark-repos/$1"
           mkdir -p "$dir"
           git -C "$dir" init -q
-          git -C "$dir" remote add origin "https://github.com/TransmodelEcosystem/$1"
-          git -C "$dir" fetch -q --depth 1 origin "$2"
+          git -C "$dir" remote add origin "$2"
+          git -C "$dir" fetch -q --depth 1 origin "$3"
           git -C "$dir" checkout -q FETCH_HEAD
           echo "$1 @ $(git -C "$dir" rev-parse HEAD) ($(git -C "$dir" ls-files | wc -l) files)"
         }
-        clone NeTEx "$NETEX_SHA"
-        clone SIRI "$SIRI_SHA"
-        clone OpRa "$OPRA_SHA"
+        clone NeTEx https://github.com/TransmodelEcosystem/NeTEx "$NETEX_SHA"
+        clone SIRI https://github.com/SIRI-CEN/SIRI "$SIRI_SHA"
+        clone OpRa https://github.com/TransmodelEcosystem/OpRa "$OPRA_SHA"
 
     - name: Wait for PostgreSQL
       shell: bash
@@ -51,11 +53,11 @@ runs:
       working-directory: backend
       run: |
         set -euo pipefail
-        for spec in "NeTEx netex" "SIRI siri" "OpRa opra"; do
+        for spec in "NeTEx TransmodelEcosystem/NeTEx netex" "SIRI SIRI-CEN/SIRI siri" "OpRa TransmodelEcosystem/OpRa opra"; do
           set -- $spec
           python manage.py build_source_index \
-            --repo-url "https://github.com/TransmodelEcosystem/$1" \
+            --repo-url "https://github.com/$2" \
             --repo-path "$RUNNER_TEMP/benchmark-repos/$1" \
-            --profile "$2" --prune
+            --profile "$3" --prune
         done
         echo "Indexed chunks: $(PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc 'select count(*) from helpdesk_sourcechunk')"
