@@ -1,115 +1,137 @@
 name: Benchmark Regression Tests
 
+# Retrieval-quality gate. Indexes the standards repositories at pinned commits with
+# the deterministic hash embedding (no LLM, embedding provider or GraphDB), runs the
+# 100 benchmark questions in baseline and graph-RAG mode, and fails if hit@10 or
+# MRR@10 dropped against backend/helpdesk/benchmarks/ci-baseline.json.
+#
+# Not covered: GraphDB-backed retrieval (ontology definitions, example lookup, graph
+# scope) and provider embeddings. The graph mode here uses the in-memory ontology.
+# Latency is reported but never gated: shared runners are too noisy.
+
 on:
   pull_request:
     branches: [main, develop]
     paths:
       - 'backend/helpdesk/services/retrieval_gateway.py'
       - 'backend/helpdesk/services/semantic_graph.py'
+      - 'backend/helpdesk/services/embeddings.py'
+      - 'backend/helpdesk/services/index_builder.py'
+      - 'backend/helpdesk/index_profiles/**'
+      - 'backend/helpdesk/benchmarks/**'
+      - 'backend/helpdesk/management/commands/run_retrieval_benchmark.py'
       - 'backend/config/settings.py'
-      - 'backend/.env'
       - '.github/workflows/benchmark-regression.yml'
+      - '.github/actions/benchmark-index/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
-  stratified-benchmark:
-    name: Stratified Benchmark (Pre-Merge)
+  retrieval-benchmark:
+    name: Retrieval Benchmark (Pre-Merge)
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    env:
+      DJANGO_SECRET_KEY: ci-secret-key
+      JWT_SECRET_KEY: ci-jwt-secret-key-at-least-32-bytes
+      NAPCORE_SKIP_GRAPHDB_IMPORT: "1"
+      GRAPHDB_ENABLED: "False"
+      GRAPH_RAG_ENABLED: "False"
+      LLM_ENABLED: "False"
+      CONTROLLER_LLM_ENABLED: "False"
+      EMBEDDING_ENABLED: "False"
+      POSTGRES_DB: napcore_helpdesk
+      POSTGRES_USER: napcore
+      POSTGRES_PASSWORD: napcore
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
 
     services:
       postgres:
-        image: pgvector/pgvector:pg16-v0.5.1
+        image: pgvector/pgvector:pg16
         env:
-          POSTGRES_DB: napcore_helpdesk_test
+          POSTGRES_DB: napcore_helpdesk
           POSTGRES_USER: napcore
-          POSTGRES_PASSWORD: test_password
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          POSTGRES_PASSWORD: napcore
         ports:
           - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U napcore -d napcore_helpdesk"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-          cache: 'pip'
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
 
       - name: Install dependencies
-        working-directory: ./backend
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+        working-directory: backend
+        run: pip install -r requirements.txt
 
-      - name: Configure Django database
-        working-directory: ./backend
-        env:
-          DJANGO_SETTINGS_MODULE: config.settings
-          DATABASE_URL: postgresql://napcore:test_password@localhost:5432/napcore_helpdesk_test
-          GRAPHDB_ENABLED: 'False'
-          LLM_ENABLED: 'False'
-        run: |
-          ../.venv/bin/python manage.py migrate --noinput 2>&1 | head -20
+      - name: Build benchmark index
+        uses: ./.github/actions/benchmark-index
 
-      - name: Run stratified benchmark
-        working-directory: ./backend
-        env:
-          DJANGO_SETTINGS_MODULE: config.settings
-          DATABASE_URL: postgresql://napcore:test_password@localhost:5432/napcore_helpdesk_test
-          GRAPHDB_ENABLED: 'False'
-          LLM_ENABLED: 'False'
+      - name: Run retrieval benchmark
+        working-directory: backend
         run: |
-          ../.venv/bin/python manage.py benchmark_stratified \
-            --fail-on-regression 10 \
-            --output ./benchmark-stratified-pr-check.json
+          python manage.py run_retrieval_benchmark \
+            --quiet \
+            --output "$GITHUB_WORKSPACE/benchmark-report.json" \
+            --gate-against helpdesk/benchmarks/ci-baseline.json \
+            --max-drop 0.03
 
-      - name: Upload benchmark results
+      - name: Upload benchmark report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: stratified-benchmark-results
-          path: backend/benchmark-stratified-pr-check.json
+          name: retrieval-benchmark-report
+          path: benchmark-report.json
+          if-no-files-found: ignore
 
       - name: Comment PR with results
-        if: always()
+        # Fork PRs get a read-only token, so commenting is best effort.
+        if: always() && github.event_name == 'pull_request' && hashFiles('benchmark-report.json') != ''
+        continue-on-error: true
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const results = JSON.parse(fs.readFileSync('./backend/benchmark-stratified-pr-check.json', 'utf8'));
-            const summary = results.summary;
-            const status = summary.gates_failed.length === 0 ? '✅ PASS' : '❌ FAIL';
-
-            let comment = `## ${status} Stratified Benchmark Results\n\n`;
-            comment += `- **Questions**: ${summary.question_ok}/${summary.question_count} passed\n`;
-            comment += `- **Avg Latency**: ${summary.graph_avg_ms?.toFixed(1) || 'N/A'} ms\n`;
-            comment += `- **P95 Latency**: ${summary.graph_p95_ms?.toFixed(1) || 'N/A'} ms\n\n`;
-
-            if (summary.gates_failed.length > 0) {
-              comment += `### Failed Gates\n`;
-              summary.gates_failed.forEach(gate => {
-                comment += `- ❌ ${gate}\n`;
+            const report = JSON.parse(fs.readFileSync('benchmark-report.json', 'utf8'));
+            const ref = JSON.parse(fs.readFileSync('backend/helpdesk/benchmarks/ci-baseline.json', 'utf8')).aggregate;
+            const failed = '${{ job.status }}' === 'failure';
+            const fmt = (v) => (v === undefined ? 'n/a' : Number(v).toFixed(3));
+            const rows = ['baseline', 'graph']
+              .filter((m) => report.aggregate[m] && ref[m])
+              .map((m) => {
+                const cur = report.aggregate[m];
+                return `| ${m} | ${fmt(cur.hit_at_10)} (${fmt(ref[m].hit_at_10)}) | ${fmt(cur.mrr_at_10)} (${fmt(ref[m].mrr_at_10)}) | ${Math.round(cur.mean_latency_ms)} ms |`;
               });
-            } else {
-              comment += `### All Gates Passed ✅\n`;
-              summary.gates_passed.forEach(gate => {
-                comment += `- ✅ ${gate}\n`;
-              });
-            }
-
-            github.rest.issues.createComment({
+            const body = [
+              `## ${failed ? '❌ FAIL' : '✅ PASS'} Retrieval benchmark`,
+              '',
+              `${report.total_questions} questions. Current (committed baseline) per mode; a drop above 0.03 in hit@10 or MRR@10 fails the check.`,
+              '',
+              '| Mode | hit@10 | MRR@10 | Mean latency |',
+              '|---|---|---|---|',
+              ...rows,
+              '',
+              'Hash embeddings, no GraphDB. Latency is informational only.',
+            ].join('\n');
+            await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: comment
+              body,
             });
-
-      - name: Fail if gates failed
-        if: failure()
-        run: exit 1
