@@ -32,6 +32,7 @@ import yaml
 import certifi
 from helpdesk.models import IndexedSourceFile, IndexRunMetric, SourceChunk
 from helpdesk.services.embeddings import build_text_embeddings_batch
+from helpdesk.services.repository_urls import canonical_repository_url
 
 
 DEFAULT_EXTENSIONS = {".md", ".txt", ".yaml", ".yml", ".xml", ".xsd", ".json"}
@@ -97,8 +98,13 @@ def load_profile_rules(profile: str) -> dict:
 
 
 def validate_repository_allowed(repo_url: str, allowed_repositories: set[str]) -> None:
-    """Guardrail: only approved source repositories may enter the retrieval index."""
-    if repo_url not in allowed_repositories:
+    """Guardrail: only approved source repositories may enter the retrieval index.
+
+    Both sides are compared by canonical URL, so a known alias of an approved
+    repository (for example SIRI-CEN/SIRI for TransmodelEcosystem/SIRI) is accepted.
+    """
+    approved = {canonical_repository_url(url) for url in allowed_repositories}
+    if canonical_repository_url(repo_url) not in approved:
         allowed = ", ".join(sorted(allowed_repositories))
         raise ValueError(f"Repository URL '{repo_url}' is not allow-listed. Allowed: {allowed}")
 
@@ -959,6 +965,9 @@ def index_repository(
     start_ts = time.perf_counter()
     include_exts = include_extensions or DEFAULT_EXTENSIONS
     stats = IndexStats()
+    # One spelling per repository: chunk ids and stored URLs include it, so an
+    # alias would otherwise index a second full copy of the same files.
+    repo_url = canonical_repository_url(repo_url)
 
     try:
         validate_repository_allowed(repo_url, allowed_repositories)
