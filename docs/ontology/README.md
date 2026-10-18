@@ -47,7 +47,7 @@ The draft is intentionally small:
 - `artifact-rules/datex-artifact-rules-v1.0.ttl`: DATEX II XSD-derived normative rules (versioned, standard-scoped).
 
 ## Generation Workflow
-See [GENERATION.md](GENERATION.md) for which files can actually be regenerated from the repositories today, measured, and for the manual steps. The summary below is older and partly out of date.
+The OpRa, SIRI and NeTEx ontologies are generated from their repositories by one command, `python manage.py build_standard_ontologies` (run in `backend/`), and are never edited by hand. See [GENERATION.md](GENERATION.md) for what each file is produced by, the measured results and the open steps. The summary below is older and partly out of date.
 
 The ontology files are generated from extracted concept inventories:
 1. Refresh extracted concepts into `backend/helpdesk/ontologies/standards.json` from local standards repositories.
