@@ -2,6 +2,8 @@ from pathlib import Path
 
 import environ
 
+from config.beat_schedule import build_beat_schedule
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -33,9 +35,10 @@ env = environ.Env(
         str,
         "https://github.com/TransmodelEcosystem/NeTEx,https://github.com/TransmodelEcosystem/SIRI,https://github.com/TransmodelEcosystem/OpRa",
     ),
-    INDEX_SCHEDULE_REPO_URL=(str, ""),
-    INDEX_SCHEDULE_REPO_PATH=(str, ""),
-    INDEX_SCHEDULE_PROFILE=(str, "netex"),
+    SOURCE_REFRESH_ENABLED=(bool, False),
+    SOURCE_REFRESH_HOUR=(int, 3),
+    SOURCE_REFRESH_MINUTE=(int, 30),
+    SOURCE_CHECKOUT_DIR=(str, "/app/repos"),
     GITHUB_API_TOKEN=(str, ""),
     GITHUB_API_VERIFY_SSL=(bool, True),
     GITHUB_CA_BUNDLE=(str, ""),
@@ -235,9 +238,10 @@ ALLOWED_SOURCE_REPOSITORIES = {
     if value.strip()
 }
 
-INDEX_SCHEDULE_REPO_URL = env("INDEX_SCHEDULE_REPO_URL").strip()
-INDEX_SCHEDULE_REPO_PATH = env("INDEX_SCHEDULE_REPO_PATH").strip()
-INDEX_SCHEDULE_PROFILE = env("INDEX_SCHEDULE_PROFILE", default="netex").strip() or "netex"
+SOURCE_REFRESH_ENABLED = env("SOURCE_REFRESH_ENABLED")
+SOURCE_REFRESH_HOUR = env("SOURCE_REFRESH_HOUR")
+SOURCE_REFRESH_MINUTE = env("SOURCE_REFRESH_MINUTE")
+SOURCE_CHECKOUT_DIR = env("SOURCE_CHECKOUT_DIR").strip() or "/app/repos"
 GITHUB_API_TOKEN = env("GITHUB_API_TOKEN", default="").strip()
 GITHUB_API_VERIFY_SSL = env("GITHUB_API_VERIFY_SSL")
 GITHUB_CA_BUNDLE = env("GITHUB_CA_BUNDLE", default="").strip() or None
@@ -309,9 +313,9 @@ SEMANTIC_CLUSTER_MAX_EVENTS = env("SEMANTIC_CLUSTER_MAX_EVENTS")
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://localhost:6379/1")
 
-CELERY_BEAT_SCHEDULE = {
-    "helpdesk-reindex-default-repository-daily": {
-        "task": "helpdesk.reindex_default_repository",
-        "schedule": 60 * 60 * 24,
-    }
-}
+# The daily source refresh runs at SOURCE_REFRESH_HOUR:SOURCE_REFRESH_MINUTE UTC, only when enabled.
+CELERY_BEAT_SCHEDULE = build_beat_schedule(
+    refresh_enabled=SOURCE_REFRESH_ENABLED,
+    hour=SOURCE_REFRESH_HOUR,
+    minute=SOURCE_REFRESH_MINUTE,
+)

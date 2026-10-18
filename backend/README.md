@@ -153,11 +153,12 @@ Recommended staging start (conservative):
 - Set `EVIDENCE_GATE_ENABLED=True` with defaults from `.env.example`.
 - Keep retrieval governance defaults, then tune only by aggregate telemetry deltas.
 
-## Scheduled incremental indexing
-Celery Beat runs `helpdesk.reindex_default_repository` daily. Configure:
-- `INDEX_SCHEDULE_REPO_URL`
-- `INDEX_SCHEDULE_REPO_PATH`
-- `INDEX_SCHEDULE_PROFILE` (default `netex`)
+## Scheduled source refresh
+`python manage.py refresh_source_indexes` fetches NeTEx, SIRI and OpRa into `SOURCE_CHECKOUT_DIR`
+(default `/app/repos`) and indexes each with its own profile (`--only NAME`, `--full`).
+Celery Beat runs the same refresh daily as `helpdesk.refresh_source_indexes` when
+`SOURCE_REFRESH_ENABLED=True` (at `SOURCE_REFRESH_HOUR`:`SOURCE_REFRESH_MINUTE` UTC, default 03:30).
+See `docs/production-deployment.md`, sections 7.2 and 7.3.
 
 ## Top-level Make targets
 From repository root:

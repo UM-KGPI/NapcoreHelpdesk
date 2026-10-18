@@ -9,7 +9,7 @@ WORKDIR /app/backend
 
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
+    && apt-get install -y --no-install-recommends curl git \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt /tmp/requirements.txt
@@ -18,7 +18,9 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt \
 
 COPY . /app/backend
 
-RUN chown -R napcore:napcore /app
+# /app/repos holds the checkouts of the indexed repositories (a named volume in production);
+# creating it here gives the volume the right owner on first use.
+RUN mkdir -p /app/repos && chown -R napcore:napcore /app
 
 USER napcore
 

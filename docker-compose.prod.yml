@@ -53,6 +53,7 @@ services:
     volumes:
       - ./docs:/app/docs:ro
       - /opt/napcore-helpdesk/VERSION:/app/VERSION:ro
+      - source-repos:/app/repos
     mem_limit: ${BACKEND_MEM_LIMIT:-3g}
     cpus: ${BACKEND_CPUS:-2.0}
     depends_on:
@@ -75,6 +76,7 @@ services:
     volumes:
       - ./docs:/app/docs:ro
       - /opt/napcore-helpdesk/VERSION:/app/VERSION:ro
+      - source-repos:/app/repos
     mem_limit: ${CELERY_WORKER_MEM_LIMIT:-2g}
     cpus: ${CELERY_WORKER_CPUS:-1.5}
 
@@ -124,3 +126,4 @@ services:
 volumes:
   postgres-data:
   graphdb-data:
+  source-repos:
