@@ -5,7 +5,7 @@ from unittest.mock import patch
 from django.test import SimpleTestCase
 from django.test import override_settings
 
-from helpdesk.services.question_parsing import QuestionParsingService
+from helpdesk.services.question_parsing import QuestionParsingService, SemanticQuery, select_effective_scope
 
 
 class QuestionParsingServiceTests(SimpleTestCase):
@@ -200,3 +200,30 @@ class QuestionParsingServiceTests(SimpleTestCase):
         self.assertIn("stop", lowered)
         self.assertIn("example", lowered)
         self.assertNotIn("show", lowered)
+
+
+class SelectEffectiveScopeTests(SimpleTestCase):
+    def _query(self, candidates, ambiguous):
+        return SemanticQuery(
+            intent="definition",
+            normativity="unspecified",
+            core_concept="nits:Journey",
+            core_concepts=["nits:Journey", "nits:Line"] if ambiguous else ["nits:Journey"],
+            ambiguous_core_concept=ambiguous,
+            candidate_standards=candidates,
+            original_terms=[],
+            confidence={},
+        )
+
+    def test_requested_scope_always_wins(self):
+        query = self._query(["NeTEx", "SIRI"], ambiguous=True)
+        self.assertEqual(select_effective_scope(query, ["OpRa"]), (["OpRa"], False))
+
+    def test_ambiguous_question_with_several_candidates_is_cut_to_the_first(self):
+        query = self._query(["NeTEx", "SIRI"], ambiguous=True)
+        self.assertEqual(select_effective_scope(query, []), (["NeTEx"], True))
+
+    def test_unambiguous_or_single_candidate_keeps_all_candidates(self):
+        self.assertEqual(select_effective_scope(self._query(["NeTEx", "SIRI"], False), None), (["NeTEx", "SIRI"], False))
+        self.assertEqual(select_effective_scope(self._query(["SIRI"], True), []), (["SIRI"], False))
+        self.assertEqual(select_effective_scope(self._query([], True), []), ([], False))

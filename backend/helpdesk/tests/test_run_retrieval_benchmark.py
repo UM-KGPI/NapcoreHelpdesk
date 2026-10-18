@@ -188,6 +188,66 @@ class RunRetrievalBenchmarkCommandTests(SimpleTestCase):
         self.assertIn("mrr_at_10_delta", delta)
         self.assertIn("latency_overhead_ms", delta)
 
+    def test_app_scope_searches_with_the_scope_the_answer_endpoints_choose(self):
+        seen = []
+
+        def recording_retrieve(question, top_k, min_score, scope, graph_rag_enabled):
+            seen.append(scope)
+            return self._fake_retrieve(question, top_k, min_score, scope, graph_rag_enabled)
+
+        questions_payload = {
+            "questions": [
+                {
+                    "id": "q001",
+                    "question": "What is a SIRI EstimatedVehicleJourney used for?",
+                    "intent": "explanation",
+                    "tags": ["siri"],
+                    "expected_source_patterns": ["DelayedAndCancelled"],
+                    "min_hits": 1,
+                    "top_k_threshold": 10,
+                }
+            ]
+        }
+
+        from django.core.management import call_command
+        from django.core.management.base import CommandError
+
+        with TemporaryDirectory() as tmp_dir:
+            tmp = Path(tmp_dir)
+            input_path = tmp / "questions.yaml"
+            output_path = tmp / "report.json"
+            input_path.write_text(yaml.safe_dump(questions_payload), encoding="utf-8")
+
+            with patch(
+                "helpdesk.management.commands.run_retrieval_benchmark.retrieve_chunks_with_trace",
+                side_effect=recording_retrieve,
+            ):
+                call_command(
+                    "run_retrieval_benchmark",
+                    input=str(input_path),
+                    output=str(output_path),
+                    quiet=True,
+                    top_k=10,
+                    app_scope=True,
+                )
+                with self.assertRaises(CommandError):
+                    call_command(
+                        "run_retrieval_benchmark",
+                        input=str(input_path),
+                        output=str(output_path),
+                        quiet=True,
+                        app_scope=True,
+                        scope=["NeTEx"],
+                    )
+
+            report = json.loads(output_path.read_text(encoding="utf-8"))
+
+        # The question names SIRI, so the scope is SIRI in both retrieval modes.
+        self.assertEqual(seen, [["SIRI"], ["SIRI"]])
+        self.assertTrue(report["app_scope"])
+        self.assertEqual(report["questions"][0]["scope"], ["SIRI"])
+        self.assertFalse(report["questions"][0]["scope_cut_to_first_candidate"])
+
     def test_command_tag_filter(self):
         questions_payload = {
             "questions": [

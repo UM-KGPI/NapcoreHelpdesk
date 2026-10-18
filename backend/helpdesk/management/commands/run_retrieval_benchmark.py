@@ -9,6 +9,7 @@ import yaml
 from django.core.management.base import BaseCommand, CommandError
 
 from helpdesk.management.commands.benchmark_utils import DEFAULT_QUESTIONS_PATH
+from helpdesk.services.question_parsing import parse_question_to_semantic_query, select_effective_scope
 from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 
 GATED_METRICS = ("hit_at_10", "mrr_at_10")
@@ -140,6 +141,15 @@ class Command(BaseCommand):
             help="Optional standards scope filter passed to retrieve_chunks_with_trace.",
         )
         parser.add_argument(
+            "--app-scope",
+            action="store_true",
+            help=(
+                "Search with the scope the answer endpoints choose for each question (question "
+                "parsing plus the ambiguity cut) instead of no scope. With GraphDB disabled the "
+                "scope comes from named standards and in-memory concepts only."
+            ),
+        )
+        parser.add_argument(
             "--tags",
             nargs="*",
             default=None,
@@ -186,6 +196,7 @@ class Command(BaseCommand):
         output_path = Path(options["output"]).expanduser().resolve()
         top_k: int = options["top_k"]
         scope: list[str] | None = options.get("scope") or None
+        app_scope: bool = bool(options.get("app_scope"))
         filter_tags: list[str] | None = options.get("tags") or None
         filter_ids: list[str] | None = options.get("ids") or None
         baseline_only: bool = bool(options.get("baseline_only"))
@@ -196,6 +207,9 @@ class Command(BaseCommand):
 
         if gate_path is not None and not gate_path.exists():
             raise CommandError(f"Gate reference file not found: {gate_path}")
+
+        if app_scope and scope:
+            raise CommandError("--app-scope and --scope cannot be combined.")
 
         if not input_path.exists():
             raise CommandError(f"Benchmark question file not found: {input_path}")
@@ -219,6 +233,8 @@ class Command(BaseCommand):
         )
         if scope:
             self.stdout.write(f"  scope filter: {scope}")
+        if app_scope:
+            self.stdout.write("  scope: chosen per question as the answer endpoints do")
         if baseline_only:
             self.stdout.write("  mode: baseline only")
         elif graph_only:
@@ -234,6 +250,12 @@ class Command(BaseCommand):
             intent = q.get("intent", "")
             tags = q.get("tags") or []
 
+            question_scope = scope
+            cut_to_first = False
+            if app_scope:
+                semantic_query = parse_question_to_semantic_query(text=question_text, requested_scope=[])
+                question_scope, cut_to_first = select_effective_scope(semantic_query, [])
+
             if not quiet:
                 self.stdout.write(f"  [{idx}/{len(questions)}] {qid}: {question_text[:70]}...")
 
@@ -245,13 +267,16 @@ class Command(BaseCommand):
                 "expected_source_patterns": q.get("expected_source_patterns") or [],
                 "min_hits": q.get("min_hits", 1),
             }
+            if app_scope:
+                result_entry["scope"] = question_scope
+                result_entry["scope_cut_to_first_candidate"] = cut_to_first
 
             if not graph_only:
                 baseline = _run_question(
                     question_dict=q,
                     top_k=top_k,
                     graph_rag_enabled=False,
-                    scope=scope,
+                    scope=question_scope,
                 )
                 result_entry["baseline"] = baseline
                 if not quiet:
@@ -266,7 +291,7 @@ class Command(BaseCommand):
                     question_dict=q,
                     top_k=top_k,
                     graph_rag_enabled=True,
-                    scope=scope,
+                    scope=question_scope,
                 )
                 result_entry["graph"] = graph
                 if not quiet:
@@ -331,6 +356,7 @@ class Command(BaseCommand):
             "benchmark_input": str(input_path),
             "top_k": top_k,
             "scope": scope,
+            "app_scope": app_scope,
             "total_questions": len(questions),
             "aggregate": aggregate,
             "questions": per_question_results,

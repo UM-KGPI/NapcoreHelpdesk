@@ -1,7 +1,7 @@
 version: "1.0"
 description: >
   P4 evaluation benchmark for the NAPCORE Helpdesk graph-RAG vs baseline
-  comparison. 120 retrieval questions (OpRa, NeTEx, SIRI) covering explanation,
+  comparison. 140 retrieval questions (OpRa, NeTEx, SIRI) covering explanation,
   example, cross-standard mapping, disambiguation, and abstention intents. Used by the
   run_retrieval_benchmark management command to emit a hit@k / MRR report.
 created: "2026-04-16"
@@ -997,3 +997,187 @@ questions:
     expected_source_patterns: [siri_estimatedVehicleJourney.xsd, netex_serviceJourney]
     min_hits: 1
     top_k_threshold: 20
+
+  # ── Group I: Questions that name no standard (q121–q140) ─────────────────
+  # Rephrased from earlier questions without the standard name, with the same
+  # expected files. They test scope inference from the concepts alone (--app-scope).
+
+  - id: q121
+    question: "What is a delayed journey and how is it modelled?"
+    intent: explanation
+    tags: [opra, delay, unnamed]
+    expected_source_patterns: [opra_framework]
+    min_hits: 1
+    top_k_threshold: 10
+    note: "Rephrased from q001 without the standard name."
+
+  - id: q122
+    question: "How are types of delay classified in journey statistics?"
+    intent: explanation
+    tags: [opra, delay, classification, unnamed]
+    expected_source_patterns: [delayClassification, opra_framework]
+    min_hits: 1
+    top_k_threshold: 10
+    note: "Rephrased from q006 without the standard name."
+
+  - id: q123
+    question: "What does CancelledDatedVehicleJourneyCount mean?"
+    intent: explanation
+    tags: [opra, cancellation, unnamed]
+    expected_source_patterns: [opra_framework]
+    min_hits: 1
+    top_k_threshold: 10
+    note: "Rephrased from q009 without the standard name."
+
+  - id: q124
+    question: "How is actual vehicle capacity measured and exchanged?"
+    intent: explanation
+    tags: [opra, capacity, unnamed]
+    expected_source_patterns: [ActualServiceDimensions, opra_framework]
+    min_hits: 1
+    top_k_threshold: 10
+    note: "Rephrased from q022 without the standard name."
+
+  - id: q125
+    question: "What fields are included in PlannedServiceDimensions?"
+    intent: example
+    tags: [opra, capacity, example, unnamed]
+    expected_source_patterns: [PlannedServiceDimensions]
+    min_hits: 1
+    top_k_threshold: 10
+    note: "Rephrased from q028 without the standard name."
+
+  - id: q126
+    question: "What does ExpectedServiceIntensity mean?"
+    intent: explanation
+    tags: [opra, service-intensity, unnamed]
+    expected_source_patterns: [ExpectedServiceIntensity, opra_framework]
+    min_hits: 1
+    top_k_threshold: 10
+    note: "Rephrased from q033 without the standard name."
+
+  - id: q127
+    question: "What is PlannedServiceIntensity?"
+    intent: explanation
+    tags: [opra, service-intensity, unnamed]
+    expected_source_patterns: [PlannedServiceIntensity, opra_framework]
+    min_hits: 1
+    top_k_threshold: 10
+    note: "Rephrased from q036 without the standard name."
+
+  - id: q128
+    question: "What does ActualServiceIntensity represent in exchange data?"
+    intent: explanation
+    tags: [opra, service-intensity, unnamed]
+    expected_source_patterns: [ActualServiceDimensions, opra_framework]
+    min_hits: 1
+    top_k_threshold: 10
+    note: "Rephrased from q040 without the standard name."
+
+  - id: q129
+    question: "How are journey patterns represented?"
+    intent: explanation
+    tags: [netex, journey-pattern, unnamed]
+    expected_source_patterns: [netex_journeyPattern]
+    min_hits: 1
+    top_k_threshold: 10
+    note: "Rephrased from q049 without the standard name."
+
+  - id: q130
+    question: "What is the TimetableFrame and what does it contain?"
+    intent: explanation
+    tags: [netex, timetable, frame, unnamed]
+    expected_source_patterns: [netex_timetableFrame]
+    min_hits: 1
+    top_k_threshold: 10
+    note: "Rephrased from q050 without the standard name."
+
+  - id: q131
+    question: "What is the JourneyPatternTimings schema element?"
+    intent: explanation
+    tags: [netex, journey-pattern, timing, unnamed]
+    expected_source_patterns: [netex_journeyPatternTimings]
+    min_hits: 1
+    top_k_threshold: 10
+    note: "Rephrased from q062 without the standard name."
+
+  - id: q132
+    question: "How is GroupOfLines used in a network description?"
+    intent: explanation
+    tags: [netex, line, network, unnamed]
+    expected_source_patterns: [netex_grouping, netex_lineNetwork, netex_line]
+    min_hits: 1
+    top_k_threshold: 10
+    note: "Rephrased from q067 without the standard name."
+
+  - id: q133
+    question: "Show me an XML example for a simple line with stop points."
+    intent: example
+    tags: [netex, line, example, unnamed]
+    expected_source_patterns: [functions/line, NeTEx_01_simple_line]
+    min_hits: 1
+    top_k_threshold: 10
+    note: "Rephrased from q070 without the standard name."
+
+  - id: q134
+    question: "What is TypeOfLine and when is it used?"
+    intent: explanation
+    tags: [netex, line, unnamed]
+    expected_source_patterns: [netex_line_support, netex_line]
+    min_hits: 1
+    top_k_threshold: 10
+    note: "Rephrased from q073 without the standard name."
+
+  - id: q135
+    question: "What is an EstimatedVehicleJourney used for?"
+    intent: explanation
+    tags: [siri, estimated-timetable, unnamed]
+    expected_source_patterns: [siri_estimatedVehicleJourney.xsd, siri_estimatedTimetable_service.xsd]
+    min_hits: 1
+    top_k_threshold: 10
+    note: "Rephrased from q103 without the standard name."
+
+  - id: q136
+    question: "What is the difference between a RecordedCall and an EstimatedCall?"
+    intent: explanation
+    tags: [siri, estimated-timetable, unnamed]
+    expected_source_patterns: [siri_estimatedVehicleJourney.xsd]
+    min_hits: 1
+    top_k_threshold: 10
+    note: "Rephrased from q104 without the standard name."
+
+  - id: q137
+    question: "Can roadwork warnings be exchanged in real time?"
+    intent: explanation
+    tags: [siri, situation-exchange, unnamed]
+    expected_source_patterns: [exx_situationExchange_road, siri_situation.xsd, siri_situationExchange_service.xsd]
+    min_hits: 1
+    top_k_threshold: 10
+    note: "Rephrased from q109 without the standard name."
+
+  - id: q138
+    question: "What is a PtSituationElement?"
+    intent: explanation
+    tags: [siri, situation-exchange, unnamed]
+    expected_source_patterns: [siri_situation.xsd, siri_situationExchange_service.xsd]
+    min_hits: 1
+    top_k_threshold: 10
+    note: "Rephrased from q110 without the standard name."
+
+  - id: q139
+    question: "How does a real-time feed report that a lift or escalator is out of service?"
+    intent: explanation
+    tags: [siri, facility-monitoring, unnamed]
+    expected_source_patterns: [siri_facility.xsd, siri_facilityMonitoring_service.xsd, siri_exm_FM]
+    min_hits: 1
+    top_k_threshold: 10
+    note: "Rephrased from q114 without the standard name."
+
+  - id: q140
+    question: "How does a connecting service learn that a feeder vehicle will arrive late?"
+    intent: explanation
+    tags: [siri, connection-monitoring, unnamed]
+    expected_source_patterns: [siri_connectionMonitoring_service.xsd, siri_exm_CM]
+    min_hits: 1
+    top_k_threshold: 10
+    note: "Rephrased from q117 without the standard name."
