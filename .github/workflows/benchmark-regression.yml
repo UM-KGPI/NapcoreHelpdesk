@@ -43,7 +43,6 @@ jobs:
       GRAPH_RAG_ENABLED: "False"
       LLM_ENABLED: "False"
       CONTROLLER_LLM_ENABLED: "False"
-      EMBEDDING_ENABLED: "False"
       POSTGRES_DB: napcore_helpdesk
       POSTGRES_USER: napcore
       POSTGRES_PASSWORD: napcore

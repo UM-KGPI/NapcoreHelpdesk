@@ -1,13 +1,13 @@
 """
 Batch embedding computation for source index chunks.
 
-Generates vector embeddings for text chunks during index builds. Content
-is hashed before the API call so unchanged chunks are skipped on incremental
-runs, reducing embedding API cost.
+Generates vector embeddings for text chunks during index builds and for
+queries at retrieval time. The vectors are deterministic hash embeddings
+computed locally; no embedding service is called.
 
 Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
 Crafted by: AI coding agents
-Created: 2026-03-28  |  Modified: 2026-06-28
+Created: 2026-03-28  |  Modified: 2026-10-18
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ def normalize_text_tokens(text: str) -> list[str]:
 
 
 def _hash_embed(text: str, dimension: int = EMBEDDING_DIMENSION) -> list[float]:
-    """Deterministic hash-based fallback embedding. No external calls required."""
+    """Deterministic hash-based embedding. No external calls required."""
     vector = [0.0] * dimension
     tokens = normalize_text_tokens(text)
     if not tokens:
@@ -62,33 +62,12 @@ def _hash_embed(text: str, dimension: int = EMBEDDING_DIMENSION) -> list[float]:
 
 
 def build_text_embedding(text: str) -> list[float]:
-    """Return a semantic embedding for the given text.
-
-    Uses the configured OpenAI-compatible provider when EMBEDDING_ENABLED=True.
-    Falls back to the deterministic hash-based embedding on provider failure or
-    when the provider is not configured.
-    """
-    try:
-        from helpdesk.services.embedding_provider import embed_texts
-        return embed_texts([text])[0]
-    except Exception:
-        pass
+    """Return the deterministic hash embedding for the given text."""
     return _hash_embed(text)
 
 
 def build_text_embeddings_batch(texts: list[str]) -> list[list[float]]:
-    """Return embeddings for a list of texts, using a single provider batch call when available.
-
-    Preserves input order. Falls back to hash-based embedding per item on provider
-    failure or when the provider is not configured.
-    """
-    if not texts:
-        return []
-    try:
-        from helpdesk.services.embedding_provider import embed_texts
-        return embed_texts(texts)
-    except Exception:
-        pass
+    """Return hash embeddings for a list of texts, preserving input order."""
     return [_hash_embed(t) for t in texts]
 
 
