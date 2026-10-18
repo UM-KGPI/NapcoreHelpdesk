@@ -60,7 +60,7 @@ from helpdesk.services.llm_model_recovery import check_gateway_models, get_cache
 from helpdesk.services.ontology_registry import current_ontology_version_payload
 from helpdesk.services.policy_guard import evaluate_policy
 from helpdesk.services.provenance_mapper import persist_evidence_provenance
-from helpdesk.services.question_parsing import parse_question_to_semantic_query, select_effective_scope
+from helpdesk.services.question_parsing import has_scope_hint, parse_question_to_semantic_query, select_effective_scope
 from helpdesk.services.index_builder import index_repository
 from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 from helpdesk.services.retrieval_event_logger import log_retrieval_events
@@ -1066,7 +1066,7 @@ class QuestionAnswerView(APIView):
                 confidence = faq_match["confidence"]
                 review_required = faq_match["review_required"]
                 citations = faq_match["citations"][:max_citations]
-        elif semantic_query.core_concept == "nits:unknown-concept" and allow_abstain and not effective_scope and not any(
+        elif semantic_query.core_concept == "nits:unknown-concept" and allow_abstain and not has_scope_hint(semantic_query, effective_scope) and not any(
             any(c.isupper() for c in term[1:]) for term in semantic_query.original_terms
         ):
             mode = QuestionEvent.MODE_ABSTAIN
@@ -1085,7 +1085,7 @@ class QuestionAnswerView(APIView):
             and float(concept_confidence) < semantic_low_confidence_threshold
             and allow_abstain
             and not scope
-            and not effective_scope
+            and not has_scope_hint(semantic_query, effective_scope)
             and not any(any(c.isupper() for c in term[1:]) for term in semantic_query.original_terms)
         ):
             mode = QuestionEvent.MODE_ABSTAIN
@@ -1553,7 +1553,7 @@ class QuestionAnswerStreamView(APIView):
                 confidence = faq_match["confidence"]
                 review_required = faq_match["review_required"]
                 citations = faq_match["citations"][:max_citations]
-        elif semantic_query.core_concept == "nits:unknown-concept" and allow_abstain and not effective_scope and not any(
+        elif semantic_query.core_concept == "nits:unknown-concept" and allow_abstain and not has_scope_hint(semantic_query, effective_scope) and not any(
             any(c.isupper() for c in term[1:]) for term in semantic_query.original_terms
         ):
             mode = QuestionEvent.MODE_ABSTAIN
@@ -1572,7 +1572,7 @@ class QuestionAnswerStreamView(APIView):
             and float(concept_confidence) < semantic_low_confidence_threshold
             and allow_abstain
             and not scope
-            and not effective_scope
+            and not has_scope_hint(semantic_query, effective_scope)
             and not any(any(c.isupper() for c in term[1:]) for term in semantic_query.original_terms)
         ):
             mode = QuestionEvent.MODE_ABSTAIN
