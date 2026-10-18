@@ -47,6 +47,8 @@ The draft is intentionally small:
 - `artifact-rules/datex-artifact-rules-v1.0.ttl`: DATEX II XSD-derived normative rules (versioned, standard-scoped).
 
 ## Generation Workflow
+See [GENERATION.md](GENERATION.md) for which files can actually be regenerated from the repositories today, measured, and for the manual steps. The summary below is older and partly out of date.
+
 The ontology files are generated from extracted concept inventories:
 1. Refresh extracted concepts into `backend/helpdesk/ontologies/standards.json` from local standards repositories.
 2. Rebuild standard module ontologies under `docs/ontology/standards/` from the refreshed glossary or XSD-grounded workflows.
