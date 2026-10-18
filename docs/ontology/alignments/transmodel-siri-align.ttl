@@ -47,6 +47,11 @@ siri:FacilityCondition
     nits:transmodelDefinitionStatus "differs" ;
     nits:alignmentMethod "name-match" .
 
+siri:FareClass
+    skos:exactMatch tm:TYPE_OF_FARE_CLASS ;
+    nits:transmodelDefinitionStatus "differs" ;
+    nits:alignmentMethod "curated" .
+
 siri:TimingPoint
     skos:exactMatch tm:TIMING_POINT ;
     nits:transmodelDefinitionStatus "differs" ;
@@ -61,6 +66,11 @@ siri:TrainComponent
     skos:exactMatch tm:TRAIN_COMPONENT ;
     nits:transmodelDefinitionStatus "differs" ;
     nits:alignmentMethod "name-match" .
+
+siri:TrainElement
+    skos:exactMatch tm:TRAIN_ELEMENT_TYPE ;
+    nits:transmodelDefinitionStatus "differs" ;
+    nits:alignmentMethod "curated" .
 
 siri:TrainInCompoundTrain
     skos:exactMatch tm:TRAIN_IN_COMPOUND_TRAIN ;
