@@ -7,14 +7,14 @@ that the orchestration layer converts into an abstention response.
 
 Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
 Crafted by: AI coding agents
-Created: 2026-03-28  |  Modified: 2026-06-28
+Created: 2026-03-28  |  Modified: 2026-10-18
 """
 
 from __future__ import annotations
 
 from django.conf import settings
 
-from urllib.parse import urlparse
+from helpdesk.services.repository_urls import canonical_repository_url
 
 
 _STRONG_CLAIM_MARKERS = (
@@ -28,36 +28,10 @@ _STRONG_CLAIM_MARKERS = (
     "shall",
 )
 
-_REPOSITORY_ALIASES = {
-    # NeTEx canonical mirror aliases used by citation URL fallback logic.
-    "https://github.com/transmodelecosystem/netex": "https://github.com/TransmodelEcosystem/NeTEx",
-    "https://github.com/netex-cen/netex": "https://github.com/TransmodelEcosystem/NeTEx",
-    # SIRI: chunks indexed from the TransmodelEcosystem mirror normalise to the
-    # canonical SIRI-CEN URL that appears in ALLOWED_SOURCE_REPOSITORIES.
-    "https://github.com/transmodelecosystem/siri": "https://github.com/SIRI-CEN/SIRI",
-    "https://github.com/siri-cen/siri": "https://github.com/SIRI-CEN/SIRI",
-}
-
-
 def _normalize_repository_url(raw_url: str) -> str:
-    """Normalize citation URLs to repository roots for allow-list checks.
+    """Normalize citation URLs to repository roots for allow-list checks."""
 
-    Supports both repository URLs and GitHub file URLs such as
-    https://github.com/<owner>/<repo>/blob/<sha>/<path>.
-    """
-
-    parsed = urlparse(raw_url)
-    if not parsed.scheme or not parsed.netloc:
-        return raw_url.rstrip("/")
-
-    path_parts = [part for part in parsed.path.split("/") if part]
-    if parsed.netloc.lower() == "github.com" and len(path_parts) >= 2:
-        owner, repo = path_parts[0], path_parts[1]
-        normalized = f"{parsed.scheme}://{parsed.netloc}/{owner}/{repo}"
-        return _REPOSITORY_ALIASES.get(normalized.lower(), normalized)
-
-    normalized = f"{parsed.scheme}://{parsed.netloc}{parsed.path}".rstrip("/")
-    return _REPOSITORY_ALIASES.get(normalized.lower(), normalized)
+    return canonical_repository_url(raw_url)
 
 
 def evaluate_policy(answer_text: str, citations: list[dict]) -> dict:
@@ -79,9 +53,10 @@ def evaluate_policy(answer_text: str, citations: list[dict]) -> dict:
             "review_required": False,
         }
 
+    approved_canonical = {canonical_repository_url(url) for url in approved_repositories}
     for citation in citations:
         repo_url = _normalize_repository_url(citation.get("repositoryUrl", ""))
-        if repo_url not in approved_repositories:
+        if repo_url not in approved_canonical:
             return {
                 "allowed": False,
                 "reason": "POLICY_BLOCK",

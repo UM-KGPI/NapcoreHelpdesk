@@ -31,7 +31,7 @@ env = environ.Env(
     DEV_JWT_TTL_MINUTES=(int, 480),
     ALLOWED_SOURCE_REPOSITORIES=(
         str,
-        "https://github.com/TransmodelEcosystem/NeTEx,https://github.com/SIRI-CEN/SIRI,https://github.com/TransmodelEcosystem/OpRa",
+        "https://github.com/TransmodelEcosystem/NeTEx,https://github.com/TransmodelEcosystem/SIRI,https://github.com/TransmodelEcosystem/OpRa",
     ),
     INDEX_SCHEDULE_REPO_URL=(str, ""),
     INDEX_SCHEDULE_REPO_PATH=(str, ""),
@@ -69,7 +69,7 @@ env = environ.Env(
     CONTROLLER_LLM_VERIFY_SSL=(bool, True),
     CONTROLLER_LLM_CA_BUNDLE=(str, ""),
     SEED_REPO_NETEX=(str, "https://github.com/TransmodelEcosystem/NeTEx"),
-    SEED_REPO_SIRI=(str, "https://github.com/SIRI-CEN/SIRI"),
+    SEED_REPO_SIRI=(str, "https://github.com/TransmodelEcosystem/SIRI"),
     SEED_REPO_OPRA=(str, "https://github.com/TransmodelEcosystem/OpRa"),
     GRAPH_RAG_ENABLED=(bool, True),
     SEMANTIC_LOW_CONFIDENCE_THRESHOLD=(float, 0.60),
@@ -230,7 +230,7 @@ ALLOWED_SOURCE_REPOSITORIES = {
     value.strip()
     for value in env(
         "ALLOWED_SOURCE_REPOSITORIES",
-        default="https://github.com/TransmodelEcosystem/NeTEx,https://github.com/SIRI-CEN/SIRI,https://github.com/TransmodelEcosystem/OpRa",
+        default="https://github.com/TransmodelEcosystem/NeTEx,https://github.com/TransmodelEcosystem/SIRI,https://github.com/TransmodelEcosystem/OpRa",
     ).split(",")
     if value.strip()
 }
@@ -272,7 +272,7 @@ CONTROLLER_LLM_VERIFY_SSL = env("CONTROLLER_LLM_VERIFY_SSL")
 CONTROLLER_LLM_CA_BUNDLE = env("CONTROLLER_LLM_CA_BUNDLE", default="").strip()
 
 SEED_REPO_NETEX = env("SEED_REPO_NETEX").strip() or "https://github.com/TransmodelEcosystem/NeTEx"
-SEED_REPO_SIRI = env("SEED_REPO_SIRI").strip() or "https://github.com/SIRI-CEN/SIRI"
+SEED_REPO_SIRI = env("SEED_REPO_SIRI").strip() or "https://github.com/TransmodelEcosystem/SIRI"
 SEED_REPO_OPRA = env("SEED_REPO_OPRA").strip() or "https://github.com/TransmodelEcosystem/OpRa"
 ALLOWED_SOURCE_REPOSITORIES |= {
     SEED_REPO_NETEX,

@@ -288,7 +288,7 @@ docker compose -f docker-compose.prod.yml exec backend \
 
 docker compose -f docker-compose.prod.yml exec backend \
   python manage.py index_repository \
-    --repo-url https://github.com/SIRI-CEN/SIRI \
+    --repo-url https://github.com/TransmodelEcosystem/SIRI \
     --profile default
 ```
 

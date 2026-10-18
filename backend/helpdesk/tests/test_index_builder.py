@@ -56,6 +56,29 @@ class SourceIndexBuilderTests(TestCase):
         self.assertTrue(IndexedSourceFile.objects.filter(source_path="docs/guide.md").exists())
         self.assertEqual(IndexRunMetric.objects.filter(status=IndexRunMetric.STATUS_SUCCESS).count(), 1)
 
+    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/TransmodelEcosystem/SIRI"})
+    def test_build_source_index_stores_one_copy_for_repository_aliases(self):
+        """Indexing a repository under an alias must not create a second copy of its chunks."""
+        siri = "https://github.com/TransmodelEcosystem/SIRI"
+        with TemporaryDirectory() as tmp_dir:
+            repo_path = Path(tmp_dir)
+            docs = repo_path / "docs"
+            docs.mkdir(parents=True, exist_ok=True)
+            (docs / "guide.md").write_text("SIRI estimated timetable guidance.", encoding="utf-8")
+
+            call_command("build_source_index", repo_url=siri, repo_path=str(repo_path), prune=True)
+            first_ids = set(SourceChunk.objects.values_list("chunk_id", flat=True))
+            call_command(
+                "build_source_index",
+                repo_url="https://github.com/SIRI-CEN/SIRI",
+                repo_path=str(repo_path),
+                prune=True,
+            )
+
+        self.assertTrue(first_ids)
+        self.assertEqual(set(SourceChunk.objects.values_list("chunk_id", flat=True)), first_ids)
+        self.assertEqual(set(SourceChunk.objects.values_list("repository_url", flat=True)), {siri})
+
     @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/TransmodelEcosystem/NeTEx"})
     def test_build_source_index_command_rejects_unapproved_repository(self):
         """Ensure repositories outside the configured allow-list are rejected."""

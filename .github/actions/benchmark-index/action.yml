@@ -17,7 +17,7 @@ runs:
       run: |
         set -euo pipefail
         # URLs must be on the application's default ALLOWED_SOURCE_REPOSITORIES list
-        # (SIRI is indexed under SIRI-CEN/SIRI, which redirects to TransmodelEcosystem/SIRI).
+        # (SIRI: SIRI-CEN/SIRI redirects to TransmodelEcosystem/SIRI, the main source).
         clone() {
           dir="$RUNNER_TEMP/benchmark-repos/$1"
           mkdir -p "$dir"
@@ -28,7 +28,7 @@ runs:
           echo "$1 @ $(git -C "$dir" rev-parse HEAD) ($(git -C "$dir" ls-files | wc -l) files)"
         }
         clone NeTEx https://github.com/TransmodelEcosystem/NeTEx "$NETEX_SHA"
-        clone SIRI https://github.com/SIRI-CEN/SIRI "$SIRI_SHA"
+        clone SIRI https://github.com/TransmodelEcosystem/SIRI "$SIRI_SHA"
         clone OpRa https://github.com/TransmodelEcosystem/OpRa "$OPRA_SHA"
 
     - name: Wait for PostgreSQL
@@ -53,7 +53,7 @@ runs:
       working-directory: backend
       run: |
         set -euo pipefail
-        for spec in "NeTEx TransmodelEcosystem/NeTEx netex" "SIRI SIRI-CEN/SIRI siri" "OpRa TransmodelEcosystem/OpRa opra"; do
+        for spec in "NeTEx TransmodelEcosystem/NeTEx netex" "SIRI TransmodelEcosystem/SIRI siri" "OpRa TransmodelEcosystem/OpRa opra"; do
           set -- $spec
           python manage.py build_source_index \
             --repo-url "https://github.com/$2" \

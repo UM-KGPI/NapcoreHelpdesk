@@ -24,7 +24,7 @@ x-backend-base: &backend-base
     DEV_JWT_DEFAULT_SUBJECT: user-local
     DEV_JWT_DEFAULT_ROLES: editor,reviewer,publisher
     DEV_JWT_TTL_MINUTES: "480"
-    ALLOWED_SOURCE_REPOSITORIES: https://github.com/TransmodelEcosystem/NeTEx,https://github.com/SIRI-CEN/SIRI,https://github.com/TransmodelEcosystem/OpRa
+    ALLOWED_SOURCE_REPOSITORIES: https://github.com/TransmodelEcosystem/NeTEx,https://github.com/TransmodelEcosystem/SIRI,https://github.com/TransmodelEcosystem/OpRa
     CELERY_BROKER_URL: redis://redis:6379/0
     CELERY_RESULT_BACKEND: redis://redis:6379/1
     GRAPHDB_ENABLED: ${GRAPHDB_ENABLED:-True}
