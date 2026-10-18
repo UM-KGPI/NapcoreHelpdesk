@@ -357,7 +357,7 @@ After the first manual deploy, all future deployments go through GitHub Actions:
 The workflow re-runs the full CI suite first, then the self-hosted runner on the server
 executes `scripts/deploy.sh`, which:
 
-- Pulls the latest code (`git pull origin main`)
+- Pulls the latest code (`git pull origin main`) and then re-runs itself from the pulled copy, so a change to `deploy.sh` applies to the same deployment
 - Rebuilds changed images (`docker compose build --pull`)
 - Restarts services with zero downtime where possible (`up -d --remove-orphans`)
 - Runs pending database migrations (`manage.py migrate --noinput`)

@@ -1,15 +1,23 @@
 #!/usr/bin/env bash
-# Production deploy script — runs on the server via SSH from GitHub Actions.
+# Production deploy script — runs on the server, started by the Deploy to Production workflow
+# on the self-hosted runner (docs/production-deployment.md, section 5).
 # Expected location on server: /opt/napcore-helpdesk/scripts/deploy.sh
 set -euo pipefail
 
-REPO_DIR="/opt/napcore-helpdesk"
+REPO_DIR="${REPO_DIR:-/opt/napcore-helpdesk}"
 COMPOSE="docker compose -f ${REPO_DIR}/docker-compose.prod.yml"
 
 cd "${REPO_DIR}"
 
-echo "==> Pulling latest code"
-git pull origin main
+if [[ -z "${DEPLOY_PULLED:-}" ]]; then
+  echo "==> Pulling latest code"
+  git pull origin main
+  # Bash keeps executing the copy of this file it started with, so if the pull changed this
+  # script, the rest of this run would use the old logic. Run the pulled copy instead.
+  trace=""
+  [[ $- == *x* ]] && trace="-x"
+  DEPLOY_PULLED=1 exec bash ${trace} scripts/deploy.sh
+fi
 
 echo "==> Building images"
 # Without these, docker-compose.prod.yml falls back to defaults: the frontend shows its
