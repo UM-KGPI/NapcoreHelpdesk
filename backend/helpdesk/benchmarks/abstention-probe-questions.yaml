@@ -1,0 +1,44 @@
+version: "1.0"
+description: >
+  Questions for probe_abstention: off-topic, vague and bare-keyword questions that no benchmark
+  question covers. The probe records the semantic abstention decision; `expect` is an optional
+  judgement (abstain or answer) used only to flag disagreements, not to fail anything.
+questions:
+  - {id: a01, category: off_topic, expect: abstain, question: "What is the weather in Ljubljana tomorrow?"}
+  - {id: a02, category: off_topic, expect: abstain, question: "How do I bake sourdough bread?"}
+  - {id: a03, category: off_topic, expect: abstain, question: "Who won the football match last night?"}
+  - {id: a04, category: off_topic, expect: abstain, question: "Write me a poem about the sea."}
+  - {id: a05, category: off_topic, expect: abstain, question: "What is the capital of Australia?"}
+  - {id: a06, category: off_topic, expect: abstain, question: "Can you recommend a good laptop?"}
+  - {id: a07, category: vague, expect: abstain, question: "How does it work?"}
+  - {id: a08, category: vague, expect: abstain, question: "Can you help me?"}
+  - {id: a09, category: vague, expect: abstain, question: "What should I do first?"}
+  - {id: a10, category: vague, expect: abstain, question: "Explain the data format."}
+  - {id: a11, category: vague, question: "What are the rules?"}
+  - {id: a12, category: vague, question: "Is this mandatory?"}
+  - {id: a13, category: generic_transport, question: "How are timetables published?"}
+  - {id: a14, category: generic_transport, question: "What data is needed for real-time information?"}
+  - {id: a15, category: generic_transport, question: "How do I describe a bus line?"}
+  - {id: a16, category: generic_transport, question: "What is a stop and how is it identified?"}
+  - {id: a17, category: generic_transport, question: "How should delays be reported to passengers?"}
+  - {id: a18, category: generic_transport, question: "Which standard should I use for vehicle positions?"}
+  - {id: a19, category: bare_keyword, question: "timetable"}
+  - {id: a20, category: bare_keyword, question: "stop point"}
+  - {id: a21, category: bare_keyword, question: "delay"}
+  - {id: a22, category: bare_keyword, question: "journey"}
+  - {id: a23, category: bare_keyword, question: "fares"}
+  - {id: a24, category: bare_keyword, question: "accessibility"}
+  - {id: a25, category: named_artifact, expect: answer, question: "What is ServiceJourneyPattern?"}
+  - {id: a26, category: named_artifact, expect: answer, question: "What does EstimatedVehicleJourney contain?"}
+  - {id: a27, category: named_artifact, expect: answer, question: "Explain StopPlace."}
+  - {id: a28, category: named_artifact, expect: answer, question: "Where is DatedVehicleJourney used?"}
+  - {id: a29, category: named_standard, expect: answer, question: "What is SIRI?"}
+  - {id: a30, category: named_standard, expect: answer, question: "What does NeTEx cover?"}
+  - {id: a31, category: named_standard, expect: answer, question: "What is OpRa for?"}
+  - {id: a32, category: named_standard, expect: answer, question: "How do NeTEx and SIRI relate?"}
+  - {id: a33, category: other_language, question: "Kaj je vozni red v NeTEx?"}
+  - {id: a34, category: other_language, question: "Wie wird eine Verspätung modelliert?"}
+  - {id: a35, category: other_language, question: "Qu'est-ce qu'un arrêt?"}
+  - {id: a36, category: unrelated_standard, expect: abstain, question: "What does GTFS say about stop times?"}
+  - {id: a37, category: unrelated_standard, expect: abstain, question: "How do I use the OpenStreetMap API?"}
+  - {id: a38, category: unrelated_standard, question: "Explain DATEX II traffic messages."}

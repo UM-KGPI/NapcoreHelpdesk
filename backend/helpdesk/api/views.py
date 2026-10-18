@@ -60,7 +60,8 @@ from helpdesk.services.llm_model_recovery import check_gateway_models, get_cache
 from helpdesk.services.ontology_registry import current_ontology_version_payload
 from helpdesk.services.policy_guard import evaluate_policy
 from helpdesk.services.provenance_mapper import persist_evidence_provenance
-from helpdesk.services.question_parsing import has_scope_hint, parse_question_to_semantic_query, select_effective_scope
+from helpdesk.services.question_parsing import parse_question_to_semantic_query, select_effective_scope
+from helpdesk.services.semantic_abstention import semantic_abstention_message
 from helpdesk.services.index_builder import index_repository
 from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 from helpdesk.services.retrieval_event_logger import log_retrieval_events
@@ -976,15 +977,6 @@ class QuestionAnswerView(APIView):
             )
             semantic_fallback = "AMBIGUOUS_CORE_CONCEPT"
 
-        semantic_confidence = getattr(semantic_query, "confidence", None)
-        if semantic_confidence is None and hasattr(semantic_query, "as_dict"):
-            semantic_confidence = (semantic_query.as_dict() or {}).get("confidence")
-        semantic_confidence = semantic_confidence or {}
-        concept_confidence = semantic_confidence.get("concept")
-        semantic_low_confidence_threshold = float(
-            getattr(settings, "SEMANTIC_LOW_CONFIDENCE_THRESHOLD", 0.60)
-        )
-
         faq_match = match_faq(question=question, scope=effective_scope)
         qualifying_faq_match = bool(
             faq_match
@@ -1066,38 +1058,21 @@ class QuestionAnswerView(APIView):
                 confidence = faq_match["confidence"]
                 review_required = faq_match["review_required"]
                 citations = faq_match["citations"][:max_citations]
-        elif semantic_query.core_concept == "nits:unknown-concept" and allow_abstain and not has_scope_hint(semantic_query, effective_scope) and not any(
-            any(c.isupper() for c in term[1:]) for term in semantic_query.original_terms
-        ):
-            mode = QuestionEvent.MODE_ABSTAIN
-            confidence = 0.0
-            abstained = True
-            abstention_reason = QuestionEvent.REASON_INSUFFICIENT_EVIDENCE
-            review_required = True
-            semantic_fallback = "NO_CONCEPT_MATCH"
-            answer_text = (
-                "I could not map your question to a known standards concept yet. "
-                "Please clarify by naming a concrete concept, artifact, or standard scope."
-            )
-            citations = []
         elif (
-            concept_confidence is not None
-            and float(concept_confidence) < semantic_low_confidence_threshold
-            and allow_abstain
-            and not scope
-            and not has_scope_hint(semantic_query, effective_scope)
-            and not any(any(c.isupper() for c in term[1:]) for term in semantic_query.original_terms)
-        ):
+            abstention_message := semantic_abstention_message(
+                semantic_query=semantic_query,
+                effective_scope=effective_scope,
+                requested_scope=scope,
+                allow_abstain=allow_abstain,
+            )
+        ) is not None:
             mode = QuestionEvent.MODE_ABSTAIN
             confidence = 0.0
             abstained = True
             abstention_reason = QuestionEvent.REASON_INSUFFICIENT_EVIDENCE
             review_required = True
             semantic_fallback = "NO_CONCEPT_MATCH"
-            answer_text = (
-                "I cannot safely determine the intended standards concept from this question yet. "
-                "Please clarify the target concept or provide a standards scope."
-            )
+            answer_text = abstention_message
             citations = []
         else:
             # 2) RAG fallback: retrieve evidence, generate, then run policy gate.
@@ -1455,15 +1430,6 @@ class QuestionAnswerStreamView(APIView):
             )
             semantic_fallback = "AMBIGUOUS_CORE_CONCEPT"
 
-        semantic_confidence = getattr(semantic_query, "confidence", None)
-        if semantic_confidence is None and hasattr(semantic_query, "as_dict"):
-            semantic_confidence = (semantic_query.as_dict() or {}).get("confidence")
-        semantic_confidence = semantic_confidence or {}
-        concept_confidence = semantic_confidence.get("concept")
-        semantic_low_confidence_threshold = float(
-            getattr(settings, "SEMANTIC_LOW_CONFIDENCE_THRESHOLD", 0.60)
-        )
-
         faq_match = match_faq(question=question, scope=effective_scope)
         answer_text = ""
 
@@ -1553,38 +1519,21 @@ class QuestionAnswerStreamView(APIView):
                 confidence = faq_match["confidence"]
                 review_required = faq_match["review_required"]
                 citations = faq_match["citations"][:max_citations]
-        elif semantic_query.core_concept == "nits:unknown-concept" and allow_abstain and not has_scope_hint(semantic_query, effective_scope) and not any(
-            any(c.isupper() for c in term[1:]) for term in semantic_query.original_terms
-        ):
-            mode = QuestionEvent.MODE_ABSTAIN
-            confidence = 0.0
-            abstained = True
-            abstention_reason = QuestionEvent.REASON_INSUFFICIENT_EVIDENCE
-            review_required = True
-            semantic_fallback = "NO_CONCEPT_MATCH"
-            answer_text = (
-                "I could not map your question to a known standards concept yet. "
-                "Please clarify by naming a concrete concept, artifact, or standard scope."
-            )
-            citations = []
         elif (
-            concept_confidence is not None
-            and float(concept_confidence) < semantic_low_confidence_threshold
-            and allow_abstain
-            and not scope
-            and not has_scope_hint(semantic_query, effective_scope)
-            and not any(any(c.isupper() for c in term[1:]) for term in semantic_query.original_terms)
-        ):
+            abstention_message := semantic_abstention_message(
+                semantic_query=semantic_query,
+                effective_scope=effective_scope,
+                requested_scope=scope,
+                allow_abstain=allow_abstain,
+            )
+        ) is not None:
             mode = QuestionEvent.MODE_ABSTAIN
             confidence = 0.0
             abstained = True
             abstention_reason = QuestionEvent.REASON_INSUFFICIENT_EVIDENCE
             review_required = True
             semantic_fallback = "NO_CONCEPT_MATCH"
-            answer_text = (
-                "I cannot safely determine the intended standards concept from this question yet. "
-                "Please clarify the target concept or provide a standards scope."
-            )
+            answer_text = abstention_message
             citations = []
         else:
             graph_rag_enabled = _resolve_graph_rag_enabled(options)
