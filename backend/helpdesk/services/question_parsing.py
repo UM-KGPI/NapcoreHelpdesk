@@ -12,7 +12,7 @@ Created: 2026-04-16  |  Modified: 2026-10-18
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import re
 import unicodedata
 
@@ -79,6 +79,10 @@ class SemanticQuery:
     candidate_standards: list[str]
     original_terms: list[str]
     confidence: dict[str, float]
+    # What the ontology associates with the concept. It no longer decides which standards are
+    # searched (candidate_standards comes from the question text alone); the abstention rules
+    # read it so that their decisions stay as they were.
+    discovered_standards: list[str] = field(default_factory=list)
 
     def as_dict(self) -> dict:
         return {
@@ -116,21 +120,21 @@ class QuestionParsingService:
         core_concepts = self._rank_and_cap_core_concepts(raw_core_concepts, normalized)
         core_concept = core_concepts[0] if core_concepts else "nits:unknown-concept"
         ambiguous_core_concept = len(core_concepts) > 1
-        candidate_standards = self._discover_standards(
+        discovered_standards = self._discover_standards(
             concept_ids=all_concepts,
             requested_scope=requested_scope,
             core_concepts=core_concepts,
         )
 
-        # Standards named in the question win over the ones the ontology associates
-        # with the concept. Otherwise a question that says "SIRI" is scoped to
-        # whichever standard the graph lists first (NeTEx for most core concepts),
-        # and the answer cites NeTEx copies of SIRI files instead of the SIRI repository.
-        # This also covers the case where graph discovery finds no standard at all.
-        if not requested_scope:
-            named_standards = self._scan_standard_keywords(normalized)
-            if named_standards:
-                candidate_standards = named_standards
+        # The standards searched come from the question alone: the requested scope, else the
+        # standards it names, else none (all standards). The ontology's idea of which standards
+        # realise the concept used to decide this, and for most concepts it listed NeTEx first:
+        # a question that said "SIRI" was answered from NeTEx's copies of SIRI files (#42), and a
+        # question naming no standard was cut to NeTEx whatever it was about (#43).
+        if requested_scope:
+            candidate_standards = list(dict.fromkeys(requested_scope))
+        else:
+            candidate_standards = self._scan_standard_keywords(normalized)
 
         concept_confidence = self._concept_confidence(core_concepts)
         intent_confidence = self._intent_confidence(intent=intent, requested_scope=requested_scope)
@@ -148,6 +152,7 @@ class QuestionParsingService:
             candidate_standards=candidate_standards,
             original_terms=original_terms,
             confidence=confidence,
+            discovered_standards=discovered_standards,
         )
 
     def _normalize_text(self, text: str) -> str:
@@ -343,3 +348,14 @@ def select_effective_scope(
     if semantic_query.ambiguous_core_concept and len(candidates) > 1:
         return [candidates[0]], True
     return candidates, False
+
+
+def has_scope_hint(semantic_query, effective_scope: list[str]) -> bool:
+    """Whether the question gave any hint of the standards it concerns.
+
+    True when a scope was requested or named, or the ontology recognised a standard for the concept.
+    The abstention rules use it (not the searched scope) so that dropping the ontology from scope
+    selection does not make them refuse questions they used to answer.
+    """
+
+    return bool(effective_scope) or bool(getattr(semantic_query, "discovered_standards", None))

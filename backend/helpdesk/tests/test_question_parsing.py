@@ -5,7 +5,12 @@ from unittest.mock import patch
 from django.test import SimpleTestCase
 from django.test import override_settings
 
-from helpdesk.services.question_parsing import QuestionParsingService, SemanticQuery, select_effective_scope
+from helpdesk.services.question_parsing import (
+    QuestionParsingService,
+    SemanticQuery,
+    has_scope_hint,
+    select_effective_scope,
+)
 
 
 class QuestionParsingServiceTests(SimpleTestCase):
@@ -33,7 +38,9 @@ class QuestionParsingServiceTests(SimpleTestCase):
         self.assertEqual(semantic_query.intent, "normative_status")
         self.assertEqual(semantic_query.normativity, "mandatory")
         self.assertEqual(semantic_query.core_concept, "nits:journey-pattern")
-        self.assertEqual(semantic_query.candidate_standards, ["NeTEx", "OpRa"])
+        # No standard is named, so none is searched; what the ontology found is kept for the abstention rules.
+        self.assertEqual(semantic_query.candidate_standards, [])
+        self.assertEqual(semantic_query.discovered_standards, ["NeTEx", "OpRa"])
         self.assertIn("ServiceJourneyPattern", semantic_query.original_terms)
         self.assertGreaterEqual(semantic_query.confidence["concept"], 0.9)
 
@@ -73,8 +80,10 @@ class QuestionParsingServiceTests(SimpleTestCase):
 
         self.assertEqual(named_one.candidate_standards, ["SIRI"])
         self.assertEqual(named_two.candidate_standards, ["NeTEx", "OpRa"])
-        # No standard named: the discovered candidates are unchanged.
-        self.assertEqual(named_none.candidate_standards, ["NeTEx", "OpRa", "SIRI", "Transmodel"])
+        # No standard named: nothing is searched in particular, whatever the ontology lists.
+        self.assertEqual(named_none.candidate_standards, [])
+        self.assertEqual(named_none.discovered_standards, ["NeTEx", "OpRa", "SIRI", "Transmodel"])
+        self.assertEqual(named_one.discovered_standards, ["NeTEx", "OpRa", "SIRI", "Transmodel"])
 
     @patch.object(QuestionParsingService, "_discover_standards")
     @patch("helpdesk.services.question_parsing.get_concept_nits_ids")
@@ -122,7 +131,8 @@ class QuestionParsingServiceTests(SimpleTestCase):
         )
 
         self.assertEqual(semantic_query.core_concept, "nits:JourneyPattern")
-        self.assertEqual(semantic_query.candidate_standards, ["NeTEx", "SIRI"])
+        self.assertEqual(semantic_query.candidate_standards, [])
+        self.assertEqual(semantic_query.discovered_standards, ["NeTEx", "SIRI"])
         connector.anchor_term_to_core_concepts.assert_called()
         connector.discover_standards_for_core_concept.assert_called()
 
@@ -150,9 +160,10 @@ class QuestionParsingServiceTests(SimpleTestCase):
             text="Where is ServiceJourneyPattern defined?",
             requested_scope=[],
         )
+        self.assertEqual(semantic_query.discovered_standards, ["NeTEx"])
 
         self.assertEqual(semantic_query.core_concept, "nits:journey-pattern")
-        self.assertEqual(semantic_query.candidate_standards, ["NeTEx"])
+        self.assertEqual(semantic_query.candidate_standards, [])
 
     @patch("helpdesk.services.question_parsing.get_concept_nits_ids")
     @patch("helpdesk.services.question_parsing.expand_graph_concepts")
@@ -227,3 +238,34 @@ class SelectEffectiveScopeTests(SimpleTestCase):
         self.assertEqual(select_effective_scope(self._query(["NeTEx", "SIRI"], False), None), (["NeTEx", "SIRI"], False))
         self.assertEqual(select_effective_scope(self._query(["SIRI"], True), []), (["SIRI"], False))
         self.assertEqual(select_effective_scope(self._query([], True), []), ([], False))
+
+
+class HasScopeHintTests(SimpleTestCase):
+    def _query(self, discovered):
+        return SemanticQuery(
+            intent="definition",
+            normativity="unspecified",
+            core_concept="nits:Journey",
+            core_concepts=["nits:Journey"],
+            ambiguous_core_concept=False,
+            candidate_standards=[],
+            original_terms=[],
+            confidence={},
+            discovered_standards=discovered,
+        )
+
+    def test_a_requested_or_named_scope_is_a_hint(self):
+        self.assertTrue(has_scope_hint(self._query([]), ["SIRI"]))
+
+    def test_a_standard_the_ontology_recognised_is_a_hint_although_nothing_is_searched_in_particular(self):
+        self.assertTrue(has_scope_hint(self._query(["NeTEx", "OpRa"]), []))
+
+    def test_nothing_requested_named_or_recognised_is_no_hint(self):
+        self.assertFalse(has_scope_hint(self._query([]), []))
+
+    def test_a_query_object_without_the_field_counts_as_no_recognised_standard(self):
+        class Legacy:
+            pass
+
+        self.assertFalse(has_scope_hint(Legacy(), []))
+        self.assertTrue(has_scope_hint(Legacy(), ["OpRa"]))
