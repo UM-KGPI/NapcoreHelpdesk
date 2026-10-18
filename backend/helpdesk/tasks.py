@@ -1,7 +1,7 @@
 """
 Background task definitions for async helpdesk operations.
 
-Wraps long-running operations (repository indexing, ontology loading) that
+Wraps long-running operations (repository refresh, semantic clustering) that
 can be dispatched via a task queue rather than blocking an API request.
 
 Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
@@ -11,50 +11,26 @@ Created: 2026-03-28  |  Modified: 2026-06-28
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from celery import shared_task
 from django.conf import settings
 
-from helpdesk.services.index_builder import index_repository
+from helpdesk.services.source_refresh import SourceRefreshError, refresh_all_sources
 from helpdesk.services.semantic_clustering import build_semantic_clusters
 
 
-@shared_task(name="helpdesk.reindex_default_repository")
-def reindex_default_repository() -> dict:
-    """Scheduled incremental re-index task using configured default repository values."""
+@shared_task(name="helpdesk.refresh_source_indexes")
+def refresh_source_indexes() -> dict:
+    """Scheduled refresh of every indexed standards repository (see services/source_refresh.py).
 
-    repo_url = settings.INDEX_SCHEDULE_REPO_URL
-    repo_path = settings.INDEX_SCHEDULE_REPO_PATH
-    profile = settings.INDEX_SCHEDULE_PROFILE
+    A repository that fails is reported, the others still run; the task then fails so the
+    problem shows up in the worker log instead of passing silently.
+    """
 
-    if not repo_url or not repo_path:
-        # Scheduler can run before env vars are configured; fail soft with structured reason.
-        return {
-            "status": "skipped",
-            "reason": "INDEX_SCHEDULE_REPO_URL or INDEX_SCHEDULE_REPO_PATH not configured",
-        }
-
-    # Daily runs use incremental+prune to keep index fresh without full rebuild costs.
-    stats = index_repository(
-        repo_url=repo_url,
-        repo_path=Path(repo_path).expanduser().resolve(),
-        allowed_repositories=settings.ALLOWED_SOURCE_REPOSITORIES,
-        profile=profile,
-        incremental=True,
-        prune=True,
-    )
-
-    return {
-        "status": "ok",
-        "repository": repo_url,
-        "profile": profile,
-        "scanned_files": stats.scanned_files,
-        "skipped_files": stats.skipped_files,
-        "created_chunks": stats.created_chunks,
-        "updated_chunks": stats.updated_chunks,
-        "deleted_chunks": stats.deleted_chunks,
-    }
+    result = refresh_all_sources()
+    if result["status"] in {"partial", "failed"}:
+        failures = {name: row.get("error", "unknown error") for name, row in result["results"].items() if row["status"] != "ok"}
+        raise SourceRefreshError(f"Source refresh {result['status']}: {failures or result.get('reason')}")
+    return result
 
 
 @shared_task(name="helpdesk.run_semantic_clustering_batch")

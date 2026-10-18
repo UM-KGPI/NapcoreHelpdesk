@@ -300,30 +300,57 @@ Verify in the GraphDB UI at `http://your-vm:7200` (only accessible if you open p
 
 ### 7.2 Index source repositories
 
-Index pulls directly from GitHub. Requires `GITHUB_API_TOKEN` in `.env.prod`.
+One command fetches the three repositories (NeTEx, SIRI, OpRa) into the `source-repos` volume
+and indexes each with its own profile (`netex`, `siri`, `opra`). The repositories are public,
+so no token is needed. The first time, index everything (`--full`) so every chunk records the
+real commit SHA:
 
 ```bash
-docker compose -f docker-compose.prod.yml exec backend \
-  python manage.py index_repository \
-    --repo-url https://github.com/TransmodelEcosystem/NeTEx \
-    --profile netex
-
-docker compose -f docker-compose.prod.yml exec backend \
-  python manage.py index_repository \
-    --repo-url https://github.com/TransmodelEcosystem/OpRa \
-    --profile opra
-
-docker compose -f docker-compose.prod.yml exec backend \
-  python manage.py index_repository \
-    --repo-url https://github.com/TransmodelEcosystem/SIRI \
-    --profile default
+docker compose -f docker-compose.prod.yml exec -T celery-worker \
+  python manage.py refresh_source_indexes --full
 ```
 
-Indexing can take several minutes per repository. Monitor progress:
+Each repository prints one line (`ok`, the commit, the number of files scanned and chunks
+created, updated and deleted) or `FAILED` with the reason; the command exits with an error if any
+repository failed. `--only SIRI` refreshes one repository. Indexing can take several minutes
+(NeTEx is the largest). Follow it in another terminal:
 
 ```bash
 docker compose -f docker-compose.prod.yml logs -f celery-worker
 ```
+
+### 7.3 Daily refresh
+
+The same refresh can run every day. It is off until you switch it on, in `.env.prod`:
+
+```
+SOURCE_REFRESH_ENABLED=True
+# Optional, UTC. Defaults: 3 and 30.
+SOURCE_REFRESH_HOUR=3
+SOURCE_REFRESH_MINUTE=30
+```
+
+Then recreate the scheduler so it reads the setting:
+`docker compose -f docker-compose.prod.yml up -d --force-recreate celery-beat`.
+
+What it does each day: for every repository, fetch the remote default branch (a shallow
+clone under `/app/repos`), then index only the changed files and remove the chunks of deleted
+files (`incremental` with `prune`). A repository that fails does not stop the others, and the task
+then fails, so the problem shows in the worker log. Check the last run:
+
+```bash
+docker compose -f docker-compose.prod.yml logs celery-worker | grep "Source refresh"
+```
+
+Things to know:
+- It follows the repositories' default branches, so the knowledge base changes when upstream
+  does. The CI benchmark pins its own commits and is not affected.
+- The first scheduled run after a long gap can delete and create many chunks; run the command
+  from 7.2 by hand once and read its counts before enabling the schedule.
+- It does not touch GraphDB. The ontology files under `docs/ontology` are generated and
+  reviewed through GitHub, then loaded with `load_graphdb_ontologies`.
+- A refresh that starts while another is running is skipped.
+- To switch it off set `SOURCE_REFRESH_ENABLED=False` and recreate `celery-beat`.
 
 ---
 
