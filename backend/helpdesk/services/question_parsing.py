@@ -7,7 +7,7 @@ evaluation and retrieval scope filtering in downstream services.
 
 Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
 Crafted by: AI coding agents
-Created: 2026-04-16  |  Modified: 2026-06-28
+Created: 2026-04-16  |  Modified: 2026-10-18
 """
 
 from __future__ import annotations
@@ -122,10 +122,15 @@ class QuestionParsingService:
             core_concepts=core_concepts,
         )
 
-        # Keyword fallback: when graph and GraphDB both fail to infer a standard,
-        # scan the question text directly for standard names that are literally present.
-        if not candidate_standards and not requested_scope:
-            candidate_standards = self._scan_standard_keywords(normalized)
+        # Standards named in the question win over the ones the ontology associates
+        # with the concept. Otherwise a question that says "SIRI" is scoped to
+        # whichever standard the graph lists first (NeTEx for most core concepts),
+        # and the answer cites NeTEx copies of SIRI files instead of the SIRI repository.
+        # This also covers the case where graph discovery finds no standard at all.
+        if not requested_scope:
+            named_standards = self._scan_standard_keywords(normalized)
+            if named_standards:
+                candidate_standards = named_standards
 
         concept_confidence = self._concept_confidence(core_concepts)
         intent_confidence = self._intent_confidence(intent=intent, requested_scope=requested_scope)
