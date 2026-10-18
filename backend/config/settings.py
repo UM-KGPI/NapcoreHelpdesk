@@ -68,12 +68,6 @@ env = environ.Env(
     CONTROLLER_LLM_API_MODEL=(str, ""),
     CONTROLLER_LLM_VERIFY_SSL=(bool, True),
     CONTROLLER_LLM_CA_BUNDLE=(str, ""),
-    EMBEDDING_ENABLED=(bool, False),
-    EMBEDDING_PROVIDER=(str, "openai-compatible"),
-    EMBEDDING_API_BASE_URL=(str, "https://api.openai.com/v1"),
-    EMBEDDING_API_KEY=(str, ""),
-    EMBEDDING_MODEL=(str, "text-embedding-3-small"),
-    EMBEDDING_TIMEOUT_SECONDS=(int, 30),
     SEED_REPO_NETEX=(str, "https://github.com/TransmodelEcosystem/NeTEx"),
     SEED_REPO_SIRI=(str, "https://github.com/SIRI-CEN/SIRI"),
     SEED_REPO_OPRA=(str, "https://github.com/TransmodelEcosystem/OpRa"),
@@ -276,12 +270,6 @@ CONTROLLER_LLM_API_MODEL = env("CONTROLLER_LLM_API_MODEL", default="").strip() o
 CONTROLLER_LLM_VERIFY_SSL = env("CONTROLLER_LLM_VERIFY_SSL")
 CONTROLLER_LLM_CA_BUNDLE = env("CONTROLLER_LLM_CA_BUNDLE", default="").strip()
 
-EMBEDDING_ENABLED = env("EMBEDDING_ENABLED")
-EMBEDDING_PROVIDER = env("EMBEDDING_PROVIDER").strip() or "openai-compatible"
-EMBEDDING_API_BASE_URL = env("EMBEDDING_API_BASE_URL").strip() or "https://api.openai.com/v1"
-EMBEDDING_API_KEY = env("EMBEDDING_API_KEY").strip()
-EMBEDDING_MODEL = env("EMBEDDING_MODEL").strip() or "text-embedding-3-small"
-EMBEDDING_TIMEOUT_SECONDS = env("EMBEDDING_TIMEOUT_SECONDS")
 SEED_REPO_NETEX = env("SEED_REPO_NETEX").strip() or "https://github.com/TransmodelEcosystem/NeTEx"
 SEED_REPO_SIRI = env("SEED_REPO_SIRI").strip() or "https://github.com/SIRI-CEN/SIRI"
 SEED_REPO_OPRA = env("SEED_REPO_OPRA").strip() or "https://github.com/TransmodelEcosystem/OpRa"
