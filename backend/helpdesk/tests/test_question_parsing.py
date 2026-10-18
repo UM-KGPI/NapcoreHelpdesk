@@ -54,6 +54,46 @@ class QuestionParsingServiceTests(SimpleTestCase):
         self.assertEqual(semantic_query.candidate_standards, ["OpRa"])
         self.assertEqual(semantic_query.normativity, "unspecified")
 
+    @patch.object(QuestionParsingService, "_discover_standards")
+    @patch("helpdesk.services.question_parsing.get_concept_nits_ids")
+    @patch("helpdesk.services.question_parsing.expand_graph_concepts")
+    @patch("helpdesk.services.question_parsing.extract_graph_concepts")
+    def test_parse_scopes_to_standards_named_in_the_question(
+        self, extract_mock, expand_mock, nch_mock, discover_mock
+    ):
+        """Graph discovery lists every standard for a core concept; the named one must win."""
+        extract_mock.return_value = {"siri:estimated-vehicle-journey"}
+        expand_mock.return_value = {"siri:estimated-vehicle-journey"}
+        nch_mock.return_value = {"nits:journey"}
+        discover_mock.return_value = ["NeTEx", "OpRa", "SIRI", "Transmodel"]
+
+        named_one = self.service.parse(text="What is a SIRI EstimatedVehicleJourney used for?", requested_scope=[])
+        named_two = self.service.parse(text="How does OpRa relate to NeTEx journeys?", requested_scope=[])
+        named_none = self.service.parse(text="What is an EstimatedVehicleJourney used for?", requested_scope=[])
+
+        self.assertEqual(named_one.candidate_standards, ["SIRI"])
+        self.assertEqual(named_two.candidate_standards, ["NeTEx", "OpRa"])
+        # No standard named: the discovered candidates are unchanged.
+        self.assertEqual(named_none.candidate_standards, ["NeTEx", "OpRa", "SIRI", "Transmodel"])
+
+    @patch.object(QuestionParsingService, "_discover_standards")
+    @patch("helpdesk.services.question_parsing.get_concept_nits_ids")
+    @patch("helpdesk.services.question_parsing.expand_graph_concepts")
+    @patch("helpdesk.services.question_parsing.extract_graph_concepts")
+    def test_parse_requested_scope_still_beats_named_standards(
+        self, extract_mock, expand_mock, nch_mock, discover_mock
+    ):
+        extract_mock.return_value = {"siri:estimated-vehicle-journey"}
+        expand_mock.return_value = {"siri:estimated-vehicle-journey"}
+        nch_mock.return_value = {"nits:journey"}
+        discover_mock.return_value = ["OpRa"]
+
+        semantic_query = self.service.parse(
+            text="What is a SIRI EstimatedVehicleJourney used for?", requested_scope=["OpRa"]
+        )
+
+        self.assertEqual(semantic_query.candidate_standards, ["OpRa"])
+
     @override_settings(GRAPHDB_ENABLED=True, GRAPHDB_SPARQL_ENDPOINT="http://graphdb.local/sparql")
     @patch("helpdesk.services.question_parsing.GraphDBConnector")
     @patch("helpdesk.services.question_parsing.get_concept_nits_ids")
