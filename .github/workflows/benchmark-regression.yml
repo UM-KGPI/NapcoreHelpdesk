@@ -2,7 +2,7 @@ name: Benchmark Regression Tests
 
 # Retrieval-quality gate. Indexes the standards repositories at pinned commits with
 # the deterministic hash embedding (no LLM, embedding provider or GraphDB), runs the
-# 100 benchmark questions in baseline and graph-RAG mode, and fails if hit@10 or
+# 120 benchmark questions in baseline and graph-RAG mode, and fails if hit@10 or
 # MRR@10 dropped against backend/helpdesk/benchmarks/ci-baseline.json.
 #
 # Not covered: GraphDB-backed retrieval (ontology definitions, example lookup, graph
