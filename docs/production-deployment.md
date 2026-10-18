@@ -1,6 +1,6 @@
 # Production Deployment Guide
 
-Target: Docker Compose on a Fedora Linux VM, deployed via GitHub Actions over SSH.
+Target: Docker Compose on a Fedora Linux VM, deployed via GitHub Actions on a self-hosted runner on the VM.
 
 ## Table of contents
 
@@ -8,7 +8,7 @@ Target: Docker Compose on a Fedora Linux VM, deployed via GitHub Actions over SS
 2. [Server bootstrap](#2-server-bootstrap)
 3. [Environment configuration](#3-environment-configuration)
 4. [Place local-only assets on the server](#4-place-local-only-assets-on-the-server)
-5. [GitHub Actions secrets](#5-github-actions-secrets)
+5. [GitHub Actions runner](#5-github-actions-runner)
 6. [First deployment](#6-first-deployment)
 7. [Populate the knowledge base](#7-populate-the-knowledge-base)
 8. [Verify the deployment](#8-verify-the-deployment)
@@ -98,7 +98,7 @@ git -C /opt/napcore-helpdesk config core.sshCommand "ssh -i ~/.ssh/napcore_deplo
 
 ### 2.4 Place the deploy script
 
-The GitHub Actions workflow SSHs in and runs `scripts/deploy.sh`. Make it executable:
+The GitHub Actions workflow runs `scripts/deploy.sh` on the server through the self-hosted runner (section 5). Make it executable:
 
 ```bash
 chmod +x /opt/napcore-helpdesk/scripts/deploy.sh
@@ -183,36 +183,63 @@ ls -lh /opt/napcore-helpdesk/secrets/graphdb.license
 
 ---
 
-## 5. GitHub Actions secrets
+## 5. GitHub Actions runner
 
-The deploy workflow authenticates over SSH. Add these three secrets in GitHub:
+GitHub-hosted runners cannot reach the server over SSH, so the **Deploy to Production**
+workflow runs on a self-hosted runner installed on the server itself. It needs no SSH key and no
+deployment secrets in GitHub.
 
-**Repository → Settings → Secrets and variables → Actions → New repository secret**
+### 5.1 Register the runner (once)
 
-| Secret name | Value |
-|---|---|
-| `PROD_HOST` | VM IP address or hostname |
-| `PROD_USER` | SSH user on the VM (e.g. `fedora` or your username) |
-| `PROD_SSH_KEY` | Contents of the **private** SSH key used to reach the VM |
-
-Generate a dedicated deploy key pair if you don't already have one:
+1. In GitHub open **Repository → Settings → Actions → Runners → New self-hosted runner**
+   and choose Linux x64. That page shows the download commands for the current runner release,
+   with its checksum, and a registration token. Use those commands; do not copy version numbers
+   from this guide.
+2. On the server, as the user that owns `/opt/napcore-helpdesk` and belongs to the `docker` group
+   (the runner uses that user's home, and so its deploy key for `git pull`):
 
 ```bash
-ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/napcore_actions -N ""
+mkdir -p ~/actions-runner && cd ~/actions-runner
+# download, verify the checksum and extract, exactly as shown on the GitHub page
 
-# Add the public key to the VM
-ssh-copy-id -i ~/.ssh/napcore_actions.pub user@your-vm
+./config.sh --url https://github.com/UM-KGPI/NapcoreHelpdesk \
+            --token <registration token from the GitHub page> \
+            --labels napcore-prod --unattended
 
-# Paste the private key contents into the PROD_SSH_KEY GitHub secret
-cat ~/.ssh/napcore_actions
+sudo ./svc.sh install "$USER"
+sudo ./svc.sh start
+sudo ./svc.sh status
 ```
+
+The registration token is shown only on that page and expires after an hour. Never commit it
+or paste it into a chat. The runner then appears under **Settings → Actions → Runners** as
+**Idle** with the label `napcore-prod`.
+
+### 5.2 Rules for the runner
+
+- Only the deploy job uses `runs-on: [self-hosted, napcore-prod]`. Never use that label in a
+  workflow that pull requests can start: the workflow code would run on the production host.
+- The deploy workflow starts only by hand (`workflow_dispatch`) and only with the word `deploy`.
+- The runner user has access to Docker, which is equivalent to root on the server. Keep the
+  repository private and the list of people who can run workflows short.
+- If the runner is offline, a started deployment waits in the queue. Check
+  **Settings → Actions → Runners**, or on the server `sudo ./svc.sh status` in `~/actions-runner`.
+- To remove the runner: `sudo ./svc.sh stop && sudo ./svc.sh uninstall`, then
+  `./config.sh remove --token <removal token from the GitHub page>`.
+
+### 5.3 Old SSH secrets
+
+`PROD_HOST`, `PROD_USER` and `PROD_SSH_KEY` are no longer used by any workflow. After the
+first successful deployment through the runner, delete them under **Settings → Secrets and
+variables → Actions**, and remove the dedicated Actions key from the server's
+`~/.ssh/authorized_keys`.
 
 ---
 
 ## 6. First deployment
 
 The first deploy must be done manually from the server because the production images
-have not been built yet and GitHub Actions cannot verify the host key.
+have not been built yet and the runner (section 5) is not registered yet.
 
 ```bash
 # On the server
@@ -327,8 +354,8 @@ After the first manual deploy, all future deployments go through GitHub Actions:
 2. Go to **Actions → Deploy to Production → Run workflow**
 3. Type `deploy` in the confirmation field and click **Run workflow**
 
-The workflow re-runs the full CI suite first, then SSHs into the server and executes
-`scripts/deploy.sh`, which:
+The workflow re-runs the full CI suite first, then the self-hosted runner on the server
+executes `scripts/deploy.sh`, which:
 
 - Pulls the latest code (`git pull origin main`)
 - Rebuilds changed images (`docker compose build --pull`)

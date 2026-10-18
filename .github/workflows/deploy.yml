@@ -30,18 +30,17 @@ jobs:
   deploy:
     name: Deploy
     needs: ci
-    runs-on: ubuntu-latest
+    # Runs on the production server itself, on a self-hosted runner registered with the
+    # label below (docs/production-deployment.md, section 5). GitHub-hosted runners cannot
+    # reach the server (issue #39), and no SSH key is needed this way. Do not use this label
+    # in any workflow that pull requests can start: that code would run on the production host.
+    runs-on: [self-hosted, napcore-prod]
+    timeout-minutes: 45
+    # One deployment at a time; a second run waits for the first instead of overlapping it.
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
 
     steps:
-      - name: Deploy via SSH
-        run: |
-          install -m 600 /dev/null /tmp/deploy_key
-          echo "${{ secrets.PROD_SSH_KEY }}" > /tmp/deploy_key
-
-          ssh -i /tmp/deploy_key \
-              -o StrictHostKeyChecking=no \
-              -o ConnectTimeout=30 \
-              "${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}" \
-              "bash -eux /opt/napcore-helpdesk/scripts/deploy.sh"
-
-          rm -f /tmp/deploy_key
+      - name: Deploy on the server
+        run: bash -eux /opt/napcore-helpdesk/scripts/deploy.sh
