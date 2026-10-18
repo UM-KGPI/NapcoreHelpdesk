@@ -9,6 +9,11 @@ or the LLM, and writes one decision per question as JSON so two runs can be diff
 Usage:
     python manage.py probe_abstention --output probe.json
     python manage.py probe_abstention --questions extra.yaml --no-benchmark
+    python manage.py probe_abstention --retrieval --output probe.json
+
+With --retrieval each question is also retrieved as the answer view does (top_k 6, min score 0.62,
+retry at 0.45 when nothing passes) and the inputs of the evidence gate are recorded: chunk count,
+semantic alignment, repository coverage, best chunk score.
 """
 
 from __future__ import annotations
@@ -19,6 +24,9 @@ from pathlib import Path
 import yaml
 from django.core.management.base import BaseCommand
 
+from django.conf import settings
+
+from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 from helpdesk.services.question_parsing import parse_question_to_semantic_query, select_effective_scope
 from helpdesk.services.semantic_abstention import (
     LOW_CONFIDENCE_MESSAGE,
@@ -45,6 +53,11 @@ class Command(BaseCommand):
             action="store_true",
             help="Probe only --questions, not the retrieval benchmark questions as well.",
         )
+        parser.add_argument(
+            "--retrieval",
+            action="store_true",
+            help="Also retrieve each question and record the evidence-gate inputs (slower).",
+        )
         parser.add_argument("--output", type=Path, help="Write the decisions as JSON to this path.")
 
     def handle(self, *args, **options):
@@ -63,8 +76,10 @@ class Command(BaseCommand):
                 allow_abstain=True,
             )
             decision = _DECISIONS.get(message, "answer")
+            retrieval = self._retrieve(item["question"], effective_scope) if options["retrieval"] else {}
             rows.append(
                 {
+                    **retrieval,
                     "id": item["id"],
                     "category": item.get("category", ""),
                     "question": item["question"],
@@ -90,3 +105,23 @@ class Command(BaseCommand):
         if options["output"]:
             options["output"].write_text(json.dumps({"questions": rows}, indent=2) + "\n", encoding="utf-8")
             self.stdout.write(f"wrote {options['output']}")
+
+    @staticmethod
+    def _retrieve(question: str, scope: list[str]) -> dict:
+        graph_rag = bool(getattr(settings, "GRAPH_RAG_ENABLED", False))
+        chunks, trace = retrieve_chunks_with_trace(
+            question=question, top_k=6, min_score=0.62, scope=scope, graph_rag_enabled=graph_rag
+        )
+        relaxed = False
+        if not chunks:
+            relaxed = True
+            chunks, trace = retrieve_chunks_with_trace(
+                question=question, top_k=6, min_score=0.45, scope=scope, graph_rag_enabled=graph_rag
+            )
+        return {
+            "chunks": len(chunks),
+            "relaxedRetry": relaxed,
+            "topScore": round(max((c.get("score", 0.0) for c in chunks), default=0.0), 4),
+            "alignment": trace.get("semanticAlignmentScore"),
+            "repositoryCoverage": trace.get("repositoryCoverageCount"),
+        }
