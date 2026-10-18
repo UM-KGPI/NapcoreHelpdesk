@@ -130,6 +130,8 @@ class RetrievalGatewayTests(TestCase):
         GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS=6,
         RETRIEVAL_DIVERSITY_ENABLED=False,
     )
+    @patch("helpdesk.services.retrieval_gateway.retrieve_concept_definitions", return_value=[])
+    @patch("helpdesk.services.retrieval_gateway.retrieve_concept_examples_with_fallback", return_value=[])
     @patch("helpdesk.services.retrieval_gateway._postgres_hybrid_candidates")
     @patch("helpdesk.services.retrieval_gateway.query_graphdb_concept_expansion")
     @patch("helpdesk.services.retrieval_gateway.get_concept_canonical_terms")
@@ -140,6 +142,8 @@ class RetrievalGatewayTests(TestCase):
         get_concept_canonical_terms_mock,
         expand_mock,
         postgres_candidates_mock,
+        _examples_mock,
+        _definitions_mock,
     ):
         from helpdesk.models import SourceChunk
         from helpdesk.services.embeddings import build_text_embedding
