@@ -2,11 +2,12 @@
 Management command to extract concept glossary from NeTEx, OpRa, and SIRI XSD schemas.
 
 Usage:
-    python manage.py extract_xsd_ontology --netex-path /path/to/NeTEx --opra-path /path/to/OpRa --siri-path /path/to/SIRI --output ontologies/standards.json
+    python manage.py extract_xsd_ontology --netex-path /path/to/NeTEx --opra-path /path/to/OpRa --siri-path /path/to/SIRI --ttl-output-dir /path/for/ttl
 """
 
 import json
 import logging
+import os
 import re
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
@@ -17,6 +18,9 @@ import yaml
 from django.core.management.base import BaseCommand, CommandError
 
 logger = logging.getLogger(__name__)
+
+# Repository root: backend/helpdesk/management/commands/<this file> is four levels below it.
+REPO_ROOT = Path(__file__).resolve().parents[4]
 
 # XSD namespace
 XSD_NS = {"xsd": "http://www.w3.org/2001/XMLSchema"}
@@ -613,6 +617,23 @@ def extract_concept_links_from_examples(
     return concept_sources, concept_relations, scanned
 
 
+def resolve_repo_path(option_value, *, name: str, env_var: str) -> Path:
+    """Where a standards repository is checked out.
+
+    Order: the --<name>-path option, the environment variable, then a directory called <name>
+    next to this repository (repositories cloned side by side).
+    """
+
+    candidate = option_value or os.environ.get(env_var) or (REPO_ROOT.parent / name)
+    path = Path(candidate).expanduser()
+    if not path.exists():
+        raise CommandError(
+            f"{name} repository not found at {path}. Pass --{name.lower()}-path, set {env_var}, "
+            f"or clone {name} next to this repository."
+        )
+    return path
+
+
 class Command(BaseCommand):
     help = "Extract concept glossary from NeTEx, OpRa, and SIRI XSD schemas"
 
@@ -620,23 +641,32 @@ class Command(BaseCommand):
         parser.add_argument(
             "--netex-path",
             type=Path,
-            help="Path to NeTEx repository root",
+            help="Path to NeTEx repository root (default: $NETEX_REPO_PATH, else ../NeTEx next to this repository).",
         )
         parser.add_argument(
             "--opra-path",
             type=Path,
-            help="Path to OpRa repository root",
+            help="Path to OpRa repository root (default: $OPRA_REPO_PATH, else ../OpRa next to this repository).",
         )
         parser.add_argument(
             "--siri-path",
             type=Path,
-            help="Path to SIRI repository root",
+            help="Path to SIRI repository root (default: $SIRI_REPO_PATH, else ../SIRI next to this repository).",
         )
         parser.add_argument(
             "--output",
             type=Path,
             default=Path(__file__).parent.parent.parent / "ontologies" / "standards.json",
-            help="(Deprecated) Kept for backward compatibility; TTL files are generated directly to docs/ontology/standards/",
+            help="(Deprecated) JSON glossary read by --merge when the file exists. The Turtle files go to --ttl-output-dir.",
+        )
+        parser.add_argument(
+            "--ttl-output-dir",
+            type=Path,
+            default=None,
+            help=(
+                "Directory for the generated Turtle files. Default: backend/helpdesk/ontologies/standards. "
+                "Use docs/ontology/standards to write the committed files directly."
+            ),
         )
         parser.add_argument(
             "--merge",
@@ -689,24 +719,9 @@ class Command(BaseCommand):
         ALLOWLIST_TOKEN = loaded_token
         DENYLIST_CONCEPT_IDS = loaded_denylist
 
-        if not netex_path:
-            netex_path = Path("/Users/andrejt/Research/repositories/git/NeTEx")
-
-        netex_path = Path(netex_path)
-        if not netex_path.exists():
-            raise CommandError(f"NeTEx path does not exist: {netex_path}")
-
-        if not opra_path:
-            opra_path = Path("/Users/andrejt/Research/repositories/git/OpRa")
-        opra_path = Path(opra_path)
-        if not opra_path.exists():
-            raise CommandError(f"OpRa path does not exist: {opra_path}")
-
-        if not siri_path:
-            siri_path = Path("/Users/andrejt/Research/repositories/git/SIRI")
-        siri_path = Path(siri_path)
-        if not siri_path.exists():
-            raise CommandError(f"SIRI path does not exist: {siri_path}")
+        netex_path = resolve_repo_path(netex_path, name="NeTEx", env_var="NETEX_REPO_PATH")
+        opra_path = resolve_repo_path(opra_path, name="OpRa", env_var="OPRA_REPO_PATH")
+        siri_path = resolve_repo_path(siri_path, name="SIRI", env_var="SIRI_REPO_PATH")
 
         self.stdout.write(f"Extracting concepts from NeTEx at {netex_path}")
 
@@ -936,7 +951,8 @@ class Command(BaseCommand):
 
         # Generate TTL files with full semantic relationships (single source of truth)
         # Write to writable backend location; production deployment copies to docs/ontology/standards/
-        ttl_output_dir = Path(__file__).resolve().parents[2] / "ontologies" / "standards"
+        ttl_output_dir = options.get("ttl_output_dir") or Path(__file__).resolve().parents[2] / "ontologies" / "standards"
+        ttl_output_dir = Path(ttl_output_dir)
         self._generate_ttl_files(ontology, ttl_output_dir)
 
         self.stdout.write(
@@ -945,7 +961,7 @@ class Command(BaseCommand):
         self.stdout.write(f"  Total concepts: {len(ontology.get('concepts', {}))}")
         self.stdout.write(f"  TTL output: {ttl_output_dir}")
         self.stdout.write(
-            f"  → To deploy: copy to docs/ontology/standards/ or load directly into GraphDB"
+            f"  → To deploy: copy to docs/ontology/standards/ (or run with --ttl-output-dir) and load into GraphDB"
         )
 
     def _generate_ttl_files(self, ontology: dict, output_dir: Path) -> None:
