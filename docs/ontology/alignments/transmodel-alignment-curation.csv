@@ -4,3 +4,5 @@
 standard,standard_class,tm_class,action,note
 siri,DatedCall,DATED_CALL,exclude,SIRI is the ordered stop sequence along a route; TM DATED_CALL is one visit to a point in a dated journey
 siri,KeyList,KEY_LIST,exclude,SIRI is a list of alternative key values; TM KEY_LIST is a key-value extension mechanism
+siri,TrainElement,TRAIN_ELEMENT_TYPE,add,both are the elementary component of a train (wagon or locomotive); TM names it as a type and SIRI TrainComponent is an instance of TRAIN ELEMENT TYPE
+siri,FareClass,TYPE_OF_FARE_CLASS,add,both are a classification of fare classes
