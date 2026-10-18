@@ -39,16 +39,15 @@ not necessarily produced from those commits.
 
 ## Things that block automation today
 
-1. `extract_xsd_ontology` falls back to `/Users/andrejt/Research/repositories/git/NeTEx` when
-   `--netex-path` is not given, and writes to `backend/helpdesk/ontologies/standards/` inside the
-   repository; the command's own closing message says to copy the files to `docs/ontology/standards/` by hand.
-2. `scripts/build_netex_ttl_with_properties.py` hard-codes the NeTEx path and writes `netex.ttl.new`.
-3. A manual step after every NeTEx regeneration (README, "Generation Workflow"): re-add the root concept
+1. ~~Hard-coded developer paths in both generators.~~ Resolved: see "Running the generators" below.
+   (Before that change `extract_xsd_ontology` fell back to `/Users/andrejt/Research/repositories/git/<name>`,
+   and the enrichment script hard-coded the NeTEx path.)
+2. A manual step after every NeTEx regeneration (README, "Generation Workflow"): re-add the root concept
    `netex:NeTEx` with its labels, and keep a mapping from it to `nits:NeTExSpecification` in
    `nits-netex-align.ttl`. Nothing checks that it was done.
-4. The README's workflow mentions a glossary `backend/helpdesk/ontologies/standards.json`. It does not
+3. The README's workflow mentions a glossary `backend/helpdesk/ontologies/standards.json`. It does not
    exist in the repository, so `--merge` and `--refresh-auto` have nothing to merge with.
-5. The `nits:` layer (`napcore-its.ttl` and the `nits-*-align.ttl` files) has no regenerable source. Whether
+4. The `nits:` layer (`napcore-its.ttl` and the `nits-*-align.ttl` files) has no regenerable source. Whether
    it is needed at all is issue #43.
 
 ## What a drift check can do now
@@ -61,10 +60,28 @@ not necessarily produced from those commits.
   files and the curation file; this is already deterministic.
 - **Not checkable:** `transmodel.ttl`, `examples.ttl` (not measured), the `nits:` files and the rules.
 
+## Running the generators
+
+Both take their inputs from options, so they run on any machine. Repository paths come from an
+option, then an environment variable, then a directory next to this repository (`../NeTEx`, `../OpRa`,
+`../SIRI`).
+
+```bash
+cd backend
+python manage.py extract_xsd_ontology --merge --refresh-auto --skip-example-xml \
+    --netex-path /path/to/NeTEx --opra-path /path/to/OpRa --siri-path /path/to/SIRI \
+    --ttl-output-dir ../docs/ontology/standards    # default: backend/helpdesk/ontologies/standards
+cd ..
+python scripts/build_netex_ttl_with_properties.py docs/ontology/standards/netex.ttl netex.enriched.ttl \
+    --netex-xsd-root /path/to/NeTEx/xsd            # or set NETEX_XSD_ROOT
+```
+
+Output is byte-identical to what the generators wrote before the options were added (checked on the
+pinned commits).
+
 ## Steps before the scheduled check can be built
 
-1. Give both generators path and output options, so they run outside one developer's machine and write
-   straight to `docs/ontology/standards/`.
+1. ~~Give both generators path and output options.~~ Done.
 2. Re-baseline `opra.ttl` and `siri.ttl` with the current extractor (one commit; the diff is the
    `xsd/` prefix in the provenance comments).
 3. Decide for NeTEx: either put the "recovered classes" step into code, or declare `netex.ttl` a

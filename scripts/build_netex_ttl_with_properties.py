@@ -16,9 +16,19 @@ Extraction rules as in the ifopt prototype (own-content only; inherited
 content stays on the base class). Self-loop object properties are kept in
 the OWL output but omitted from skos:related (no expansion value).
 
-Writes: netex.ttl.new next to the canonical netex.ttl + stats to stdout.
+Usage:
+    python scripts/build_netex_ttl_with_properties.py [TTL [OUT]] [--netex-xsd-root DIR]
+
+    TTL   the netex.ttl to enrich (default: docs/ontology/standards/netex.ttl)
+    OUT   where to write the result (default: TTL with the suffix .ttl.new)
+    --netex-xsd-root   the xsd folder of a NeTEx checkout (default: $NETEX_XSD_ROOT, else
+                       ../NeTEx/xsd next to this repository)
+
+Writes the enriched file (netex.ttl.new next to the canonical netex.ttl by default) and stats to stdout.
 """
 
+import argparse
+import os
 import re
 import sys
 import xml.etree.ElementTree as ET
@@ -26,7 +36,7 @@ from collections import defaultdict
 from pathlib import Path
 
 XSD_NS = "{http://www.w3.org/2001/XMLSchema}"
-NETEX_XSD_ROOT = Path("/Users/andrejt/Research/repositories/git/NeTEx/xsd")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 SCOPE_DIRS = [
     "netex_framework",
     "netex_part_1",
@@ -35,12 +45,7 @@ SCOPE_DIRS = [
     "netex_part_5",
     "netex_service",
 ]
-TTL_PATH = Path(
-    sys.argv[1]
-    if len(sys.argv) > 1
-    else "/Users/andrejt/Research/repositories/git/NapcoreHelpdesk/docs/ontology/standards/netex.ttl"
-)
-OUT_PATH = Path(sys.argv[2]) if len(sys.argv) > 2 else TTL_PATH.with_suffix(".ttl.new")
+DEFAULT_TTL = REPO_ROOT / "docs" / "ontology" / "standards" / "netex.ttl"
 
 # Structure-type suffixes used across the NeTEx schema, most specific first
 # (the match loop stops at the first hit). "_VersionedChlldStructure" is a
@@ -232,13 +237,13 @@ def esc(text: str) -> str:
     return text.replace("\\", "\\\\").replace('"', '\\"')
 
 
-def main():
-    ttl_text = TTL_PATH.read_text(encoding="utf-8")
+def main(ttl_path: Path, out_path: Path, xsd_root: Path):
+    ttl_text = ttl_path.read_text(encoding="utf-8")
     ttl_classes = load_ttl_classes(ttl_text)
     print(f"netex.ttl classes: {len(ttl_classes)}")
 
     idx = SchemaIndex()
-    nfiles = idx.scan(NETEX_XSD_ROOT, SCOPE_DIRS)
+    nfiles = idx.scan(xsd_root, SCOPE_DIRS)
     print(f"scanned {nfiles} XSD files: {len(idx.complex_types)} complexTypes, "
           f"{len(idx.groups)} groups, {len(idx.simple_types)} simpleTypes")
 
@@ -382,10 +387,26 @@ def main():
     if VERSION_NEW not in merged:
         print("WARN: versionInfo string not found; keeping original header")
     merged = merged.rstrip("\n") + "\n" + "".join(lines)
-    OUT_PATH.write_text(merged, encoding="utf-8")
-    print(f"\nwrote {OUT_PATH} ({len(merged.splitlines())} lines, "
+    out_path.write_text(merged, encoding="utf-8")
+    print(f"\nwrote {out_path} ({len(merged.splitlines())} lines, "
           f"{len(obj_edges)} obj props, {len(dt_edges)} dt props)")
 
 
+def parse_args(argv: list[str] | None = None) -> tuple[Path, Path, Path]:
+    parser = argparse.ArgumentParser(description="Enrich netex.ttl with properties extracted from the NeTEx XSD.")
+    parser.add_argument("ttl", nargs="?", type=Path, default=DEFAULT_TTL, help="netex.ttl to enrich")
+    parser.add_argument("out", nargs="?", type=Path, default=None, help="output file (default: TTL with suffix .ttl.new)")
+    parser.add_argument("--netex-xsd-root", type=Path, default=None, help="the xsd folder of a NeTEx checkout")
+    args = parser.parse_args(argv)
+
+    xsd_root = Path(args.netex_xsd_root or os.environ.get("NETEX_XSD_ROOT") or REPO_ROOT.parent / "NeTEx" / "xsd").expanduser()
+    if not xsd_root.is_dir():
+        parser.error(f"NeTEx xsd folder not found: {xsd_root} (pass --netex-xsd-root or set NETEX_XSD_ROOT)")
+    if not args.ttl.is_file():
+        parser.error(f"netex.ttl not found: {args.ttl}")
+    out = args.out or args.ttl.with_suffix(".ttl.new")
+    return args.ttl, out, xsd_root
+
+
 if __name__ == "__main__":
-    main()
+    main(*parse_args())
