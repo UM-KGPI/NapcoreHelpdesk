@@ -2,3 +2,5 @@
 # action=add: link standard_class to tm_class (Transmodel local name, e.g. STOP_PLACE) where names differ.
 # action=exclude: drop a name match that is not the same concept.
 standard,standard_class,tm_class,action,note
+siri,DatedCall,DATED_CALL,exclude,SIRI is the ordered stop sequence along a route; TM DATED_CALL is one visit to a point in a dated journey
+siri,KeyList,KEY_LIST,exclude,SIRI is a list of alternative key values; TM KEY_LIST is a key-value extension mechanism
