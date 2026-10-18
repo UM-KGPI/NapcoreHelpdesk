@@ -237,7 +237,7 @@ def esc(text: str) -> str:
     return text.replace("\\", "\\\\").replace('"', '\\"')
 
 
-def main(ttl_path: Path, out_path: Path, xsd_root: Path):
+def main(ttl_path: Path, out_path: Path, xsd_root: Path) -> dict[str, int]:
     ttl_text = ttl_path.read_text(encoding="utf-8")
     ttl_classes = load_ttl_classes(ttl_text)
     print(f"netex.ttl classes: {len(ttl_classes)}")
@@ -390,6 +390,7 @@ def main(ttl_path: Path, out_path: Path, xsd_root: Path):
     out_path.write_text(merged, encoding="utf-8")
     print(f"\nwrote {out_path} ({len(merged.splitlines())} lines, "
           f"{len(obj_edges)} obj props, {len(dt_edges)} dt props)")
+    return dict(dangling)  # range targets that are not classes yet (see helpdesk/services/netex_recovery.py)
 
 
 def parse_args(argv: list[str] | None = None) -> tuple[Path, Path, Path]:
@@ -409,4 +410,4 @@ def parse_args(argv: list[str] | None = None) -> tuple[Path, Path, Path]:
 
 
 if __name__ == "__main__":
-    main(*parse_args())
+    main(*parse_args())  # the returned dangling targets are for callers that import this module

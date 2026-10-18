@@ -13,7 +13,7 @@ not necessarily produced from those commits.
 |---|---|---|
 | `standards/opra.ttl` | `extract_xsd_ontology` | **Yes.** Same 106 classes and 661 triples; only the provenance comment differs (see below). |
 | `standards/siri.ttl` | `extract_xsd_ontology` | **Yes.** Same 310 classes and 1,852 triples; only the provenance comment differs. |
-| `standards/netex.ttl` | `extract_xsd_ontology`, then `scripts/build_netex_ttl_with_properties.py`, then work with no tool in the repository | **No.** Regeneration gives 861 classes and 23,034 triples; the committed file has 922 and 25,718. |
+| `standards/netex.ttl` | `build_standard_ontologies`: `extract_xsd_ontology`, `scripts/build_netex_ttl_with_properties.py`, and a class recovery rule (`helpdesk/services/netex_recovery.py`) | **Yes, with the pipeline.** On upstream `dc6f162` it reproduces 919 of the 922 committed classes and 99.5% of the committed non-comment triples (below). The committed file predates the pipeline and has not been replaced yet. |
 | `standards/examples.ttl` | `extract_xsd_ontology` without `--skip-example-xml` (scans every example XML) | Not measured. The scan did not finish in 10 minutes. |
 | `standards/transmodel.ttl` | Enterprise Architect model export (`TransmodelEcoSystem2024-EAv16-nk84_OpRa-v13.qea`, header of the file) | **No.** The source is a local file, not a public repository. |
 | `alignments/transmodel-{netex,opra,siri}-align.ttl` | `build_transmodel_alignment` from the standards files, `transmodel.ttl` and `transmodel-alignment-curation.csv` | **Yes**, deterministic: regenerating changes only the date line. Depends on the files above. |
@@ -35,16 +35,43 @@ not necessarily produced from those commits.
   `skos:related`). The commit `703f14b` ("netex enrichment round 2") says these were "harvested from XSD
   element declarations" and the suffix table of the enrichment script was extended, but no script in the
   repository does the harvesting. Running the enrichment script on the regenerated file (its hard-coded NeTEx path
-  pointed at the pinned clone, nothing else changed) gives 23,034 triples and no recovered classes.
+  pointed at the pinned clone, nothing else changed) gives 23,034 triples and no recovered classes. The NeTEx
+  version is not the cause: the CI-pinned commit (`24040c1`), the upstream default branch (`dc6f162`,
+  2026-10-08) and a local work-in-progress branch (`c7f5caa`) all give 861 extracted classes and miss the
+  same 61.
 
-## Things that block automation today
+### Recovering the missing classes
+
+The 61 classes are elements that object properties point to ("dangling" targets; the enrichment finds 182)
+but that the extractor does not emit. The commit that added them marks them `(property-gap recovery)`; the
+selection was made by hand: of the 182 targets, documented elements such as `PrivateCode` were taken and
+`PublicCode` was not. The generated ontology must not depend on a hand-made list, so the pipeline replaces it
+with a fixed rule (`helpdesk/services/netex_recovery.py`). A dangling target becomes a class when it is
+declared as an `xsd:element`, its name is PascalCase, and it is not a placeholder (`X_Dummy`) or a derived
+view (`XView`, `XInverse`). Its definition is the documentation of the element, else of its type. The
+enrichment then runs again, because the new classes bring properties with new targets, until nothing is added
+(3 rounds on upstream).
+
+Measured against the committed `netex.ttl`, generated from upstream `dc6f162` with the pinned OpRa and SIRI:
+
+| | committed | generated |
+|---|---|---|
+| classes | 922 | 938 (919 in common) |
+| object / datatype properties | 1,866 / 2,018 | 1,972 / 2,077 |
+| triples without `rdfs:comment` in common | 20,813 of 20,910 (99.5%) | |
+
+Only in the committed file: `privateCodes` (a lower-case container element), `SiteStructure` (never a property
+target) and `SimplePoint`. Only in the generated file: 19 documented NeTEx concepts that the manual selection
+skipped, among them `PublicCode`, `Presentation`, `Frequency`, `Location`, `Arrival` and `Departure`.
+
+## Things that blocked automation (status)
 
 1. ~~Hard-coded developer paths in both generators.~~ Resolved: see "Running the generators" below.
    (Before that change `extract_xsd_ontology` fell back to `/Users/andrejt/Research/repositories/git/<name>`,
    and the enrichment script hard-coded the NeTEx path.)
-2. A manual step after every NeTEx regeneration (README, "Generation Workflow"): re-add the root concept
-   `netex:NeTEx` with its labels, and keep a mapping from it to `nits:NeTExSpecification` in
-   `nits-netex-align.ttl`. Nothing checks that it was done.
+2. ~~The class recovery had no tool.~~ Resolved by the pipeline above. The README also names a manual step
+   (re-add the root concept `netex:NeTEx`), but the committed file has no such concept: that README text is
+   stale. If questions such as "What is NeTEx?" need the concept, the pipeline has to produce it.
 3. The README's workflow mentions a glossary `backend/helpdesk/ontologies/standards.json`. It does not
    exist in the repository, so `--merge` and `--refresh-auto` have nothing to merge with.
 4. The `nits:` layer (`napcore-its.ttl` and the `nits-*-align.ttl` files) has no regenerable source. Whether
@@ -54,8 +81,8 @@ not necessarily produced from those commits.
 
 - **OpRa and SIRI:** after one re-baseline commit, regenerate on a schedule and compare. Safe to
   automate fully, even to the point of opening a pull request with the regenerated files.
-- **NeTEx:** compare only the class set (classes added or removed upstream), and report it; do not
-  overwrite the file, because regeneration would delete the 61 recovered classes and the properties.
+- **NeTEx:** the pipeline regenerates the whole file, so it can be compared and proposed like the other
+  two. Nothing is maintained by hand: the OpRa, SIRI and NeTEx ontologies are generated.
 - **Transmodel alignments:** rerun `build_transmodel_alignment` after any change to the standards
   files and the curation file; this is already deterministic.
 - **Not checkable:** `transmodel.ttl`, `examples.ttl` (not measured), the `nits:` files and the rules.
@@ -79,13 +106,25 @@ python scripts/build_netex_ttl_with_properties.py docs/ontology/standards/netex.
 Output is byte-identical to what the generators wrote before the options were added (checked on the
 pinned commits).
 
+All three standard ontologies in one command, with the same options for the repository paths:
+
+```bash
+cd backend
+python manage.py build_standard_ontologies \
+    --netex-path /path/to/NeTEx --opra-path /path/to/OpRa --siri-path /path/to/SIRI \
+    --output-dir ../docs/ontology/standards    # the default
+```
+
+It runs the extractor, copies `opra.ttl` and `siri.ttl`, and builds `netex.ttl` with the enrichment and the
+class recovery. Two runs on the same repositories give byte-identical files (tested).
+
 ## Steps before the scheduled check can be built
 
 1. ~~Give both generators path and output options.~~ Done.
-2. Re-baseline `opra.ttl` and `siri.ttl` with the current extractor (one commit; the diff is the
-   `xsd/` prefix in the provenance comments).
-3. Decide for NeTEx: either put the "recovered classes" step into code, or declare `netex.ttl` a
-   maintained file and compare class sets only.
-4. Turn the manual `netex:NeTEx` root concept into a check or into code.
+2. ~~Re-baseline `opra.ttl` and `siri.ttl` with the current extractor.~~ Done (#59).
+3. ~~Decide for NeTEx.~~ Decision: nothing is maintained by hand; the pipeline generates it.
+4. Replace the committed `netex.ttl` with the generated one, after loading it into a GraphDB and running the
+   benchmark with the app's scope selection (the generated file has 16 more classes and about 100 more
+   properties).
 5. Then the weekly workflow on GitHub-hosted runners: clone the three repositories at their default
    branch, run the extractor, compare, and open a pull request or an issue with the differences.
