@@ -948,6 +948,24 @@ def _graph_concept_candidates(
     return [chunk for _rank_score, _quality_score, _chunk_id, chunk in ranked_candidates[:candidate_limit]]
 
 
+def _preselect_base_ids(vector_ranked: list, base_limit: int, lexical_reserve: int) -> set[int]:
+    """Pick `base_limit` candidates from a vector-ranked list for full scoring.
+
+    The last slots (at most a quarter) go to the strongest lexical matches the
+    vector order would cut, e.g. a schema named in the question that sits
+    mid-pool by vector similarity.
+    """
+    reserve = min(base_limit // 4, lexical_reserve)
+    selected = {int(chunk.id) for chunk in vector_ranked[: base_limit - reserve]}
+    lexical_leaders = sorted(
+        (chunk for chunk in vector_ranked if int(chunk.id) not in selected),
+        key=lambda chunk: float(getattr(chunk, "lexical_rank", 0.0) or 0.0),
+        reverse=True,
+    )
+    selected.update(int(chunk.id) for chunk in lexical_leaders[:reserve])
+    return selected
+
+
 def _question_standard_hints(question: str) -> set[str]:
     """Extract standards explicitly referenced in the user question."""
     lower_question = question.lower()
@@ -1033,6 +1051,7 @@ def retrieve_chunks_with_trace(
     graph_expansion_max_candidates = max(1, int(getattr(settings, "GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS", 40)))
     retrieval_scoring_candidate_cap = max(12, int(getattr(settings, "RETRIEVAL_SCORING_CANDIDATE_CAP", 40)))
     graph_preselect_multiplier = max(1, int(getattr(settings, "RETRIEVAL_GRAPH_PRESELECT_MULTIPLIER", 2)))
+    lexical_preselect_reserve = max(0, int(getattr(settings, "RETRIEVAL_LEXICAL_PRESELECT_RESERVE", 8)))
     source_path_cap = max(1, int(getattr(settings, "RETRIEVAL_MAX_SAME_SOURCE_PATH", 2)))
     mmr_lambda = float(getattr(settings, "RETRIEVAL_MMR_LAMBDA", 0.92))
     mmr_lambda = max(0.0, min(1.0, mmr_lambda))
@@ -1307,7 +1326,7 @@ def retrieve_chunks_with_trace(
         )
 
         base_limit = max(0, retrieval_scoring_candidate_cap - len(selected_graph_ids) - len(definition_ids))
-        selected_base_ids = {int(chunk.id) for chunk in base_candidates[:base_limit]}
+        selected_base_ids = _preselect_base_ids(base_candidates, base_limit, lexical_preselect_reserve)
 
         chunk_iterable = [
             chunk

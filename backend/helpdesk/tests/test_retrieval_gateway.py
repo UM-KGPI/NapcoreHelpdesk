@@ -89,6 +89,23 @@ class RetrievalGatewayTests(TestCase):
         self.assertLessEqual(shared_count, 1)
         self.assertEqual(trace["retrievalSourcePathCap"], 1)
 
+    def test_preselect_reserves_slots_for_lexical_leaders_cut_by_vector_order(self):
+        """A strong lexical match ranked low by vector similarity still reaches scoring."""
+        from types import SimpleNamespace
+
+        from helpdesk.services.retrieval_gateway import _preselect_base_ids
+
+        # Vector-ranked: ids 1..12 with weak lexical rank, id 99 last but the best lexical match.
+        vector_ranked = [SimpleNamespace(id=i, lexical_rank=0.1) for i in range(1, 13)]
+        vector_ranked.append(SimpleNamespace(id=99, lexical_rank=1.0))
+
+        selected = _preselect_base_ids(vector_ranked, base_limit=8, lexical_reserve=8)
+        self.assertEqual(len(selected), 8)
+        self.assertIn(99, selected)  # reserve is capped at a quarter: 6 by vector, 2 lexical
+        self.assertTrue({1, 2, 3, 4, 5, 6}.issubset(selected))
+
+        self.assertEqual(_preselect_base_ids(vector_ranked, base_limit=8, lexical_reserve=0), set(range(1, 9)))
+
     def test_question_doc_type_hints_prefers_example_over_schema_for_example_xml(self):
         from helpdesk.services.retrieval_gateway import _question_doc_type_hints
 
