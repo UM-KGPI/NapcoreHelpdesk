@@ -324,3 +324,22 @@ class QuestionParsingService:
 
 def parse_question_to_semantic_query(text: str, requested_scope: list[str] | None = None) -> SemanticQuery:
     return QuestionParsingService().parse(text=text, requested_scope=requested_scope)
+
+
+def select_effective_scope(
+    semantic_query: SemanticQuery, requested_scope: list[str] | None
+) -> tuple[list[str], bool]:
+    """Return the standards an answer searches, and whether the ambiguity cut applied.
+
+    An explicit scope always wins. Otherwise the question's candidate standards are used,
+    and when the core concept is ambiguous and several standards qualify, only the first
+    is kept (the caller then asks the user to clarify). The answer endpoints and the
+    benchmark's --app-scope mode both call this, so they cannot drift apart.
+    """
+
+    if requested_scope:
+        return list(requested_scope), False
+    candidates = list(semantic_query.candidate_standards)
+    if semantic_query.ambiguous_core_concept and len(candidates) > 1:
+        return [candidates[0]], True
+    return candidates, False

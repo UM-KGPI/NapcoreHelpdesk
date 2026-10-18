@@ -60,7 +60,7 @@ from helpdesk.services.llm_model_recovery import check_gateway_models, get_cache
 from helpdesk.services.ontology_registry import current_ontology_version_payload
 from helpdesk.services.policy_guard import evaluate_policy
 from helpdesk.services.provenance_mapper import persist_evidence_provenance
-from helpdesk.services.question_parsing import parse_question_to_semantic_query
+from helpdesk.services.question_parsing import parse_question_to_semantic_query, select_effective_scope
 from helpdesk.services.index_builder import index_repository
 from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 from helpdesk.services.retrieval_event_logger import log_retrieval_events
@@ -924,7 +924,7 @@ class QuestionAnswerView(APIView):
         scope = data.get("standardsScope", [])
         semantic_query = parse_question_to_semantic_query(text=question, requested_scope=scope)
         semantic_query_dict = semantic_query.as_dict() if hasattr(semantic_query, "as_dict") else {}
-        effective_scope = scope or semantic_query.candidate_standards
+        effective_scope, ambiguity_cut = select_effective_scope(semantic_query, scope)
         semantic_disambiguation_required = False
         semantic_disambiguation_prompt = None
         semantic_fallback = None
@@ -967,9 +967,8 @@ class QuestionAnswerView(APIView):
         controller_route = None
 
         # 1) FAQ-first: fast, deterministic, and usually high confidence.
-        if not scope and semantic_query.ambiguous_core_concept and len(effective_scope) > 1:
-            # Ambiguity fallback: reduce reasoning scope and ask for clarification.
-            effective_scope = [effective_scope[0]]
+        if ambiguity_cut:
+            # Ambiguity fallback: the scope was reduced to one standard; ask for clarification.
             semantic_disambiguation_required = True
             semantic_disambiguation_prompt = (
                 "Your question maps to multiple core concepts. "
@@ -1408,7 +1407,7 @@ class QuestionAnswerStreamView(APIView):
         scope = data.get("standardsScope", [])
         semantic_query = parse_question_to_semantic_query(text=question, requested_scope=scope)
         semantic_query_dict = semantic_query.as_dict() if hasattr(semantic_query, "as_dict") else {}
-        effective_scope = scope or semantic_query.candidate_standards
+        effective_scope, ambiguity_cut = select_effective_scope(semantic_query, scope)
         semantic_disambiguation_required = False
         semantic_disambiguation_prompt = None
         semantic_fallback = None
@@ -1448,8 +1447,7 @@ class QuestionAnswerStreamView(APIView):
         }
         controller_route = None
 
-        if not scope and semantic_query.ambiguous_core_concept and len(effective_scope) > 1:
-            effective_scope = [effective_scope[0]]
+        if ambiguity_cut:
             semantic_disambiguation_required = True
             semantic_disambiguation_prompt = (
                 "Your question maps to multiple core concepts. "
