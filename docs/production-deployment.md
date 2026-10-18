@@ -245,9 +245,9 @@ have not been built yet and the runner (section 5) is not registered yet.
 # On the server
 cd /opt/napcore-helpdesk
 
-# Without VITE_APP_VERSION set, the frontend build falls back to a
-# hardcoded default version instead of the real one in VERSION.
-export VITE_APP_VERSION="$(bash scripts/app_version.sh)"
+# Without these variables, the frontend build falls back to a hardcoded default
+# version and the backend reports build reference "dev".
+. scripts/build_env.sh
 docker compose -f docker-compose.prod.yml build
 docker compose -f docker-compose.prod.yml up -d
 
@@ -415,6 +415,20 @@ docker compose -f docker-compose.prod.yml logs -f backend
 ```bash
 docker compose -f docker-compose.prod.yml restart backend
 ```
+
+### Running `docker compose` by hand
+
+`scripts/deploy.sh` sets the version variables before it builds and starts the services. When you
+run `docker compose ... build` or `up` yourself, set them first, from the repository root:
+
+```bash
+. scripts/build_env.sh
+docker compose -f docker-compose.prod.yml up -d
+```
+
+Without them the services are recreated with defaults: the backend reports build reference
+`dev`, and the frontend falls back to its hardcoded version when it is rebuilt.
+`docker compose restart` does not recreate containers and does not need them.
 
 ### Database backup
 

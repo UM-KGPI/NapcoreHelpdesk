@@ -15,6 +15,9 @@ x-backend-base: &backend-base
     GRAPHDB_SPARQL_ENDPOINT: http://graphdb:7200/repositories/napcore-helpdesk
     GRAPHDB_REPOSITORY: napcore-helpdesk
     GRAPHDB_TIMEOUT_SECONDS: "30"
+    # From scripts/build_env.sh. Empty or unset falls back to the VERSION file and "dev".
+    SERVICE_VERSION: ${SERVICE_VERSION:-}
+    SERVICE_BUILD_REF: ${SERVICE_BUILD_REF:-dev}
   depends_on:
     db:
       condition: service_healthy
