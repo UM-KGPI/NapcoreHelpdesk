@@ -1,8 +1,8 @@
 version: "1.0"
 description: >
   P4 evaluation benchmark for the NAPCORE Helpdesk graph-RAG vs baseline
-  comparison. 100 retrieval questions covering explanation, example,
-  cross-standard mapping, disambiguation, and abstention intents. Used by the
+  comparison. 120 retrieval questions (OpRa, NeTEx, SIRI) covering explanation,
+  example, cross-standard mapping, disambiguation, and abstention intents. Used by the
   run_retrieval_benchmark management command to emit a hit@k / MRR report.
 created: "2026-04-16"
 target_k: [5, 10, 20]
@@ -831,3 +831,169 @@ questions:
     min_hits: 0
     top_k_threshold: 10
     note: "Regulatory framing of Transmodel/OpRa relationship not available in indexed sources."
+
+  # ── Group H: SIRI functional services (q101–q120) ─────────────────────────
+  # Patterns name files that exist only in the SIRI repository: NeTEx ships
+  # copies of the SIRI framework schemas (xsd/siri, xsd/siri_utility,
+  # xsd/wsdl_model) and examples (ws_siri_request), so those paths are avoided.
+
+  - id: q101
+    question: "What is SIRI Stop Monitoring and what does a MonitoredStopVisit contain?"
+    intent: explanation
+    tags: [siri, stop-monitoring]
+    expected_source_patterns: [siri_stopMonitoring_service.xsd, siri_exm_SM]
+    min_hits: 1
+    top_k_threshold: 10
+
+  - id: q102
+    question: "Show me a SIRI Stop Monitoring request and response example."
+    intent: example
+    tags: [siri, stop-monitoring, example]
+    expected_source_patterns: [siri_exm_SM]
+    min_hits: 1
+    top_k_threshold: 10
+
+  - id: q103
+    question: "What is a SIRI EstimatedVehicleJourney used for?"
+    intent: explanation
+    tags: [siri, estimated-timetable]
+    expected_source_patterns: [siri_estimatedVehicleJourney.xsd, siri_estimatedTimetable_service.xsd]
+    min_hits: 1
+    top_k_threshold: 10
+
+  - id: q104
+    question: "What is the difference between a RecordedCall and an EstimatedCall in SIRI Estimated Timetable?"
+    intent: explanation
+    tags: [siri, estimated-timetable]
+    expected_source_patterns: [siri_estimatedVehicleJourney.xsd]
+    min_hits: 1
+    top_k_threshold: 10
+
+  - id: q105
+    question: "How is a cancelled journey or a cancelled stop shown in a SIRI Estimated Timetable message?"
+    intent: example
+    tags: [siri, estimated-timetable, cancellation, example]
+    expected_source_patterns: [siri_exm_ET, siri_estimatedVehicleJourney.xsd]
+    min_hits: 1
+    top_k_threshold: 10
+
+  - id: q106
+    question: "How does SIRI add an extra journey that is not in the planned timetable?"
+    intent: explanation
+    tags: [siri, estimated-timetable]
+    expected_source_patterns: [siri_estimatedVehicleJourney.xsd, siri_datedVehicleJourney.xsd]
+    min_hits: 1
+    top_k_threshold: 10
+
+  - id: q107
+    question: "How is vehicle occupancy reported in SIRI real-time data?"
+    intent: example
+    tags: [siri, occupancy, example]
+    expected_source_patterns: [examples/occupancy, siri_journey.xsd]
+    min_hits: 1
+    top_k_threshold: 10
+
+  - id: q108
+    question: "What does a VehicleActivity in SIRI Vehicle Monitoring contain?"
+    intent: explanation
+    tags: [siri, vehicle-monitoring]
+    expected_source_patterns: [siri_vehicleMonitoring_service.xsd, siri_exm_VM]
+    min_hits: 1
+    top_k_threshold: 10
+
+  - id: q109
+    question: "Can SIRI exchange roadwork warnings?"
+    intent: explanation
+    tags: [siri, situation-exchange]
+    expected_source_patterns: [exx_situationExchange_road, siri_situation.xsd, siri_situationExchange_service.xsd]
+    min_hits: 1
+    top_k_threshold: 10
+
+  - id: q110
+    question: "What is a PtSituationElement in SIRI Situation Exchange?"
+    intent: explanation
+    tags: [siri, situation-exchange]
+    expected_source_patterns: [siri_situation.xsd, siri_situationExchange_service.xsd]
+    min_hits: 1
+    top_k_threshold: 10
+
+  - id: q111
+    question: "How do I describe which lines and stops are affected by a disruption in SIRI SX?"
+    intent: explanation
+    tags: [siri, situation-exchange]
+    expected_source_patterns: [siri_situationAffects.xsd, siri_exm_SX]
+    min_hits: 1
+    top_k_threshold: 10
+
+  - id: q112
+    question: "Show an example of a SIRI SX situation from the first message to the end message."
+    intent: example
+    tags: [siri, situation-exchange, example]
+    expected_source_patterns: [VDV736_exm, siri_exm_SX]
+    min_hits: 1
+    top_k_threshold: 10
+
+  - id: q113
+    question: "What is SIRI General Message and how is an InfoMessage structured?"
+    intent: example
+    tags: [siri, general-message, example]
+    expected_source_patterns: [siri_generalMessage_service.xsd, siri_exm_GM]
+    min_hits: 1
+    top_k_threshold: 10
+
+  - id: q114
+    question: "How does SIRI Facility Monitoring report that a lift or escalator is out of service?"
+    intent: explanation
+    tags: [siri, facility-monitoring]
+    expected_source_patterns: [siri_facility.xsd, siri_facilityMonitoring_service.xsd, siri_exm_FM]
+    min_hits: 1
+    top_k_threshold: 10
+
+  - id: q115
+    question: "What is the SIRI Production Timetable service and what does a DatedVehicleJourney contain?"
+    intent: explanation
+    tags: [siri, production-timetable]
+    expected_source_patterns: [siri_productionTimetable_service.xsd, siri_datedVehicleJourney.xsd, siri_exm_PT]
+    min_hits: 1
+    top_k_threshold: 10
+
+  - id: q116
+    question: "Does SIRI-ST exist, and what does the Stop Timetable service deliver?"
+    intent: explanation
+    tags: [siri, stop-timetable]
+    expected_source_patterns: [siri_stopTimetable_service.xsd, siri_exm_ST]
+    min_hits: 1
+    top_k_threshold: 10
+
+  - id: q117
+    question: "How does SIRI Connection Monitoring tell a connecting service that a feeder vehicle will arrive late?"
+    intent: explanation
+    tags: [siri, connection-monitoring]
+    expected_source_patterns: [siri_connectionMonitoring_service.xsd, siri_exm_CM]
+    min_hits: 1
+    top_k_threshold: 10
+
+  - id: q118
+    question: "How can a SIRI client discover the lines and stop points a producer serves?"
+    intent: example
+    tags: [siri, discovery, example]
+    expected_source_patterns: [siri_exu_discovery, siri_discovery.xsd]
+    min_hits: 1
+    top_k_threshold: 10
+
+  - id: q119
+    question: "How does SIRI publish/subscribe delivery work with DataReadyNotification and heartbeat messages?"
+    intent: explanation
+    tags: [siri, framework]
+    expected_source_patterns: [siri_exa_framework]
+    min_hits: 1
+    top_k_threshold: 10
+    note: "NeTEx ships the same framework examples under ws_siri_request; only the SIRI copies count."
+
+  - id: q120
+    question: "How does a SIRI EstimatedVehicleJourney relate to a NeTEx ServiceJourney?"
+    intent: mapping
+    tags: [siri, netex, cross-standard]
+    expected_source_patterns: [siri_estimatedVehicleJourney.xsd, netex_serviceJourney]
+    min_hits: 1
+    top_k_threshold: 20
