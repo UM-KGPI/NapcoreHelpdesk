@@ -84,6 +84,23 @@ class RetrieveConceptDefinitionsTests(SimpleTestCase):
         self.assertEqual(definitions[0]["tm_definition"], TM_DEFINITION)
         self.assertEqual(definitions[0]["tm_status"], "differs")
 
+    def test_definition_query_reads_only_the_current_graphs(self):
+        with patch(
+            "helpdesk.services.graphdb_client.execute_sparql_query", return_value={"results": {"bindings": []}}
+        ) as query_mock:
+            retrieve_concept_definitions(
+                concept_ids={"opra:Opra"}, endpoint="http://localhost:7200", repository="napcore"
+            )
+
+        sent_query = query_mock.call_args.kwargs["sparql_query"]
+        for graph in (
+            "https://napcore.eu/graph/standards/opra",
+            "https://napcore.eu/graph/standards/transmodel",
+            "https://napcore.eu/graph/alignments/transmodel-netex",
+        ):
+            self.assertIn(f"FROM <{graph}>", sent_query)
+        self.assertNotIn("urn:graph:", sent_query)
+
     def test_transmodel_concept_uses_rdfs_comment_as_definition(self):
         results = {
             "results": {

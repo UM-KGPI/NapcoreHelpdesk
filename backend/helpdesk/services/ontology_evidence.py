@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
+from helpdesk.services.graphdb_client import TRANSMODEL_ALIGNED_STANDARDS
 from helpdesk.services.transmodel_alignment import clean_definition
 
 logger = logging.getLogger(__name__)
@@ -20,6 +21,16 @@ TRANSMODEL_NAMESPACE = "https://transmodel-cen.eu/6.2/"
 TRANSMODEL_SOURCE_PATH = "docs/ontology/standards/transmodel.ttl"
 TRANSMODEL_SOURCE_URL = (
     "https://github.com/UM-KGPI/NapcoreHelpdesk/blob/main/docs/ontology/standards/transmodel.ttl"
+)
+
+# Graphs the definition query reads. The repository also holds legacy urn:graph:* graphs from older loads;
+# their rdfs:comment values differ (e.g. "Extracted from OpRa XSD source: opra.xsd. <definition>"), and
+# reading them gave citations a source path that does not exist.
+DEFINITION_GRAPHS = (
+    "https://napcore.eu/graph/core/napcore-its",
+    "https://napcore.eu/graph/standards/transmodel",
+    *(f"https://napcore.eu/graph/standards/{standard}" for standard in TRANSMODEL_ALIGNED_STANDARDS),
+    *(f"https://napcore.eu/graph/alignments/transmodel-{standard}" for standard in TRANSMODEL_ALIGNED_STANDARDS),
 )
 
 # Values of nits:transmodelDefinitionStatus (see alignments/transmodel-*-align.ttl).
@@ -62,6 +73,7 @@ def retrieve_concept_definitions(
         concept_uris = " ".join(
             [f"<{_ensure_uri(cid)}>" for cid in sorted(concept_ids)]
         )
+        from_graphs = "\n        ".join(f"FROM <{graph}>" for graph in DEFINITION_GRAPHS)
 
         sparql_query = f"""
         PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
@@ -71,6 +83,7 @@ def retrieve_concept_definitions(
 
         SELECT ?concept ?definition ?prefLabel ?altLabel ?type ?source ?ownComment
                ?tmConcept ?tmLabel ?tmDefinition ?tmStatus
+        {from_graphs}
         WHERE {{
           VALUES ?concept {{ {concept_uris} }}
           ?concept a ?type .
