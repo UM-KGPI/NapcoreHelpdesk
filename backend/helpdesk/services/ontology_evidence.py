@@ -174,10 +174,43 @@ def retrieve_concept_definitions(
         return []
 
 
-def format_definitions_as_chunks(definitions: list[dict]) -> list[dict]:
+STANDARD_REPOSITORIES = {
+    standard: f"https://github.com/TransmodelEcosystem/{standard}" for standard in ("NeTEx", "SIRI", "OpRa")
+}
+
+
+def indexed_commit_shas() -> dict[str, str]:
+    """Commit each standard's repository was last indexed at, by standard name.
+
+    Definition links point at this commit: a release tag guessed from the standard's name may not
+    exist (OpRa has no v1.0 tag, so its links returned 404). Empty when nothing is indexed or the
+    database cannot be read; callers then use the fallback refs.
+    """
+
+    try:
+        from helpdesk.models import SourceChunk
+
+        shas: dict[str, str] = {}
+        for standard, repository_url in STANDARD_REPOSITORIES.items():
+            sha = (
+                SourceChunk.objects.filter(repository_url=repository_url, commit_sha__regex=r"^[0-9a-f]{40}$")
+                .order_by("-updated_at")
+                .values_list("commit_sha", flat=True)
+                .first()
+            )
+            if sha:
+                shas[standard] = sha
+        return shas
+    except Exception:
+        logger.warning("Could not read indexed commits for definition links", exc_info=True)
+        return {}
+
+
+def format_definitions_as_chunks(definitions: list[dict], commit_shas: dict[str, str] | None = None) -> list[dict]:
     """Convert ontology definitions to chunk format for LLM context.
 
-    Each chunk represents a concept's semantic definition with metadata.
+    Each chunk represents a concept's semantic definition with metadata. `commit_shas` maps a standard
+    to the commit its repository was indexed at; links use it in preference to a release tag.
     """
     chunks = []
     emitted_transmodel: set[str] = set()
@@ -255,10 +288,10 @@ Definition:
         # Use version tags for official schema releases
         version_map = {
             "NeTEx": "v2.0",
-            "OpRa": "v1.0",
+            "OpRa": "main",  # the repository has no v1.0 tag
             "SIRI": "v2.1",
         }
-        commit_sha = version_map.get(standard, "main")
+        commit_sha = (commit_shas or {}).get(standard) or version_map.get(standard, "main")
 
         # Use XSD source file path if available, ensure xsd/ prefix
         # Source should be the actual XSD file: netex_part_2/.../file.xsd

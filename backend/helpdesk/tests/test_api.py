@@ -971,6 +971,20 @@ class HelpdeskApiTests(APITestCase):
             commit_sha="3734861",
         )
 
+    @patch("helpdesk.api.views._resolve_commit_sha", return_value="main")
+    def test_build_file_url_keeps_anchor_as_url_fragment(self, _resolve_commit_sha_mock):
+        """An anchor such as transmodel.ttl#STOP_PLACE must not become part of the file name (404)."""
+        url = _build_file_url(
+            repo_url="https://github.com/UM-KGPI/NapcoreHelpdesk",
+            commit_sha="main",
+            source_path="docs/ontology/standards/transmodel.ttl#STOP_PLACE",
+        )
+
+        self.assertEqual(
+            url,
+            "https://github.com/UM-KGPI/NapcoreHelpdesk/blob/main/docs/ontology/standards/transmodel.ttl#STOP_PLACE",
+        )
+
     def test_build_file_url_maps_issue_path_to_issue_url(self):
         """Ensure synthetic indexed issue paths link to the actual GitHub issue page."""
         url = _build_file_url(

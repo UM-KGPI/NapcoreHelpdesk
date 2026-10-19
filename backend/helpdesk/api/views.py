@@ -123,7 +123,10 @@ def _build_file_url(repo_url: str, commit_sha: str, source_path: str) -> str:
             return f"{repo_url}/issues/{issue_number}"
 
     # Encode unsafe characters (e.g. spaces) in path segments while keeping / separators.
-    encoded_path = quote(source_path, safe="/")
+    # A "#anchor" suffix (e.g. transmodel.ttl#STOP_PLACE) stays a URL fragment; encoded as %23 it
+    # would become part of the file name and GitHub would answer 404.
+    file_path, hash_mark, fragment = source_path.partition("#")
+    encoded_path = quote(file_path, safe="/") + (f"#{quote(fragment, safe='')}" if hash_mark else "")
 
     resolved_commit_sha = _resolve_commit_sha(repo_url=repo_url, commit_sha=commit_sha)
     # When commit SHA is unavailable, prefer a stable repository ref instead of a broken blob URL.
