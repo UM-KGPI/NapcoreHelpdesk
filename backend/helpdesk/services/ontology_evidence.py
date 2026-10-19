@@ -168,6 +168,7 @@ def format_definitions_as_chunks(definitions: list[dict]) -> list[dict]:
     """
     chunks = []
     emitted_transmodel: set[str] = set()
+    comparison_notes = _comparison_notes_by_transmodel_concept(definitions)
 
     for definition in definitions:
         concept = definition.get("concept", "")
@@ -191,6 +192,7 @@ def format_definitions_as_chunks(definitions: list[dict]) -> list[dict]:
                     tm_label=definition.get("tm_label", ""),
                     tm_definition=tm_definition,
                     implemented_as=f"{standard} {concept_name}",
+                    notes=comparison_notes.get(tm_concept, []),
                 )
             )
 
@@ -203,6 +205,7 @@ def format_definitions_as_chunks(definitions: list[dict]) -> list[dict]:
                         tm_label=pref_label,
                         tm_definition=definition_text,
                         implemented_as="",
+                        notes=comparison_notes.get(concept, []),
                     )
                 )
             continue
@@ -230,9 +233,6 @@ Definition:
         if tm_concept:
             tm_name = definition.get("tm_label", "") or tm_concept.rsplit("/", 1)[-1]
             chunk_text += f"Transmodel concept: {tm_name} (skos:exactMatch)\n"
-            status_note = _DEFINITION_STATUS_NOTES.get(definition.get("tm_status", ""))
-            if status_note:
-                chunk_text += status_note.format(standard=standard) + "\n"
 
         chunk_id_str = f"ontology-def-{concept_name.lower()}"
         chunk_id_int = hash(chunk_id_str) % (10 ** 8)
@@ -295,12 +295,34 @@ Definition:
     return chunks
 
 
+def _comparison_notes_by_transmodel_concept(definitions: list[dict]) -> dict[str, list[str]]:
+    """How each standard's own definition compares with the Transmodel one, by Transmodel concept.
+
+    The comparison comes from the alignment data, not from the standard's XSD, so it is carried by the
+    Transmodel chunk. Cited from the XSD chunk it would point readers at a file that does not say it.
+    Only concepts whose Transmodel chunk is emitted need a note.
+    """
+
+    notes: dict[str, list[str]] = {}
+    for definition in definitions:
+        tm_concept = definition.get("tm_concept", "")
+        template = _DEFINITION_STATUS_NOTES.get(definition.get("tm_status", ""))
+        if not (tm_concept and definition.get("tm_definition") and template):
+            continue
+        standard, concept_name = _extract_concept_info(definition.get("concept", ""))
+        note = f"{standard} {concept_name}: " + template.format(standard=standard)
+        if note not in notes.setdefault(tm_concept, []):
+            notes[tm_concept].append(note)
+    return notes
+
+
 def _transmodel_definition_chunk(
     *,
     tm_concept: str,
     tm_label: str,
     tm_definition: str,
     implemented_as: str,
+    notes: list[str] | None = None,
 ) -> dict:
     """Build the evidence chunk for a Transmodel reference definition."""
     local_name = tm_concept.rsplit("/", 1)[-1]
@@ -319,6 +341,8 @@ IRI: {tm_concept}
 Definition:
 {tm_definition}
 """
+    for note in notes or []:
+        chunk_text += f"Comparison with {note}\n"
 
     chunk_id_str = f"ontology-def-tm-{local_name.lower()}"
     chunk_id_int = hash(chunk_id_str) % (10 ** 8)
