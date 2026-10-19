@@ -9,7 +9,6 @@
 @prefix opra: <https://transmodel-cen.eu/opra/1.0#> .
 @prefix siri: <https://siri.org.uk/siri/1.3#> .
 @prefix transmodel: <https://transmodel-cen.eu/6.2/> .
-@prefix nits: <https://napcore.eu/ontology/nits#> .
 
 <https://siri.org.uk/siri/1.3>
     a owl:Ontology ;

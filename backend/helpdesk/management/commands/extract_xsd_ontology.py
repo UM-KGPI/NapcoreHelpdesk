@@ -741,7 +741,6 @@ class Command(BaseCommand):
                 "opra": "https://transmodel-cen.eu/opra/1.0#",
                 "siri": "https://siri.org.uk/siri/1.3#",
                 "transmodel": "https://transmodel-cen.eu/6.2/",
-                "nits": "https://napcore.eu/ontology/nits#",
             }
 
         if refresh_auto:
