@@ -15,6 +15,7 @@ Target: Docker Compose on a Fedora Linux VM, deployed via GitHub Actions on a se
 9. [Subsequent deployments](#9-subsequent-deployments)
 10. [Data migration from dev](#10-data-migration-from-dev)
 11. [Operational notes](#11-operational-notes)
+12. [Rolling out an update to the knowledge base](#12-rolling-out-an-update-to-the-knowledge-base)
 
 ---
 
@@ -36,7 +37,6 @@ need another 3–5 GB. Size accordingly.
 
 - SSH access to the VM
 - The GraphDB license file (`secrets/graphdb.license` in the repo root)
-- The ontology TTL files from `.mylocal/docs/ontology/`
 - A GitHub personal access token or deploy key with read access to the repo
 
 ---
@@ -155,16 +155,16 @@ chmod 600 /opt/napcore-helpdesk/backend/.env.prod
 
 ## 4. Place local-only assets on the server
 
-These files are gitignored and must be copied from your local machine.
+These files are gitignored and must be copied from your local machine. Only the GraphDB license is
+still local-only.
 
 ### 4.1 Ontology TTL files
 
-```bash
-# Run on your Mac
-rsync -av --progress \
-  .mylocal/docs/ontology/ \
-  user@your-vm:/opt/napcore-helpdesk/ontology/
-```
+Nothing to copy. The ontology files are committed under `docs/ontology/` and reach the server with the
+repository: `docker-compose.prod.yml` mounts `./docs` into the backend and Celery containers, so a deploy
+(`git pull`) also updates the files that `load_graphdb_ontologies` reads. The OpRa, SIRI and NeTEx
+files are generated from the upstream repositories (`docs/ontology/GENERATION.md`) and reviewed
+through GitHub.
 
 ### 4.2 GraphDB license
 
@@ -284,19 +284,29 @@ repository chunks and ontology graphs — must be loaded separately.
 
 ### 7.1 Bootstrap GraphDB
 
-Create the GraphDB repository and load the ontology graphs:
+The ontology graphs go into a GraphDB repository named `napcore-helpdesk`
+(`GRAPHDB_REPOSITORY` in `docker-compose.prod.yml`). **Nothing in this repository creates that
+repository, and its configuration (type and ruleset) is not recorded here.** On a new server, create
+it in the GraphDB Workbench (Setup, Repositories) with the same settings as the existing production
+repository, read from its Workbench page before you build the new one.
+
+Then load the ontology graphs. The command is a dry run until `--apply` is given:
 
 ```bash
-docker compose -f docker-compose.prod.yml exec backend \
-  python manage.py init_graphdb_repository
+docker compose -f docker-compose.prod.yml exec -T backend \
+  python manage.py load_graphdb_ontologies            # prints the plan only
 
-docker compose -f docker-compose.prod.yml exec backend \
-  python manage.py load_ontology_graphs
+docker compose -f docker-compose.prod.yml exec -T -e GRAPHDB_TIMEOUT_SECONDS=1800 backend \
+  python manage.py load_graphdb_ontologies --apply --replace
 ```
+
+The long timeout is for this command only: the compose default of 30 seconds is meant for answering
+questions, not for replacing a large graph. Do not add `--include-artifact-rules` unless the
+artifact-rule graphs are meant to be active.
 
 Verify in the GraphDB UI at `http://your-vm:7200` (only accessible if you open port
 7200 in your firewall; otherwise use SSH port forwarding:
-`ssh -L 7200:localhost:7200 user@your-vm`).
+`ssh -L 7200:localhost:7200 user@your-vm`), or with the count query in section 12.
 
 ### 7.2 Index source repositories
 
@@ -518,3 +528,96 @@ your-domain.example.com {
     reverse_proxy frontend:80
 }
 ```
+
+---
+
+## 12. Rolling out an update to the knowledge base
+
+Use this order after a deploy that changes the ontology files, the indexing, or the answer logic.
+Stop at the first check that fails. Run from `/opt/napcore-helpdesk`; every stage assumes:
+
+```bash
+cd /opt/napcore-helpdesk
+C="docker compose -f docker-compose.prod.yml"
+```
+
+### 12.0 Before changing anything (read-only)
+
+```bash
+git rev-parse --short HEAD
+$C ps
+$C exec -T backend curl -s http://localhost:8000/api/v1/health/ready
+
+# triples per graph (save the output; compare after stage 2)
+$C exec -T backend sh -c 'curl -s -u "$GRAPHDB_USER:$GRAPHDB_PASSWORD" -H "Accept: text/csv" \
+  --data-urlencode "query=SELECT ?g (COUNT(*) AS ?n) WHERE { GRAPH ?g { ?s ?p ?o } } GROUP BY ?g ORDER BY ?g" \
+  http://graphdb:7200/repositories/napcore-helpdesk'
+
+# chunks per repository
+$C exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc \
+  "select repository_url, count(*) from helpdesk_sourcechunk group by 1 order by 1"'
+
+# backup of every GraphDB graph
+$C exec -T backend sh -c 'curl -sf -u "$GRAPHDB_USER:$GRAPHDB_PASSWORD" -H "Accept: application/n-quads" \
+  http://graphdb:7200/repositories/napcore-helpdesk/statements' > ~/graphdb-before-$(date +%F).nq
+ls -lh ~/graphdb-before-*.nq
+```
+
+`-u` with empty credentials is accepted by a GraphDB without security (checked against a local one).
+Note whether the graph list includes `artifact-rules/*` graphs; stage 12.2 leaves them alone.
+
+### 12.1 Deploy
+
+Run **Actions, Deploy to Production** (section 9). Check that the workflow is green, that
+`http://localhost:8000/api/v1/health/live` (from inside the backend container, as `deploy.sh` does)
+reports the new version and a build reference that matches `git rev-parse --short HEAD`, and ask one
+real question. Roll back by deploying the previous commit through GitHub, never by editing the server.
+
+### 12.2 Ontology graphs
+
+Run the two commands from 7.1, then repeat the count query. The expected triples are those of the
+committed files; compute them on any machine with rdflib:
+
+```python
+import rdflib
+g = rdflib.Graph(); g.parse("docs/ontology/standards/netex.ttl", format="turtle"); print(len(g))
+```
+
+The NeTEx figure (26,705 for the file generated from upstream `dc6f162`) equals the count GraphDB reported
+for it. Do this at a quiet time and do not re-run a command that seems to hang: read its output and the GraphDB
+log first. The backup from 12.0 restores the previous state.
+
+### 12.3 Source index refresh
+
+```bash
+$C exec -T celery-worker python manage.py refresh_source_indexes --full
+$C logs -f celery-worker
+```
+
+Each repository prints `ok` with a commit and counts, or `FAILED`. Compare the per-repository chunk counts
+with 12.0 (SIRI must not double: that was the duplicate source removed in #40), then ask a SIRI question and
+confirm it cites the SIRI repository. Only then switch on the daily refresh (7.3).
+
+### 12.4 Relevance check (optional)
+
+`RELEVANCE_CHECK_ENABLED` is off by default. When on, a question that names no standard and no artifact is
+put to the controller model, which answers RELEVANT or IRRELEVANT; a failed call falls back to the keyword
+rules. First prove the model call works from the server (it prints `None` when it does not):
+
+```bash
+$C exec -T backend python manage.py shell -c "
+from helpdesk.services.relevance_check import is_relevant
+for q in ['What is the weather in Ljubljana tomorrow?','fares','Can roadwork warnings be exchanged in real time?']:
+    print(repr(is_relevant(q)), '|', q)"
+```
+
+Expect `False`, `True`, `True`. If that matches, set `RELEVANCE_CHECK_ENABLED=True` in `backend/.env.prod` and
+recreate the backend:
+
+```bash
+. scripts/build_env.sh
+$C up -d --force-recreate backend
+```
+
+Check that a weather question abstains, and that "fares" and "What is SIRI?" are answered. To switch it
+off set the variable to `False` and recreate the backend. It uses the `CONTROLLER_LLM_*` settings.
