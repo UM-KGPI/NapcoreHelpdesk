@@ -135,6 +135,8 @@ Use feature flags in `backend/.env` for progressive rollout:
 
 - Wave 1 evidence and policy controls:
   - `SEMANTIC_LOW_CONFIDENCE_THRESHOLD`
+  - `RELEVANCE_CHECK_ENABLED` (asks the controller LLM whether a question that names no standard or artifact is about the standards; keyword rules decide when off or when the call fails)
+  - `RELEVANCE_CHECK_TIMEOUT_SECONDS`
   - `EVIDENCE_GATE_ENABLED`
   - `EVIDENCE_GATE_MIN_ALIGNMENT`
   - `EVIDENCE_GATE_MIN_CHUNKS`

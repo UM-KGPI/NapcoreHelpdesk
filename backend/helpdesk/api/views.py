@@ -1064,6 +1064,7 @@ class QuestionAnswerView(APIView):
                 effective_scope=effective_scope,
                 requested_scope=scope,
                 allow_abstain=allow_abstain,
+                question=question,
             )
         ) is not None:
             mode = QuestionEvent.MODE_ABSTAIN
@@ -1525,6 +1526,7 @@ class QuestionAnswerStreamView(APIView):
                 effective_scope=effective_scope,
                 requested_scope=scope,
                 allow_abstain=allow_abstain,
+                question=question,
             )
         ) is not None:
             mode = QuestionEvent.MODE_ABSTAIN

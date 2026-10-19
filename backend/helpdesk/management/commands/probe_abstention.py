@@ -31,11 +31,16 @@ from helpdesk.services.question_parsing import parse_question_to_semantic_query,
 from helpdesk.services.semantic_abstention import (
     LOW_CONFIDENCE_MESSAGE,
     NO_CONCEPT_MESSAGE,
+    NOT_RELEVANT_MESSAGE,
     semantic_abstention_message,
 )
 
 BENCHMARKS = Path(__file__).resolve().parent.parent.parent / "benchmarks"
-_DECISIONS = {NO_CONCEPT_MESSAGE: "abstain_no_concept", LOW_CONFIDENCE_MESSAGE: "abstain_low_confidence"}
+_DECISIONS = {
+    NO_CONCEPT_MESSAGE: "abstain_no_concept",
+    LOW_CONFIDENCE_MESSAGE: "abstain_low_confidence",
+    NOT_RELEVANT_MESSAGE: "abstain_not_relevant",
+}
 
 
 def _load(path: Path, category: str | None = None) -> list[dict]:
@@ -74,6 +79,7 @@ class Command(BaseCommand):
                 effective_scope=effective_scope,
                 requested_scope=None,
                 allow_abstain=True,
+                question=item["question"],
             )
             decision = _DECISIONS.get(message, "answer")
             retrieval = self._retrieve(item["question"], effective_scope) if options["retrieval"] else {}
