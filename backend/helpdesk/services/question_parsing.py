@@ -22,7 +22,6 @@ from helpdesk.services.graphdb_connector import GraphDBConnector
 from helpdesk.services.semantic_graph import (
     expand_graph_concepts,
     extract_graph_concepts,
-    get_concept_nits_ids,
     get_concept_transmodel_ids,
 )
 
@@ -245,19 +244,15 @@ class QuestionParsingService:
     def _anchor_candidates_to_concepts(self, concept_ids: set[str]) -> list[str]:
         """Resolve recognized glossary concepts to a core-concept identity.
 
-        Tries the NITS pivot first (still real data in any GraphDB-enabled
-        deployment, until Phase 2 removes it), then the static,
-        GraphDB-independent Transmodel pivot. If neither resolves anything --
-        the common case today with GraphDB disabled -- fall back to the
-        glossary concept IDs themselves rather than returning nothing: a
-        recognized concept with no cross-standard alignment is not the same
-        as recognizing nothing at all, and treating it as such previously
-        made the sentinel fire even when extract_graph_concepts had matched
-        something (e.g. "vehicle journey" -> netex:VehicleJourney).
+        Tries the static, GraphDB-independent Transmodel pivot first. If it
+        resolves nothing -- e.g. the concept has no Transmodel alignment yet
+        -- fall back to the glossary concept IDs themselves rather than
+        returning nothing: a recognized concept with no cross-standard
+        alignment is not the same as recognizing nothing at all, and
+        treating it as such previously made the sentinel fire even when
+        extract_graph_concepts had matched something (e.g. "vehicle
+        journey" -> netex:VehicleJourney).
         """
-        nits_ids = sorted(get_concept_nits_ids(concept_ids))
-        if nits_ids:
-            return [f"nits:{nits_id.split(':', 1)[-1]}" for nits_id in nits_ids]
         transmodel_ids = sorted(get_concept_transmodel_ids(concept_ids))
         if transmodel_ids:
             return [f"transmodel:{tm_id.split(':', 1)[-1]}" for tm_id in transmodel_ids]
@@ -304,14 +299,11 @@ class QuestionParsingService:
         discovered: list[str] = []
         for term in original_terms:
             for iri in connector.anchor_term_to_core_concepts(term):
-                if not iri:
+                if not iri or not iri.startswith(TRANSMODEL_NAMESPACE):
                     continue
                 # Present GraphDB anchors in the app core namespace expected by runtime trace.
                 local = iri.rsplit("#", 1)[-1].rsplit("/", 1)[-1]
-                if iri.startswith(TRANSMODEL_NAMESPACE):
-                    candidate = f"transmodel:{local}"
-                else:
-                    candidate = f"nits:{local}"
+                candidate = f"transmodel:{local}"
                 if candidate not in discovered:
                     discovered.append(candidate)
                 if len(discovered) >= _MAX_CORE_CONCEPT_CANDIDATES:
@@ -332,22 +324,13 @@ class QuestionParsingService:
             return []
 
         discovered: list[str] = []
-        namespace_base = "https://napcore.eu/ontology/nits#"
         for core_concept in core_concepts:
             if core_concept.startswith("transmodel:"):
                 local = core_concept.split(":", 1)[1]
                 # The local name is already the exact Transmodel class (e.g.
-                # STOP_PLACE), so there is a real IRI to query directly --
-                # no slug-matching fallback needed, unlike the nits: branch
-                # below whose local name was a lossy label-derived slug.
+                # STOP_PLACE), so there is a real IRI to query directly.
                 iri = f"{TRANSMODEL_NAMESPACE}{local}"
                 standards = connector.discover_standards_for_core_concept(iri)
-            elif core_concept.startswith("nits:"):
-                local = core_concept.split(":", 1)[1]
-                iri = f"{namespace_base}{local}"
-                standards = connector.discover_standards_for_core_concept(iri)
-                if not standards:
-                    standards = connector.discover_standards_for_core_concept_slug(local)
             else:
                 continue
 
