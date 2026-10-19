@@ -26,8 +26,12 @@ The draft is intentionally small:
 - add only the minimum NAPCORE-specific classes and properties needed for graph-aware retrieval.
 
 ## Current Scope
-- Final target scope: NAPCORE-wide ontology coverage.
-- Current implemented scope: core `nits:` concepts plus standard modules for NeTEx, OpRa, SIRI, and DATEX II.
+- Final target scope: NAPCORE-wide ontology coverage, including DATEX II.
+- Current implemented scope: core `nits:` concepts plus standard modules for NeTEx, OpRa, and SIRI. DATEX II
+  is referenced as a recognized standard name in a few places in code (e.g. term lists), but none of its
+  ontology, alignment, or artifact-rule files exist yet (confirmed: `standards/datex.ttl`,
+  `alignments/nits-datex-align.ttl`, and `artifact-rules/datex-artifact-rules-v1.0.ttl` are all absent from
+  this directory) — treat DATEX II as not yet implemented, not current scope.
 - Current implemented scope also includes explicit cross-standard alignment modules, example-artifact modules for retrieval-oriented artifact linking, and optional artifact-derived rule modules for standard-specific normative reasoning.
 
 ## Files
@@ -35,16 +39,15 @@ The draft is intentionally small:
 - `standards/netex.ttl`: NeTEx standard ontology module.
 - `standards/opra.ttl`: OpRa standard ontology module.
 - `standards/siri.ttl`: SIRI standard ontology module.
-- `standards/datex.ttl`: DATEX II standard ontology module.
 - `examples/netex-examples.ttl`: NeTEx example-artifact ontology module linking repository examples to canonical standard concepts.
 - `alignments/nits-netex-align.ttl`: NITS-NeTEx alignment axioms.
 - `alignments/nits-opra-align.ttl`: NITS-OpRa alignment axioms.
 - `alignments/nits-siri-align.ttl`: NITS-SIRI alignment axioms.
-- `alignments/nits-datex-align.ttl`: NITS-DATEX II alignment axioms.
 - `artifact-rules/netex-artifact-rules-v1.0.ttl`: NeTEx XSD-derived normative rules (versioned, standard-scoped).
 - `artifact-rules/opra-artifact-rules-v1.0.ttl`: OpRa XSD-derived normative rules (versioned, standard-scoped).
 - `artifact-rules/siri-artifact-rules-v1.0.ttl`: SIRI XSD-derived normative rules (versioned, standard-scoped).
-- `artifact-rules/datex-artifact-rules-v1.0.ttl`: DATEX II XSD-derived normative rules (versioned, standard-scoped).
+
+(DATEX II equivalents of the above are planned, not yet created — see "Current Scope".)
 
 ## Generation Workflow
 The OpRa, SIRI and NeTEx ontologies are generated from their repositories by one command, `python manage.py build_standard_ontologies` (run in `backend/`), and are never edited by hand. See [GENERATION.md](GENERATION.md) for what each file is produced by, the measured results and the open steps. The summary below is older and partly out of date.
@@ -71,9 +74,9 @@ Most recent refresh used local repositories for NeTEx and OpRa and linked concep
 ## Ontology Topology
 The ontology topology is core + standards + examples + alignments (+ optional artifact-derived rules):
 1. Core ontology (`napcore-its.ttl`) provides canonical `nits:` concepts.
-2. Standard modules (`standards/netex.ttl`, `standards/opra.ttl`, `standards/siri.ttl`, `standards/datex.ttl`) provide standard-local concepts.
+2. Standard modules (`standards/netex.ttl`, `standards/opra.ttl`, `standards/siri.ttl`; a `datex.ttl` module is planned but not yet created) provide standard-local concepts.
 3. Example modules (`examples/*.ttl`) describe repository artifacts and map them to canonical standard concepts without polluting the conceptual standard ontologies.
-4. Alignment modules (`alignments/nits-netex-align.ttl`, `alignments/nits-opra-align.ttl`, `alignments/nits-siri-align.ttl`, `alignments/nits-datex-align.ttl`) declare explicit cross-standard mappings and equivalences.
+4. Alignment modules (`alignments/nits-netex-align.ttl`, `alignments/nits-opra-align.ttl`, `alignments/nits-siri-align.ttl`; a `nits-datex-align.ttl` is planned but not yet created) declare explicit cross-standard mappings and equivalences.
 5. Artifact-derived rules (`artifact-rules/*-artifact-rules-v*.ttl`) capture XSD-derived normativity (mandatory/optional/cardinality/required attributes), one standard per file and one version per file.
 
 This structure keeps runtime anchoring stable while allowing each standard ontology to evolve independently.
