@@ -141,9 +141,14 @@ LLM_MODEL=gpt-4o-mini
 GRAPHDB_ENABLED=True
 GRAPH_RAG_ENABLED=True
 
-# --- Leave these disabled in production ---
-DEV_JWT_AUTO_ISSUE=False
+# --- Keep this enabled until real authentication exists ---
+DEV_JWT_AUTO_ISSUE=True
 ```
+
+`DEV_JWT_AUTO_ISSUE=True` is how browsers get their token today: `POST /auth/dev-token` is the only way to
+obtain a JWT, and every visitor receives the same generic identity. The name suggests a development
+setting, but turning it off locks out every user whose browser has no cached token, and the Send button
+stays disabled with no error shown. Switch it off only after a scoped authentication system replaces it.
 
 Protect the file:
 
