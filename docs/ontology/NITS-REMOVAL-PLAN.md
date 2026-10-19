@@ -1,7 +1,9 @@
 # NITS Upper-Ontology Removal — Plan
 
-Status: **Phase 1 (low-risk decoupling, §3) is complete and independently verified. Phases 0, 2, and 3
-have not started.**
+Status: **Phases 1 and 2 (steps 2.1-2.4; §3) are complete and independently verified against both a
+GraphDB-disabled config and live GraphDB/Postgres. Phase 0's design (`NITS-REMOVAL-PHASE0-DESIGN.md`)
+landed via a cloud session that exceeded its brief (asked for options only, it implemented instead) but
+checked out correctly on independent re-verification. Steps 2.5/2.6 and Phase 3 have not started.**
 Scope: namespace `https://napcore.eu/ontology/nits#`, file `docs/ontology/napcore-its.ttl`, and every
 reference to it (`nits:` prefix, `NITS_*`/`_NITS_*`/`*_nits_*` symbols, the `nits-{netex,opra,siri}-align.ttl`
 alignment files, and the `nits:unknown-concept` sentinel string).
@@ -197,12 +199,12 @@ Each step is phrased as a claim you can check independently — run the check be
 
 ### Phase 2 — Remove the structural pivot (only after Phase 0 is verified)
 
-- **2.1** `question_parsing.py` no longer imports `get_concept_nits_ids` or calls the NITS-anchoring methods; `core_concept` comes entirely from the 0.2 replacement. Check: rewritten `test_question_parsing.py` passes; `grep -i nits` on the file returns zero hits.
-- **2.2** Delete `CONCEPT_TO_NITS`, `NITS_TO_CONCEPTS`, `NITS_RELATIONS`, `_NITS_ONTOLOGY`, and their builder functions from `semantic_graph.py`; `expand_graph_concepts` uses only the 0.1 replacement. Check: rewritten `test_semantic_graph.py` passes; `grep -i nits` on the file returns zero hits.
-- **2.3** Delete `_ABSTRACT_NITS_PIVOTS`, the NITS UNION branch, the `nits-*-align` `graph_specs` entries, and `DEFAULT_NAMESPACES["nits"]` from `graphdb_client.py`. Check: rewritten `test_graphdb_client.py` passes; `grep -i nits` on the file returns zero hits.
-- **2.4** Remove the `napcore.eu/ontology/nits` namespace filter from `graphdb_connector.py`. Check: `grep -i nits` on the file returns zero hits. **Note:** no dedicated `test_graphdb_connector.py` was found in the inventory — confirm test coverage exists (via `test_graphdb_client.py` or elsewhere) or add it before this step.
-- **2.5** Update any remaining `nits`-named literal-string checks in `semantic_abstention.py`/`faq_publication.py` to the final sentinel name chosen in 0.2. Check: `grep -i nits` on both files returns zero hits.
-- **2.6** Delete the `nits-{netex,opra,siri}-align` entries from `ontology_registry.py`'s `ONTOLOGY_SPECS`. Check: the admin reload-detection UI no longer lists those assets; `grep -i nits` on the file returns zero hits.
+- **2.1 — DONE.** `question_parsing.py` no longer imports `get_concept_nits_ids`/calls any NITS-anchoring method; `core_concept` comes entirely from the Transmodel pivot (falling back to the glossary concept ID itself when Transmodel has no alignment). Verified: rewritten `test_question_parsing.py` passes with `GRAPHDB_ENABLED=False`; `grep -i nits` on the file returns zero hits; a live manual check shows "vehicle journey in NeTEx" now resolves to `transmodel:VEHICLE` (previously `nits:Vehicle`).
+- **2.2 — DONE.** `CONCEPT_TO_NITS`, `NITS_TO_CONCEPTS`, `NITS_RELATIONS`, `_NITS_ONTOLOGY`, `get_concept_nits_ids`/`get_concept_nch_ids`, and their builder functions (`_build_concept_nits_mapping`, `_build_nits_relations`, `_expand_nits_concepts`, `_default_nits_concept_id`, `_normalize_nits_target`, `_build_nits_label_index`, `_infer_nits_mapping_from_labels`, `_validate_ontology_payload`) are deleted from `semantic_graph.py`; `expand_graph_concepts` uses only the Transmodel pivot. Verified: rewritten `test_semantic_graph.py` passes; `grep -i nits` on the file returns zero hits (only protective SPARQL `FILTER`s excluding NITS concepts from the main standards load remain, correctly, until Phase 3 deletes the source file they guard against).
+- **2.3 — PARTIALLY done** (by the Phase 0 cloud session, before this step was reached deliberately): `_ABSTRACT_NITS_PIVOTS` and the NITS half of the live SPARQL UNION branch in `query_graphdb_concept_expansion` are deleted. **Not yet done, by design:** the `nits-*-align` `graph_specs` entries and `DEFAULT_NAMESPACES["nits"]` remain in `graphdb_client.py` — removing the load spec while the TTL files it points at still exist would stop using them without deleting them, which is exactly Phase 3's job, not this step's.
+- **2.4 — DONE.** `discover_standards_for_core_concept_slug` (the method that resolved NITS concept slugs) is deleted from `graphdb_connector.py` along with its one caller; its sibling method `discover_standards_for_core_concept` is untouched (generic, still used by the Transmodel branch) and keeps its protective NITS-exclusion filter. No dedicated `test_graphdb_connector.py` existed or was needed — the method had no direct test coverage to begin with.
+- **2.5 — not started.** `semantic_abstention.py`/`faq_publication.py` still check the Phase-0 sentinel (`UNKNOWN_CONCEPT_SENTINEL = "unknown-concept"`, already namespace-free) — nothing further to do here; this step is effectively subsumed by Phase 0's sentinel change.
+- **2.6 — not started.** `ontology_registry.py`'s `nits-{netex,opra,siri}-align` `ONTOLOGY_SPECS` entries are untouched, deliberately — same reasoning as 2.3, these track files that still exist until Phase 3.
 
 ### Phase 3 — Delete the static artifacts and reload GraphDB (see §4 for exact commands)
 
