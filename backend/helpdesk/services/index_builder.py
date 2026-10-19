@@ -719,6 +719,29 @@ def _prune_indexed_source_files(repository_url: str) -> None:
         IndexedSourceFile.objects.filter(id__in=batch).delete()
 
 
+def prune_alias_spellings(canonical_url: str) -> int:
+    """Delete the chunks and file records stored under another spelling of `canonical_url`.
+
+    A repository indexed under an old name (OpRa-CEN/OpRa) and later under its canonical URL would
+    otherwise keep two full copies, because pruning only looks at one URL. Nothing is deleted unless
+    the canonical repository has chunks, so the only copy of a repository is never removed.
+    Returns the number of chunks deleted.
+    """
+
+    stored = set(SourceChunk.objects.order_by().values_list("repository_url", flat=True).distinct())
+    stored |= set(IndexedSourceFile.objects.order_by().values_list("repository_url", flat=True).distinct())
+    aliases = sorted(url for url in stored if url != canonical_url and canonical_repository_url(url) == canonical_url)
+    if not aliases or not SourceChunk.objects.filter(repository_url=canonical_url).exists():
+        return 0
+
+    deleted = 0
+    for alias in aliases:
+        chunk_ids = list(SourceChunk.objects.filter(repository_url=alias).values_list("chunk_id", flat=True))
+        deleted += _delete_chunks_by_ids(alias, chunk_ids)
+        IndexedSourceFile.objects.filter(repository_url=alias).delete()
+    return deleted
+
+
 def build_content_hash(content: str) -> str:
     """Content fingerprint used for incremental skip decisions."""
     return hashlib.sha1(content.encode("utf-8")).hexdigest()  # nosec B324 - deterministic non-crypto ID only

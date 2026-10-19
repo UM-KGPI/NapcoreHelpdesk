@@ -26,7 +26,8 @@ from pathlib import Path
 
 from django.conf import settings
 
-from helpdesk.services.index_builder import index_repository
+from helpdesk.services.index_builder import index_repository, prune_alias_spellings
+from helpdesk.services.repository_urls import canonical_repository_url
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +125,8 @@ def refresh_source(
         incremental=not full,
         prune=True,
     )
+    # After a successful index of the canonical URL, drop copies stored under an old spelling.
+    alias_chunks_removed = prune_alias_spellings(canonical_repository_url(source.url))
     return {
         "repository": source.url,
         "profile": source.profile,
@@ -134,6 +137,7 @@ def refresh_source(
         "created_chunks": stats.created_chunks,
         "updated_chunks": stats.updated_chunks,
         "deleted_chunks": stats.deleted_chunks,
+        "alias_chunks_removed": alias_chunks_removed,
     }
 
 

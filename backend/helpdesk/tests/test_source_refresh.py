@@ -12,8 +12,8 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import SimpleTestCase, TestCase, override_settings
 
-from helpdesk.models import SourceChunk
-from helpdesk.services.index_builder import IndexStats
+from helpdesk.models import IndexedSourceFile, SourceChunk
+from helpdesk.services.index_builder import IndexStats, prune_alias_spellings
 from helpdesk.services.source_refresh import (
     LOCK_FILE_NAME,
     SourceRefreshError,
@@ -109,7 +109,7 @@ class SyncCheckoutTests(SimpleTestCase):
                 sync_checkout(source, Path(tmp) / "repos")
 
 
-class RefreshAllSourcesTests(SimpleTestCase):
+class RefreshAllSourcesTests(TestCase):
     def _sources(self, root: Path) -> list[SourceRepository]:
         return [
             SourceRepository(name, f"https://github.com/TransmodelEcosystem/{name}", name.lower(), str(make_remote(root, name)))
@@ -193,7 +193,7 @@ class RefreshAllSourcesTests(SimpleTestCase):
         self.assertEqual(result["status"], "skipped")
 
 
-class RefreshTaskAndCommandTests(SimpleTestCase):
+class RefreshTaskAndCommandTests(TestCase):
     def test_task_returns_the_result_when_everything_is_ok(self):
         ok = {"status": "ok", "results": {"NeTEx": {"status": "ok"}}}
         with patch("helpdesk.tasks.refresh_all_sources", return_value=ok):
@@ -207,11 +207,13 @@ class RefreshTaskAndCommandTests(SimpleTestCase):
 
     def test_command_reports_each_repository_and_fails_on_errors(self):
         rows = {"SIRI": {"status": "ok", "mode": "full", "commit": "a" * 40, "scanned_files": 10, "skipped_files": 0,
-                         "created_chunks": 5, "updated_chunks": 0, "deleted_chunks": 0, "seconds": 1.2}}
+                         "created_chunks": 5, "updated_chunks": 0, "deleted_chunks": 0, "alias_chunks_removed": 423,
+                         "seconds": 1.2}}
         out = StringIO()
         with patch("helpdesk.management.commands.refresh_source_indexes.refresh_all_sources", return_value={"status": "ok", "results": rows}):
             call_command("refresh_source_indexes", "--only", "SIRI", "--full", stdout=out)
         self.assertIn("SIRI: ok full commit=aaaaaaaaaaaa", out.getvalue())
+        self.assertIn("alias_removed=423", out.getvalue())
 
         failed = {"SIRI": {"status": "failed", "error": "RuntimeError: x", "seconds": 0.1}}
         with patch("helpdesk.management.commands.refresh_source_indexes.refresh_all_sources", return_value={"status": "failed", "results": failed}):
@@ -259,3 +261,59 @@ class RefreshWithTheRealIndexerTests(TestCase):
             paths = set(SourceChunk.objects.filter(repository_url=self.CANONICAL).values_list("source_path", flat=True))
             self.assertIn("added.md", paths)
             self.assertNotIn("file1.md", paths)
+
+
+class AliasSpellingTests(TestCase):
+    """Production indexed OpRa under OpRa-CEN/OpRa; the refresh indexes TransmodelEcosystem/OpRa."""
+
+    OLD = "https://github.com/OpRa-CEN/OpRa"
+    CANONICAL = "https://github.com/TransmodelEcosystem/OpRa"
+
+    def _chunk(self, url, name):
+        return SourceChunk.objects.create(
+            repository_url=url, commit_sha="a" * 40, source_path=f"{name}.xsd", chunk_id=f"{url}-{name}", text="t",
+            embedding_vector=[0.1] * 1536,
+        )
+
+    def test_old_spelling_is_removed_after_the_canonical_copy_exists(self):
+        for name in ("a", "b"):
+            self._chunk(self.OLD, name)
+        IndexedSourceFile.objects.create(repository_url=self.OLD, source_path="a.xsd", commit_sha="a" * 40, content_hash="h")
+        self._chunk(self.CANONICAL, "a")
+
+        removed = prune_alias_spellings(self.CANONICAL)
+
+        self.assertEqual(removed, 2)
+        self.assertFalse(SourceChunk.objects.filter(repository_url=self.OLD).exists())
+        self.assertFalse(IndexedSourceFile.objects.filter(repository_url=self.OLD).exists())
+        self.assertEqual(SourceChunk.objects.filter(repository_url=self.CANONICAL).count(), 1)
+
+    def test_the_only_copy_is_never_removed(self):
+        self._chunk(self.OLD, "a")
+
+        self.assertEqual(prune_alias_spellings(self.CANONICAL), 0)
+        self.assertEqual(SourceChunk.objects.filter(repository_url=self.OLD).count(), 1)
+
+    def test_other_repositories_and_the_canonical_copy_are_untouched(self):
+        self._chunk(self.CANONICAL, "a")
+        self._chunk("https://github.com/TransmodelEcosystem/SIRI", "s")
+        self._chunk("https://github.com/SomeOrg/Other", "o")
+
+        self.assertEqual(prune_alias_spellings(self.CANONICAL), 0)
+        self.assertEqual(SourceChunk.objects.count(), 3)
+
+    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/OpRa-CEN/OpRa"})
+    def test_refresh_replaces_the_old_copy_and_reports_it(self):
+        for name in ("a", "b", "c"):
+            self._chunk(self.OLD, name)
+
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            remote = make_remote(root, "OpRa", files=25)
+            source = SourceRepository("OpRa", self.CANONICAL, "default", str(remote))
+            result = refresh_all_sources([source], checkout_root=root / "repos")
+
+        self.assertEqual(result["status"], "ok", result)
+        self.assertEqual(result["results"]["OpRa"]["alias_chunks_removed"], 3)
+        self.assertFalse(SourceChunk.objects.filter(repository_url=self.OLD).exists())
+        self.assertGreaterEqual(SourceChunk.objects.filter(repository_url=self.CANONICAL).count(), 25)

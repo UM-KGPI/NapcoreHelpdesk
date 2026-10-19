@@ -24,6 +24,9 @@ REPOSITORY_ALIASES = {
     # SIRI: the main source is TransmodelEcosystem/SIRI; SIRI-CEN/SIRI redirects there.
     "https://github.com/transmodelecosystem/siri": "https://github.com/TransmodelEcosystem/SIRI",
     "https://github.com/siri-cen/siri": "https://github.com/TransmodelEcosystem/SIRI",
+    # OpRa: OpRa-CEN/OpRa is the same GitHub repository (same id) as TransmodelEcosystem/OpRa.
+    "https://github.com/transmodelecosystem/opra": "https://github.com/TransmodelEcosystem/OpRa",
+    "https://github.com/opra-cen/opra": "https://github.com/TransmodelEcosystem/OpRa",
 }
 
 

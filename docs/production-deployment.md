@@ -321,7 +321,8 @@ docker compose -f docker-compose.prod.yml exec -T celery-worker \
 ```
 
 Each repository prints one line (`ok`, the commit, the number of files scanned and chunks
-created, updated and deleted) or `FAILED` with the reason; the command exits with an error if any
+created, updated and deleted, and `alias_removed`: chunks deleted because they were stored under
+another spelling of the same repository) or `FAILED` with the reason; the command exits with an error if any
 repository failed. `--only SIRI` refreshes one repository. Indexing can take several minutes
 (NeTEx is the largest). Follow it in another terminal:
 
@@ -595,7 +596,11 @@ $C logs -f celery-worker
 ```
 
 Each repository prints `ok` with a commit and counts, or `FAILED`. Compare the per-repository chunk counts
-with 12.0 (SIRI must not double: that was the duplicate source removed in #40), then ask a SIRI question and
+with 12.0 (SIRI must not double: that was the duplicate source removed in #40). OpRa was indexed under the old
+name `OpRa-CEN/OpRa`, the same GitHub repository as `TransmodelEcosystem/OpRa`: the first refresh after the alias
+fix creates the OpRa chunks under the canonical URL and then deletes the old ones, so expect `alias_removed=423`
+for OpRa (or the count from 12.0) and 0 for the others, and afterwards one OpRa entry in the chunk table,
+under `TransmodelEcosystem/OpRa`, then ask a SIRI question and
 confirm it cites the SIRI repository. Only then switch on the daily refresh (7.3).
 
 ### 12.4 Relevance check (optional)
