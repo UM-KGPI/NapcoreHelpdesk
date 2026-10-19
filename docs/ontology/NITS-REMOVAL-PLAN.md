@@ -23,19 +23,22 @@ pass against live GraphDB/Postgres):
   entry found while fixing it (`Bash(make ontology-alignment-gap *)`, dead since that target no longer
   exists).
 
-**Two corrections to this document, found while verifying Phase 1 (neither blocks anything above):**
+**Two corrections to this document, found while verifying Phase 1 (neither blocks anything above),
+both now addressed:**
 - §2 group E previously stated `docs/ontology/ontology-enrichment.md` does not exist. That was checking the
   wrong path — **`docs/ontology-enrichment.md`** (one level up, at repo-root `docs/`) does exist, and it
-  documents the `ontology_alignment_gap` workflow in detail (heuristic NITS-category table, example output,
+  documented the `ontology_alignment_gap` workflow in detail (heuristic NITS-category table, example output,
   "Alignment axioms → `docs/ontology/alignments/nits-netex-align.ttl`"). Since step 1.5 deleted that command,
-  this doc is now stale and belongs in group E's doc-rewrite list — not fixed yet, not blocking.
-- A previously unnoticed **`backend/docs/ontology/standards/`** directory exists (a real directory, not a
-  symlink) with its own stale copies of `netex.ttl`/`opra.ttl`, still carrying the old unused `@prefix nits:`
-  line. Confirmed by grep: no code, script, or Makefile target anywhere in the repo references this path —
-  the live app resolves its ontology directory to repo-root `docs/ontology/` only (`graphdb_client.py`,
-  `parents[3] / "docs" / "ontology"`). This looks like an orphaned duplicate, not a second deployment target.
-  Not deleted — flagged for a decision, since it's outside this plan's original scope and deleting a whole
-  directory wasn't something to do unasked.
+  this doc was stale — it has been rewritten to drop every reference to the removed command/workflow while
+  keeping the unrelated, still-working `make ontology-scan-examples` documentation intact.
+- A previously unnoticed `backend/docs/ontology/standards/` directory existed with its own stale copies
+  of `netex.ttl`/`opra.ttl`, still carrying the old unused `@prefix nits:` line. Confirmed by grep: no code,
+  script, or Makefile target anywhere references this path — the live app resolves its ontology directory to
+  repo-root `docs/ontology/` only (`graphdb_client.py`, `parents[3] / "docs" / "ontology"`). Further
+  correction: this directory was not actually part of the repository at all — it is named in
+  `.git/info/exclude` (a local-only, personal exclude list, never committed or shared with other developers
+  or CI), meaning it was local build/checkout residue on this one machine, not shared project content. It
+  has since been removed from the local checkout; nothing to commit for this item.
 
 ---
 
