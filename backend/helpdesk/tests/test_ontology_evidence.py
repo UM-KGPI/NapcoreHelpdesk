@@ -5,6 +5,7 @@ from unittest.mock import patch
 from django.test import SimpleTestCase
 
 from helpdesk.services.ontology_evidence import (
+    indexed_commit_shas,
     format_definitions_as_chunks,
     retrieve_concept_definitions,
 )
@@ -195,6 +196,33 @@ class FormatDefinitionsAsChunksTests(SimpleTestCase):
 
         self.assertEqual(len(chunks), 1)
         self.assertNotIn("differs from the Transmodel definition", chunks[0]["text"])
+
+    def test_definition_links_use_the_indexed_commit(self):
+        opra = self._netex_stop_place(
+            concept="https://transmodel-cen.eu/opra/1.0#Opra",
+            xsd_source="xsd/opra.xsd",
+            tm_concept="",
+            tm_label="",
+            tm_definition="",
+            tm_status="",
+        )
+        sha = "3b829b76247bdd577b60abfcf6568c8f2a6d118b"
+
+        indexed = format_definitions_as_chunks([opra], commit_shas={"OpRa": sha})[0]
+        self.assertEqual(
+            indexed["repositoryUrl"], f"https://github.com/TransmodelEcosystem/OpRa/blob/{sha}/xsd/opra.xsd"
+        )
+        self.assertEqual(indexed["commitSha"], sha)
+
+        # Nothing indexed: OpRa has no v1.0 tag, so the fallback must not name one.
+        fallback = format_definitions_as_chunks([opra])[0]
+        self.assertEqual(
+            fallback["repositoryUrl"], "https://github.com/TransmodelEcosystem/OpRa/blob/main/xsd/opra.xsd"
+        )
+
+    def test_indexed_commit_shas_is_empty_when_the_database_cannot_be_read(self):
+        # SimpleTestCase forbids database queries, so the lookup must degrade to the fallback refs.
+        self.assertEqual(indexed_commit_shas(), {})
 
     def test_unaligned_concept_is_unchanged(self):
         chunks = format_definitions_as_chunks(

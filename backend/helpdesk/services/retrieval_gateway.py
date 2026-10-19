@@ -53,6 +53,7 @@ from helpdesk.services.example_retrieval import (
 )
 from helpdesk.services.ontology_evidence import (
     format_definitions_as_chunks,
+    indexed_commit_shas,
     retrieve_concept_definitions,
 )
 from helpdesk.services.graphdb_client import (
@@ -1257,7 +1258,7 @@ def retrieve_chunks_with_trace(
                     password=getattr(settings, "GRAPHDB_PASSWORD", ""),
                 )
                 if definitions:
-                    definition_chunks = format_definitions_as_chunks(definitions)
+                    definition_chunks = format_definitions_as_chunks(definitions, commit_shas=indexed_commit_shas())
                     ontology_definitions_added = len(definition_chunks)
                     logger.info(f"Retrieved {ontology_definitions_added} ontology definitions for {len(question_concepts)} concepts")
                     # Add definitions to the retrieval results (highest quality evidence)
