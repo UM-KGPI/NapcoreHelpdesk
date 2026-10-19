@@ -59,6 +59,33 @@ class LLMGeneratorTests(SimpleTestCase):
         self.assertIn("fenced code block", messages[0]["content"])
         self.assertIn("single evidence block", messages[0]["content"])
 
+    def _system_prompt(self, question: str) -> str:
+        chunk = {
+            "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx",
+            "commitSha": "abc",
+            "sourcePath": "xsd/netex_part_1/part1_ifopt/netex_ifopt_stopPlace_version.xsd",
+            "chunkId": "chunk-1",
+            "text": "StopPlace definition",
+            "score": 0.91,
+        }
+        return _build_messages(question=question, chunks=[chunk], scope=[])[0]["content"]
+
+    def test_definition_question_asks_for_the_definition_first_and_no_code(self):
+        for question in ("what is a StopPlace?", "What is a ServiceJourney in NeTEx?", "Define Quay"):
+            with self.subTest(question=question):
+                prompt = self._system_prompt(question)
+                self.assertIn("start with the definition of X", prompt)
+                self.assertNotIn("Include a relevant code example", prompt)
+
+    def test_questions_asking_for_structure_or_examples_keep_their_own_instructions(self):
+        technical = self._system_prompt("What is the XML structure of a StopPlace?")
+        self.assertIn("Include a relevant code example", technical)
+        self.assertNotIn("start with the definition of X", technical)
+
+        example = self._system_prompt("Show me a NeTEx XML example for stop points.")
+        self.assertIn("single evidence block", example)
+        self.assertNotIn("start with the definition of X", example)
+
     @patch("helpdesk.services.llm_model_recovery.check_gateway_models")
     @patch("helpdesk.services.llm_generator.request.urlopen")
     @patch("helpdesk.services.llm_generator._build_ssl_context")

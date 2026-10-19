@@ -51,6 +51,19 @@ def _question_requests_verbatim_example(question: str) -> bool:
     return asks_for_example and asks_for_code
 
 
+_DEFINITION_QUESTION_RE = re.compile(r"\b(what\s+is|what\s+are|define|definition\s+of|meaning\s+of)\b")
+_NOT_PURE_DEFINITION_TERMS = ("example", "sample", "snippet", "xml", "json", "yaml", "code", "show", "structure", "how")
+
+
+def _question_asks_for_definition(question: str) -> bool:
+    """True for "what is X?" questions that do not ask for examples, code or structure."""
+
+    question_lower = question.lower()
+    if not _DEFINITION_QUESTION_RE.search(question_lower):
+        return False
+    return not any(term in question_lower for term in _NOT_PURE_DEFINITION_TERMS)
+
+
 def _question_about_xml_or_technical(question: str) -> bool:
     question_lower = question.lower()
     mentions_standard = any(term in question_lower for term in ["xml", "netex", "siri", "opra", "transmodel", "json", "code"])
@@ -761,6 +774,15 @@ def _build_messages(
             "When showing XML/JSON/YAML, include one fenced code block (```xml) of 6-20 lines from a single evidence block. "
             "Quote only verbatim excerpts from evidence blocks. Never synthesize or combine structures across sources. "
             "If asking for availability ('Is there any...?'), list all matching examples found in the evidence with their source paths and brief descriptions."
+        )
+    elif _question_asks_for_definition(question):
+        system_prompt = (
+            f"{system_prompt} "
+            "For definition questions ('what is X?'): start with the definition of X, quoted from the definition "
+            "evidence blocks and naming the standard each comes from. Then add at most a short paragraph on how X "
+            "relates to other concepts (parent concept, what it contains or is part of) if the evidence says so. "
+            "Use example (.xml) blocks only to illustrate in one sentence at most; do not walk through the details "
+            "or mappings of an example file, and do not include code unless the question asks for it."
         )
     elif _question_about_xml_or_technical(question):
         system_prompt = (

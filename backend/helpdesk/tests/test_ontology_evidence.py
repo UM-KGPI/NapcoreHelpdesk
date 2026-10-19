@@ -137,7 +137,13 @@ class FormatDefinitionsAsChunksTests(SimpleTestCase):
 
         self.assertEqual(netex_chunk["standards_scope"], ["NeTEx"])
         self.assertIn("Transmodel concept: STOP PLACE", netex_chunk["text"])
-        self.assertIn("use the Transmodel definition as the reference", netex_chunk["text"])
+        # The comparison comes from the alignment data, so the Transmodel chunk carries it,
+        # not the NeTEx chunk whose source file (the XSD) does not contain it.
+        self.assertIn(
+            "Comparison with NeTEx StopPlace: The NeTEx XSD definition differs from the Transmodel definition",
+            tm_chunk["text"],
+        )
+        self.assertNotIn("differs from the Transmodel definition", netex_chunk["text"])
 
     def test_transmodel_definition_emitted_once_per_concept(self):
         tm_own = {
@@ -152,6 +158,26 @@ class FormatDefinitionsAsChunksTests(SimpleTestCase):
 
         tm_chunks = [chunk for chunk in chunks if chunk["standards_scope"] == ["Transmodel"]]
         self.assertEqual(len(tm_chunks), 1)
+
+    def test_comparison_note_kept_when_transmodel_definition_comes_first(self):
+        tm_own = {
+            "concept": TM_STOP_PLACE,
+            "type": "http://www.w3.org/2002/07/owl#Class",
+            "definition": TM_DEFINITION,
+            "prefLabel": "",
+            "altLabels": [],
+            "xsd_source": "",
+        }
+        chunks = format_definitions_as_chunks([tm_own, self._netex_stop_place()])
+
+        tm_chunk = next(chunk for chunk in chunks if chunk["standards_scope"] == ["Transmodel"])
+        self.assertIn("Comparison with NeTEx StopPlace", tm_chunk["text"])
+
+    def test_no_comparison_note_without_transmodel_definition(self):
+        chunks = format_definitions_as_chunks([self._netex_stop_place(tm_definition="")])
+
+        self.assertEqual(len(chunks), 1)
+        self.assertNotIn("differs from the Transmodel definition", chunks[0]["text"])
 
     def test_unaligned_concept_is_unchanged(self):
         chunks = format_definitions_as_chunks(
