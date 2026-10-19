@@ -47,7 +47,10 @@ jobs:
 
       - name: Install dependencies
         working-directory: backend
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
+          # build_transmodel_alignment needs rdflib, which the application itself does not.
+          pip install "rdflib==7.6.0"
 
       - name: Clone the standards repositories (default branch)
         id: upstream
