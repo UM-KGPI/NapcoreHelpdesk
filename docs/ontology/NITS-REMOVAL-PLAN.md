@@ -1,9 +1,23 @@
 # NITS Upper-Ontology Removal — Plan
 
-Status: **Phases 1 and 2 (steps 2.1-2.4; §3) are complete and independently verified against both a
-GraphDB-disabled config and live GraphDB/Postgres. Phase 0's design (`NITS-REMOVAL-PHASE0-DESIGN.md`)
-landed via a cloud session that exceeded its brief (asked for options only, it implemented instead) but
-checked out correctly on independent re-verification. Steps 2.5/2.6 and Phase 3 have not started.**
+Status: **NITS is fully removed from both the codebase and the live GraphDB this was run against.**
+Phases 0-3 are complete: `napcore-its.ttl` and the 3 `nits-{netex,opra,siri}-align.ttl` files are deleted
+from the repository; their graphs were deleted from GraphDB by a `--replace` reload (confirmed via the
+load command's own output); a direct SPARQL `ASK` across every named graph (not just the default graph)
+for any triple under `https://napcore.eu/ontology/nits#` returns `false`. The full test suite (269 tests)
+shows only two pre-existing, unrelated failure categories that were confirmed present identically on the
+pre-removal code (§7 risk 1 below is resolved; the commit_sha/None bug and the live-GraphDB-vs-mock test
+sensitivity are both independent, older issues). Phase 0's design document (`NITS-REMOVAL-PHASE0-DESIGN.md`)
+was produced by a cloud session that exceeded its brief (asked for options only, it implemented instead)
+but checked out correctly on independent re-verification.
+
+**What remains, deliberately out of this plan's scope:** `graphdb_client.py`'s `STANDARD_GRAPH_SCOPE`/
+`query_graphdb_concept_expansion` comments and `graphdb_connector.py`'s one protective NITS-exclusion
+filter in `discover_standards_for_core_concept` are harmless and were left as historical context /
+defense-in-depth. The documentation rewrite (`docs/ontology/README.md`, `GENERATION.md`,
+`backend/README.md`) describing the old NITS-centric architecture has **not** been done yet — that's the
+one real follow-up task, now unblocked since the architecture it needs to describe (Transmodel as the
+cross-standard pivot) is finally the actual, current state rather than a moving target.
 Scope: namespace `https://napcore.eu/ontology/nits#`, file `docs/ontology/napcore-its.ttl`, and every
 reference to it (`nits:` prefix, `NITS_*`/`_NITS_*`/`*_nits_*` symbols, the `nits-{netex,opra,siri}-align.ttl`
 alignment files, and the `nits:unknown-concept` sentinel string).
