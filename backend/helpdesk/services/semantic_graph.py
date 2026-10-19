@@ -16,6 +16,7 @@ import hashlib
 import logging
 import os
 import re
+from pathlib import Path
 from typing import Iterable
 
 from helpdesk.models import SourceChunk
@@ -459,10 +460,66 @@ def _build_concept_aliases_from_ontology(ontology: dict) -> dict[str, set[str]]:
     return aliases
 
 
+_TRANSMODEL_ALIGN_ENTRY_PATTERN = re.compile(
+    r"^(?P<std>[a-z]+):(?P<local>[A-Za-z0-9_]+)\s*\n\s*skos:exactMatch\s+tm:(?P<tm_class>[A-Z0-9_]+)\s*;",
+    re.MULTILINE,
+)
+
+
+def _parse_transmodel_alignment_file(path: Path) -> dict[str, str]:
+    """Parse one generated transmodel-<standard>-align.ttl file.
+
+    Returns {"<standard>:<Class>": "transmodel:<TM_CLASS>"} for every
+    skos:exactMatch entry. Pure text parsing (no rdflib dependency, no
+    GraphDB) so this loads in every environment, GraphDB-enabled or not.
+    """
+    try:
+        content = path.read_text(encoding="utf-8")
+    except OSError:
+        logger.warning("Transmodel alignment file not found: %s", path)
+        return {}
+
+    mapping: dict[str, str] = {}
+    for match in _TRANSMODEL_ALIGN_ENTRY_PATTERN.finditer(content):
+        concept_id = f"{match.group('std')}:{match.group('local')}"
+        mapping[concept_id] = f"transmodel:{match.group('tm_class')}"
+    return mapping
+
+
+def _load_transmodel_pivot_from_static_files() -> tuple[dict[str, str], dict[str, set[str]]]:
+    """Build the Transmodel cross-standard pivot from the committed alignment TTLs.
+
+    Non-NITS replacement for the cross-standard bridge in
+    _build_concept_nits_mapping/NITS_TO_CONCEPTS: standard concepts that share
+    a direct skos:exactMatch to the same Transmodel class are treated as
+    siblings. Sourced entirely from docs/ontology/alignments/transmodel-
+    {netex,siri,opra}-align.ttl, which build_transmodel_alignment.py generates
+    offline from the standards' own TTLs and never touches GraphDB -- so,
+    unlike the NITS pivot (loaded from a live GraphDB query at process
+    startup), this pivot has no GraphDB-availability dependency at all and
+    cannot go silently empty because GraphDB happened to be unreachable when
+    this worker process started.
+    """
+    ontology_dir = Path(__file__).resolve().parents[3] / "docs" / "ontology" / "alignments"
+    concept_to_transmodel: dict[str, str] = {}
+    for standard in ("netex", "siri", "opra"):
+        align_path = ontology_dir / f"transmodel-{standard}-align.ttl"
+        concept_to_transmodel.update(_parse_transmodel_alignment_file(align_path))
+
+    transmodel_to_concepts: dict[str, set[str]] = {}
+    for concept_id, tm_id in concept_to_transmodel.items():
+        transmodel_to_concepts.setdefault(tm_id, set()).add(concept_id)
+
+    return concept_to_transmodel, transmodel_to_concepts
+
+
 # Load ontologies at module initialization
 _ONTOLOGY = _load_ontology()
 _NITS_ONTOLOGY = _load_nits_ontology()
 GRAPH_CONCEPT_ALIASES = _build_concept_aliases_from_ontology(_ONTOLOGY)
+
+# Static, GraphDB-independent cross-standard pivot (see docstring above).
+CONCEPT_TO_TRANSMODEL, TRANSMODEL_TO_CONCEPTS = _load_transmodel_pivot_from_static_files()
 
 _FALLBACK_GRAPH_CONCEPT_ALIASES = {
     "opra:DelayedJourney": {"delayed journey", "delayed journeys"},
@@ -784,7 +841,9 @@ def _build_graph_relations_from_ontology(ontology: dict) -> dict[str, set[str]]:
 
     # Cross-standard bridge: concepts mapped to the same NCH node are treated as
     # directly related so one-hop expansion can traverse standard boundaries.
-    for aligned_concepts in NITS_TO_CONCEPTS.values():
+    # Both the NITS pivot (above) and the static Transmodel pivot (below) feed
+    # this bridge; see expand_graph_concepts for why there are two.
+    for aligned_concepts in (*NITS_TO_CONCEPTS.values(), *TRANSMODEL_TO_CONCEPTS.values()):
         if len(aligned_concepts) < 2:
             continue
         sorted_ids = sorted(aligned_concepts)
@@ -851,6 +910,33 @@ def get_concept_nch_ids(concept_ids: set[str]) -> set[str]:
     return get_concept_nits_ids(concept_ids)
 
 
+def get_concept_transmodel_ids(concept_ids: set[str]) -> set[str]:
+    """Return resolved Transmodel concept IDs for ontology concept IDs.
+
+    Static counterpart to get_concept_nits_ids: looks up CONCEPT_TO_TRANSMODEL,
+    which has no GraphDB dependency (see _load_transmodel_pivot_from_static_files).
+    """
+
+    return {
+        CONCEPT_TO_TRANSMODEL[concept_id]
+        for concept_id in concept_ids
+        if concept_id in CONCEPT_TO_TRANSMODEL
+    }
+
+
+def _expand_transmodel_concepts(transmodel_ids: set[str]) -> set[str]:
+    """Return the sibling glossary concepts sharing each given Transmodel ID.
+
+    No multi-hop needed here (unlike _expand_nits_concepts): the alignment
+    files only record direct skos:exactMatch pairs, not a Transmodel-internal
+    relation graph, so a sibling group is already the full pivot in one step.
+    """
+    expanded: set[str] = set()
+    for transmodel_id in transmodel_ids:
+        expanded.update(TRANSMODEL_TO_CONCEPTS.get(transmodel_id, set()))
+    return expanded
+
+
 def expand_graph_concepts(concepts: set[str], hops: int = 1) -> set[str]:
     expanded = set(concepts)
 
@@ -859,6 +945,14 @@ def expand_graph_concepts(concepts: set[str], hops: int = 1) -> set[str]:
     expanded_nits_ids = _expand_nits_concepts(seed_nits_ids, hops=hops)
     for nits_id in expanded_nits_ids:
         expanded.update(NITS_TO_CONCEPTS.get(nits_id, set()))
+
+    # Cross-standard phase: glossary -> Transmodel -> glossary. Runs alongside
+    # (not instead of) the NITS phase above: NITS still carries real sibling
+    # data in any GraphDB-enabled deployment until Phase 2 removes it, while
+    # this phase has no GraphDB dependency at all, so cross-standard expansion
+    # does not go silently empty just because GraphDB was unreachable when
+    # this worker started (or is disabled altogether, as in this environment).
+    expanded.update(_expand_transmodel_concepts(get_concept_transmodel_ids(expanded)))
 
     frontier = set(expanded)
     for _ in range(max(0, hops)):
@@ -875,6 +969,12 @@ def expand_graph_concepts(concepts: set[str], hops: int = 1) -> set[str]:
                 if equivalent not in expanded:
                     expanded.add(equivalent)
                     next_frontier.add(equivalent)
+
+        # Keep Transmodel-equivalent concepts synchronized as the frontier grows.
+        for equivalent in _expand_transmodel_concepts(get_concept_transmodel_ids(next_frontier)):
+            if equivalent not in expanded:
+                expanded.add(equivalent)
+                next_frontier.add(equivalent)
 
         frontier = next_frontier
         if not frontier:
