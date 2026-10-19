@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase, override_settings
 
-from helpdesk.services.question_parsing import SemanticQuery
+from helpdesk.services.question_parsing import UNKNOWN_CONCEPT_SENTINEL, SemanticQuery
 from helpdesk.services.semantic_abstention import (
     LOW_CONFIDENCE_MESSAGE,
     NO_CONCEPT_MESSAGE,
@@ -13,12 +13,12 @@ from helpdesk.services.semantic_abstention import (
 )
 
 
-def _query(*, concept="nits:unknown-concept", confidence=0.45, terms=("weather",), discovered=()):
+def _query(*, concept=UNKNOWN_CONCEPT_SENTINEL, confidence=0.45, terms=("weather",), discovered=()):
     return SemanticQuery(
         intent="definition",
         normativity="unspecified",
         core_concept=concept,
-        core_concepts=[] if concept == "nits:unknown-concept" else [concept],
+        core_concepts=[] if concept == UNKNOWN_CONCEPT_SENTINEL else [concept],
         ambiguous_core_concept=False,
         candidate_standards=[],
         original_terms=list(terms),
