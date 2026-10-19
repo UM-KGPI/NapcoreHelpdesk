@@ -575,7 +575,7 @@ opra:OpraPayloadDelivery
 
 opra:OpraSubscriptionRequest
     a owl:Class ;
-    skos:definition "General OpRa Subscription Request that subscribes to PublicationDelivery responses."@en ;
+    skos:definition "General OpRa Subscription Request that subscribes to PublicationDelivery deliveries."@en ;
     skos:prefLabel "opra subscription request"@en ;
     skos:altLabel "oprasubscriptionrequest"@en ;
     rdfs:comment "Extracted from: xsd/opra_request.xsd"@en .
