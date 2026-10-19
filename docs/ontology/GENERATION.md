@@ -123,8 +123,27 @@ class recovery. Two runs on the same repositories give byte-identical files (tes
 1. ~~Give both generators path and output options.~~ Done.
 2. ~~Re-baseline `opra.ttl` and `siri.ttl` with the current extractor.~~ Done (#59).
 3. ~~Decide for NeTEx.~~ Decision: nothing is maintained by hand; the pipeline generates it.
-4. Replace the committed `netex.ttl` with the generated one, after loading it into a GraphDB and running the
-   benchmark with the app's scope selection (the generated file has 16 more classes and about 100 more
-   properties).
-5. Then the weekly workflow on GitHub-hosted runners: clone the three repositories at their default
-   branch, run the extractor, compare, and open a pull request or an issue with the differences.
+4. ~~Replace the committed `netex.ttl` with the generated one~~ Done (#61): loaded into a GraphDB and benchmarked
+   with the app's scope selection first (hit@10 0.843 both ways).
+5. ~~The weekly workflow~~ Done: `.github/workflows/ontology-drift.yml`, described below.
+
+## The scheduled check
+
+`Ontology Drift Check` runs every Monday at 05:23 UTC and on demand (Actions, "Run workflow"). On a
+GitHub-hosted runner it clones the default branch of `TransmodelEcosystem/NeTEx`, `SIRI` and `OpRa`,
+runs `build_standard_ontologies`, and compares the three files with the committed ones.
+
+- **No difference:** nothing happens; the run summary lists the three commits it used.
+- **Difference:** it also runs `build_transmodel_alignment`, drops any alignment file whose only change
+  is its date line, and opens (or updates) the pull request `chore/regenerate-standard-ontologies` with
+  the class counts and the three upstream commits.
+- **A checkout with fewer than 20 files fails the run** instead of regenerating from a broken clone.
+
+The pull request is opened with the workflow token, so it has no CI checks. Before merging, load the
+changed graphs into a GraphDB (`load_graphdb_ontologies --apply --replace`) and run
+`run_retrieval_benchmark --app-scope`, as was done for #61; after merging, repeat the load on the server.
+
+Checked before the first run by executing the workflow's steps locally against the upstream default
+branches (NeTEx `dc6f162`, SIRI `b42cdba`, OpRa `3b829b7`, on 2026-10-19): the only difference was one
+reworded definition in `opra.ttl`. Not checked locally: Python 3.11 (the runner's version; the local
+runs used 3.13) and the pull-request step itself.
