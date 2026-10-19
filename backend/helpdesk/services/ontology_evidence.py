@@ -27,7 +27,6 @@ TRANSMODEL_SOURCE_URL = (
 # their rdfs:comment values differ (e.g. "Extracted from OpRa XSD source: opra.xsd. <definition>"), and
 # reading them gave citations a source path that does not exist.
 DEFINITION_GRAPHS = (
-    "https://napcore.eu/graph/core/napcore-its",
     "https://napcore.eu/graph/standards/transmodel",
     *(f"https://napcore.eu/graph/standards/{standard}" for standard in TRANSMODEL_ALIGNED_STANDARDS),
     *(f"https://napcore.eu/graph/alignments/transmodel-{standard}" for standard in TRANSMODEL_ALIGNED_STANDARDS),
@@ -461,7 +460,6 @@ def _ensure_uri(concept_id: str) -> str:
         "opra": "https://transmodel-cen.eu/opra/1.0#",
         "siri": "https://siri.org.uk/siri/1.3#",
         "transmodel": "https://transmodel-cen.eu/6.2/",
-        "nits": "https://napcore.eu/ontology/nits#",
     }
     for prefix, namespace in prefix_map.items():
         if concept_id.startswith(f"{prefix}:"):

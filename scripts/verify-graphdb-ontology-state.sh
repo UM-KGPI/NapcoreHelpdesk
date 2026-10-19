@@ -8,9 +8,6 @@ GRAPHDB_QUERY_ENDPOINT="${GRAPHDB_ENDPOINT%/}/repositories/${GRAPHDB_REPOSITORY}
 
 expected_graphs=(
   "https://napcore.eu/graph/alignments/datex"
-  "https://napcore.eu/graph/alignments/netex"
-  "https://napcore.eu/graph/alignments/opra"
-  "https://napcore.eu/graph/alignments/siri"
   "https://napcore.eu/graph/alignments/transmodel-netex"
   "https://napcore.eu/graph/alignments/transmodel-opra"
   "https://napcore.eu/graph/alignments/transmodel-siri"
@@ -18,7 +15,6 @@ expected_graphs=(
   "https://napcore.eu/graph/artifact-rules/netex/v1.0"
   "https://napcore.eu/graph/artifact-rules/opra/v1.0"
   "https://napcore.eu/graph/artifact-rules/siri/v1.0"
-  "https://napcore.eu/graph/core/napcore-its"
   "https://napcore.eu/graph/examples/netex"
   "https://napcore.eu/graph/standards/datex"
   "https://napcore.eu/graph/standards/netex"

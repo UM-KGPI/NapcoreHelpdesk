@@ -240,7 +240,7 @@ class GraphDbClientTests(TestCase):
             )
 
         graph_uris = {item["graphUri"] for item in results}
-        self.assertEqual(len(results), 12)
+        self.assertEqual(len(results), 8)
         for standard in ("netex", "siri", "opra"):
             self.assertIn(f"https://napcore.eu/graph/alignments/transmodel-{standard}", graph_uris)
         self.assertNotIn("https://napcore.eu/graph/alignments/transmodel", graph_uris)
@@ -260,9 +260,21 @@ class GraphDbClientTests(TestCase):
                 replace=True,
             )
 
-        delete_mock.assert_called_once()
-        self.assertEqual(delete_mock.call_args.kwargs["graph_uri"], "https://napcore.eu/graph/alignments/transmodel")
-        self.assertTrue(results[-1]["retired"])
+        self.assertEqual(delete_mock.call_count, 5)
+        deleted_graph_uris = {call.kwargs["graph_uri"] for call in delete_mock.call_args_list}
+        self.assertEqual(
+            deleted_graph_uris,
+            {
+                "https://napcore.eu/graph/alignments/transmodel",
+                "https://napcore.eu/graph/core/napcore-its",
+                "https://napcore.eu/graph/alignments/netex",
+                "https://napcore.eu/graph/alignments/opra",
+                "https://napcore.eu/graph/alignments/siri",
+            },
+        )
+        retired_results = results[-5:]
+        self.assertTrue(all(item["retired"] for item in retired_results))
+        self.assertEqual({item["graphUri"] for item in retired_results}, deleted_graph_uris)
 
     def test_load_default_ontology_graphs_includes_selected_artifact_rules(self):
         with (
