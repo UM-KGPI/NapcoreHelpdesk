@@ -80,7 +80,7 @@ class RetrieveConceptDefinitionsTests(SimpleTestCase):
 
         sent_query = query_mock.call_args.kwargs["sparql_query"]
         self.assertIn("skos:exactMatch|^skos:exactMatch ?tmConcept", sent_query)
-        self.assertIn("nits:transmodelDefinitionStatus", sent_query)
+        self.assertIn("tmalign:transmodelDefinitionStatus", sent_query)
         self.assertEqual(len(definitions), 1)
         self.assertEqual(definitions[0]["tm_definition"], TM_DEFINITION)
         self.assertEqual(definitions[0]["tm_status"], "differs")

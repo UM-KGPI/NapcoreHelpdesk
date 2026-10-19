@@ -144,7 +144,7 @@ class RenderTests(SimpleTestCase):
         )
         turtle = render_turtle(plan, generated_on=date(2026, 10, 17))
         self.assertIn("netex:StopPlace\n    skos:exactMatch tm:STOP_PLACE ;", turtle)
-        self.assertIn('nits:transmodelDefinitionStatus "differs" ;', turtle)
+        self.assertIn('tmalign:transmodelDefinitionStatus "differs" ;', turtle)
         self.assertIn("@prefix netex: <https://netex.org.uk/netex/2.0#> .", turtle)
 
         report = render_report([plan], generated_on=date(2026, 10, 17))

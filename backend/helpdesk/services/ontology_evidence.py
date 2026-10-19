@@ -33,7 +33,7 @@ DEFINITION_GRAPHS = (
     *(f"https://napcore.eu/graph/alignments/transmodel-{standard}" for standard in TRANSMODEL_ALIGNED_STANDARDS),
 )
 
-# Values of nits:transmodelDefinitionStatus (see alignments/transmodel-*-align.ttl).
+# Values of tmalign:transmodelDefinitionStatus (see alignments/transmodel-*-align.ttl).
 _DEFINITION_STATUS_NOTES = {
     "differs": "The {standard} XSD definition differs from the Transmodel definition; "
     "use the Transmodel definition as the reference.",
@@ -79,7 +79,7 @@ def retrieve_concept_definitions(
         PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX owl: <http://www.w3.org/2002/07/owl#>
-        PREFIX nits: <https://napcore.eu/ontology/nits#>
+        PREFIX tmalign: <https://napcore.eu/ontology/transmodel-alignment#>
 
         SELECT ?concept ?definition ?prefLabel ?altLabel ?type ?source ?ownComment
                ?tmConcept ?tmLabel ?tmDefinition ?tmStatus
@@ -103,7 +103,7 @@ def retrieve_concept_definitions(
             ?tmConcept rdfs:comment ?tmDefinition .
             OPTIONAL {{ ?tmConcept rdfs:label ?tmLabel . }}
           }}
-          OPTIONAL {{ ?concept nits:transmodelDefinitionStatus ?tmStatus . }}
+          OPTIONAL {{ ?concept tmalign:transmodelDefinitionStatus ?tmStatus . }}
         }}
         ORDER BY ?concept
         LIMIT 200
