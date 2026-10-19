@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from django.conf import settings
 
+from helpdesk.services.ontology_evidence import TRANSMODEL_SOURCE_URL
 from helpdesk.services.repository_urls import canonical_repository_url
 
 
@@ -32,6 +33,16 @@ def _normalize_repository_url(raw_url: str) -> str:
     """Normalize citation URLs to repository roots for allow-list checks."""
 
     return canonical_repository_url(raw_url)
+
+
+def _is_generated_ontology_source(raw_url: str) -> bool:
+    """True for the generated Transmodel ontology file cited as definition evidence.
+
+    It lives in this project's own repository, which is not an approved source repository, so it is
+    matched by its exact file URL and not by repository.
+    """
+
+    return raw_url.split("#", 1)[0].split("?", 1)[0] == TRANSMODEL_SOURCE_URL
 
 
 def evaluate_policy(answer_text: str, citations: list[dict]) -> dict:
@@ -55,6 +66,8 @@ def evaluate_policy(answer_text: str, citations: list[dict]) -> dict:
 
     approved_canonical = {canonical_repository_url(url) for url in approved_repositories}
     for citation in citations:
+        if _is_generated_ontology_source(citation.get("repositoryUrl", "")):
+            continue
         repo_url = _normalize_repository_url(citation.get("repositoryUrl", ""))
         if repo_url not in approved_canonical:
             return {
