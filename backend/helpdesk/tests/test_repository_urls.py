@@ -5,6 +5,7 @@ from django.test import SimpleTestCase
 from helpdesk.services.repository_urls import canonical_repository_url
 
 SIRI = "https://github.com/TransmodelEcosystem/SIRI"
+OPRA = "https://github.com/TransmodelEcosystem/OpRa"
 
 
 class CanonicalRepositoryUrlTests(SimpleTestCase):
@@ -29,9 +30,18 @@ class CanonicalRepositoryUrlTests(SimpleTestCase):
             SIRI,
         )
 
+    def test_opra_aliases_map_to_transmodel_ecosystem(self):
+        for spelling in (
+            OPRA,
+            "https://github.com/OpRa-CEN/OpRa",
+            "https://github.com/opra-cen/opra/",
+            "https://github.com/OpRa-CEN/OpRa/blob/abc123/xsd/opra.xsd",
+        ):
+            self.assertEqual(canonical_repository_url(spelling), OPRA, spelling)
+
     def test_unknown_repositories_keep_their_own_spelling(self):
         self.assertEqual(
-            canonical_repository_url("https://github.com/OpRa-CEN/OpRa/"), "https://github.com/OpRa-CEN/OpRa"
+            canonical_repository_url("https://github.com/SomeOrg/Other/"), "https://github.com/SomeOrg/Other"
         )
         self.assertEqual(canonical_repository_url("https://example.org/repo/"), "https://example.org/repo")
         self.assertEqual(canonical_repository_url("not a url/"), "not a url")

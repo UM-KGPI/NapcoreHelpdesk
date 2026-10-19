@@ -245,7 +245,7 @@ class SourceIndexBuilderTests(TestCase):
                 self.assertEqual(chunk.structured_metadata["schema"]["requiredAttributes"], ["version"])
                 self.assertNotIn("<xs:schema", chunk.text)
 
-    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/OpRa-CEN/OpRa"})
+    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/TransmodelEcosystem/OpRa"})
     def test_retrieve_chunks_matches_delayed_question_to_late_journey_docs(self):
         """Ensure retrieval handles common delayed-vs-late wording differences for OpRa docs."""
         with TemporaryDirectory() as tmp_dir:
@@ -259,7 +259,7 @@ class SourceIndexBuilderTests(TestCase):
 
             call_command(
                 "build_source_index",
-                repo_url="https://github.com/OpRa-CEN/OpRa",
+                repo_url="https://github.com/TransmodelEcosystem/OpRa",
                 repo_path=str(repo_path),
                 profile="opra",
                 prune=True,
@@ -273,7 +273,7 @@ class SourceIndexBuilderTests(TestCase):
         )
 
         self.assertTrue(chunks)
-        self.assertEqual(chunks[0]["repositoryUrl"], "https://github.com/OpRa-CEN/OpRa")
+        self.assertEqual(chunks[0]["repositoryUrl"], "https://github.com/TransmodelEcosystem/OpRa")
         self.assertEqual(chunks[0]["sourcePath"], "docs/late-journeys.md")
 
     def test_generate_answer_uses_evidence_driven_delayed_journey_template(self):
@@ -284,7 +284,7 @@ class SourceIndexBuilderTests(TestCase):
                 {
                     "text": "The OpRa model defines how late journeys are represented for monitoring and reporting.",
                     "score": 0.74,
-                    "repositoryUrl": "https://github.com/OpRa-CEN/OpRa",
+                    "repositoryUrl": "https://github.com/TransmodelEcosystem/OpRa",
                     "commitSha": "abc123",
                     "sourcePath": "docs/late-journeys.md",
                     "chunkId": "chunk-1",
@@ -306,7 +306,7 @@ class SourceIndexBuilderTests(TestCase):
                 {
                     "text": "Example payload for delayed and cancelled journeys with events.",
                     "score": 0.86,
-                    "repositoryUrl": "https://github.com/OpRa-CEN/OpRa",
+                    "repositoryUrl": "https://github.com/TransmodelEcosystem/OpRa",
                     "commitSha": "abc123",
                     "sourcePath": "examples/DelayedAndCancelledJourneysWithEvents.xml",
                     "chunkId": "chunk-opra-example",
@@ -327,7 +327,7 @@ class SourceIndexBuilderTests(TestCase):
         self.assertIn("Based on retrieved approved-source evidence", result["answer"])
         self.assertIn("Evidence spans multiple repositories", result["answer"])
 
-    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/OpRa-CEN/OpRa"})
+    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/TransmodelEcosystem/OpRa"})
     def test_retrieve_chunks_prefers_docs_model_content_over_readme(self):
         """Ensure generic README chunks rank below substantive docs/model content."""
         with TemporaryDirectory() as tmp_dir:
@@ -345,7 +345,7 @@ class SourceIndexBuilderTests(TestCase):
 
             call_command(
                 "build_source_index",
-                repo_url="https://github.com/OpRa-CEN/OpRa",
+                repo_url="https://github.com/TransmodelEcosystem/OpRa",
                 repo_path=str(repo_path),
                 profile="opra",
                 prune=True,
@@ -363,7 +363,7 @@ class SourceIndexBuilderTests(TestCase):
 
     @override_settings(
         ALLOWED_SOURCE_REPOSITORIES={
-            "https://github.com/OpRa-CEN/OpRa",
+            "https://github.com/TransmodelEcosystem/OpRa",
             "https://github.com/TransmodelEcosystem/NeTEx",
         }
     )
@@ -388,7 +388,7 @@ class SourceIndexBuilderTests(TestCase):
 
             call_command(
                 "build_source_index",
-                repo_url="https://github.com/OpRa-CEN/OpRa",
+                repo_url="https://github.com/TransmodelEcosystem/OpRa",
                 repo_path=str(opra_path),
                 profile="opra",
                 prune=True,
@@ -409,11 +409,11 @@ class SourceIndexBuilderTests(TestCase):
         )
 
         self.assertTrue(chunks)
-        self.assertEqual(chunks[0]["repositoryUrl"], "https://github.com/OpRa-CEN/OpRa")
+        self.assertEqual(chunks[0]["repositoryUrl"], "https://github.com/TransmodelEcosystem/OpRa")
 
     @override_settings(
         ALLOWED_SOURCE_REPOSITORIES={
-            "https://github.com/OpRa-CEN/OpRa",
+            "https://github.com/TransmodelEcosystem/OpRa",
             "https://github.com/TransmodelEcosystem/NeTEx",
         }
     )
@@ -450,7 +450,7 @@ class SourceIndexBuilderTests(TestCase):
             )
             call_command(
                 "build_source_index",
-                repo_url="https://github.com/OpRa-CEN/OpRa",
+                repo_url="https://github.com/TransmodelEcosystem/OpRa",
                 repo_path=str(opra_path),
                 profile="opra",
                 prune=True,
@@ -464,14 +464,14 @@ class SourceIndexBuilderTests(TestCase):
         )
 
         self.assertTrue(chunks)
-        self.assertEqual(chunks[0]["repositoryUrl"], "https://github.com/OpRa-CEN/OpRa")
+        self.assertEqual(chunks[0]["repositoryUrl"], "https://github.com/TransmodelEcosystem/OpRa")
         self.assertTrue(
             any(chunk["sourcePath"] == "examples/DelayedAndCancelledJourneysWithEvents.xml" for chunk in chunks)
         )
 
     @override_settings(
         ALLOWED_SOURCE_REPOSITORIES={
-            "https://github.com/OpRa-CEN/OpRa",
+            "https://github.com/TransmodelEcosystem/OpRa",
             "https://github.com/TransmodelEcosystem/NeTEx",
         }
     )
@@ -518,7 +518,7 @@ class SourceIndexBuilderTests(TestCase):
             )
             call_command(
                 "build_source_index",
-                repo_url="https://github.com/OpRa-CEN/OpRa",
+                repo_url="https://github.com/TransmodelEcosystem/OpRa",
                 repo_path=str(opra_path),
                 profile="opra",
                 prune=True,
@@ -538,7 +538,7 @@ class SourceIndexBuilderTests(TestCase):
 
     @override_settings(
         ALLOWED_SOURCE_REPOSITORIES={
-            "https://github.com/OpRa-CEN/OpRa",
+            "https://github.com/TransmodelEcosystem/OpRa",
             "https://github.com/TransmodelEcosystem/NeTEx",
         }
     )
@@ -569,7 +569,7 @@ class SourceIndexBuilderTests(TestCase):
 
             call_command(
                 "build_source_index",
-                repo_url="https://github.com/OpRa-CEN/OpRa",
+                repo_url="https://github.com/TransmodelEcosystem/OpRa",
                 repo_path=str(opra_path),
                 profile="opra",
                 prune=True,
@@ -591,10 +591,10 @@ class SourceIndexBuilderTests(TestCase):
 
         self.assertTrue(chunks)
         repository_urls = {chunk["repositoryUrl"] for chunk in chunks}
-        self.assertIn("https://github.com/OpRa-CEN/OpRa", repository_urls)
+        self.assertIn("https://github.com/TransmodelEcosystem/OpRa", repository_urls)
         self.assertIn("https://github.com/TransmodelEcosystem/NeTEx", repository_urls)
 
-    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/OpRa-CEN/OpRa"})
+    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/TransmodelEcosystem/OpRa"})
     def test_index_builder_assigns_doc_type_from_paths(self):
         """Ensure chunk doc_type is assigned for README, examples, and schema sources."""
         with TemporaryDirectory() as tmp_dir:
@@ -619,7 +619,7 @@ class SourceIndexBuilderTests(TestCase):
 
             call_command(
                 "build_source_index",
-                repo_url="https://github.com/OpRa-CEN/OpRa",
+                repo_url="https://github.com/TransmodelEcosystem/OpRa",
                 repo_path=str(repo_path),
                 profile="default",
                 prune=True,
@@ -637,7 +637,7 @@ class SourceIndexBuilderTests(TestCase):
         self.assertIsNotNone(schema_chunk)
         self.assertEqual(schema_chunk.doc_type, "schema")
 
-    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/OpRa-CEN/OpRa"})
+    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/TransmodelEcosystem/OpRa"})
     def test_index_builder_uses_doc_type_quality_signal(self):
         """Ensure quality scores differ across doc types instead of using one constant."""
         with TemporaryDirectory() as tmp_dir:
@@ -652,7 +652,7 @@ class SourceIndexBuilderTests(TestCase):
 
             call_command(
                 "build_source_index",
-                repo_url="https://github.com/OpRa-CEN/OpRa",
+                repo_url="https://github.com/TransmodelEcosystem/OpRa",
                 repo_path=str(repo_path),
                 profile="default",
                 prune=True,
