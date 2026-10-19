@@ -17,8 +17,6 @@ not necessarily produced from those commits.
 | `standards/examples.ttl` | `extract_xsd_ontology` without `--skip-example-xml` (scans every example XML) | Not measured. The scan did not finish in 10 minutes. |
 | `standards/transmodel.ttl` | Enterprise Architect model export (`TransmodelEcoSystem2024-EAv16-nk84_OpRa-v13.qea`, header of the file) | **No.** The source is a local file, not a public repository. |
 | `alignments/transmodel-{netex,opra,siri}-align.ttl` | `build_transmodel_alignment` from the standards files, `transmodel.ttl` and `transmodel-alignment-curation.csv` | **Yes**, deterministic: regenerating changes only the date line. Depends on the files above. |
-| `alignments/nits-{netex,opra,siri}-align.ttl` | Heuristic rules in `ontology_alignment_gap` (`_HEURISTIC_RULES`), as stated in the header of the SIRI file and the commit messages for the other two | **No tool writes them.** That command only writes a gap report; the step that wrote the Turtle is not in the repository. |
-| `napcore-its.ttl` | By hand | No source to compare with. |
 | `artifact-rules/*.ttl` | No generator found; the opra and siri files say "initial module scaffold" | No source to compare with. |
 
 ## Measured results
@@ -74,8 +72,10 @@ skipped, among them `PublicCode`, `Presentation`, `Frequency`, `Location`, `Arri
    stale. If questions such as "What is NeTEx?" need the concept, the pipeline has to produce it.
 3. The README's workflow mentions a glossary `backend/helpdesk/ontologies/standards.json`. It does not
    exist in the repository, so `--merge` and `--refresh-auto` have nothing to merge with.
-4. The `nits:` layer (`napcore-its.ttl` and the `nits-*-align.ttl` files) has no regenerable source. Whether
-   it is needed at all is issue #43.
+4. ~~The `nits:` layer (`napcore-its.ttl` and the `nits-*-align.ttl` files) had no regenerable source.~~
+   Resolved by `docs/ontology/NITS-REMOVAL-PLAN.md`: issue #43's question is settled — NITS was not
+   needed, and both files are now deleted. Transmodel (already regenerable, see above) is the
+   cross-standard pivot instead.
 
 ## What a drift check can do now
 
@@ -85,7 +85,7 @@ skipped, among them `PublicCode`, `Presentation`, `Frequency`, `Location`, `Arri
   two. Nothing is maintained by hand: the OpRa, SIRI and NeTEx ontologies are generated.
 - **Transmodel alignments:** rerun `build_transmodel_alignment` after any change to the standards
   files and the curation file; this is already deterministic.
-- **Not checkable:** `transmodel.ttl`, `examples.ttl` (not measured), the `nits:` files and the rules.
+- **Not checkable:** `transmodel.ttl`, `examples.ttl` (not measured), and the artifact rules.
 
 ## Running the generators
 

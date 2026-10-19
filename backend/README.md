@@ -100,17 +100,26 @@ Note:
 ## Semantic reasoning model (implemented)
 - The backend retrieval path uses an explicit two-layer semantic setup:
   - GraphDB-backed standards glossary concepts loaded from ontology modules and alignments.
-  - GraphDB-backed NITS core concept graph for cross-standard expansion.
-- Runtime uses `nits:` as the canonical core namespace and still supports legacy `maps_to_nch` fields for backward compatibility.
-- Canonical RDF/Turtle artifact for the same core graph: `../docs/ontology/napcore-its.ttl`.
+  - A Transmodel-based cross-standard pivot: standard concepts that `skos:exactMatch` the same
+    Transmodel class are treated as semantic siblings. Two independent implementations back this,
+    so it keeps working whether or not GraphDB is reachable:
+    - A live GraphDB SPARQL pivot (`helpdesk/services/graphdb_client.py`,
+      `query_graphdb_concept_expansion`), used when GraphDB is enabled.
+    - A static, GraphDB-independent fallback (`helpdesk/services/semantic_graph.py`) that parses
+      the generated `../docs/ontology/alignments/transmodel-{netex,siri,opra}-align.ttl` files
+      directly at process startup.
+- Canonical RDF/Turtle artifacts for the pivot: `../docs/ontology/standards/transmodel.ttl` (the
+  reference module) and the `transmodel-{netex,siri,opra}-align.ttl` alignment files above.
 - Runtime implementation is in `helpdesk/services/semantic_graph.py`.
 - Canonical end-to-end runtime methodology: `../docs/architecture/query-to-evidence-methodology.md`.
 - Query reasoning flow:
   1. Lexical concept extraction from glossary labels and aliases.
-  2. Mapping from glossary concepts to `nits:` concepts (`maps_to_nits`, legacy `maps_to_nch`, or synonym-derived mapping).
-  3. NITS relation expansion (`related_to`) for cross-standard semantic neighbors.
+  2. Mapping from glossary concepts to their aligned Transmodel class, where one exists
+     (`skos:exactMatch`, via the live SPARQL pivot or the static alignment-file fallback above).
+  3. Expansion to the other glossary concepts that share that same Transmodel class, i.e. the
+     sibling standard concepts it bridges to.
   4. Projection back to glossary concepts for candidate retrieval and ranking adjustments.
-- This keeps term normalization and user-language matching in the glossary while semantic interoperability is handled by the ontology graph.
+- This keeps term normalization and user-language matching in the glossary while semantic interoperability is handled by the Transmodel alignment.
 
 ### Ontology validation controls
 - Ontology payloads are schema-validated at load time in `helpdesk/services/semantic_graph.py`.
