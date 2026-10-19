@@ -10,10 +10,16 @@ from __future__ import annotations
 from django.conf import settings
 
 from helpdesk.services.question_parsing import has_scope_hint
+from helpdesk.services.relevance_check import has_artifact_term, is_relevant, relevance_check_enabled
 
 NO_CONCEPT_MESSAGE = (
     "I could not map your question to a known standards concept yet. "
     "Please clarify by naming a concrete concept, artifact, or standard scope."
+)
+NOT_RELEVANT_MESSAGE = (
+    "This helpdesk answers questions about the public-transport data standards NeTEx, SIRI, OpRa and "
+    "Transmodel, and your question does not seem to be about them. Please rephrase it or name the "
+    "standard or concept you mean."
 )
 LOW_CONFIDENCE_MESSAGE = (
     "I cannot safely determine the intended standards concept from this question yet. "
@@ -33,12 +39,25 @@ def _has_capitalised_term(semantic_query) -> bool:
 
 
 def semantic_abstention_message(
-    *, semantic_query, effective_scope, requested_scope, allow_abstain: bool
+    *, semantic_query, effective_scope, requested_scope, allow_abstain: bool, question: str | None = None
 ) -> str | None:
-    """The refusal message when the question should be refused, else None."""
+    """The refusal message when the question should be refused, else None.
+
+    With the relevance check enabled, a question that names a standard (or has a requested scope) or
+    contains a CamelCase artifact term is answered without any check, and every other question is put
+    to the controller model. When the check is off, or cannot decide, the keyword rules below decide.
+    """
 
     if not allow_abstain:
         return None
+    if question is not None and relevance_check_enabled():
+        if effective_scope or has_artifact_term(question):
+            return None
+        verdict = is_relevant(question)
+        if verdict is True:
+            return None
+        if verdict is False:
+            return NOT_RELEVANT_MESSAGE
     # The capitalised-term check goes last in each rule, as it did when the rules were inline.
     if (
         semantic_query.core_concept == "nits:unknown-concept"

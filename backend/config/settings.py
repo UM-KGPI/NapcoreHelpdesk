@@ -62,6 +62,10 @@ env = environ.Env(
     # Routing decision with graceful fallback: a slow controller must not hold
     # the request anywhere near as long as answer generation may.
     CONTROLLER_LLM_TIMEOUT_SECONDS=(int, 5),
+    # Ask the controller model whether a question that names no standard or artifact is about the
+    # standards at all. Off by default; the keyword rules decide when it is off or the call fails.
+    RELEVANCE_CHECK_ENABLED=(bool, False),
+    RELEVANCE_CHECK_TIMEOUT_SECONDS=(int, 10),
     CONTROLLER_LLM_CTX_SIZE=(int, 2048),
     CONTROLLER_LLM_MAX_TOKENS=(int, 96),
     CONTROLLER_LLM_THREADS=(int, 8),
@@ -265,6 +269,8 @@ CONTROLLER_LLM_EXECUTABLE = env("CONTROLLER_LLM_EXECUTABLE", default="").strip()
 CONTROLLER_LLM_MODEL_PATH = env("CONTROLLER_LLM_MODEL_PATH", default="").strip()
 CONTROLLER_LLM_DEVICE = env("CONTROLLER_LLM_DEVICE", default="none").strip() or "none"
 CONTROLLER_LLM_TIMEOUT_SECONDS = env("CONTROLLER_LLM_TIMEOUT_SECONDS")
+RELEVANCE_CHECK_ENABLED = env("RELEVANCE_CHECK_ENABLED")
+RELEVANCE_CHECK_TIMEOUT_SECONDS = env("RELEVANCE_CHECK_TIMEOUT_SECONDS")
 CONTROLLER_LLM_CTX_SIZE = env("CONTROLLER_LLM_CTX_SIZE")
 CONTROLLER_LLM_MAX_TOKENS = env("CONTROLLER_LLM_MAX_TOKENS")
 CONTROLLER_LLM_THREADS = env("CONTROLLER_LLM_THREADS")
