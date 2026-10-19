@@ -1,12 +1,41 @@
 # NITS Upper-Ontology Removal — Plan
 
-Status: **planning only — no code, TTL, or GraphDB state has been changed by this document.**
+Status: **Phase 1 (low-risk decoupling, §3) is complete and independently verified. Phases 0, 2, and 3
+have not started.**
 Scope: namespace `https://napcore.eu/ontology/nits#`, file `docs/ontology/napcore-its.ttl`, and every
 reference to it (`nits:` prefix, `NITS_*`/`_NITS_*`/`*_nits_*` symbols, the `nits-{netex,opra,siri}-align.ttl`
 alignment files, and the `nits:unknown-concept` sentinel string).
 
-Produced from main @ `4d9da5a` (v0.97.13), on branch `chore/remove-nits-plan`. No files outside this
-plan document were modified.
+Produced from main @ `4d9da5a` (v0.97.13), on branch `chore/remove-nits-plan`.
+
+**Phase 1 execution log** (commits `e655df1`, `f5fc28b`, `ad6546f`, `1c84d6d`, `024ac25` on this branch,
+done in a cloud session, independently re-verified afterward — `manage.py check` and 103 relevant tests
+pass against live GraphDB/Postgres):
+- Steps 1.1–1.5 (§3) done and verified: `llm_generator.py` no longer imports `_NITS_ONTOLOGY`; the
+  `nits:transmodelDefinitionStatus`/`nits:alignmentMethod` properties were renamed and the 3
+  `transmodel-*-align.ttl` files regenerated; the vestigial `@prefix nits:` line is gone from
+  `netex.ttl`/`opra.ttl`/`siri.ttl`/`examples.ttl` (checked for the literal token, not just a case-insensitive
+  grep, since those files legitimately contain "unit(s)" text); `ontology_alignment_gap.py`, its Makefile
+  target, and the 3 generated `*-alignment-gap.md` reports are deleted; the Makefile smoke-test placeholder
+  was swapped.
+- Step 1.6 was only half-done by the cloud session (Makefile fixed, `.claude/settings.local.json` missed) —
+  fixed directly afterward by deleting the 2 stale `nits:` SPARQL-debug permission lines plus a 3rd stale
+  entry found while fixing it (`Bash(make ontology-alignment-gap *)`, dead since that target no longer
+  exists).
+
+**Two corrections to this document, found while verifying Phase 1 (neither blocks anything above):**
+- §2 group E previously stated `docs/ontology/ontology-enrichment.md` does not exist. That was checking the
+  wrong path — **`docs/ontology-enrichment.md`** (one level up, at repo-root `docs/`) does exist, and it
+  documents the `ontology_alignment_gap` workflow in detail (heuristic NITS-category table, example output,
+  "Alignment axioms → `docs/ontology/alignments/nits-netex-align.ttl`"). Since step 1.5 deleted that command,
+  this doc is now stale and belongs in group E's doc-rewrite list — not fixed yet, not blocking.
+- A previously unnoticed **`backend/docs/ontology/standards/`** directory exists (a real directory, not a
+  symlink) with its own stale copies of `netex.ttl`/`opra.ttl`, still carrying the old unused `@prefix nits:`
+  line. Confirmed by grep: no code, script, or Makefile target anywhere in the repo references this path —
+  the live app resolves its ontology directory to repo-root `docs/ontology/` only (`graphdb_client.py`,
+  `parents[3] / "docs" / "ontology"`). This looks like an orphaned duplicate, not a second deployment target.
+  Not deleted — flagged for a decision, since it's outside this plan's original scope and deleting a whole
+  directory wasn't something to do unasked.
 
 ---
 
