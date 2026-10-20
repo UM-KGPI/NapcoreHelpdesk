@@ -335,7 +335,17 @@ def _alias_matches_text(alias: str, normalized_text: str) -> bool:
     # vehicle journeys" matching alias "delayed journey", without that false-positive
     # class.
     text_tokens = set(normalized_text.split())
-    return bool(alias_tokens) and set(alias_tokens).issubset(text_tokens)
+    if set(alias_tokens).issubset(text_tokens):
+        return True
+
+    # A PascalCase class name typed with no internal space (e.g. "OnwardCall" for
+    # alias "onward call") lowercases to one glued token ("onwardcall") with no
+    # separator left to split on, so the subset check above can't see it. Checking
+    # whether the alias's words concatenated form a single existing text token
+    # covers this generally, for every multi-word alias, without touching how the
+    # question text itself is tokenized -- unlike splitting camelCase in the text,
+    # which would also wrongly split standard names like "NeTEx" into "Ne"/"TEx".
+    return "".join(alias_tokens) in text_tokens
 
 
 def _build_graph_relations_from_ontology(ontology: dict) -> dict[str, set[str]]:

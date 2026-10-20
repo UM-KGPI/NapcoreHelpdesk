@@ -48,6 +48,19 @@ class AliasMatchesTextTests(SimpleTestCase):
         text = _normalize_for_matching("what type of line is used")
         self.assertTrue(_alias_matches_text("type of line", text))
 
+    def test_multiword_alias_matches_glued_camelcase_class_name(self):
+        """"OnwardCall" typed with no space lowercases to one glued token
+        ("onwardcall") the subset check alone can't split. Checking whether the
+        alias's words concatenated form a single existing text token covers this
+        for every multi-word alias, not just this one concept."""
+        text = _normalize_for_matching("What is OnwardCall?")
+        self.assertTrue(_alias_matches_text("onward call", text))
+
+    def test_glued_match_does_not_reopen_the_word_boundary_bug(self):
+        """"is on" joined is "ison", which must not equal "onwardcall"."""
+        text = _normalize_for_matching("What is OnwardCall?")
+        self.assertFalse(_alias_matches_text("is on", text))
+
 
 class TransmodelPivotTests(SimpleTestCase):
     """The static, GraphDB-independent replacement for the NITS cross-standard
