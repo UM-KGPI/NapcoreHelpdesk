@@ -454,30 +454,41 @@ def _expand_transmodel_concepts(transmodel_ids: set[str]) -> set[str]:
     return expanded
 
 
-def expand_graph_concepts(concepts: set[str], hops: int = 1) -> set[str]:
-    expanded = set(concepts)
+def expand_graph_concepts_with_distance(concepts: set[str], hops: int = 1) -> dict[str, int]:
+    """Like expand_graph_concepts, but also returns each concept's hop distance
+    from the seed set (0 for the seeds). Lets a caller truncate an oversized
+    expansion by keeping the closest concepts first, instead of an arbitrary
+    tiebreak (e.g. alphabetical) that lets unrelated far concepts crowd out
+    relevant near ones whenever a seed has many direct neighbors.
+    """
+    distances: dict[str, int] = {concept_id: 0 for concept_id in concepts}
 
-    expanded.update(_expand_transmodel_concepts(get_concept_transmodel_ids(expanded)))
+    for equivalent in _expand_transmodel_concepts(get_concept_transmodel_ids(set(distances))):
+        distances.setdefault(equivalent, 0)
 
-    frontier = set(expanded)
-    for _ in range(max(0, hops)):
+    frontier = set(distances)
+    for hop in range(1, max(0, hops) + 1):
         next_frontier: set[str] = set()
         for concept_id in frontier:
             for neighbor in GRAPH_RELATIONS.get(concept_id, set()):
-                if neighbor not in expanded:
-                    expanded.add(neighbor)
+                if neighbor not in distances:
+                    distances[neighbor] = hop
                     next_frontier.add(neighbor)
 
         # Keep Transmodel-equivalent concepts synchronized as the frontier grows.
         for equivalent in _expand_transmodel_concepts(get_concept_transmodel_ids(next_frontier)):
-            if equivalent not in expanded:
-                expanded.add(equivalent)
+            if equivalent not in distances:
+                distances[equivalent] = hop
                 next_frontier.add(equivalent)
 
         frontier = next_frontier
         if not frontier:
             break
-    return expanded
+    return distances
+
+
+def expand_graph_concepts(concepts: set[str], hops: int = 1) -> set[str]:
+    return set(expand_graph_concepts_with_distance(concepts, hops=hops))
 
 
 def build_semantic_graph_snapshot(chunks: Iterable[SourceChunk]) -> dict:
