@@ -21,7 +21,7 @@ Create and run a repeatable process that:
 - You need an operational loop that identifies recurring user questions and persists approved FAQs.
 
 ## Inputs
-- Standards scope: Transmodel, NeTEx, SIRI, OJP/OpRa, DATEX II.
+- Standards scope: Transmodel, NeTEx, SIRI, OJP/OpRa. DATEX II is out of scope (issue #90).
 - Source repositories and docs URLs.
 - GUI context: web chat, portal widget, or internal support interface.
 - Data backend constraints: SQL or NoSQL, retention policy, and audit requirements.

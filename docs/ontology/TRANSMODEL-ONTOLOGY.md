@@ -113,7 +113,7 @@ Class names are converted to valid RDF identifiers using these rules:
 | **SIRI Ontology** | Service Interface for Real-time Information | [`standards/siri.ttl`](standards/siri.ttl) |
 | **OpRa Ontology** | Open Reservation API | [`standards/opra.ttl`](standards/opra.ttl) |
 | **Transmodel alignments** | `skos:exactMatch` links from NeTEx, SIRI and OpRa classes to Transmodel classes | [`alignments/transmodel-{netex,siri,opra}-align.ttl`](alignments/) |
-| **DATEX II Ontology** | Data Exchange for Traffic and Travel Information | Planned, not yet created (see [`README.md`](README.md) "Current Scope") |
+| **DATEX II Ontology** | Data Exchange for Traffic and Travel Information | Out of scope: not part of the Transmodel family and not planned (see [`README.md`](README.md) "Current Scope") |
 
 ---
 
