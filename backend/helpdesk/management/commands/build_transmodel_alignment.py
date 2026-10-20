@@ -75,7 +75,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--dry-run",
             action="store_true",
-            help="Print the summary without writing files.",
+            help="Print the summary (and the classes treated as service-operation types) without writing files.",
         )
 
     def handle(self, *args, **options):
@@ -121,8 +121,14 @@ class Command(BaseCommand):
                 statuses[row.status] = statuses.get(row.status, 0) + 1
             self.stdout.write(
                 f"{STANDARD_LABELS[standard]}: {len(standard_classes)} classes, {len(plan.rows)} aligned "
-                f"{dict(sorted(statuses.items()))}, {len(plan.unmatched)} unmatched"
+                f"{dict(sorted(statuses.items()))}, {len(plan.unmatched)} unmatched, "
+                f"{len(plan.service_operations)} service-operation types"
             )
+            if options["dry_run"] and plan.service_operations:
+                # Printed so the envelope filter can be eyeballed before a real run.
+                self.stdout.write(
+                    "  service-operation types (not counted as unmatched): " + ", ".join(plan.service_operations)
+                )
 
             if not options["dry_run"]:
                 out_path = alignments_dir / f"transmodel-{standard}-align.ttl"

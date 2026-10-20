@@ -6,12 +6,16 @@ its concepts. This module pairs each standard class with the Transmodel class
 of the same name (STOP_PLACE -> StopPlace), compares their definitions, and
 renders the result as a SKOS alignment graph plus a review report.
 
+Classes without a name match are split into service-operation types (XSD
+request/response envelopes, out of scope for conceptual alignment) and real
+unmatched classes.
+
 Pure functions only (no RDF library): parsing the TTL files happens in the
 build_transmodel_alignment management command.
 
 Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
 Crafted by: AI coding agents
-Created: 2026-10-17  |  Modified: 2026-10-17
+Created: 2026-10-17  |  Modified: 2026-10-20
 """
 
 from __future__ import annotations
@@ -55,6 +59,11 @@ STATUS_DESCRIPTIONS = {
     "missing": "one of the two definitions is empty",
 }
 
+# XSD service-operation envelopes (SIRI/OpRa request, response, delivery, ...) and
+# abstract base types. Transmodel is a conceptual model and has no counterpart for
+# them, so they are reported apart instead of inflating the unmatched count.
+SERVICE_OPERATION_PATTERN = re.compile(r"(?:Request|Response|Delivery|Discovery|Subscription|Error)$|^Abstract")
+
 
 @dataclass
 class AlignmentRow:
@@ -75,11 +84,16 @@ class AlignmentPlan:
     standard: str
     rows: list[AlignmentRow] = field(default_factory=list)
     unmatched: list[str] = field(default_factory=list)
+    service_operations: list[str] = field(default_factory=list)
     collisions: dict[str, list[str]] = field(default_factory=dict)
 
 
 def is_model_class(tm_local_name: str) -> bool:
     return bool(_MODEL_CLASS.match(tm_local_name)) and not tm_local_name.endswith(_EXCLUDED_SUFFIXES)
+
+
+def is_service_operation_type(standard_class: str) -> bool:
+    return bool(SERVICE_OPERATION_PATTERN.search(standard_class))
 
 
 def transmodel_to_camel(tm_local_name: str) -> str:
@@ -180,7 +194,10 @@ def plan_alignment(
                 tm_class = ""
 
         if not tm_class:
-            plan.unmatched.append(standard_class)
+            if is_service_operation_type(standard_class):
+                plan.service_operations.append(standard_class)
+            else:
+                plan.unmatched.append(standard_class)
             continue
 
         tm_definition = tm_classes[tm_class]
@@ -272,14 +289,23 @@ def render_report(plans: list[AlignmentPlan], *, generated_on: date | None = Non
         "",
     ]
     out += [f"- **{key}**: {value}" for key, value in STATUS_DESCRIPTIONS.items()]
-    out += ["", "## Summary", "", "| Standard | Classes | Aligned | equivalent | extends | differs | missing | Unmatched |",
-            "|---|---|---|---|---|---|---|---|"]
+    out += [
+        "",
+        "Service-operation types (class names ending in Request, Response, Delivery, Discovery,",
+        "Subscription or Error, or starting with Abstract) are XSD message envelopes and abstract",
+        "base types with no conceptual counterpart in Transmodel. They are listed separately and not",
+        "counted as unmatched.",
+    ]
+    out += ["", "## Summary", "",
+            "| Standard | Classes | Aligned | equivalent | extends | differs | missing | Unmatched | Service-operation types |",
+            "|---|---|---|---|---|---|---|---|---|"]
     for plan in plans:
         counts = {key: sum(1 for row in plan.rows if row.status == key) for key in STATUS_DESCRIPTIONS}
-        total = len(plan.rows) + len(plan.unmatched)
+        total = len(plan.rows) + len(plan.unmatched) + len(plan.service_operations)
         out.append(
             f"| {STANDARD_LABELS[plan.standard]} | {total} | {len(plan.rows)} | {counts['equivalent']} | "
-            f"{counts['extends']} | {counts['differs']} | {counts['missing']} | {len(plan.unmatched)} |"
+            f"{counts['extends']} | {counts['differs']} | {counts['missing']} | {len(plan.unmatched)} | "
+            f"{len(plan.service_operations)} |"
         )
 
     for plan in plans:
@@ -304,5 +330,12 @@ def render_report(plans: list[AlignmentPlan], *, generated_on: date | None = Non
             out += [f"- {', '.join(names)}" for names in plan.collisions.values()]
         out += ["", f"### {label}: classes without a Transmodel match ({len(plan.unmatched)})", ""]
         out.append(", ".join(plan.unmatched) if plan.unmatched else "None.")
+        out += [
+            "",
+            f"### {label}: service-operation types, out of scope for conceptual alignment "
+            f"({len(plan.service_operations)})",
+            "",
+        ]
+        out.append(", ".join(plan.service_operations) if plan.service_operations else "None.")
     out.append("")
     return "\n".join(out)

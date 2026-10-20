@@ -10,6 +10,7 @@ from helpdesk.services.transmodel_alignment import (
     clean_definition,
     definition_status,
     is_model_class,
+    is_service_operation_type,
     load_curation,
     plan_alignment,
     render_report,
@@ -148,6 +149,67 @@ class RenderTests(SimpleTestCase):
         self.assertIn("@prefix netex: <https://netex.org.uk/netex/2.0#> .", turtle)
 
         report = render_report([plan], generated_on=date(2026, 10, 17))
-        self.assertIn("| NeTEx | 2 | 1 | 0 | 0 | 1 | 0 | 1 |", report)
+        self.assertIn("| NeTEx | 2 | 1 | 0 | 0 | 1 | 0 | 1 | 0 |", report)
         self.assertIn("| StopPlace | STOP_PLACE |", report)
         self.assertIn("QuayList", report)
+
+
+class ServiceOperationFilterTests(SimpleTestCase):
+    def test_message_envelopes_and_abstract_types_are_service_operations(self):
+        for name in (
+            "StopMonitoringRequest",  # SIRI
+            "CapabilitiesResponse",
+            "VehicleMonitoringDelivery",
+            "OpraDiscoveryDelivery",  # OpRa
+            "PlannedCapacityDiscoveryRequest",
+            "SubscriptionRequest",
+            "UnknownSubscriberError",
+            "AbstractLogEntry",
+        ):
+            self.assertTrue(is_service_operation_type(name), name)
+
+    def test_domain_concepts_are_not_service_operations(self):
+        # Real unmatched SIRI/OpRa classes that are candidate concepts, including ones
+        # that merely contain an envelope word somewhere other than the end.
+        for name in (
+            "EstimatedVehicleJourney",
+            "PtSituationElement",
+            "VehicleTypeCapacity",
+            "ErrorCondition",
+            "DeliveryVariant",
+            "ResponseStatus",
+            "Destination",
+        ):
+            self.assertFalse(is_service_operation_type(name), name)
+
+    def test_envelopes_are_reported_apart_from_unmatched(self):
+        plan = plan_alignment(
+            standard="siri",
+            standard_classes={
+                "StopPlace": NETEX_STOP_PLACE,
+                "StopMonitoringRequest": "Request for information about stop visits.",
+                "AbstractRequest": "",
+                "EstimatedVehicleJourney": "A VEHICLE JOURNEY taking place on a particular date.",
+            },
+            tm_classes={"STOP_PLACE": TM_STOP_PLACE},
+        )
+        self.assertEqual(plan.unmatched, ["EstimatedVehicleJourney"])
+        self.assertEqual(plan.service_operations, ["AbstractRequest", "StopMonitoringRequest"])
+
+        report = render_report([plan], generated_on=date(2026, 10, 20))
+        self.assertIn("| SIRI | 4 | 1 | 0 | 0 | 1 | 0 | 1 | 2 |", report)
+        self.assertIn("### SIRI: classes without a Transmodel match (1)\n\nEstimatedVehicleJourney", report)
+        self.assertIn(
+            "### SIRI: service-operation types, out of scope for conceptual alignment (2)\n\n"
+            "AbstractRequest, StopMonitoringRequest",
+            report,
+        )
+
+    def test_a_name_match_wins_over_the_envelope_filter(self):
+        plan = plan_alignment(
+            standard="netex",
+            standard_classes={"PublicationDelivery": "A delivery of published data."},
+            tm_classes={"PUBLICATION_DELIVERY": "A delivery of published data."},
+        )
+        self.assertEqual([row.standard_class for row in plan.rows], ["PublicationDelivery"])
+        self.assertEqual(plan.service_operations, [])
