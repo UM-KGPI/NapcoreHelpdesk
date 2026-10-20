@@ -812,7 +812,7 @@ questions:
     expected_source_patterns: []
     min_hits: 0
     top_k_threshold: 10
-    note: "DATEX II not yet indexed; abstention expected."
+    note: "DATEX II is out of scope (Transmodel family only); abstention expected."
 
   - id: q099
     question: "How does the Norwegian national NeTEx profile handle delayed journey representation?"

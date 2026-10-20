@@ -46,8 +46,6 @@ allowlist_exact:
     - MonitoredVehicleJourney
     - EstimatedVehicleJourney
     - DatedVehicleJourney
-  datex:
-    - TrafficEvent
   transmodel:
     - Journey
 
@@ -77,11 +75,6 @@ allowlist_token:
     - facility
     - connection
     - message
-    - situation
-  datex:
-    - traffic
-    - event
-    - incident
     - situation
 
 denylist_concept_ids:

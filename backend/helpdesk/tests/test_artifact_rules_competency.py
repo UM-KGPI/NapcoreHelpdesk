@@ -40,7 +40,6 @@ class ArtifactRulesCompetencyTests(SimpleTestCase):
         self.assertIn("CQ-NETEX-STOP-02", ids)
         self.assertIn("CQ-OPRA-ROLE-01", ids)
         self.assertIn("CQ-SIRI-RT-01", ids)
-        self.assertIn("CQ-DATEX-EVT-01", ids)
 
     def test_netex_required_rules_exist_with_provenance(self):
         data = self._load_registry()

@@ -951,7 +951,7 @@ components:
           type: array
           items:
             type: string
-            enum: [Transmodel, NeTEx, SIRI, OpRa, DATEX II, Profile Documentation]
+            enum: [Transmodel, NeTEx, SIRI, OpRa, Profile Documentation]
         language:
           type: string
           default: en
