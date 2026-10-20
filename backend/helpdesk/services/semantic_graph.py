@@ -325,11 +325,15 @@ def _alias_matches_text(alias: str, normalized_text: str) -> bool:
     if len(alias_tokens) == 1:
         return normalized_alias in set(normalized_text.split())
 
-    if normalized_alias in normalized_text:
-        return True
-
-    # Token-subset fallback catches phrase variants like "delayed vehicle journeys"
-    # matching alias "delayed journey".
+    # Multi-token aliases match by token subset, not substring: a raw substring check
+    # (`normalized_alias in normalized_text`) would also match across a word boundary
+    # it shouldn't -- e.g. alias "is on" is a substring of "what is onwardcall" (the
+    # end of "is" plus the start of "onwardcall"), even though "on" is never a real
+    # token in that text. The subset check already catches every genuine match a
+    # substring check would (every word in the alias has to appear as its own token
+    # somewhere in the text), including scattered phrase variants like "delayed
+    # vehicle journeys" matching alias "delayed journey", without that false-positive
+    # class.
     text_tokens = set(normalized_text.split())
     return bool(alias_tokens) and set(alias_tokens).issubset(text_tokens)
 

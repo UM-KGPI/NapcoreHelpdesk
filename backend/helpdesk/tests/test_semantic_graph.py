@@ -6,6 +6,8 @@ from django.test import SimpleTestCase
 
 import helpdesk.services.semantic_graph as semantic_graph
 from helpdesk.services.semantic_graph import (
+    _alias_matches_text,
+    _normalize_for_matching,
     _parse_transmodel_alignment_file,
     expand_graph_concepts,
     get_concept_transmodel_ids,
@@ -24,6 +26,27 @@ class SemanticGraphMappingTests(SimpleTestCase):
             )
 
         self.assertIn("netex:Line", concepts)
+
+
+class AliasMatchesTextTests(SimpleTestCase):
+    """Regression coverage for the word-boundary bug found investigating a weak
+    production answer to "What is OnwardCall?": a multi-word alias like "is on"
+    is a plain substring of "what is onwardcall" (the end of "is" plus the start
+    of "onwardcall"), even though "on" is never a real token in that text. The
+    fix drops the substring check and relies solely on the token-subset check,
+    which already requires every alias word to appear as its own token."""
+
+    def test_multiword_alias_does_not_match_across_a_word_boundary(self):
+        text = _normalize_for_matching("What is OnwardCall?")
+        self.assertFalse(_alias_matches_text("is on", text))
+
+    def test_multiword_alias_still_matches_as_separate_real_words(self):
+        text = _normalize_for_matching("the light is on now")
+        self.assertTrue(_alias_matches_text("is on", text))
+
+    def test_multiword_alias_still_matches_scattered_out_of_order(self):
+        text = _normalize_for_matching("what type of line is used")
+        self.assertTrue(_alias_matches_text("type of line", text))
 
 
 class TransmodelPivotTests(SimpleTestCase):
