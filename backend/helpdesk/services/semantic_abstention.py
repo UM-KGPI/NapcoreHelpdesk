@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from django.conf import settings
 
-from helpdesk.services.question_parsing import has_scope_hint
+from helpdesk.services.question_parsing import UNKNOWN_CONCEPT_SENTINEL, has_scope_hint
 from helpdesk.services.relevance_check import has_artifact_term, is_relevant, relevance_check_enabled
 
 NO_CONCEPT_MESSAGE = (
@@ -60,7 +60,7 @@ def semantic_abstention_message(
             return NOT_RELEVANT_MESSAGE
     # The capitalised-term check goes last in each rule, as it did when the rules were inline.
     if (
-        semantic_query.core_concept == "nits:unknown-concept"
+        semantic_query.core_concept == UNKNOWN_CONCEPT_SENTINEL
         and not has_scope_hint(semantic_query, effective_scope)
         and not _has_capitalised_term(semantic_query)
     ):

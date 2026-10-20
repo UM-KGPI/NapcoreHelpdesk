@@ -1,23 +1,36 @@
 # Ontology Enrichment
 
-Ontology enrichment is the process of adding example registrations and cross-standard alignment axioms to keep the semantic store accurate as transport standard repositories grow.
+Ontology enrichment is the process of adding example registrations to keep the semantic store
+accurate as transport standard repositories grow.
+
+> **2026-10-19 update:** the `ontology_alignment_gap` management command and its `make
+> ontology-alignment-gap` target were removed as part of Phase 1 of the NITS-upper-ontology
+> removal (see `docs/ontology/NITS-REMOVAL-PLAN.md`). That command was the only tool that
+> automated alignment-gap detection and NITS-category assignment described further below — those
+> capabilities no longer exist and the figures in "Coverage baseline" below can no longer be
+> regenerated or re-verified. The example-scanning workflow (`make ontology-scan-examples`) is
+> unaffected and still works as documented.
 
 ## Why enrichment matters
 
-GraphRAG retrieval uses three ontology layers to expand and rank evidence:
+GraphRAG retrieval uses two ontology layers to expand and rank evidence:
 
 | Layer | File | Role |
 |-------|------|------|
 | Example artifacts | `examples/<standard>-examples.ttl` | Maps each XML example to the NeTEx/SIRI concepts it illustrates |
-| Alignment axioms | `alignments/nits-<standard>-align.ttl` | Maps standard classes to NITS categories for cross-standard reasoning |
 | Normative rules | `artifact-rules/netex-artifact-rules-v1.0.ttl` | XSD-derived containment and attribute rules for validation |
+
+(A third layer, alignment axioms mapping standard classes to NITS categories, existed until the
+NITS removal referenced above; see that plan document for current status.)
 
 A concept not covered by these layers is invisible to GraphRAG. Retrieval falls back to lexical/vector matching only, which can miss structurally correct examples that use domain vocabulary.
 
-## Coverage baseline (NeTEx, 2026-09)
+## Coverage baseline (NeTEx, 2026-09) — historical, frozen
 
-- Per `make ontology-alignment-gap` (`docs/ontology/alignments/netex-alignment-gap.md`), the
-  authoritative source for this figure: 824 of 2939 NeTEx terms aligned (~28%) in
+These figures were last measured before the `ontology_alignment_gap` command was removed and can
+no longer be regenerated:
+
+- Per the (now-removed) `make ontology-alignment-gap` report: 824 of 2939 NeTEx terms aligned (~28%) in
   `nits-netex-align.ttl` (`owl:versionInfo "0.3-realignment-pass"`) — up from 62/872 (~7%) before a
   September 2026 realignment pass that combined hand-curated entries with a heuristic
   NITS-category pass over the remaining unaligned classes; see
@@ -25,14 +38,11 @@ A concept not covered by these layers is invisible to GraphRAG. Retrieval falls 
   Note: despite the report's "classes" label, that 2939 figure counts every `netex:`-prefixed
   term the extraction regex matches at line-start — both `owl:Class` declarations (922 of them)
   and lowercase-first `netex:` *properties* (~2017). Of the true `owl:Class` subset, 829/922
-  (~90%) are aligned. The two percentages measure different things; the gap-report tool's own
-  number is what `make ontology-alignment-gap` and the workflow below actually operate on.
+  (~90%) are aligned. The two percentages measure different things.
 - ~287 XML examples in the NeTEx repository
 - ~19 registered in `netex-examples.ttl` before the first enrichment session (example-artifact coverage was not re-scanned as part of the September realignment pass, so this figure is not re-verified)
 
 ## Scan commands
-
-Two management commands surface gaps without touching live files or GraphDB.
 
 ### `make ontology-scan-examples`
 
@@ -56,45 +66,15 @@ The command skips:
 - Abstract base classes and reference structures (`TypeOf*`, `*Ref`, `*RefStructure`, etc.)
 - Cross-cutting real-world directories that mix many concepts and need manual review (`standards/norway/`, `standards/tap_tsi/`, `standards/vdv452/`, `ws_siri_request/`)
 
-By default the scan covers all `functions/` subdirectories. The `standards/` tree and multi-standard request examples are flagged for manual review.
-
-### `make ontology-alignment-gap`
-
-Diffs all classes in `netex.ttl` against `nits-netex-align.ttl`, groups unaligned classes by heuristic NITS category, and writes a markdown report with a ready-to-paste TTL block per category.
-
-```
-make ontology-alignment-gap
-# or:
-cd backend && ../.venv/bin/python manage.py ontology_alignment_gap --standard netex
-```
-
-Output: `docs/ontology/alignments/netex-alignment-gap.md`
-
-Heuristic category assignment (first match wins):
-
-| Pattern | Assigned category |
-|---------|-------------------|
-| `TypeOf*`, `*List`, `*Ref`, `*RefStructure`, `Abstract*` | `skip` (enumeration/helper types) |
-| Contains `Zone`, `Area`, `Place`, `Link`, `Point`, `Path`, `Entrance`, `Section` | `nits:SpatialEntity` |
-| Contains `Journey`, `Route`, `Pattern`, `Run` | `nits:Journey` |
-| Contains `Operator`, `Authority`, `Organisation`, `Provider` | `nits:Organisation` |
-| Contains `Timetable`, `DayType`, `Calendar`, `Period`, `Schedule` | `nits:TemporalEntity` |
-| Starts with `Stop` or ends with `Quay` | `nits:Stop` |
-| Contains `Network` or ends with `Group` | `nits:Network` |
-| Starts with `Line` | `nits:Line` |
-| Starts with `Service` | `nits:Service` |
-| Everything else | `nits:DataArtifact` (catch-all) |
-
-The report lists skip candidates separately so they can be ignored without scrolling past them.
+By default the scan covers all `functions/` subdirectories. The `standards/` tree and multi-standard request examples are flagged for manual review. This command only ever supported `--standard netex`; it is unaffected by the NITS removal.
 
 ## Enrichment workflow
 
 ### Trigger conditions
 
 Run an enrichment session when:
-- A new NeTEx (or SIRI/OpRa/DATEX II) release adds example files or classes.
+- A new NeTEx (or SIRI/OpRa/DATEX II) release adds example files.
 - A weak-answer investigation identifies a coverage gap (concept retrieved by vector search but not by graph expansion).
-- Alignment coverage falls below an acceptable threshold on the gap report.
 
 ### Steps
 
@@ -102,12 +82,10 @@ Run an enrichment session when:
 
 ```bash
 make ontology-scan-examples
-make ontology-alignment-gap
 ```
 
-Review the two output files:
+Review the output file:
 - `docs/ontology/examples/netex-examples.proposed.ttl` — draft example stanzas
-- `docs/ontology/alignments/netex-alignment-gap.md` — alignment gap report with TTL blocks
 
 **2. Review and edit**
 
@@ -116,24 +94,18 @@ For each proposed example stanza:
 - Remove or replace concepts added by heuristic that are structural artefacts, not domain concepts.
 - Adjust the label if the derived name is unclear.
 
-For alignment entries:
-- Remove skip-category entries you do not want aligned.
-- Promote any `nits:DataArtifact` defaults to a more precise NITS class if one exists.
-- Flag classes that require a new NITS class (those need a core ontology extension — see below).
-
 **3. Publish**
 
-Copy approved stanzas into the live TTL files:
+Copy approved stanzas into the live TTL file:
 - Example stanzas → `docs/ontology/examples/netex-examples.ttl`
-- Alignment axioms → `docs/ontology/alignments/nits-netex-align.ttl`
 
-Bump `owl:versionInfo` in each modified file, then load into GraphDB:
+Bump `owl:versionInfo` in the modified file, then load into GraphDB:
 
 ```bash
 make graphdb-load
 ```
 
-Re-run the scan and gap commands to confirm coverage improved.
+Re-run the scan command to confirm coverage improved.
 
 ## Automated vs manual
 
@@ -141,22 +113,10 @@ Re-run the scan and gap commands to confirm coverage improved.
 |---------|-----------|--------|
 | Discovering unregistered example files | Yes — `scan_example_artifacts` scans `functions/` tree | — |
 | Concept extraction per XML | Yes — top-N element frequency | Verify links are semantically correct |
-| Detecting unaligned classes | Yes — set diff of TTL class names | — |
-| NITS category assignment | Yes — heuristic (first-match regex) | Override when heuristic is wrong |
 | `standards/` real-world examples | No — flagged for manual review | Inspect structure before generating stanzas |
-| New NITS classes (none exists yet) | No | Add class to core NITS ontology, reload, then re-align |
 | Publishing to GraphDB | No — deliberate human gate | `make graphdb-load` after review |
 
+Detecting unaligned classes and assigning a heuristic alignment category were automated by the
+now-removed `ontology_alignment_gap` command; there is currently no tooling for either.
+
 The deliberate human gate between scan and publish mirrors the editorial review pattern used elsewhere in the system: automation surfaces candidates, a human approves, the system publishes.
-
-## Scope: beyond NeTEx
-
-The commands support additional standards via `--standard`:
-
-```bash
-python manage.py ontology_alignment_gap --standard opra
-python manage.py ontology_alignment_gap --standard siri
-python manage.py ontology_alignment_gap --standard datex
-```
-
-Each standard requires its own `standards/<standard>.ttl` and `alignments/nits-<standard>-align.ttl` to be present in `docs/ontology/`. The scan command currently supports `--standard netex` only; extend `scan_example_artifacts.py` when example repositories for other standards are available locally.

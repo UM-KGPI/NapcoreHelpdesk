@@ -22,11 +22,6 @@ from helpdesk.models import OntologyAssetVersion
 
 ONTOLOGY_SPECS = [
     {
-        "ontology_key": "napcore-its",
-        "file_path": "napcore-its.ttl",
-        "graph_uri": "https://napcore.eu/graph/core/napcore-its",
-    },
-    {
         "ontology_key": "transmodel",
         "file_path": "standards/transmodel.ttl",
         "graph_uri": "https://napcore.eu/graph/standards/transmodel",
@@ -64,21 +59,6 @@ ONTOLOGY_SPECS = [
         }
         for standard in ("netex", "siri", "opra")
     ),
-    {
-        "ontology_key": "nits-netex-align",
-        "file_path": "alignments/nits-netex-align.ttl",
-        "graph_uri": "https://napcore.eu/graph/alignments/netex",
-    },
-    {
-        "ontology_key": "nits-opra-align",
-        "file_path": "alignments/nits-opra-align.ttl",
-        "graph_uri": "https://napcore.eu/graph/alignments/opra",
-    },
-    {
-        "ontology_key": "nits-siri-align",
-        "file_path": "alignments/nits-siri-align.ttl",
-        "graph_uri": "https://napcore.eu/graph/alignments/siri",
-    },
     {
         "ontology_key": "netex-artifact-rules-v1.0",
         "file_path": "artifact-rules/netex-artifact-rules-v1.0.ttl",

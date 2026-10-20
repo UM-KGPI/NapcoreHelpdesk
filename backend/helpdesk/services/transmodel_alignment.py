@@ -215,7 +215,7 @@ def render_turtle(plan: AlignmentPlan, *, generated_on: date | None = None) -> s
         "@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .",
         "@prefix skos: <http://www.w3.org/2004/02/skos/core#> .",
         "@prefix dct:  <http://purl.org/dc/terms/> .",
-        "@prefix nits: <https://napcore.eu/ontology/nits#> .",
+        "@prefix tmalign: <https://napcore.eu/ontology/transmodel-alignment#> .",
         f"@prefix tm:   <{TRANSMODEL_NAMESPACE}> .",
         f"@prefix {standard}: <{STANDARD_NAMESPACES[standard]}> .",
         "",
@@ -228,7 +228,7 @@ def render_turtle(plan: AlignmentPlan, *, generated_on: date | None = None) -> s
         f'    dct:created "{today}"^^xsd:date ;',
         "    dct:license <https://creativecommons.org/licenses/by/4.0/> .",
         "",
-        "nits:transmodelDefinitionStatus",
+        "tmalign:transmodelDefinitionStatus",
         "    a owl:AnnotationProperty ;",
         '    rdfs:label "Transmodel definition status"@en ;',
         "    skos:definition \"How a standard concept's definition compares to the definition of the "
@@ -236,7 +236,7 @@ def render_turtle(plan: AlignmentPlan, *, generated_on: date | None = None) -> s
         + "; ".join(f"{key} ({value})" for key, value in STATUS_DESCRIPTIONS.items())
         + '."@en .',
         "",
-        "nits:alignmentMethod",
+        "tmalign:alignmentMethod",
         "    a owl:AnnotationProperty ;",
         '    rdfs:label "alignment method"@en ;',
         '    skos:definition "How the link to Transmodel was made: name-match (generated, pending review) '
@@ -247,8 +247,8 @@ def render_turtle(plan: AlignmentPlan, *, generated_on: date | None = None) -> s
         lines += [
             f"{standard}:{row.standard_class}",
             f"    skos:exactMatch tm:{row.tm_class} ;",
-            f'    nits:transmodelDefinitionStatus "{row.status}" ;',
-            f'    nits:alignmentMethod "{row.method}" .',
+            f'    tmalign:transmodelDefinitionStatus "{row.status}" ;',
+            f'    tmalign:alignmentMethod "{row.method}" .',
             "",
         ]
     return "\n".join(lines)

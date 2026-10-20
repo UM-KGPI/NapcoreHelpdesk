@@ -16,7 +16,7 @@ from hashlib import sha1
 import re
 
 from helpdesk.models import EditorialQueueItem, FAQEntry, FAQVersion
-from helpdesk.services.question_parsing import parse_question_to_semantic_query
+from helpdesk.services.question_parsing import UNKNOWN_CONCEPT_SENTINEL, parse_question_to_semantic_query
 
 _TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
 _LOW_VALUE_TOKENS = {
@@ -112,7 +112,7 @@ def publish_queue_item_to_faq(*, queue_item: EditorialQueueItem) -> FAQVersion:
 
     standards_scope = _normalize_scope(question_event.standards_scope)
     normalized_intent = f"{semantic.intent} {semantic.core_concept}".strip()
-    if normalized_intent == "unknown nits:unknown-concept":
+    if normalized_intent == f"unknown {UNKNOWN_CONCEPT_SENTINEL}":
         normalized_intent = question.lower()[:512]
 
     faq_entry_id = question_event.matched_faq_entry_id or _build_faq_entry_id(

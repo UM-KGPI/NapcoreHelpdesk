@@ -37,7 +37,6 @@ SKOS_RELATIONS = [
 ]
 
 DEFAULT_NAMESPACES = {
-    "nits": "https://napcore.eu/ontology/nits#",
     "netex": "https://netex.org.uk/netex/2.0#",
     "opra": "https://transmodel-cen.eu/opra/1.0#",
     # Matches standards/siri.ttl's actual @prefix (confirmed against what's
@@ -88,18 +87,22 @@ STANDARD_ARTIFACT_RULE_SPECS = {
     ),
 }
 
+# The per-standard alignments/{netex,opra,siri} graphs used to be listed here
+# too; they are populated exclusively by the nits-{netex,opra,siri}-align.ttl
+# files (confirmed in NITS-REMOVAL-PLAN.md section 2 group A). Since the live
+# concept-expansion pivot (query_graphdb_concept_expansion, above) now pivots
+# through Transmodel only, those graphs no longer contribute to this scope --
+# the Transmodel-alignment equivalent (alignments/transmodel-{standard}) is
+# already added unconditionally by TRANSMODEL_REFERENCE_GRAPHS below.
 STANDARD_GRAPH_SCOPE = {
     "netex": [
         "https://napcore.eu/graph/standards/netex",
-        "https://napcore.eu/graph/alignments/netex",
     ],
     "opra": [
         "https://napcore.eu/graph/standards/opra",
-        "https://napcore.eu/graph/alignments/opra",
     ],
     "siri": [
         "https://napcore.eu/graph/standards/siri",
-        "https://napcore.eu/graph/alignments/siri",
     ],
     "transmodel": [
         "https://napcore.eu/graph/standards/transmodel",
@@ -110,8 +113,16 @@ STANDARD_GRAPH_SCOPE = {
 # that stale content does not stay live in GraphDB after the file is gone.
 # - alignments/transmodel (nits-transmodel-align.ttl): hand-written definitions
 #   on NeTEx classes; superseded by the generated transmodel-*-align.ttl.
+# - core/napcore-its and alignments/{netex,opra,siri}: the NITS upper
+#   ontology and its per-standard alignment files (NITS-REMOVAL-PLAN.md
+#   Phase 3) -- superseded by the Transmodel pivot (see STANDARD_GRAPH_SCOPE
+#   and query_graphdb_concept_expansion above).
 RETIRED_GRAPH_URIS = [
     "https://napcore.eu/graph/alignments/transmodel",
+    "https://napcore.eu/graph/core/napcore-its",
+    "https://napcore.eu/graph/alignments/netex",
+    "https://napcore.eu/graph/alignments/opra",
+    "https://napcore.eu/graph/alignments/siri",
 ]
 
 # Transmodel is the conceptual reference for NeTEx, SIRI and OpRa, so its
@@ -126,11 +137,6 @@ TRANSMODEL_REFERENCE_GRAPHS = [
 ]
 
 TRANSMODEL_NAMESPACE = "https://transmodel-cen.eu/6.2/"
-
-# Root NITS metaclasses. Hundreds of concepts map to them (928 to
-# nits:DataArtifact alone), so pivoting through one yields noise, not siblings.
-# Same set as semantic_graph._ABSTRACT_NITS_IDS.
-_ABSTRACT_NITS_PIVOTS = ("DomainConcept", "DataArtifact", "Process", "System", "Actor")
 
 STANDARD_ALIASES = {
     "netex": "netex",
@@ -283,19 +289,16 @@ def query_graphdb_concept_expansion(
     quant = "" if safe_hops == 1 else "+"
     if graph_uris:
         graph_values = " ".join(f"<{iri}>" for iri in graph_uris)
-        nits_namespace = DEFAULT_NAMESPACES["nits"]
-        abstract_pivots = ", ".join(f"<{nits_namespace}{name}>" for name in _ABSTRACT_NITS_PIVOTS)
         # A property path inside `GRAPH ?g { ?seed path ?related }` must resolve
         # entirely within one graph per solution -- it cannot hop from an edge in
-        # e.g. alignments/opra to an edge in alignments/netex, even though both
-        # are in `graph_uris`. That breaks the one thing the shared hubs
-        # exist for: a seed in one standard's alignment graph reaching a sibling
-        # concept declared in a different standard's alignment graph.
+        # e.g. alignments/transmodel-opra to an edge in alignments/transmodel-netex,
+        # even though both are in `graph_uris`. That breaks the one thing the
+        # shared hub exists for: a seed in one standard's alignment graph reaching
+        # a sibling concept declared in a different standard's alignment graph.
         # Second UNION branch below handles that case explicitly as two single-
         # graph hops: seed -> pivot (in the seed's own graph), then
-        # pivot <- sibling concepts (searched across all scoped graphs).
-        # Pivots are Transmodel concepts (the reference hub) or specific nits:
-        # concepts; abstract nits: roots are excluded.
+        # pivot <- sibling concepts (searched across all scoped graphs). Pivots
+        # are Transmodel concepts (the reference hub).
         query = (
             "SELECT DISTINCT ?related WHERE { "
             "{ "
@@ -311,16 +314,12 @@ def query_graphdb_concept_expansion(
             "GRAPH ?gPivot { "
             f"?seed ({relation_paths}) ?pivot . "
             "} "
-            "FILTER("
-            f"(CONTAINS(STR(?pivot), 'napcore.eu/ontology/nits') && ?pivot NOT IN ({abstract_pivots})) "
-            f"|| STRSTARTS(STR(?pivot), '{TRANSMODEL_NAMESPACE}')"
-            ") "
+            f"FILTER(STRSTARTS(STR(?pivot), '{TRANSMODEL_NAMESPACE}')) "
             f"VALUES ?gSibling {{ {graph_values} }} "
             "GRAPH ?gSibling { "
             f"?related ({relation_paths}) ?pivot . "
             "} "
             "FILTER(isIRI(?related)) "
-            "FILTER(!CONTAINS(STR(?related), 'napcore.eu/ontology/nits')) "
             "} "
             "}"
         )
@@ -446,11 +445,6 @@ def load_default_ontology_graphs(
 
     graph_specs = [
         (
-            "napcore-its",
-            ontology_dir / "napcore-its.ttl",
-            "https://napcore.eu/graph/core/napcore-its",
-        ),
-        (
             "transmodel",
             ontology_dir / "standards" / "transmodel.ttl",
             "https://napcore.eu/graph/standards/transmodel",
@@ -462,21 +456,6 @@ def load_default_ontology_graphs(
             "examples-catalog",
             ontology_dir / "standards" / "examples.ttl",
             "https://napcore.eu/graph/examples/catalog",
-        ),
-        (
-            "nits-netex-align",
-            ontology_dir / "alignments" / "nits-netex-align.ttl",
-            "https://napcore.eu/graph/alignments/netex",
-        ),
-        (
-            "nits-opra-align",
-            ontology_dir / "alignments" / "nits-opra-align.ttl",
-            "https://napcore.eu/graph/alignments/opra",
-        ),
-        (
-            "nits-siri-align",
-            ontology_dir / "alignments" / "nits-siri-align.ttl",
-            "https://napcore.eu/graph/alignments/siri",
         ),
         # Generated by build_transmodel_alignment
         *(

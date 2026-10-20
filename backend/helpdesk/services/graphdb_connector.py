@@ -103,60 +103,6 @@ SELECT DISTINCT ?stdConcept WHERE {{
                     break
         return sorted(standards)
 
-    def discover_standards_for_core_concept_slug(self, core_concept_slug: str) -> list[str]:
-        """Resolve a slug-style NITS concept id (e.g. line-network) and discover standards."""
-
-        slug = (core_concept_slug or "").strip().lower()
-        if not slug:
-            return []
-
-        normalized_slug = "".join(ch for ch in slug if ch.isalnum())
-        if not normalized_slug:
-            return []
-
-        tokens = [token for token in slug.replace("_", "-").split("-") if token]
-        token_values = " ".join(f'"{token}"' for token in tokens)
-
-        sparql = f"""
-SELECT DISTINCT ?core WHERE {{
-  GRAPH ?g {{
-    ?core a <http://www.w3.org/2002/07/owl#Class> .
-    OPTIONAL {{ ?core <http://www.w3.org/2004/02/skos/core#prefLabel>|<http://www.w3.org/2000/01/rdf-schema#label> ?label . }}
-    FILTER(CONTAINS(STR(?core), "napcore.eu/ontology/nits"))
-    BIND(LCASE(REPLACE(STRAFTER(STR(?core), "#"), "[^A-Za-z0-9]", "")) AS ?coreLocalNorm)
-    BIND(LCASE(REPLACE(STR(COALESCE(?label, "")), "[^A-Za-z0-9]", "")) AS ?labelNorm)
-    FILTER(?coreLocalNorm = "{normalized_slug}" || ?labelNorm = "{normalized_slug}")
-  }}
-}}
-""".strip()
-        rows = self._query_select(sparql)
-
-        core_iris = [row.get("core", "") for row in rows if row.get("core")]
-        if not core_iris and token_values:
-            # Fallback: match by individual tokens when full slug has no exact match.
-            token_sparql = f"""
-SELECT DISTINCT ?core WHERE {{
-  GRAPH ?g {{
-    ?core a <http://www.w3.org/2002/07/owl#Class> .
-    OPTIONAL {{ ?core <http://www.w3.org/2004/02/skos/core#prefLabel>|<http://www.w3.org/2000/01/rdf-schema#label> ?label . }}
-    FILTER(CONTAINS(STR(?core), "napcore.eu/ontology/nits"))
-    BIND(LCASE(REPLACE(STRAFTER(STR(?core), "#"), "[^A-Za-z0-9]", "")) AS ?coreLocalNorm)
-    BIND(LCASE(REPLACE(STR(COALESCE(?label, "")), "[^A-Za-z0-9]", "")) AS ?labelNorm)
-    VALUES ?token {{ {token_values} }}
-    FILTER(?coreLocalNorm = ?token || ?labelNorm = ?token)
-  }}
-}}
-""".strip()
-            token_rows = self._query_select(token_sparql)
-            core_iris = [row.get("core", "") for row in token_rows if row.get("core")]
-
-        discovered: list[str] = []
-        for core_iri in sorted(set(core_iris)):
-            for standard in self.discover_standards_for_core_concept(core_iri):
-                if standard not in discovered:
-                    discovered.append(standard)
-        return discovered
-
     def _query_select(self, sparql: str) -> list[dict[str, str]]:
         if not self.endpoint_url:
             return []

@@ -37,6 +37,7 @@ from rest_framework.test import APITestCase
 from helpdesk.api.exceptions import custom_exception_handler
 from helpdesk.api.views import _build_file_url, _rewrite_source_paths_as_evidence_markers, _select_citations
 from helpdesk.services.llm_generator import LLMGenerationError
+from helpdesk.services.question_parsing import UNKNOWN_CONCEPT_SENTINEL
 from helpdesk.models import (
     AnswerEvidenceLink,
     EditorialQueueItem,
@@ -432,14 +433,14 @@ class HelpdeskApiTests(APITestCase):
         """No concept match should trigger clarification abstain without retrieval."""
 
         parse_mock.return_value = SimpleNamespace(
-            core_concept="nits:unknown-concept",
+            core_concept=UNKNOWN_CONCEPT_SENTINEL,
             ambiguous_core_concept=False,
             candidate_standards=[],
             original_terms=["unmapped"],
             as_dict=lambda: {
                 "intent": "unknown",
                 "normativity": "unspecified",
-                "coreConcept": "nits:unknown-concept",
+                "coreConcept": UNKNOWN_CONCEPT_SENTINEL,
                 "coreConcepts": [],
                 "ambiguousCoreConcept": False,
                 "candidateStandards": [],

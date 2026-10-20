@@ -177,37 +177,50 @@ _WEAK_TERM_PATTERN = re.compile(
 )
 
 # Terms so generic they appear in virtually every NeTEx/standards document and
-# must never be used as the sole grounding evidence for a citation.
-# Derived dynamically from the NITS ontology labels so the set grows automatically
-# as new abstract concepts are added; a minimal hardcoded fallback is used when
-# the ontology is unavailable (e.g. during tests without a live GraphDB).
-def _build_ubiquitous_terms() -> frozenset[str]:
-    try:
-        from helpdesk.services.semantic_graph import _NITS_ONTOLOGY  # noqa: PLC0415
-        concepts = _NITS_ONTOLOGY.get("concepts", {})
-        terms: set[str] = set()
-        for concept_data in concepts.values():
-            for label in concept_data.get("labels", []):
-                lower = label.lower().strip()
-                if len(lower) >= 3:
-                    terms.add(lower)
-                    # Also add simple plural so e.g. "ROUTEs" → "routes" is covered.
-                    if not lower.endswith("s"):
-                        terms.add(lower + "s")
-        if terms:
-            return frozenset(terms)
-    except Exception:
-        pass
-    # Minimal fallback used when the ontology module is unavailable.
-    return frozenset({
-        "netex", "opra", "siri", "datex", "transmodel", "nits",
-        "line", "lines", "route", "routes", "stop", "stops",
-        "trip", "trips", "service", "services", "journey", "journeys",
-        "network", "networks", "operator", "operators", "pattern", "patterns",
-    })
-
-
-_UBIQUITOUS_TERMS = _build_ubiquitous_terms()
+# must never be used as the sole grounding evidence for a citation. This is a
+# static list (no live ontology lookup); the labels/altLabels of every upper-ontology
+# concept, pluralized, plus a small set of cross-standard names.
+_UBIQUITOUS_TERMS = frozenset({
+    "netex", "opra", "siri", "datex", "transmodel",
+    "line", "lines", "route", "routes", "stop", "stops",
+    "trip", "trips", "service", "services", "journey", "journeys",
+    "network", "networks", "operator", "operators", "pattern", "patterns",
+    "actor", "actors", "applies to network", "applies to networks",
+    "authority", "authoritys", "belongs to ecosystem", "belongs to ecosystems",
+    "characterises service", "characterises services", "consists of", "consists ofs",
+    "data artifact", "data artifacts", "data consumer", "data consumers",
+    "data exchange", "data exchanges", "data publisher", "data publishers",
+    "data set", "data sets", "datex ii", "datex ii ontology", "datex ii ontologys",
+    "datex iis", "describes specification", "describes specifications",
+    "disruption", "disruptions", "disturbance", "disturbances",
+    "domain concept", "domain concepts", "event", "events",
+    "exchanged between", "exchanged betweens", "governs",
+    "has specification ontology", "has specification ontologys", "involves",
+    "journey component", "journey components", "journey pattern", "journey patterns",
+    "location", "locations", "netex ontology", "netex ontologys", "netexs",
+    "operational intensity", "operational intensitys", "operational process",
+    "opra ontology", "opra ontologys", "opras",
+    "organisation", "organisations", "organization", "organizations",
+    "process", "produces", "profile", "profiles", "provides",
+    "public transport line", "public transport lines",
+    "real-time information", "real-time informations",
+    "responsibility", "responsibilitys", "role", "roles",
+    "route line", "route lines", "schedule", "scheduled stop point",
+    "scheduled stop points", "schedules",
+    "service intensity", "service intensitys", "service metric", "service metrics",
+    "siri ontology", "siri ontologys", "siris",
+    "situation", "situations", "spatial entity", "spatial entitys",
+    "specification ontology", "specification ontologys",
+    "standards ecosystem", "standards ecosystems",
+    "stop point", "stop points", "stopping place", "stopping places",
+    "system", "systems", "technical specification", "technical specifications",
+    "temporal entity", "temporal entitys", "timetable", "timetables",
+    "transmodel ecosystem", "transmodel ecosystems",
+    "transmodel ontology", "transmodel ontologys", "transmodels",
+    "transport journey", "transport journey pattern", "transport journey patterns",
+    "transport journeys", "transport line", "transport lines",
+    "transport network", "transport networks", "uses",
+})
 
 
 def _classify_terms(sentence: str) -> tuple[list[str], list[str]]:

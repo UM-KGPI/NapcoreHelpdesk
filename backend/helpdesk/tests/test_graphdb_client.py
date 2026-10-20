@@ -99,9 +99,10 @@ class GraphDbClientTests(TestCase):
         seed in one standard's alignment graph to a sibling concept in a
         different standard's alignment graph, even when both are in
         `graph_uris`. The scoped query must include a second, explicit
-        two-hop branch (seed -> nits concept, then nits concept <- sibling
-        concepts) that is not constrained to a single graph binding for
-        both hops, or cross-standard concepts are silently unreachable.
+        two-hop branch (seed -> Transmodel concept, then Transmodel concept
+        <- sibling concepts) that is not constrained to a single graph
+        binding for both hops, or cross-standard concepts are silently
+        unreachable.
         """
         graphdb_response = {"head": {"vars": ["related"]}, "results": {"bindings": []}}
         mock_response = MagicMock()
@@ -116,16 +117,16 @@ class GraphDbClientTests(TestCase):
                 endpoint="http://localhost:7200",
                 repository="napcore",
                 graph_uris=[
-                    "https://napcore.eu/graph/alignments/opra",
-                    "https://napcore.eu/graph/alignments/netex",
-                    "https://napcore.eu/graph/alignments/siri",
+                    "https://napcore.eu/graph/alignments/transmodel-opra",
+                    "https://napcore.eu/graph/alignments/transmodel-netex",
+                    "https://napcore.eu/graph/alignments/transmodel-siri",
                 ],
             )
 
         sent_query = urlopen_mock.call_args[0][0].data.decode("utf-8")
         self.assertIn("UNION", sent_query)
         self.assertIn("?pivot", sent_query)
-        self.assertIn("napcore.eu/ontology/nits", sent_query)
+        self.assertIn("https://transmodel-cen.eu/6.2/", sent_query)
         # The two hops of the pivot branch must use independently-bound graph
         # variables (not both constrained to the same single ?g), otherwise
         # they collapse back into the single-graph-only bug this guards against.
@@ -135,12 +136,13 @@ class GraphDbClientTests(TestCase):
     def test_query_graphdb_concept_expansion_pivot_branch_reaches_other_standards(self):
         """Simulates GraphDB returning results only from the pivot UNION branch
         (as if the direct-relation branch found nothing, which is the real-world
-        case when a seed's only path to a sibling standard is through nits:)."""
+        case when a seed's only path to a sibling standard is through a shared
+        Transmodel concept)."""
         graphdb_response = {
             "head": {"vars": ["related"]},
             "results": {
                 "bindings": [
-                    {"related": {"type": "uri", "value": "https://napcore.eu/ontology/nits#Journey"}},
+                    {"related": {"type": "uri", "value": "https://transmodel-cen.eu/6.2/JOURNEY"}},
                     {"related": {"type": "uri", "value": "https://netex.org.uk/netex/2.0#VehicleJourney"}},
                     {"related": {"type": "uri", "value": "https://siri.org.uk/siri/1.3#EstimatedVehicleJourney"}},
                 ]
@@ -158,9 +160,9 @@ class GraphDbClientTests(TestCase):
                 endpoint="http://localhost:7200",
                 repository="napcore",
                 graph_uris=[
-                    "https://napcore.eu/graph/alignments/opra",
-                    "https://napcore.eu/graph/alignments/netex",
-                    "https://napcore.eu/graph/alignments/siri",
+                    "https://napcore.eu/graph/alignments/transmodel-opra",
+                    "https://napcore.eu/graph/alignments/transmodel-netex",
+                    "https://napcore.eu/graph/alignments/transmodel-siri",
                 ],
             )
 
@@ -173,7 +175,7 @@ class GraphDbClientTests(TestCase):
             include_artifact_rules=False,
         )
         self.assertIn("https://napcore.eu/graph/standards/netex", scoped_without_rules)
-        self.assertIn("https://napcore.eu/graph/alignments/siri", scoped_without_rules)
+        self.assertIn("https://napcore.eu/graph/alignments/transmodel-siri", scoped_without_rules)
         self.assertFalse(any("/artifact-rules/" in uri for uri in scoped_without_rules))
 
         scoped_with_rules = build_graph_scope_for_standards(
@@ -196,7 +198,7 @@ class GraphDbClientTests(TestCase):
         # Empty scope means "query all graphs"; adding reference graphs would narrow it.
         self.assertEqual(build_graph_scope_for_standards(set(), include_artifact_rules=False), [])
 
-    def test_query_graphdb_concept_expansion_pivots_through_transmodel_not_abstract_nits(self):
+    def test_query_graphdb_concept_expansion_pivots_through_transmodel_only(self):
         graphdb_response = {"head": {"vars": ["related"]}, "results": {"bindings": []}}
         mock_response = MagicMock()
         mock_response.read.return_value = json.dumps(graphdb_response).encode("utf-8")
@@ -214,8 +216,10 @@ class GraphDbClientTests(TestCase):
 
         sent_query = urlopen_mock.call_args[0][0].data.decode("utf-8")
         self.assertIn("STRSTARTS(STR(?pivot), 'https://transmodel-cen.eu/6.2/')", sent_query)
-        self.assertIn("NOT IN (", sent_query)
-        self.assertIn("<https://napcore.eu/ontology/nits#DataArtifact>", sent_query)
+        # The NITS pivot (and its abstract-root exclusion) is gone: Transmodel
+        # is the only hub this branch pivots through now.
+        self.assertNotIn("napcore.eu/ontology/nits", sent_query)
+        self.assertNotIn("NOT IN (", sent_query)
 
     def test_load_default_ontology_graphs_excludes_artifact_rules_by_default(self):
         with (
@@ -236,7 +240,7 @@ class GraphDbClientTests(TestCase):
             )
 
         graph_uris = {item["graphUri"] for item in results}
-        self.assertEqual(len(results), 12)
+        self.assertEqual(len(results), 8)
         for standard in ("netex", "siri", "opra"):
             self.assertIn(f"https://napcore.eu/graph/alignments/transmodel-{standard}", graph_uris)
         self.assertNotIn("https://napcore.eu/graph/alignments/transmodel", graph_uris)
@@ -256,9 +260,21 @@ class GraphDbClientTests(TestCase):
                 replace=True,
             )
 
-        delete_mock.assert_called_once()
-        self.assertEqual(delete_mock.call_args.kwargs["graph_uri"], "https://napcore.eu/graph/alignments/transmodel")
-        self.assertTrue(results[-1]["retired"])
+        self.assertEqual(delete_mock.call_count, 5)
+        deleted_graph_uris = {call.kwargs["graph_uri"] for call in delete_mock.call_args_list}
+        self.assertEqual(
+            deleted_graph_uris,
+            {
+                "https://napcore.eu/graph/alignments/transmodel",
+                "https://napcore.eu/graph/core/napcore-its",
+                "https://napcore.eu/graph/alignments/netex",
+                "https://napcore.eu/graph/alignments/opra",
+                "https://napcore.eu/graph/alignments/siri",
+            },
+        )
+        retired_results = results[-5:]
+        self.assertTrue(all(item["retired"] for item in retired_results))
+        self.assertEqual({item["graphUri"] for item in retired_results}, deleted_graph_uris)
 
     def test_load_default_ontology_graphs_includes_selected_artifact_rules(self):
         with (

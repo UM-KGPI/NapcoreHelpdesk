@@ -157,7 +157,6 @@ def retrieve_concept_examples_with_fallback(
         # Additionally: examples of concrete types (ServiceJourney) also demonstrate templates (TemplateServiceJourney)
         sparql_query = f"""
         PREFIX netex: <https://netex.org.uk/netex/2.0#>
-        PREFIX nits: <https://napcore.eu/ontology/nits#>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
         PREFIX dct: <http://purl.org/dc/terms/>
@@ -409,7 +408,6 @@ def _ensure_uri(concept_id: str) -> str:
         "opra": "https://transmodel-cen.eu/opra/1.0#",
         "siri": "https://siri.org.uk/siri/1.3#",
         "transmodel": "https://transmodel-cen.eu/6.2/",
-        "nits": "https://napcore.eu/ontology/nits#",
     }
     for prefix, namespace in prefix_map.items():
         if concept_id.startswith(f"{prefix}:"):
