@@ -60,8 +60,17 @@ from helpdesk.services.graphdb_client import (
     build_graph_scope_for_standards,
     query_graphdb_concept_expansion_with_distance,
 )
+from helpdesk.services.relation_paths import (
+    format_relation_paths_as_chunks,
+    is_relation_question,
+    load_relation_graph,
+    relation_paths_for_question,
+    supporting_subclass_chunks,
+)
 from helpdesk.services.semantic_graph import (
+    CONCEPT_TO_TRANSMODEL,
     GRAPH_CONCEPT_ALIASES,
+    TRANSMODEL_TO_CONCEPTS,
     expand_graph_concepts_with_distance,
     extract_graph_concepts,
     get_concept_canonical_terms,
@@ -400,6 +409,70 @@ def _diversified_top_k(candidates: list[dict], top_k: int, mmr_lambda: float) ->
         candidate.pop("_diversityTokens", None)
 
     return selected
+
+
+def _relation_path_candidates(question_concepts: set[str]) -> list[dict]:
+    """Relation-path evidence for a relationship question, ranked above scored chunks.
+
+    Paths are the answer to "how is X related to Y" and would otherwise never reach
+    the generator: they are graph edges, not text. Each path comes with the indexed
+    XSD chunk that shows its subclass step, when there is one.
+    """
+    if not getattr(settings, "GRAPHDB_ENABLED", False):
+        return []
+    graph = load_relation_graph(
+        endpoint=settings.GRAPHDB_SPARQL_ENDPOINT,
+        repository=settings.GRAPHDB_REPOSITORY,
+        username=getattr(settings, "GRAPHDB_USER", ""),
+        password=getattr(settings, "GRAPHDB_PASSWORD", ""),
+        timeout_seconds=max(5, int(settings.GRAPHDB_TIMEOUT_SECONDS)),
+    )
+    if graph is None:
+        return []
+    paths = relation_paths_for_question(graph, question_concepts, CONCEPT_TO_TRANSMODEL, TRANSMODEL_TO_CONCEPTS)
+    if not paths:
+        return []
+
+    candidates: list[dict] = []
+    for index, chunk in enumerate(format_relation_paths_as_chunks(paths, commit_shas=indexed_commit_shas())):
+        candidates.append(
+            {
+                **chunk,
+                "score": 1.0,
+                "_rankScore": 3.0 - index * 0.01,
+                "_vectorScore": 1.0,
+                "chunkType": "relation-path",
+                "structuredMetadata": {},
+                "retrievalEventId": f"re-{uuid4().hex[:8]}",
+                "_graphContribution": 0.0,
+                "_graphHit": True,
+                "_graphProvenanceConceptIds": sorted(question_concepts),
+            }
+        )
+    for index, chunk in enumerate(supporting_subclass_chunks(paths)):
+        candidates.append(
+            {
+                "text": chunk.text,
+                "score": 0.95,
+                "_rankScore": 2.5 - index * 0.01,
+                "_vectorScore": 0.9,
+                "repositoryUrl": chunk.repository_url,
+                "commitSha": chunk.commit_sha,
+                "sourcePath": chunk.source_path,
+                "chunkId": chunk.chunk_id,
+                "label": chunk.label,
+                "standardsScope": chunk.standards_scope or [],
+                "chunkType": chunk.chunk_type or "",
+                "docType": chunk.doc_type or "",
+                "heading": chunk.heading or "",
+                "structuredMetadata": chunk.structured_metadata or {},
+                "retrievalEventId": f"re-{uuid4().hex[:8]}",
+                "_graphContribution": 0.0,
+                "_graphHit": True,
+                "_graphProvenanceConceptIds": sorted(question_concepts),
+            }
+        )
+    return candidates
 
 
 def _cap_expanded_concepts(
@@ -1525,6 +1598,17 @@ def retrieve_chunks_with_trace(
         logger.info(f"Added {len(xsd_schema_chunks)} XSD schema definition chunks to candidates")
 
     stage_start = time.perf_counter()
+    relation_paths_added = 0
+    if graph_rag_enabled and question_concepts and is_relation_question(question):
+        try:
+            relation_candidates = _relation_path_candidates(question_concepts)
+            candidates.extend(relation_candidates)
+            relation_paths_added = sum(1 for c in relation_candidates if c["docType"] == "ontology-relation")
+        except Exception:
+            logger.warning("Relation-path evidence failed", exc_info=True)
+    _record_stage("relationPathMs", stage_start)
+
+    stage_start = time.perf_counter()
     candidates.sort(key=lambda value: (value["_rankScore"], value["score"]), reverse=True)
     candidates = _apply_source_path_cap(candidates=candidates, max_per_source_path=source_path_cap)
     if retrieval_diversity_enabled:
@@ -1592,6 +1676,7 @@ def retrieve_chunks_with_trace(
         "graphProvenanceChainCount": len(provenance_chains) if graph_rag_enabled else 0,
         "exampleChunksAdded": example_chunks_added,
         "ontologyDefinitionsAdded": ontology_definitions_added,
+        "relationPathsAdded": relation_paths_added,
         "repositoryCoverageCount": repository_coverage_count,
         "conceptCoverageCount": len(graph_concepts_in_trimmed),
         "semanticAlignmentScore": round(sum(vector_scores_trimmed) / len(vector_scores_trimmed), 4) if vector_scores_trimmed else 0.0,
