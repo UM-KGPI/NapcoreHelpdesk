@@ -245,6 +245,50 @@ class SourceIndexBuilderTests(TestCase):
                 self.assertEqual(chunk.structured_metadata["schema"]["requiredAttributes"], ["version"])
                 self.assertNotIn("<xs:schema", chunk.text)
 
+        @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/TransmodelEcosystem/NeTEx"})
+        def test_build_source_index_summarizes_xsd_group_definitions(self):
+                """xs:group declarations (e.g. ServiceJourneyGroup) must be chunked too, since
+                the elements they reference are otherwise invisible to retrieval - only the
+                thin complexType wrapper that points at the group gets indexed."""
+                with TemporaryDirectory() as tmp_dir:
+                        repo_path = Path(tmp_dir)
+                        xsd_dir = repo_path / "xsd"
+                        xsd_dir.mkdir(parents=True, exist_ok=True)
+                        (xsd_dir / "serviceJourney.xsd").write_text(
+                                """<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">
+    <xs:group name=\"ServiceJourneyReferencesGroup\">
+        <xs:annotation>
+            <xs:documentation>Reference elements for a SERVICE JOURNEY.</xs:documentation>
+        </xs:annotation>
+        <xs:sequence>
+            <xs:element ref=\"LineRef\"/>
+            <xs:element ref=\"DirectionType\" minOccurs=\"0\"/>
+        </xs:sequence>
+    </xs:group>
+</xs:schema>
+""",
+                                encoding="utf-8",
+                        )
+
+                        call_command(
+                                "build_source_index",
+                                repo_url="https://github.com/TransmodelEcosystem/NeTEx",
+                                repo_path=str(repo_path),
+                                profile="netex",
+                                prune=True,
+                        )
+
+                chunk = SourceChunk.objects.get(source_path="xsd/serviceJourney.xsd")
+                self.assertEqual(chunk.chunk_type, "schema_fragment")
+                self.assertEqual(chunk.heading, "ServiceJourneyReferencesGroup")
+                self.assertIn("Schema declaration: group ServiceJourneyReferencesGroup", chunk.text)
+                self.assertIn("Direct child elements: LineRef, DirectionType", chunk.text)
+                self.assertEqual(
+                    chunk.structured_metadata["schema"]["requiredChildElements"],
+                    ["LineRef"],
+                )
+
     @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/TransmodelEcosystem/OpRa"})
     def test_retrieve_chunks_matches_delayed_question_to_late_journey_docs(self):
         """Ensure retrieval handles common delayed-vs-late wording differences for OpRa docs."""

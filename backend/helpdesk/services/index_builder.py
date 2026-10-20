@@ -374,51 +374,55 @@ def _extract_xsd_documentation(node: ET.Element) -> str:
     return _first_nonempty_text(texts)
 
 
+# Child elements and attributes live directly under xs:sequence/xs:choice for an
+# xs:group declaration, but one level deeper (under xs:complexType) for a named
+# complexType. Search both so group declarations aren't left empty.
+_CHILD_ELEMENT_PATHS = (
+    "./xs:complexType/xs:sequence/xs:element",
+    "./xs:complexType/xs:choice/xs:element",
+    "./xs:sequence/xs:element",
+    "./xs:choice/xs:element",
+    "./xs:sequence/xs:choice/xs:element",
+)
+_ATTRIBUTE_PATHS = (
+    "./xs:complexType/xs:attribute",
+    "./xs:attribute",
+)
+
+
 def _extract_xsd_child_elements(node: ET.Element, limit: int = 12) -> list[str]:
     child_names: list[str] = []
-    for child in node.findall("./xs:complexType/xs:sequence/xs:element", XSD_NS):
-        name = child.get("ref") or child.get("name") or child.get("type") or ""
-        name = name.strip()
-        if name and name not in child_names:
-            child_names.append(name)
-        if len(child_names) >= limit:
-            break
-
-    if len(child_names) < limit:
-        for child in node.findall("./xs:complexType/xs:choice/xs:element", XSD_NS):
+    for path in _CHILD_ELEMENT_PATHS:
+        for child in node.findall(path, XSD_NS):
             name = child.get("ref") or child.get("name") or child.get("type") or ""
             name = name.strip()
             if name and name not in child_names:
                 child_names.append(name)
             if len(child_names) >= limit:
-                break
-
+                return child_names
     return child_names
 
 
 def _extract_xsd_attributes(node: ET.Element, limit: int = 12) -> list[str]:
     attributes: list[str] = []
-    for attr in node.findall("./xs:complexType/xs:attribute", XSD_NS):
-        name = attr.get("ref") or attr.get("name") or attr.get("type") or ""
-        name = name.strip()
-        if not name:
-            continue
-        if attr.get("use"):
-            name = f"{name} ({attr.get('use')})"
-        if name not in attributes:
-            attributes.append(name)
-        if len(attributes) >= limit:
-            break
+    for path in _ATTRIBUTE_PATHS:
+        for attr in node.findall(path, XSD_NS):
+            name = attr.get("ref") or attr.get("name") or attr.get("type") or ""
+            name = name.strip()
+            if not name:
+                continue
+            if attr.get("use"):
+                name = f"{name} ({attr.get('use')})"
+            if name not in attributes:
+                attributes.append(name)
+            if len(attributes) >= limit:
+                return attributes
     return attributes
 
 
 def _extract_xsd_required_child_elements(node: ET.Element, limit: int = 12) -> list[str]:
     required_children: list[str] = []
-    child_paths = [
-        "./xs:complexType/xs:sequence/xs:element",
-        "./xs:complexType/xs:choice/xs:element",
-    ]
-    for path in child_paths:
+    for path in _CHILD_ELEMENT_PATHS:
         for child in node.findall(path, XSD_NS):
             min_occurs = (child.get("minOccurs") or "1").strip()
             if min_occurs == "0":
@@ -434,15 +438,16 @@ def _extract_xsd_required_child_elements(node: ET.Element, limit: int = 12) -> l
 
 def _extract_xsd_required_attributes(node: ET.Element, limit: int = 12) -> list[str]:
     required_attributes: list[str] = []
-    for attr in node.findall("./xs:complexType/xs:attribute", XSD_NS):
-        if (attr.get("use") or "").strip() != "required":
-            continue
-        name = attr.get("ref") or attr.get("name") or attr.get("type") or ""
-        name = name.strip()
-        if name and name not in required_attributes:
-            required_attributes.append(name)
-        if len(required_attributes) >= limit:
-            break
+    for path in _ATTRIBUTE_PATHS:
+        for attr in node.findall(path, XSD_NS):
+            if (attr.get("use") or "").strip() != "required":
+                continue
+            name = attr.get("ref") or attr.get("name") or attr.get("type") or ""
+            name = name.strip()
+            if name and name not in required_attributes:
+                required_attributes.append(name)
+            if len(required_attributes) >= limit:
+                return required_attributes
     return required_attributes
 
 
@@ -456,12 +461,13 @@ def extract_xsd_structured_metadata(text: str, max_declarations: int = 250) -> d
     declarations = list(root.findall("./xs:element", XSD_NS))
     declarations.extend(root.findall("./xs:complexType", XSD_NS))
     declarations.extend(root.findall("./xs:simpleType", XSD_NS))
+    declarations.extend(root.findall("./xs:group", XSD_NS))
 
     structured: dict[str, dict] = {}
     for node in declarations[:max_declarations]:
         declaration_type = node.tag.rsplit("}", 1)[-1]
         declaration_name = (node.get("name") or node.get("ref") or "").strip()
-        if declaration_type not in {"element", "complexType", "simpleType"} or not declaration_name:
+        if declaration_type not in {"element", "complexType", "simpleType", "group"} or not declaration_name:
             continue
 
         base_type = node.get("type") or ""
@@ -491,7 +497,7 @@ def extract_xsd_structured_metadata(text: str, max_declarations: int = 250) -> d
 
 def _build_xsd_summary_text(node: ET.Element, source_name: str) -> tuple[str, str] | None:
     declaration_type = node.tag.rsplit("}", 1)[-1]
-    if declaration_type not in {"element", "complexType", "simpleType"}:
+    if declaration_type not in {"element", "complexType", "simpleType", "group"}:
         return None
 
     declaration_name = (node.get("name") or node.get("ref") or "").strip()
@@ -540,6 +546,7 @@ def split_xsd_summary(text: str, source_name: str, max_declarations: int = 250) 
     top_level_declarations = list(root.findall("./xs:element", XSD_NS))
     top_level_declarations.extend(root.findall("./xs:complexType", XSD_NS))
     top_level_declarations.extend(root.findall("./xs:simpleType", XSD_NS))
+    top_level_declarations.extend(root.findall("./xs:group", XSD_NS))
 
     for node in top_level_declarations[:max_declarations]:
         summary = _build_xsd_summary_text(node, source_name)

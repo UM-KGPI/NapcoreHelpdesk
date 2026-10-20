@@ -118,6 +118,23 @@ class XSDHarvester:
                             config=config,
                         )
 
+            # Extract xs:group definitions (named groups, e.g. ServiceJourneyGroup).
+            # These hold the actual <xs:element ref="..."/> declarations that
+            # complexTypes merely reference via <xs:group ref="..."/>, so without
+            # this pass most element content inside groups is never indexed.
+            for elem in root.findall(".//xs:group", ns):
+                name = elem.get("name")
+                if name:
+                    self.definitions_found += 1
+                    if not self.dry_run:
+                        self._store_definition(
+                            name=name,
+                            elem_type="group",
+                            element_xml=ET.tostring(elem, encoding="unicode")[:2000],
+                            source_file=str(xsd_file.relative_to(config["path"])),
+                            config=config,
+                        )
+
         except ET.ParseError as e:
             logger.warning(f"Failed to parse {xsd_file}: {e}")
 
@@ -135,7 +152,7 @@ Type: {elem_type or 'element'}
 Source: {source_file}
 
 Definition:
-{element_xml[:500]}
+{element_xml[:2000]}
 """
 
         # Generate embedding for the definition
