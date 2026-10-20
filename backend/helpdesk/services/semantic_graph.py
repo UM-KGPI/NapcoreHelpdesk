@@ -128,6 +128,22 @@ def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
         " }"
     )
 
+    # rdfs:subClassOf links (e.g. netex:ServiceJourney -> netex:Journey). Bridges an
+    # abstract/base concept to the concrete subtypes that carry its real properties
+    # (ServiceJourney has lineRef, the abstract Journey base class does not), so a
+    # question anchored on the abstract concept can still reach them one hop away.
+    subclass_rows = _sparql_get(
+        "SELECT DISTINCT ?concept ?related WHERE {"
+        " ?concept <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?related ."
+        " FILTER(!CONTAINS(STR(?concept), 'napcore.eu/ontology/nits'))"
+        " FILTER(!CONTAINS(STR(?concept), 'www.w3.org'))"
+        " FILTER(!CONTAINS(STR(?concept), 'purl.org'))"
+        " FILTER(!CONTAINS(STR(?related), 'napcore.eu/ontology/nits'))"
+        " FILTER(!CONTAINS(STR(?related), 'www.w3.org'))"
+        " FILTER(!CONTAINS(STR(?related), 'purl.org'))"
+        " }"
+    )
+
     concepts: dict[str, dict] = {}
     for row in labels_rows:
         concept_id = _iri_to_concept_id(row.get("concept", ""))
@@ -138,9 +154,9 @@ def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
         if label not in entry["labels"]:
             entry["labels"].append(label)
 
-    # Populate related_to from skos:related and owl:ObjectProperty domain→range.
-    # Both directions are added so graph traversal is bidirectional.
-    for row in (*skos_related_rows, *object_property_rows):
+    # Populate related_to from skos:related, owl:ObjectProperty domain→range, and
+    # rdfs:subClassOf. Both directions are added so graph traversal is bidirectional.
+    for row in (*skos_related_rows, *object_property_rows, *subclass_rows):
         concept_id = _iri_to_concept_id(row.get("concept", ""))
         related_id = _iri_to_concept_id(row.get("related", ""))
         if not concept_id or not related_id or concept_id == related_id:

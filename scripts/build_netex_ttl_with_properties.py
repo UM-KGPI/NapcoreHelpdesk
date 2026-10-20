@@ -5,6 +5,10 @@ triples extracted from the complete NeTEx XSD tree, plus materialized
 skos:related pairs for the GraphDB-mode expansion path (SKOS_RELATIONS).
 
 Layer-1 only (shared helpdesk-RAG / validator vocabulary):
+  - class hierarchy: rdfs:subClassOf between netex.ttl classes, one edge per
+    class from its immediate xsd:extension base (e.g. ServiceJourney ->
+    Journey). Restriction bases are value-space narrowing, not subtyping, and
+    are not emitted.
   - object properties: rdfs:domain / rdfs:range between netex.ttl classes
   - datatype properties: rdfs:domain netex class, rdfs:range xsd:* builtin
     (named simpleTypes resolved through their restriction-base chain;
@@ -66,8 +70,9 @@ CLASS_STRUCT_SUFFIXES = (
 VERSION_OLDS = (
     '"0.2-xsd-rebuild-with-relationships"',
     '"0.3-with-object-and-datatype-properties"',
+    '"0.4-expanded-classes-and-structure-suffixes"',
 )
-VERSION_NEW = '"0.4-expanded-classes-and-structure-suffixes"'
+VERSION_NEW = '"0.5-with-class-hierarchy"'
 
 
 def load_ttl_classes(text: str) -> set[str]:
@@ -140,6 +145,50 @@ def first_doc(elem: ET.Element) -> str:
     if ann is not None and ann.text:
         return " ".join(ann.text.split())
     return ""
+
+
+def find_extension_base(ctype: ET.Element) -> str | None:
+    """Return the immediate xsd:extension base type name of a complexType, if any.
+
+    XSD single-inheritance only ever has one base, found under
+    complexContent/extension (never restriction: that's a value-space
+    narrowing, not a subtype relationship we want to carry into the ontology).
+    """
+    content = ctype.find(f"{XSD_NS}complexContent")
+    if content is None:
+        return None
+    extension = content.find(f"{XSD_NS}extension")
+    if extension is None:
+        return None
+    return extension.get("base")
+
+
+def compute_subclass_edges(
+    class_to_type: dict[str, str], idx: SchemaIndex, ttl_classes: set[str]
+) -> dict[str, str]:
+    """Map each class to its immediate base class, resolved through the same
+    structure-type suffixes used elsewhere, when both ends are known ontology
+    classes. This is the XSD type-extension relationship (e.g.
+    ServiceJourney_VersionStructure extends Journey_VersionStructure) that the
+    rest of this script deliberately does not use for property inheritance
+    (own-content only) but is exactly what graph traversal needs to bridge an
+    abstract concept to the concrete subtypes that carry its real properties.
+    """
+    edges: dict[str, str] = {}
+    for cls, tname in class_to_type.items():
+        ctype = idx.complex_types.get(tname)
+        if ctype is None:
+            continue
+        base_tname = find_extension_base(ctype)
+        if not base_tname:
+            continue
+        for suffix in CLASS_STRUCT_SUFFIXES:
+            if base_tname.endswith(suffix):
+                base_cls = base_tname[: -len(suffix)]
+                if base_cls in ttl_classes and base_cls != cls:
+                    edges[cls] = base_cls
+                break
+    return edges
 
 
 def own_content_entries(ctype: ET.Element, idx: SchemaIndex) -> list[ET.Element]:
@@ -257,6 +306,9 @@ def main(ttl_path: Path, out_path: Path, xsd_root: Path) -> dict[str, int]:
                 break
     print(f"TTL classes with a structure type: {len(class_to_type)} / {len(ttl_classes)}")
 
+    subclass_edges = compute_subclass_edges(class_to_type, idx, ttl_classes)
+    print(f"subClassOf edges: {len(subclass_edges)}")
+
     obj_edges: dict[tuple[str, str, str], dict] = {}
     dt_edges: dict[tuple[str, str], dict] = {}
     dangling: defaultdict[str, int] = defaultdict(int)
@@ -340,6 +392,15 @@ def main(ttl_path: Path, out_path: Path, xsd_root: Path) -> dict[str, int]:
 
     lines = []
     lines.append("\n#################################################################\n")
+    lines.append("# Class hierarchy (XSD xsd:extension base, own-content classes only)\n")
+    lines.append("# Bridges an abstract/base concept to the concrete subtypes that carry\n")
+    lines.append("# its real properties (e.g. ServiceJourney -> Journey).\n")
+    lines.append("#################################################################\n\n")
+    for cls, base_cls in sorted(subclass_edges.items()):
+        lines.append(f"netex:{cls} rdfs:subClassOf netex:{base_cls} .\n")
+    lines.append("\n")
+
+    lines.append("#################################################################\n")
     lines.append("# Object Properties (extracted from XSD content models)\n")
     lines.append("# Rules: element ref XxxRef / XxxRefStructure -> reference;\n")
     lines.append("#        xxx_RelStructure / class structure type -> containment.\n")
@@ -393,11 +454,61 @@ def main(ttl_path: Path, out_path: Path, xsd_root: Path) -> dict[str, int]:
     return dict(dangling)  # range targets that are not classes yet (see helpdesk/services/netex_recovery.py)
 
 
-def parse_args(argv: list[str] | None = None) -> tuple[Path, Path, Path]:
+def append_subclass_section_only(ttl_path: Path, out_path: Path, xsd_root: Path) -> int:
+    """Append just the rdfs:subClassOf section to an ALREADY-enriched netex.ttl.
+
+    `main()` always re-emits every section (object properties, datatype
+    properties, skos:related) from scratch, which is correct when it runs on
+    the pristine extractor output but would duplicate everything if run again
+    on a file that already has those sections. Use this instead to add
+    subClassOf support to a file enriched before this feature existed, without
+    touching anything already in it.
+    """
+    ttl_text = ttl_path.read_text(encoding="utf-8")
+    ttl_classes = load_ttl_classes(ttl_text)
+
+    idx = SchemaIndex()
+    idx.scan(xsd_root, SCOPE_DIRS)
+
+    class_to_type: dict[str, str] = {}
+    for tname in idx.complex_types:
+        for suffix in CLASS_STRUCT_SUFFIXES:
+            if tname.endswith(suffix):
+                cls = tname[: -len(suffix)]
+                if cls in ttl_classes:
+                    class_to_type.setdefault(cls, tname)
+                break
+
+    subclass_edges = compute_subclass_edges(class_to_type, idx, ttl_classes)
+    print(f"subClassOf edges: {len(subclass_edges)}")
+
+    lines = [
+        "\n#################################################################\n",
+        "# Class hierarchy (XSD xsd:extension base, own-content classes only)\n",
+        "# Bridges an abstract/base concept to the concrete subtypes that carry\n",
+        "# its real properties (e.g. ServiceJourney -> Journey).\n",
+        "#################################################################\n\n",
+    ]
+    for cls, base_cls in sorted(subclass_edges.items()):
+        lines.append(f"netex:{cls} rdfs:subClassOf netex:{base_cls} .\n")
+
+    merged = ttl_text.rstrip("\n") + "\n" + "".join(lines)
+    out_path.write_text(merged, encoding="utf-8")
+    print(f"wrote {out_path} ({len(merged.splitlines())} lines, {len(subclass_edges)} subClassOf edges)")
+    return len(subclass_edges)
+
+
+def parse_args(argv: list[str] | None = None) -> tuple[Path, Path, Path, bool]:
     parser = argparse.ArgumentParser(description="Enrich netex.ttl with properties extracted from the NeTEx XSD.")
     parser.add_argument("ttl", nargs="?", type=Path, default=DEFAULT_TTL, help="netex.ttl to enrich")
     parser.add_argument("out", nargs="?", type=Path, default=None, help="output file (default: TTL with suffix .ttl.new)")
     parser.add_argument("--netex-xsd-root", type=Path, default=None, help="the xsd folder of a NeTEx checkout")
+    parser.add_argument(
+        "--subclass-only",
+        action="store_true",
+        help="append only the new rdfs:subClassOf section to an already-enriched netex.ttl, "
+        "without re-emitting object/datatype properties or skos:related (which would duplicate them)",
+    )
     args = parser.parse_args(argv)
 
     xsd_root = Path(args.netex_xsd_root or os.environ.get("NETEX_XSD_ROOT") or REPO_ROOT.parent / "NeTEx" / "xsd").expanduser()
@@ -406,8 +517,12 @@ def parse_args(argv: list[str] | None = None) -> tuple[Path, Path, Path]:
     if not args.ttl.is_file():
         parser.error(f"netex.ttl not found: {args.ttl}")
     out = args.out or args.ttl.with_suffix(".ttl.new")
-    return args.ttl, out, xsd_root
+    return args.ttl, out, xsd_root, args.subclass_only
 
 
 if __name__ == "__main__":
-    main(*parse_args())  # the returned dangling targets are for callers that import this module
+    ttl_path, out_path, xsd_root, subclass_only = parse_args()
+    if subclass_only:
+        append_subclass_section_only(ttl_path, out_path, xsd_root)
+    else:
+        main(ttl_path, out_path, xsd_root)  # the returned dangling targets are for callers that import this module

@@ -1106,9 +1106,16 @@ def retrieve_chunks_with_trace(
                     active_standards,
                     include_artifact_rules=_is_normative_constraint_question(question),
                 )
+                # 2 hops: a base concept now reaches concrete subtypes via
+                # rdfs:subClassOf, and those subtypes' own object properties
+                # (e.g. ServiceJourney --lineRef--> Line) are a further hop out.
+                # Note: query_graphdb_concept_expansion has no bounded {2}
+                # property-path operator in SPARQL 1.1, so hops>1 traverses the
+                # `+` (unbounded) path instead of exactly 2 -- _cap_expanded_concepts
+                # below is the backstop against runaway fan-out.
                 expanded_concepts = query_graphdb_concept_expansion(
                     concept_ids=question_concepts,
-                    hops=1,
+                    hops=2,
                     endpoint=settings.GRAPHDB_SPARQL_ENDPOINT,
                     repository=settings.GRAPHDB_REPOSITORY,
                     username=getattr(settings, "GRAPHDB_USER", ""),
@@ -1118,10 +1125,10 @@ def retrieve_chunks_with_trace(
                 )
                 graph_expansion_source = "graphdb"
             except Exception:
-                expanded_concepts = expand_graph_concepts(question_concepts, hops=1)
+                expanded_concepts = expand_graph_concepts(question_concepts, hops=2)
                 graph_expansion_source = "memory_fallback"
         else:
-            expanded_concepts = expand_graph_concepts(question_concepts, hops=1)
+            expanded_concepts = expand_graph_concepts(question_concepts, hops=2)
             graph_expansion_source = "memory"
         expanded_concepts = _cap_expanded_concepts(
             question_concepts=question_concepts,

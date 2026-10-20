@@ -114,7 +114,10 @@ class QuestionParsingService:
         normativity = self._detect_normativity(normalized)
 
         direct_concepts = extract_graph_concepts(normalized)
-        expanded_concepts = expand_graph_concepts(direct_concepts, hops=1)
+        # 2 hops: an abstract/base concept (e.g. netex:Journey) now links to its
+        # concrete subtypes via rdfs:subClassOf, but those subtypes' own object
+        # properties (e.g. ServiceJourney --lineRef--> Line) are a further hop out.
+        expanded_concepts = expand_graph_concepts(direct_concepts, hops=2)
         all_concepts = direct_concepts | expanded_concepts
 
         original_terms = self._extract_original_terms(normalized)
