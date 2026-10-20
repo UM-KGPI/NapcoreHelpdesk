@@ -73,7 +73,7 @@ By default the scan covers all `functions/` subdirectories. The `standards/` tre
 ### Trigger conditions
 
 Run an enrichment session when:
-- A new NeTEx (or SIRI/OpRa/DATEX II) release adds example files.
+- A new NeTEx (or SIRI/OpRa) release adds example files. (DATEX II is out of scope, see issue #90.)
 - A weak-answer investigation identifies a coverage gap (concept retrieved by vector search but not by graph expansion).
 
 ### Steps

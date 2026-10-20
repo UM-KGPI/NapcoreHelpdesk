@@ -62,9 +62,6 @@ def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
         "https://siri.org.uk/siri/1.3#": "siri",
         "https://siri.org.uk/siri/1.3/": "siri",
         "http://napcore.example.org/ontology/siri#": "siri",
-        "https://datex.org/ontology/datex#": "datex",
-        "http://datex.org/ontology/datex#": "datex",
-        "http://napcore.example.org/ontology/datex#": "datex",
         "https://transmodel-cen.eu/6.2/": "transmodel",
         "https://transmodel-cen.eu/6.2#": "transmodel",
     }
@@ -89,7 +86,7 @@ def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
             logger.warning("GraphDB ontology load failed: %s", exc)
             return []
 
-    # Labels for standard-specific concepts (netex, opra, siri, datex, transmodel)
+    # Labels for standard-specific concepts (netex, opra, siri, transmodel)
     labels_rows = _sparql_get(
         "SELECT ?concept ?label WHERE {"
         " ?concept <http://www.w3.org/2004/02/skos/core#prefLabel>|"
@@ -167,7 +164,6 @@ def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
         "netex": "https://netex.org.uk/netex/2.0",
         "opra": "https://transmodel-cen.eu/opra/1.0",
         "siri": "https://siri.org.uk/siri/1.3",
-        "datex": "https://datex.org/ontology/datex",
         "transmodel": "https://transmodel-cen.eu/6.2",
     }
     return {"namespaces": namespaces, "concepts": concepts}

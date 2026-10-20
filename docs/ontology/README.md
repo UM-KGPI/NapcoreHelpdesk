@@ -33,13 +33,13 @@ The draft is intentionally small:
 - add only the minimum NAPCORE-specific classes and properties needed for graph-aware retrieval.
 
 ## Current Scope
-- Final target scope: NAPCORE-wide ontology coverage, including DATEX II.
-- Current implemented scope: the Transmodel reference module plus standard modules for NeTEx, OpRa,
-  and SIRI, linked by direct Transmodel-to-standard alignment modules. DATEX II
-  is referenced as a recognized standard name in a few places in code (e.g. term lists), but none of its
-  ontology, alignment, or artifact-rule files exist yet (confirmed: `standards/datex.ttl` and
-  `artifact-rules/datex-artifact-rules-v1.0.ttl` are absent from
-  this directory) — treat DATEX II as not yet implemented, not current scope.
+- Scope: the Transmodel family only — the Transmodel reference module plus standard modules for
+  NeTEx, OpRa, and SIRI, linked by direct Transmodel-to-standard alignment modules. This is the
+  permanent scope, not a first slice.
+- Out of scope: DATEX II and other standards outside the Transmodel family (e.g. GTFS). DATEX II was
+  once planned but never implemented, and the decision to drop it is recorded in issue #90. The
+  relevance check (`backend/helpdesk/services/relevance_check.py`) treats questions about these
+  standards as out of scope.
 - Current implemented scope also includes explicit cross-standard alignment modules, example-artifact modules for retrieval-oriented artifact linking, and optional artifact-derived rule modules for standard-specific normative reasoning.
 
 ## Files
@@ -55,8 +55,6 @@ The draft is intentionally small:
 - `artifact-rules/netex-artifact-rules-v1.0.ttl`: NeTEx XSD-derived normative rules (versioned, standard-scoped).
 - `artifact-rules/opra-artifact-rules-v1.0.ttl`: OpRa XSD-derived normative rules (versioned, standard-scoped).
 - `artifact-rules/siri-artifact-rules-v1.0.ttl`: SIRI XSD-derived normative rules (versioned, standard-scoped).
-
-(DATEX II equivalents of the above are planned, not yet created — see "Current Scope".)
 
 ## Generation Workflow
 The OpRa, SIRI and NeTEx ontologies are generated from their repositories by one command, `python manage.py build_standard_ontologies` (run in `backend/`), and are never edited by hand. See [GENERATION.md](GENERATION.md) for what each file is produced by, the measured results and the open steps. The summary below is older and partly out of date.
@@ -83,12 +81,10 @@ Most recent refresh used local repositories for NeTEx and OpRa and linked concep
 The ontology topology is standards (with Transmodel as the reference module) + examples + alignments
 (+ optional artifact-derived rules). There is no separate core/upper ontology:
 1. Standard modules (`standards/transmodel.ttl`, `standards/netex.ttl`, `standards/opra.ttl`,
-   `standards/siri.ttl`; a `datex.ttl` module is planned but not yet created) provide standard-local
-   concepts. Transmodel's module is the conceptual reference the other three align to.
+   `standards/siri.ttl`) provide standard-local concepts. Transmodel's module is the conceptual reference the other three align to.
 2. Example modules (`examples/*.ttl`) describe repository artifacts and map them to canonical standard concepts without polluting the conceptual standard ontologies.
 3. Alignment modules (`alignments/transmodel-netex-align.ttl`, `alignments/transmodel-opra-align.ttl`,
-   `alignments/transmodel-siri-align.ttl`; a `transmodel-datex-align.ttl` is planned but not yet created)
-   declare `skos:exactMatch` links from each standard's classes to the Transmodel class of the same
+   `alignments/transmodel-siri-align.ttl`) declare `skos:exactMatch` links from each standard's classes to the Transmodel class of the same
    name. `semantic_graph.py` parses these same files directly for the static, GraphDB-independent
    in-memory pivot; `graphdb_client.py`'s live SPARQL pivot reads them via GraphDB.
 4. Artifact-derived rules (`artifact-rules/*-artifact-rules-v*.ttl`) capture XSD-derived normativity (mandatory/optional/cardinality/required attributes), one standard per file and one version per file.
@@ -109,7 +105,7 @@ This structure keeps runtime anchoring stable while allowing each standard ontol
 
 ## Modeling Conventions
 - Use `tm:` for the Transmodel reference module's classes.
-- Use standard-local module prefixes such as `netex:`, `opra:`, `siri:`, and `datex:` for standard-specific concepts.
+- Use the standard-local module prefixes `netex:`, `opra:`, and `siri:` for standard-specific concepts.
 - Model standard and Transmodel concepts primarily as `owl:Class` and `owl:ObjectProperty`, and use SKOS annotations for lexical labels, aliases, and related-term hints.
 - Keep domain assertions source-grounded through `prov:wasDerivedFrom` and DCTERMS metadata.
 - Treat example XML files and normative XSD files as artifacts that can be linked to concepts and chunks.
@@ -136,4 +132,5 @@ This structure keeps runtime anchoring stable while allowing each standard ontol
 1. Add more Transmodel-family concepts from NeTEx, SIRI, and OpRa materials.
 2. Add extracted artifact and chunk instances during indexing.
 3. Add relation extraction confidence and retrieval-oriented weighting metadata.
-4. Add DATEX II concept mappings after the Transmodel-family slice is stable.
+
+Standards outside the Transmodel family, DATEX II included, are not on this path (see "Current Scope").

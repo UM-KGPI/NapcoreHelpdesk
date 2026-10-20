@@ -181,7 +181,7 @@ _WEAK_TERM_PATTERN = re.compile(
 # static list (no live ontology lookup); the labels/altLabels of every upper-ontology
 # concept, pluralized, plus a small set of cross-standard names.
 _UBIQUITOUS_TERMS = frozenset({
-    "netex", "opra", "siri", "datex", "transmodel",
+    "netex", "opra", "siri", "transmodel",
     "line", "lines", "route", "routes", "stop", "stops",
     "trip", "trips", "service", "services", "journey", "journeys",
     "network", "networks", "operator", "operators", "pattern", "patterns",
@@ -190,8 +190,7 @@ _UBIQUITOUS_TERMS = frozenset({
     "characterises service", "characterises services", "consists of", "consists ofs",
     "data artifact", "data artifacts", "data consumer", "data consumers",
     "data exchange", "data exchanges", "data publisher", "data publishers",
-    "data set", "data sets", "datex ii", "datex ii ontology", "datex ii ontologys",
-    "datex iis", "describes specification", "describes specifications",
+    "data set", "data sets", "describes specification", "describes specifications",
     "disruption", "disruptions", "disturbance", "disturbances",
     "domain concept", "domain concepts", "event", "events",
     "exchanged between", "exchanged betweens", "governs",

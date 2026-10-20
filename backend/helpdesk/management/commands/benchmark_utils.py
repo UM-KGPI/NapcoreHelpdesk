@@ -71,8 +71,6 @@ def infer_scope_from_question(question):
             inferred.append('OpRa')
         elif tl == 'siri':
             inferred.append('SIRI')
-        elif tl in {'datex', 'datexii', 'datex ii'}:
-            inferred.append('DATEX II')
     return sorted(set(inferred)) if inferred else None
 
 

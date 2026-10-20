@@ -46,7 +46,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--artifact-rule-standards",
             default="",
-            help="Comma-separated subset for artifact rules (netex,opra,siri,datex).",
+            help="Comma-separated subset for artifact rules (netex,opra,siri).",
         )
 
     def handle(self, *args, **options):
