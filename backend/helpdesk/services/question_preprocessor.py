@@ -158,6 +158,9 @@ def _correct_with_library(question: str, language: str) -> Optional[str]:
         else:
             # Check and correct misspelled words
             clean_word = word.strip(".,;:!?\"'")
+            if not clean_word:
+                corrected.append(word)
+                continue
             if clean_word.lower() not in spell:
                 correction = spell.correction(clean_word)
                 if correction and correction != clean_word:

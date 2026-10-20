@@ -63,6 +63,14 @@ class PreprocessQuestionTests(SimpleTestCase):
         self.assertEqual(preprocess_question("Does SIRI-PT existe?", "English"), "Does SIRI-PT existe?")
         self.assertEqual(preprocess_question("Does SIRI-PT exist?", "English"), "Does SIRI-PT exist?")
 
+    def test_space_before_question_mark_does_not_crash(self):
+        # A French typographic habit (space before "?") carried into an English
+        # question isolates "?" as its own token; stripped of punctuation it's
+        # the empty string, which used to crash the spellchecker correction path
+        # with an IndexError on clean_word[0] (HTTP 500 in production).
+        question = "What is the relation between a line and a journey ?"
+        self.assertEqual(preprocess_question(question, "English"), question)
+
 
 class PromptLanguageTests(SimpleTestCase):
     def _prompt_text(self, question: str, language: str) -> str:
