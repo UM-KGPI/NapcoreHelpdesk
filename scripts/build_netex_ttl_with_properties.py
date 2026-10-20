@@ -492,7 +492,10 @@ def append_subclass_section_only(ttl_path: Path, out_path: Path, xsd_root: Path)
     for cls, base_cls in sorted(subclass_edges.items()):
         lines.append(f"netex:{cls} rdfs:subClassOf netex:{base_cls} .\n")
 
-    merged = ttl_text.rstrip("\n") + "\n" + "".join(lines)
+    merged = ttl_text
+    for version_old in VERSION_OLDS:
+        merged = merged.replace(version_old, VERSION_NEW, 1)
+    merged = merged.rstrip("\n") + "\n" + "".join(lines)
     out_path.write_text(merged, encoding="utf-8")
     print(f"wrote {out_path} ({len(merged.splitlines())} lines, {len(subclass_edges)} subClassOf edges)")
     return len(subclass_edges)

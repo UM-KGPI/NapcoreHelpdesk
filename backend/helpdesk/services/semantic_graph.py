@@ -132,6 +132,8 @@ def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
     # abstract/base concept to the concrete subtypes that carry its real properties
     # (ServiceJourney has lineRef, the abstract Journey base class does not), so a
     # question anchored on the abstract concept can still reach them one hop away.
+    # Kept directed (class -> subclass, see "narrower" below): followed upward,
+    # every class reaches framework roots like netex:DataManagedObject.
     subclass_rows = _sparql_get(
         "SELECT DISTINCT ?concept ?related WHERE {"
         " ?concept <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?related ."
@@ -150,13 +152,24 @@ def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
         label = row.get("label", "").strip()
         if not concept_id or not label:
             continue
-        entry = concepts.setdefault(concept_id, {"labels": [], "related_to": []})
+        entry = concepts.setdefault(concept_id, {"labels": [], "related_to": [], "narrower": []})
         if label not in entry["labels"]:
             entry["labels"].append(label)
 
-    # Populate related_to from skos:related, owl:ObjectProperty domain→range, and
-    # rdfs:subClassOf. Both directions are added so graph traversal is bidirectional.
-    for row in (*skos_related_rows, *object_property_rows, *subclass_rows):
+    for row in subclass_rows:
+        subclass_id = _iri_to_concept_id(row.get("concept", ""))
+        superclass_id = _iri_to_concept_id(row.get("related", ""))
+        if not subclass_id or not superclass_id or subclass_id == superclass_id:
+            continue
+        if subclass_id not in concepts or superclass_id not in concepts:
+            continue
+        narrower = concepts[superclass_id].setdefault("narrower", [])
+        if subclass_id not in narrower:
+            narrower.append(subclass_id)
+
+    # Populate related_to from skos:related and owl:ObjectProperty domain→range.
+    # Both directions are added so graph traversal is bidirectional.
+    for row in (*skos_related_rows, *object_property_rows):
         concept_id = _iri_to_concept_id(row.get("concept", ""))
         related_id = _iri_to_concept_id(row.get("related", ""))
         if not concept_id or not related_id or concept_id == related_id:
@@ -383,6 +396,14 @@ def _build_graph_relations_from_ontology(ontology: dict) -> dict[str, set[str]]:
             if related_concept not in relations:
                 relations[related_concept] = set()
             relations[related_concept].add(concept_id)
+
+    # Class -> subclass only, added after the reverse pass so it stays one-way:
+    # an abstract concept reaches its concrete subtypes, but a subtype never
+    # climbs to framework roots (netex:DataManagedObject has 92 subclasses).
+    for concept_id, concept_data in concepts.items():
+        narrower = concept_data.get("narrower", [])
+        if narrower:
+            relations.setdefault(concept_id, set()).update(narrower)
 
     # Cross-standard bridge: concepts mapped to the same Transmodel class are
     # treated as directly related so one-hop expansion can traverse standard

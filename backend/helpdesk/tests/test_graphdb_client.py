@@ -10,6 +10,7 @@ from helpdesk.services.graphdb_client import (
     build_graph_scope_for_standards,
     load_default_ontology_graphs,
     query_graphdb_concept_expansion,
+    query_graphdb_concept_expansion_with_distance,
 )
 
 
@@ -90,6 +91,48 @@ class GraphDbClientTests(TestCase):
         sent_query = request.data.decode("utf-8")
         self.assertIn("VALUES ?g", sent_query)
         self.assertIn("GRAPH ?g", sent_query)
+
+    def test_expansion_follows_subclass_downward_only(self):
+        """Inverse subClassOf (find subclasses) is in the path; forward subClassOf
+        (climb to superclasses such as netex:DataManagedObject) is not."""
+        mock_response = MagicMock()
+        mock_response.read.return_value = json.dumps({"results": {"bindings": []}}).encode("utf-8")
+        mock_response.__enter__ = lambda self: self
+        mock_response.__exit__ = MagicMock(return_value=False)
+
+        with patch("helpdesk.services.graphdb_client.urlopen", return_value=mock_response) as urlopen_mock:
+            query_graphdb_concept_expansion(
+                concept_ids={"netex:Journey"},
+                hops=1,
+                endpoint="http://localhost:7200",
+                repository="napcore",
+            )
+
+        sent_query = urlopen_mock.call_args[0][0].data.decode("utf-8")
+        subclass = "<http://www.w3.org/2000/01/rdf-schema#subClassOf>"
+        self.assertIn(f"^{subclass}", sent_query)
+        self.assertEqual(sent_query.count(subclass), 1)
+
+    def test_expansion_reports_hop_distance(self):
+        def response(iris):
+            mock = MagicMock()
+            bindings = [{"related": {"type": "uri", "value": iri}} for iri in iris]
+            mock.read.return_value = json.dumps({"results": {"bindings": bindings}}).encode("utf-8")
+            mock.__enter__ = lambda self: self
+            mock.__exit__ = MagicMock(return_value=False)
+            return mock
+
+        hop1 = response(["https://netex.org.uk/netex/2.0#ServiceJourney"])
+        hop2 = response(["https://netex.org.uk/netex/2.0#Line"])
+        with patch("helpdesk.services.graphdb_client.urlopen", side_effect=[hop1, hop2]):
+            distances = query_graphdb_concept_expansion_with_distance(
+                concept_ids={"netex:Journey"},
+                hops=2,
+                endpoint="http://localhost:7200",
+                repository="napcore",
+            )
+
+        self.assertEqual(distances, {"netex:Journey": 0, "netex:ServiceJourney": 1, "netex:Line": 2})
 
     def test_query_graphdb_concept_expansion_scoped_query_includes_cross_standard_pivot(self):
         """Regression test for the cross-graph pivot bug.

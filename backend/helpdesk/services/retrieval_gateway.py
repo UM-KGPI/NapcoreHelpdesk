@@ -1131,6 +1131,7 @@ def retrieve_chunks_with_trace(
     graph_expansion_source = "none"
     if graph_rag_enabled and question_concepts:
         stage_start = time.perf_counter()
+        graph_expansion_hops = 1
         graphdb_enabled = getattr(settings, "GRAPHDB_ENABLED", False)
 
         if graphdb_enabled:
@@ -1143,19 +1144,11 @@ def retrieve_chunks_with_trace(
                     active_standards,
                     include_artifact_rules=_is_normative_constraint_question(question),
                 )
-                # 2 hops: a base concept now reaches concrete subtypes via
-                # rdfs:subClassOf, and those subtypes' own object properties
-                # (e.g. ServiceJourney --lineRef--> Line) are a further hop out.
-                # _with_distance runs one SPARQL query per hop level (bounded,
-                # exact -- not the unbounded `+` property-path traversal a
-                # single multi-hop query would need), and the per-concept
-                # distance it returns is what _cap_expanded_concepts below
-                # uses to keep the closest concepts when truncating, instead
-                # of an arbitrary tiebreak that lets a hop-2 concept crowd out
-                # a more relevant hop-1 one.
+                # The per-concept distance is what _cap_expanded_concepts below
+                # uses to keep the closest concepts when truncating.
                 concept_distances = query_graphdb_concept_expansion_with_distance(
                     concept_ids=question_concepts,
-                    hops=2,
+                    hops=graph_expansion_hops,
                     endpoint=settings.GRAPHDB_SPARQL_ENDPOINT,
                     repository=settings.GRAPHDB_REPOSITORY,
                     username=getattr(settings, "GRAPHDB_USER", ""),
@@ -1165,10 +1158,10 @@ def retrieve_chunks_with_trace(
                 )
                 graph_expansion_source = "graphdb"
             except Exception:
-                concept_distances = expand_graph_concepts_with_distance(question_concepts, hops=2)
+                concept_distances = expand_graph_concepts_with_distance(question_concepts, hops=graph_expansion_hops)
                 graph_expansion_source = "memory_fallback"
         else:
-            concept_distances = expand_graph_concepts_with_distance(question_concepts, hops=2)
+            concept_distances = expand_graph_concepts_with_distance(question_concepts, hops=graph_expansion_hops)
             graph_expansion_source = "memory"
         expanded_concepts = _cap_expanded_concepts(
             question_concepts=question_concepts,
@@ -1177,7 +1170,6 @@ def retrieve_chunks_with_trace(
             concept_distances=concept_distances,
         )
         _record_stage("graphExpandMs", stage_start)
-        graph_expansion_hops = 2
     else:
         expanded_concepts = set()
         graph_expansion_hops = 0

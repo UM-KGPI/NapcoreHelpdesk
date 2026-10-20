@@ -33,8 +33,13 @@ SKOS_RELATIONS = [
     "http://www.w3.org/2004/02/skos/core#exactMatch",
     "http://www.w3.org/2004/02/skos/core#closeMatch",
     "http://www.w3.org/2002/07/owl#equivalentClass",
-    "http://www.w3.org/2000/01/rdf-schema#subClassOf",
 ]
+
+# Traversed downward only (from a class to its subclasses), unlike the symmetric
+# relations above. Upward, every class reaches framework roots such as
+# netex:DataManagedObject (92 subclasses) or tm:GROUP_OF_ENTITIES, so one hop up
+# and one back down floods the expansion with unrelated siblings.
+SUBCLASS_RELATION = "http://www.w3.org/2000/01/rdf-schema#subClassOf"
 
 DEFAULT_NAMESPACES = {
     "netex": "https://netex.org.uk/netex/2.0#",
@@ -279,6 +284,7 @@ def _query_graphdb_related_one_hop(
     unbounded `+` would silently traverse further than requested.
     """
     relation_paths = "|".join(f"<{rel}>" for rel in SKOS_RELATIONS)
+    expansion_path = f"(({relation_paths})|^({relation_paths})|^<{SUBCLASS_RELATION}>)"
     values = " ".join(f"<{iri}>" for iri in seed_iris)
     if graph_uris:
         graph_values = " ".join(f"<{iri}>" for iri in graph_uris)
@@ -298,7 +304,7 @@ def _query_graphdb_related_one_hop(
             f"VALUES ?seed {{ {values} }} "
             f"VALUES ?g {{ {graph_values} }} "
             "GRAPH ?g { "
-            f"?seed (({relation_paths})|^({relation_paths})) ?related . "
+            f"?seed {expansion_path} ?related . "
             "} "
             "FILTER(isIRI(?related)) "
             "} UNION { "
@@ -320,7 +326,7 @@ def _query_graphdb_related_one_hop(
         query = (
             "SELECT DISTINCT ?related WHERE { "
             f"VALUES ?seed {{ {values} }} "
-            f"?seed (({relation_paths})|^({relation_paths})) ?related . "
+            f"?seed {expansion_path} ?related . "
             "FILTER(isIRI(?related)) "
             "}"
         )
