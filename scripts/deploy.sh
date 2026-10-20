@@ -29,9 +29,13 @@ ${COMPOSE} build --pull
 echo "==> Starting services"
 ${COMPOSE} up -d --remove-orphans
 
-echo "==> Waiting for backend to become healthy"
-timeout 90 bash -c "until ${COMPOSE} exec -T backend curl -sf http://localhost:8000/api/v1/health/live; do sleep 3; done"
+# /ready, not /live: it also checks the database connection, so a deploy only counts as up
+# once the new backend can actually serve requests.
+echo "==> Waiting for backend to become ready"
+timeout 90 bash -c "until ${COMPOSE} exec -T backend curl -sf http://localhost:8000/api/v1/health/ready; do sleep 3; done"
 
+# The backend container already runs `migrate` before starting gunicorn (docker-compose.prod.yml),
+# so this normally finds nothing to do; it stays as a check that the schema is current.
 echo "==> Running migrations"
 ${COMPOSE} exec -T backend python manage.py migrate --noinput
 
