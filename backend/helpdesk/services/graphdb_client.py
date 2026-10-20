@@ -33,8 +33,13 @@ SKOS_RELATIONS = [
     "http://www.w3.org/2004/02/skos/core#exactMatch",
     "http://www.w3.org/2004/02/skos/core#closeMatch",
     "http://www.w3.org/2002/07/owl#equivalentClass",
-    "http://www.w3.org/2000/01/rdf-schema#subClassOf",
 ]
+
+# Traversed downward only (from a class to its subclasses), unlike the symmetric
+# relations above. Upward, every class reaches framework roots such as
+# netex:DataManagedObject (92 subclasses) or tm:GROUP_OF_ENTITIES, so one hop up
+# and one back down floods the expansion with unrelated siblings.
+SUBCLASS_RELATION = "http://www.w3.org/2000/01/rdf-schema#subClassOf"
 
 DEFAULT_NAMESPACES = {
     "netex": "https://netex.org.uk/netex/2.0#",
@@ -261,32 +266,26 @@ def execute_sparql_query(
         return None
 
 
-def query_graphdb_concept_expansion(
+def _query_graphdb_related_one_hop(
     *,
-    concept_ids: set[str],
-    hops: int = 1,
+    seed_iris: list[str],
     endpoint: str,
-    repository: str = "",
-    username: str = "",
-    password: str = "",
-    timeout_seconds: int = 10,
-    graph_uris: list[str] | None = None,
+    repository: str,
+    username: str,
+    password: str,
+    timeout_seconds: int,
+    graph_uris: list[str] | None,
 ) -> set[str]:
-    """Query GraphDB for SKOS-based concept expansion and return expanded concept IDs."""
+    """Run exactly one hop of SKOS-relation traversal from the given seed IRIs.
 
-    if not concept_ids:
-        return set()
-
-    seed_iris = sorted({iri for cid in concept_ids if (iri := _to_iri(cid))})
-    if not seed_iris:
-        return set(concept_ids)
-
-    safe_hops = max(1, int(hops))
+    Returns the related concept IDs reached (not including the seeds). Used by
+    query_graphdb_concept_expansion_with_distance to build bounded, exact-N-hop
+    BFS layers -- SPARQL 1.1 has no bounded {2} property-path quantifier, so an
+    unbounded `+` would silently traverse further than requested.
+    """
     relation_paths = "|".join(f"<{rel}>" for rel in SKOS_RELATIONS)
+    expansion_path = f"(({relation_paths})|^({relation_paths})|^<{SUBCLASS_RELATION}>)"
     values = " ".join(f"<{iri}>" for iri in seed_iris)
-    # SPARQL 1.1 property paths do not support {n,m} quantifiers.
-    # Use a plain path for 1 hop, or + for multi-hop traversal.
-    quant = "" if safe_hops == 1 else "+"
     if graph_uris:
         graph_values = " ".join(f"<{iri}>" for iri in graph_uris)
         # A property path inside `GRAPH ?g { ?seed path ?related }` must resolve
@@ -305,7 +304,7 @@ def query_graphdb_concept_expansion(
             f"VALUES ?seed {{ {values} }} "
             f"VALUES ?g {{ {graph_values} }} "
             "GRAPH ?g { "
-            f"?seed (({relation_paths})|^({relation_paths})){quant} ?related . "
+            f"?seed {expansion_path} ?related . "
             "} "
             "FILTER(isIRI(?related)) "
             "} UNION { "
@@ -327,7 +326,7 @@ def query_graphdb_concept_expansion(
         query = (
             "SELECT DISTINCT ?related WHERE { "
             f"VALUES ?seed {{ {values} }} "
-            f"?seed (({relation_paths})|^({relation_paths})){quant} ?related . "
+            f"?seed {expansion_path} ?related . "
             "FILTER(isIRI(?related)) "
             "}"
         )
@@ -354,14 +353,100 @@ def query_graphdb_concept_expansion(
     payload = json.loads(body)
     bindings = payload.get("results", {}).get("bindings", [])
 
-    expanded = set(concept_ids)
+    related_iris: set[str] = set()
     for binding in bindings:
         iri = str(binding.get("related", {}).get("value") or "").strip()
-        if not iri:
-            continue
-        concept_id = _iri_to_concept_id(iri)
-        if concept_id:
-            expanded.add(concept_id)
+        if iri:
+            related_iris.add(iri)
+    return related_iris
+
+
+def query_graphdb_concept_expansion_with_distance(
+    *,
+    concept_ids: set[str],
+    hops: int = 1,
+    endpoint: str,
+    repository: str = "",
+    username: str = "",
+    password: str = "",
+    timeout_seconds: int = 10,
+    graph_uris: list[str] | None = None,
+) -> dict[str, int]:
+    """Query GraphDB for SKOS-based concept expansion, bounded to exactly `hops`
+    hops, returning each reached concept's hop distance from the seed set (0 for
+    the seeds themselves). One SPARQL round trip per hop level (so hops=1 is a
+    single query, identical in cost to before); a wider frontier at hop 2 means
+    more IRIs in one VALUES clause, not more round trips.
+
+    Distance is what lets a caller truncate an oversized expansion by keeping
+    the closest concepts first instead of an arbitrary tiebreak (e.g.
+    alphabetical), which otherwise lets unrelated hop-2 concepts crowd out
+    relevant ones whenever a seed has many hop-1 neighbors.
+    """
+    if not concept_ids:
+        return {}
+
+    seed_iris = sorted({iri for cid in concept_ids if (iri := _to_iri(cid))})
+    if not seed_iris:
+        return {cid: 0 for cid in concept_ids}
+
+    distances: dict[str, int] = {cid: 0 for cid in concept_ids}
+    seen_iris = set(seed_iris)
+    frontier_iris = seed_iris
+
+    for hop in range(1, max(1, int(hops)) + 1):
+        if not frontier_iris:
+            break
+        related_iris = _query_graphdb_related_one_hop(
+            seed_iris=frontier_iris,
+            endpoint=endpoint,
+            repository=repository,
+            username=username,
+            password=password,
+            timeout_seconds=timeout_seconds,
+            graph_uris=graph_uris,
+        )
+        new_iris = related_iris - seen_iris
+        if not new_iris:
+            break
+        seen_iris.update(new_iris)
+        for iri in new_iris:
+            concept_id = _iri_to_concept_id(iri)
+            if concept_id and concept_id not in distances:
+                distances[concept_id] = hop
+        frontier_iris = sorted(new_iris)
+
+    return distances
+
+
+def query_graphdb_concept_expansion(
+    *,
+    concept_ids: set[str],
+    hops: int = 1,
+    endpoint: str,
+    repository: str = "",
+    username: str = "",
+    password: str = "",
+    timeout_seconds: int = 10,
+    graph_uris: list[str] | None = None,
+) -> set[str]:
+    """Query GraphDB for SKOS-based concept expansion and return expanded concept IDs.
+
+    Thin set-only wrapper over query_graphdb_concept_expansion_with_distance;
+    prefer that function when the caller needs to rank/truncate the result.
+    """
+    distances = query_graphdb_concept_expansion_with_distance(
+        concept_ids=concept_ids,
+        hops=hops,
+        endpoint=endpoint,
+        repository=repository,
+        username=username,
+        password=password,
+        timeout_seconds=timeout_seconds,
+        graph_uris=graph_uris,
+    )
+    expanded = set(concept_ids)
+    expanded.update(distances.keys())
 
     return expanded
 

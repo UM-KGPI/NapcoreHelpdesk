@@ -128,15 +128,44 @@ def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
         " }"
     )
 
+    # rdfs:subClassOf links (e.g. netex:ServiceJourney -> netex:Journey). Bridges an
+    # abstract/base concept to the concrete subtypes that carry its real properties
+    # (ServiceJourney has lineRef, the abstract Journey base class does not), so a
+    # question anchored on the abstract concept can still reach them one hop away.
+    # Kept directed (class -> subclass, see "narrower" below): followed upward,
+    # every class reaches framework roots like netex:DataManagedObject.
+    subclass_rows = _sparql_get(
+        "SELECT DISTINCT ?concept ?related WHERE {"
+        " ?concept <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?related ."
+        " FILTER(!CONTAINS(STR(?concept), 'napcore.eu/ontology/nits'))"
+        " FILTER(!CONTAINS(STR(?concept), 'www.w3.org'))"
+        " FILTER(!CONTAINS(STR(?concept), 'purl.org'))"
+        " FILTER(!CONTAINS(STR(?related), 'napcore.eu/ontology/nits'))"
+        " FILTER(!CONTAINS(STR(?related), 'www.w3.org'))"
+        " FILTER(!CONTAINS(STR(?related), 'purl.org'))"
+        " }"
+    )
+
     concepts: dict[str, dict] = {}
     for row in labels_rows:
         concept_id = _iri_to_concept_id(row.get("concept", ""))
         label = row.get("label", "").strip()
         if not concept_id or not label:
             continue
-        entry = concepts.setdefault(concept_id, {"labels": [], "related_to": []})
+        entry = concepts.setdefault(concept_id, {"labels": [], "related_to": [], "narrower": []})
         if label not in entry["labels"]:
             entry["labels"].append(label)
+
+    for row in subclass_rows:
+        subclass_id = _iri_to_concept_id(row.get("concept", ""))
+        superclass_id = _iri_to_concept_id(row.get("related", ""))
+        if not subclass_id or not superclass_id or subclass_id == superclass_id:
+            continue
+        if subclass_id not in concepts or superclass_id not in concepts:
+            continue
+        narrower = concepts[superclass_id].setdefault("narrower", [])
+        if subclass_id not in narrower:
+            narrower.append(subclass_id)
 
     # Populate related_to from skos:related and owl:ObjectProperty domain→range.
     # Both directions are added so graph traversal is bidirectional.
@@ -368,6 +397,14 @@ def _build_graph_relations_from_ontology(ontology: dict) -> dict[str, set[str]]:
                 relations[related_concept] = set()
             relations[related_concept].add(concept_id)
 
+    # Class -> subclass only, added after the reverse pass so it stays one-way:
+    # an abstract concept reaches its concrete subtypes, but a subtype never
+    # climbs to framework roots (netex:DataManagedObject has 92 subclasses).
+    for concept_id, concept_data in concepts.items():
+        narrower = concept_data.get("narrower", [])
+        if narrower:
+            relations.setdefault(concept_id, set()).update(narrower)
+
     # Cross-standard bridge: concepts mapped to the same Transmodel class are
     # treated as directly related so one-hop expansion can traverse standard
     # boundaries. See expand_graph_concepts for the matching pivot phase.
@@ -438,30 +475,41 @@ def _expand_transmodel_concepts(transmodel_ids: set[str]) -> set[str]:
     return expanded
 
 
-def expand_graph_concepts(concepts: set[str], hops: int = 1) -> set[str]:
-    expanded = set(concepts)
+def expand_graph_concepts_with_distance(concepts: set[str], hops: int = 1) -> dict[str, int]:
+    """Like expand_graph_concepts, but also returns each concept's hop distance
+    from the seed set (0 for the seeds). Lets a caller truncate an oversized
+    expansion by keeping the closest concepts first, instead of an arbitrary
+    tiebreak (e.g. alphabetical) that lets unrelated far concepts crowd out
+    relevant near ones whenever a seed has many direct neighbors.
+    """
+    distances: dict[str, int] = {concept_id: 0 for concept_id in concepts}
 
-    expanded.update(_expand_transmodel_concepts(get_concept_transmodel_ids(expanded)))
+    for equivalent in _expand_transmodel_concepts(get_concept_transmodel_ids(set(distances))):
+        distances.setdefault(equivalent, 0)
 
-    frontier = set(expanded)
-    for _ in range(max(0, hops)):
+    frontier = set(distances)
+    for hop in range(1, max(0, hops) + 1):
         next_frontier: set[str] = set()
         for concept_id in frontier:
             for neighbor in GRAPH_RELATIONS.get(concept_id, set()):
-                if neighbor not in expanded:
-                    expanded.add(neighbor)
+                if neighbor not in distances:
+                    distances[neighbor] = hop
                     next_frontier.add(neighbor)
 
         # Keep Transmodel-equivalent concepts synchronized as the frontier grows.
         for equivalent in _expand_transmodel_concepts(get_concept_transmodel_ids(next_frontier)):
-            if equivalent not in expanded:
-                expanded.add(equivalent)
+            if equivalent not in distances:
+                distances[equivalent] = hop
                 next_frontier.add(equivalent)
 
         frontier = next_frontier
         if not frontier:
             break
-    return expanded
+    return distances
+
+
+def expand_graph_concepts(concepts: set[str], hops: int = 1) -> set[str]:
+    return set(expand_graph_concepts_with_distance(concepts, hops=hops))
 
 
 def build_semantic_graph_snapshot(chunks: Iterable[SourceChunk]) -> dict:

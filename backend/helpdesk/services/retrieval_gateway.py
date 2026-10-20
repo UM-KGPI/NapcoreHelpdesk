@@ -58,11 +58,11 @@ from helpdesk.services.ontology_evidence import (
 )
 from helpdesk.services.graphdb_client import (
     build_graph_scope_for_standards,
-    query_graphdb_concept_expansion,
+    query_graphdb_concept_expansion_with_distance,
 )
 from helpdesk.services.semantic_graph import (
     GRAPH_CONCEPT_ALIASES,
-    expand_graph_concepts,
+    expand_graph_concepts_with_distance,
     extract_graph_concepts,
     get_concept_canonical_terms,
 )
@@ -407,19 +407,56 @@ def _cap_expanded_concepts(
     question_concepts: set[str],
     expanded_concepts: set[str],
     max_concepts: int,
+    concept_distances: dict[str, int] | None = None,
 ) -> set[str]:
-    """Cap expanded graph concepts to reduce query drift and noisy fan-out."""
+    """Cap expanded graph concepts to reduce query drift and noisy fan-out.
+
+    Takes concepts round-robin across hop-distance levels (nearest first),
+    alphabetically within each level, rather than a single alphabetical sort
+    over the whole set. A sort keyed on distance alone still lets one hop
+    level's fan-out consume the entire cap before a farther level is ever
+    considered (e.g. a seed with 30 hop-1 neighbors leaves no room for a
+    hop-2 concept, however relevant) -- round-robin guarantees every hop
+    level present gets a share of the budget as long as the cap is at least
+    as large as the number of distinct hop levels.
+
+    This does not fully solve every case: within one hop level, a relevant
+    concept can still be crowded out by same-level siblings that merely sort
+    earlier (this is a tiebreak, not a relevance score) -- that needs ranking
+    by relation type (e.g. a direct property reference vs. an
+    rdfs:subClassOf sibling), which this function does not have the
+    information to do.
+    """
 
     if max_concepts <= 0:
         return set()
     if len(expanded_concepts) <= max_concepts:
         return expanded_concepts
 
-    prioritized = sorted(
-        expanded_concepts,
-        key=lambda concept_id: (concept_id not in question_concepts, concept_id),
-    )
-    return set(prioritized[:max_concepts])
+    distances = concept_distances or {}
+    seeds = sorted(c for c in expanded_concepts if c in question_concepts)
+    non_seeds = [c for c in expanded_concepts if c not in question_concepts]
+
+    buckets: dict[int, list[str]] = {}
+    for concept_id in non_seeds:
+        buckets.setdefault(distances.get(concept_id, 1), []).append(concept_id)
+    for bucket in buckets.values():
+        bucket.sort()
+
+    selected = list(seeds)
+    remaining_budget = max_concepts - len(selected)
+    hop_levels = sorted(buckets)
+    cursors = {hop: 0 for hop in hop_levels}
+    while remaining_budget > 0 and any(cursors[hop] < len(buckets[hop]) for hop in hop_levels):
+        for hop in hop_levels:
+            if remaining_budget <= 0:
+                break
+            if cursors[hop] < len(buckets[hop]):
+                selected.append(buckets[hop][cursors[hop]])
+                cursors[hop] += 1
+                remaining_budget -= 1
+
+    return set(selected[:max_concepts])
 
 
 def _apply_source_path_cap(candidates: list[dict], max_per_source_path: int) -> list[dict]:
@@ -1094,6 +1131,7 @@ def retrieve_chunks_with_trace(
     graph_expansion_source = "none"
     if graph_rag_enabled and question_concepts:
         stage_start = time.perf_counter()
+        graph_expansion_hops = 1
         graphdb_enabled = getattr(settings, "GRAPHDB_ENABLED", False)
 
         if graphdb_enabled:
@@ -1106,9 +1144,11 @@ def retrieve_chunks_with_trace(
                     active_standards,
                     include_artifact_rules=_is_normative_constraint_question(question),
                 )
-                expanded_concepts = query_graphdb_concept_expansion(
+                # The per-concept distance is what _cap_expanded_concepts below
+                # uses to keep the closest concepts when truncating.
+                concept_distances = query_graphdb_concept_expansion_with_distance(
                     concept_ids=question_concepts,
-                    hops=1,
+                    hops=graph_expansion_hops,
                     endpoint=settings.GRAPHDB_SPARQL_ENDPOINT,
                     repository=settings.GRAPHDB_REPOSITORY,
                     username=getattr(settings, "GRAPHDB_USER", ""),
@@ -1118,18 +1158,18 @@ def retrieve_chunks_with_trace(
                 )
                 graph_expansion_source = "graphdb"
             except Exception:
-                expanded_concepts = expand_graph_concepts(question_concepts, hops=1)
+                concept_distances = expand_graph_concepts_with_distance(question_concepts, hops=graph_expansion_hops)
                 graph_expansion_source = "memory_fallback"
         else:
-            expanded_concepts = expand_graph_concepts(question_concepts, hops=1)
+            concept_distances = expand_graph_concepts_with_distance(question_concepts, hops=graph_expansion_hops)
             graph_expansion_source = "memory"
         expanded_concepts = _cap_expanded_concepts(
             question_concepts=question_concepts,
-            expanded_concepts=expanded_concepts,
+            expanded_concepts=set(concept_distances),
             max_concepts=graph_expansion_max_concepts,
+            concept_distances=concept_distances,
         )
         _record_stage("graphExpandMs", stage_start)
-        graph_expansion_hops = 1
     else:
         expanded_concepts = set()
         graph_expansion_hops = 0

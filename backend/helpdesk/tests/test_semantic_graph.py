@@ -62,6 +62,38 @@ class AliasMatchesTextTests(SimpleTestCase):
         self.assertFalse(_alias_matches_text("is on", text))
 
 
+class SubclassTraversalTests(SimpleTestCase):
+    """rdfs:subClassOf is followed from a class to its subclasses only. Followed
+    upward, netex:Journey reaches framework roots such as netex:DataManagedObject
+    (92 subclasses), and the next hop floods the expansion with unrelated
+    siblings."""
+
+    def _relations(self):
+        ontology = {
+            "concepts": {
+                "netex:DataManagedObject": {"labels": ["x"], "related_to": [], "narrower": ["netex:Journey", "netex:Unrelated"]},
+                "netex:Journey": {"labels": ["x"], "related_to": [], "narrower": ["netex:ServiceJourney"]},
+                "netex:ServiceJourney": {"labels": ["x"], "related_to": ["netex:Line"], "narrower": []},
+                "netex:Line": {"labels": ["x"], "related_to": [], "narrower": []},
+                "netex:Unrelated": {"labels": ["x"], "related_to": [], "narrower": []},
+            }
+        }
+        with patch.object(semantic_graph, "TRANSMODEL_TO_CONCEPTS", {}):
+            return semantic_graph._build_graph_relations_from_ontology(ontology)
+
+    def test_abstract_class_reaches_its_subclass(self):
+        self.assertIn("netex:ServiceJourney", self._relations()["netex:Journey"])
+
+    def test_class_does_not_climb_to_its_superclass(self):
+        self.assertNotIn("netex:DataManagedObject", self._relations().get("netex:Journey", set()))
+        self.assertNotIn("netex:Journey", self._relations().get("netex:ServiceJourney", set()))
+
+    def test_object_properties_stay_bidirectional(self):
+        relations = self._relations()
+        self.assertIn("netex:Line", relations["netex:ServiceJourney"])
+        self.assertIn("netex:ServiceJourney", relations["netex:Line"])
+
+
 class TransmodelPivotTests(SimpleTestCase):
     """The static, GraphDB-independent replacement for the NITS cross-standard
     pivot (Phase 0.1 of docs/ontology/NITS-REMOVAL-PLAN.md)."""

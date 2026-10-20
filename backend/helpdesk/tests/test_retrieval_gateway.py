@@ -12,15 +12,15 @@ class RetrievalGatewayTests(TestCase):
         GRAPHDB_REPOSITORY="napcore-helpdesk",
         GRAPH_EXPANSION_MAX_CONCEPTS=1,
     )
-    @patch("helpdesk.services.retrieval_gateway.query_graphdb_concept_expansion")
+    @patch("helpdesk.services.retrieval_gateway.query_graphdb_concept_expansion_with_distance")
     def test_retrieval_caps_graph_expansion_concepts(self, expand_mock):
         """Expanded graph concepts are capped by GRAPH_EXPANSION_MAX_CONCEPTS."""
         from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 
         expand_mock.return_value = {
-            "opra:DelayedJourney",
-            "opra:DelayStatistics",
-            "opra:LateDatedVehicleJourneyEntry",
+            "opra:DelayedJourney": 0,
+            "opra:DelayStatistics": 1,
+            "opra:LateDatedVehicleJourneyEntry": 1,
         }
 
         _chunks, trace = retrieve_chunks_with_trace(
@@ -118,15 +118,15 @@ class RetrievalGatewayTests(TestCase):
         GRAPH_EXPANSION_MAX_CONCEPTS=64,
         GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS=40,
     )
-    @patch("helpdesk.services.retrieval_gateway.query_graphdb_concept_expansion")
+    @patch("helpdesk.services.retrieval_gateway.query_graphdb_concept_expansion_with_distance")
     def test_example_xml_query_reduces_graph_candidate_cap(self, expand_mock):
         from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 
         expand_mock.return_value = {
-            "netex:Line",
-            "netex:ScheduledStopPoint",
-            "netex:StopPlace",
-            "netex:Route",
+            "netex:Line": 0,
+            "netex:ScheduledStopPoint": 1,
+            "netex:StopPlace": 1,
+            "netex:Route": 1,
         }
 
         _chunks, trace = retrieve_chunks_with_trace(
@@ -150,7 +150,7 @@ class RetrievalGatewayTests(TestCase):
     @patch("helpdesk.services.retrieval_gateway.retrieve_concept_definitions", return_value=[])
     @patch("helpdesk.services.retrieval_gateway.retrieve_concept_examples_with_fallback", return_value=[])
     @patch("helpdesk.services.retrieval_gateway._postgres_hybrid_candidates")
-    @patch("helpdesk.services.retrieval_gateway.query_graphdb_concept_expansion")
+    @patch("helpdesk.services.retrieval_gateway.query_graphdb_concept_expansion_with_distance")
     @patch("helpdesk.services.retrieval_gateway.get_concept_canonical_terms")
     @patch("helpdesk.services.retrieval_gateway.extract_graph_concepts")
     def test_graph_candidate_ranking_keeps_specific_example_before_cap(
@@ -167,7 +167,7 @@ class RetrievalGatewayTests(TestCase):
         from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 
         postgres_candidates_mock.return_value = SourceChunk.objects.none()
-        expand_mock.return_value = {"netex:Line"}
+        expand_mock.return_value = {"netex:Line": 0}
         get_concept_canonical_terms_mock.return_value = ["simple line"]
 
         def extract_graph_concepts_side_effect(text: str) -> set[str]:
@@ -249,3 +249,84 @@ class RetrievalGatewayTests(TestCase):
         self.assertTrue(graph_hit)
         self.assertEqual(matching_concepts, {"netex:Line"})
         self.assertGreaterEqual(adjustment, 0.20)
+
+    def test_cap_gives_every_hop_level_a_share_instead_of_one_level_crowding_out_the_rest(self):
+        """Regression test: investigating a weak "line and journey" production
+        answer found a plain alphabetical sort over the whole expanded set let
+        netex:Journey's hop-1 neighbors (dozens of them, via subClassOf
+        fan-out) consume the entire cap, so netex:Line -- reached one hop
+        further out, via netex:ServiceJourney's lineRef -- never survived
+        truncation. Round-robin by hop level fixes that: every level present
+        gets a share of the budget, so the farther, still-relevant concept is
+        no longer automatically excluded just because a nearer level happens
+        to have more members.
+
+        Known residual gap, not fixed by this: round-robin only orders
+        between hop levels. Within one level, a relevant concept can still
+        lose a tiebreak to same-level siblings that merely sort earlier (here,
+        netex:ServiceJourney itself can still be excluded if its own hop-1
+        level has many other members alphabetically ahead of it) -- that
+        needs ranking by relation type, not hop distance, which this function
+        does not have the information to do.
+        """
+        from helpdesk.services.retrieval_gateway import _cap_expanded_concepts
+
+        question_concepts = {"netex:Journey"}
+        expanded_concepts = {
+            "netex:Journey",
+            "netex:AbstractGroupMember",  # hop 1, alphabetically before Line
+            "netex:AcceptedDriverPermit",  # hop 1, alphabetically before Line
+            "netex:Access",  # hop 1, alphabetically before Line
+            "netex:ServiceJourney",  # hop 1
+            "netex:Line",  # hop 2, via ServiceJourney's lineRef
+        }
+        concept_distances = {
+            "netex:Journey": 0,
+            "netex:AbstractGroupMember": 1,
+            "netex:AcceptedDriverPermit": 1,
+            "netex:Access": 1,
+            "netex:ServiceJourney": 1,
+            "netex:Line": 2,
+        }
+
+        capped = _cap_expanded_concepts(
+            question_concepts=question_concepts,
+            expanded_concepts=expanded_concepts,
+            max_concepts=3,
+            concept_distances=concept_distances,
+        )
+
+        # A plain alphabetical sort over the whole set would pick Journey (seed) +
+        # the 2 alphabetically-first hop-1 concepts, excluding Line entirely.
+        self.assertIn("netex:Line", capped)
+
+    def test_cap_without_hop_separation_would_exclude_the_farther_concept(self):
+        """Documents the failure mode the round-robin fix replaces: sorting
+        the same scenario by distance alone (no per-level budget share) still
+        lets a larger hop-1 bucket exhaust the cap before hop 2 is reached."""
+        distances = {
+            "netex:AbstractGroupMember": 1,
+            "netex:AcceptedDriverPermit": 1,
+            "netex:Access": 1,
+            "netex:ServiceJourney": 1,
+            "netex:Line": 2,
+        }
+        non_seeds = ["netex:AbstractGroupMember", "netex:AcceptedDriverPermit", "netex:Access", "netex:ServiceJourney", "netex:Line"]
+
+        prioritized = sorted(non_seeds, key=lambda c: (distances[c], c))
+
+        self.assertNotIn("netex:Line", prioritized[:2])  # excluded by a distance-only sort at this cap
+
+    def test_cap_without_distances_falls_back_to_alphabetical(self):
+        """No concept_distances means every non-seed concept is treated as
+        equally near (the pre-existing behavior, preserved for any caller that
+        doesn't have a distance ranking to give)."""
+        from helpdesk.services.retrieval_gateway import _cap_expanded_concepts
+
+        capped = _cap_expanded_concepts(
+            question_concepts={"netex:Journey"},
+            expanded_concepts={"netex:Journey", "netex:Access", "netex:Line"},
+            max_concepts=2,
+        )
+
+        self.assertEqual(capped, {"netex:Journey", "netex:Access"})
