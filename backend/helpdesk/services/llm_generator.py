@@ -424,7 +424,12 @@ def _unwrap_json_answer(text: str) -> str:
         if isinstance(response_json.get(key), str):
             logger.info(f"[UNWRAP] Using '{key}' field instead")
             return response_json[key]
-    return str(response_json)
+    # Any other key (a model once emitted {": ": "<answer>"}): the prose is the
+    # longest string value. Never return str(dict) -- the UI shows it verbatim.
+    string_values = [value for value in response_json.values() if isinstance(value, str) and value.strip()]
+    if string_values:
+        return max(string_values, key=len)
+    return text
 
 
 def _strip_raw_filenames(answer: str, chunks: list[dict] | None = None) -> str:

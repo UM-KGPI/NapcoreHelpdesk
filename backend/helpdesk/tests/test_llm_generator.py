@@ -401,3 +401,31 @@ class LLMGeneratorTests(SimpleTestCase):
         self.assertIn("NeTEx_01_simple_line.xml", result["answer"])
         # Should not invent/fabricate XML structures
         self.assertNotIn("<", result["answer"])
+
+
+class UnwrapJsonAnswerTests(SimpleTestCase):
+    """Production showed {': ': '...'} as an answer: a JSON response with an
+    unexpected key fell through to str(dict), which the UI rendered verbatim."""
+
+    def test_answer_field_is_returned(self):
+        from helpdesk.services.llm_generator import _unwrap_json_answer
+
+        self.assertEqual(_unwrap_json_answer('{"answer": "LineRef.", "citations_used": ["E1"]}'), "LineRef.")
+
+    def test_unexpected_key_returns_the_prose_not_the_dict(self):
+        from helpdesk.services.llm_generator import _unwrap_json_answer
+
+        result = _unwrap_json_answer('{": ": "The element is LineRef [E1].", "citations_used": "E1"}')
+
+        self.assertEqual(result, "The element is LineRef [E1].")
+        self.assertFalse(result.startswith("{"))
+
+    def test_json_without_any_text_value_returns_the_raw_text(self):
+        from helpdesk.services.llm_generator import _unwrap_json_answer
+
+        self.assertEqual(_unwrap_json_answer('{"citations_used": ["E1"]}'), '{"citations_used": ["E1"]}')
+
+    def test_plain_text_is_unchanged(self):
+        from helpdesk.services.llm_generator import _unwrap_json_answer
+
+        self.assertEqual(_unwrap_json_answer("Plain prose."), "Plain prose.")

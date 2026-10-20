@@ -60,12 +60,14 @@ class FindRelationPathsTests(SimpleTestCase):
         self.assertEqual([edge.element for edge in best.properties], ["LineRef"])
         self.assertEqual(best.cost, 1.5)
 
-    def test_hub_path_ranks_below_the_specific_one(self):
+    def test_hub_path_never_beats_the_specific_one(self):
+        """Journey and Line both contain an AccessibilityAssessment (a hub with 22
+        neighbours); that shared hub must rank below, or be cut as a detour."""
         paths = rp.find_relation_paths(_graph(), {"netex:Journey"}, {"netex:Line"}, max_paths=5)
 
-        hub_paths = [p for p in paths if any(e.range == "netex:AccessibilityAssessment" for e in p.properties)]
-        self.assertTrue(hub_paths)
-        self.assertGreater(hub_paths[0].cost, paths[0].cost)
+        self.assertNotIn("netex:AccessibilityAssessment", {e.range for e in paths[0].properties})
+        for path in paths[1:]:
+            self.assertGreaterEqual(path.cost, paths[0].cost)
 
     def test_never_climbs_to_a_superclass(self):
         """Journey -> DataManagedObject -> Sibling -> Line would be 3 edges, but the
@@ -88,6 +90,28 @@ class FindRelationPathsTests(SimpleTestCase):
 
         self.assertEqual(paths[0].properties, ())
         self.assertEqual(paths[0].down_from_source, (("netex:Journey", "netex:ServiceJourney"),))
+
+    def test_costly_detour_is_dropped_when_a_direct_path_exists(self):
+        """Line and ServiceJourney both reference an Operator, but ServiceJourney
+        references Line directly: the shared-Operator detour must not be shown."""
+        graph = _graph(extra_props=[
+            _prop("operatorRef_Line", "Line", "Operator"),
+            _prop("operatorRef_ServiceJourney", "ServiceJourney", "Operator"),
+        ])
+
+        paths = rp.find_relation_paths(graph, {"netex:Line"}, {"netex:ServiceJourney"}, max_paths=5)
+
+        self.assertEqual([[e.element for e in p.properties] for p in paths], [["LineRef"]])
+
+    def test_close_alternative_paths_are_kept(self):
+        graph = _graph(extra_props=[_prop("lineRef_DeadRun", "DeadRun", "Line")], extra_subs=[_sub("DeadRun", "Journey")])
+
+        paths = rp.find_relation_paths(graph, {"netex:Journey"}, {"netex:Line"}, max_paths=5)
+
+        self.assertEqual(
+            {p.down_from_source[-1][1] for p in paths if p.down_from_source and p.properties},
+            {"netex:ServiceJourney", "netex:DeadRun"},
+        )
 
     def test_unknown_concepts_give_no_paths(self):
         self.assertEqual(rp.find_relation_paths(_graph(), {"netex:Nope"}, {"netex:Line"}), [])
@@ -117,6 +141,7 @@ class RelationQuestionTests(SimpleTestCase):
             "What is the relation between a line and a journey ?",
             "How is a Route related to a JourneyPattern?",
             "How do I link a stop place to a quay?",
+            "Which XML element does a NeTEx ServiceJourney use to reference its Line?",
         ]:
             with self.subTest(question=question):
                 self.assertTrue(rp.is_relation_question(question))
