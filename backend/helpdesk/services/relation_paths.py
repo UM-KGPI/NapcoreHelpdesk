@@ -47,11 +47,13 @@ MAX_PATH_EDGES = 3
 MAX_SPECIALIZATION_DEPTH = 2
 SUBCLASS_STEP_COST = 0.5
 PROPERTY_STEP_COST = 1.0
+MAX_EXTRA_COST = 1.0
 CACHE_TTL_SECONDS = 3600
 
 _RELATION_QUESTION = re.compile(
     r"\b(relation|relations|relationship|relationships|related|relate|relates|link|linked|links|"
-    r"connect|connected|connection|connects|between|associated|association)\b",
+    r"connect|connected|connection|connects|between|associated|association|"
+    r"reference|references|referenced|referencing|refer|refers)\b",
     re.IGNORECASE,
 )
 _PROVENANCE = re.compile(r"Extracted from:\s*(?P<xsd>\S+)\s*\((?P<mechanism>[^)]+)\)")
@@ -293,7 +295,13 @@ def find_relation_paths(
     found.sort(key=lambda path: (path.cost, path.edge_count, _signature(path)))
     unique: list[RelationPath] = []
     seen: set[tuple] = set()
+    best_cost = found[0].cost if found else 0.0
     for path in found:
+        # A detour much costlier than the best path (Line and ServiceJourney both
+        # referencing an Operator, when ServiceJourney references Line directly)
+        # says nothing about how the two concepts relate.
+        if path.cost > best_cost + MAX_EXTRA_COST:
+            break
         signature = tuple((edge.domain, edge.element, edge.range) for edge in path.properties) or _signature(path)
         if signature in seen:
             continue
