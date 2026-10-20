@@ -401,9 +401,11 @@ The workflow re-runs the full CI suite first, then the self-hosted runner on the
 executes `scripts/deploy.sh`, which:
 
 - Pulls the latest code (`git pull origin main`) and then re-runs itself from the pulled copy, so a change to `deploy.sh` applies to the same deployment
-- Rebuilds changed images (`docker compose build --pull`)
-- Restarts services with zero downtime where possible (`up -d --remove-orphans`)
-- Runs pending database migrations (`manage.py migrate --noinput`)
+- Rebuilds changed images (`docker compose build --pull`); the site keeps running meanwhile
+- Switches on the maintenance page (creates `maintenance/on`, see "Maintenance page" in section 11)
+- Restarts the services (`up -d --remove-orphans`). The backend container applies migrations before it starts serving
+- Waits until `/api/v1/health/ready` answers (the backend can reach its database), then confirms migrations (`manage.py migrate --noinput`)
+- Switches the maintenance page off again. This also happens if the deploy fails or is cancelled, so the site is never left in maintenance
 - Prunes dangling images
 
 ---
@@ -472,6 +474,25 @@ docker compose -f docker-compose.prod.yml up -d
 Without them the services are recreated with defaults: the backend reports build reference
 `dev`, and the frontend falls back to its hardcoded version when it is rebuilt.
 `docker compose restart` does not recreate containers and does not need them.
+
+### Maintenance page
+
+The frontend's nginx shows a maintenance page while the file `/opt/napcore-helpdesk/maintenance/on`
+exists. Browsers get a short HTML page that reloads itself; API calls get HTTP 503 with a JSON error
+(`SERVICE_UNAVAILABLE`) and `Retry-After: 30`, which the web app shows as a message. nginx checks the
+file on every request, so no restart is needed. `deploy.sh` switches it on and off; for planned
+maintenance do it by hand:
+
+```bash
+touch /opt/napcore-helpdesk/maintenance/on   # on
+rm /opt/napcore-helpdesk/maintenance/on      # off
+```
+
+The same API response also appears, without the file, whenever the backend cannot be reached (for
+example while its container restarts). Errors returned by the backend itself are passed through
+unchanged. Two limits: the page is served by the frontend container, so while that container is
+being recreated the proxy in front of it answers instead; and the directory must stay readable by
+others (the default for a cloned repository), or nginx cannot see the file.
 
 ### Database backup
 

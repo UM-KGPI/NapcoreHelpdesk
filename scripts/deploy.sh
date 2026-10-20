@@ -26,11 +26,21 @@ echo "==> Building images"
 . scripts/build_env.sh
 ${COMPOSE} build --pull
 
+# Maintenance page from here until the new backend is ready (nginx checks for this file,
+# see frontend/nginx-frontend.conf). The build above runs with the site still up; the restart
+# below is what takes it down. The trap removes the flag on any exit, failed or not, so a
+# failed deploy never leaves the site stuck in maintenance.
+MAINTENANCE_FLAG="${REPO_DIR}/maintenance/on"
+mkdir -p "$(dirname "${MAINTENANCE_FLAG}")"
+trap 'rm -f "${MAINTENANCE_FLAG}"' EXIT
+echo "==> Maintenance page on"
+touch "${MAINTENANCE_FLAG}"
+
 echo "==> Starting services"
 ${COMPOSE} up -d --remove-orphans
 
-# /ready, not /live: it also checks the database connection, so a deploy only counts as up
-# once the new backend can actually serve requests.
+# /ready, not /live: it also checks the database connection, so the maintenance page stays up
+# until the new backend can actually serve requests.
 echo "==> Waiting for backend to become ready"
 timeout 90 bash -c "until ${COMPOSE} exec -T backend curl -sf http://localhost:8000/api/v1/health/ready; do sleep 3; done"
 
@@ -38,6 +48,9 @@ timeout 90 bash -c "until ${COMPOSE} exec -T backend curl -sf http://localhost:8
 # so this normally finds nothing to do; it stays as a check that the schema is current.
 echo "==> Running migrations"
 ${COMPOSE} exec -T backend python manage.py migrate --noinput
+
+echo "==> Maintenance page off"
+rm -f "${MAINTENANCE_FLAG}"
 
 echo "==> Removing dangling images"
 docker image prune -f

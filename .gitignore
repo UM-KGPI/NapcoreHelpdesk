@@ -47,3 +47,7 @@ scripts/
 secrets/
 graphdb.license
 .git-credentials
+
+# Maintenance-mode flag (scripts/deploy.sh); the directory itself is tracked
+/maintenance/*
+!/maintenance/README

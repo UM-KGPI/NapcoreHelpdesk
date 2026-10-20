@@ -98,6 +98,11 @@ services:
     restart: unless-stopped
     ports:
       - "8080:80"
+    volumes:
+      # nginx shows the maintenance page while maintenance/on exists (scripts/deploy.sh
+      # creates it for the duration of a deploy). The directory is tracked in git so it
+      # exists, owned by the deploy user, before the first `up`.
+      - ./maintenance:/etc/nginx/maintenance:ro
     depends_on:
       backend:
         condition: service_healthy

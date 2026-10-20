@@ -16,6 +16,8 @@ FROM nginx:alpine
 
 COPY --from=builder /app/frontend/dist /usr/share/nginx/html
 COPY nginx-frontend.conf /etc/nginx/conf.d/default.conf
+# Outside the SPA root so no app route can shadow it (see the maintenance block in the conf).
+COPY maintenance.html /usr/share/nginx/maintenance/maintenance.html
 
 EXPOSE 80
 

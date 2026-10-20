@@ -1,0 +1,3 @@
+Maintenance-mode flag directory, bind-mounted into the frontend container (docker-compose.prod.yml).
+While a file named "on" exists here, nginx serves the maintenance page instead of the app.
+scripts/deploy.sh creates and removes it; do the same by hand for planned maintenance.
