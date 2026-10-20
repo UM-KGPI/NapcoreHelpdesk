@@ -1136,7 +1136,7 @@ def retrieve_chunks_with_trace(
             max_concepts=graph_expansion_max_concepts,
         )
         _record_stage("graphExpandMs", stage_start)
-        graph_expansion_hops = 1
+        graph_expansion_hops = 2
     else:
         expanded_concepts = set()
         graph_expansion_hops = 0

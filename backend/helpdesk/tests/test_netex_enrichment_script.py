@@ -61,7 +61,10 @@ class NetexEnrichmentScriptTests(SimpleTestCase):
         with TemporaryDirectory() as tmp:
             ttl, xsd_root = self._fixture(Path(tmp))
             out = Path(tmp) / "out.ttl"
-            ttl_path, out_path, root = self.script.parse_args([str(ttl), str(out), "--netex-xsd-root", str(xsd_root)])
+            ttl_path, out_path, root, subclass_only = self.script.parse_args(
+                [str(ttl), str(out), "--netex-xsd-root", str(xsd_root)]
+            )
+            self.assertFalse(subclass_only)
             self.script.main(ttl_path, out_path, root)
             result = out.read_text(encoding="utf-8")
 
@@ -72,14 +75,14 @@ class NetexEnrichmentScriptTests(SimpleTestCase):
     def test_default_output_is_next_to_the_input_with_a_new_suffix(self):
         with TemporaryDirectory() as tmp:
             ttl, xsd_root = self._fixture(Path(tmp))
-            _, out_path, _ = self.script.parse_args([str(ttl), "--netex-xsd-root", str(xsd_root)])
+            _, out_path, _, _ = self.script.parse_args([str(ttl), "--netex-xsd-root", str(xsd_root)])
         self.assertEqual(out_path.name, "netex.ttl.new")
 
     def test_the_xsd_root_comes_from_the_environment_when_no_option_is_given(self):
         with TemporaryDirectory() as tmp:
             ttl, xsd_root = self._fixture(Path(tmp))
             with patch.dict(os.environ, {"NETEX_XSD_ROOT": str(xsd_root)}):
-                _, _, root = self.script.parse_args([str(ttl)])
+                _, _, root, _ = self.script.parse_args([str(ttl)])
         self.assertEqual(root, xsd_root)
 
     def test_a_missing_xsd_folder_or_ttl_is_a_clear_error_without_a_developer_path(self):
@@ -90,3 +93,44 @@ class NetexEnrichmentScriptTests(SimpleTestCase):
             with self.assertRaises(SystemExit):
                 self.script.parse_args([str(Path(tmp) / "missing.ttl"), "--netex-xsd-root", str(Path(tmp))])
         self.assertNotIn("/Users/", SCRIPT.read_text(encoding="utf-8"))
+
+    def test_main_emits_subclass_of_from_xsd_extension(self):
+        with TemporaryDirectory() as tmp:
+            ttl, xsd_root = self._fixture(Path(tmp))
+            (xsd_root / "netex_part_1" / "flexible_line.xsd").write_text(
+                '<?xml version="1.0"?>\n'
+                '<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">\n'
+                '  <xsd:complexType name="FlexibleLine_VersionStructure">\n'
+                '    <xsd:complexContent>\n'
+                '      <xsd:extension base="Line_VersionStructure">\n'
+                "        <xsd:sequence/>\n"
+                "      </xsd:extension>\n"
+                "    </xsd:complexContent>\n"
+                "  </xsd:complexType>\n"
+                "</xsd:schema>\n",
+                encoding="utf-8",
+            )
+            ttl.write_text(ttl.read_text(encoding="utf-8") + "\nnetex:FlexibleLine\n    a owl:Class .\n", encoding="utf-8")
+            out = Path(tmp) / "out.ttl"
+            ttl_path, out_path, root, subclass_only = self.script.parse_args(
+                [str(ttl), str(out), "--netex-xsd-root", str(xsd_root)]
+            )
+            self.script.main(ttl_path, out_path, root)
+            result = out.read_text(encoding="utf-8")
+
+        self.assertIn("netex:FlexibleLine rdfs:subClassOf netex:Line .", result)
+
+    def test_subclass_only_appends_without_duplicating_existing_properties(self):
+        with TemporaryDirectory() as tmp:
+            ttl, xsd_root = self._fixture(Path(tmp))
+            out = Path(tmp) / "out.ttl"
+            ttl_path, out_path, root, subclass_only = self.script.parse_args(
+                ["--subclass-only", str(ttl), str(out), "--netex-xsd-root", str(xsd_root)]
+            )
+            self.assertTrue(subclass_only)
+            edge_count = self.script.append_subclass_section_only(ttl_path, out_path, root)
+            result = out.read_text(encoding="utf-8")
+
+        self.assertEqual(edge_count, 0)  # no xsd:extension in this fixture
+        self.assertNotIn("owl:ObjectProperty", result)  # untouched: not re-emitted
+        self.assertIn("netex:Line", result)  # original content preserved
