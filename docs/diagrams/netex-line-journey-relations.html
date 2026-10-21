@@ -2546,6 +2546,7 @@ body[data-not-sent] > #vis-container ~ #not-sent {
 </style>
 <div id="cd"></div>
 <div class="legend">
+  <span>netex: https://netex.org.uk/netex/2.0#, rdfs: http://www.w3.org/2000/01/rdf-schema#</span>
   <span><span class="dot" style="background:#1D9E75"></span>owl:ObjectProperty in netex.ttl, cited as relation-path evidence</span>
   <span><span class="dot" style="background:#378ADD"></span>rdfs:subClassOf, downward only, fixed in PR #95</span>
   <span><span class="dot" style="background:#BA7517"></span>dashed: Transmodel chain, each step named in a Transmodel definition (PR #109)</span>
@@ -2568,40 +2569,40 @@ mermaid.initialize({
   },
 });
 const src = `classDiagram
-  class Journey {
+  class Journey["netex:Journey"] {
     abstract base type
     anchored by the question
   }
-  class ServiceJourney {
+  class ServiceJourney["netex:ServiceJourney"] {
     subclass of Journey
     has lineRef
   }
-  class VehicleJourney {
+  class VehicleJourney["netex:VehicleJourney"] {
     subclass of Journey
   }
-  class DeadRun {
+  class DeadRun["netex:DeadRun"] {
     subclass of VehicleJourney
     has lineRef
   }
-  class JourneyPattern {
+  class JourneyPattern["netex:JourneyPattern"] {
     Transmodel, on a single ROUTE
     has routeRef
   }
-  class Route {
+  class Route["netex:Route"] {
     Transmodel, LINE groups ROUTEs
     has lineRef
   }
-  class Line {
+  class Line["netex:Line"] {
     target concept
   }
-  Journey <|-- ServiceJourney : subClassOf
-  Journey <|-- VehicleJourney : subClassOf
-  VehicleJourney <|-- DeadRun : subClassOf
-  ServiceJourney --> Line : lineRef_ServiceJourney
-  DeadRun --> Line : lineRef_DeadRun
-  ServiceJourney ..> JourneyPattern : journeyPatternRef_ServiceJourney
-  JourneyPattern ..> Route : routeRef_JourneyPattern
-  Route ..> Line : lineRef_Route
+  Journey <|-- ServiceJourney : rdfs#colon;subClassOf
+  Journey <|-- VehicleJourney : rdfs#colon;subClassOf
+  VehicleJourney <|-- DeadRun : rdfs#colon;subClassOf
+  ServiceJourney --> Line : netex#colon;lineRef_ServiceJourney
+  DeadRun --> Line : netex#colon;lineRef_DeadRun
+  ServiceJourney ..> JourneyPattern : netex#colon;journeyPatternRef_ServiceJourney
+  JourneyPattern ..> Route : netex#colon;routeRef_JourneyPattern
+  Route ..> Line : netex#colon;lineRef_Route
 `;
 const { svg } = await mermaid.render('cd-svg', src);
 document.getElementById('cd').innerHTML = svg;
