@@ -67,6 +67,7 @@ from helpdesk.services.relation_paths import (
     relation_paths_for_question,
     supporting_subclass_chunks,
 )
+from helpdesk.services.vocabulary_bridge import bridged_question_concepts
 from helpdesk.services.semantic_graph import (
     CONCEPT_TO_TRANSMODEL,
     GRAPH_CONCEPT_ALIASES,
@@ -1279,8 +1280,14 @@ def retrieve_chunks_with_trace(
     # Concept extraction happens BEFORE embedding so canonical domain terms
     # are present in the query vector and align with indexed document vocabulary.
     stage_start = time.perf_counter()
-    question_concepts = extract_graph_concepts(question) if graph_rag_enabled else set()
+    question_concepts = extract_graph_concepts(question, word_variants=True) if graph_rag_enabled else set()
     _record_stage("conceptExtractMs", stage_start)
+    bridged_concepts: set[str] = set()
+    if graph_rag_enabled:
+        stage_start = time.perf_counter()
+        bridged_concepts = set(bridged_question_concepts(question)) - question_concepts
+        question_concepts |= bridged_concepts
+        _record_stage("vocabularyBridgeMs", stage_start)
 
     graph_expansion_source = "none"
     if graph_rag_enabled and question_concepts:
@@ -1768,6 +1775,7 @@ def retrieve_chunks_with_trace(
         "graphExpansionHops": graph_expansion_hops,
         "graphExpansionSource": graph_expansion_source,
         "graphConceptIds": sorted(expanded_concepts) if graph_rag_enabled else [],
+        "bridgedConceptIds": sorted(bridged_concepts),
         "graphConceptCap": graph_expansion_max_concepts if graph_rag_enabled else 0,
         "graphCandidatesAdded": graph_candidates_added if graph_rag_enabled else 0,
         "graphCandidateCap": graph_expansion_max_candidates if graph_rag_enabled else 0,

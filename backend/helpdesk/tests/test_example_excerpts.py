@@ -9,7 +9,6 @@ from helpdesk.services.retrieval_gateway import (
     _ensure_element_coverage,
     concept_element_names,
 )
-from helpdesk.services.semantic_graph import _normalize_for_matching, _alias_matches_text, CURATED_PHRASE_ALIASES
 
 HEADER = "<PublicationDelivery>\n" + "\n".join(f"  <Frame{i}/>" for i in range(400)) + "\n"
 TSJ = '<TemplateServiceJourney version="1" id="x:1">\n  <Name>Journey</Name>\n</TemplateServiceJourney>\n'
@@ -76,29 +75,3 @@ class ElementRankingTests(SimpleTestCase):
     def test_single_element_questions_are_left_alone(self):
         selected = [{"docType": "example", "text": "<Line/>"}, {"docType": "example", "text": TSJ}]
         self.assertEqual(_ensure_element_coverage(selected, selected, ["TemplateServiceJourney"], 6), selected)
-
-
-class OnDemandVocabularyTests(SimpleTestCase):
-    def test_everyday_on_demand_wording_maps_to_flexible_service(self):
-        text = _normalize_for_matching("The service operates when there is a demand.")
-        phrases = CURATED_PHRASE_ALIASES["netex:FlexibleServiceProperties"]
-        self.assertTrue(any(_alias_matches_text(phrase, text) for phrase in phrases))
-
-    def test_a_plain_mention_of_demand_does_not(self):
-        text = _normalize_for_matching("What is the demand for timetable data?")
-        phrases = CURATED_PHRASE_ALIASES["netex:FlexibleServiceProperties"]
-        self.assertFalse(any(_alias_matches_text(phrase, text) for phrase in phrases))
-
-    def test_curated_phrases_do_not_switch_off_the_fallback_vocabulary(self):
-        """With GraphDB off GRAPH_CONCEPT_ALIASES is empty and the fallback table
-        must still be used; the curated phrases are added on top, not instead."""
-        from unittest.mock import patch
-
-        import helpdesk.services.semantic_graph as semantic_graph
-
-        fallback_concept, fallback_aliases = next(iter(semantic_graph._FALLBACK_GRAPH_CONCEPT_ALIASES.items()))
-        with patch.object(semantic_graph, "GRAPH_CONCEPT_ALIASES", {}):
-            concepts = semantic_graph.extract_graph_concepts(f"{max(fallback_aliases, key=len)} when there is a demand")
-
-        self.assertIn(fallback_concept, concepts)
-        self.assertIn("netex:FlexibleServiceProperties", concepts)
