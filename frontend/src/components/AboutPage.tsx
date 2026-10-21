@@ -5,7 +5,7 @@
  *
  * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
  * Crafted by: AI coding agents
- * Created: 2026-07-02  |  Modified: 2026-09-21
+ * Created: 2026-07-02  |  Modified: 2026-10-22
  */
 
 interface AboutPageProps {
@@ -42,7 +42,8 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
         </p>
         <ul>
           <li><strong>Grounded answers:</strong> responses are based only on approved source repositories and cite the evidence they use.</li>
-          <li><strong>Semantic technologies:</strong> the standards are modelled as linked data and stored in a GraphDB knowledge graph, helping the assistant find related concepts across standards.</li>
+          <li><strong>Semantic technologies:</strong> the standards are modelled as linked data and stored in a GraphDB knowledge graph, with Transmodel as the shared reference model, helping the assistant find related concepts across standards.</li>
+          <li><strong>Structure-aware answers:</strong> how two concepts are related (for example a LINE, its ROUTEs and the JOURNEY PATTERNs on them) and what two schemas have in common are computed from the standards' own structure, refreshed with every update of the source repositories, and cited as evidence.</li>
           <li><strong>AI as controller and narrator:</strong> a controller model checks whether a matched FAQ fits or the sources should be searched, and a narration model writes the answer from the retrieved evidence. Both use the open-weight model <code>nvidia/Qwen3.6-35B-A3B-NVFP4</code>, hosted at the University of Maribor, Faculty of Electrical Engineering and Computer Science.</li>
           <li><strong>Honest about gaps:</strong> when the evidence is insufficient, the assistant says so instead of guessing.</li>
           <li><strong>Curated knowledge:</strong> editorially reviewed FAQ answers are used first, with search across the source repositories as a fallback.</li>
@@ -122,25 +123,25 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           <li><strong>Cross-standard ontology alignment &amp; robustness</strong> (Sep
              2026, ongoing): migrated NeTEx/OpRa/SIRI source repositories to their current canonical
              GitHub orgs and reindexed; rewrote stale ontology alignments (825 NeTEx, 297 SIRI,
-             102 OpRa concepts now correctly mapped to the shared core ontology); fixed the
+             102 OpRa concepts now correctly mapped to a shared core ontology, since replaced by Transmodel); fixed the
              GraphDB query structure that had silently prevented cross-standard concept
              expansion from ever working; corrected a production LLM model-alias regression and
              built a self-healing recovery mechanism, plus a public, browser-viewable LLM
              status endpoint, to make gateway drift visible instead of silently breaking answers; closed
              drift between the API and its documentation (OpenAPI spec, endpoint reference);
              dependency upgrades (React Router v7, Vitest v4).</li>
+          <li><strong>Transmodel pivot &amp; structure-aware answers</strong> (Oct 2026, ongoing):
+             replaced the separate core ontology with Transmodel as the single cross-standard
+             reference and dropped DATEX II from scope; relation paths between concepts, with
+             longer chains chosen where Transmodel's own definitions document each step; service
+             abbreviations (e.g. SIRI-CA, SIRI-VM) read from the standards' READMEs and shared schema
+             structure computed for comparison questions; matching everyday wording to model terms
+             (e.g. "charging station" for RECHARGING STATION); stricter checks that claims about an
+             element's purpose are grounded in a definition; a daily refresh of all indexed
+             repositories at their real commits; a maintenance page during deploys.</li>
         </ol>
         <p>
-          See{" "}
-          <a
-            href="https://github.com/UM-KGPI/NapcoreHelpdesk/blob/main/docs/recent-updates.md"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Recent updates
-          </a>{" "}
-          for a detailed log of the latest phase. Development is ongoing, and this timeline will
-          grow as the project evolves.
+          Development is ongoing, and this timeline will grow as the project evolves.
         </p>
       </section>
 
@@ -149,10 +150,10 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           <h2>Contributing</h2>
         </div>
         <p>
-          NAPCORE Helpdesk is open-source and developed collaboratively. We welcome contributions, feedback, and ideas from the community. Because the project is a work in progress, reports of incorrect, incomplete, or missing answers are especially valuable.
+          NAPCORE Helpdesk is developed collaboratively, and feedback from the community is very welcome. Because the project is a work in progress, reports of incorrect, incomplete, or missing answers are especially valuable: use the thumbs up and thumbs down buttons under each answer.
         </p>
         <p>
-          Visit the <a href="https://github.com/UM-KGPI/NapcoreHelpdesk" target="_blank" rel="noreferrer">GitHub repository</a> to:
+          The <a href="https://github.com/UM-KGPI/NapcoreHelpdesk" target="_blank" rel="noreferrer">GitHub repository</a> is currently private. NAPCORE task members can ask Andrej Tibaut or Sara Guerra de Oliveira for access, and collaborators can there:
         </p>
         <ul>
           <li>Report issues and bugs</li>
