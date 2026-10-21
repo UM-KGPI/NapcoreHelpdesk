@@ -66,6 +66,10 @@ env = environ.Env(
     # standards at all. Off by default; the keyword rules decide when it is off or the call fails.
     RELEVANCE_CHECK_ENABLED=(bool, False),
     RELEVANCE_CHECK_TIMEOUT_SECONDS=(int, 10),
+    # Ask the controller model for the model terms a question describes in other words
+    # (vocabulary_bridge). Off by default; concept matching uses label words only when off.
+    VOCABULARY_BRIDGE_ENABLED=(bool, False),
+    VOCABULARY_BRIDGE_TIMEOUT_SECONDS=(int, 3),
     CONTROLLER_LLM_CTX_SIZE=(int, 2048),
     CONTROLLER_LLM_MAX_TOKENS=(int, 96),
     CONTROLLER_LLM_THREADS=(int, 8),
@@ -271,6 +275,8 @@ CONTROLLER_LLM_DEVICE = env("CONTROLLER_LLM_DEVICE", default="none").strip() or 
 CONTROLLER_LLM_TIMEOUT_SECONDS = env("CONTROLLER_LLM_TIMEOUT_SECONDS")
 RELEVANCE_CHECK_ENABLED = env("RELEVANCE_CHECK_ENABLED")
 RELEVANCE_CHECK_TIMEOUT_SECONDS = env("RELEVANCE_CHECK_TIMEOUT_SECONDS")
+VOCABULARY_BRIDGE_ENABLED = env("VOCABULARY_BRIDGE_ENABLED")
+VOCABULARY_BRIDGE_TIMEOUT_SECONDS = env("VOCABULARY_BRIDGE_TIMEOUT_SECONDS")
 CONTROLLER_LLM_CTX_SIZE = env("CONTROLLER_LLM_CTX_SIZE")
 CONTROLLER_LLM_MAX_TOKENS = env("CONTROLLER_LLM_MAX_TOKENS")
 CONTROLLER_LLM_THREADS = env("CONTROLLER_LLM_THREADS")

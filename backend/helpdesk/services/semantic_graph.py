@@ -296,36 +296,6 @@ def _load_transmodel_pivot_from_static_files() -> tuple[dict[str, str], dict[str
 _ONTOLOGY = _load_ontology()
 GRAPH_CONCEPT_ALIASES = _build_concept_aliases_from_ontology(_ONTOLOGY)
 
-# Everyday phrasings that no ontology label carries. The ontology labels a
-# demand-responsive service only through its model terms (flexible line,
-# flexible service properties, booking arrangements), so "the service operates
-# when there is a demand" matched nothing and retrieval never reached them.
-CURATED_PHRASE_ALIASES: dict[str, set[str]] = {
-    "netex:FlexibleServiceProperties": {
-        "on demand",
-        "on-demand",
-        "demand responsive",
-        "demand-responsive",
-        "when there is a demand",
-        "dial a ride",
-        "dial-a-ride",
-        "flexible service",
-        "flexible transport",
-    },
-    "netex:FlexibleLine": {"on demand line", "demand responsive line", "flexible line"},
-    "netex:BookingArrangements": {"must be booked", "booking required", "advance booking", "pre-booking"},
-}
-
-
-def _active_alias_table() -> dict[str, set[str]]:
-    """Ontology aliases (or the fallback table when GraphDB is off) plus the
-    curated phrases. Kept separate so the curated entries never make an empty
-    GRAPH_CONCEPT_ALIASES look loaded and silently switch the fallback off."""
-    table = {concept_id: set(aliases) for concept_id, aliases in (GRAPH_CONCEPT_ALIASES or _FALLBACK_GRAPH_CONCEPT_ALIASES).items()}
-    for concept_id, phrases in CURATED_PHRASE_ALIASES.items():
-        table.setdefault(concept_id, set()).update(phrases)
-    return table
-
 # Static, GraphDB-independent cross-standard pivot (see docstring above).
 CONCEPT_TO_TRANSMODEL, TRANSMODEL_TO_CONCEPTS = _load_transmodel_pivot_from_static_files()
 
@@ -403,6 +373,58 @@ def _alias_matches_text(alias: str, normalized_text: str) -> bool:
     return "".join(alias_tokens) in text_tokens
 
 
+# A question word stands for a longer model word when the model word only adds
+# a short prefix: "charging" for "recharging", "booking" for "prebooking". The
+# word must be long enough to be distinctive, so "line" never matches "deadline".
+_MIN_PREFIXED_WORD = 5
+_MAX_MODEL_PREFIX = 3
+
+
+def _word_variant_kind(model_word: str, question_word: str) -> str | None:
+    """'exact' for the same word or a plural of it, 'prefixed' when the model
+    word is the question word with a short prefix, otherwise None."""
+    if model_word == question_word:
+        return "exact"
+    for left, right in ((model_word, question_word), (question_word, model_word)):
+        if len(left) >= 3 and right in (left + "s", left + "es"):
+            return "exact"
+    for word in {question_word, question_word[:-1] if question_word.endswith("s") else question_word}:
+        extra = len(model_word) - len(word)
+        if len(word) >= _MIN_PREFIXED_WORD and 0 < extra <= _MAX_MODEL_PREFIX and model_word.endswith(word):
+            return "prefixed"
+    return None
+
+
+def _is_class_concept(concept_id: str) -> bool:
+    """Classes are named in PascalCase (netex:RechargingStation) or upper case
+    (transmodel:RECHARGING_STATION); associations start lower case (transmodel:relatesTo)."""
+    local = concept_id.split(":", 1)[-1]
+    return bool(local) and local[0].isupper()
+
+
+def _alias_matches_question(alias: str, normalized_text: str) -> bool:
+    """Alias match for a user's question, tolerant of everyday wording.
+
+    Besides the strict match used for indexing (_alias_matches_text), each word of
+    a multi-word label may appear in the question as a plural or without a short
+    prefix ("charging stations" for the label "recharging station"). At least one
+    label word must appear as itself or its plural, so a label is never reached
+    through prefix-stripped words alone."""
+    if _alias_matches_text(alias, normalized_text):
+        return True
+    alias_tokens = _normalize_for_matching(alias).split()
+    if len(alias_tokens) < 2:
+        return False
+    text_tokens = set(normalized_text.split())
+    kinds = []
+    for alias_token in alias_tokens:
+        token_kinds = {_word_variant_kind(alias_token, text_token) for text_token in text_tokens} - {None}
+        if not token_kinds:
+            return False
+        kinds.append("exact" if "exact" in token_kinds else "prefixed")
+    return "exact" in kinds
+
+
 def _build_graph_relations_from_ontology(ontology: dict) -> dict[str, set[str]]:
     """Build GRAPH_RELATIONS from ontology concept relationships.
 
@@ -453,12 +475,49 @@ def _build_graph_relations_from_ontology(ontology: dict) -> dict[str, set[str]]:
 GRAPH_RELATIONS = _build_graph_relations_from_ontology(_ONTOLOGY)
 
 
-def extract_graph_concepts(text: str) -> set[str]:
+def extract_graph_concepts(text: str, *, word_variants: bool = False) -> set[str]:
+    """Concepts whose labels occur in the text.
+
+    word_variants is for a user's question: class labels then also match plurals
+    and words without a short prefix (see _alias_matches_question). Indexed chunk
+    text keeps the strict match."""
     normalized_text = _normalize_for_matching(text)
     concepts: set[str] = set()
-    for concept_id, aliases in _active_alias_table().items():
-        if any(_alias_matches_text(alias, normalized_text) for alias in aliases):
+    for concept_id, aliases in (GRAPH_CONCEPT_ALIASES or _FALLBACK_GRAPH_CONCEPT_ALIASES).items():
+        # Word variants are for class names only. Association labels such as
+        # "relates to" or "used as" are verb phrases, and their verb forms would
+        # match ordinary question wording.
+        loose = word_variants and _is_class_concept(concept_id)
+        matches = _alias_matches_question if loose else _alias_matches_text
+        if any(matches(alias, normalized_text) for alias in aliases):
             concepts.add(concept_id)
+    return concepts
+
+
+def concepts_named_by_terms(terms: list[str]) -> set[str]:
+    """Class concepts named by model terms, such as the terms an LLM gives for a
+    question's everyday wording. Each term counts only for the class labels it
+    matches with the most words, so "SCHEDULED STOP POINT" yields the scheduled
+    stop point and not every concept labelled "point". A term that matches no
+    label (an invented name) yields nothing."""
+    concepts: set[str] = set()
+    aliases_by_concept = GRAPH_CONCEPT_ALIASES or _FALLBACK_GRAPH_CONCEPT_ALIASES
+    for term in terms:
+        normalized_term = _normalize_for_matching(term)
+        if not normalized_term:
+            continue
+        best_length, best = 0, set()
+        for concept_id, aliases in aliases_by_concept.items():
+            if not _is_class_concept(concept_id):
+                continue
+            for alias in aliases:
+                length = len(_normalize_for_matching(alias).split())
+                if length < best_length or not _alias_matches_question(alias, normalized_term):
+                    continue
+                if length > best_length:
+                    best_length, best = length, set()
+                best.add(concept_id)
+        concepts |= best
     return concepts
 
 

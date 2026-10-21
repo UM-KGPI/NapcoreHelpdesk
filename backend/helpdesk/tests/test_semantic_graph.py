@@ -177,3 +177,63 @@ class TransmodelPivotTests(SimpleTestCase):
         synthetic fixture."""
         expanded = expand_graph_concepts({"netex:DatedVehicleJourney"}, hops=1)
         self.assertIn("siri:DatedVehicleJourney", expanded)
+
+
+class QuestionWordVariantTests(SimpleTestCase):
+    """A question may name a class in everyday wording: a plural, or a word the
+    model spells with a short prefix ("charging station" for RECHARGING STATION)."""
+
+    def _concepts(self, aliases, question):
+        with patch.object(semantic_graph, "GRAPH_CONCEPT_ALIASES", aliases):
+            return semantic_graph.extract_graph_concepts(question, word_variants=True)
+
+    def test_word_without_the_model_prefix_matches(self):
+        concepts = self._concepts({"netex:RechargingStation": {"recharging station"}}, "How are e charging stations represented in NeTex ?")
+        self.assertEqual(concepts, {"netex:RechargingStation"})
+
+    def test_plural_matches(self):
+        concepts = self._concepts({"netex:JourneyPattern": {"journey pattern"}}, "How does NeTEx represent journey patterns?")
+        self.assertEqual(concepts, {"netex:JourneyPattern"})
+
+    def test_prefix_stripped_words_alone_do_not_match(self):
+        """At least one label word must appear as itself or its plural."""
+        concepts = self._concepts({"netex:RechargingRebooking": {"recharging rebooking"}}, "charging booking")
+        self.assertEqual(concepts, set())
+
+    def test_short_words_never_match_by_suffix(self):
+        concepts = self._concepts({"netex:Deadline": {"deadline date"}}, "line date")
+        self.assertEqual(concepts, set())
+
+    def test_association_labels_keep_the_strict_match(self):
+        """Verb phrases like "relates to" would otherwise match ordinary wording."""
+        concepts = self._concepts({"transmodel:relatesTo": {"relates to"}}, "How does it relate to a line?")
+        self.assertEqual(concepts, set())
+
+    def test_chunk_text_keeps_the_strict_match(self):
+        with patch.object(semantic_graph, "GRAPH_CONCEPT_ALIASES", {"netex:RechargingStation": {"recharging station"}}):
+            self.assertEqual(semantic_graph.extract_graph_concepts("charging stations"), set())
+
+
+class ConceptsNamedByTermsTests(SimpleTestCase):
+    ALIASES = {
+        "netex:ScheduledStopPoint": {"scheduled stop point"},
+        "netex:Point": {"point"},
+        "netex:FlexibleServiceProperties": {"flexible service properties"},
+        "transmodel:relatesTo": {"relates to"},
+    }
+
+    def _concepts(self, terms):
+        with patch.object(semantic_graph, "GRAPH_CONCEPT_ALIASES", self.ALIASES):
+            return semantic_graph.concepts_named_by_terms(terms)
+
+    def test_term_yields_its_longest_matching_label_only(self):
+        self.assertEqual(self._concepts(["SCHEDULED STOP POINT"]), {"netex:ScheduledStopPoint"})
+
+    def test_underscored_term_matches(self):
+        self.assertEqual(self._concepts(["FLEXIBLE_SERVICE_PROPERTIES"]), {"netex:FlexibleServiceProperties"})
+
+    def test_invented_term_yields_nothing(self):
+        self.assertEqual(self._concepts(["DEMAND RESPONSIVE OPERATION"]), set())
+
+    def test_associations_are_never_named(self):
+        self.assertEqual(self._concepts(["RELATES TO"]), set())
