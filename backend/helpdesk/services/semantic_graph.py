@@ -315,8 +315,16 @@ CURATED_PHRASE_ALIASES: dict[str, set[str]] = {
     "netex:FlexibleLine": {"on demand line", "demand responsive line", "flexible line"},
     "netex:BookingArrangements": {"must be booked", "booking required", "advance booking", "pre-booking"},
 }
-for _concept_id, _phrases in CURATED_PHRASE_ALIASES.items():
-    GRAPH_CONCEPT_ALIASES.setdefault(_concept_id, set()).update(_phrases)
+
+
+def _active_alias_table() -> dict[str, set[str]]:
+    """Ontology aliases (or the fallback table when GraphDB is off) plus the
+    curated phrases. Kept separate so the curated entries never make an empty
+    GRAPH_CONCEPT_ALIASES look loaded and silently switch the fallback off."""
+    table = {concept_id: set(aliases) for concept_id, aliases in (GRAPH_CONCEPT_ALIASES or _FALLBACK_GRAPH_CONCEPT_ALIASES).items()}
+    for concept_id, phrases in CURATED_PHRASE_ALIASES.items():
+        table.setdefault(concept_id, set()).update(phrases)
+    return table
 
 # Static, GraphDB-independent cross-standard pivot (see docstring above).
 CONCEPT_TO_TRANSMODEL, TRANSMODEL_TO_CONCEPTS = _load_transmodel_pivot_from_static_files()
@@ -448,8 +456,7 @@ GRAPH_RELATIONS = _build_graph_relations_from_ontology(_ONTOLOGY)
 def extract_graph_concepts(text: str) -> set[str]:
     normalized_text = _normalize_for_matching(text)
     concepts: set[str] = set()
-    aliases_by_concept = GRAPH_CONCEPT_ALIASES or _FALLBACK_GRAPH_CONCEPT_ALIASES
-    for concept_id, aliases in aliases_by_concept.items():
+    for concept_id, aliases in _active_alias_table().items():
         if any(_alias_matches_text(alias, normalized_text) for alias in aliases):
             concepts.add(concept_id)
     return concepts
