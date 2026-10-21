@@ -362,6 +362,77 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
                 )
 
 
+_XML_ELEMENT_MENTION_PATTERN = re.compile(r"[<`]([A-Za-z][A-Za-z0-9]*)[>`]")
+
+# Phrases that attribute a semantic purpose/meaning to an XML element. An
+# element's own name is not its definition (e.g. "TimeDemandTypeRef" sounds
+# like it marks demand-responsive service, but in Transmodel a TIME DEMAND
+# TYPE is running-time-per-demand-level, unrelated to flexible/on-demand
+# operation) — so a claim of this shape must be grounded in a chunk that
+# actually *defines* the element, not merely one that contains it in an
+# example.
+_ELEMENT_PURPOSE_CLAIM_PATTERN = re.compile(
+    r"\b(is used to|is how|is the way to|indicates?|marks?|means?|represents?|"
+    r"denotes?|signifies?|is used for|flags?|specifies? that|shows? that|"
+    r"tells? you|defines? whether|to mark|to indicate|to show|to specify|"
+    r"used to (?:mark|indicate|show|flag|specify))\b",
+    re.IGNORECASE,
+)
+
+# Chunk doc types that can plausibly carry a definition/explanation of an
+# element's purpose. "example" chunks are raw XML/JSON instances — the
+# presence of an element there proves it exists, not what it means.
+_DEFINITIONAL_DOC_TYPES = {"schema", "frame", "object", "ontology-definition", "ontology-relation", "guide"}
+
+
+def _validate_no_unsupported_element_purpose_claims(answer: str, chunks: list[dict]) -> None:
+    """
+    Reject sentences that explain what an XML element "means" or "is used for"
+    when the cited evidence only shows the element used in an example, never
+    defines it.
+
+    An element's name is not its definition — the model must not infer intent
+    (e.g. "on-demand operation") from a plausible-sounding name when no cited
+    evidence block actually defines that element's semantics.
+    """
+    sentences = re.split(r"(?<=[.!?])\s+", answer.replace("\n", " "))
+
+    for sentence in sentences:
+        if not _ELEMENT_PURPOSE_CLAIM_PATTERN.search(sentence):
+            continue
+
+        element_names = _XML_ELEMENT_MENTION_PATTERN.findall(sentence)
+        if not element_names:
+            continue
+
+        found_citations = CITATION_PATTERN.findall(sentence)
+        if not found_citations:
+            continue  # Uncited purpose claims are caught by other validators.
+
+        grounded = False
+        for citation_str in found_citations:
+            idx = int(citation_str) - 1
+            if idx < 0 or idx >= len(chunks):
+                continue
+            chunk = chunks[idx]
+            doc_type = str(chunk.get("docType", "") or "").lower()
+            if doc_type not in _DEFINITIONAL_DOC_TYPES:
+                continue
+            chunk_text = str(chunk.get("text", ""))
+            if any(name.lower() in chunk_text.lower() for name in element_names):
+                grounded = True
+                break
+
+        if not grounded:
+            raise LLMGenerationError(
+                f"Sentence attributes a purpose/meaning to element(s) {element_names} "
+                f"citing only non-definitional evidence (e.g. an example file): "
+                f"'{sentence[:150].strip()}'. "
+                "An element's name is not its definition — do not infer what an element "
+                "means or is used for unless a cited evidence block actually defines it."
+            )
+
+
 _RAW_FILENAME_PATTERN = re.compile(
     r"\b[A-Za-z0-9_][A-Za-z0-9_.\-]*\.(?:xml|xsd|yaml|yml|json|ttl|csv|rdf|owl)\b"
 )
@@ -1041,6 +1112,7 @@ def _validate_generated_answer(answer: str, chunks: list[dict]) -> None:
         _validate_citation_grounding(answer=answer, chunks=chunks)
         _validate_no_raw_filenames(answer=answer, chunks=chunks)
         _validate_answer_has_specificity(answer=answer)
+        _validate_no_unsupported_element_purpose_claims(answer=answer, chunks=chunks)
     except LLMGenerationError as exc:
         logger.info(f"[VALIDATE] Validation FAILED: {str(exc)[:150]}")
         raise
@@ -1058,6 +1130,18 @@ def _append_feedback_message(messages: list[dict], rejected_answer: str, error_m
     example_hint = ""
     if "citation" in error_msg.lower() or "not in" in error_msg.lower() or "evidence" in error_msg.lower():
         example_hint = "\n- CRITICAL: Do NOT mention specific numbered examples (like 'SCWW-86' or 'LUAS Line 93') unless you find those EXACT examples in the evidence blocks. You can mention generic standard names if they appear in evidence, but NOT specific numbered instances you know from training."
+
+    # Add specific guidance for unsupported element-purpose claims
+    purpose_claim_hint = ""
+    if "purpose/meaning" in error_msg.lower() or "is not its definition" in error_msg.lower():
+        purpose_claim_hint = (
+            "\n- CRITICAL: Do NOT explain what an XML element means or is used for based on its name. "
+            "Only state what an element means if a cited evidence block explicitly defines it. "
+            "If the evidence does not define an element's purpose, either omit that claim or say the "
+            "evidence does not define it — check the other evidence blocks for a definition that actually "
+            "covers the behavior in question (e.g. a dedicated properties/arrangements element) instead of "
+            "guessing from an example file alone."
+        )
 
     # Add specific guidance for language errors
     language_hint = ""
@@ -1077,7 +1161,7 @@ def _append_feedback_message(messages: list[dict], rejected_answer: str, error_m
         "6. If you cannot find specific technical details, say so clearly — in the response language, not English "
         "(unless English is the response language)\n"
         "7. EVERY sentence must have [E#] citation to the exact evidence block"
-        f"{file_name_hint}{example_hint}{language_hint}"
+        f"{file_name_hint}{example_hint}{purpose_claim_hint}{language_hint}"
     )
     return messages + [
         {"role": "assistant", "content": rejected_answer},
