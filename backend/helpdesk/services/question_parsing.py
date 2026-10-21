@@ -113,7 +113,7 @@ class QuestionParsingService:
         intent = self._detect_intent(normalized)
         normativity = self._detect_normativity(normalized)
 
-        direct_concepts = extract_graph_concepts(normalized)
+        direct_concepts = extract_graph_concepts(normalized, word_variants=True)
         expanded_concepts = expand_graph_concepts(direct_concepts, hops=1)
         all_concepts = direct_concepts | expanded_concepts
 

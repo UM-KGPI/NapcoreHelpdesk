@@ -170,7 +170,7 @@ class RetrievalGatewayTests(TestCase):
         expand_mock.return_value = {"netex:Line": 0}
         get_concept_canonical_terms_mock.return_value = ["simple line"]
 
-        def extract_graph_concepts_side_effect(text: str) -> set[str]:
+        def extract_graph_concepts_side_effect(text: str, **_kwargs) -> set[str]:
             return {"netex:Line"} if "line" in text.lower() else set()
 
         extract_graph_concepts_mock.side_effect = extract_graph_concepts_side_effect
