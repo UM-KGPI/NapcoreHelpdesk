@@ -2584,6 +2584,13 @@ const src = `classDiagram
     subclass of VehicleJourney
     has lineRef
   }
+  class SingleJourney["netex:SingleJourney"] {
+    subclass of Journey
+    has singleJourneyPathRef
+  }
+  class SingleJourneyPath["netex:SingleJourneyPath"] {
+    has routeRef
+  }
   class JourneyPattern["netex:JourneyPattern"] {
     Transmodel, on a single ROUTE
     has routeRef
@@ -2598,11 +2605,14 @@ const src = `classDiagram
   Journey <|-- ServiceJourney : rdfs#colon;subClassOf
   Journey <|-- VehicleJourney : rdfs#colon;subClassOf
   VehicleJourney <|-- DeadRun : rdfs#colon;subClassOf
+  Journey <|-- SingleJourney : rdfs#colon;subClassOf
   ServiceJourney --> Line : netex#colon;lineRef_ServiceJourney
   DeadRun --> Line : netex#colon;lineRef_DeadRun
   ServiceJourney ..> JourneyPattern : netex#colon;journeyPatternRef_ServiceJourney
   JourneyPattern ..> Route : netex#colon;routeRef_JourneyPattern
   Route ..> Line : netex#colon;lineRef_Route
+  SingleJourney ..> SingleJourneyPath : netex#colon;singleJourneyPathRef
+  SingleJourneyPath ..> Route : netex#colon;routeRef_SingleJourneyPath
 `;
 const { svg } = await mermaid.render('cd-svg', src);
 document.getElementById('cd').innerHTML = svg;
@@ -2631,7 +2641,7 @@ document.querySelectorAll('#cd svg.classDiagram .row-rect-odd path, #cd svg.clas
 });
 
 document.querySelectorAll('#cd svg.classDiagram .edgePaths path').forEach((p, i) => {
-  const color = i < 3 ? '#378ADD' : i < 5 ? '#1D9E75' : '#BA7517';
+  const color = i < 4 ? '#378ADD' : i < 6 ? '#1D9E75' : '#BA7517';
   p.style.setProperty('stroke', color, 'important');
   p.style.setProperty('stroke-width', '1.5px', 'important');
 });
