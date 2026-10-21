@@ -296,6 +296,28 @@ def _load_transmodel_pivot_from_static_files() -> tuple[dict[str, str], dict[str
 _ONTOLOGY = _load_ontology()
 GRAPH_CONCEPT_ALIASES = _build_concept_aliases_from_ontology(_ONTOLOGY)
 
+# Everyday phrasings that no ontology label carries. The ontology labels a
+# demand-responsive service only through its model terms (flexible line,
+# flexible service properties, booking arrangements), so "the service operates
+# when there is a demand" matched nothing and retrieval never reached them.
+CURATED_PHRASE_ALIASES: dict[str, set[str]] = {
+    "netex:FlexibleServiceProperties": {
+        "on demand",
+        "on-demand",
+        "demand responsive",
+        "demand-responsive",
+        "when there is a demand",
+        "dial a ride",
+        "dial-a-ride",
+        "flexible service",
+        "flexible transport",
+    },
+    "netex:FlexibleLine": {"on demand line", "demand responsive line", "flexible line"},
+    "netex:BookingArrangements": {"must be booked", "booking required", "advance booking", "pre-booking"},
+}
+for _concept_id, _phrases in CURATED_PHRASE_ALIASES.items():
+    GRAPH_CONCEPT_ALIASES.setdefault(_concept_id, set()).update(_phrases)
+
 # Static, GraphDB-independent cross-standard pivot (see docstring above).
 CONCEPT_TO_TRANSMODEL, TRANSMODEL_TO_CONCEPTS = _load_transmodel_pivot_from_static_files()
 

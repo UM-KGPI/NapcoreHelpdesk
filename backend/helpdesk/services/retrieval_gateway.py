@@ -633,6 +633,86 @@ def _example_chunk_boost(doc_type: str, query_concepts: set[str]) -> float:
     return 0.0
 
 
+_ELEMENT_STANDARD_PREFIXES = ("netex:", "siri:", "opra:")
+_ELEMENT_BOOST_DOC_TYPES = frozenset({"example", "xml-example", "schema", "xsd-definition"})
+
+
+def concept_element_names(concept_ids: set[str]) -> list[str]:
+    """XML element names for the standard-namespace concepts a question names
+    (netex:TemplateServiceJourney -> TemplateServiceJourney)."""
+    return sorted(
+        concept_id.split(":", 1)[1]
+        for concept_id in concept_ids
+        if concept_id.startswith(_ELEMENT_STANDARD_PREFIXES) and concept_id.split(":", 1)[1][:1].isupper()
+    )
+
+
+def _element_candidates(element_names: list[str], per_element: int = 6) -> list:
+    """Indexed example and schema chunks whose text contains <Element followed by
+    a space, > or />, a few per element, highest quality first."""
+    from django.db.models import Q
+
+    found: list = []
+    seen: set[int] = set()
+    for name in element_names[:4]:
+        tag_match = Q(text__contains=f"<{name} ") | Q(text__contains=f"<{name}>") | Q(text__contains=f"<{name}/")
+        for chunk in (
+            SourceChunk.objects.filter(tag_match, doc_type__in=("example", "schema"))
+            .order_by("-quality_score", "id")[:per_element]
+        ):
+            if chunk.id not in seen:
+                seen.add(chunk.id)
+                found.append(chunk)
+    return found
+
+
+def _ensure_element_coverage(
+    selected: list[dict], candidates: list[dict], element_names: list[str], top_k: int
+) -> list[dict]:
+    """Put the best chunk for each asked element right after the definitions.
+
+    The answer model only sees the first few chunks. When a question names two
+    elements (TemplateServiceJourney, FlexibleServiceProperties), plain ranking
+    can fill those slots with examples of one element only; the model then
+    improvises the other (it presented TimeDemandTypeRef as "on demand").
+    """
+    if len(element_names) < 2:
+        return selected
+
+    def shows(candidate: dict, name: str) -> bool:
+        return bool(re.search(rf"<{re.escape(name)}[\s>/]", candidate.get("text", "") or ""))
+
+    covering: list[dict] = []
+    for name in element_names:
+        best = next((c for c in selected if shows(c, name)), None) or next(
+            (c for c in candidates if shows(c, name)), None
+        )
+        if best is not None and all(best is not chosen for chosen in covering):
+            covering.append(best)
+    if not covering:
+        return selected
+
+    leading = [c for c in selected if c.get("docType") in {"ontology-definition", "ontology-relation"}]
+    rest = [c for c in selected if all(c is not x for x in leading + covering)]
+    return (leading + covering + rest)[:top_k]
+
+
+def _concept_element_boost(doc_type: str, chunk_text: str, element_names: list[str]) -> float:
+    """Prefer the chunk of a file that actually contains the asked element.
+
+    An example file is split into ~10 chunks and only one per file survives the
+    same-source-path cap. Without this, the winner is usually the file's first
+    chunk, whose header comment describes the example in words close to the
+    question, while the chunk with <TemplateServiceJourney ...> loses.
+    """
+    if doc_type not in _ELEMENT_BOOST_DOC_TYPES or not element_names or not chunk_text:
+        return 0.0
+    for name in element_names:
+        if re.search(rf"<{re.escape(name)}[\s>/]", chunk_text):
+            return 0.2
+    return 0.0
+
+
 def _semantic_definition_boost(doc_type: str, query_concepts: set[str]) -> float:
     """Boost semantic definitions from ontology so they rank high in context.
 
@@ -1383,6 +1463,23 @@ def retrieve_chunks_with_trace(
             logger.debug(f"Failed to retrieve ontology definitions: {e}")
     _record_stage("ontologyDefinitionRetrievalMs", stage_start)
 
+    # Chunks that contain an element the question names (<TemplateServiceJourney ...>).
+    # They may not reach the pool on embedding similarity alone, and a ranking boost
+    # can only reorder chunks that are already in it.
+    stage_start = time.perf_counter()
+    question_element_names = concept_element_names(question_concepts) if graph_rag_enabled else []
+    element_chunk_ids: set[int] = set()
+    if question_element_names:
+        if not isinstance(chunk_iterable, list):
+            chunk_iterable = list(chunk_iterable)
+        present_ids = {int(chunk.id) for chunk in chunk_iterable}
+        for element_chunk in _element_candidates(question_element_names):
+            element_chunk_ids.add(int(element_chunk.id))
+            if int(element_chunk.id) not in present_ids:
+                chunk_iterable.append(element_chunk)
+                present_ids.add(int(element_chunk.id))
+    _record_stage("elementCandidateMs", stage_start)
+
     graph_candidates_added = 0
     graph_candidate_ids: list[int] = []
     stage_start = time.perf_counter()
@@ -1425,7 +1522,7 @@ def retrieve_chunks_with_trace(
             if int(chunk.id) in selected_graph_ids:
                 continue
             doc_type = (getattr(chunk, "doc_type", "guide") or "guide").lower()
-            if doc_type == "ontology-definition":
+            if doc_type == "ontology-definition" or int(chunk.id) in element_chunk_ids:
                 definition_ids.add(int(chunk.id))
             else:
                 base_candidates.append(chunk)
@@ -1514,6 +1611,7 @@ def retrieve_chunks_with_trace(
             )
             + _semantic_definition_boost(doc_type=doc_type, query_concepts=question_concepts)
             + _example_chunk_boost(doc_type=doc_type, query_concepts=question_concepts)
+            + _concept_element_boost(doc_type=doc_type, chunk_text=chunk.text, element_names=question_element_names)
         )
         graph_adjustment, graph_hit, matching_concepts = _graph_score_adjustment(
             graph_enabled=graph_rag_enabled,
@@ -1615,6 +1713,7 @@ def retrieve_chunks_with_trace(
         trimmed = _diversified_top_k(candidates=candidates, top_k=top_k, mmr_lambda=mmr_lambda)
     else:
         trimmed = candidates[:top_k]
+    trimmed = _ensure_element_coverage(trimmed, candidates, question_element_names, top_k)
     _record_stage("candidateSelectionMs", stage_start)
 
     stage_start = time.perf_counter()
