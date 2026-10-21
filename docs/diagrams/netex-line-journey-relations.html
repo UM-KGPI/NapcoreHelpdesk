@@ -2546,8 +2546,9 @@ body[data-not-sent] > #vis-container ~ #not-sent {
 </style>
 <div id="cd"></div>
 <div class="legend">
-  <span><span class="dot" style="background:#1D9E75"></span>owl:ObjectProperty in netex.ttl — cited as relation-path evidence</span>
-  <span><span class="dot" style="background:#378ADD"></span>rdfs:subClassOf, downward only — fixed in PR #95</span>
+  <span><span class="dot" style="background:#1D9E75"></span>owl:ObjectProperty in netex.ttl, cited as relation-path evidence</span>
+  <span><span class="dot" style="background:#378ADD"></span>rdfs:subClassOf, downward only, fixed in PR #95</span>
+  <span><span class="dot" style="background:#BA7517"></span>dashed: Transmodel chain, each step named in a Transmodel definition (PR #109)</span>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
 <script type="module">
@@ -2582,14 +2583,25 @@ const src = `classDiagram
     subclass of VehicleJourney
     has lineRef
   }
+  class JourneyPattern {
+    Transmodel, on a single ROUTE
+    has routeRef
+  }
+  class Route {
+    Transmodel, LINE groups ROUTEs
+    has lineRef
+  }
   class Line {
     target concept
   }
-  Journey <|-- ServiceJourney : rdfs:subClassOf
-  Journey <|-- VehicleJourney : rdfs:subClassOf
-  VehicleJourney <|-- DeadRun : rdfs:subClassOf
+  Journey <|-- ServiceJourney : subClassOf
+  Journey <|-- VehicleJourney : subClassOf
+  VehicleJourney <|-- DeadRun : subClassOf
   ServiceJourney --> Line : lineRef_ServiceJourney
   DeadRun --> Line : lineRef_DeadRun
+  ServiceJourney ..> JourneyPattern : journeyPatternRef_ServiceJourney
+  JourneyPattern ..> Route : routeRef_JourneyPattern
+  Route ..> Line : lineRef_Route
 `;
 const { svg } = await mermaid.render('cd-svg', src);
 document.getElementById('cd').innerHTML = svg;
@@ -2618,7 +2630,7 @@ document.querySelectorAll('#cd svg.classDiagram .row-rect-odd path, #cd svg.clas
 });
 
 document.querySelectorAll('#cd svg.classDiagram .edgePaths path').forEach((p, i) => {
-  p.setAttribute('stroke', i < 3 ? '#378ADD' : '#1D9E75');
+  p.setAttribute('stroke', i < 3 ? '#378ADD' : i < 5 ? '#1D9E75' : '#BA7517');
 });
 </script>
 </div></body></html>
