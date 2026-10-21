@@ -74,6 +74,9 @@ class IndexedSourceFile(TimestampedModel):
     source_path = models.CharField(max_length=512)
     commit_sha = models.CharField(max_length=64)
     content_hash = models.CharField(max_length=64)
+    # For XSD files: {"includes": [...], "uses": {type: [declarations using it]}},
+    # written at index time so schema comparisons follow every refresh.
+    schema_references = models.JSONField(default=dict, blank=True)
 
     class Meta:
         ordering = ["repository_url", "source_path"]

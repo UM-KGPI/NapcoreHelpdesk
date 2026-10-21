@@ -4,10 +4,10 @@ A question that names a service only by its abbreviation ("overlaps between
 SIRI-CA and SIRI-VM") matched no concept and no file, so retrieval fell back to
 generic files and the answer guessed what the letters stand for. The SIRI README
 lists every service as "Control Actions (SIRI-CA)"; the indexed README chunks are
-read for such pairs, and each service is linked to its indexed *_service.xsd by
-the first letters of each word of its name ("Control Actions" ->
-siri_controlAction_service.xsd), which also tolerates small spelling slips in the
-README. Nothing is hand-written: a new service in a README is picked up the next
+read for such pairs, and each service is linked to the indexed schema whose file
+name contains the first letters of each word of its name ("Control Actions" ->
+siri_controlAction_service.xsd). No file naming convention is assumed, and small
+spelling slips in the README are tolerated. Nothing is hand-written: a new service in a README is picked up the next
 time the index is read.
 """
 
@@ -21,7 +21,6 @@ from helpdesk.models import SourceChunk
 # "Control Actions (SIRI-CA)": a capitalised name of one to five words, then the
 # abbreviation in parentheses: the standard's name, a hyphen, two to four capitals.
 _NAME_ABBREVIATION = re.compile(r"\b([A-Z][A-Za-z]+(?: [A-Za-z]+){0,4}) \(([A-Z][A-Za-z]{1,9}-[A-Z]{2,4})\)")
-_SERVICE_SCHEMA = re.compile(r"(?:^|/)[a-z]+_([A-Za-z]+)_service\.xsd$")
 _WORD_PREFIX = 5
 
 
@@ -53,19 +52,29 @@ def _schema_matches(name: str, schema_stem: str) -> bool:
     return True
 
 
+def _file_stem(path: str) -> str:
+    """Letters of the file name without extension, lower case:
+    "xsd/siri_controlAction_service.xsd" -> "siricontrolactionservice"."""
+    name = path.rsplit("/", 1)[-1].rsplit(".", 1)[0]
+    return re.sub(r"[^a-z]", "", name.lower())
+
+
 def build_services(readme_texts: list[str], indexed_paths: list[str]) -> dict[str, Service]:
-    schemas = []
-    for path in sorted(set(indexed_paths)):
-        match = _SERVICE_SCHEMA.search(path)
-        if match:
-            schemas.append((path, match.group(1).lower()))
+    """Services named in the READMEs, each linked to the indexed schema whose file
+    name contains every word of its name. No naming convention is assumed: of all
+    matching schemas the one with the shortest file name wins, so "Vehicle
+    Monitoring" picks the vehicle monitoring schema over a longer file that also
+    happens to contain both words."""
+    schemas = [(path, _file_stem(path)) for path in sorted(set(indexed_paths))]
     services: dict[str, Service] = {}
     for text in readme_texts:
         for name, abbreviation in _NAME_ABBREVIATION.findall(text or ""):
             key = abbreviation.upper()
             if key in services:
                 continue
-            paths = tuple(sorted(path for path, stem in schemas if _schema_matches(name, stem)))
+            matches = [(len(stem), path) for path, stem in schemas if _schema_matches(name, stem)]
+            shortest = min((length for length, _ in matches), default=None)
+            paths = tuple(sorted(path for length, path in matches if length == shortest))
             services[key] = Service(abbreviation=key, name=name, schema_paths=paths)
     return services
 
@@ -85,7 +94,7 @@ def service_table() -> dict[str, Service]:
             .exclude(source_path__startswith=".mylocal")
             .values_list("text", flat=True)
         )
-        paths = list(SourceChunk.objects.filter(source_path__endswith="_service.xsd").values_list("source_path", flat=True))
+        paths = list(SourceChunk.objects.filter(source_path__endswith=".xsd").values_list("source_path", flat=True).distinct())
     except Exception:  # database unavailable or not allowed (e.g. SimpleTestCase)
         return {}
     table = build_services(readmes, paths)

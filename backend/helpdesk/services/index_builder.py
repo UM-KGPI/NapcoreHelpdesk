@@ -31,6 +31,7 @@ import xml.etree.ElementTree as ET
 import yaml
 import certifi
 from helpdesk.models import IndexedSourceFile, IndexRunMetric, SourceChunk
+from helpdesk.services.schema_overlap import extract_schema_references
 from helpdesk.services.embeddings import build_text_embeddings_batch
 from helpdesk.services.repository_urls import canonical_repository_url
 
@@ -1033,6 +1034,11 @@ def index_repository(
                     content_hash=content_hash,
                 ).first()
                 if indexed_file:
+                    # Files indexed before schema references existed get them now,
+                    # so the next incremental refresh fills every XSD without a full run.
+                    if file_path.suffix.lower() == ".xsd" and not indexed_file.schema_references:
+                        indexed_file.schema_references = extract_schema_references(raw_text)
+                        indexed_file.save(update_fields=["schema_references", "updated_at"])
                     existing_chunk_ids = SourceChunk.objects.filter(
                         repository_url=repo_url,
                         source_path=relative_path,
@@ -1149,6 +1155,9 @@ def index_repository(
                 defaults={
                     "commit_sha": commit_sha,
                     "content_hash": content_hash,
+                    "schema_references": (
+                        extract_schema_references(raw_text) if file_path.suffix.lower() == ".xsd" else {}
+                    ),
                 },
             )
 

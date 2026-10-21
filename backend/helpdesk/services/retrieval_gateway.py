@@ -67,6 +67,7 @@ from helpdesk.services.relation_paths import (
     relation_paths_for_question,
     supporting_subclass_chunks,
 )
+from helpdesk.services.schema_overlap import format_overlap_chunk, overlap_for_schemas
 from helpdesk.services.service_abbreviations import expand_abbreviations, services_in_question
 from helpdesk.services.vocabulary_bridge import bridged_question_concepts
 from helpdesk.services.semantic_graph import (
@@ -725,17 +726,23 @@ def _ensure_source_coverage(
     if len(path_groups) < 2:
         return selected
 
+    leading_types = {"ontology-definition", "ontology-relation"}
+
+    def from_schema(candidate: dict, paths: set[str]) -> bool:
+        # Computed chunks (shared structure) cite a schema path but are not the schema.
+        return candidate.get("sourcePath") in paths and candidate.get("docType") not in leading_types
+
     covering: list[dict] = []
     for paths in path_groups:
-        best = next((c for c in selected if c.get("sourcePath") in paths), None) or next(
-            (c for c in candidates if c.get("sourcePath") in paths), None
+        best = next((c for c in selected if from_schema(c, paths)), None) or next(
+            (c for c in candidates if from_schema(c, paths)), None
         )
         if best is not None and all(best is not chosen for chosen in covering):
             covering.append(best)
     if not covering:
         return selected
 
-    leading = [c for c in selected if c.get("docType") in {"ontology-definition", "ontology-relation"}]
+    leading = [c for c in selected if c.get("docType") in leading_types]
     rest = [c for c in selected if all(c is not x for x in leading + covering)]
     return (leading + covering + rest)[:top_k]
 
@@ -1768,6 +1775,37 @@ def retrieve_chunks_with_trace(
             logger.warning("Relation-path evidence failed", exc_info=True)
     _record_stage("relationPathMs", stage_start)
 
+    # A comparison of named services gets their shared structure, computed from
+    # the schema references stored at index time (schema_overlap).
+    stage_start = time.perf_counter()
+    schema_overlap_added = 0
+    named_services = [service for service in services_in_question(question) if service.schema_paths]
+    if len(named_services) >= 2:
+        try:
+            overlap = overlap_for_schemas(
+                [service.schema_paths[0] for service in named_services],
+                [service.name for service in named_services],
+            )
+            if overlap is not None:
+                candidates.append(
+                    {
+                        **format_overlap_chunk(overlap),
+                        "score": 1.0,
+                        "_rankScore": 3.0,
+                        "_vectorScore": 1.0,
+                        "chunkType": "schema-overlap",
+                        "structuredMetadata": {},
+                        "retrievalEventId": f"re-{uuid4().hex[:8]}",
+                        "_graphContribution": 0.0,
+                        "_graphHit": False,
+                        "_graphProvenanceConceptIds": [],
+                    }
+                )
+                schema_overlap_added = 1
+        except Exception:
+            logger.warning("Schema overlap evidence failed", exc_info=True)
+    _record_stage("schemaOverlapMs", stage_start)
+
     stage_start = time.perf_counter()
     candidates.sort(key=lambda value: (value["_rankScore"], value["score"]), reverse=True)
     candidates = _apply_source_path_cap(candidates=candidates, max_per_source_path=source_path_cap)
@@ -1831,6 +1869,7 @@ def retrieve_chunks_with_trace(
         "graphExpansionSource": graph_expansion_source,
         "graphConceptIds": sorted(expanded_concepts) if graph_rag_enabled else [],
         "bridgedConceptIds": sorted(bridged_concepts),
+        "schemaOverlapAdded": schema_overlap_added,
         "graphConceptCap": graph_expansion_max_concepts if graph_rag_enabled else 0,
         "graphCandidatesAdded": graph_candidates_added if graph_rag_enabled else 0,
         "graphCandidateCap": graph_expansion_max_candidates if graph_rag_enabled else 0,
