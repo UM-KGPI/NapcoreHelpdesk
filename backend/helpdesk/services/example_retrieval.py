@@ -10,6 +10,7 @@ Created: 2026-07-01
 from __future__ import annotations
 
 import logging
+import re
 from typing import Optional
 from urllib.parse import unquote
 
@@ -255,6 +256,27 @@ def retrieve_concept_examples_with_fallback(
         return []
 
 
+
+EXCERPT_CHARS = 2000
+
+
+def concept_excerpt(content: str, element: str, max_chars: int = EXCERPT_CHARS) -> str:
+    """The part of an example file that shows `element`, not just the file head.
+
+    NeTEx examples open with a long PublicationDelivery header and frames: in the
+    TemplateServiceJourney examples the element first appears 3,000 to 6,700
+    characters in, so the first 2,000 characters never contain it. Start a little
+    before the first <element ...> instead; fall back to the head when absent.
+    """
+    if len(content) <= max_chars:
+        return content
+    match = re.search(rf"<{re.escape(element)}[\s>/]", content) if element else None
+    if not match:
+        return content[:max_chars]
+    start = content.rfind("\n", 0, max(0, match.start() - max_chars // 5)) + 1
+    return content[start : start + max_chars]
+
+
 def format_examples_as_chunks(examples: list[dict]) -> list[dict]:
     """Convert example metadata to chunk format for LLM context.
 
@@ -284,6 +306,7 @@ def format_examples_as_chunks(examples: list[dict]) -> list[dict]:
 
         # Try to load actual XML content
         file_content = _load_example_file_content(example["file_path"])
+        element = re.split(r"[#/:]", example.get("concept", ""))[-1]
 
         # Build chunk text with actual content if available, fallback to metadata
         if file_content:
@@ -291,7 +314,7 @@ def format_examples_as_chunks(examples: list[dict]) -> list[dict]:
                 f"{match_context}"
                 f"Example XML file: {example['file_path']}\n"
                 f"Related concept: {example['concept']}\n\n"
-                f"Content excerpt:\n{file_content[:2000]}"
+                f"Content excerpt:\n{concept_excerpt(file_content, element)}"
             )
         else:
             chunk_text = (
@@ -329,13 +352,13 @@ def _load_example_file_content(file_path: str) -> str:
     relative paths (e.g., "examples/ActualServiceDimensions.xml") but the source
     standard (NeTEx, OpRa, SIRI) isn't recorded, so we try all repositories.
 
-    Returns first 2000 chars of readable XML content, or empty string if file not found.
+    Returns the file's text (callers cut an excerpt), or empty string if not found.
 
     Args:
         file_path: Relative path like "examples/path/to/file.xml"
 
     Returns:
-        Text content from XML file, or empty string if not found
+        Full text of the XML file, or empty string if not found
     """
     if not file_path:
         return ""
@@ -367,9 +390,7 @@ def _load_example_file_content(file_path: str) -> str:
             if full_path.exists() and full_path.is_file():
                 try:
                     with open(full_path, 'r', encoding='utf-8', errors='ignore') as f:
-                        content = f.read()
-                        # Return first 2000 chars - enough for LLM context without bloat
-                        return content[:2000]
+                        return f.read()
                 except Exception:
                     continue
 
@@ -385,8 +406,7 @@ def _load_example_file_content(file_path: str) -> str:
                         if found_file.is_file():
                             try:
                                 with open(found_file, 'r', encoding='utf-8', errors='ignore') as f:
-                                    content = f.read()
-                                    return content[:2000]
+                                    return f.read()
                             except Exception:
                                 continue
 

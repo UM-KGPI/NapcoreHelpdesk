@@ -676,11 +676,33 @@ def _build_ssl_context() -> ssl.SSLContext:
     return context
 
 
-def _trim_chunk_text(text: str, max_chars: int) -> str:
+_FOCUS_TERM = re.compile(r"\b[A-Z][a-z0-9]+(?:[A-Z][a-z0-9]*)+\b")
+
+
+def _question_focus_terms(question: str) -> list[str]:
+    """CamelCase element names typed in the question (TemplateServiceJourney)."""
+    return list(dict.fromkeys(_FOCUS_TERM.findall(question or "")))
+
+
+def _trim_chunk_text(text: str, max_chars: int, focus_terms: list[str] | tuple[str, ...] = ()) -> str:
+    """Cut a chunk to max_chars, keeping an asked-for XML element inside the cut.
+
+    Cutting from the start drops the element whenever it sits past the limit
+    (an example chunk often opens with frames and references), and the model
+    then says the evidence has no snippet. When the text contains <Term for a
+    term from the question that the head cut would miss, cut a window that
+    starts a little before it instead.
+    """
     if max_chars <= 0:
         return text
     if len(text) <= max_chars:
         return text
+    for term in focus_terms:
+        match = re.search(rf"<{re.escape(term)}[\s>/]", text)
+        if match and match.start() + 300 > max_chars:
+            start = text.rfind("\n", 0, max(0, match.start() - max_chars // 5)) + 1
+            excerpt = text[start : start + max_chars].rstrip()
+            return f"...[excerpt]\n{excerpt}\n...[truncated for latency]"
     return f"{text[:max_chars].rstrip()}\n...[truncated for latency]"
 
 
@@ -696,8 +718,9 @@ def _build_messages(
     detected_language: str | None = None,
 ) -> list[dict]:
     context_lines = []
+    focus_terms = _question_focus_terms(question)
     for index, chunk in enumerate(chunks[:max_chunks], start=1):
-        chunk_text = _trim_chunk_text(str(chunk.get("text", "")), max_chars=max_chars_per_chunk)
+        chunk_text = _trim_chunk_text(str(chunk.get("text", "")), max_chars=max_chars_per_chunk, focus_terms=focus_terms)
         context_lines.append(
             "\n".join(
                 [
