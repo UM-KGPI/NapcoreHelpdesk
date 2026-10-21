@@ -385,17 +385,47 @@ _ELEMENT_PURPOSE_CLAIM_PATTERN = re.compile(
 _DEFINITIONAL_DOC_TYPES = {"schema", "frame", "object", "ontology-definition", "ontology-relation", "guide"}
 
 
+def _element_has_definition_in_evidence(element_name: str, chunks: list[dict]) -> bool:
+    """True if some chunk in the full prompt evidence defines this element.
+
+    Checked against the whole evidence set, not just the sentence's own
+    citations: the model may cite the example it quotes XML from ([E3]) in
+    the same sentence that explains the element's purpose, while the actual
+    definition sits in a different, uncited evidence block ([E1]). As long
+    as that definition is somewhere in the prompt, the claim is grounded —
+    citing the wrong block for one clause is a citation-precision issue
+    (see _validate_citation_grounding), not evidence of an invented meaning.
+    """
+    for chunk in chunks:
+        doc_type = str(chunk.get("docType", "") or "").lower()
+        if doc_type not in _DEFINITIONAL_DOC_TYPES:
+            continue
+        chunk_text = str(chunk.get("text", ""))
+        if element_name.lower() in chunk_text.lower():
+            return True
+    return False
+
+
 def _validate_no_unsupported_element_purpose_claims(answer: str, chunks: list[dict]) -> None:
     """
     Reject sentences that explain what an XML element "means" or "is used for"
-    when the cited evidence only shows the element used in an example, never
-    defines it.
+    when no block in the evidence defines it — only shows it used in an example.
 
     An element's name is not its definition — the model must not infer intent
-    (e.g. "on-demand operation") from a plausible-sounding name when no cited
-    evidence block actually defines that element's semantics.
+    (e.g. "on-demand operation") from a plausible-sounding name when nothing in
+    the evidence actually defines that element's semantics. A claim is accepted
+    as long as a definitional chunk for the element exists anywhere in the
+    prompt evidence, even if the sentence's own citation points at an example
+    instead — see _element_has_definition_in_evidence.
+
+    Fenced code blocks (quoted XML/JSON snippets) are stripped before sentence
+    splitting: a verbatim snippet can contain many element tags with no sentence
+    punctuation between them, and without stripping, those tags bleed into
+    whatever prose sentence precedes or follows the fence and get judged as if
+    the model had made a purpose claim about each of them.
     """
-    sentences = re.split(r"(?<=[.!?])\s+", answer.replace("\n", " "))
+    prose_only = FENCED_CODE_BLOCK_PATTERN.sub(" ", answer)
+    sentences = re.split(r"(?<=[.!?])\s+", prose_only.replace("\n", " "))
 
     for sentence in sentences:
         if not _ELEMENT_PURPOSE_CLAIM_PATTERN.search(sentence):
@@ -409,27 +439,18 @@ def _validate_no_unsupported_element_purpose_claims(answer: str, chunks: list[di
         if not found_citations:
             continue  # Uncited purpose claims are caught by other validators.
 
-        grounded = False
-        for citation_str in found_citations:
-            idx = int(citation_str) - 1
-            if idx < 0 or idx >= len(chunks):
-                continue
-            chunk = chunks[idx]
-            doc_type = str(chunk.get("docType", "") or "").lower()
-            if doc_type not in _DEFINITIONAL_DOC_TYPES:
-                continue
-            chunk_text = str(chunk.get("text", ""))
-            if any(name.lower() in chunk_text.lower() for name in element_names):
-                grounded = True
-                break
+        ungrounded = [
+            name for name in element_names if not _element_has_definition_in_evidence(name, chunks)
+        ]
 
-        if not grounded:
+        if ungrounded:
             raise LLMGenerationError(
-                f"Sentence attributes a purpose/meaning to element(s) {element_names} "
-                f"citing only non-definitional evidence (e.g. an example file): "
+                f"Sentence attributes a purpose/meaning to element(s) {ungrounded} "
+                f"but no evidence block defines them (only non-definitional evidence, "
+                f"e.g. an example file, is available): "
                 f"'{sentence[:150].strip()}'. "
                 "An element's name is not its definition — do not infer what an element "
-                "means or is used for unless a cited evidence block actually defines it."
+                "means or is used for unless some evidence block actually defines it."
             )
 
 
@@ -1136,11 +1157,12 @@ def _append_feedback_message(messages: list[dict], rejected_answer: str, error_m
     if "purpose/meaning" in error_msg.lower() or "is not its definition" in error_msg.lower():
         purpose_claim_hint = (
             "\n- CRITICAL: Do NOT explain what an XML element means or is used for based on its name. "
-            "Only state what an element means if a cited evidence block explicitly defines it. "
-            "If the evidence does not define an element's purpose, either omit that claim or say the "
-            "evidence does not define it — check the other evidence blocks for a definition that actually "
-            "covers the behavior in question (e.g. a dedicated properties/arrangements element) instead of "
-            "guessing from an example file alone."
+            "Check EVERY evidence block for a definition of that element, not just the block you quote "
+            "XML from — if a different block ([E1], [E2], etc.) defines it, cite that definition block "
+            "in the same sentence alongside the example citation, and KEEP any verbatim XML snippet from "
+            "the evidence; do not drop content or evidence blocks that were already correct just because "
+            "one claim needed a different citation. Only omit a purpose claim, or say the evidence does "
+            "not define it, when no evidence block anywhere defines that element."
         )
 
     # Add specific guidance for language errors
