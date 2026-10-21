@@ -2630,7 +2630,9 @@ document.querySelectorAll('#cd svg.classDiagram .row-rect-odd path, #cd svg.clas
 });
 
 document.querySelectorAll('#cd svg.classDiagram .edgePaths path').forEach((p, i) => {
-  p.setAttribute('stroke', i < 3 ? '#378ADD' : i < 5 ? '#1D9E75' : '#BA7517');
+  const color = i < 3 ? '#378ADD' : i < 5 ? '#1D9E75' : '#BA7517';
+  p.style.setProperty('stroke', color, 'important');
+  p.style.setProperty('stroke-width', '1.5px', 'important');
 });
 </script>
 </div></body></html>
