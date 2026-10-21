@@ -447,6 +447,66 @@ class ElementPurposeClaimValidationTests(SimpleTestCase):
         # Should not raise - [E1] is a schema chunk that contains the element name.
         _validate_no_unsupported_element_purpose_claims(answer=answer, chunks=self._chunks())
 
+    def test_allows_purpose_claim_when_definition_is_elsewhere_in_evidence_not_the_sentence_citation(self):
+        # The sentence cites the example [E3] (where the XML snippet comes from), but a
+        # definitional chunk for FlexibleServiceProperties exists elsewhere in the full
+        # evidence set ([E2]). This must be accepted — the definition doesn't have to be
+        # among this specific sentence's own citations.
+        answer = "`FlexibleServiceProperties` is used to indicate demand-responsive service [E3]."
+        # Should not raise.
+        _validate_no_unsupported_element_purpose_claims(answer=answer, chunks=self._chunks())
+
+    def test_still_rejects_when_no_evidence_block_anywhere_defines_the_element(self):
+        # TimeDemandTypeRef has no definitional chunk anywhere in the evidence set (only
+        # the example [E3] mentions it) - this must stay rejected regardless of which
+        # citation the sentence uses.
+        answer = (
+            "The `TimeDemandTypeRef` element is used to indicate that the service operates "
+            "on demand [E3]."
+        )
+        with self.assertRaises(LLMGenerationError):
+            _validate_no_unsupported_element_purpose_claims(answer=answer, chunks=self._chunks())
+
+    def test_fenced_code_block_elements_do_not_leak_into_a_neighboring_sentence(self):
+        # A verbatim XML snippet has no sentence-ending punctuation between its tags, so
+        # without stripping the fence first, every tag inside it bleeds into whatever
+        # prose sentence surrounds it. None of these child elements (DepartureTime,
+        # dayTypes, Arrival, ...) have definitions in this evidence set, so if they leaked
+        # in, this would wrongly raise.
+        answer = (
+            "The TemplateServiceJourney is defined as a vehicle journey with frequencies [E1], "
+            "and the following snippet is used to show its structure:\n"
+            "```xml\n"
+            "<TemplateServiceJourney>\n"
+            "    <DepartureTime>10:20:00.0Z</DepartureTime>\n"
+            "    <dayTypes><DayTypeRef ref=\"hde:DT_01\"/></dayTypes>\n"
+            "    <calls><Call><Arrival><ForAlighting>false</ForAlighting></Arrival></Call></calls>\n"
+            "</TemplateServiceJourney>\n"
+            "```\n"
+            "This matches the example in [E3]."
+        )
+        # Should not raise - the purpose claim ("is used to show its structure") is about
+        # the snippet itself, not about the untagged child elements inside the fence.
+        _validate_no_unsupported_element_purpose_claims(answer=answer, chunks=self._chunks())
+
+    def test_retry_feedback_asks_to_cite_definition_and_keep_snippet_not_drop_content(self):
+        from helpdesk.services.llm_generator import _append_feedback_message
+
+        messages = _append_feedback_message(
+            messages=[{"role": "system", "content": "sys"}, {"role": "user", "content": "usr"}],
+            rejected_answer="The `TimeDemandTypeRef` element is used to indicate demand [E3].",
+            error_msg=(
+                "Sentence attributes a purpose/meaning to element(s) ['TimeDemandTypeRef'] but no "
+                "evidence block defines them: '...'. An element's name is not its definition — do "
+                "not infer what an element means or is used for unless some evidence block actually "
+                "defines it."
+            ),
+        )
+        feedback_text = messages[-1]["content"]
+        self.assertIn("Check EVERY evidence block", feedback_text)
+        self.assertIn("KEEP any verbatim XML snippet", feedback_text)
+        self.assertNotIn("either omit that claim", feedback_text)
+
 
 class UnwrapJsonAnswerTests(SimpleTestCase):
     """Production showed {': ': '...'} as an answer: a JSON response with an
