@@ -13,6 +13,7 @@ from helpdesk.services.llm_generator import (
     LLMGenerationError,
     _build_messages,
     _stream_request_chat_completion,
+    _validate_no_unsupported_element_purpose_claims,
     generate_answer_llm,
 )
 
@@ -401,6 +402,50 @@ class LLMGeneratorTests(SimpleTestCase):
         self.assertIn("NeTEx_01_simple_line.xml", result["answer"])
         # Should not invent/fabricate XML structures
         self.assertNotIn("<", result["answer"])
+
+
+class ElementPurposeClaimValidationTests(SimpleTestCase):
+    def _chunks(self):
+        return [
+            {
+                "sourcePath": "xsd/netex_part_2/part2_journeyTimes/netex_serviceJourney_version.xsd",
+                "docType": "schema",
+                "text": "TemplateServiceJourney: a vehicle journey with frequencies.",
+            },
+            {
+                "sourcePath": "xsd/netex_part_2/part2_journeyTimes/netex_flexibleService_version.xsd",
+                "docType": "schema",
+                "text": "FlexibleServiceProperties describes a flexible/demand-responsive service and BookingArrangements.",
+            },
+            {
+                "sourcePath": "examples/functions/timetable/Netex_05.2_Bus_TemplateTimetable_RhythmicalFrequency.xml",
+                "docType": "example",
+                "text": "<TemplateServiceJourney><TimeDemandTypeRef ref=\"hde:TDT_45\"/></TemplateServiceJourney>",
+            },
+        ]
+
+    def test_rejects_purpose_claim_grounded_only_in_an_example_chunk(self):
+        answer = (
+            "The <TimeDemandTypeRef> element is used to indicate that the service operates "
+            "on demand [E3]."
+        )
+        with self.assertRaises(LLMGenerationError):
+            _validate_no_unsupported_element_purpose_claims(answer=answer, chunks=self._chunks())
+
+    def test_allows_purpose_claim_grounded_in_a_schema_chunk(self):
+        answer = "`FlexibleServiceProperties` is used to indicate demand-responsive service [E2]."
+        # Should not raise.
+        _validate_no_unsupported_element_purpose_claims(answer=answer, chunks=self._chunks())
+
+    def test_allows_mention_without_a_purpose_claim(self):
+        answer = "The example [E3] contains a `TimeDemandTypeRef` element referencing `hde:TDT_45`."
+        # Should not raise - no purpose/meaning verb attached to the element.
+        _validate_no_unsupported_element_purpose_claims(answer=answer, chunks=self._chunks())
+
+    def test_allows_definition_claim_for_element_the_definition_chunk_actually_names(self):
+        answer = "`TemplateServiceJourney` is used to represent a vehicle journey with frequencies [E1]."
+        # Should not raise - [E1] is a schema chunk that contains the element name.
+        _validate_no_unsupported_element_purpose_claims(answer=answer, chunks=self._chunks())
 
 
 class UnwrapJsonAnswerTests(SimpleTestCase):
