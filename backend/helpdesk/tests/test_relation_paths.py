@@ -116,12 +116,18 @@ class FindRelationPathsTests(SimpleTestCase):
     def test_unknown_concepts_give_no_paths(self):
         self.assertEqual(rp.find_relation_paths(_graph(), {"netex:Nope"}, {"netex:Line"}), [])
 
-    def test_paths_longer_than_three_edges_are_dropped(self):
-        props = [_prop("a_A", "A", "B"), _prop("b_B", "B", "C"), _prop("c_C", "C", "D"), _prop("d_D", "D", "E")]
+    def test_paths_longer_than_four_edges_are_dropped(self):
+        props = [
+            _prop("a_A", "A", "B"),
+            _prop("b_B", "B", "C"),
+            _prop("c_C", "C", "D"),
+            _prop("d_D", "D", "E"),
+            _prop("e_E", "E", "F"),
+        ]
         graph = rp.build_relation_graph(props, [])
 
-        self.assertTrue(rp.find_relation_paths(graph, {"netex:A"}, {"netex:D"}))
-        self.assertEqual(rp.find_relation_paths(graph, {"netex:A"}, {"netex:E"}), [])
+        self.assertTrue(rp.find_relation_paths(graph, {"netex:A"}, {"netex:E"}, max_paths=10))
+        self.assertEqual(rp.find_relation_paths(graph, {"netex:A"}, {"netex:F"}), [])
 
 
 class AnchorGroupTests(SimpleTestCase):
@@ -191,3 +197,124 @@ class RetrievalIntegrationTests(SimpleTestCase):
         from helpdesk.services.retrieval_gateway import _relation_path_candidates
 
         self.assertEqual(_relation_path_candidates({"netex:Journey", "netex:Line"}), [])
+
+
+TM = "https://transmodel-cen.eu/6.2/"
+
+
+def _definition(concept: str, label: str, comment: str) -> dict:
+    return {"concept": f"{TM}{concept}", "label": label, "comment": comment}
+
+
+def _journey_line_graph():
+    """Journey to Line, as in NeTEx: two shortcuts, the Transmodel chain through
+    JourneyPattern and Route, and a rival chain of the same length through
+    CourseOfJourneys that Transmodel does not document at every step.
+    JourneyPattern gets many extra neighbours so the cost ranking alone puts its
+    chain last, which is what happened in production."""
+    props = [
+        _prop("lineRef_ServiceJourney", "ServiceJourney", "Line"),
+        _prop("journeyPatternRef_ServiceJourney", "ServiceJourney", "JourneyPattern"),
+        _prop("journeyPatternRef_VehicleJourney", "VehicleJourney", "JourneyPattern"),
+        _prop("routeRef_JourneyPattern", "JourneyPattern", "Route"),
+        _prop("lineRef_Route", "Route", "Line"),
+        _prop("courseOfJourneysRef_ServiceJourney", "ServiceJourney", "CourseOfJourneys"),
+        _prop("journeys_CourseOfJourneys", "CourseOfJourneys", "JourneyDesignator", mechanism="containment-list"),
+        _prop("lineRef_JourneyDesignator", "JourneyDesignator", "Line"),
+        *[_prop(f"x{i}_JourneyPattern", "JourneyPattern", f"Hub{i}") for i in range(30)],
+    ]
+    subs = [_sub("ServiceJourney", "Journey"), _sub("VehicleJourney", "Journey")]
+    definitions = [
+        _definition("SERVICE_JOURNEY", "SERVICE JOURNEY", "A passenger carrying VEHICLE JOURNEY. NOTE: The pattern of working is in principle defined by a SERVICE JOURNEY PATTERN."),
+        _definition("VEHICLE_JOURNEY", "VEHICLE JOURNEY", "The planned movement of a vehicle from the start point to the end point of a JOURNEY PATTERN on a specified ROUTE."),
+        _definition("JOURNEY_PATTERN", "JOURNEY PATTERN", "An ordered list of SCHEDULED STOP POINTs on a single ROUTE, describing the pattern of working."),
+        _definition("ROUTE", "ROUTE", "An ordered list of located POINTs defining one single path through the network."),
+        _definition("LINE", "LINE", "A group of ROUTEs which is generally known to the public by a similar name or number."),
+        _definition("COURSE_OF_JOURNEYS", "COURSE OF JOURNEYS", "A part of a BLOCK composed of consecutive VEHICLE JOURNEYs, all operated on the same LINE."),
+    ]
+    transmodel_of = {
+        "netex:ServiceJourney": "transmodel:SERVICE_JOURNEY",
+        "netex:VehicleJourney": "transmodel:VEHICLE_JOURNEY",
+        "netex:JourneyPattern": "transmodel:JOURNEY_PATTERN",
+        "netex:Route": "transmodel:ROUTE",
+        "netex:Line": "transmodel:LINE",
+        "netex:CourseOfJourneys": "transmodel:COURSE_OF_JOURNEYS",
+    }
+    return rp.build_relation_graph(props, subs, definitions, transmodel_of)
+
+
+class SentenceNamingTests(SimpleTestCase):
+    def test_plural_counts(self):
+        self.assertTrue(rp._sentence_naming("A group of ROUTEs which is known.", "ROUTE"))
+
+    def test_compound_ending_in_the_name_counts(self):
+        self.assertTrue(rp._sentence_naming("Defined by a SERVICE JOURNEY PATTERN.", "JOURNEY PATTERN"))
+
+    def test_compound_continuing_the_name_does_not(self):
+        self.assertIsNone(rp._sentence_naming("A section of a LINE SECTION.", "LINE"))
+
+    def test_lower_case_words_are_not_concept_names(self):
+        self.assertIsNone(rp._sentence_naming("Vehicles follow the route along the line.", "ROUTE"))
+
+    def test_returns_the_sentence_that_names_it(self):
+        text = "First sentence. An ordered list on a single ROUTE, describing work. NOTE: other."
+        self.assertEqual(rp._sentence_naming(text, "ROUTE"), "An ordered list on a single ROUTE, describing work.")
+
+
+class DocumentedChainTests(SimpleTestCase):
+    def test_journey_line_includes_the_transmodel_chain_regression(self):
+        """Issue #108: the answer to "What is the relation between a line and a
+        journey ?" must show the JourneyPattern, Route, Line chain."""
+        paths = rp.find_relation_paths(_journey_line_graph(), {"netex:Journey"}, {"netex:Line"})
+
+        chains = [p for p in paths if p.kind == "transmodel-chain"]
+        self.assertEqual(len(chains), 1)
+        self.assertEqual([e.element for e in chains[0].properties], ["JourneyPatternRef", "RouteRef", "LineRef"])
+        self.assertTrue(any("on a single ROUTE" in q for q in chains[0].documentation))
+        self.assertTrue(any("A group of ROUTEs" in q for q in chains[0].documentation))
+
+    def test_shortcut_is_still_returned_as_a_direct_path(self):
+        paths = rp.find_relation_paths(_journey_line_graph(), {"netex:Journey"}, {"netex:Line"})
+
+        self.assertEqual(paths[0].kind, "direct")
+        self.assertEqual([e.element for e in paths[0].properties], ["LineRef"])
+
+    def test_chain_with_an_undocumented_step_is_not_added(self):
+        paths = rp.find_relation_paths(_journey_line_graph(), {"netex:Journey"}, {"netex:Line"}, max_paths=1)
+
+        for path in paths:
+            self.assertNotIn("netex:CourseOfJourneys", {e.range for e in path.properties})
+
+    def test_variants_through_different_subclasses_count_once(self):
+        """ServiceJourney and VehicleJourney both reach JourneyPattern; that is
+        one chain, not two."""
+        paths = rp.find_relation_paths(_journey_line_graph(), {"netex:Journey"}, {"netex:Line"})
+
+        self.assertEqual(sum(1 for p in paths if p.kind == "transmodel-chain"), 1)
+
+    def test_without_definitions_no_chain_is_added(self):
+        graph = _journey_line_graph()
+        graph.definitions.clear()
+        graph._documented.clear()
+
+        paths = rp.find_relation_paths(graph, {"netex:Journey"}, {"netex:Line"})
+
+        self.assertFalse(any(p.kind == "transmodel-chain" for p in paths))
+
+    def test_chain_evidence_is_labelled_and_quotes_transmodel(self):
+        paths = rp.find_relation_paths(_journey_line_graph(), {"netex:Journey"}, {"netex:Line"})
+        chain = next(p for p in paths if p.kind == "transmodel-chain")
+
+        chunk = rp.format_relation_paths_as_chunks([chain])[0]
+
+        self.assertIn("Transmodel chain", chunk["text"].splitlines()[0])
+        self.assertIn("Transmodel definitions documenting these steps:", chunk["text"])
+        self.assertIn('LINE: "A group of ROUTEs', chunk["text"])
+        self.assertTrue(chunk["label"].startswith("Transmodel chain"))
+
+    def test_direct_path_evidence_is_labelled_as_direct_reference(self):
+        paths = rp.find_relation_paths(_journey_line_graph(), {"netex:Journey"}, {"netex:Line"})
+
+        chunk = rp.format_relation_paths_as_chunks([paths[0]])[0]
+
+        self.assertIn("NeTEx direct reference", chunk["text"].splitlines()[0])

@@ -426,6 +426,7 @@ def _relation_path_candidates(question_concepts: set[str]) -> list[dict]:
         username=getattr(settings, "GRAPHDB_USER", ""),
         password=getattr(settings, "GRAPHDB_PASSWORD", ""),
         timeout_seconds=max(5, int(settings.GRAPHDB_TIMEOUT_SECONDS)),
+        transmodel_of=CONCEPT_TO_TRANSMODEL,
     )
     if graph is None:
         return []

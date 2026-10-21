@@ -28,7 +28,7 @@ import logging
 import math
 import re
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from itertools import combinations
 
 from helpdesk.services.graphdb_client import (
@@ -36,18 +36,21 @@ from helpdesk.services.graphdb_client import (
     _iri_to_concept_id,
     execute_sparql_query,
 )
+from helpdesk.services.transmodel_alignment import clean_definition
 
 logger = logging.getLogger(__name__)
 
+TRANSMODEL_GRAPH = "https://napcore.eu/graph/standards/transmodel"
 STANDARD_GRAPHS = tuple(f"https://napcore.eu/graph/standards/{standard}" for standard in TRANSMODEL_ALIGNED_STANDARDS)
 STANDARD_LABELS = {"netex": "NeTEx", "siri": "SIRI", "opra": "OpRa"}
 STANDARD_REPOSITORIES = {"netex": "NeTEx", "siri": "SIRI", "opra": "OpRa"}
 
-MAX_PATH_EDGES = 3
+MAX_PATH_EDGES = 4
 MAX_SPECIALIZATION_DEPTH = 2
 SUBCLASS_STEP_COST = 0.5
 PROPERTY_STEP_COST = 1.0
 MAX_EXTRA_COST = 1.0
+MAX_DOCUMENTED_CHAINS = 2
 CACHE_TTL_SECONDS = 3600
 
 _RELATION_QUESTION = re.compile(
@@ -78,12 +81,40 @@ class PropertyEdge:
 class RelationGraph:
     adjacency: dict[str, list[PropertyEdge]] = field(default_factory=dict)
     narrower: dict[str, set[str]] = field(default_factory=dict)
+    # Standard concept -> Transmodel concept (skos:exactMatch), and Transmodel
+    # concept -> (label, definition). Used to tell which steps of a path the
+    # Transmodel conceptual model documents.
+    transmodel_of: dict[str, str] = field(default_factory=dict)
+    definitions: dict[str, tuple[str, str]] = field(default_factory=dict)
+    _documented: dict[tuple[str, str], str | None] = field(default_factory=dict, repr=False)
 
     def degree(self, node: str) -> int:
         return len({edge.other(node) for edge in self.adjacency.get(node, [])})
 
     def knows(self, node: str) -> bool:
         return node in self.adjacency or node in self.narrower
+
+    def documented_by(self, first: str, second: str) -> str | None:
+        """The Transmodel definition sentence that relates two standard concepts,
+        or None. A step counts as documented when the Transmodel definition of
+        one concept names the other (JOURNEY PATTERN: "... on a single ROUTE").
+        Memoised, so each pair is checked once per loaded graph."""
+        key = (first, second) if first <= second else (second, first)
+        if key not in self._documented:
+            self._documented[key] = self._find_documentation(*key)
+        return self._documented[key]
+
+    def _find_documentation(self, first: str, second: str) -> str | None:
+        tm_first, tm_second = self.transmodel_of.get(first), self.transmodel_of.get(second)
+        if not tm_first or not tm_second or tm_first == tm_second:
+            return None
+        label_first, text_first = self.definitions.get(tm_first, ("", ""))
+        label_second, text_second = self.definitions.get(tm_second, ("", ""))
+        for owner_label, text, named_label in ((label_first, text_first, label_second), (label_second, text_second, label_first)):
+            sentence = _sentence_naming(text, named_label)
+            if sentence:
+                return f'{owner_label}: "{sentence}"'
+        return None
 
 
 @dataclass(frozen=True)
@@ -94,6 +125,10 @@ class RelationPath:
     properties: tuple[PropertyEdge, ...]
     down_from_target: tuple[tuple[str, str], ...]
     cost: float
+    # "direct": a shortest path, typically a NeTEx shortcut reference.
+    # "transmodel-chain": a longer chain whose every step Transmodel documents.
+    kind: str = "direct"
+    documentation: tuple[str, ...] = ()
 
     @property
     def edge_count(self) -> int:
@@ -125,8 +160,38 @@ def _local(concept_id: str) -> str:
     return concept_id.split(":", 1)[-1]
 
 
-def build_relation_graph(property_rows: list[dict], subclass_rows: list[dict]) -> RelationGraph:
-    graph = RelationGraph()
+def _sentence_naming(text: str, label: str) -> str | None:
+    """The first sentence of a Transmodel definition that names `label`.
+
+    Transmodel writes concept names in capitals, so the match is case
+    sensitive ("ROUTE", not "route"), allows a plural ("ROUTEs"), and accepts a
+    compound that ends in the name (SERVICE JOURNEY PATTERN names JOURNEY
+    PATTERN: it is a kind of it) but not one that continues it (LINE SECTION
+    does not name LINE).
+    """
+    if not text or not label:
+        return None
+    pattern = re.compile(rf"(?<![A-Za-z]){re.escape(label)}s?(?![A-Za-z])(?! [A-Z]{{2}})")
+    for sentence in re.split(r"(?<=\.)\s+", text):
+        if pattern.search(sentence):
+            return sentence.strip()
+    return None
+
+
+def build_relation_graph(
+    property_rows: list[dict],
+    subclass_rows: list[dict],
+    definition_rows: list[dict] | None = None,
+    transmodel_of: dict[str, str] | None = None,
+) -> RelationGraph:
+    graph = RelationGraph(transmodel_of=dict(transmodel_of or {}))
+    for row in definition_rows or []:
+        concept = _iri_to_concept_id(row.get("concept", ""))
+        if not concept:
+            continue
+        local = concept.split(":", 1)[1]
+        label = row.get("label", "") or local.replace("_", " ")
+        graph.definitions.setdefault(concept, (label, clean_definition(row.get("comment", "") or "")))
     for row in property_rows:
         domain = _iri_to_concept_id(row.get("domain", ""))
         range_ = _iri_to_concept_id(row.get("range", ""))
@@ -162,8 +227,10 @@ def load_relation_graph(
     username: str = "",
     password: str = "",
     timeout_seconds: int = 10,
+    transmodel_of: dict[str, str] | None = None,
 ) -> RelationGraph | None:
-    """Typed property and subclass edges of the standards graphs, cached per process."""
+    """Typed property and subclass edges of the standards graphs, plus the
+    Transmodel labels and definitions, cached per process."""
     key = (endpoint, repository)
     cached = _cache.get(key)
     if cached and time.monotonic() - cached[0] < CACHE_TTL_SECONDS:
@@ -188,8 +255,19 @@ def load_relation_graph(
       GRAPH ?g {{ ?sub rdfs:subClassOf ?super . FILTER(isIRI(?super)) }}
     }}
     """
+    definition_query = f"""
+    PREFIX owl: <http://www.w3.org/2002/07/owl#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    SELECT ?concept ?label ?comment WHERE {{
+      GRAPH <{TRANSMODEL_GRAPH}> {{
+        ?concept a owl:Class .
+        OPTIONAL {{ ?concept rdfs:label ?label . }}
+        OPTIONAL {{ ?concept rdfs:comment ?comment . }}
+      }}
+    }}
+    """
     rows: list[list[dict]] = []
-    for query in (property_query, subclass_query):
+    for query in (property_query, subclass_query, definition_query):
         result = execute_sparql_query(
             sparql_query=query,
             endpoint=endpoint,
@@ -199,6 +277,11 @@ def load_relation_graph(
             timeout_seconds=timeout_seconds,
         )
         if result is None:
+            if query is definition_query:
+                # Without definitions no chain counts as documented; shortcuts still work.
+                logger.warning("Transmodel definitions unavailable; relation paths without Transmodel chains")
+                rows.append([])
+                continue
             return None
         rows.append(
             [
@@ -206,7 +289,7 @@ def load_relation_graph(
                 for binding in result.get("results", {}).get("bindings", [])
             ]
         )
-    graph = build_relation_graph(rows[0], rows[1])
+    graph = build_relation_graph(rows[0], rows[1], rows[2], transmodel_of)
     _cache[key] = (time.monotonic(), graph)
     logger.info(
         "Loaded relation graph: %d nodes with properties, %d classes with subclasses",
@@ -309,7 +392,39 @@ def find_relation_paths(
         unique.append(path)
         if len(unique) >= max_paths:
             break
+
+    # The cost-ranked selection favours short paths, so the standard's own
+    # decomposition (Journey -> JourneyPattern -> Route -> Line) loses to every
+    # shortcut, and to equally long chains through less connected classes,
+    # which graph structure alone cannot tell apart from it. The Transmodel
+    # conceptual model is the normative tie-breaker: add the chains whose every
+    # step it documents, regardless of cost.
+    for chain in _documented_chains(graph, found, seen):
+        unique.append(chain)
+
     return unique
+
+
+def _property_directions(path: RelationPath) -> list[str]:
+    """'F' (forward, X references Y) or 'B' (backward, Y is referenced by X) for
+    each property edge, in path order. A pure composition chain is one
+    direction throughout (ServiceJourney references JourneyPattern references
+    Route references Line); a "meet in the middle" shortcut (two unrelated
+    classes that both happen to reference the same third class) necessarily
+    reverses direction partway, because it is built from two forward edges
+    pointed at a shared target rather than one edge continuing from the other.
+    """
+    current = path.down_from_source[-1][1] if path.down_from_source else path.source
+    directions = []
+    for edge in path.properties:
+        directions.append("F" if edge.domain == current else "B")
+        current = edge.other(current)
+    return directions
+
+
+def _is_monotonic(path: RelationPath) -> bool:
+    directions = _property_directions(path)
+    return len(directions) <= 1 or len(set(directions)) == 1
 
 
 def _nodes_along(start: str, steps: tuple[PropertyEdge, ...]) -> list[str]:
@@ -321,6 +436,51 @@ def _nodes_along(start: str, steps: tuple[PropertyEdge, ...]) -> list[str]:
 
 def _signature(path: RelationPath) -> tuple:
     return (path.down_from_source, tuple(edge.iri_local for edge in path.properties), path.down_from_target)
+
+
+def _chain_documentation(graph: RelationGraph, path: RelationPath) -> tuple[str, ...] | None:
+    """The Transmodel sentences documenting every property step, or None when a
+    step is undocumented. Subclass steps need no text: they come from the XSD
+    type extension, which is itself normative."""
+    quotes: list[str] = []
+    for edge in path.properties:
+        quote = graph.documented_by(edge.domain, edge.range)
+        if quote is None:
+            return None
+        if quote not in quotes:
+            quotes.append(quote)
+    return tuple(quotes)
+
+
+def _documented_chains(graph: RelationGraph, found: list[RelationPath], seen: set[tuple]) -> list[RelationPath]:
+    """Up to MAX_DOCUMENTED_CHAINS chains of two or more property steps, each in
+    one direction and documented in Transmodel at every step. Longest first.
+    Chains that differ only in which subclass of the source they start from
+    (ServiceJourney, VehicleJourney, ...) are one chain: the cheapest is kept."""
+    candidates = []
+    for path in found:
+        if len(path.properties) < 2 or not _is_monotonic(path):
+            continue
+        signature = tuple((edge.domain, edge.element, edge.range) for edge in path.properties)
+        if signature in seen:
+            continue
+        documentation = _chain_documentation(graph, path)
+        if documentation is not None:
+            candidates.append((path, documentation))
+    candidates.sort(key=lambda item: (-len(item[0].properties), item[0].cost, _signature(item[0])))
+
+    chains: list[RelationPath] = []
+    shown: set[tuple[str, ...]] = set()
+    for path, documentation in candidates:
+        first = path.down_from_source[-1][1] if path.down_from_source else path.source
+        key = tuple(_nodes_along(first, path.properties)[1:])
+        if key in shown:
+            continue
+        shown.add(key)
+        chains.append(replace(path, kind="transmodel-chain", documentation=documentation))
+        if len(chains) >= MAX_DOCUMENTED_CHAINS:
+            break
+    return chains
 
 
 def anchor_groups(question_concepts: set[str], concept_to_transmodel: dict[str, str], transmodel_to_concepts: dict[str, set[str]]) -> list[set[str]]:
@@ -417,15 +577,23 @@ def format_relation_paths_as_chunks(paths: list[RelationPath], commit_shas: dict
         prefix = path.source.split(":", 1)[0]
         standard = STANDARD_LABELS.get(prefix, prefix)
         notation, steps = describe_path(path)
-        text = "\n".join(
-            [
-                f"RELATION PATH ({standard}): {_local(path.source)} → {_local(path.target)}",
-                f"Path: {notation}",
-                "Steps:",
-                *(f"{number}. {step}" for number, step in enumerate(steps, start=1)),
-                f"Derived from the {standard} ontology (docs/ontology/standards/{prefix}.ttl), generated from the {standard} XSD.",
-            ]
+        if path.kind == "transmodel-chain":
+            heading = f"RELATION PATH (Transmodel chain, as implemented in {standard}): {_local(path.source)} → {_local(path.target)}"
+        else:
+            heading = f"RELATION PATH ({standard} direct reference): {_local(path.source)} → {_local(path.target)}"
+        lines = [
+            heading,
+            f"Path: {notation}",
+            "Steps:",
+            *(f"{number}. {step}" for number, step in enumerate(steps, start=1)),
+        ]
+        if path.documentation:
+            lines.append("Transmodel definitions documenting these steps:")
+            lines.extend(f"- {quote}" for quote in path.documentation)
+        lines.append(
+            f"Derived from the {standard} ontology (docs/ontology/standards/{prefix}.ttl), generated from the {standard} XSD."
         )
+        text = "\n".join(lines)
         decisive = next((edge for edge in path.properties if edge.xsd), None)
         fragment = decisive.iri_local if decisive else _local(path.target)
         source_path = f"docs/ontology/standards/{prefix}.ttl#{fragment}"
@@ -445,7 +613,7 @@ def format_relation_paths_as_chunks(paths: list[RelationPath], commit_shas: dict
                 "sourcePath": source_path,
                 "repositoryUrl": repository_url,
                 "commitSha": commit_sha,
-                "label": f"Relation path: {_local(path.source)} → {_local(path.target)}",
+                "label": f"{'Transmodel chain' if path.kind == 'transmodel-chain' else 'Relation path'}: {_local(path.source)} → {_local(path.target)}",
                 "heading": f"{_local(path.source)} – {_local(path.target)} relation ({standard})",
                 "text": text,
                 "docType": "ontology-relation",
