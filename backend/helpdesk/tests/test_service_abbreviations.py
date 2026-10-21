@@ -76,3 +76,14 @@ class SourceCoverageTests(SimpleTestCase):
         with patch.object(service_abbreviations, "service_table", return_value=table):
             hints = retrieval_gateway._question_path_hints("What is SIRI-CA?")
         self.assertEqual(hints, {"xsd/siri_controlaction_service.xsd"})
+
+
+class NoNamingConventionTests(SimpleTestCase):
+    def test_schema_without_service_suffix_is_still_linked(self):
+        table = build_services(["Control Actions (SIRI-CA)"], ["xsd/control-actions.xsd", "xsd/siri_journey.xsd"])
+        self.assertEqual(table["SIRI-CA"].schema_paths, ("xsd/control-actions.xsd",))
+
+    def test_shortest_matching_file_wins(self):
+        paths = ["xsd/siri_vehicleMonitoring_service.xsd", "xsd/model/siri_vehicleMonitoringPermissions_extended.xsd"]
+        table = build_services(["Vehicle Monitoring (SIRI-VM)"], paths)
+        self.assertEqual(table["SIRI-VM"].schema_paths, ("xsd/siri_vehicleMonitoring_service.xsd",))
