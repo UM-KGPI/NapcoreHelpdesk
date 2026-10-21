@@ -32,3 +32,15 @@ NAPCORE Helpdesk is a FAQ-first, RAG-fallback system for transport standards.
 - SVG render: [docs/diagrams/rag-activity-graphdb.svg](diagrams/rag-activity-graphdb.svg)
 
 ![RAG Activity Diagram](diagrams/rag-activity-graphdb.svg)
+
+## NeTEx Line–Journey class relations
+
+How `netex:Line` and `netex:Journey` connect once `rdfs:subClassOf` is followed downward only
+(PR #95) and relation-path evidence cites the resulting `owl:ObjectProperty` edges (PR #96):
+`Journey` has no direct link to `Line`, but its subclasses `ServiceJourney` and `DeadRun` each
+reference `Line` through `lineRef`.
+
+- Interactive (mermaid.js): [docs/diagrams/netex-line-journey-relations.html](diagrams/netex-line-journey-relations.html)
+- SVG render: [docs/diagrams/netex-line-journey-relations.svg](diagrams/netex-line-journey-relations.svg)
+
+![NeTEx Line-Journey relations](diagrams/netex-line-journey-relations.svg)
