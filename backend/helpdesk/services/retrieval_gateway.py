@@ -67,6 +67,7 @@ from helpdesk.services.relation_paths import (
     relation_paths_for_question,
     supporting_subclass_chunks,
 )
+from helpdesk.services.service_abbreviations import expand_abbreviations, services_in_question
 from helpdesk.services.vocabulary_bridge import bridged_question_concepts
 from helpdesk.services.semantic_graph import (
     CONCEPT_TO_TRANSMODEL,
@@ -192,7 +193,16 @@ def _question_path_hints(question: str) -> set[str]:
             or any(ch.isdigit() for ch in normalized)
         ):
             hints.add(normalized)
+    # A service named by its abbreviation ("SIRI-CA") points at its schema file.
+    for service in services_in_question(question):
+        hints.discard(service.abbreviation.lower())
+        hints.update(path.lower() for path in service.schema_paths)
     return hints
+
+
+def _question_service_paths(question: str) -> list[set[str]]:
+    """Schema paths of each service the question names, one set per service."""
+    return [set(service.schema_paths) for service in services_in_question(question) if service.schema_paths]
 
 
 def _path_hint_candidates(question: str, top_k: int, scope: list[str] | None = None):
@@ -202,12 +212,17 @@ def _path_hint_candidates(question: str, top_k: int, scope: list[str] | None = N
     if not hints:
         return SourceChunk.objects.none()
 
-    path_filter = models.Q()
-    for hint in hints:
-        path_filter |= models.Q(source_path__icontains=hint)
-
-    # Standard path hint limit
-    return SourceChunk.objects.filter(_scope_query_filter(scope)).filter(path_filter)[: max(15, top_k * 3)]
+    # Each hint gets its own share, so a file with many chunks cannot crowd out
+    # the other file a comparison question names.
+    per_hint = max(5, max(15, top_k * 3) // len(hints))
+    candidates: list = []
+    seen: set[int] = set()
+    for hint in sorted(hints):
+        for chunk in SourceChunk.objects.filter(_scope_query_filter(scope)).filter(source_path__icontains=hint)[:per_hint]:
+            if chunk.pk not in seen:
+                seen.add(chunk.pk)
+                candidates.append(chunk)
+    return candidates
 
 
 def _path_score_adjustment(question: str, source_path: str) -> float:
@@ -688,6 +703,32 @@ def _ensure_element_coverage(
     for name in element_names:
         best = next((c for c in selected if shows(c, name)), None) or next(
             (c for c in candidates if shows(c, name)), None
+        )
+        if best is not None and all(best is not chosen for chosen in covering):
+            covering.append(best)
+    if not covering:
+        return selected
+
+    leading = [c for c in selected if c.get("docType") in {"ontology-definition", "ontology-relation"}]
+    rest = [c for c in selected if all(c is not x for x in leading + covering)]
+    return (leading + covering + rest)[:top_k]
+
+
+def _ensure_source_coverage(
+    selected: list[dict], candidates: list[dict], path_groups: list[set[str]], top_k: int
+) -> list[dict]:
+    """Put the best chunk from each named service's schema right after the definitions.
+
+    A comparison question ("overlaps between SIRI-CA and SIRI-VM") needs evidence
+    for both sides; plain ranking filled every slot with Vehicle Monitoring.
+    """
+    if len(path_groups) < 2:
+        return selected
+
+    covering: list[dict] = []
+    for paths in path_groups:
+        best = next((c for c in selected if c.get("sourcePath") in paths), None) or next(
+            (c for c in candidates if c.get("sourcePath") in paths), None
         )
         if best is not None and all(best is not chosen for chosen in covering):
             covering.append(best)
@@ -1240,6 +1281,10 @@ def retrieve_chunks_with_trace(
     _ensure_seed_chunks()
     _record_stage("seedChunkEnsureMs", stage_start)
 
+    # "SIRI-CA" becomes "SIRI-CA (Control Actions)", so concept matching, lexical
+    # search and the query vector see the service name the README gives.
+    question = expand_abbreviations(question, services_in_question(question))
+
     graph_expansion_max_concepts = max(1, int(getattr(settings, "GRAPH_EXPANSION_MAX_CONCEPTS", 64)))
     graph_expansion_max_candidates = max(1, int(getattr(settings, "GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS", 40)))
     retrieval_scoring_candidate_cap = max(12, int(getattr(settings, "RETRIEVAL_SCORING_CANDIDATE_CAP", 40)))
@@ -1486,6 +1531,15 @@ def retrieve_chunks_with_trace(
             if int(element_chunk.id) not in present_ids:
                 chunk_iterable.append(element_chunk)
                 present_ids.add(int(element_chunk.id))
+    # A few chunks of each named service's schema survive preselection like the
+    # element chunks, so the coverage step below has both sides of a comparison.
+    service_path_groups = _question_service_paths(question)
+    if len(service_path_groups) >= 2:
+        if not isinstance(chunk_iterable, list):
+            chunk_iterable = list(chunk_iterable)
+        for paths in service_path_groups:
+            for chunk in [c for c in chunk_iterable if c.source_path in paths][:3]:
+                element_chunk_ids.add(int(chunk.id))
     _record_stage("elementCandidateMs", stage_start)
 
     graph_candidates_added = 0
@@ -1722,6 +1776,7 @@ def retrieve_chunks_with_trace(
     else:
         trimmed = candidates[:top_k]
     trimmed = _ensure_element_coverage(trimmed, candidates, question_element_names, top_k)
+    trimmed = _ensure_source_coverage(trimmed, candidates, _question_service_paths(question), top_k)
     _record_stage("candidateSelectionMs", stage_start)
 
     stage_start = time.perf_counter()

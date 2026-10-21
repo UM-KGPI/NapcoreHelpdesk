@@ -1181,3 +1181,19 @@ questions:
     min_hits: 1
     top_k_threshold: 10
     note: "Rephrased from q117 without the standard name."
+
+  - id: q141
+    question: "What are the overlaps between SIRI-CA and SIRI-VM?"
+    intent: explanation
+    tags: [siri, control-actions, vehicle-monitoring, abbreviation]
+    expected_source_patterns: [siri_controlAction_service.xsd, siri_vehicleMonitoring_service.xsd]
+    min_hits: 2
+    top_k_threshold: 10
+
+  - id: q142
+    question: "How do SIRI-SM and SIRI-ET differ?"
+    intent: explanation
+    tags: [siri, stop-monitoring, estimated-timetable, abbreviation]
+    expected_source_patterns: [siri_stopMonitoring_service.xsd, siri_estimatedTimetable_service.xsd]
+    min_hits: 2
+    top_k_threshold: 10

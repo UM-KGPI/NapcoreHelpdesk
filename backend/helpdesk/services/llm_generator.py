@@ -23,6 +23,7 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
+from helpdesk.services.service_abbreviations import services_in_question
 from helpdesk.services.question_preprocessor import detect_question_language
 from helpdesk.services.llm_model_recovery import (
     extract_authorized_model,
@@ -937,9 +938,21 @@ def _build_messages(
         f"NEVER cite [E{num_blocks+1}], [E{num_blocks+2}], or any higher numbers. Only use [E1] through [E{num_blocks}].\n\n"
     )
 
+    # Service abbreviations the question uses, as the standard's README defines
+    # them. Without this the model guessed ("Cab Announcement" for SIRI-CA).
+    named_services = services_in_question(question)
+    abbreviation_note = ""
+    if named_services:
+        meanings = "; ".join(f"{service.abbreviation} = {service.name}" for service in named_services)
+        abbreviation_note = (
+            f"Abbreviations in the question, as defined in the standard's README: {meanings}. "
+            "Do not expand any other abbreviation unless an evidence block defines it.\n\n"
+        )
+
     user_prompt = (
         f"🌍 RESPOND IN: {effective_language if (effective_language or '').lower() not in ('', 'en', 'english') else 'English (detect question language)'}\n\n"
         f"Question:\n{question}\n\n"
+        f"{abbreviation_note}"
         f"Requested scope: {scope_text}\n\n"
         f"{faq_section}"
         f"{candidate_index}"
