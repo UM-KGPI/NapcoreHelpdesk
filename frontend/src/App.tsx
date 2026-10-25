@@ -27,7 +27,7 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useSearchParams } from "react-router-dom";
 
-import { HelpdeskApiClient } from "./api";
+import { HelpdeskApiClient, StreamUnavailableError } from "./api";
 import { AuthProvider } from "./auth-context";
 import AboutPage from "./components/AboutPage";
 import EditorConsoleWorkspace from "./components/EditorConsoleWorkspace";
@@ -570,7 +570,12 @@ export default function App() {
         try {
           result = await client.answerQuestionStream(answerPayload, requestId, handleStreamToken);
         } catch (streamErr) {
-          // Streaming endpoint unavailable or failed — retry with the regular endpoint.
+          // Only a missing streaming endpoint is retried with the regular one. Any other
+          // failure (a proxy timeout, a stream cut off) means the server already ran the
+          // whole pipeline once; repeating it would double the wait and likely fail again.
+          if (!(streamErr instanceof StreamUnavailableError)) {
+            throw streamErr;
+          }
           // Remove the placeholder turn first, then fall through to the non-streaming path.
           setChatTurns((prev) => prev.filter((t) => t.id !== assistantTurnId));
           result = await client.answerQuestion(answerPayload, requestId);

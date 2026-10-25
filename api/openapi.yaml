@@ -317,12 +317,16 @@ paths:
               $ref: '#/components/schemas/AnswerRequest'
       responses:
         '200':
-          description: Server-sent events stream with token deltas and final answer payload
+          description: Server-sent events stream with status updates, token deltas and final answer payload
           content:
             text/event-stream:
               schema:
                 type: string
-                description: SSE payloads encoded as data events with token deltas and a final done event
+                description: >-
+                  SSE payloads encoded as data events. Status events
+                  ({"type":"status","stage":"received|retrieving|generating|retrying"})
+                  arrive before each slow step, then token deltas and a final done event.
+                  Clients should ignore event types they do not know.
         '400':
           description: Invalid request payload
           content:

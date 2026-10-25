@@ -132,6 +132,19 @@ const defaultHeaders = {
   "Content-Type": "application/json",
 };
 
+// Statuses meaning this server has no streaming endpoint at all. Any other failure
+// (a 504 from a proxy, a stream cut off mid-answer) means the server already did
+// the work once, so re-asking without streaming would only repeat it.
+const STREAM_UNSUPPORTED_STATUSES = new Set([404, 405, 501]);
+
+/** The streaming endpoint is not available; the regular answer endpoint may be used instead. */
+export class StreamUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "StreamUnavailableError";
+  }
+}
+
 export class HelpdeskApiClient {
   private readonly baseUrl: string;
   private readonly token: string;
@@ -207,19 +220,23 @@ export class HelpdeskApiClient {
     if (!response.ok) {
       const bodyText = await response.text();
       let errorCode = `HTTP_${response.status}`;
+      let msg = response.statusText;
       try {
         const parsed = JSON.parse(bodyText) as { error?: { code?: string; message?: string } };
         errorCode = parsed?.error?.code ?? errorCode;
-        const msg = parsed?.error?.message ?? response.statusText;
-        throw new Error(`${errorCode}: ${msg}`);
+        msg = parsed?.error?.message ?? msg;
       } catch {
-        throw new Error(`${errorCode}: ${response.statusText}`);
+        // Non-JSON body, for example a proxy's HTML error page.
       }
+      if (STREAM_UNSUPPORTED_STATUSES.has(response.status)) {
+        throw new StreamUnavailableError(`${errorCode}: ${msg}`);
+      }
+      throw new Error(`${errorCode}: ${msg}`);
     }
 
     const reader = response.body?.getReader();
     if (!reader) {
-      throw new Error("STREAM_UNAVAILABLE: Response body is not readable.");
+      throw new StreamUnavailableError("STREAM_UNAVAILABLE: Response body is not readable.");
     }
 
     const decoder = new TextDecoder();
@@ -256,6 +273,8 @@ export class HelpdeskApiClient {
           // LLM failed mid-stream; deterministic fallback was used.
           // Continue consuming until "done" event arrives.
         }
+        // "status" events only keep the connection active through slow steps;
+        // they and any other unknown types are skipped.
       }
     }
 

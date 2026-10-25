@@ -1659,3 +1659,82 @@ class HelpdeskApiTests(APITestCase):
         self.assertGreaterEqual(response.data["byPriority"]["high"], 1)
         self.assertGreaterEqual(response.data["byReason"]["POLICY_REVIEW"], 1)
         self.assertGreaterEqual(response.data["agingBuckets"]["gt72h"], 1)
+
+    @override_settings(LLM_ENABLED=True)
+    @patch("helpdesk.api.views.stream_answer_llm")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_answer_stream_sends_status_before_each_slow_step(self, retrieve_mock, stream_mock):
+        """The stream must never stay silent through a whole answer: a status event
+        goes out at once, before every retrieval pass and LLM call, and for an LLM
+        retry, so proxies in front of the app do not time the request out."""
+
+        retrieve_mock.return_value = (
+            [
+                {
+                    "text": "OpRa operational exchange starts with a subscription request.",
+                    "score": 0.84,
+                    "repositoryUrl": "https://github.com/TransmodelEcosystem/OpRa",
+                    "commitSha": "abc123",
+                    "sourcePath": "docs/exchange.md",
+                    "chunkId": "chunk-1",
+                    "label": "Exchange",
+                    "retrievalEventId": "re-test-stream-001",
+                }
+            ],
+            # Below the 0.35 threshold, so the wider second retrieval pass runs too.
+            {
+                "graphRagVariant": "control",
+                "graphExpansionHops": 0,
+                "graphExpansionSource": "none",
+                "graphConceptIds": [],
+                "graphCandidatesAdded": 0,
+                "graphEvidenceCount": 0,
+                "graphScoreContribution": 0.0,
+                "graphProvenanceChainCount": 0,
+                "semanticAlignmentScore": 0.2,
+                "retrievalLatencyMs": 5.0,
+            },
+        )
+
+        def fake_stream(**kwargs):
+            yield ("status", "retrying")
+            yield ("token", "Exchange starts with a subscription request [E1].")
+            yield (
+                "done",
+                {
+                    "answer": "Exchange starts with a subscription request [E1].",
+                    "confidence": 0.88,
+                    "review_required": False,
+                    "provider": "openai-compatible",
+                    "model": "test-model",
+                    "rejected_answer": None,
+                    "rejection_reason": None,
+                },
+            )
+
+        stream_mock.side_effect = fake_stream
+
+        response = self.client.post(
+            reverse("answer-question-stream"),
+            {
+                "question": "Explain OpRa operational exchange setup sequence.",
+                "standardsScope": ["OpRa"],
+                "generationProfile": "llm-ready",
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-stream-status-001",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        body = b"".join(response.streaming_content).decode("utf-8")
+        events = [json.loads(part[len("data:"):]) for part in body.split("\n\n") if part.startswith("data:")]
+        sequence = [event.get("stage", event["type"]) for event in events]
+
+        self.assertEqual(sequence[0], "received")
+        self.assertEqual(
+            sequence,
+            ["received", "retrieving", "retrieving", "generating", "retrying", "token", "done"],
+        )
+        self.assertEqual(retrieve_mock.call_count, 2)
+        self.assertIn("subscription request", events[-1]["answer"]["answer"])
