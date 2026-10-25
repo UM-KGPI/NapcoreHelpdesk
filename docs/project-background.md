@@ -51,6 +51,13 @@ Chair of Construction and Transportation Informatics (https://kgpi.fgpa.um.si/).
 Transmodel), the FAQ-first/RAG-fallback answer strategy, the citation and
 abstention rules, and the editorial review workflow. The work is part of NAPCORE Task 4.3 Multimodal standards, led by Jorge Gonzalez, Multimodal and Digital Policy Officer at the French Ministry of Transport (DGITM). Active task partners are contributing during the pilot phase.
 
+External collaborators who joined recently make important contributions to the
+requirements and to testing:
+
+- Christophe Duquesne
+- Brewenn Métayer
+- Tu-Tho Thai
+
 ## Development approach
 
 Development is led by Andrej Tibaut, who orchestrates the implementation and also

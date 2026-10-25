@@ -5,7 +5,7 @@
  *
  * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
  * Crafted by: AI coding agents
- * Created: 2026-07-02  |  Modified: 2026-10-22
+ * Created: 2026-07-02  |  Modified: 2026-10-25
  */
 
 interface AboutPageProps {
@@ -73,6 +73,14 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           Chair of Construction and Transportation Informatics (<a href="https://kgpi.fgpa.um.si/" target="_blank" rel="noreferrer">kgpi.fgpa.um.si</a>). They defined the standards scope (NeTEx/SIRI/OpRa/Transmodel), the FAQ-first/RAG-fallback answer strategy, the citation and
           abstention rules, and the editorial review workflow. The work is part of NAPCORE Task 4.3 Multimodal standards, led by Jorge Gonzalez, Multimodal and Digital Policy Officer at the French Ministry of Transport (DGITM). Active task partners are contributing during the pilot phase.
         </p>
+        <p>
+          External collaborators who joined recently make important contributions to the requirements and to testing:
+        </p>
+        <ul>
+          <li>Christophe Duquesne</li>
+          <li>Brewenn Métayer</li>
+          <li>Tu-Tho Thai</li>
+        </ul>
       </section>
 
       <section className="panel">
