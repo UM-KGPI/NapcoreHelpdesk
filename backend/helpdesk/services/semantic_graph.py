@@ -16,6 +16,7 @@ import hashlib
 import logging
 import os
 import re
+from functools import lru_cache
 from pathlib import Path
 from typing import Iterable
 
@@ -330,12 +331,24 @@ def _normalize_for_matching(text: str) -> str:
     return " ".join(tokens)
 
 
-def _alias_matches_text(alias: str, normalized_text: str) -> bool:
-    normalized_alias = _normalize_for_matching(alias)
-    if not normalized_alias:
-        return False
+# extract_graph_concepts tests every alias (several thousand) against one text, so
+# tokenizing the alias and the text once each, not once per pair, keeps retrieval
+# from spending seconds per question re-splitting the same strings.
+@lru_cache(maxsize=None)
+def _alias_tokens(alias: str) -> tuple[str, ...]:
+    return tuple(_normalize_for_matching(alias).split())
 
-    alias_tokens = normalized_alias.split()
+
+@lru_cache(maxsize=256)
+def _text_tokens(normalized_text: str) -> frozenset[str]:
+    return frozenset(normalized_text.split())
+
+
+def _alias_matches_text(alias: str, normalized_text: str) -> bool:
+    alias_tokens = _alias_tokens(alias)
+    if not alias_tokens:
+        return False
+    normalized_alias = " ".join(alias_tokens)
 
     # 1-2 char labels (e.g. transmodel:a label="a", transmodel:in label="in") are
     # too short to be semantically distinctive and produce false positives by
@@ -347,8 +360,9 @@ def _alias_matches_text(alias: str, normalized_text: str) -> bool:
     # "line" must not match "linetype"; "siri" must not match "expiry"; "when" must not
     # match "whenever".  The token-subset fallback below already handles multi-token
     # aliases like "type of line", so this guard only fires for single-token ones.
+    text_tokens = _text_tokens(normalized_text)
     if len(alias_tokens) == 1:
-        return normalized_alias in set(normalized_text.split())
+        return normalized_alias in text_tokens
 
     # Multi-token aliases match by token subset, not substring: a raw substring check
     # (`normalized_alias in normalized_text`) would also match across a word boundary
@@ -359,8 +373,7 @@ def _alias_matches_text(alias: str, normalized_text: str) -> bool:
     # somewhere in the text), including scattered phrase variants like "delayed
     # vehicle journeys" matching alias "delayed journey", without that false-positive
     # class.
-    text_tokens = set(normalized_text.split())
-    if set(alias_tokens).issubset(text_tokens):
+    if text_tokens.issuperset(alias_tokens):
         return True
 
     # A PascalCase class name typed with no internal space (e.g. "OnwardCall" for
@@ -412,10 +425,10 @@ def _alias_matches_question(alias: str, normalized_text: str) -> bool:
     through prefix-stripped words alone."""
     if _alias_matches_text(alias, normalized_text):
         return True
-    alias_tokens = _normalize_for_matching(alias).split()
+    alias_tokens = _alias_tokens(alias)
     if len(alias_tokens) < 2:
         return False
-    text_tokens = set(normalized_text.split())
+    text_tokens = _text_tokens(normalized_text)
     kinds = []
     for alias_token in alias_tokens:
         token_kinds = {_word_variant_kind(alias_token, text_token) for text_token in text_tokens} - {None}
