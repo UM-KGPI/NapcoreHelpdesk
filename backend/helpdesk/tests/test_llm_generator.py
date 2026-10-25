@@ -563,10 +563,31 @@ class UnwrapJsonAnswerTests(SimpleTestCase):
         self.assertEqual(result, "The element is LineRef [E1].")
         self.assertFalse(result.startswith("{"))
 
-    def test_json_without_any_text_value_returns_the_raw_text(self):
+    def test_json_without_any_text_value_is_rejected_not_shown(self):
         from helpdesk.services.llm_generator import _unwrap_json_answer
 
-        self.assertEqual(_unwrap_json_answer('{"citations_used": ["E1"]}'), '{"citations_used": ["E1"]}')
+        with self.assertRaises(LLMGenerationError):
+            _unwrap_json_answer('{"citations_used": ["E1"]}')
+
+    def test_malformed_json_with_an_intact_answer_field_returns_the_answer(self):
+        from helpdesk.services.llm_generator import _unwrap_json_answer
+
+        text = '{"answer": "Use \\"StopPlace\\" with quays [E1].\\nSee [E2].", "citations_used": [1,}'
+        self.assertEqual(_unwrap_json_answer(text), 'Use "StopPlace" with quays [E1].\nSee [E2].')
+
+    def test_malformed_json_is_rejected_not_shown(self):
+        """Production showed '{": ": "Based on ... xmlns:netex=", "http://...' verbatim."""
+        from helpdesk.services.llm_generator import _unwrap_json_answer
+
+        text = '{": ": "Based on the evidence [E1], the attribute `xmlns:netex=", "http://www.netex.org.uk/netex` is declared [E4].'
+        with self.assertRaises(LLMGenerationError):
+            _unwrap_json_answer(text)
+
+    def test_answer_broken_by_an_unescaped_quote_is_rejected_not_cut_short(self):
+        from helpdesk.services.llm_generator import _unwrap_json_answer
+
+        with self.assertRaises(LLMGenerationError):
+            _unwrap_json_answer('{"answer": "The "quoted" element [E1].", "citations_used": [1]')
 
     def test_plain_text_is_unchanged(self):
         from helpdesk.services.llm_generator import _unwrap_json_answer
@@ -594,3 +615,37 @@ class StripNonEvidenceMarkupTests(SimpleTestCase):
     def test_code_blocks_and_double_backtick_spans_are_untouched(self):
         answer = 'Code:\n```xml\n<a ref="[C1]">``</a>\n```\nKeep ``a `b` c`` [E1].'
         self.assertEqual(_strip_non_evidence_markup(answer), answer)
+
+
+class StreamMalformedJsonTests(SimpleTestCase):
+    """A malformed JSON answer is retried, and a malformed retry falls back instead of being shown."""
+
+    CHUNKS = [
+        {
+            "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx",
+            "commitSha": "abc",
+            "sourcePath": "docs/timetables.md",
+            "chunkId": "chunk-1",
+            "text": "Timetables are exchanged in a TimetableFrame.",
+            "score": 0.9,
+        }
+    ]
+    BROKEN = '{": ": "Timetables use a frame, see `xmlns:netex=", "http://www.netex.org.uk/netex` [E1].'
+
+    def _events(self, responses):
+        with override_settings(LLM_ENABLED=True, LLM_PROVIDER="openai-compatible", LLM_API_BASE_URL="https://llm.example.test"), \
+                patch("helpdesk.services.llm_generator._stream_request_chat_completion", side_effect=[iter([r]) for r in responses]), \
+                patch("helpdesk.services.llm_generator._validate_generated_answer"), \
+                patch("helpdesk.services.llm_generator._validate_answer_language"), \
+                patch("helpdesk.services.llm_generator._validate_grounded_example_output"):
+            return list(stream_answer_llm(question="How are timetables exchanged in NeTEx?", chunks=self.CHUNKS, scope=["NeTEx"]))
+
+    def test_malformed_first_answer_is_retried(self):
+        events = self._events([self.BROKEN, '{"answer": "Timetables are exchanged in a TimetableFrame [E1]."}'])
+
+        self.assertEqual(events[0], ("status", "retrying"))
+        self.assertEqual(events[-1][1]["answer"], "Timetables are exchanged in a TimetableFrame [E1].")
+
+    def test_malformed_retry_raises_so_the_caller_falls_back(self):
+        with self.assertRaises(LLMGenerationError):
+            self._events([self.BROKEN, self.BROKEN])
