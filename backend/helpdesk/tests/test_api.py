@@ -1665,7 +1665,7 @@ class HelpdeskApiTests(APITestCase):
     @patch("helpdesk.api.views.retrieve_chunks_with_trace")
     def test_answer_stream_sends_status_before_each_slow_step(self, retrieve_mock, stream_mock):
         """The stream must never stay silent through a whole answer: a status event
-        goes out at once, before every retrieval pass and LLM call, and for an LLM
+        goes out at once, before retrieval and the LLM call, and for an LLM
         retry, so proxies in front of the app do not time the request out."""
 
         retrieve_mock.return_value = (
@@ -1681,7 +1681,7 @@ class HelpdeskApiTests(APITestCase):
                     "retrievalEventId": "re-test-stream-001",
                 }
             ],
-            # Below the 0.35 threshold, so the wider second retrieval pass runs too.
+            # A low alignment score used to trigger a wider second pass; it no longer does.
             {
                 "graphRagVariant": "control",
                 "graphExpansionHops": 0,
@@ -1734,7 +1734,7 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(sequence[0], "received")
         self.assertEqual(
             sequence,
-            ["received", "retrieving", "retrieving", "generating", "retrying", "token", "done"],
+            ["received", "retrieving", "generating", "retrying", "token", "done"],
         )
-        self.assertEqual(retrieve_mock.call_count, 2)
+        self.assertEqual(retrieve_mock.call_count, 1)
         self.assertIn("subscription request", events[-1]["answer"]["answer"])
