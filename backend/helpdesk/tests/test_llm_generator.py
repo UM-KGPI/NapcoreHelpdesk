@@ -14,6 +14,7 @@ from helpdesk.services.llm_generator import (
     _build_messages,
     _stream_request_chat_completion,
     _validate_no_unsupported_element_purpose_claims,
+    _strip_non_evidence_markup,
     generate_answer_llm,
     stream_answer_llm,
 )
@@ -571,3 +572,25 @@ class UnwrapJsonAnswerTests(SimpleTestCase):
         from helpdesk.services.llm_generator import _unwrap_json_answer
 
         self.assertEqual(_unwrap_json_answer("Plain prose."), "Plain prose.")
+
+
+class StripNonEvidenceMarkupTests(SimpleTestCase):
+    """Only [E#] markers are citations; other markers and emptied code spans are removed."""
+
+    def test_candidate_index_markers_and_empty_code_spans_are_removed(self):
+        answer = "references to XSD schema files (such as `` [C12], [C15] and `` [E1], [E2])."
+        self.assertEqual(
+            _strip_non_evidence_markup(answer),
+            "references to XSD schema files (such as and [E1], [E2]).",
+        )
+
+    def test_evidence_markers_and_real_code_spans_are_kept(self):
+        answer = "The attribute `xsi:schemaLocation` pointing to `` [E1]. See [C3]."
+        self.assertEqual(
+            _strip_non_evidence_markup(answer),
+            "The attribute `xsi:schemaLocation` pointing to [E1]. See.",
+        )
+
+    def test_code_blocks_and_double_backtick_spans_are_untouched(self):
+        answer = 'Code:\n```xml\n<a ref="[C1]">``</a>\n```\nKeep ``a `b` c`` [E1].'
+        self.assertEqual(_strip_non_evidence_markup(answer), answer)

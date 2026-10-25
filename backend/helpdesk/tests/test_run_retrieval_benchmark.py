@@ -246,7 +246,7 @@ class RunRetrievalBenchmarkCommandTests(SimpleTestCase):
         self.assertEqual(seen, [["SIRI"], ["SIRI"]])
         self.assertTrue(report["app_scope"])
         self.assertEqual(report["questions"][0]["scope"], ["SIRI"])
-        self.assertFalse(report["questions"][0]["scope_cut_to_first_candidate"])
+        self.assertFalse(report["questions"][0]["scope_needs_clarification"])
 
     def test_command_tag_filter(self):
         questions_payload = {

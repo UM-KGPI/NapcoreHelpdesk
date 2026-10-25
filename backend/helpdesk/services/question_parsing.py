@@ -348,20 +348,19 @@ def parse_question_to_semantic_query(text: str, requested_scope: list[str] | Non
 def select_effective_scope(
     semantic_query: SemanticQuery, requested_scope: list[str] | None
 ) -> tuple[list[str], bool]:
-    """Return the standards an answer searches, and whether the ambiguity cut applied.
+    """Return the standards an answer searches, and whether to ask the user to clarify.
 
-    An explicit scope always wins. Otherwise the question's candidate standards are used,
-    and when the core concept is ambiguous and several standards qualify, only the first
-    is kept (the caller then asks the user to clarify). The answer endpoints and the
+    An explicit scope always wins. Otherwise the question's candidate standards are used.
+    They are the standards the question names, so none is ever dropped: "How does SIRI
+    use NeTEx?" is about both. When the core concept is ambiguous and several standards
+    are named, the caller still adds a clarification note. The answer endpoints and the
     benchmark's --app-scope mode both call this, so they cannot drift apart.
     """
 
     if requested_scope:
         return list(requested_scope), False
     candidates = list(semantic_query.candidate_standards)
-    if semantic_query.ambiguous_core_concept and len(candidates) > 1:
-        return [candidates[0]], True
-    return candidates, False
+    return candidates, bool(semantic_query.ambiguous_core_concept and len(candidates) > 1)
 
 
 def has_scope_hint(semantic_query, effective_scope: list[str]) -> bool:

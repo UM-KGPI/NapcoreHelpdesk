@@ -233,9 +233,11 @@ class SelectEffectiveScopeTests(SimpleTestCase):
         query = self._query(["NeTEx", "SIRI"], ambiguous=True)
         self.assertEqual(select_effective_scope(query, ["OpRa"]), (["OpRa"], False))
 
-    def test_ambiguous_question_with_several_candidates_is_cut_to_the_first(self):
+    def test_ambiguous_question_keeps_every_named_standard_and_asks_to_clarify(self):
+        """Candidate standards are the ones the question names; dropping one would
+        answer "How does SIRI use NeTEx?" from NeTEx alone."""
         query = self._query(["NeTEx", "SIRI"], ambiguous=True)
-        self.assertEqual(select_effective_scope(query, []), (["NeTEx"], True))
+        self.assertEqual(select_effective_scope(query, []), (["NeTEx", "SIRI"], True))
 
     def test_unambiguous_or_single_candidate_keeps_all_candidates(self):
         self.assertEqual(select_effective_scope(self._query(["NeTEx", "SIRI"], False), None), (["NeTEx", "SIRI"], False))
