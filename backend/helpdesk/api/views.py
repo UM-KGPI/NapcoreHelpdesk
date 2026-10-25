@@ -1101,22 +1101,6 @@ class QuestionAnswerView(APIView):
                     graph_rag_enabled=graph_rag_enabled,
                 )
 
-            # Retry with a wider candidate pool when the retrieved evidence is semantically
-            # misaligned with the query (low mean cosine similarity).  This is a general
-            # signal that keyword-trap chunks dominated the first pass.  We do not inspect
-            # question content here; the alignment score alone drives the decision.
-            _SEMANTIC_ALIGNMENT_RETRY_THRESHOLD = 0.35
-            if chunks and graph_trace.get("semanticAlignmentScore", 1.0) < _SEMANTIC_ALIGNMENT_RETRY_THRESHOLD:
-                wider_chunks, wider_trace = retrieve_chunks_with_trace(
-                    question=question,
-                    top_k=retrieval_top_k * 2,
-                    min_score=relaxed_min_score,
-                    scope=effective_scope,
-                    graph_rag_enabled=graph_rag_enabled,
-                )
-                if wider_trace.get("semanticAlignmentScore", 0.0) > graph_trace.get("semanticAlignmentScore", 0.0):
-                    chunks, graph_trace = wider_chunks, wider_trace
-
             retrieved_chunks = chunks
             retrieval_event_ids = [chunk["retrievalEventId"] for chunk in chunks]
             all_candidates = graph_trace.get("allCandidates", [])
@@ -1572,18 +1556,6 @@ class QuestionAnswerStreamView(APIView):
                     scope=effective_scope,
                     graph_rag_enabled=graph_rag_enabled,
                 )
-            _SEMANTIC_ALIGNMENT_RETRY_THRESHOLD = 0.35
-            if chunks and graph_trace.get("semanticAlignmentScore", 1.0) < _SEMANTIC_ALIGNMENT_RETRY_THRESHOLD:
-                yield self._status("retrieving")
-                wider_chunks, wider_trace = retrieve_chunks_with_trace(
-                    question=question,
-                    top_k=retrieval_top_k * 2,
-                    min_score=relaxed_min_score,
-                    scope=effective_scope,
-                    graph_rag_enabled=graph_rag_enabled,
-                )
-                if wider_trace.get("semanticAlignmentScore", 0.0) > graph_trace.get("semanticAlignmentScore", 0.0):
-                    chunks, graph_trace = wider_chunks, wider_trace
 
             retrieved_chunks = chunks
             retrieval_event_ids = [chunk["retrievalEventId"] for chunk in chunks]
