@@ -94,6 +94,7 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           Collaborators who joined recently make important contributions to the requirements and to testing:
         </p>
         <ul>
+          <li>Thibaut Barrère</li>
           <li>Christophe Duquesne</li>
           <li>Brewenn Métayer</li>
           <li>Tu-Tho Thai</li>

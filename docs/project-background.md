@@ -60,6 +60,7 @@ abstention rules, and the editorial review workflow. The work is part of NAPCORE
 Collaborators who joined recently make important contributions to the
 requirements and to testing:
 
+- Thibaut Barrère
 - Christophe Duquesne
 - Brewenn Métayer
 - Tu-Tho Thai
