@@ -15,6 +15,7 @@ from __future__ import annotations
 import logging
 import re
 import time
+from functools import lru_cache
 from uuid import uuid4
 from django.db import connection, models
 from django.conf import settings
@@ -982,12 +983,18 @@ def _graph_score_adjustment(
     return 0.0, False, set()
 
 
+@lru_cache(maxsize=1024)
+def _token_set(value: str) -> frozenset[str]:
+    # Graph candidate ranking checks every alias against the same few chunk
+    # fields, so each field is tokenized once rather than once per alias.
+    return frozenset(_normalize_tokens(value))
+
+
 def _alias_token_subset_match(alias: str, value: str) -> bool:
-    alias_tokens = set(_normalize_tokens(alias))
+    alias_tokens = _token_set(alias)
     if not alias_tokens:
         return False
-    value_tokens = set(_normalize_tokens(value))
-    return alias_tokens.issubset(value_tokens)
+    return alias_tokens.issubset(_token_set(value or ""))
 
 
 def _graph_alias_match_score(
