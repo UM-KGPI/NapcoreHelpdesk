@@ -1483,6 +1483,7 @@ def stream_answer_llm(
     Generator yielding (event_type, payload) tuples for streaming narration.
 
     Yields:
+        ("status", "retrying") — before a retry when the first answer fails validation.
         ("token", delta_str) — for each token from the LLM.
         ("done", metadata_dict) — once after all tokens, with answer metadata.
 
@@ -1580,6 +1581,9 @@ def stream_answer_llm(
             rejected_answer=rejected_answer,
             error_msg=rejection_reason,
         )
+        # The retry is a second full LLM call with nothing sent meanwhile; tell the
+        # caller so the client connection does not sit silent through both calls.
+        yield ("status", "retrying")
         full_answer = _collect_stream(retry_messages)
 
         logger.info(f"[STREAM_RETRY_RAW] Retry response (first 250 chars): {full_answer[:250]}")

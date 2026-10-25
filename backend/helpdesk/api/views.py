@@ -1333,6 +1333,7 @@ class QuestionAnswerStreamView(APIView):
     browser can render narration tokens as they arrive from the LLM.
 
     SSE event shapes:
+      data: {"type":"status","stage":"received|retrieving|generating|retrying"}
       data: {"type":"token","delta":"..."}
       data: {"type":"done","answer":{...full AnswerResponse payload...}}
       data: {"type":"error","code":"...","message":"..."}
@@ -1378,7 +1379,14 @@ class QuestionAnswerStreamView(APIView):
     def _sse(self, payload: dict) -> str:
         return f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
 
+    def _status(self, stage: str) -> str:
+        return self._sse({"type": "status", "stage": stage})
+
     def _event_stream(self, request, data, request_id):  # noqa: C901
+        # Status events go out before every step that can take seconds (retrieval
+        # passes, LLM calls), so the connection is never silent for a whole answer:
+        # proxies in front of the app close upstreams that send nothing for 60 s.
+        yield self._status("received")
         options = data.get("options", {})
         question = data["question"].strip()
         language = data.get("language", "en")
@@ -1467,6 +1475,7 @@ class QuestionAnswerStreamView(APIView):
             matched_faq_entry_id = faq_match["faq_entry_id"]
 
             graph_rag_enabled = _resolve_graph_rag_enabled(options)
+            yield self._status("retrieving")
             chunks, graph_trace = retrieve_chunks_with_trace(
                 question=question,
                 top_k=retrieval_top_k,
@@ -1482,6 +1491,7 @@ class QuestionAnswerStreamView(APIView):
             if chunks and use_llm:
                 generated = None
                 try:
+                    yield self._status("generating")
                     for event_type, payload in stream_answer_llm(
                         question=question,
                         chunks=chunks,
@@ -1492,6 +1502,8 @@ class QuestionAnswerStreamView(APIView):
                     ):
                         if event_type == "token":
                             yield self._sse({"type": "token", "delta": payload})
+                        elif event_type == "status":
+                            yield self._status(payload)
                         elif event_type == "done":
                             generated = payload
                 except LLMGenerationError as exc:
@@ -1542,6 +1554,7 @@ class QuestionAnswerStreamView(APIView):
             citations = []
         else:
             graph_rag_enabled = _resolve_graph_rag_enabled(options)
+            yield self._status("retrieving")
             chunks, graph_trace = retrieve_chunks_with_trace(
                 question=question,
                 top_k=retrieval_top_k,
@@ -1551,6 +1564,7 @@ class QuestionAnswerStreamView(APIView):
             )
             relaxed_min_score = min(retrieval_min_score, 0.45)
             if not chunks and relaxed_min_score < retrieval_min_score:
+                yield self._status("retrieving")
                 chunks, graph_trace = retrieve_chunks_with_trace(
                     question=question,
                     top_k=retrieval_top_k,
@@ -1560,6 +1574,7 @@ class QuestionAnswerStreamView(APIView):
                 )
             _SEMANTIC_ALIGNMENT_RETRY_THRESHOLD = 0.35
             if chunks and graph_trace.get("semanticAlignmentScore", 1.0) < _SEMANTIC_ALIGNMENT_RETRY_THRESHOLD:
+                yield self._status("retrieving")
                 wider_chunks, wider_trace = retrieve_chunks_with_trace(
                     question=question,
                     top_k=retrieval_top_k * 2,
@@ -1599,6 +1614,7 @@ class QuestionAnswerStreamView(APIView):
                     # Stream tokens to the client; accumulate for post-stream processing.
                     generated = None
                     try:
+                        yield self._status("generating")
                         for event_type, payload in stream_answer_llm(
                             question=question,
                             chunks=chunks,
@@ -1608,6 +1624,8 @@ class QuestionAnswerStreamView(APIView):
                         ):
                             if event_type == "token":
                                 yield self._sse({"type": "token", "delta": payload})
+                            elif event_type == "status":
+                                yield self._status(payload)
                             elif event_type == "done":
                                 generated = payload
                                 llm_generated = True

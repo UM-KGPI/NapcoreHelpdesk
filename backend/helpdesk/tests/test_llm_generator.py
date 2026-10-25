@@ -5,7 +5,7 @@ import json
 from unittest.mock import patch
 from urllib import error
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 
 from helpdesk.services import llm_model_recovery
 from helpdesk.services.grounded_generator import generate_answer
@@ -15,6 +15,7 @@ from helpdesk.services.llm_generator import (
     _stream_request_chat_completion,
     _validate_no_unsupported_element_purpose_claims,
     generate_answer_llm,
+    stream_answer_llm,
 )
 
 
@@ -402,6 +403,42 @@ class LLMGeneratorTests(SimpleTestCase):
         self.assertIn("NeTEx_01_simple_line.xml", result["answer"])
         # Should not invent/fabricate XML structures
         self.assertNotIn("<", result["answer"])
+
+
+    @override_settings(LLM_ENABLED=True, LLM_PROVIDER="openai-compatible", LLM_API_BASE_URL="https://llm.example.test")
+    @patch("helpdesk.services.llm_generator._validate_grounded_example_output")
+    @patch("helpdesk.services.llm_generator._validate_answer_language")
+    @patch("helpdesk.services.llm_generator._validate_generated_answer")
+    @patch("helpdesk.services.llm_generator._stream_request_chat_completion")
+    def test_stream_answer_signals_status_before_validation_retry(
+        self, stream_mock, validate_mock, _language_mock, _example_mock
+    ):
+        """A rejected first answer means a second full LLM call; the generator says so
+        before making it, so the caller can keep the client connection active."""
+        stream_mock.side_effect = [iter(["First answer."]), iter(["Retry answer [E1]."])]
+        validate_mock.side_effect = [LLMGenerationError("not grounded"), None]
+
+        events = list(
+            stream_answer_llm(
+                question="How do I exchange timetables in NeTEx?",
+                chunks=[
+                    {
+                        "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx",
+                        "commitSha": "abc",
+                        "sourcePath": "docs/timetables.md",
+                        "chunkId": "chunk-1",
+                        "text": "Timetables are exchanged in a TimetableFrame.",
+                        "score": 0.9,
+                    }
+                ],
+                scope=["NeTEx"],
+            )
+        )
+
+        self.assertEqual(events[0], ("status", "retrying"))
+        self.assertEqual(stream_mock.call_count, 2)
+        self.assertEqual(events[-1][0], "done")
+        self.assertEqual(events[-1][1]["answer"], "Retry answer [E1].")
 
 
 class ElementPurposeClaimValidationTests(SimpleTestCase):
