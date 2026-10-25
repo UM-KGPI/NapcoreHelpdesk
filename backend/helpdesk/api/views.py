@@ -427,6 +427,23 @@ def _rewrite_source_paths_as_evidence_markers(answer_text: str, citations: list[
     return rewritten
 
 
+def _drop_markers_without_citation(answer_text: str, citations: list[dict]) -> str:
+    """Remove [E#] markers that point past the citation list.
+
+    [E#] is the #-th citation. A model sometimes cites a block that was never in its
+    prompt ([E20] when only E1-E6 exist); when the retry does the same, its answer is
+    still used, and the marker would link to nothing.
+    """
+
+    if not answer_text:
+        return answer_text
+
+    def _keep_if_cited(match: re.Match) -> str:
+        return match.group(0) if 1 <= int(match.group(1)) <= len(citations) else ""
+
+    return re.sub(r"[ \t]*\[E(\d+)\]", _keep_if_cited, answer_text)
+
+
 def _inject_evidence_markers_if_missing(answer_text: str, citations: list[dict]) -> str:
     """
     Fallback: if answer_text lacks [E#] markers but citations exist,
@@ -1191,6 +1208,7 @@ class QuestionAnswerView(APIView):
 
         # Rewrite any source path references to [E#] markers
         answer_text = _rewrite_source_paths_as_evidence_markers(answer_text=answer_text, citations=citations)
+        answer_text = _drop_markers_without_citation(answer_text=answer_text, citations=citations)
 
         answer_id = f"ans-{uuid4().hex[:12]}"
         # Persist the orchestration outcome as a question event before child trace records.
@@ -1658,6 +1676,7 @@ class QuestionAnswerStreamView(APIView):
 
         answer_text = _inject_evidence_markers_if_missing(answer_text=answer_text, citations=citations)
         answer_text = _rewrite_source_paths_as_evidence_markers(answer_text=answer_text, citations=citations)
+        answer_text = _drop_markers_without_citation(answer_text=answer_text, citations=citations)
 
         answer_id = f"ans-{uuid4().hex[:12]}"
 
