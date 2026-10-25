@@ -24,7 +24,7 @@ import jwt
 import yaml
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.test import override_settings
+from django.test import SimpleTestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from jsonschema import Draft202012Validator, RefResolver
@@ -1738,3 +1738,96 @@ class HelpdeskApiTests(APITestCase):
         )
         self.assertEqual(retrieve_mock.call_count, 1)
         self.assertIn("subscription request", events[-1]["answer"]["answer"])
+
+    @override_settings(LLM_ENABLED=True)
+    @patch("helpdesk.api.views.stream_answer_llm")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_answer_stream_drops_markers_without_a_citation(self, retrieve_mock, stream_mock):
+        """A retry that cites a block never in its prompt ([E20]) is still used; the
+        marker must not reach the answer, because no citation backs it."""
+
+        retrieve_mock.return_value = (
+            [
+                {
+                    "text": "OpRa operational exchange starts with a subscription request.",
+                    "score": 0.84,
+                    "repositoryUrl": "https://github.com/TransmodelEcosystem/OpRa",
+                    "commitSha": "abc123",
+                    "sourcePath": "docs/exchange.md",
+                    "chunkId": "chunk-1",
+                    "label": "Exchange",
+                    "retrievalEventId": "re-test-stream-001",
+                }
+            ],
+            # A low alignment score used to trigger a wider second pass; it no longer does.
+            {
+                "graphRagVariant": "control",
+                "graphExpansionHops": 0,
+                "graphExpansionSource": "none",
+                "graphConceptIds": [],
+                "graphCandidatesAdded": 0,
+                "graphEvidenceCount": 0,
+                "graphScoreContribution": 0.0,
+                "graphProvenanceChainCount": 0,
+                "semanticAlignmentScore": 0.2,
+                "retrievalLatencyMs": 5.0,
+            },
+        )
+
+        def fake_stream(**kwargs):
+            yield ("status", "retrying")
+            yield ("token", "Exchange starts with a subscription request [E1] and uses a profile [E20].")
+            yield (
+                "done",
+                {
+                    "answer": "Exchange starts with a subscription request [E1] and uses a profile [E20].",
+                    "confidence": 0.88,
+                    "review_required": False,
+                    "provider": "openai-compatible",
+                    "model": "test-model",
+                    "rejected_answer": None,
+                    "rejection_reason": None,
+                },
+            )
+
+        stream_mock.side_effect = fake_stream
+
+        response = self.client.post(
+            reverse("answer-question-stream"),
+            {
+                "question": "Explain OpRa operational exchange setup sequence.",
+                "standardsScope": ["OpRa"],
+                "generationProfile": "llm-ready",
+            },
+            format="json",
+            HTTP_X_REQUEST_ID="req-stream-status-001",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        body = b"".join(response.streaming_content).decode("utf-8")
+        done = [json.loads(part[len("data:"):]) for part in body.split("\n\n") if part.startswith("data:")][-1]
+        answer = done["answer"]["answer"]
+
+        self.assertIn("[E1]", answer)
+        self.assertNotIn("[E20]", answer)
+        self.assertTrue(answer.endswith("uses a profile."), answer)
+        self.assertEqual([c["label"] for c in done["answer"]["citations"]], ["E1"])
+
+
+class DropMarkersWithoutCitationTests(SimpleTestCase):
+    """[E#] is the #-th citation; markers past the citation list are removed."""
+
+    def test_markers_past_the_citation_list_are_removed(self):
+        from helpdesk.api.views import _drop_markers_without_citation
+
+        citations = [{"label": "E1"}, {"label": "E2"}]
+        self.assertEqual(
+            _drop_markers_without_citation("A [E1], B [E2] and C [E20]. D [E0].", citations),
+            "A [E1], B [E2] and C. D.",
+        )
+
+    def test_without_citations_every_marker_is_removed(self):
+        from helpdesk.api.views import _drop_markers_without_citation
+
+        self.assertEqual(_drop_markers_without_citation("Nothing to cite [E1].", []), "Nothing to cite.")
