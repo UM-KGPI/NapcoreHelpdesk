@@ -683,9 +683,11 @@ which the backend and the worker call over HTTP, so the model (about 0.9 GB of m
 The rollout is in steps. Until all of them are done, **leave `EMBEDDING_BACKEND` at `hash`**: hash vectors and
 semantic vectors cannot be compared, so switching it on before every chunk is re-embedded breaks retrieval.
 
-1. *Service and switch (this section).* The `embedder` service has the compose profile `semantic` and does
+1. *Service and switch (#152).* The `embedder` service has the compose profile `semantic` and does
    not start by default, so a deploy changes nothing.
-2. *Ranking that lets similarity decide* (next pull request), behind the same switch.
+2. *Ranking that lets similarity decide*, behind the same switch: with `semantic`, vector similarity is
+   rescaled over each question's candidates and the hash-era quality floor and README penalty no longer
+   override it.
 3. *Re-embedding every chunk* with the model while hash vectors stay in use.
 4. *Switching over*, then measuring on production.
 

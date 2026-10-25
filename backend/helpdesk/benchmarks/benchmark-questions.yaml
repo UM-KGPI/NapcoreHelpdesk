@@ -1197,3 +1197,45 @@ questions:
     expected_source_patterns: [siri_stopMonitoring_service.xsd, siri_estimatedTimetable_service.xsd]
     min_hits: 2
     top_k_threshold: 10
+
+  # Explanation questions answered by the standards' README overviews, not by an
+  # example or a schema (doc_type "readme").
+  - id: q143
+    question: "How does SIRI use NeTEx?"
+    intent: explanation
+    tags: [siri, netex, relation, readme]
+    expected_source_patterns: [README.md]
+    min_hits: 1
+    top_k_threshold: 10
+
+  - id: q144
+    question: "What is the relationship between NeTEx and Transmodel?"
+    intent: explanation
+    tags: [netex, transmodel, relation, readme]
+    expected_source_patterns: [README.md]
+    min_hits: 1
+    top_k_threshold: 10
+
+  - id: q145
+    question: "What kind of data does OpRa exchange?"
+    intent: explanation
+    tags: [opra, overview, readme]
+    expected_source_patterns: [README.md]
+    min_hits: 1
+    top_k_threshold: 10
+
+  - id: q146
+    question: "Which standard is used for real-time data and which for timetables?"
+    intent: explanation
+    tags: [netex, siri, overview, readme]
+    expected_source_patterns: [README.md]
+    min_hits: 1
+    top_k_threshold: 10
+
+  - id: q147
+    question: "What is SIRI used for?"
+    intent: explanation
+    tags: [siri, overview, readme]
+    expected_source_patterns: [README.md]
+    min_hits: 1
+    top_k_threshold: 10

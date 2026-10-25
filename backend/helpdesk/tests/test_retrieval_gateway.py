@@ -420,3 +420,52 @@ class HybridCandidateCutoffTests(TestCase):
         tied = [row for row in result if abs(row.vector_similarity - 0.5) < 1e-9]
         self.assertEqual(len(tied), 3)
         self.assertGreater(tied[0].lexical_rank, 0.0)
+
+
+class SimilarityRankingSwitchTests(TestCase):
+    """With semantic vectors, similarity decides the ranking; with hash vectors the
+    quality-based ranking stays as it was."""
+
+    @staticmethod
+    def _vector(similarity: float) -> list[float]:
+        vector = [0.0] * 1536
+        vector[0] = similarity
+        vector[1] = (1.0 - similarity * similarity) ** 0.5
+        return vector
+
+    def setUp(self):
+        from helpdesk.models import SourceChunk
+
+        text = "SIRI messages refer to NeTEx objects such as lines and stop points."
+        for chunk_id, doc_type, quality, similarity, path in (
+            ("example-1", "example", 0.84, 0.80, "examples/siri_request.xml"),
+            ("readme-1", "readme", 0.73, 0.95, "README.md"),
+        ):
+            SourceChunk.objects.create(
+                repository_url="https://github.com/TransmodelEcosystem/SIRI",
+                commit_sha="abc",
+                source_path=path,
+                chunk_id=chunk_id,
+                label=chunk_id,
+                text=text,
+                standards_scope=["SIRI"],
+                quality_score=quality,
+                doc_type=doc_type,
+                embedding_vector=self._vector(similarity),
+            )
+
+    def _ranked_ids(self):
+        from helpdesk.services import retrieval_gateway
+
+        with patch.object(retrieval_gateway, "build_text_embedding", return_value=self._vector(1.0)):
+            chunks, _trace = retrieval_gateway.retrieve_chunks_with_trace(
+                question="How does SIRI use NeTEx?", top_k=2, min_score=0.0, scope=["SIRI"], graph_rag_enabled=False
+            )
+        return [chunk["chunkId"] for chunk in chunks]
+
+    def test_hash_keeps_the_quality_based_ranking(self):
+        self.assertEqual(self._ranked_ids()[0], "example-1")
+
+    @override_settings(EMBEDDING_BACKEND="semantic")
+    def test_semantic_ranks_the_closer_chunk_first(self):
+        self.assertEqual(self._ranked_ids()[0], "readme-1")
