@@ -91,7 +91,7 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           abstention rules, and the editorial review workflow. The work is part of NAPCORE Task 4.3 Multimodal standards, led by Jorge Gonzalez, Multimodal and Digital Policy Officer at the French Ministry of Transport (DGITM). Active task partners are contributing during the pilot phase.
         </p>
         <p>
-          External collaborators who joined recently make important contributions to the requirements and to testing:
+          Collaborators who joined recently make important contributions to the requirements and to testing:
         </p>
         <ul>
           <li>Christophe Duquesne</li>
@@ -166,7 +166,7 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
              repositories at their real commits, and the standard ontologies regenerated from
              upstream with a weekly drift check; a maintenance page during deploys; faster and
              sturdier answers, with retrieval in about half the time and a stream that reports
-             progress from the start, so long answers no longer time out. External collaborators
+             progress from the start, so long answers no longer time out. Collaborators
              recently joined and contribute to the requirements and testing.</li>
         </ol>
         <p>
