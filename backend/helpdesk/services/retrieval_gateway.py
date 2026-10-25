@@ -299,15 +299,33 @@ def _postgres_hybrid_candidates(
         return None
 
     search_query = SearchQuery(question)
+    limit = max(25, top_k * 5)
     filtered = SourceChunk.objects.filter(_scope_query_filter(scope))
-    # Cosine distance is lower-is-better; convert to similarity with (1 - distance).
-    return (
-        filtered.annotate(
-            lexical_rank=SearchRank(_search_vector(), search_query),
-            vector_distance=CosineDistance("embedding_vector", query_embedding),
-        )
+
+    # Rows are ordered by vector similarity first; the lexical rank only breaks ties.
+    # Building the text search vector for every chunk took seconds per pass, so first
+    # find the similarity of the limit-th row (cheap: no text processing), then rank
+    # only rows at or above it. Every row of the full ordering's top `limit` passes
+    # that filter, ties included, so the result is the same. Rows without an
+    # embedding sort first (NULLs lead a descending order) and are always kept.
+    cutoff = list(
+        filtered.annotate(vector_distance=CosineDistance("embedding_vector", query_embedding))
         .annotate(vector_similarity=1.0 - models.F("vector_distance"))
-        .only(
+        .order_by("-vector_similarity")
+        .values_list("vector_similarity", flat=True)[limit - 1 : limit]
+    )
+
+    # Cosine distance is lower-is-better; convert to similarity with (1 - distance).
+    ranked = filtered.annotate(
+        lexical_rank=SearchRank(_search_vector(), search_query),
+        vector_distance=CosineDistance("embedding_vector", query_embedding),
+    ).annotate(vector_similarity=1.0 - models.F("vector_distance"))
+    if cutoff and cutoff[0] is not None:
+        ranked = ranked.filter(
+            models.Q(vector_similarity__gte=cutoff[0]) | models.Q(embedding_vector__isnull=True)
+        )
+    return (
+        ranked.only(
             "id",
             "text",
             "repository_url",
@@ -322,7 +340,7 @@ def _postgres_hybrid_candidates(
             "structured_metadata",
             "quality_score",
         )
-        .order_by("-vector_similarity", "-lexical_rank")[: max(25, top_k * 5)]
+        .order_by("-vector_similarity", "-lexical_rank")[:limit]
     )
 
 
