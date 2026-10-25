@@ -98,6 +98,21 @@ body {
   color: #0f766e;
 }
 
+.about-diagram {
+  display: block;
+  overflow-x: auto;
+}
+
+.about-diagram img {
+  display: block;
+  width: 100%;
+  min-width: 36rem;
+  height: auto;
+  border: 1px solid #cfe0d8;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
 .version-info {
   display: grid;
   grid-template-columns: auto 1fr;

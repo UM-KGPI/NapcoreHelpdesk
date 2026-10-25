@@ -37,6 +37,12 @@ and OpRa.
 The name refers to NAPCORE, the EU coordination initiative for National Access
 Points to transport data, which these standards serve (www.napcore.eu).
 
+## System context
+
+Who uses the helpdesk and which external systems it relies on (C4 model, level 1).
+
+![C4 system context](diagrams/c4-system-context.svg)
+
 ## Requirements & design
 
 The requirements and domain design are by:

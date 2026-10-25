@@ -8,6 +8,8 @@
  * Created: 2026-07-02  |  Modified: 2026-10-25
  */
 
+import systemContextDiagramUrl from "../assets/c4-system-context.svg";
+
 interface AboutPageProps {
   appVersion: string;
   backendBuildRef?: string;
@@ -53,6 +55,21 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           The name refers to NAPCORE, the EU coordination initiative for National Access Points to
           transport data, which these standards serve (<a href="https://www.napcore.eu" target="_blank" rel="noreferrer">www.napcore.eu</a>).
         </p>
+      </section>
+
+      <section className="panel">
+        <div className="panel-title-row">
+          <h2>System context</h2>
+        </div>
+        <p>
+          Who uses the helpdesk and which external systems it relies on (C4 model, level 1). Select the diagram to open it at full size.
+        </p>
+        <a className="about-diagram" href={systemContextDiagramUrl} target="_blank" rel="noreferrer">
+          <img
+            src={systemContextDiagramUrl}
+            alt="C4 system context: NAP operators, transport authorities, transport operators, standards implementers and ITS system integrators ask questions, and editors review answers. The helpdesk indexes the NeTEx, SIRI and OpRa repositories on GitHub, queries the GraphDB ontology store, and uses a language model gateway at the University of Maribor."
+          />
+        </a>
       </section>
 
       <section className="panel">
