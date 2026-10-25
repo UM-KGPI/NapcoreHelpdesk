@@ -928,7 +928,7 @@ class QuestionAnswerView(APIView):
         scope = data.get("standardsScope", [])
         semantic_query = parse_question_to_semantic_query(text=question, requested_scope=scope)
         semantic_query_dict = semantic_query.as_dict() if hasattr(semantic_query, "as_dict") else {}
-        effective_scope, ambiguity_cut = select_effective_scope(semantic_query, scope)
+        effective_scope, needs_clarification = select_effective_scope(semantic_query, scope)
         semantic_disambiguation_required = False
         semantic_disambiguation_prompt = None
         semantic_fallback = None
@@ -971,8 +971,8 @@ class QuestionAnswerView(APIView):
         controller_route = None
 
         # 1) FAQ-first: fast, deterministic, and usually high confidence.
-        if ambiguity_cut:
-            # Ambiguity fallback: the scope was reduced to one standard; ask for clarification.
+        if needs_clarification:
+            # Several named standards and an ambiguous core concept: search all of them, and ask for clarification.
             semantic_disambiguation_required = True
             semantic_disambiguation_prompt = (
                 "Your question maps to multiple core concepts. "
@@ -1378,7 +1378,7 @@ class QuestionAnswerStreamView(APIView):
         scope = data.get("standardsScope", [])
         semantic_query = parse_question_to_semantic_query(text=question, requested_scope=scope)
         semantic_query_dict = semantic_query.as_dict() if hasattr(semantic_query, "as_dict") else {}
-        effective_scope, ambiguity_cut = select_effective_scope(semantic_query, scope)
+        effective_scope, needs_clarification = select_effective_scope(semantic_query, scope)
         semantic_disambiguation_required = False
         semantic_disambiguation_prompt = None
         semantic_fallback = None
@@ -1418,7 +1418,7 @@ class QuestionAnswerStreamView(APIView):
         }
         controller_route = None
 
-        if ambiguity_cut:
+        if needs_clarification:
             semantic_disambiguation_required = True
             semantic_disambiguation_prompt = (
                 "Your question maps to multiple core concepts. "

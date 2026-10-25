@@ -467,7 +467,7 @@ class HelpdeskApiTests(APITestCase):
     @patch("helpdesk.api.views.parse_question_to_semantic_query")
     @patch("helpdesk.api.views.retrieve_chunks_with_trace")
     def test_answer_reduces_scope_when_core_concept_is_ambiguous(self, retrieve_mock, parse_mock):
-        """Ambiguous core concept should reduce automatic scope to first candidate standard."""
+        """An ambiguous core concept keeps every named standard and asks the user to clarify."""
 
         parse_mock.return_value = SimpleNamespace(
             core_concept="nits:journey-pattern",
@@ -524,7 +524,7 @@ class HelpdeskApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assert_matches_schema("AnswerResponse", response.data)
-        self.assertEqual(retrieve_mock.call_args.kwargs.get("scope"), ["NeTEx"])
+        self.assertEqual(retrieve_mock.call_args.kwargs.get("scope"), ["NeTEx", "OpRa"])
         self.assertTrue(response.data["trace"]["semanticDisambiguationRequired"])
         self.assertEqual(response.data["trace"]["semanticFallback"], "AMBIGUOUS_CORE_CONCEPT")
 

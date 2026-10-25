@@ -251,10 +251,10 @@ class Command(BaseCommand):
             tags = q.get("tags") or []
 
             question_scope = scope
-            cut_to_first = False
+            needs_clarification = False
             if app_scope:
                 semantic_query = parse_question_to_semantic_query(text=question_text, requested_scope=[])
-                question_scope, cut_to_first = select_effective_scope(semantic_query, [])
+                question_scope, needs_clarification = select_effective_scope(semantic_query, [])
 
             if not quiet:
                 self.stdout.write(f"  [{idx}/{len(questions)}] {qid}: {question_text[:70]}...")
@@ -269,7 +269,7 @@ class Command(BaseCommand):
             }
             if app_scope:
                 result_entry["scope"] = question_scope
-                result_entry["scope_cut_to_first_candidate"] = cut_to_first
+                result_entry["scope_needs_clarification"] = needs_clarification
 
             if not graph_only:
                 baseline = _run_question(

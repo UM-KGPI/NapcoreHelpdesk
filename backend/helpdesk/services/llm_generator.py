@@ -568,6 +568,34 @@ def _strip_raw_filenames(answer: str, chunks: list[dict] | None = None) -> str:
     return temp_answer
 
 
+# Only [E#] markers are citations. The prompt also lists other candidates as [C#], and
+# a model sometimes cites those; they have no citation entry and would show as text.
+_NON_EVIDENCE_MARKER_PATTERN = re.compile(r"[ \t]*\[(?!E\d+\])[A-Z]\d+\]")
+# Removing a file name the evidence does not contain can leave its backticks behind.
+# A pair counts as empty only when it stands alone: ``code`` with double backticks keeps
+# its delimiters.
+_EMPTY_INLINE_CODE_PATTERN = re.compile(r"(?<![^\s(])`[ \t]*`(?![^\s.,;:)\]])")
+_INTRODUCER_COMMA_PATTERN = re.compile(r"\b(such as|e\.g\.|including),", re.IGNORECASE)
+
+
+def _strip_non_evidence_markup(answer: str) -> str:
+    """Remove bracketed markers that are not evidence citations, and inline code spans
+    left empty, outside code blocks, then tidy the punctuation they leave behind."""
+    code_block_texts = [m.group(0) for m in FENCED_CODE_BLOCK_PATTERN.finditer(answer)]
+    text = FENCED_CODE_BLOCK_PATTERN.sub("__CODE_BLOCK__", answer)
+    text = _NON_EVIDENCE_MARKER_PATTERN.sub("", text)
+    text = _EMPTY_INLINE_CODE_PATTERN.sub("", text)
+    text = re.sub(r"[ \t]+([,.;:)])", r"\1", text)
+    text = re.sub(r"\([ \t]*,[ \t]*", "(", text)
+    text = re.sub(r",[ \t]*(?=,)", "", text)
+    text = re.sub(r"\([ \t]*\)", "", text)
+    text = _INTRODUCER_COMMA_PATTERN.sub(r"\1", text)
+    text = re.sub(r"(?<=\S)[ \t]{2,}", " ", text)
+    for code_block in code_block_texts:
+        text = text.replace("__CODE_BLOCK__", code_block, 1)
+    return text
+
+
 def _strip_stray_list_markers(answer: str) -> str:
     """
     Remove stray numeric list markers (e.g., "1\n") that appear before code blocks.
@@ -1126,6 +1154,7 @@ def _generate_answer_text(
 
     # Strip stray list markers before code blocks (e.g., "1\n```" → "```")
     answer = _strip_stray_list_markers(answer)
+    answer = _strip_non_evidence_markup(answer)
 
     # Fix out-of-range citations before validation (LLM may hallucinate [E10] when only [E1-E6] exist)
     max_chunk_idx = len(chunks)
@@ -1565,6 +1594,7 @@ def stream_answer_llm(
         full_answer = _strip_json_suffix(full_answer)
         full_answer = _strip_raw_filenames(full_answer, chunks)
         full_answer = _strip_stray_list_markers(full_answer)
+        full_answer = _strip_non_evidence_markup(full_answer)
         _validate_answer_language(answer=full_answer, question=question, target_language=effective_language)
         _validate_generated_answer(answer=full_answer, chunks=chunks)
         _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
@@ -1593,6 +1623,7 @@ def stream_answer_llm(
         full_answer = _strip_json_suffix(full_answer)
         full_answer = _strip_raw_filenames(full_answer, chunks)
         full_answer = _strip_stray_list_markers(full_answer)
+        full_answer = _strip_non_evidence_markup(full_answer)
         try:
             _validate_answer_language(answer=full_answer, question=question, target_language=effective_language)
             _validate_generated_answer(answer=full_answer, chunks=chunks)
