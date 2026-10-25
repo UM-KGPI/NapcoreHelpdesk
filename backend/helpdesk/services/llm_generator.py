@@ -483,6 +483,12 @@ def _strip_json_suffix(answer: str) -> str:
     return _JSON_SUFFIX_PATTERN.sub("", answer).rstrip()
 
 
+# A complete, correctly escaped "answer" string followed by another key or the end of
+# the object. An unescaped quote inside the answer ends the string early, and then the
+# lookahead fails, so a broken answer is never returned cut short.
+_LENIENT_ANSWER_FIELD_PATTERN = re.compile(r'"answer"\s*:\s*("(?:[^"\\]|\\.)*")(?=\s*(?:,\s*"[^"]*"\s*:|\}))', re.DOTALL)
+
+
 def _unwrap_json_answer(text: str) -> str:
     """
     Extract the prose answer from a JSON-mode LLM response.
@@ -490,12 +496,26 @@ def _unwrap_json_answer(text: str) -> str:
     JSON mode makes the model emit ``{"answer": "...", "citations_used": [...]}``;
     this returns the "answer" field, unwrapping a double-encoded answer field and
     falling back to other common field names. Non-JSON input is returned as-is.
+    Text that starts like a JSON object but does not parse is never returned: its
+    answer field is recovered when it is intact, otherwise LLMGenerationError is
+    raised so the caller retries or falls back instead of showing JSON fragments.
     """
     try:
         response_json = json.loads(text)
     except json.JSONDecodeError:
-        logger.debug("[UNWRAP] Not JSON, treating as plain text")
-        return text
+        if not text.lstrip().startswith("{"):
+            logger.debug("[UNWRAP] Not JSON, treating as plain text")
+            return text
+        match = _LENIENT_ANSWER_FIELD_PATTERN.search(text)
+        if match:
+            try:
+                answer = json.loads(match.group(1))
+            except json.JSONDecodeError:
+                answer = None
+            if isinstance(answer, str) and answer.strip():
+                logger.warning("[UNWRAP] Malformed JSON response; recovered its answer field")
+                return answer
+        raise LLMGenerationError("LLM response looks like JSON but cannot be parsed; its answer cannot be recovered.")
     if not isinstance(response_json, dict):
         return text
 
@@ -522,7 +542,7 @@ def _unwrap_json_answer(text: str) -> str:
     string_values = [value for value in response_json.values() if isinstance(value, str) and value.strip()]
     if string_values:
         return max(string_values, key=len)
-    return text
+    raise LLMGenerationError("LLM JSON response contains no answer text.")
 
 
 def _strip_raw_filenames(answer: str, chunks: list[dict] | None = None) -> str:
