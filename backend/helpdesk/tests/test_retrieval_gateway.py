@@ -330,3 +330,93 @@ class RetrievalGatewayTests(TestCase):
         )
 
         self.assertEqual(capped, {"netex:Journey", "netex:Access"})
+
+
+class HybridCandidateCutoffTests(TestCase):
+    """The hybrid query ranks text only for rows at or above the limit-th vector
+    similarity. Its result must equal ranking every row, ties at the cutoff included."""
+
+    @staticmethod
+    def _vector(similarity: float) -> list[float]:
+        # Cosine similarity to the unit query vector e0 is exactly `similarity`.
+        vector = [0.0] * 1536
+        vector[0] = similarity
+        vector[1] = (1.0 - similarity * similarity) ** 0.5
+        return vector
+
+    def setUp(self):
+        from helpdesk.models import SourceChunk
+
+        def chunk(index: int, similarity: float, text: str) -> None:
+            SourceChunk.objects.create(
+                repository_url="https://github.com/TransmodelEcosystem/NeTEx",
+                commit_sha="abc",
+                source_path=f"examples/chunk_{index}.xml",
+                chunk_id=f"cutoff-{index}",
+                label=f"Chunk {index}",
+                text=text,
+                standards_scope=["NeTEx"],
+                quality_score=0.5,
+                doc_type="example",
+                embedding_vector=self._vector(similarity),
+            )
+
+        index = 0
+        for step in range(22):
+            chunk(index, 0.99 - step * 0.01, f"Unrelated content {index}.")
+            index += 1
+        # Eight rows share the similarity at the 25-row cutoff; their order, and which
+        # three of them make the cut, depends on the lexical rank alone.
+        tie_texts = [
+            "Stop place.",
+            "A stop place with quays and a stop place entrance.",
+            "Nothing relevant here.",
+            "Quays of a stop place.",
+            "Stop place, quays, stop place, quays.",
+            "Something else.",
+            "Place.",
+            "Stop.",
+        ]
+        for text in tie_texts:
+            chunk(index, 0.5, text)
+            index += 1
+        for _ in range(10):
+            chunk(index, 0.1, "Stop place with quays far away in vector space.")
+            index += 1
+
+    def test_cutoff_keeps_the_same_rows_and_order_as_ranking_every_row(self):
+        from django.contrib.postgres.search import SearchQuery, SearchRank
+        from django.db import connection, models
+
+        from helpdesk.models import SourceChunk
+        from helpdesk.services import retrieval_gateway
+
+        if connection.vendor != "postgresql" or not retrieval_gateway.HAS_NATIVE_PGVECTOR:
+            self.skipTest("needs PostgreSQL with pgvector")
+
+        question = "stop place with quays"
+        query_vector = self._vector(1.0)
+        top_k = 5  # limit = max(25, top_k * 5) = 25, inside the tie group
+
+        full = list(
+            SourceChunk.objects.annotate(
+                lexical_rank=SearchRank(retrieval_gateway._search_vector(), SearchQuery(question)),
+                vector_distance=retrieval_gateway.CosineDistance("embedding_vector", query_vector),
+            )
+            .annotate(vector_similarity=1.0 - models.F("vector_distance"))
+            .order_by("-vector_similarity", "-lexical_rank")[:25]
+        )
+        result = list(
+            retrieval_gateway._postgres_hybrid_candidates(
+                question=question, query_embedding=query_vector, top_k=top_k
+            )
+        )
+
+        self.assertEqual(
+            [(row.chunk_id, row.lexical_rank) for row in result],
+            [(row.chunk_id, row.lexical_rank) for row in full],
+        )
+        # Three of the eight tied rows are kept, chosen by lexical rank.
+        tied = [row for row in result if abs(row.vector_similarity - 0.5) < 1e-9]
+        self.assertEqual(len(tied), 3)
+        self.assertGreater(tied[0].lexical_rank, 0.0)
