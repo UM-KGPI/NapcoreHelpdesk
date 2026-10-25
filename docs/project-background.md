@@ -37,6 +37,12 @@ and OpRa.
 The name refers to NAPCORE, the EU coordination initiative for National Access
 Points to transport data, which these standards serve (www.napcore.eu).
 
+## System context
+
+Who uses the helpdesk and which external systems it relies on (C4 model, level 1).
+
+![C4 system context](diagrams/c4-system-context.svg)
+
 ## Requirements & design
 
 The requirements and domain design are by:
@@ -50,6 +56,13 @@ Transportation Engineering and Architecture,
 Chair of Construction and Transportation Informatics (https://kgpi.fgpa.um.si/). They defined the standards scope (NeTEx/SIRI/OpRa/
 Transmodel), the FAQ-first/RAG-fallback answer strategy, the citation and
 abstention rules, and the editorial review workflow. The work is part of NAPCORE Task 4.3 Multimodal standards, led by Jorge Gonzalez, Multimodal and Digital Policy Officer at the French Ministry of Transport (DGITM). Active task partners are contributing during the pilot phase.
+
+External collaborators who joined recently make important contributions to the
+requirements and to testing:
+
+- Christophe Duquesne
+- Brewenn Métayer
+- Tu-Tho Thai
 
 ## Development approach
 

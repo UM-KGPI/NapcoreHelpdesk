@@ -5,8 +5,10 @@
  *
  * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
  * Crafted by: AI coding agents
- * Created: 2026-07-02  |  Modified: 2026-10-22
+ * Created: 2026-07-02  |  Modified: 2026-10-25
  */
+
+import systemContextDiagramUrl from "../assets/c4-system-context.svg";
 
 interface AboutPageProps {
   appVersion: string;
@@ -57,6 +59,21 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
 
       <section className="panel">
         <div className="panel-title-row">
+          <h2>System context</h2>
+        </div>
+        <p>
+          Who uses the helpdesk and which external systems it relies on (C4 model, level 1). Select the diagram to open it at full size.
+        </p>
+        <a className="about-diagram" href={systemContextDiagramUrl} target="_blank" rel="noreferrer">
+          <img
+            src={systemContextDiagramUrl}
+            alt="C4 system context: NAP operators, transport authorities, transport operators, standards implementers and ITS system integrators ask questions, and editors review answers. The helpdesk indexes the NeTEx, SIRI and OpRa repositories on GitHub, queries the GraphDB ontology store, and uses a language model gateway at the University of Maribor."
+          />
+        </a>
+      </section>
+
+      <section className="panel">
+        <div className="panel-title-row">
           <h2>Requirements &amp; design</h2>
         </div>
         <p>
@@ -73,6 +90,14 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           Chair of Construction and Transportation Informatics (<a href="https://kgpi.fgpa.um.si/" target="_blank" rel="noreferrer">kgpi.fgpa.um.si</a>). They defined the standards scope (NeTEx/SIRI/OpRa/Transmodel), the FAQ-first/RAG-fallback answer strategy, the citation and
           abstention rules, and the editorial review workflow. The work is part of NAPCORE Task 4.3 Multimodal standards, led by Jorge Gonzalez, Multimodal and Digital Policy Officer at the French Ministry of Transport (DGITM). Active task partners are contributing during the pilot phase.
         </p>
+        <p>
+          External collaborators who joined recently make important contributions to the requirements and to testing:
+        </p>
+        <ul>
+          <li>Christophe Duquesne</li>
+          <li>Brewenn Métayer</li>
+          <li>Tu-Tho Thai</li>
+        </ul>
       </section>
 
       <section className="panel">
