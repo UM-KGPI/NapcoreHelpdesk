@@ -135,7 +135,7 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
              approved/rejected → published workflow, KPI widgets, and board UI; Fedora VM +
              Docker Compose deployment automation.</li>
           <li><strong>Answer-quality &amp; reasoning-model hardening</strong> (Jul 2026, the
-             single largest push, over half of all commits to date): citation-grounding
+             single largest push, about 40% of all commits to date): citation-grounding
              correctness (stop false rejections, prevent hallucinated [E#] references, lenient
              handling for code blocks); Qwen reasoning-model controller tuning; prompt-constraint
              and markdown-formatting fixes; multilingual abstain/insufficient-evidence
@@ -163,7 +163,11 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
              structure computed for comparison questions; matching everyday wording to model terms
              (e.g. "charging station" for RECHARGING STATION); stricter checks that claims about an
              element's purpose are grounded in a definition; a daily refresh of all indexed
-             repositories at their real commits; a maintenance page during deploys.</li>
+             repositories at their real commits, and the standard ontologies regenerated from
+             upstream with a weekly drift check; a maintenance page during deploys; faster and
+             sturdier answers, with retrieval in about half the time and a stream that reports
+             progress from the start, so long answers no longer time out. External collaborators
+             recently joined and contribute to the requirements and testing.</li>
         </ol>
         <p>
           Development is ongoing, and this timeline will grow as the project evolves.

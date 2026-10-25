@@ -95,7 +95,7 @@ since. Broad phases, in order:
    approved/rejected → published workflow, KPI widgets, and board UI; Fedora
    VM + Docker Compose deployment automation.
 3. **Answer-quality & reasoning-model hardening** (Jul 2026, the single
-   largest push, over half of all commits to date): citation-grounding
+   largest push, about 40% of all commits to date): citation-grounding
    correctness (stop false rejections, prevent hallucinated [E#] references,
    lenient handling for code blocks); Qwen reasoning-model controller
    tuning; prompt-constraint and markdown-formatting fixes; multilingual
@@ -126,8 +126,12 @@ since. Broad phases, in order:
    computed for comparison questions; matching everyday wording to model
    terms (e.g. "charging station" for RECHARGING STATION); stricter checks
    that claims about an element's purpose are grounded in a definition; a
-   daily refresh of all indexed repositories at their real commits; a
-   maintenance page during deploys.
+   daily refresh of all indexed repositories at their real commits, and the
+   standard ontologies regenerated from upstream with a weekly drift check;
+   a maintenance page during deploys; faster and sturdier answers, with
+   retrieval in about half the time and a stream that reports progress from
+   the start, so long answers no longer time out. External collaborators
+   recently joined and contribute to the requirements and testing.
 
 See [Recent updates](recent-updates.md) for a detailed log of the latest
 phase. Development is ongoing, and this timeline will grow as the project
