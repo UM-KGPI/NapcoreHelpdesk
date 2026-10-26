@@ -80,6 +80,24 @@ services:
     mem_limit: ${CELERY_WORKER_MEM_LIMIT:-2g}
     cpus: ${CELERY_WORKER_CPUS:-1.5}
 
+  # Semantic embeddings: one process holds the model (about 0.9 GB) for the backend and the
+  # worker. Started only with the "semantic" profile (COMPOSE_PROFILES=semantic in the compose
+  # .env file), together with EMBEDDING_BACKEND=semantic; see docs/production-deployment.md.
+  embedder:
+    <<: *backend-base
+    profiles: ["semantic"]
+    command: python -m helpdesk.embedding_service
+    volumes:
+      - embedding-models:/models
+    mem_limit: ${EMBEDDER_MEM_LIMIT:-1536m}
+    cpus: ${EMBEDDER_CPUS:-2.0}
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8090/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 180s
+
   celery-beat:
     <<: *backend-base
     command: celery -A config beat -l info
@@ -132,3 +150,4 @@ volumes:
   postgres-data:
   graphdb-data:
   source-repos:
+  embedding-models:

@@ -45,7 +45,13 @@ except Exception:  # pragma: no cover - unavailable when postgres search extras 
 
 from helpdesk.models import SourceChunk
 from helpdesk.db_fields import HAS_NATIVE_PGVECTOR
-from helpdesk.services.embeddings import build_text_embedding, cosine_similarity, normalize_text_tokens
+from helpdesk.services.embeddings import (
+    build_text_embedding,
+    cosine_similarity,
+    normalize_text_tokens,
+    passage_text,
+    semantic_enabled,
+)
 from helpdesk.services.concept_extractor import extract_concepts, build_enriched_query
 from helpdesk.services.xsd_schema_extractor import retrieve_schema_definitions_for_concepts
 from helpdesk.services.example_retrieval import (
@@ -97,9 +103,6 @@ DEFAULT_CHUNKS = [
         "standards_scope": ["NeTEx", "Transmodel"],
         "quality_score": 0.84,
         "doc_type": "readme",
-        "embedding_vector": build_text_embedding(
-            "NeTEx profiles define interoperable structures for timetable and stop data."
-        ),
     },
     {
         "repository_url": settings.SEED_REPO_SIRI,
@@ -111,9 +114,6 @@ DEFAULT_CHUNKS = [
         "standards_scope": ["SIRI"],
         "quality_score": 0.79,
         "doc_type": "readme",
-        "embedding_vector": build_text_embedding(
-            "SIRI supports real-time information exchange in public transport systems."
-        ),
     },
     {
         "repository_url": settings.SEED_REPO_OPRA,
@@ -125,9 +125,6 @@ DEFAULT_CHUNKS = [
         "standards_scope": ["OpRa"],
         "quality_score": 0.78,
         "doc_type": "readme",
-        "embedding_vector": build_text_embedding(
-            "OpRa defines operational and performance metrics exchange profiles for transport networks."
-        ),
     },
 ]
 
@@ -136,10 +133,11 @@ def _ensure_seed_chunks() -> None:
     if SourceChunk.objects.exists():
         return
 
+    # Embedded here, not at import: with semantic embeddings that calls the embedding service.
     for chunk in DEFAULT_CHUNKS:
         SourceChunk.objects.get_or_create(
             chunk_id=chunk["chunk_id"],
-            defaults=chunk,
+            defaults={**chunk, "embedding_vector": build_text_embedding(chunk["text"])},
         )
 
 
@@ -810,6 +808,10 @@ def _build_query_embedding_input(
     hinted_doc_types: set[str],
     expanded_concept_terms: list[str] | None = None,
 ) -> str:
+    # A semantic model compares meaning, so it gets the question itself; the metadata lines
+    # below steer only the hash vectors.
+    if semantic_enabled():
+        return question
     standards = ", ".join(sorted(hinted_standards)) if hinted_standards else "unspecified"
     doc_types = ", ".join(sorted(hinted_doc_types)) if hinted_doc_types else "unspecified"
     concept_line = (
@@ -826,6 +828,8 @@ def _build_query_embedding_input(
 
 
 def _build_chunk_embedding_input(chunk: SourceChunk) -> str:
+    if semantic_enabled():
+        return passage_text(chunk.source_path, getattr(chunk, "heading", "") or "", chunk.text)
     standards_scope = chunk.standards_scope or []
     scope = ", ".join(standards_scope) if standards_scope else "unspecified"
     return (
@@ -1465,7 +1469,8 @@ def retrieve_chunks_with_trace(
             hinted_standards=hinted_standards,
             hinted_doc_types=hinted_doc_types,
             expanded_concept_terms=all_concept_terms if all_concept_terms else None,
-        )
+        ),
+        kind="query",
     )
     _record_stage("queryEmbeddingMs", stage_start)
 

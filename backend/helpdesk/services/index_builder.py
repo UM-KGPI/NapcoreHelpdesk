@@ -32,7 +32,7 @@ import yaml
 import certifi
 from helpdesk.models import IndexedSourceFile, IndexRunMetric, SourceChunk
 from helpdesk.services.schema_overlap import extract_schema_references
-from helpdesk.services.embeddings import build_text_embeddings_batch
+from helpdesk.services.embeddings import build_text_embeddings_batch, passage_text, semantic_enabled
 from helpdesk.services.repository_urls import canonical_repository_url
 
 
@@ -697,7 +697,12 @@ def build_chunk_embedding_text(
     repository_url: str,
     source_path: str,
 ) -> str:
-    """Build contextual embedding input so vectors encode document role and provenance."""
+    """Build contextual embedding input so vectors encode document role and provenance.
+
+    A semantic model gets the location and the text only; the metadata lines steer the
+    hash vectors."""
+    if semantic_enabled():
+        return passage_text(source_path, heading, chunk_text)
     scope = ", ".join(standards_scope) if standards_scope else "unspecified"
     return (
         f"doc_type: {doc_type}\n"
