@@ -13,7 +13,7 @@ constraints live in services/editorial_workflow.py, not here.
 
 Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
 Crafted by: AI coding agents
-Created: 2026-03-28  |  Modified: 2026-06-28
+Created: 2026-03-28  |  Modified: 2026-10-26
 """
 
 from django.db import models
@@ -53,6 +53,9 @@ class SourceChunk(TimestampedModel):
     structured_metadata = models.JSONField(default=dict, blank=True)
     # PostgreSQL uses pgvector; PortableVectorField keeps value normalization centralized.
     embedding_vector = PortableVectorField(dimensions=1536, default=list, blank=True)
+    # The vector of the other embedding backend (hash or semantic), filled by reembed_chunks so that
+    # switching EMBEDDING_BACKEND is a swap of the two columns; empty after the chunk's text changes.
+    alternate_vector = PortableVectorField(dimensions=1536, null=True, blank=True, default=None)
 
     class Meta:
         ordering = ["-quality_score", "source_path", "chunk_id"]

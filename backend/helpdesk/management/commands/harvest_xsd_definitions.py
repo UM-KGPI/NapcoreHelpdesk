@@ -174,6 +174,7 @@ Definition:
             "source_path": source_file,
             "heading": f"{name} - {self.standard} XSD Definition",
             "embedding_vector": embedding,
+            "alternate_vector": None,
             "updated_at": timezone.now(),
         }
 
