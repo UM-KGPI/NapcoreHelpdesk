@@ -610,9 +610,27 @@ import rdflib
 g = rdflib.Graph(); g.parse("docs/ontology/standards/netex.ttl", format="turtle"); print(len(g))
 ```
 
-The NeTEx figure (26,705 for the file generated from upstream `dc6f162`) equals the count GraphDB reported
-for it. Do this at a quiet time and do not re-run a command that seems to hang: read its output and the GraphDB
-log first. The backup from 12.0 restores the previous state.
+The NeTEx figure (27,129 for the file committed in #147, generated from upstream `dc6f162` with the class
+hierarchy of #95) equals the count GraphDB reports for it. Do this at a quiet time and do not re-run a command
+that seems to hang: read its output and the GraphDB log first. The backup from 12.0 restores the previous state.
+
+Then restart the backend and the worker. They read the concepts and labels from GraphDB once, when a process
+starts, so until they restart they keep answering with the graphs loaded before:
+
+```bash
+$C restart backend celery-worker
+```
+
+A regenerated file whose triples are unchanged (only reordered, as in #147) needs none of this. Check with rdflib
+before loading:
+
+```python
+import rdflib
+from rdflib.compare import isomorphic
+old = rdflib.Graph().parse("netex_before.ttl")   # git show <previous commit>:docs/ontology/standards/netex.ttl
+new = rdflib.Graph().parse("docs/ontology/standards/netex.ttl")
+print(isomorphic(old, new))                       # True: nothing to load
+```
 
 ### 12.3 Source index refresh
 

@@ -141,7 +141,10 @@ runs `build_standard_ontologies`, and compares the three files with the committe
 
 The pull request is opened with the workflow token, so it has no CI checks. Before merging, load the
 changed graphs into a GraphDB (`load_graphdb_ontologies --apply --replace`) and run
-`run_retrieval_benchmark --app-scope`, as was done for #61; after merging, repeat the load on the server.
+`run_retrieval_benchmark --app-scope`, as was done for #61; after merging, repeat the load on the server and
+restart the backend and the worker, which read the graphs only when they start
+(`docs/production-deployment.md`, section 12.2). A file whose triples are unchanged, only reordered (#147), needs
+no load: compare old and new with `rdflib.compare.isomorphic` first.
 
 Checked before the first run by executing the workflow's steps locally against the upstream default
 branches (NeTEx `dc6f162`, SIRI `b42cdba`, OpRa `3b829b7`, on 2026-10-19): the only difference was one
