@@ -15,7 +15,7 @@ not necessarily produced from those commits.
 | `standards/siri.ttl` | `extract_xsd_ontology` | **Yes.** Same 310 classes and 1,852 triples; only the provenance comment differs. |
 | `standards/netex.ttl` | `build_standard_ontologies`: `extract_xsd_ontology`, `scripts/build_netex_ttl_with_properties.py`, and a class recovery rule (`helpdesk/services/netex_recovery.py`) | **Yes, with the pipeline.** On upstream `dc6f162` it reproduces 919 of the 922 committed classes and 99.5% of the committed non-comment triples (below). The committed file predates the pipeline and has not been replaced yet. |
 | `standards/examples.ttl` | `extract_xsd_ontology` without `--skip-example-xml` (scans every example XML) | Not measured. The scan did not finish in 10 minutes. |
-| `standards/transmodel.ttl` | Enterprise Architect model export (`TransmodelEcoSystem2024-EAv16-nk84_OpRa-v13.qea`, header of the file) | **No.** The source is a local file, not a public repository. |
+| `standards/transmodel.ttl` | Enterprise Architect model export (`TransmodelEcoSystem2024-EAv16-nk84_OpRa-v13.qea`, header of the file), plus a section at the end written by `add_transmodel_guids --model <.qea>` (one `tmalign:eaGuid` per class, the stable EA GUID by which the Transmodel website can give the rest; a rerun gives the same file) | **No.** The source is a local file, not a public repository. |
 | `alignments/transmodel-{netex,opra,siri}-align.ttl` | `build_transmodel_alignment` from the standards files, `transmodel.ttl` and `transmodel-alignment-curation.csv` | **Yes**, deterministic: regenerating changes only the date line. Depends on the files above. |
 | `artifact-rules/*.ttl` | No generator found; the opra and siri files say "initial module scaffold" | No source to compare with. |
 
