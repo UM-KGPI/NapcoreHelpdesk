@@ -62,7 +62,7 @@ class TrackedQuestionsTests(SimpleTestCase):
 
     def test_questions_are_well_formed(self):
         questions = load_benchmark_questions()
-        self.assertEqual(len(questions), 142)
+        self.assertEqual(len(questions), 147)
         ids = [q["id"] for q in questions]
         self.assertEqual([i for i, n in Counter(ids).items() if n > 1], [])
         for question in questions:

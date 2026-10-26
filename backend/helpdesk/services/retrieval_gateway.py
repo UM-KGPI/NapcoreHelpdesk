@@ -1647,6 +1647,21 @@ def retrieve_chunks_with_trace(
 
     stage_start = time.perf_counter()
     candidates = []
+    # With semantic vectors, similarity decides the ranking: it is rescaled to 0-1 over this
+    # question's candidates (the model's similarities fall in a narrow band), and the legacy
+    # floor and README penalty below, tuned for hash vectors, no longer override it. Both
+    # parts were needed in the trial; either alone found no README answers.
+    vector_range = None
+    if semantic_enabled():
+        raw_vectors = []
+        for chunk in chunk_iterable:
+            similarity = getattr(chunk, "vector_similarity", None)
+            if similarity is None and chunk.embedding_vector is not None and len(chunk.embedding_vector):
+                similarity = cosine_similarity(query_embedding, chunk.embedding_vector)
+            if similarity is not None:
+                raw_vectors.append(max(0.0, min(1.0, float(similarity))))
+        if raw_vectors:
+            vector_range = (min(raw_vectors), max(raw_vectors))
     for chunk in chunk_iterable:
         if not _scope_matches(chunk.standards_scope or [], scope):
             continue
@@ -1684,12 +1699,22 @@ def retrieve_chunks_with_trace(
         quality_score = max(0.0, min(1.0, chunk.quality_score))
         doc_type = (getattr(chunk, "doc_type", "guide") or "guide").lower()
 
-        hybrid_score = (vector_score * 0.5) + (lexical_score * 0.3) + (quality_score * 0.2)
-        # Keep backward-compatible retrieval strength so known covered intents do not regress.
-        legacy_score = (quality_score * 0.8) + (lexical_score * 0.2)
+        if vector_range is not None:
+            low, high = vector_range
+            scaled_vector = (vector_score - low) / (high - low) if high > low else 1.0
+            base_score = (scaled_vector * 0.5) + (lexical_score * 0.3) + (quality_score * 0.2)
+            doc_type_adjustment = _doc_type_score_adjustment(hinted_doc_types=hinted_doc_types, doc_type=doc_type)
+            if doc_type == "readme":
+                doc_type_adjustment -= DOC_TYPE_BASE_ADJUSTMENTS.get("readme", 0.0)
+        else:
+            hybrid_score = (vector_score * 0.5) + (lexical_score * 0.3) + (quality_score * 0.2)
+            # Keep backward-compatible retrieval strength so known covered intents do not regress.
+            legacy_score = (quality_score * 0.8) + (lexical_score * 0.2)
+            base_score = max(hybrid_score, legacy_score)
+            doc_type_adjustment = _doc_type_score_adjustment(hinted_doc_types=hinted_doc_types, doc_type=doc_type)
         raw_score = (
-            max(hybrid_score, legacy_score)
-            + _doc_type_score_adjustment(hinted_doc_types=hinted_doc_types, doc_type=doc_type)
+            base_score
+            + doc_type_adjustment
             + _path_score_adjustment(question=question, source_path=chunk.source_path)
             + _source_path_intent_adjustment(
                 hinted_doc_types=hinted_doc_types,
