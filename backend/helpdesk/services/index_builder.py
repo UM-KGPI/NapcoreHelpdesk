@@ -32,7 +32,7 @@ import yaml
 import certifi
 from helpdesk.models import IndexedSourceFile, IndexRunMetric, SourceChunk
 from helpdesk.services.schema_overlap import extract_schema_references
-from helpdesk.services.embeddings import build_text_embeddings_batch, passage_text, semantic_enabled
+from helpdesk.services.embeddings import build_text_embeddings_batch, passage_text, uses_semantic
 from helpdesk.services.repository_urls import canonical_repository_url
 
 
@@ -696,12 +696,13 @@ def build_chunk_embedding_text(
     standards_scope: list[str],
     repository_url: str,
     source_path: str,
+    backend: str | None = None,
 ) -> str:
     """Build contextual embedding input so vectors encode document role and provenance.
 
     A semantic model gets the location and the text only; the metadata lines steer the
-    hash vectors."""
-    if semantic_enabled():
+    hash vectors. backend overrides EMBEDDING_BACKEND, as in build_text_embeddings_batch."""
+    if uses_semantic(backend):
         return passage_text(source_path, heading, chunk_text)
     scope = ", ".join(standards_scope) if standards_scope else "unspecified"
     return (
@@ -1175,6 +1176,8 @@ def index_repository(
                     "heading": chunk_record["heading"],
                     "structured_metadata": chunk_record["structured_metadata"],
                     "embedding_vector": chunk_embedding,
+                    # Changed text: the other backend's vector is stale (reembed_chunks fills it again).
+                    "alternate_vector": None,
                 }
 
                 _, created = SourceChunk.objects.update_or_create(
@@ -1315,6 +1318,7 @@ def index_repository(
                         "heading": issue_chunk_record["heading"],
                         "structured_metadata": issue_chunk_record["structured_metadata"],
                         "embedding_vector": chunk_embedding,
+                        "alternate_vector": None,
                     }
 
                     _, created = SourceChunk.objects.update_or_create(

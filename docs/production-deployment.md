@@ -688,7 +688,7 @@ semantic vectors cannot be compared, so switching it on before every chunk is re
 2. *Ranking that lets similarity decide*, behind the same switch: with `semantic`, vector similarity is
    rescaled over each question's candidates and the hash-era quality floor and README penalty no longer
    override it.
-3. *Re-embedding every chunk* with the model while hash vectors stay in use.
+3. *Re-embedding every chunk* with the model while hash vectors stay in use (`reembed_chunks`, §13.1).
 4. *Switching over*, then measuring on production.
 
 To start the service, add to `/opt/napcore-helpdesk/.env` (the file compose reads for the project; every deploy
@@ -708,3 +708,49 @@ $C exec -T backend curl -s http://embedder:8090/health
 Its settings are `EMBEDDER_*` variables (`EMBEDDER_MAX_TOKENS`, default 256; `EMBEDDER_BATCH_SIZE`, default 16;
 `EMBEDDER_CPUS` and `EMBEDDER_MEM_LIMIT` in compose). The older `EMBEDDING_MODEL`, `EMBEDDING_PROVIDER` and
 similar entries in existing env files belong to a removed provider and are ignored.
+
+### 13.1 Re-embedding and switching over
+
+Every chunk has two vectors: `embedding_vector`, which retrieval uses and which matches `EMBEDDING_BACKEND`,
+and `alternate_vector`, the vector of the other backend. `reembed_chunks` fills `alternate_vector` while
+retrieval keeps using the hash vectors, so answers do not change during the run. Switching is then one swap
+of the two columns, and swapping back restores the hash vectors exactly. The index refresh empties
+`alternate_vector` of every chunk whose text it changes, so a later run only embeds those.
+
+1. Give the embedder more CPUs for the run, in `/opt/napcore-helpdesk/.env`, and recreate it:
+
+   ```bash
+   EMBEDDER_CPUS=8
+   EMBEDDER_MEM_LIMIT=3g
+   ```
+
+   ```bash
+   $C up -d embedder
+   ```
+
+2. Fill the alternate vectors. Locally, 53,798 chunks took 59 minutes on 4 CPUs (15 chunks/s); 8 CPUs should
+   be faster. The run can be stopped and rerun, and continues where it stopped:
+
+   ```bash
+   $C exec -T backend python manage.py reembed_chunks --status
+   $C exec -T backend python manage.py reembed_chunks
+   ```
+
+3. At a quiet time, swap and switch at once. `--swap` first embeds the chunks the refresh changed since step 2,
+   then swaps the columns in one transaction and rebuilds the vector index (93 seconds locally for 53,798
+   chunks; questions may wait while the index is rebuilt). Until the restart, questions are still embedded
+   with hash, so answers are poor for those minutes:
+
+   ```bash
+   $C exec -T backend python manage.py reembed_chunks --swap
+   # append EMBEDDING_BACKEND=semantic to /opt/napcore-helpdesk/backend/.env.prod, then
+   $C up -d
+   ```
+
+   The setting belongs in `backend/.env.prod`, not in the compose `.env` of step 1. That file is shared by
+   every backend service and the `db` service, so `up -d` recreates them all; the database is down for
+   seconds and its data stays.
+
+   `EMBEDDER_CPUS` can go back to 2 afterwards: answering embeds one question at a time.
+
+4. To go back to hash: `reembed_chunks --swap` again, set `EMBEDDING_BACKEND=hash` in `backend/.env.prod`, and `$C up -d`.

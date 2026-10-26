@@ -83,6 +83,11 @@ def semantic_enabled() -> bool:
     return getattr(settings, "EMBEDDING_BACKEND", "hash") == "semantic"
 
 
+def uses_semantic(backend: str | None = None) -> bool:
+    """Whether to embed semantically: the given backend ("hash" or "semantic"), else the setting."""
+    return semantic_enabled() if backend is None else backend == "semantic"
+
+
 def passage_text(source_path: str, heading: str, text: str) -> str:
     """The text a semantic model embeds for an indexed chunk: where it is, then what it says."""
     return f"{source_path}\n{heading or ''}\n{text}"
@@ -114,9 +119,11 @@ def build_text_embedding(text: str, kind: str = "passage") -> list[float]:
     return _hash_embed(text)
 
 
-def build_text_embeddings_batch(texts: list[str], kind: str = "passage") -> list[list[float]]:
-    """Return embeddings for a list of texts, preserving input order."""
-    if semantic_enabled():
+def build_text_embeddings_batch(texts: list[str], kind: str = "passage", backend: str | None = None) -> list[list[float]]:
+    """Return embeddings for a list of texts, preserving input order.
+
+    backend overrides EMBEDDING_BACKEND, for re-embedding the index with the other backend."""
+    if uses_semantic(backend):
         return _service_embed(list(texts), kind) if texts else []
     return [_hash_embed(t) for t in texts]
 
