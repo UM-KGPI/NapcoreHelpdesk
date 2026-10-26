@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.test import TestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from helpdesk.models import IndexedSourceFile, IndexRunMetric, SourceChunk
 from helpdesk.services.grounded_generator import generate_answer
@@ -710,3 +710,50 @@ class SourceIndexBuilderTests(TestCase):
         self.assertEqual(readme_chunk.doc_type, "readme")
         self.assertEqual(frame_chunk.doc_type, "frame")
         self.assertLess(readme_chunk.quality_score, frame_chunk.quality_score)
+
+
+class TrackedSourceFilesTests(SimpleTestCase):
+    """In a git checkout only tracked files are indexed: untracked and gitignored files
+    (a contributor's local notes) are not part of the published standard."""
+
+    def _git(self, repo, *args):
+        import subprocess
+
+        subprocess.run(["git", "-C", str(repo), *args], check=True, capture_output=True)
+
+    def test_git_checkout_lists_only_tracked_files(self):
+        import shutil
+
+        from helpdesk.services.index_builder import iter_source_files
+
+        if not shutil.which("git"):
+            self.skipTest("git is not installed")
+        with TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / "xsd").mkdir()
+            (repo / "xsd" / "netex_line.xsd").write_text("<xs:schema/>")
+            (repo / "README.md").write_text("# NeTEx")
+            (repo / ".gitignore").write_text(".mylocal/\n")
+            (repo / ".mylocal").mkdir()
+            (repo / ".mylocal" / "notes.md").write_text("local notes")
+            self._git(repo, "init", "-q")
+            self._git(repo, "add", "xsd/netex_line.xsd", "README.md", ".gitignore")
+            (repo / "draft.md").write_text("untracked draft")
+
+            files = iter_source_files(repo, {".xsd", ".md"})
+
+        self.assertEqual([p.relative_to(repo).as_posix() for p in files], ["README.md", "xsd/netex_line.xsd"])
+
+    def test_directory_without_git_is_walked(self):
+        from helpdesk.services.index_builder import iter_source_files
+
+        with TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / "notes").mkdir()
+            (repo / "notes" / "a.md").write_text("a")
+            (repo / "node_modules").mkdir()
+            (repo / "node_modules" / "b.md").write_text("b")
+
+            files = iter_source_files(repo, {".md"})
+
+        self.assertEqual([p.relative_to(repo).as_posix() for p in files], ["notes/a.md"])

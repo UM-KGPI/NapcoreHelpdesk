@@ -110,16 +110,22 @@ def validate_repository_allowed(repo_url: str, allowed_repositories: set[str]) -
         raise ValueError(f"Repository URL '{repo_url}' is not allow-listed. Allowed: {allowed}")
 
 
+def _git(repo_path: Path, *args: str) -> subprocess.CompletedProcess:
+    """Run git in a checkout. The checkout may belong to another user (a host directory
+    mounted into a container), so this path alone is trusted; otherwise git refuses it
+    as "dubious ownership"."""
+    return subprocess.run(
+        ["git", "-c", f"safe.directory={repo_path}", "-C", str(repo_path), *args],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+
 def current_commit_sha(repo_path: Path) -> str:
     """Resolve full current git commit for traceability; fallback to 'unknown' for non-git dirs."""
     try:
-        result = subprocess.run(
-            ["git", "-C", str(repo_path), "rev-parse", "HEAD"],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-        return result.stdout.strip() or "unknown"
+        return _git(repo_path, "rev-parse", "HEAD").stdout.strip() or "unknown"
     except Exception:
         return "unknown"
 
@@ -156,13 +162,46 @@ def infer_scope(source_path: str, chunk_text: str, repo_url: str = "") -> list[s
     return sorted(scope)
 
 
+_EXCLUDED_DIRECTORIES = {".git", ".venv", "node_modules", "dist", "build"}
+
+
+def _tracked_files(repo_path: Path) -> list[Path] | None:
+    """Files the repository tracks, or None when the directory is not a usable git checkout.
+
+    Untracked and gitignored files (a contributor's local notes, build output) are not
+    part of the standard and are never published upstream, so they are not indexed.
+    """
+    if not (repo_path / ".git").exists():
+        return None
+    try:
+        output = _git(repo_path, "ls-files", "-z").stdout
+    except Exception:
+        logger.warning("git ls-files failed for %s; indexing every file instead", repo_path, exc_info=True)
+        return None
+    return [repo_path / relative for relative in output.split("\0") if relative]
+
+
 def iter_source_files(repo_path: Path, include_extensions: set[str]) -> list[Path]:
-    """Walk repository files while excluding common non-source directories."""
+    """List the repository's source files, excluding common non-source directories.
+
+    In a git checkout only tracked files are listed; nested checkouts and submodules are
+    single gitlink entries there, not files, so they are skipped as in the walk below.
+    """
+    tracked = _tracked_files(repo_path)
+    if tracked is not None:
+        return sorted(
+            path
+            for path in tracked
+            if path.suffix.lower() in include_extensions
+            and not _EXCLUDED_DIRECTORIES.intersection(path.relative_to(repo_path).parts)
+            and path.is_file()
+        )
+
     files: list[Path] = []
     for root, dirs, filenames in os.walk(repo_path):
         filtered_dirs: list[str] = []
         for directory in dirs:
-            if directory in {".git", ".venv", "node_modules", "dist", "build"}:
+            if directory in _EXCLUDED_DIRECTORIES:
                 continue
 
             directory_path = Path(root) / directory
