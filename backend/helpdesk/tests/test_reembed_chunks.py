@@ -58,7 +58,11 @@ class ReembedChunksTests(TestCase):
         self.assertEqual([len(texts) for _, texts in seen], [1])
 
     def test_swap_switches_the_columns_and_swapping_again_restores_them(self):
-        self._fill("--swap")
+        seen: list = []
+        out = StringIO()
+        with patch.object(embeddings, "urlopen", side_effect=_service_answer(seen)):
+            call_command("reembed_chunks", "--swap", stdout=out)
+        self.assertIn("retrieval vectors are now semantic", out.getvalue())
         for chunk in SourceChunk.objects.all():
             self.assertEqual(vector_kind(chunk.embedding_vector), "semantic")
             self.assertEqual(list(chunk.alternate_vector), self.hash_vectors[chunk.pk])

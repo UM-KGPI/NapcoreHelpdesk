@@ -728,8 +728,8 @@ of the two columns, and swapping back restores the hash vectors exactly. The ind
    $C up -d embedder
    ```
 
-2. Fill the alternate vectors (about an hour for some 54,000 chunks on 8 CPUs; it can be stopped and
-   rerun, and continues where it stopped):
+2. Fill the alternate vectors. Locally, 53,798 chunks took 59 minutes on 4 CPUs (15 chunks/s); 8 CPUs should
+   be faster. The run can be stopped and rerun, and continues where it stopped:
 
    ```bash
    $C exec -T backend python manage.py reembed_chunks --status
@@ -737,8 +737,9 @@ of the two columns, and swapping back restores the hash vectors exactly. The ind
    ```
 
 3. At a quiet time, swap and switch at once. `--swap` first embeds the chunks the refresh changed since step 2,
-   then swaps the columns in one transaction and rebuilds the vector index. Until the restart, questions
-   are still embedded with hash, so answers are poor for that minute:
+   then swaps the columns in one transaction and rebuilds the vector index (93 seconds locally for 53,798
+   chunks; questions may wait while the index is rebuilt). Until the restart, questions are still embedded
+   with hash, so answers are poor for those minutes:
 
    ```bash
    $C exec -T backend python manage.py reembed_chunks --swap

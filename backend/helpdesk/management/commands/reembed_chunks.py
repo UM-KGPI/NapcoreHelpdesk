@@ -111,7 +111,9 @@ def swap_vectors() -> int:
             with connection.cursor() as cursor:
                 cursor.execute("SELECT 1 FROM pg_class WHERE relname = %s", [VECTOR_INDEX])
                 if cursor.fetchone():
-                    # The ivfflat lists were built from the old vectors.
+                    # The ivfflat lists were built from the old vectors. Rebuilding them for some
+                    # 54,000 chunks needs about 65 MB, just over Postgres's default of 64 MB.
+                    cursor.execute("SET LOCAL maintenance_work_mem = '256MB'")
                     cursor.execute(f"REINDEX INDEX {VECTOR_INDEX}")
     return swapped
 
@@ -146,7 +148,11 @@ class Command(BaseCommand):
         self.stdout.write(f"Filled {filled} alternate vectors.")
         if options["swap"]:
             swapped = swap_vectors()
+            # Read back what retrieval now uses rather than assume it.
+            sample = SourceChunk.objects.order_by("pk").values_list("embedding_vector", flat=True)[:200]
+            kinds = {vector_kind(vector) for vector in sample} - {"empty"}
+            now = kinds.pop() if len(kinds) == 1 else "mixed"
             self.stdout.write(
-                f"Swapped the vectors of {swapped} chunks: retrieval vectors are now {backend}.\n"
-                f"Now set EMBEDDING_BACKEND={backend} and restart the backend and the worker."
+                f"Swapped the vectors of {swapped} chunks: retrieval vectors are now {now}.\n"
+                f"Now set EMBEDDING_BACKEND={now} and restart the backend and the worker."
             )
