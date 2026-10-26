@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 
 from django.test import SimpleTestCase
 
-from helpdesk.services.transmodel_packages import SECTION_MARKER, add_package_section, read_package_paths
+from helpdesk.services.transmodel_parts import SECTION_MARKER, add_part_section, read_parts
 
 TTL = """@prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix tm: <https://transmodel-cen.eu/6.2/> .
@@ -40,48 +40,40 @@ def _model(path: Path) -> Path:
     return path
 
 
-class TransmodelPackageTests(SimpleTestCase):
+class TransmodelPartTests(SimpleTestCase):
     def setUp(self):
         self._dir = TemporaryDirectory()
-        self.paths = read_package_paths(_model(Path(self._dir.name) / "model.qea"))
+        self.parts = read_parts(_model(Path(self._dir.name) / "model.qea"))
 
     def tearDown(self):
         self._dir.cleanup()
 
-    def test_each_class_gets_its_own_package(self):
-        text, counts = add_package_section(TTL, self.paths, "model.qea")
+    def test_each_class_gets_only_its_part(self):
+        text, counts = add_part_section(TTL, self.parts, "model.qea")
 
-        self.assertIn(
-            'tm:SINGLE_JOURNEY tmalign:transmodelPackage "Part 10 - Alternative Modes (NM) > SJ Single Journey Service MODEL" .',
-            text,
-        )
+        self.assertIn('tm:SINGLE_JOURNEY tmalign:transmodelPart "Part 10 - Alternative Modes (NM)" .', text)
+        self.assertNotIn("SJ Single Journey Service MODEL", text)
         # Hyphens in the model name become underscores in the tm: name.
-        self.assertIn('tm:PRE_ASSIGNED_FARE_PRODUCT tmalign:transmodelPackage "Part 5 - Fare Management (FM)" .', text)
+        self.assertIn('tm:PRE_ASSIGNED_FARE_PRODUCT tmalign:transmodelPart "Part 5 - Fare Management (FM)" .', text)
         # The same name twice: the suffixed class is the object with that id, the plain one the other.
-        self.assertIn(
-            'tm:VEHICLE_EQUIPMENT_PROFILE tmalign:transmodelPackage "Part 1 - Common Concepts (CC) > RC Vehicle Type MODEL" .',
-            text,
-        )
-        self.assertIn(
-            'tm:VEHICLE_EQUIPMENT_PROFILE_12709 tmalign:transmodelPackage "Part 10 - Alternative Modes (NM) > SJ Single Journey Service MODEL" .',
-            text,
-        )
+        self.assertIn('tm:VEHICLE_EQUIPMENT_PROFILE tmalign:transmodelPart "Part 1 - Common Concepts (CC)" .', text)
+        self.assertIn('tm:VEHICLE_EQUIPMENT_PROFILE_12709 tmalign:transmodelPart "Part 10 - Alternative Modes (NM)" .', text)
         self.assertEqual(counts["missing"], ["UNKNOWN_CLASS"])
 
     def test_classes_of_other_models_in_the_file_are_ignored(self):
-        self.assertEqual(list(self.paths["SINGLE_JOURNEY"].values()), ["Part 10 - Alternative Modes (NM) > SJ Single Journey Service MODEL"])
+        self.assertEqual(list(self.parts["SINGLE_JOURNEY"].values()), ["Part 10 - Alternative Modes (NM)"])
 
     def test_a_rerun_replaces_the_section_and_keeps_the_rest(self):
-        once, _ = add_package_section(TTL, self.paths, "model.qea")
-        twice, _ = add_package_section(once, self.paths, "model.qea")
+        once, _ = add_part_section(TTL, self.parts, "model.qea")
+        twice, _ = add_part_section(once, self.parts, "model.qea")
 
         self.assertEqual(once, twice)
         self.assertEqual(once.count(SECTION_MARKER), 1)
         self.assertTrue(once.startswith(TTL.rstrip()))
 
 
-class TransmodelPackageEvidenceTests(SimpleTestCase):
-    def test_definition_evidence_names_the_package(self):
+class TransmodelPartEvidenceTests(SimpleTestCase):
+    def test_definition_evidence_names_the_part(self):
         from helpdesk.services.ontology_evidence import format_definitions_as_chunks
 
         chunks = format_definitions_as_chunks(
@@ -90,23 +82,22 @@ class TransmodelPackageEvidenceTests(SimpleTestCase):
                     "concept": "https://transmodel-cen.eu/6.2/SINGLE_JOURNEY",
                     "definition": "The planned movement of any type of vehicle.",
                     "prefLabel": "SINGLE JOURNEY",
-                    "package": "Part 10 - Alternative Modes (NM) > SJ Single Journey Service MODEL",
+                    "part": "Part 10 - Alternative Modes (NM)",
                 },
                 {
                     "concept": "https://netex.org.uk/netex/2.0#SingleJourney",
                     "definition": "A JOURNEY of a VEHICLE.",
                     "tm_concept": "https://transmodel-cen.eu/6.2/SINGLE_JOURNEY_PATH",
                     "tm_definition": "A path for a SINGLE JOURNEY.",
-                    "tm_package": "Part 10 - Alternative Modes (NM) > SJ Single Journey Path MODEL",
+                    "tm_part": "Part 10 - Alternative Modes (NM)",
                 },
             ]
         )
         texts = [chunk["text"] for chunk in chunks]
 
-        self.assertTrue(any("Transmodel package: Part 10 - Alternative Modes (NM) > SJ Single Journey Service MODEL" in t for t in texts))
-        self.assertTrue(any("Transmodel package: Part 10 - Alternative Modes (NM) > SJ Single Journey Path MODEL" in t for t in texts))
+        self.assertEqual(sum("Transmodel part: Part 10 - Alternative Modes (NM)\n" in t for t in texts), 2)
 
-    def test_query_results_carry_the_package(self):
+    def test_query_results_carry_the_part(self):
         from unittest.mock import patch
 
         from helpdesk.services.ontology_evidence import retrieve_concept_definitions
@@ -115,12 +106,12 @@ class TransmodelPackageEvidenceTests(SimpleTestCase):
             "concept": {"value": "https://transmodel-cen.eu/6.2/SINGLE_JOURNEY"},
             "type": {"value": "http://www.w3.org/2002/07/owl#Class"},
             "ownComment": {"value": "The planned movement of any type of vehicle."},
-            "ownPackage": {"value": "Part 10 - Alternative Modes (NM) > SJ Single Journey Service MODEL"},
+            "ownPart": {"value": "Part 10 - Alternative Modes (NM)"},
         }
         with patch(
             "helpdesk.services.graphdb_client.execute_sparql_query", return_value={"results": {"bindings": [binding]}}
         ) as query:
             definitions = retrieve_concept_definitions({"transmodel:SINGLE_JOURNEY"}, endpoint="http://graphdb", repository="r")
 
-        self.assertIn("tmalign:transmodelPackage", query.call_args.kwargs["sparql_query"])
-        self.assertEqual(definitions[0]["package"], "Part 10 - Alternative Modes (NM) > SJ Single Journey Service MODEL")
+        self.assertIn("tmalign:transmodelPart", query.call_args.kwargs["sparql_query"])
+        self.assertEqual(definitions[0]["part"], "Part 10 - Alternative Modes (NM)")

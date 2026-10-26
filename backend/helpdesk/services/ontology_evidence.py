@@ -80,8 +80,8 @@ def retrieve_concept_definitions(
         PREFIX owl: <http://www.w3.org/2002/07/owl#>
         PREFIX tmalign: <https://napcore.eu/ontology/transmodel-alignment#>
 
-        SELECT ?concept ?definition ?prefLabel ?altLabel ?type ?source ?ownComment ?ownPackage
-               ?tmConcept ?tmLabel ?tmDefinition ?tmStatus ?tmPackage
+        SELECT ?concept ?definition ?prefLabel ?altLabel ?type ?source ?ownComment ?ownPart
+               ?tmConcept ?tmLabel ?tmDefinition ?tmStatus ?tmPart
         {from_graphs}
         WHERE {{
           VALUES ?concept {{ {concept_uris} }}
@@ -95,15 +95,15 @@ def retrieve_concept_definitions(
             ?concept rdfs:comment ?ownComment .
             FILTER(STRSTARTS(STR(?concept), "{TRANSMODEL_NAMESPACE}"))
           }}
-          # The Transmodel package a concept is defined in (e.g. "Part 10 - Alternative Modes (NM) > ...")
-          OPTIONAL {{ ?concept tmalign:transmodelPackage ?ownPackage . }}
+          # The Transmodel part a concept is defined in (e.g. "Part 10 - Alternative Modes (NM)")
+          OPTIONAL {{ ?concept tmalign:transmodelPart ?ownPart . }}
           # Reference definition of the Transmodel concept this concept implements
           OPTIONAL {{
             ?concept skos:exactMatch|^skos:exactMatch ?tmConcept .
             FILTER(STRSTARTS(STR(?tmConcept), "{TRANSMODEL_NAMESPACE}"))
             ?tmConcept rdfs:comment ?tmDefinition .
             OPTIONAL {{ ?tmConcept rdfs:label ?tmLabel . }}
-            OPTIONAL {{ ?tmConcept tmalign:transmodelPackage ?tmPackage . }}
+            OPTIONAL {{ ?tmConcept tmalign:transmodelPart ?tmPart . }}
           }}
           OPTIONAL {{ ?concept tmalign:transmodelDefinitionStatus ?tmStatus . }}
         }}
@@ -152,8 +152,8 @@ def retrieve_concept_definitions(
                 # Transmodel EA export leaves HTML (<font ...>) in some definitions
                 "tm_definition": clean_definition(binding.get("tmDefinition", {}).get("value", "")),
                 "tm_status": binding.get("tmStatus", {}).get("value", ""),
-                "package": binding.get("ownPackage", {}).get("value", ""),
-                "tm_package": binding.get("tmPackage", {}).get("value", ""),
+                "part": binding.get("ownPart", {}).get("value", ""),
+                "tm_part": binding.get("tmPart", {}).get("value", ""),
             }
 
             # OPTIONALs multiply rows (types x altLabels x ...) and a value can be
@@ -241,7 +241,7 @@ def format_definitions_as_chunks(definitions: list[dict], commit_shas: dict[str,
                     tm_concept=tm_concept,
                     tm_label=definition.get("tm_label", ""),
                     tm_definition=tm_definition,
-                    tm_package=definition.get("tm_package", ""),
+                    tm_part=definition.get("tm_part", ""),
                     implemented_as=f"{standard} {concept_name}",
                     notes=comparison_notes.get(tm_concept, []),
                 )
@@ -255,7 +255,7 @@ def format_definitions_as_chunks(definitions: list[dict], commit_shas: dict[str,
                         tm_concept=concept,
                         tm_label=pref_label,
                         tm_definition=definition_text,
-                        tm_package=definition.get("package", ""),
+                        tm_part=definition.get("part", ""),
                         implemented_as="",
                         notes=comparison_notes.get(concept, []),
                     )
@@ -375,11 +375,11 @@ def _transmodel_definition_chunk(
     tm_definition: str,
     implemented_as: str,
     notes: list[str] | None = None,
-    tm_package: str = "",
+    tm_part: str = "",
 ) -> dict:
     """Build the evidence chunk for a Transmodel reference definition.
 
-    The package says where in Transmodel the concept is defined, which is often part of its meaning:
+    The part says where in Transmodel the concept is defined, which is often part of its meaning:
     SINGLE JOURNEY is defined in Part 10 - Alternative Modes, so it was introduced for new modes."""
     local_name = tm_concept.rsplit("/", 1)[-1]
     label = tm_label or local_name.replace("_", " ")
@@ -391,8 +391,8 @@ CONCEPT DEFINITION: {label} ({camel_name})
 Standard: Transmodel (conceptual reference model, v6.2)
 IRI: {tm_concept}
 """
-    if tm_package:
-        chunk_text += f"Transmodel package: {tm_package}\n"
+    if tm_part:
+        chunk_text += f"Transmodel part: {tm_part}\n"
     if implemented_as:
         chunk_text += f"Implemented as: {implemented_as}\n"
     chunk_text += f"""
