@@ -137,7 +137,7 @@ def build_semantic_clusters(*, window_days: int, min_cluster_size: int, similari
         }
 
     questions = [str(item["question"]) for item in events]
-    vectors = build_text_embeddings_batch(questions)
+    vectors = build_text_embeddings_batch(questions, kind="query")
 
     clusters: list[_ClusterState] = []
     for event, vector in zip(events, vectors):

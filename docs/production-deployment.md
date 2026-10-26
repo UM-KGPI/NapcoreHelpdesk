@@ -670,3 +670,39 @@ $C up -d --force-recreate backend
 
 Check that a weather question abstains, and that "fares" and "What is SIRI?" are answered. To switch it
 off set the variable to `False` and recreate the backend. It uses the `CONTROLLER_LLM_*` settings.
+
+## 13. Semantic embeddings (not switched on yet)
+
+Retrieval compares a question with indexed chunks by vector similarity. By default the vectors are hash
+embeddings of the words (`EMBEDDING_BACKEND=hash`). A multilingual model, `intfloat/multilingual-e5-small`
+(MIT license, about 100 languages, 384 dimensions, runs offline), can produce vectors that compare meaning
+instead; a local trial found more README answers and questions in other languages, see the design note
+linked from PR #145. The model runs in one container, `embedder` (`backend/helpdesk/embedding_service.py`),
+which the backend and the worker call over HTTP, so the model (about 0.9 GB of memory) is loaded once.
+
+The rollout is in steps. Until all of them are done, **leave `EMBEDDING_BACKEND` at `hash`**: hash vectors and
+semantic vectors cannot be compared, so switching it on before every chunk is re-embedded breaks retrieval.
+
+1. *Service and switch (this section).* The `embedder` service has the compose profile `semantic` and does
+   not start by default, so a deploy changes nothing.
+2. *Ranking that lets similarity decide* (next pull request), behind the same switch.
+3. *Re-embedding every chunk* with the model while hash vectors stay in use.
+4. *Switching over*, then measuring on production.
+
+To start the service, add to `/opt/napcore-helpdesk/.env` (the file compose reads for the project; every deploy
+then keeps the service, because `deploy.sh` runs `up -d --remove-orphans` with the profiles it finds there):
+
+```bash
+COMPOSE_PROFILES=semantic
+```
+
+and deploy. The first start downloads the model (470 MB) from Hugging Face into the volume
+`embedding-models`. Check it from the backend:
+
+```bash
+$C exec -T backend curl -s http://embedder:8090/health
+```
+
+Its settings are `EMBEDDER_*` variables (`EMBEDDER_MAX_TOKENS`, default 256; `EMBEDDER_BATCH_SIZE`, default 16;
+`EMBEDDER_CPUS` and `EMBEDDER_MEM_LIMIT` in compose). The older `EMBEDDING_MODEL`, `EMBEDDING_PROVIDER` and
+similar entries in existing env files belong to a removed provider and are ignored.

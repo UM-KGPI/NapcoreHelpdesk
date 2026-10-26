@@ -107,6 +107,19 @@ services:
       backend:
         condition: service_started
 
+  # Semantic embeddings; started only with the "semantic" profile (see docker-compose.prod.yml).
+  embedder:
+    <<: *backend-base
+    profiles: ["semantic"]
+    command: python -m helpdesk.embedding_service
+    volumes:
+      - ./backend:/app/backend
+      - embedding-models:/models
+    ports:
+      - "8090:8090"
+    mem_limit: ${EMBEDDER_MEM_LIMIT:-1536m}
+    cpus: ${EMBEDDER_CPUS:-2.0}
+
   celery-beat:
     <<: *backend-base
     command: celery -A config beat -l info
@@ -188,6 +201,7 @@ services:
     cpus: ${CONTROLLER_LLM_CPUS:-3.0}
 
 volumes:
+  embedding-models:
   postgres-data:
   frontend-node-modules:
   graphdb-data:

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import environ
+from django.core.exceptions import ImproperlyConfigured
 
 from config.beat_schedule import build_beat_schedule
 
@@ -52,6 +53,9 @@ env = environ.Env(
     LLM_TIMEOUT_SECONDS=(int, 20),
     LLM_MAX_TOKENS=(int, 4000),
     LLM_TEMPERATURE=(float, 0.2),
+    EMBEDDING_BACKEND=(str, "hash"),
+    EMBEDDING_SERVICE_URL=(str, "http://embedder:8090"),
+    EMBEDDING_SERVICE_TIMEOUT_SECONDS=(int, 120),
     LLM_MAX_EVIDENCE_CHUNKS=(int, 4),
     LLM_MAX_EVIDENCE_CHARS_PER_CHUNK=(int, 1200),
     CONTROLLER_LLM_ENABLED=(bool, False),
@@ -265,6 +269,13 @@ LLM_CA_BUNDLE = env("LLM_CA_BUNDLE", default="").strip() or GITHUB_CA_BUNDLE
 LLM_TIMEOUT_SECONDS = env("LLM_TIMEOUT_SECONDS")
 LLM_MAX_TOKENS = env("LLM_MAX_TOKENS")
 LLM_TEMPERATURE = env("LLM_TEMPERATURE")
+# "hash" (default) or "semantic". Semantic needs the embedding service (compose profile
+# "semantic") and every chunk re-embedded with it: hash and semantic vectors cannot be mixed.
+EMBEDDING_BACKEND = env("EMBEDDING_BACKEND").strip().lower()
+if EMBEDDING_BACKEND not in {"hash", "semantic"}:
+    raise ImproperlyConfigured("EMBEDDING_BACKEND must be 'hash' or 'semantic'.")
+EMBEDDING_SERVICE_URL = env("EMBEDDING_SERVICE_URL").strip()
+EMBEDDING_SERVICE_TIMEOUT_SECONDS = env("EMBEDDING_SERVICE_TIMEOUT_SECONDS")
 LLM_MAX_EVIDENCE_CHUNKS = env("LLM_MAX_EVIDENCE_CHUNKS")
 LLM_MAX_EVIDENCE_CHARS_PER_CHUNK = env("LLM_MAX_EVIDENCE_CHARS_PER_CHUNK")
 CONTROLLER_LLM_ENABLED = env("CONTROLLER_LLM_ENABLED")
