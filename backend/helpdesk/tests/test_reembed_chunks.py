@@ -31,7 +31,8 @@ def _chunk(index: int) -> SourceChunk:
 class ReembedChunksTests(TestCase):
     def setUp(self):
         self.chunks = [_chunk(i) for i in range(3)]
-        self.hash_vectors = {c.pk: list(c.embedding_vector) for c in self.chunks}
+        # As stored: pgvector keeps 32-bit floats.
+        self.hash_vectors = {c.pk: list(c.embedding_vector) for c in SourceChunk.objects.all()}
 
     def _fill(self, *args):
         seen: list = []
