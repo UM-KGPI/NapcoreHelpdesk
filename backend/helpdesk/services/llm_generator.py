@@ -24,7 +24,7 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 from helpdesk.services.service_abbreviations import services_in_question
-from helpdesk.services.question_preprocessor import detect_question_language
+from helpdesk.services.question_preprocessor import LANGDETECT_LANGUAGE_NAMES, detect_question_language
 from helpdesk.services.llm_model_recovery import (
     extract_authorized_model,
     remember_correction,
@@ -847,6 +847,54 @@ def _trim_chunk_text(text: str, max_chars: int, focus_terms: list[str] | tuple[s
     return f"{text[:max_chars].rstrip()}\n...[truncated for latency]"
 
 
+LANGUAGE_CLASSIFIER_TIMEOUT_SECONDS = 10
+
+
+def _classify_question_language_with_llm(question: str) -> str | None:
+    """Ask the LLM which language a question is written in; return a language name or None.
+
+    For questions the word-based detector cannot judge: once schema identifiers are removed,
+    "Wie verwendet SIRI NeTEx?" keeps only two words. The generic "respond in the question's
+    language" instruction then gets an English answer, so the answer prompt needs the language
+    named. Any failure or an unknown name returns None, which keeps that generic instruction.
+    """
+    base_url = (settings.LLM_API_BASE_URL or "").strip()
+    if not base_url:
+        return None
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "Identify the natural language the user's question is written in. Ignore technical terms, "
+                "acronyms and schema names such as SIRI, NeTEx or StopPlace. "
+                'Reply with JSON only: {"language": "<English name of the language>"}.'
+            ),
+        },
+        {"role": "user", "content": question},
+    ]
+    try:
+        response = _request_chat_completion(
+            api_base_url=base_url,
+            api_key=(settings.LLM_API_KEY or "").strip(),
+            model=settings.LLM_MODEL,
+            timeout_seconds=min(settings.LLM_TIMEOUT_SECONDS, LANGUAGE_CLASSIFIER_TIMEOUT_SECONDS),
+            temperature=0.0,
+            max_tokens=20,
+            messages=messages,
+        )
+        content = response["choices"][0]["message"]["content"]
+        name = str(json.loads(content).get("language", "")).strip().title()
+    except Exception:
+        logger.warning("LLM language classification failed for %r", question, exc_info=True)
+        return None
+    return name if name in LANGDETECT_LANGUAGE_NAMES.values() else None
+
+
+def question_language(question: str) -> str | None:
+    """The question's language: the word-based detector first, the LLM when it cannot judge."""
+    return detect_question_language(question) or _classify_question_language_with_llm(question)
+
+
 def _build_messages(
     question: str,
     chunks: list[dict],
@@ -1287,6 +1335,7 @@ def generate_answer_llm(
         faq_hint=faq_hint,
         language=language,
         all_candidates=all_candidates,
+        detected_language=question_language(question),
     )
 
     primary_base_url = (settings.LLM_API_BASE_URL or "").strip()
@@ -1555,7 +1604,7 @@ def stream_answer_llm(
     # Detect once and share: _build_messages uses it for the prompt's language
     # instruction, and the _validate_answer_language() calls below compare
     # against it.
-    detected_language = detect_question_language(question)
+    detected_language = question_language(question)
     effective_language = detected_language
     messages = _build_messages(
         question=question,
