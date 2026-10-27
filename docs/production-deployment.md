@@ -671,7 +671,7 @@ $C up -d --force-recreate backend
 Check that a weather question abstains, and that "fares" and "What is SIRI?" are answered. To switch it
 off set the variable to `False` and recreate the backend. It uses the `CONTROLLER_LLM_*` settings.
 
-## 13. Semantic embeddings (not switched on yet)
+## 13. Semantic embeddings
 
 Retrieval compares a question with indexed chunks by vector similarity. By default the vectors are hash
 embeddings of the words (`EMBEDDING_BACKEND=hash`). A multilingual model, `intfloat/multilingual-e5-small`
@@ -680,8 +680,9 @@ instead; a local trial found more README answers and questions in other language
 linked from PR #145. The model runs in one container, `embedder` (`backend/helpdesk/embedding_service.py`),
 which the backend and the worker call over HTTP, so the model (about 0.9 GB of memory) is loaded once.
 
-The rollout is in steps. Until all of them are done, **leave `EMBEDDING_BACKEND` at `hash`**: hash vectors and
-semantic vectors cannot be compared, so switching it on before every chunk is re-embedded breaks retrieval.
+Production switched to `semantic` on 2026-10-27 (0.97.44). Hash vectors and semantic vectors cannot be
+compared, so `EMBEDDING_BACKEND` must always match the vectors retrieval uses (`reembed_chunks --status`); on a
+new installation, keep `hash` until the steps below are done.
 
 1. *Service and switch (#152).* The `embedder` service has the compose profile `semantic` and does
    not start by default, so a deploy changes nothing.
@@ -691,8 +692,9 @@ semantic vectors cannot be compared, so switching it on before every chunk is re
 3. *Re-embedding every chunk* with the model while hash vectors stay in use (`reembed_chunks`, §13.1).
 4. *Switching over*, then measuring on production.
 
-To start the service, add to `/opt/napcore-helpdesk/.env` (the file compose reads for the project; every deploy
-then keeps the service, because `deploy.sh` runs `up -d --remove-orphans` with the profiles it finds there):
+To start the service, add to `/opt/napcore-helpdesk/.env` (the file compose reads for the project; create it if it
+does not exist yet; every deploy then keeps the service, because `deploy.sh` runs `up -d --remove-orphans` with the
+profiles it finds there):
 
 ```bash
 COMPOSE_PROFILES=semantic
@@ -717,6 +719,9 @@ retrieval keeps using the hash vectors, so answers do not change during the run.
 of the two columns, and swapping back restores the hash vectors exactly. The index refresh empties
 `alternate_vector` of every chunk whose text it changes, so a later run only embeds those.
 
+Run `. scripts/build_env.sh` once in the shell before the `$C up` commands below; without it the containers
+report the build reference `dev` until the next deploy.
+
 1. Give the embedder more CPUs for the run, in `/opt/napcore-helpdesk/.env`, and recreate it:
 
    ```bash
@@ -728,17 +733,19 @@ of the two columns, and swapping back restores the hash vectors exactly. The ind
    $C up -d embedder
    ```
 
-2. Fill the alternate vectors. Locally, 53,798 chunks took 59 minutes on 4 CPUs (15 chunks/s); 8 CPUs should
-   be faster. The run can be stopped and rerun, and continues where it stopped:
+2. Fill the alternate vectors. On production (Xeon Silver 4210, 2.2 GHz), 53,682 chunks took 4 hours 25 minutes
+   with 8 CPUs (3.4 chunks/s) and the embedder used about 1.05 GiB; a laptop with 4 faster cores did 15 chunks/s,
+   so per-core speed counts more than the number of CPUs. Run it detached from the SSH session. It can be stopped
+   and rerun, and continues where it stopped:
 
    ```bash
    $C exec -T backend python manage.py reembed_chunks --status
-   $C exec -T backend python manage.py reembed_chunks
+   nohup $C exec -T backend python -u manage.py reembed_chunks > ~/reembed-$(date +%F).log 2>&1 &
    ```
 
 3. At a quiet time, swap and switch at once. `--swap` first embeds the chunks the refresh changed since step 2,
-   then swaps the columns in one transaction and rebuilds the vector index (93 seconds locally for 53,798
-   chunks; questions may wait while the index is rebuilt). Until the restart, questions are still embedded
+   then swaps the columns in one transaction and rebuilds the vector index (4 minutes 20 seconds on production;
+   questions may wait while the index is rebuilt). Until the restart, questions are still embedded
    with hash, so answers are poor for those minutes:
 
    ```bash

@@ -3,7 +3,8 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-RUN groupadd -r napcore && useradd -r -g napcore napcore
+# -m creates /home/napcore: the model download keeps its cache under $HOME.
+RUN groupadd -r napcore && useradd -r -m -g napcore napcore
 
 WORKDIR /app/backend
 
@@ -18,9 +19,9 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt \
 
 COPY . /app/backend
 
-# /app/repos holds the checkouts of the indexed repositories (a named volume in production);
-# creating it here gives the volume the right owner on first use.
-RUN mkdir -p /app/repos && chown -R napcore:napcore /app
+# /app/repos holds the checkouts of the indexed repositories and /models the embedding model (named
+# volumes in production); creating them here gives a new volume the right owner on first use.
+RUN mkdir -p /app/repos /models && chown -R napcore:napcore /app /models
 
 USER napcore
 
