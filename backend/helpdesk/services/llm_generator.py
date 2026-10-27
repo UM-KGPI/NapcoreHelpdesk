@@ -596,14 +596,17 @@ _NON_EVIDENCE_MARKER_PATTERN = re.compile(r"[ \t]*\[(?!E\d+\])[A-Z]\d+\]")
 # its delimiters.
 _EMPTY_INLINE_CODE_PATTERN = re.compile(r"(?<![^\s(])`[ \t]*`(?![^\s.,;:)\]])")
 _INTRODUCER_COMMA_PATTERN = re.compile(r"\b(such as|e\.g\.|including),", re.IGNORECASE)
+# The same citation twice in a row ("[E1] [E1]", "[E2][E2]") says nothing more than once.
+_REPEATED_CITATION_PATTERN = re.compile(r"\[E(\d+)\](?:[ \t]*\[E\1\])+")
 
 
 def _strip_non_evidence_markup(answer: str) -> str:
-    """Remove bracketed markers that are not evidence citations, and inline code spans
-    left empty, outside code blocks, then tidy the punctuation they leave behind."""
+    """Remove bracketed markers that are not evidence citations, repeated citations, and
+    inline code spans left empty, outside code blocks, then tidy the punctuation they leave behind."""
     code_block_texts = [m.group(0) for m in FENCED_CODE_BLOCK_PATTERN.finditer(answer)]
     text = FENCED_CODE_BLOCK_PATTERN.sub("__CODE_BLOCK__", answer)
     text = _NON_EVIDENCE_MARKER_PATTERN.sub("", text)
+    text = _REPEATED_CITATION_PATTERN.sub(r"[E\1]", text)
     text = _EMPTY_INLINE_CODE_PATTERN.sub("", text)
     text = re.sub(r"[ \t]+([,.;:)])", r"\1", text)
     text = re.sub(r"\([ \t]*,[ \t]*", "(", text)

@@ -617,6 +617,13 @@ class StripNonEvidenceMarkupTests(SimpleTestCase):
         answer = 'Code:\n```xml\n<a ref="[C1]">``</a>\n```\nKeep ``a `b` c`` [E1].'
         self.assertEqual(_strip_non_evidence_markup(answer), answer)
 
+    def test_a_citation_repeated_in_a_row_is_kept_once(self):
+        answer = "SIRI is a CEN standard [E1] [E1]. It covers stops [E2][E2][E2] and lines [E1] [E12]."
+        self.assertEqual(
+            _strip_non_evidence_markup(answer),
+            "SIRI is a CEN standard [E1]. It covers stops [E2] and lines [E1] [E12].",
+        )
+
 
 class StreamMalformedJsonTests(SimpleTestCase):
     """A malformed JSON answer is retried, and a malformed retry falls back instead of being shown."""
