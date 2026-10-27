@@ -14,7 +14,7 @@ questions:
     question: "What is a delayed journey in OpRa and how is it modelled?"
     intent: explanation
     tags: [opra, delay]
-    expected_source_patterns: [opra_framework]
+    expected_source_patterns: [opra_lateDatedVehicleJourney]
     min_hits: 1
     top_k_threshold: 10
 
@@ -46,7 +46,7 @@ questions:
     question: "What is LateDatedVehicleJourneyEntry in OpRa?"
     intent: explanation
     tags: [opra, delay]
-    expected_source_patterns: [opra_framework, DelayedAndCancelled, RequestLateDated, ResponseLateDated]
+    expected_source_patterns: [opra_lateDatedVehicleJourney, DelayedAndCancelled, RequestLateDated, ResponseLateDated]
     min_hits: 1
     top_k_threshold: 10
 
@@ -54,7 +54,7 @@ questions:
     question: "How does OpRa classify types of delay in journey statistics?"
     intent: explanation
     tags: [opra, delay, classification]
-    expected_source_patterns: [delayClassification, opra_framework]
+    expected_source_patterns: [delayClassification]
     min_hits: 1
     top_k_threshold: 10
 
@@ -62,7 +62,7 @@ questions:
     question: "What is DelayStatistics in OpRa and what data does it aggregate?"
     intent: explanation
     tags: [opra, delay]
-    expected_source_patterns: [opra_framework, delayClassification]
+    expected_source_patterns: [opra_lateDatedVehicleJourney, opra_statistics_support, delayClassification]
     min_hits: 1
     top_k_threshold: 10
 
@@ -78,7 +78,7 @@ questions:
     question: "What does CancelledDatedVehicleJourneyCount mean in OpRa?"
     intent: explanation
     tags: [opra, cancellation]
-    expected_source_patterns: [opra_framework]
+    expected_source_patterns: [opra_cancelledDatedVehicleJourney]
     min_hits: 1
     top_k_threshold: 10
 
@@ -94,7 +94,7 @@ questions:
     question: "What is the difference between a delayed journey and a cancelled journey in OpRa?"
     intent: disambiguation
     tags: [opra, delay, cancellation]
-    expected_source_patterns: [opra_framework, DelayedAndCancelled]
+    expected_source_patterns: [opra_lateDatedVehicleJourney, opra_cancelledDatedVehicleJourney, DelayedAndCancelled]
     min_hits: 1
     top_k_threshold: 10
 
@@ -110,7 +110,7 @@ questions:
     question: "What OpRa indicators are used to measure journey reliability?"
     intent: explanation
     tags: [opra, delay, reliability]
-    expected_source_patterns: [opra_framework]
+    expected_source_patterns: [opra_lateDatedVehicleJourney, opra_cancelledDatedVehicleJourney]
     min_hits: 1
     top_k_threshold: 10
 
@@ -118,7 +118,7 @@ questions:
     question: "What does PreparednessLevel indicate in OpRa reporting?"
     intent: explanation
     tags: [opra, delay]
-    expected_source_patterns: [opra_framework]
+    expected_source_patterns: [opra_indicatorFrame]
     min_hits: 1
     top_k_threshold: 10
 
@@ -142,7 +142,7 @@ questions:
     question: "How are delay statistics aggregated over a route in OpRa?"
     intent: explanation
     tags: [opra, delay, aggregation]
-    expected_source_patterns: [opra_framework]
+    expected_source_patterns: [opra_lateDatedVehicleJourney, opra_statistics_support]
     min_hits: 1
     top_k_threshold: 10
 
@@ -150,7 +150,7 @@ questions:
     question: "What is LateDatedVehicleJourneyCount in OpRa schema?"
     intent: explanation
     tags: [opra, delay]
-    expected_source_patterns: [opra_framework]
+    expected_source_patterns: [opra_lateDatedVehicleJourney]
     min_hits: 1
     top_k_threshold: 10
 
@@ -158,7 +158,7 @@ questions:
     question: "What data fields are required in OpRa to compute a delay indicator?"
     intent: explanation
     tags: [opra, delay]
-    expected_source_patterns: [opra_framework, delayClassification]
+    expected_source_patterns: [opra_lateDatedVehicleJourney, delayClassification]
     min_hits: 1
     top_k_threshold: 10
 
@@ -176,7 +176,7 @@ questions:
     question: "What is PlannedCapacity in OpRa and what does it measure?"
     intent: explanation
     tags: [opra, capacity]
-    expected_source_patterns: [PlannedCapacity, opra_framework]
+    expected_source_patterns: [PlannedCapacity, opra_capacity]
     min_hits: 1
     top_k_threshold: 10
 
@@ -184,7 +184,7 @@ questions:
     question: "How is actual vehicle capacity measured and exchanged in OpRa?"
     intent: explanation
     tags: [opra, capacity]
-    expected_source_patterns: [ActualServiceDimensions, opra_framework]
+    expected_source_patterns: [ActualServiceDimensions, opra_capacity]
     min_hits: 1
     top_k_threshold: 10
 
@@ -192,7 +192,7 @@ questions:
     question: "What is VehicleTypeCapacity in OpRa schema?"
     intent: explanation
     tags: [opra, capacity]
-    expected_source_patterns: [opra_framework]
+    expected_source_patterns: [opra_capacity]
     min_hits: 1
     top_k_threshold: 10
 
@@ -216,7 +216,7 @@ questions:
     question: "What is AverageCommercialSpeed in OpRa and how is it calculated?"
     intent: explanation
     tags: [opra, performance]
-    expected_source_patterns: [opra_framework]
+    expected_source_patterns: [opra_serviceIntensity]
     min_hits: 1
     top_k_threshold: 10
 
@@ -240,7 +240,7 @@ questions:
     question: "How does OpRa compare expected versus actual service capacity?"
     intent: explanation
     tags: [opra, capacity]
-    expected_source_patterns: [ActualServiceDimensions, opra_framework]
+    expected_source_patterns: [ActualServiceDimensions, opra_capacity]
     min_hits: 1
     top_k_threshold: 10
 
@@ -248,7 +248,7 @@ questions:
     question: "What is MeanCapacityOverJourneyDistance in OpRa?"
     intent: explanation
     tags: [opra, capacity, distance]
-    expected_source_patterns: [opra_framework]
+    expected_source_patterns: [opra_serviceIntensity]
     min_hits: 1
     top_k_threshold: 10
 
@@ -272,7 +272,7 @@ questions:
     question: "What does ExpectedServiceIntensity mean in OpRa?"
     intent: explanation
     tags: [opra, service-intensity]
-    expected_source_patterns: [ExpectedServiceIntensity, opra_framework]
+    expected_source_patterns: [ExpectedServiceIntensity, opra_serviceIntensity]
     min_hits: 1
     top_k_threshold: 10
 
@@ -280,7 +280,7 @@ questions:
     question: "How does CapacitySpecification work in OpRa schema?"
     intent: explanation
     tags: [opra, capacity]
-    expected_source_patterns: [opra_framework]
+    expected_source_patterns: [opra_capacity]
     min_hits: 1
     top_k_threshold: 10
 
@@ -298,7 +298,7 @@ questions:
     question: "What is PlannedServiceIntensity in OpRa?"
     intent: explanation
     tags: [opra, service-intensity]
-    expected_source_patterns: [PlannedServiceIntensity, opra_framework]
+    expected_source_patterns: [PlannedServiceIntensity, opra_serviceIntensity]
     min_hits: 1
     top_k_threshold: 10
 
@@ -314,7 +314,7 @@ questions:
     question: "What does TransportPerformance measure in OpRa?"
     intent: explanation
     tags: [opra, performance]
-    expected_source_patterns: [opra_framework]
+    expected_source_patterns: [opra_serviceIntensity]
     min_hits: 1
     top_k_threshold: 10
 
@@ -322,7 +322,7 @@ questions:
     question: "How is TransportPerformancePerVehicle calculated in OpRa?"
     intent: explanation
     tags: [opra, performance]
-    expected_source_patterns: [opra_framework]
+    expected_source_patterns: [opra_serviceIntensity]
     min_hits: 1
     top_k_threshold: 10
 
@@ -330,7 +330,7 @@ questions:
     question: "What does ActualServiceIntensity represent in OpRa exchange data?"
     intent: explanation
     tags: [opra, service-intensity]
-    expected_source_patterns: [ActualServiceDimensions, opra_framework]
+    expected_source_patterns: [ActualServiceDimensions, opra_serviceIntensity]
     min_hits: 1
     top_k_threshold: 10
 
@@ -338,7 +338,7 @@ questions:
     question: "How does OpRa represent load over journey distance?"
     intent: explanation
     tags: [opra, performance, distance]
-    expected_source_patterns: [opra_framework]
+    expected_source_patterns: [opra_serviceIntensity]
     min_hits: 1
     top_k_threshold: 10
 
@@ -346,7 +346,7 @@ questions:
     question: "What is MeanCapacityOverNetworkDistance in OpRa?"
     intent: explanation
     tags: [opra, capacity, distance]
-    expected_source_patterns: [opra_framework]
+    expected_source_patterns: [opra_serviceIntensity]
     min_hits: 1
     top_k_threshold: 10
 
@@ -354,7 +354,7 @@ questions:
     question: "How does OpRa combine service intensity data with capacity indicators?"
     intent: explanation
     tags: [opra, service-intensity, capacity]
-    expected_source_patterns: [opra_framework, ExpectedServiceIntensity]
+    expected_source_patterns: [opra_serviceIntensity, opra_capacity, ExpectedServiceIntensity]
     min_hits: 1
     top_k_threshold: 10
 
@@ -362,7 +362,7 @@ questions:
     question: "Which OpRa indicators support passenger demand analysis?"
     intent: explanation
     tags: [opra, passenger, demand]
-    expected_source_patterns: [ExpectedPassengerCount, opra_framework]
+    expected_source_patterns: [ExpectedPassengerCount]
     min_hits: 1
     top_k_threshold: 10
 
@@ -632,7 +632,7 @@ questions:
     question: "Which NeTEx structures correspond to OpRa capacity indicators?"
     intent: mapping
     tags: [opra, netex, capacity, cross-standard]
-    expected_source_patterns: [opra_framework, netex_vehicleType]
+    expected_source_patterns: [opra_capacity, netex_vehicleType]
     min_hits: 1
     top_k_threshold: 20
 
@@ -640,7 +640,7 @@ questions:
     question: "Map OpRa delay statistics to NeTEx operational journey concepts."
     intent: mapping
     tags: [opra, netex, delay, cross-standard]
-    expected_source_patterns: [opra_framework, netex_journeyPattern]
+    expected_source_patterns: [opra_lateDatedVehicleJourney, netex_journeyPattern]
     min_hits: 1
     top_k_threshold: 20
 
@@ -656,7 +656,7 @@ questions:
     question: "How does OpRa service intensity relate to NeTEx line and network concepts?"
     intent: mapping
     tags: [opra, netex, service-intensity, cross-standard]
-    expected_source_patterns: [opra_framework, netex_line, netex_lineNetwork]
+    expected_source_patterns: [opra_serviceIntensity, netex_line, netex_lineNetwork]
     min_hits: 1
     top_k_threshold: 20
 
@@ -672,7 +672,7 @@ questions:
     question: "Which OpRa indicators are relevant for analysing NeTEx journey timing patterns?"
     intent: mapping
     tags: [opra, netex, timing, cross-standard]
-    expected_source_patterns: [opra_framework, netex_journeyTiming, netex_part_2]
+    expected_source_patterns: [opra_lateDatedVehicleJourney, opra_serviceIntensity, netex_journeyTiming, netex_part_2]
     min_hits: 1
     top_k_threshold: 20
 
@@ -688,7 +688,7 @@ questions:
     question: "What is the NeTEx equivalent of an OpRa VehicleJourney operational indicator?"
     intent: mapping
     tags: [opra, netex, journey, cross-standard]
-    expected_source_patterns: [opra_framework, netex_datedVehicleJourney]
+    expected_source_patterns: [opra_lateDatedVehicleJourney, opra_cancelledDatedVehicleJourney, netex_datedVehicleJourney]
     min_hits: 1
     top_k_threshold: 20
 
@@ -696,7 +696,7 @@ questions:
     question: "How should OpRa performance data be interpreted in a NeTEx timetable context?"
     intent: mapping
     tags: [opra, netex, performance, cross-standard]
-    expected_source_patterns: [opra_framework, netex_timetableFrame]
+    expected_source_patterns: [opra_serviceIntensity, netex_timetableFrame]
     min_hits: 1
     top_k_threshold: 20
 
@@ -704,7 +704,7 @@ questions:
     question: "What is the semantic relationship between NeTEx JourneyPattern and OpRa capacity data?"
     intent: mapping
     tags: [opra, netex, journey-pattern, capacity, cross-standard]
-    expected_source_patterns: [netex_journeyPattern, opra_framework]
+    expected_source_patterns: [netex_journeyPattern, opra_capacity]
     min_hits: 1
     top_k_threshold: 20
 
@@ -736,7 +736,7 @@ questions:
     question: "Which NeTEx concept best corresponds to OpRa TransportPerformance?"
     intent: mapping
     tags: [opra, netex, performance, cross-standard]
-    expected_source_patterns: [opra_framework, netex_part_2]
+    expected_source_patterns: [opra_serviceIntensity, netex_part_2]
     min_hits: 1
     top_k_threshold: 20
 
@@ -1006,7 +1006,7 @@ questions:
     question: "What is a delayed journey and how is it modelled?"
     intent: explanation
     tags: [opra, delay, unnamed]
-    expected_source_patterns: [opra_framework]
+    expected_source_patterns: [opra_lateDatedVehicleJourney]
     min_hits: 1
     top_k_threshold: 10
     note: "Rephrased from q001 without the standard name."
@@ -1015,7 +1015,7 @@ questions:
     question: "How are types of delay classified in journey statistics?"
     intent: explanation
     tags: [opra, delay, classification, unnamed]
-    expected_source_patterns: [delayClassification, opra_framework]
+    expected_source_patterns: [delayClassification]
     min_hits: 1
     top_k_threshold: 10
     note: "Rephrased from q006 without the standard name."
@@ -1024,7 +1024,7 @@ questions:
     question: "What does CancelledDatedVehicleJourneyCount mean?"
     intent: explanation
     tags: [opra, cancellation, unnamed]
-    expected_source_patterns: [opra_framework]
+    expected_source_patterns: [opra_cancelledDatedVehicleJourney]
     min_hits: 1
     top_k_threshold: 10
     note: "Rephrased from q009 without the standard name."
@@ -1033,7 +1033,7 @@ questions:
     question: "How is actual vehicle capacity measured and exchanged?"
     intent: explanation
     tags: [opra, capacity, unnamed]
-    expected_source_patterns: [ActualServiceDimensions, opra_framework]
+    expected_source_patterns: [ActualServiceDimensions, opra_capacity]
     min_hits: 1
     top_k_threshold: 10
     note: "Rephrased from q022 without the standard name."
@@ -1051,7 +1051,7 @@ questions:
     question: "What does ExpectedServiceIntensity mean?"
     intent: explanation
     tags: [opra, service-intensity, unnamed]
-    expected_source_patterns: [ExpectedServiceIntensity, opra_framework]
+    expected_source_patterns: [ExpectedServiceIntensity, opra_serviceIntensity]
     min_hits: 1
     top_k_threshold: 10
     note: "Rephrased from q033 without the standard name."
@@ -1060,7 +1060,7 @@ questions:
     question: "What is PlannedServiceIntensity?"
     intent: explanation
     tags: [opra, service-intensity, unnamed]
-    expected_source_patterns: [PlannedServiceIntensity, opra_framework]
+    expected_source_patterns: [PlannedServiceIntensity, opra_serviceIntensity]
     min_hits: 1
     top_k_threshold: 10
     note: "Rephrased from q036 without the standard name."
@@ -1069,7 +1069,7 @@ questions:
     question: "What does ActualServiceIntensity represent in exchange data?"
     intent: explanation
     tags: [opra, service-intensity, unnamed]
-    expected_source_patterns: [ActualServiceDimensions, opra_framework]
+    expected_source_patterns: [ActualServiceDimensions, opra_serviceIntensity]
     min_hits: 1
     top_k_threshold: 10
     note: "Rephrased from q040 without the standard name."
