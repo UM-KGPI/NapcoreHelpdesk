@@ -954,6 +954,23 @@ class HelpdeskApiTests(APITestCase):
         self.assertNotIn("examples/functions/line/NeTEx_01_simple_line.xml", rewritten)
         self.assertNotIn("examples/functions/fares/Netex_51.3_Bus_SimpleFares_ZoneToZone_AdultChildProduct.xml", rewritten)
 
+    def test_a_path_in_a_sentence_becomes_the_file_name(self):
+        citations = [{"sourcePath": "xsd/siri.xsd"}, {"sourcePath": "xsd/NeTEx_siri.xsd"}]
+
+        cited_later = _rewrite_source_paths_as_evidence_markers(
+            answer_text="Das Schema wird in der Datei xsd/NeTEx_siri.xsd definiert [E2]. Siehe auch [E1].",
+            citations=citations,
+        )
+        not_cited = _rewrite_source_paths_as_evidence_markers(
+            answer_text="It is defined in `xsd/NeTEx_siri.xsd`. The root is <Siri> [E1].",
+            citations=citations,
+        )
+
+        self.assertEqual(
+            cited_later, "Das Schema wird in der Datei `NeTEx_siri.xsd` definiert [E2]. Siehe auch [E1]."
+        )
+        self.assertEqual(not_cited, "It is defined in `NeTEx_siri.xsd` [E2]. The root is <Siri> [E1].")
+
     @patch("helpdesk.api.views._resolve_commit_sha", return_value="3734861abcdef0123456789abcdef012345678")
     def test_build_file_url_expands_short_commit_sha(self, resolve_commit_sha_mock):
         """Ensure citation URLs use an expanded commit SHA when available."""
