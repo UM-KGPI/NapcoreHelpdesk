@@ -753,7 +753,26 @@ class TrackedSourceFilesTests(SimpleTestCase):
             (repo / "notes" / "a.md").write_text("a")
             (repo / "node_modules").mkdir()
             (repo / "node_modules" / "b.md").write_text("b")
+            (repo / ".mylocal").mkdir()
+            (repo / ".mylocal" / "c.md").write_text("local notes")
 
             files = iter_source_files(repo, {".md"})
 
         self.assertEqual([p.relative_to(repo).as_posix() for p in files], ["notes/a.md"])
+
+    def test_mylocal_is_skipped_when_git_listing_fails(self):
+        from unittest.mock import patch
+
+        from helpdesk.services import index_builder
+
+        with TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            (repo / "README.md").write_text("# OpRa")
+            (repo / ".mylocal").mkdir()
+            (repo / ".mylocal" / "notes.md").write_text("local notes")
+
+            with patch.object(index_builder, "_git", side_effect=RuntimeError("not a git repository")):
+                files = index_builder.iter_source_files(repo, {".md"})
+
+        self.assertEqual([p.relative_to(repo).as_posix() for p in files], ["README.md"])

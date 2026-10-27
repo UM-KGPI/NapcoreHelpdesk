@@ -162,7 +162,9 @@ def infer_scope(source_path: str, chunk_text: str, repo_url: str = "") -> list[s
     return sorted(scope)
 
 
-_EXCLUDED_DIRECTORIES = {".git", ".venv", "node_modules", "dist", "build"}
+# .mylocal holds a contributor's local-only material: never published upstream or to production,
+# so never indexed, even when the git listing below fails and the directory is walked instead.
+_EXCLUDED_DIRECTORIES = {".git", ".venv", "node_modules", "dist", "build", ".mylocal"}
 
 
 def _tracked_files(repo_path: Path) -> list[Path] | None:
