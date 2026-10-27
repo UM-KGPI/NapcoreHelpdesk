@@ -461,6 +461,38 @@ def _drop_markers_without_citation(answer_text: str, citations: list[dict]) -> s
     return re.sub(r"[ \t]*\[E(\d+)\]", _keep_if_cited, answer_text)
 
 
+def _merge_citations_of_same_source(answer_text: str, citations: list[dict]) -> tuple[str, list[dict]]:
+    """Give each source file one citation and renumber the answer's [E#] markers to match.
+
+    Two evidence blocks are often passages of the same file; the prompt numbers them [E1]
+    and [E2], but the reader needs one reference per file. The merged citation keeps the
+    first passage's entry, and a marker repeated in a row afterwards is kept once.
+    """
+
+    if not citations:
+        return answer_text, citations
+
+    merged: list[dict] = []
+    first_index_of_source: dict[str, int] = {}
+    new_index: dict[int, int] = {}
+    for old_index, citation in enumerate(citations, start=1):
+        source = str(citation.get("sourcePath", "")).strip() or f"#{old_index}"
+        if source not in first_index_of_source:
+            merged.append({**citation, "label": f"E{len(merged) + 1}"})
+            first_index_of_source[source] = len(merged)
+        new_index[old_index] = first_index_of_source[source]
+    if len(merged) == len(citations):
+        return answer_text, citations
+
+    def _renumber(match: re.Match) -> str:
+        old = int(match.group(1))
+        return f"[E{new_index[old]}]" if old in new_index else match.group(0)
+
+    text = re.sub(r"\[E(\d+)\]", _renumber, answer_text or "")
+    text = re.sub(r"\[E(\d+)\](?:[ \t]*\[E\1\])+", r"[E\1]", text)
+    return text, merged
+
+
 def _inject_evidence_markers_if_missing(answer_text: str, citations: list[dict]) -> str:
     """
     Fallback: if answer_text lacks [E#] markers but citations exist,
@@ -1226,6 +1258,7 @@ class QuestionAnswerView(APIView):
         # Rewrite any source path references to [E#] markers
         answer_text = _rewrite_source_paths_as_evidence_markers(answer_text=answer_text, citations=citations)
         answer_text = _drop_markers_without_citation(answer_text=answer_text, citations=citations)
+        answer_text, citations = _merge_citations_of_same_source(answer_text=answer_text, citations=citations)
 
         answer_id = f"ans-{uuid4().hex[:12]}"
         # Persist the orchestration outcome as a question event before child trace records.
@@ -1694,6 +1727,7 @@ class QuestionAnswerStreamView(APIView):
         answer_text = _inject_evidence_markers_if_missing(answer_text=answer_text, citations=citations)
         answer_text = _rewrite_source_paths_as_evidence_markers(answer_text=answer_text, citations=citations)
         answer_text = _drop_markers_without_citation(answer_text=answer_text, citations=citations)
+        answer_text, citations = _merge_citations_of_same_source(answer_text=answer_text, citations=citations)
 
         answer_id = f"ans-{uuid4().hex[:12]}"
 
