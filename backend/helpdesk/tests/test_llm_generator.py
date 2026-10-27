@@ -16,6 +16,7 @@ from helpdesk.services.llm_generator import (
     _validate_no_unsupported_element_purpose_claims,
     _strip_non_evidence_markup,
     generate_answer_llm,
+    question_language,
     stream_answer_llm,
 )
 
@@ -649,3 +650,35 @@ class StreamMalformedJsonTests(SimpleTestCase):
     def test_malformed_retry_raises_so_the_caller_falls_back(self):
         with self.assertRaises(LLMGenerationError):
             self._events([self.BROKEN, self.BROKEN])
+
+
+@override_settings(LLM_API_BASE_URL="http://llm.test/v1", LLM_API_KEY="", LLM_MODEL="m")
+class QuestionLanguageTests(SimpleTestCase):
+    """Short questions keep too few words for the detector once schema names are removed;
+    the LLM names their language so the answer prompt can require it."""
+
+    def _llm_says(self, content: str):
+        return patch(
+            "helpdesk.services.llm_generator._request_chat_completion",
+            return_value={"choices": [{"message": {"content": content}}]},
+        )
+
+    def test_a_detectable_question_does_not_call_the_llm(self):
+        with self._llm_says('{"language": "English"}') as llm:
+            self.assertEqual(question_language("Wofür wird SIRI verwendet?"), "German")
+        llm.assert_not_called()
+
+    def test_a_short_question_gets_its_language_from_the_llm(self):
+        with self._llm_says('{"language": "German"}') as llm:
+            language = question_language("Wie verwendet SIRI NeTEx?")
+        self.assertEqual(language, "German")
+        self.assertEqual(llm.call_args.kwargs["messages"][-1]["content"], "Wie verwendet SIRI NeTEx?")
+        self.assertIn("Respond in German.", _build_messages(
+            question="Wie verwendet SIRI NeTEx?", chunks=[], scope=[], detected_language=language
+        )[0]["content"])
+
+    def test_an_unknown_name_or_a_failed_call_keeps_the_generic_instruction(self):
+        with self._llm_says('{"language": "Klingon"}'):
+            self.assertIsNone(question_language("Wie verwendet SIRI NeTEx?"))
+        with patch("helpdesk.services.llm_generator._request_chat_completion", side_effect=OSError("down")):
+            self.assertIsNone(question_language("Wie verwendet SIRI NeTEx?"))
