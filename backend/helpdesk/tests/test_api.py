@@ -35,7 +35,12 @@ from rest_framework.test import APIRequestFactory
 from rest_framework.test import APITestCase
 
 from helpdesk.api.exceptions import custom_exception_handler
-from helpdesk.api.views import _build_file_url, _rewrite_source_paths_as_evidence_markers, _select_citations
+from helpdesk.api.views import (
+    _build_file_url,
+    _merge_citations_of_same_source,
+    _rewrite_source_paths_as_evidence_markers,
+    _select_citations,
+)
 from helpdesk.services.llm_generator import LLMGenerationError
 from helpdesk.services.question_parsing import UNKNOWN_CONCEPT_SENTINEL
 from helpdesk.models import (
@@ -953,6 +958,25 @@ class HelpdeskApiTests(APITestCase):
         self.assertIn("[E2]", rewritten)
         self.assertNotIn("examples/functions/line/NeTEx_01_simple_line.xml", rewritten)
         self.assertNotIn("examples/functions/fares/Netex_51.3_Bus_SimpleFares_ZoneToZone_AdultChildProduct.xml", rewritten)
+
+    def test_passages_of_the_same_file_share_one_citation(self):
+        slovenia = "examples/functions/timetable/Netex_09.2_Bus_SimpleTimetable_Slovenia.xml"
+        citations = [
+            {"sourcePath": slovenia, "chunkId": "a", "label": "E1"},
+            {"sourcePath": slovenia, "chunkId": "b", "label": "E2"},
+            {"sourcePath": "xsd/netex_line_version.xsd", "chunkId": "c", "label": "E3"},
+        ]
+
+        text, merged = _merge_citations_of_same_source(
+            "The timetable [E1] lists journeys [E2]. Lines are defined in [E3]. Both [E1] [E2].", citations
+        )
+
+        self.assertEqual(text, "The timetable [E1] lists journeys [E1]. Lines are defined in [E2]. Both [E1].")
+        self.assertEqual([(c["chunkId"], c["label"]) for c in merged], [("a", "E1"), ("c", "E2")])
+
+    def test_distinct_sources_are_left_alone(self):
+        citations = [{"sourcePath": "a.xsd", "label": "E1"}, {"sourcePath": "b.xsd", "label": "E2"}]
+        self.assertEqual(_merge_citations_of_same_source("x [E1] y [E2].", citations), ("x [E1] y [E2].", citations))
 
     def test_a_path_in_a_sentence_becomes_the_file_name(self):
         citations = [{"sourcePath": "xsd/siri.xsd"}, {"sourcePath": "xsd/NeTEx_siri.xsd"}]
