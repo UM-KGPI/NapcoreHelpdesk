@@ -408,8 +408,16 @@ def _citations_from_prompt_order(chunks: list[dict], answer_text: str) -> list[d
     return citations
 
 
+_SENTENCE_END_PATTERN = re.compile(r"[.!?](?:\s|$)|\n")
+
+
 def _rewrite_source_paths_as_evidence_markers(answer_text: str, citations: list[dict]) -> str:
-    """Replace cited sourcePath strings in answer prose with [E#] marker references."""
+    """Replace cited sourcePath strings in answer prose with the file name and its [E#] marker.
+
+    A path is often part of the sentence ("defined in the file xsd/NeTEx_siri.xsd"), so it
+    becomes the file name rather than a bare marker, which would read "in the file [E2]".
+    The marker follows the name unless the rest of the sentence already cites that source.
+    """
 
     if not answer_text or not citations:
         return answer_text
@@ -421,8 +429,17 @@ def _rewrite_source_paths_as_evidence_markers(answer_text: str, citations: list[
             continue
 
         marker = f"[E{index}]"
-        rewritten = rewritten.replace(f"`{source_path}`", marker)
-        rewritten = rewritten.replace(source_path, marker)
+        file_name = source_path.rsplit("/", 1)[-1]
+
+        def _name_and_marker(match: re.Match, marker: str = marker, file_name: str = file_name) -> str:
+            rest = match.string[match.end():]
+            sentence_end = _SENTENCE_END_PATTERN.search(rest)
+            rest_of_sentence = rest[: sentence_end.start() if sentence_end else len(rest)]
+            if marker in rest_of_sentence:
+                return f"`{file_name}`"
+            return f"`{file_name}` {marker}"
+
+        rewritten = re.sub(rf"`?{re.escape(source_path)}`?", _name_and_marker, rewritten)
 
     return rewritten
 
