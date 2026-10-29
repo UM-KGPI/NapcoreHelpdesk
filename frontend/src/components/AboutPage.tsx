@@ -5,7 +5,7 @@
  *
  * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
  * Crafted by: AI coding agents
- * Created: 2026-07-02  |  Modified: 2026-10-25
+ * Created: 2026-07-02  |  Modified: 2026-10-29
  */
 
 import systemContextDiagramUrl from "../assets/c4-system-context.svg";
@@ -67,7 +67,7 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
         <a className="about-diagram" href={systemContextDiagramUrl} target="_blank" rel="noreferrer">
           <img
             src={systemContextDiagramUrl}
-            alt="C4 system context: NAP operators, transport authorities, transport operators, standards implementers and ITS system integrators ask questions, and editors review answers. The helpdesk indexes the NeTEx, SIRI and OpRa repositories on GitHub, queries the GraphDB ontology store, and uses a language model gateway at the University of Maribor."
+            alt="C4 system context: NAP operators, transport authorities, transport operators, standards implementers and ITS system integrators ask questions, and editors review answers. The helpdesk indexes the NeTEx, SIRI and OpRa repositories on GitHub, queries the GraphDB ontology store, uses a language model gateway at the University of Maribor, and downloads its multilingual embedding model once from Hugging Face."
           />
         </a>
       </section>

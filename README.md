@@ -7,7 +7,7 @@ It answers user questions from approved standards repositories, provides evidenc
 
 - Backend API and orchestration: Django + DRF
 - Frontend web GUI: React + TypeScript + Vite
-- Retrieval stack: lexical + vector retrieval (pgvector in PostgreSQL)
+- Retrieval stack: lexical + vector retrieval (pgvector in PostgreSQL), with semantic embeddings from a self-hosted multilingual model (intfloat/multilingual-e5-small)
 - Optional graph expansion: GraphDB (RDF/OWL + SPARQL)
 - Editorial workflow: draft -> review -> approved/rejected -> published
 
