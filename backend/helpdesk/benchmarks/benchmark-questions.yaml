@@ -755,10 +755,10 @@ questions:
     question: "What are the EU legal obligations for NeTEx adoption by transport authorities?"
     intent: regulatory
     tags: [netex, regulatory]
-    expected_source_patterns: []
+    expected_source_patterns: ["02017R1926-20240304#art_4"]
     min_hits: 0
     top_k_threshold: 10
-    note: "Answered from EU legislation since #91: the provisions that name NeTEx (MMTIS Art. 4, TEL TSI App. C) are added to the evidence. No expected source, so the metric does not depend on the legislation being indexed."
+    note: "Answered from EU legislation since #91: with the app's scope (NeTEx) the provisions that name NeTEx (MMTIS Art. 4, TEL TSI App. C) are added to the evidence. min_hits 0: the CI benchmark index has no legislation and runs without the app scope, so this question is not scored there."
 
   - id: q093
     question: "How does NeTEx compare to GTFS in terms of real-time data quality?"
