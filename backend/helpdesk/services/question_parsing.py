@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import re
+from functools import lru_cache
 import unicodedata
 
 from django.conf import settings
@@ -149,6 +150,12 @@ class QuestionParsingService:
             candidate_standards = list(dict.fromkeys(requested_scope))
         else:
             candidate_standards = self._scan_standard_keywords(normalized)
+            # A term the EU acts define ("static travel and traffic data") points to the legislation when
+            # nothing else points to a standard: no standard named, and the standards concept found, if
+            # any, is only a word of that term ("travel" in "travel data"). "Show example for transport
+            # operator in NeTEx" and "How are transport operators linked to lines?" stay standards questions.
+            if not candidate_standards and _legislation_term_covers(text, core_concept):
+                candidate_standards = [LEGISLATION_SCOPE]
 
         concept_confidence = self._concept_confidence(core_concepts)
         intent_confidence = self._intent_confidence(intent=intent, requested_scope=requested_scope)
@@ -350,6 +357,51 @@ class QuestionParsingService:
                 if normalized and normalized not in discovered:
                     discovered.append(normalized)
         return discovered
+
+
+LEGISLATION_SCOPE = "EU legislation"
+
+
+@lru_cache(maxsize=1)
+def _legislation_term_patterns() -> tuple[re.Pattern, re.Pattern] | None:
+    from helpdesk.services.regulations import vocabulary_terms
+
+    terms = sorted(set(vocabulary_terms()), key=len, reverse=True)
+    if not terms:
+        return None
+    acronyms = [t for t in terms if t.isupper()]
+    phrases = [t for t in terms if not t.isupper()]
+    # Acronyms match case-sensitively ("ITS", not "its"); phrases in any case, also in the plural.
+    def build(items, flags):
+        joined = "|".join(re.escape(t) for t in items) or r"(?!x)x"
+        return re.compile(rf"(?<![\w-])(?:{joined})s?(?![\w-])", flags)
+
+    return build(acronyms, 0), build(phrases, re.IGNORECASE)
+
+
+def legislation_terms_in(text: str) -> list[str]:
+    """Terms the indexed EU acts define that the question uses (docs/regulations/eu-legislation-definitions.ttl)."""
+    patterns = _legislation_term_patterns()
+    if not patterns:
+        return []
+    return [match.group(0) for pattern in patterns for match in pattern.finditer(text or "")]
+
+
+def _concept_label(concept_id: str) -> str:
+    local = concept_id.split(":", 1)[-1]
+    return re.sub(r"(?<=[a-z])(?=[A-Z])", " ", local).replace("_", " ").lower()
+
+
+def _legislation_term_covers(text: str, core_concept: str) -> bool:
+    """Whether a defined legal term is the question's most specific match: it is used, and the standards
+    concept found (if any) is part of it."""
+    terms = [term.lower() for term in legislation_terms_in(text)]
+    if not terms:
+        return False
+    if core_concept == UNKNOWN_CONCEPT_SENTINEL:
+        return True
+    label = _concept_label(core_concept)
+    return any(re.search(rf"(?<!\w){re.escape(label)}(?!\w)", term) for term in terms)
 
 
 def parse_question_to_semantic_query(text: str, requested_scope: list[str] | None = None) -> SemanticQuery:
