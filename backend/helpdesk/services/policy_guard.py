@@ -15,6 +15,7 @@ from __future__ import annotations
 from django.conf import settings
 
 from helpdesk.services.ontology_evidence import TRANSMODEL_SOURCE_URL
+from helpdesk.services.regulations import is_regulation_url
 from helpdesk.services.repository_urls import canonical_repository_url
 
 
@@ -71,6 +72,9 @@ def evaluate_policy(answer_text: str, citations: list[dict]) -> dict:
     approved_canonical = {canonical_repository_url(url) for url in approved_repositories}
     for citation in citations:
         if _is_generated_ontology_source(citation.get("repositoryUrl", "")):
+            continue
+        # EUR-Lex is not a repository; the acts are approved by being in the pinned list.
+        if is_regulation_url(citation.get("repositoryUrl", "")):
             continue
         repo_url = _normalize_repository_url(citation.get("repositoryUrl", ""))
         if repo_url not in approved_canonical:

@@ -150,11 +150,19 @@ def _token_overlap_score(question: str, chunk_text: str) -> float:
     return len(overlap) / len(question_tokens)
 
 
+# Sources searched only when the question's scope names them: EU legislation (issue #91) would otherwise
+# compete with the standards in every question that names no standard.
+OPT_IN_SCOPES = ("EU legislation",)
+
+
 def _scope_query_filter(scope: list[str] | None):
     """Build JSON scope filter compatible with PostgreSQL JSON array fields."""
 
     if not scope:
-        return models.Q()
+        unscoped = models.Q()
+        for opt_in in OPT_IN_SCOPES:
+            unscoped &= ~models.Q(standards_scope__contains=[opt_in])
+        return unscoped
 
     scoped_filter = models.Q()
     for standard in scope:
@@ -344,7 +352,7 @@ def _postgres_hybrid_candidates(
 
 def _scope_matches(chunk_scope: list[str], requested_scope: list[str] | None) -> bool:
     if not requested_scope:
-        return True
+        return not set(chunk_scope).intersection(OPT_IN_SCOPES)
     return bool(set(chunk_scope).intersection(set(requested_scope)))
 
 
@@ -1483,6 +1491,16 @@ def retrieve_chunks_with_trace(
     )
     if postgres_candidates is None:
         postgres_candidates = _postgres_fts_candidates(question=question, top_k=top_k, scope=scope)
+    elif scope and len(scope) > 1:
+        # A small opt-in source (EU legislation) asked for together with a standard gets its own share
+        # of candidates; in one shared pool the standard's tens of thousands of chunks crowd it out.
+        for opt_in in (s for s in scope if s in OPT_IN_SCOPES):
+            opt_in_candidates = _postgres_hybrid_candidates(
+                question=question, query_embedding=query_embedding, top_k=top_k, scope=[opt_in]
+            )
+            pooled = list(postgres_candidates)
+            pooled_ids = {chunk.id for chunk in pooled}
+            postgres_candidates = pooled + [c for c in opt_in_candidates if c.id not in pooled_ids]
     _record_stage("postgresCandidateQueryMs", stage_start)
 
     stage_start = time.perf_counter()
