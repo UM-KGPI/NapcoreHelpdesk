@@ -420,6 +420,7 @@ Definition:
     # per-source-path retrieval cap (RETRIEVAL_MAX_SAME_SOURCE_PATH) would
     # otherwise let only two of them survive.
     source_path = f"{TRANSMODEL_SOURCE_PATH}#{local_name}"
+    class_url = transmodel_class_url(local_name)
     return {
         "id": chunk_id_int,
         "chunkId": chunk_id_str,
@@ -438,7 +439,8 @@ Definition:
         "repository_url": TRANSMODEL_SOURCE_URL,
         # Link target of the citation: the class page readers outside this repository can open (#82).
         # repositoryUrl stays the file, so citation selection still treats all definitions as one source.
-        "sourceUrl": transmodel_class_url(local_name),
+        "sourceUrl": class_url,
+        "source_url": class_url,
         "commitSha": "main",
         "commit_sha": "main",
         "embedding_vector": None,

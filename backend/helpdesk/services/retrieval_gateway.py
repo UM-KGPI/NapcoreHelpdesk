@@ -1775,6 +1775,8 @@ def retrieve_chunks_with_trace(
                 "_rankScore": rank_score,
                 "_vectorScore": vector_score,
                 "repositoryUrl": chunk.repository_url,
+                # Final link of a source outside a repository file, e.g. a Transmodel class page
+                "sourceUrl": getattr(chunk, "source_url", "") or "",
                 "commitSha": chunk.commit_sha,
                 "sourcePath": chunk.source_path,
                 "chunkId": chunk.chunk_id,

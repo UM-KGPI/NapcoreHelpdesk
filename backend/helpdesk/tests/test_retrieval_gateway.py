@@ -229,6 +229,55 @@ class RetrievalGatewayTests(TestCase):
         self.assertIn("examples/functions/line/NeTEx_01_simple_line.xml", source_paths)
         self.assertEqual(trace["graphCandidateCap"], 6)
 
+    @override_settings(
+        GRAPHDB_ENABLED=True,
+        GRAPHDB_SPARQL_ENDPOINT="http://localhost:7200",
+        GRAPHDB_REPOSITORY="napcore-helpdesk",
+        TRANSMODEL_HTML_BASE_URL="https://helpdesk.example/transmodel",
+    )
+    @patch("helpdesk.services.retrieval_gateway.retrieve_concept_definitions")
+    @patch("helpdesk.services.retrieval_gateway.retrieve_concept_examples_with_fallback", return_value=[])
+    @patch("helpdesk.services.retrieval_gateway._postgres_hybrid_candidates")
+    @patch("helpdesk.services.retrieval_gateway.query_graphdb_concept_expansion_with_distance", return_value={})
+    @patch("helpdesk.services.retrieval_gateway.get_concept_canonical_terms", return_value=[])
+    @patch("helpdesk.services.retrieval_gateway.extract_graph_concepts", return_value={"transmodel:STOP_PLACE"})
+    def test_transmodel_definition_keeps_its_class_page_link(
+        self,
+        _extract_mock,
+        _canonical_mock,
+        _expand_mock,
+        postgres_candidates_mock,
+        _examples_mock,
+        definitions_mock,
+    ):
+        """The candidate built from a definition chunk carries its sourceUrl through to the results (#151)."""
+        from helpdesk.models import SourceChunk
+        from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
+
+        postgres_candidates_mock.return_value = SourceChunk.objects.none()
+        definitions_mock.return_value = [
+            {
+                "concept": "https://transmodel-cen.eu/6.2/STOP_PLACE",
+                "type": "http://www.w3.org/2002/07/owl#Class",
+                "definition": "A place comprising one or more locations where vehicles may stop.",
+                "prefLabel": "STOP PLACE",
+                "altLabels": [],
+            }
+        ]
+
+        chunks, _trace = retrieve_chunks_with_trace(
+            question="What is a stop place in Transmodel?",
+            top_k=6,
+            min_score=0.0,
+            graph_rag_enabled=True,
+        )
+
+        (definition,) = [c for c in chunks if c.get("sourcePath") == "docs/ontology/standards/transmodel.ttl#STOP_PLACE"]
+        self.assertEqual(
+            definition["sourceUrl"],
+            "https://helpdesk.example/transmodel/index.htm?guid=06B01244-7E43-4925-8610-0B0B61508E7D",
+        )
+
     @patch("helpdesk.services.retrieval_gateway.extract_graph_concepts")
     def test_graph_score_boosts_exact_example_path_on_direct_concept_hit(self, extract_graph_concepts_mock):
         from helpdesk.services.retrieval_gateway import _graph_score_adjustment
