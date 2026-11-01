@@ -17,9 +17,9 @@ from helpdesk.services.llm_generator import (
 )
 from helpdesk.services.policy_guard import evaluate_policy
 from helpdesk.services.question_parsing import (
-    UNKNOWN_CONCEPT_SENTINEL,
     _legislation_term_covers,
     legislation_terms_in,
+    names_indexed_act,
     parse_question_to_semantic_query,
 )
 from helpdesk.services.regulations import (
@@ -266,16 +266,29 @@ class LegislationTermScopeTests(SimpleTestCase):
     def test_defined_terms_are_found(self):
         self.assertEqual(legislation_terms_in("Who is a data holder?"), ["data holder"])
         self.assertEqual(legislation_terms_in("What does ITS mean?"), ["ITS"])
-        self.assertEqual(legislation_terms_in("Is its value correct?"), [])
+        self.assertEqual(legislation_terms_in("kakšna je vloga nap?"), ["nap"])  # acronyms in any case
+        self.assertEqual(legislation_terms_in("Is its value correct?"), [])  # unless a function word
 
-    def test_the_term_must_cover_the_standards_concept_found(self):
-        self.assertTrue(_legislation_term_covers("What is static travel data?", "transmodel:TRAVEL"))
-        self.assertTrue(_legislation_term_covers("Who is a data holder?", UNKNOWN_CONCEPT_SENTINEL))
-        self.assertFalse(_legislation_term_covers("How are transport operators linked to lines?", "transmodel:linkedTo"))
-        self.assertFalse(_legislation_term_covers("What is a cancelled journey?", "transmodel:JOURNEY"))
+    def test_the_term_must_cover_every_span_the_standards_concepts_matched(self):
+        aliases = {"tm:TRAVEL": {"travel"}, "nx:Service": {"service"}, "tm:linkedTo": {"linked to"}}
+        with patch("helpdesk.services.question_parsing.GRAPH_CONCEPT_ALIASES", aliases):
+            self.assertTrue(_legislation_term_covers("What is static travel data?", ["tm:TRAVEL"]))
+            # a concept matched on a word inside the term, as on prod for "service"
+            self.assertTrue(_legislation_term_covers("What is a travel information service?", ["tm:TRAVEL", "nx:Service"]))
+            self.assertTrue(_legislation_term_covers("Who is a data holder?", []))
+            self.assertFalse(
+                _legislation_term_covers("How are transport operators linked to lines?", ["tm:linkedTo"])
+            )
+            self.assertFalse(_legislation_term_covers("What is a cancelled journey?", []))  # no defined term
 
     def test_a_named_standard_keeps_the_question_with_the_standard(self):
         self.assertEqual(
             parse_question_to_semantic_query("Show example for transport operator in NeTEx.").candidate_standards,
             ["NeTEx"],
         )
+
+    def test_acts_are_recognised_by_their_names_and_numbers_from_the_act_list(self):
+        for question in ["What does MMTIS require?", "TEL-TSI fares", "the ITS Directive", "Verordnung 2017/1926"]:
+            with self.subTest(question=question):
+                self.assertTrue(names_indexed_act(question))
+        self.assertFalse(names_indexed_act("Is there an API for NeTEx?"))  # a defined term, not an act

@@ -21,6 +21,7 @@ from django.conf import settings
 
 from helpdesk.services.graphdb_connector import GraphDBConnector
 from helpdesk.services.semantic_graph import (
+    GRAPH_CONCEPT_ALIASES,
     expand_graph_concepts,
     extract_graph_concepts,
     get_concept_transmodel_ids,
@@ -62,13 +63,12 @@ _STANDARD_KEYWORD_PATTERNS: dict[str, re.Pattern] = {
     "SIRI": re.compile(r"\bsiri\b", re.IGNORECASE),
     "OpRa": re.compile(r"\bopra\b", re.IGNORECASE),
     "Transmodel": re.compile(r"\btransmodel\b", re.IGNORECASE),
-    # The EU acts indexed as a source (services/regulations.py), by name, acronym or number, and the
-    # words for regulation/directive/legislation in the languages questions arrive in. Not "legal":
-    # NeTEx uses it for organisations (legal entity).
+    # Words for legislation in the languages questions arrive in. The indexed acts themselves (names,
+    # acronyms, numbers) and the terms they define come from services/regulations.py, see
+    # _legislation_identifier_pattern. Not "legal": NeTEx uses it for organisations (legal entity).
     "EU legislation": re.compile(
-        r"\b(?:mmtis|its[ -]directive|naps?|national access points?|tel[ -]?tsi|tap[ -]?tsi|taf[ -]?tsi|tsi"
-        r"|eur-lex|delegated (?:act|regulation)|implementing (?:act|regulation)"
-        r"|regulations?|directives?|legislation|2017/1926|2024/490|2010/40(?:/eu)?|2023/2661|2026/253"
+        r"\b(?:eur-lex|delegated (?:act|regulation)|implementing (?:act|regulation)|tsi"
+        r"|regulations?|directives?|legislation"
         r"|uredb\w*|direktiv\w*|zakonodaj\w*|verordnung\w*|richtlinie\w*|gesetzgebung"
         r"|r[eè]glements?|l[ée]gislation|regolament\w*|direttiv\w*|normativ\w*|reglamentos?|directivas?)\b",
         re.IGNORECASE,
@@ -151,10 +151,11 @@ class QuestionParsingService:
         else:
             candidate_standards = self._scan_standard_keywords(normalized)
             # A term the EU acts define ("static travel and traffic data") points to the legislation when
-            # nothing else points to a standard: no standard named, and the standards concept found, if
-            # any, is only a word of that term ("travel" in "travel data"). "Show example for transport
-            # operator in NeTEx" and "How are transport operators linked to lines?" stay standards questions.
-            if not candidate_standards and _legislation_term_covers(text, core_concept):
+            # nothing else points to a standard: no standard named, and every word the standards concepts
+            # matched lies inside that term ("travel" in "travel data", "service" in "travel information
+            # service"). "Show example for transport operator in NeTEx" and "How are transport operators
+            # linked to lines?" stay standards questions.
+            if not candidate_standards and _legislation_term_covers(text, direct_concepts):
                 candidate_standards = [LEGISLATION_SCOPE]
 
         concept_confidence = self._concept_confidence(core_concepts)
@@ -332,7 +333,7 @@ class QuestionParsingService:
         """Return standards whose name appears verbatim in the question text."""
         found: list[str] = []
         for standard, pattern in _STANDARD_KEYWORD_PATTERNS.items():
-            if pattern.search(text):
+            if pattern.search(text) or (standard == LEGISLATION_SCOPE and names_indexed_act(text)):
                 found.append(standard)
         return found
 
@@ -359,24 +360,59 @@ class QuestionParsingService:
         return discovered
 
 
+# English function words (articles, pronouns, possessives, prepositions, conjunctions, auxiliaries).
+_FUNCTION_WORDS = frozenset(
+    "a an the it its it's he she we us you they them his her our your their this that these those i me my "
+    "in on at to of for by as is am are was be been or and but if so no not do does did can may has had "
+    "up out off via per".split()
+)
+
 LEGISLATION_SCOPE = "EU legislation"
 
 
 @lru_cache(maxsize=1)
-def _legislation_term_patterns() -> tuple[re.Pattern, re.Pattern] | None:
+def _legislation_term_patterns() -> tuple[re.Pattern, re.Pattern, re.Pattern] | None:
+    """(acronyms in capitals only, other acronyms, phrases) of the terms the indexed EU acts define."""
     from helpdesk.services.regulations import vocabulary_terms
 
     terms = sorted(set(vocabulary_terms()), key=len, reverse=True)
     if not terms:
         return None
-    acronyms = [t for t in terms if t.isupper()]
-    phrases = [t for t in terms if not t.isupper()]
-    # Acronyms match case-sensitively ("ITS", not "its"); phrases in any case, also in the plural.
+    # An acronym whose lowercase form is an ordinary function word ("ITS" / "its") matches only in capitals;
+    # other terms match in any case ("nap" in a Slovenian question), also in the plural.
+    case_sensitive = [t for t in terms if t.isupper() and t.lower() in _FUNCTION_WORDS]
+    any_case = [t for t in terms if t not in case_sensitive]
+
     def build(items, flags):
         joined = "|".join(re.escape(t) for t in items) or r"(?!x)x"
         return re.compile(rf"(?<![\w-])(?:{joined})s?(?![\w-])", flags)
 
-    return build(acronyms, 0), build(phrases, re.IGNORECASE)
+    return build(case_sensitive, 0), build([t for t in any_case if t.isupper()], re.IGNORECASE), build(
+        [t for t in any_case if not t.isupper()], re.IGNORECASE
+    )
+
+
+@lru_cache(maxsize=1)
+def _legislation_identifier_pattern() -> re.Pattern | None:
+    """The indexed acts by their names in parentheses ("MMTIS", "ITS Directive") and numbers ("2017/1926")."""
+    from helpdesk.services.regulations import ACTS
+
+    identifiers: set[str] = set()
+    for act in ACTS:
+        identifiers.update(re.findall(r"\(([^()]*[A-Za-z][^()]*)\)", act.name))
+        identifiers.update(re.findall(r"\d{4}/\d+(?:/EU)?", act.name))
+    identifiers.discard("EU")
+    if not identifiers:
+        return None
+    alternatives = "|".join(re.escape(i).replace(r"\ ", r"[\s-]?") for i in sorted(identifiers, key=len, reverse=True))
+    return re.compile(rf"(?<![\w/])(?:{alternatives})(?![\w/])", re.IGNORECASE)
+
+
+def names_indexed_act(text: str) -> bool:
+    """Whether the question names one of the indexed EU acts. Terms the acts define (NAP, data holder) go
+    through the conditional rule in parse instead."""
+    pattern = _legislation_identifier_pattern()
+    return bool(pattern and pattern.search(text or ""))
 
 
 def legislation_terms_in(text: str) -> list[str]:
@@ -387,21 +423,23 @@ def legislation_terms_in(text: str) -> list[str]:
     return [match.group(0) for pattern in patterns for match in pattern.finditer(text or "")]
 
 
-def _concept_label(concept_id: str) -> str:
-    local = concept_id.split(":", 1)[-1]
-    return re.sub(r"(?<=[a-z])(?=[A-Z])", " ", local).replace("_", " ").lower()
-
-
-def _legislation_term_covers(text: str, core_concept: str) -> bool:
-    """Whether a defined legal term is the question's most specific match: it is used, and the standards
-    concept found (if any) is part of it."""
-    terms = [term.lower() for term in legislation_terms_in(text)]
-    if not terms:
+def _legislation_term_covers(text: str, concept_ids) -> bool:
+    """Whether a defined legal term is the question's most specific match: it is used, and every span the
+    standards concepts matched (any alias of a concept found in the question's words) lies inside it."""
+    patterns = _legislation_term_patterns()
+    if not patterns:
         return False
-    if core_concept == UNKNOWN_CONCEPT_SENTINEL:
-        return True
-    label = _concept_label(core_concept)
-    return any(re.search(rf"(?<!\w){re.escape(label)}(?!\w)", term) for term in terms)
+    legal_spans = [match.span() for pattern in patterns for match in pattern.finditer(text or "")]
+    if not legal_spans:
+        return False
+    for concept_id in concept_ids:
+        for alias in GRAPH_CONCEPT_ALIASES.get(concept_id, ()):
+            pattern = rf"(?<![\w-]){re.escape(alias)}s?(?![\w-])"
+            for match in re.finditer(pattern, text or "", re.IGNORECASE):
+                start, end = match.span()
+                if not any(legal_start <= start and end <= legal_end for legal_start, legal_end in legal_spans):
+                    return False
+    return True
 
 
 def parse_question_to_semantic_query(text: str, requested_scope: list[str] | None = None) -> SemanticQuery:
