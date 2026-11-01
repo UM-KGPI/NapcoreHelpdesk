@@ -16,8 +16,26 @@ from helpdesk.services.llm_generator import (
     _regulation_citation_grounded,
 )
 from helpdesk.services.policy_guard import evaluate_policy
-from helpdesk.services.question_parsing import parse_question_to_semantic_query
-from helpdesk.services.regulations import ACTS, SCOPE, Act, _chunk_records, index_act, is_regulation_url, parse_act
+from helpdesk.services.question_parsing import (
+    UNKNOWN_CONCEPT_SENTINEL,
+    _legislation_term_covers,
+    legislation_terms_in,
+    parse_question_to_semantic_query,
+)
+from helpdesk.services.regulations import (
+    ACTS,
+    SCOPE,
+    VOCABULARY_PATH,
+    Act,
+    _chunk_records,
+    build_vocabulary,
+    extract_definitions,
+    index_act,
+    is_regulation_url,
+    parse_act,
+    render_vocabulary,
+    vocabulary_terms,
+)
 from helpdesk.services.retrieval_gateway import _scope_matches
 
 XHTML = b"""<?xml version="1.0" encoding="UTF-8"?>
@@ -195,3 +213,69 @@ class LegislationPolicyTests(SimpleTestCase):
         self.assertTrue(evaluate_policy("Answer.", [{"repositoryUrl": f"{ACTS[0].url}#art_4"}])["allowed"])
         other = "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32016R0679#art_1"
         self.assertFalse(evaluate_policy("Answer.", [{"repositoryUrl": other}])["allowed"])
+
+
+DEFINITIONS_XHTML = """<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"><body>
+<div id="art_2"><p class="title-article-norm">Article 2</p>
+  <p>(1) &#8216;data holder&#8217; means a body that holds data;</p>
+  <p>(2) &#8216;Intelligent Transport Systems&#8217; or &#8216;ITS&#8217; means systems;</p>
+  <p>(3) &#8216;rail ticketing&#8217; means the process comprising the following:</p>
+  <p>(a) booking;</p>
+  <p>(4) &#8216;journey&#8217; means a trip;</p>
+</div></body></html>""".encode()
+
+
+class LegislationVocabularyTests(SimpleTestCase):
+    def setUp(self):
+        self._dir = TemporaryDirectory()
+        path = Path(self._dir.name) / "act.xhtml"
+        path.write_bytes(DEFINITIONS_XHTML)
+        self.patcher = patch.object(Act, "path", property(lambda self: path))
+        self.patcher.start()
+        self.definitions = extract_definitions(ACT, "MMTIS")
+
+    def tearDown(self):
+        self.patcher.stop()
+        self._dir.cleanup()
+
+    def test_definitions_with_other_names_and_continued_lists(self):
+        by_term = {d.labels[0]: d for d in self.definitions}
+        self.assertEqual(by_term["Intelligent Transport Systems"].labels, ["Intelligent Transport Systems", "ITS"])
+        self.assertTrue(by_term["rail ticketing"].text.endswith("the following: (a) booking;"))
+        self.assertEqual(by_term["data holder"].text, "means a body that holds data;")
+
+    def test_scope_terms_skip_shared_and_single_words(self):
+        with TemporaryDirectory() as tmp:
+            vocabulary = Path(tmp) / "vocabulary.ttl"
+            vocabulary.write_text(render_vocabulary(self.definitions, {"rail ticketing"}), encoding="utf-8")
+            terms = vocabulary_terms(vocabulary)
+        self.assertIn("data holder", terms)
+        self.assertIn("ITS", terms)  # an acronym counts
+        self.assertNotIn("rail ticketing", terms)  # shared with a standards label
+        self.assertNotIn("journey", terms)  # a single ordinary word does not set the scope
+
+
+class StoredVocabularyTests(SimpleTestCase):
+    def test_the_stored_vocabulary_is_generated_from_the_stored_acts(self):
+        text, _, _ = build_vocabulary()
+        self.assertEqual(VOCABULARY_PATH.read_text(encoding="utf-8"), text, "run build_legislation_vocabulary")
+
+
+class LegislationTermScopeTests(SimpleTestCase):
+    def test_defined_terms_are_found(self):
+        self.assertEqual(legislation_terms_in("Who is a data holder?"), ["data holder"])
+        self.assertEqual(legislation_terms_in("What does ITS mean?"), ["ITS"])
+        self.assertEqual(legislation_terms_in("Is its value correct?"), [])
+
+    def test_the_term_must_cover_the_standards_concept_found(self):
+        self.assertTrue(_legislation_term_covers("What is static travel data?", "transmodel:TRAVEL"))
+        self.assertTrue(_legislation_term_covers("Who is a data holder?", UNKNOWN_CONCEPT_SENTINEL))
+        self.assertFalse(_legislation_term_covers("How are transport operators linked to lines?", "transmodel:linkedTo"))
+        self.assertFalse(_legislation_term_covers("What is a cancelled journey?", "transmodel:JOURNEY"))
+
+    def test_a_named_standard_keeps_the_question_with_the_standard(self):
+        self.assertEqual(
+            parse_question_to_semantic_query("Show example for transport operator in NeTEx.").candidate_standards,
+            ["NeTEx"],
+        )
