@@ -18,8 +18,8 @@ NO_CONCEPT_MESSAGE = (
 )
 NOT_RELEVANT_MESSAGE = (
     "This helpdesk answers questions about the public-transport data standards NeTEx, SIRI, OpRa and "
-    "Transmodel, and your question does not seem to be about them. Please rephrase it or name the "
-    "standard or concept you mean."
+    "Transmodel, and the EU legislation that governs their data (MMTIS, ITS Directive, TEL TSI), and your "
+    "question does not seem to be about them. Please rephrase it or name the standard, act or concept you mean."
 )
 LOW_CONFIDENCE_MESSAGE = (
     "I cannot safely determine the intended standards concept from this question yet. "
