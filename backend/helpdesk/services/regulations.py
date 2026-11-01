@@ -315,6 +315,13 @@ def index_act(act: Act) -> tuple[str, int]:
     return "indexed", len(records)
 
 
+def citation_title(source_path: str) -> str:
+    """A readable name for a cited part of an indexed act ("MMTIS Art. 4"), or "" for other sources."""
+    celex, _, anchor = (source_path or "").partition("#")
+    act = next((a for a in ACTS if a.celex == celex), None)
+    return provision_label(act, anchor) if act and anchor else ""
+
+
 def is_regulation_url(url: str) -> bool:
     """True for an EUR-Lex link to one of the indexed acts (citation allow-list)."""
     base = url.split("#", 1)[0]
@@ -442,8 +449,12 @@ _ANCHOR_KINDS = {"art": "Art.", "app": "App.", "anx": "Annex", "rct": "Recital"}
 def provision_label(act: Act, anchor: str) -> str:
     """A short name for a provision: the act's short name (in parentheses in its name) and the point,
     e.g. "MMTIS Art. 4", "TEL TSI App. C"."""
-    names = [g for g in re.findall(r"\(([^()]*[A-Za-z][^()]*)\)", act.name) if g != "EU"]
-    short = names[0] if names else act.celex
+    if act.kind == "amending":
+        # An amending act is named by its number: its recitals are not those of the act it amends.
+        short = act.name.split(" amending ", 1)[0]
+    else:
+        names = [g for g in re.findall(r"\(([^()]*[A-Za-z][^()]*)\)", act.name) if g != "EU"]
+        short = names[0] if names else act.celex
     kind, _, number = anchor.partition("_")
     point = _ANCHOR_KINDS.get(kind, kind)
     return f"{short} {point} {number}".strip() if not (kind == "anx" and number == "1") else f"{short} {point}"

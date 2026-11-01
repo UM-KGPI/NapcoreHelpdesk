@@ -1143,6 +1143,9 @@ components:
           type: string
         label:
           type: string
+        title:
+          type: string
+          description: Readable name of a cited part of an EU act (e.g. "MMTIS Art. 4"); absent for other sources.
       additionalProperties: false
     LegalContextItem:
       type: object

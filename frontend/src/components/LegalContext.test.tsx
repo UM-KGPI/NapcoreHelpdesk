@@ -23,3 +23,13 @@ describe("LegalContext", () => {
     expect(container.textContent).toBe("");
   });
 });
+
+describe("citationDisplayName", () => {
+  it("prefers the title of a cited part of an EU act over its source path", async () => {
+    const { citationDisplayName } = await import("../citationLabels");
+    expect(citationDisplayName({ label: "E2", sourcePath: "02017R1926-20240304#art_4", title: "MMTIS Art. 4" })).toBe(
+      "MMTIS Art. 4",
+    );
+    expect(citationDisplayName({ label: "E1", sourcePath: "xsd/netex_part_1/a.xsd" })).toBe("a.xsd");
+  });
+});

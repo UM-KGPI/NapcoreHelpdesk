@@ -8,6 +8,8 @@ const EVIDENCE_LABEL_PATTERN = /^E\d+$/;
 interface CitationLike {
   label?: string | null;
   sourcePath: string;
+  /** Readable name of a cited part of an EU act ("MMTIS Art. 4"), when the backend sends one. */
+  title?: string;
 }
 
 /** Marker shown before a citation entry, e.g. "[E2]" — matches the answer text. */
@@ -18,6 +20,9 @@ export function citationMarker(citation: CitationLike, index: number): string {
 
 /** Human-readable name for a citation entry (never the E# marker itself). */
 export function citationDisplayName(citation: CitationLike): string {
+  if (citation.title) {
+    return citation.title;
+  }
   const label = citation.label ?? "";
   if (label && !EVIDENCE_LABEL_PATTERN.test(label) && label !== citation.sourcePath) {
     return label;

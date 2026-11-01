@@ -20,6 +20,8 @@ export interface Citation {
   sourcePath: string;
   chunkId: string;
   label?: string;
+  /** Readable name of a cited part of an EU act ("MMTIS Art. 4"); absent for other sources. */
+  title?: string;
 }
 
 /** A provision of an EU act that names the standard an answer is about. */
@@ -284,6 +286,7 @@ export interface QuestionEventCitation {
   sourcePath: string;
   repositoryUrl: string;
   chunkId: string;
+  title?: string;
 }
 
 export interface QuestionEventDetail {

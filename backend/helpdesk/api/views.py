@@ -103,6 +103,15 @@ def _service_health_payload(check: str, status_value: str, **extra_fields) -> di
     return payload
 
 
+def _citation_title(source_path: str) -> dict:
+    """{"title": "MMTIS Art. 4"} for a cited part of an EU act, else nothing: the frontend shows the
+    title instead of the raw source path."""
+    from helpdesk.services.regulations import citation_title
+
+    title = citation_title(source_path)
+    return {"title": title} if title else {}
+
+
 def _legal_context(mode: str, scope: list[str] | None) -> list[dict]:
     """Provisions of the EU acts that name the standards an answer is about, for a "Legal context" line.
 
@@ -351,6 +360,7 @@ def _select_citations(chunks: list[dict], max_citations: int) -> list[dict]:
                 "sourcePath": source_path,
                 "chunkId": chunk["chunkId"],
                 "label": chunk.get("label"),
+                **_citation_title(source_path),
             }
         )
         if len(selected) >= max_citations:
@@ -372,6 +382,7 @@ def _select_citations(chunks: list[dict], max_citations: int) -> list[dict]:
                 "sourcePath": source_path,
                 "chunkId": chunk["chunkId"],
                 "label": chunk.get("label"),
+                **_citation_title(source_path),
             }
         )
         if len(selected) >= max_citations:
@@ -409,6 +420,7 @@ def _citations_from_prompt_order(chunks: list[dict], answer_text: str) -> list[d
                 "sourcePath": chunk.get("sourcePath", ""),
                 "chunkId": chunk["chunkId"],
                 "label": f"E{index}",
+                **_citation_title(chunk.get("sourcePath", "")),
             }
         )
     return citations
@@ -2009,6 +2021,7 @@ class QuestionEventDetailView(APIView):
                     else _build_file_url(link.repository_url, link.commit_sha, link.source_path)
                 ),
                 "chunkId": link.chunk_id,
+                **_citation_title(link.source_path),
             })
 
         return Response(
