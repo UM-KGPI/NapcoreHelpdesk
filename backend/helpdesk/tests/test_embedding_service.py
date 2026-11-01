@@ -64,7 +64,9 @@ class EmbeddingSwitchTests(SimpleTestCase):
         with patch.object(embeddings, "urlopen", side_effect=_service_answer(seen)):
             vectors = build_text_embeddings_batch([f"chunk {i}" for i in range(70)])
 
-        self.assertEqual([(kind, len(texts)) for kind, texts in seen], [("passage", 64), ("passage", 6)])
+        size = embeddings.SERVICE_BATCH_SIZE
+        expected = [("passage", size)] * (70 // size) + ([("passage", 70 % size)] if 70 % size else [])
+        self.assertEqual([(kind, len(texts)) for kind, texts in seen], expected)
         self.assertEqual(len(vectors), 70)
 
     @override_settings(EMBEDDING_BACKEND="semantic")
