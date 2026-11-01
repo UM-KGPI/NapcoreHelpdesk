@@ -3,6 +3,7 @@
 # '# shared' marks a label that is also a label in docs/ontology/standards/.
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix dct: <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix eulex: <https://napcore.eu/ontology/eu-legislation#> .
 
 eulex:MMTIS-multimodal_travel_information a skos:Concept ;
@@ -594,6 +595,6 @@ eulex:TELTSI-data_quality a skos:Concept ;
     skos:inScheme eulex:TELTSI .
 
 # Provisions that name a standard (eulex:namesStandard), generated from the same acts.
-eulex:MMTIS-art_4 a eulex:Provision ; dct:source <https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:02017R1926-20240304#art_4> ; eulex:namesStandard "NeTEx" , "Transmodel" .
-eulex:MMTIS-art_5 a eulex:Provision ; dct:source <https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:02017R1926-20240304#art_5> ; eulex:namesStandard "SIRI" .
-eulex:TELTSI-app_C a eulex:Provision ; dct:source <https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32026R0253#app_C> ; eulex:namesStandard "NeTEx" , "Transmodel" .
+eulex:MMTIS-art_4 a eulex:Provision ; rdfs:label "MMTIS Art. 4"@en ; dct:source <https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:02017R1926-20240304#art_4> ; eulex:namesStandard "NeTEx" , "Transmodel" .
+eulex:MMTIS-art_5 a eulex:Provision ; rdfs:label "MMTIS Art. 5"@en ; dct:source <https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:02017R1926-20240304#art_5> ; eulex:namesStandard "SIRI" .
+eulex:TELTSI-app_C a eulex:Provision ; rdfs:label "TEL TSI App. C"@en ; dct:source <https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32026R0253#app_C> ; eulex:namesStandard "NeTEx" , "Transmodel" .

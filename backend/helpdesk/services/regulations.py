@@ -390,6 +390,7 @@ def render_vocabulary(definitions: list[Definition], shared_labels: set[str]) ->
         "# '# shared' marks a label that is also a label in docs/ontology/standards/.",
         "@prefix skos: <http://www.w3.org/2004/02/skos/core#> .",
         "@prefix dct: <http://purl.org/dc/terms/> .",
+        "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .",
         f"@prefix eulex: <{VOCABULARY_NAMESPACE}> .",
         "",
     ]
@@ -414,7 +415,10 @@ STANDARD_IDENTIFIERS = {
     "Transmodel": r"\bTransmodel\b|EN 12896",
     "OpRa": r"\bOpRa\b",
 }
-_PROVISION_LINE = re.compile(r"^eulex:\S+ a eulex:Provision ; dct:source <[^#>]+CELEX:([^#>]+)#([^>]+)> ; eulex:namesStandard (.+) \.$")
+_PROVISION_LINE = re.compile(
+    r'^eulex:\S+ a eulex:Provision ; rdfs:label "([^"]+)"@en ; dct:source <([^#>]+CELEX:([^#>]+))#([^>]+)> ; '
+    r"eulex:namesStandard (.+) \.$"
+)
 
 
 def extract_provisions() -> list[tuple[Act, str, list[str]]]:
@@ -432,6 +436,19 @@ def extract_provisions() -> list[tuple[Act, str, list[str]]]:
     return provisions
 
 
+_ANCHOR_KINDS = {"art": "Art.", "app": "App.", "anx": "Annex", "rct": "Recital"}
+
+
+def provision_label(act: Act, anchor: str) -> str:
+    """A short name for a provision: the act's short name (in parentheses in its name) and the point,
+    e.g. "MMTIS Art. 4", "TEL TSI App. C"."""
+    names = [g for g in re.findall(r"\(([^()]*[A-Za-z][^()]*)\)", act.name) if g != "EU"]
+    short = names[0] if names else act.celex
+    kind, _, number = anchor.partition("_")
+    point = _ANCHOR_KINDS.get(kind, kind)
+    return f"{short} {point} {number}".strip() if not (kind == "anx" and number == "1") else f"{short} {point}"
+
+
 def render_provisions(provisions: list[tuple[Act, str, list[str]]]) -> str:
     lines = [
         "",
@@ -440,8 +457,8 @@ def render_provisions(provisions: list[tuple[Act, str, list[str]]]) -> str:
     for act, anchor, standards in provisions:
         names = " , ".join(f'"{s}"' for s in standards)
         lines.append(
-            f"eulex:{_VOCABULARY_ACTS[act.celex]}-{anchor} a eulex:Provision ; dct:source <{act.url}#{anchor}> ; "
-            f"eulex:namesStandard {names} ."
+            f'eulex:{_VOCABULARY_ACTS[act.celex]}-{anchor} a eulex:Provision ; rdfs:label "{provision_label(act, anchor)}"@en ; '
+            f"dct:source <{act.url}#{anchor}> ; eulex:namesStandard {names} ."
         )
     return "\n".join(lines) + "\n"
 
@@ -458,12 +475,31 @@ def provisions_naming(standard: str, path: Path = VOCABULARY_PATH) -> list[str]:
     """Source paths ("<CELEX>#<anchor>") of the provisions that name a standard, in act order."""
     if not path.exists():
         return []
+    return [f"{p['celex']}#{p['anchor']}" for p in _provisions(path) if standard in p["standards"]]
+
+
+def _provisions(path: Path = VOCABULARY_PATH) -> list[dict]:
+    if not path.exists():
+        return []
     found = []
     for line in path.read_text(encoding="utf-8").splitlines():
         match = _PROVISION_LINE.match(line.strip())
-        if match and f'"{standard}"' in match.group(3):
-            found.append(f"{match.group(1)}#{match.group(2)}")
+        if match:
+            label, url, celex, anchor, names = match.groups()
+            found.append(
+                {"label": label, "url": f"{url}#{anchor}", "celex": celex, "anchor": anchor,
+                 "standards": re.findall(r'"([^"]+)"', names)}
+            )
     return found
+
+
+def legal_context(standards: list[str], path: Path = VOCABULARY_PATH) -> list[dict]:
+    """The provisions that name any of the standards, as {"label", "url"} for a "Legal context" line."""
+    return [
+        {"label": p["label"], "url": p["url"]}
+        for p in _provisions(path)
+        if any(standard in p["standards"] for standard in standards)
+    ]
 
 
 def vocabulary_terms(path: Path = VOCABULARY_PATH) -> list[str]:

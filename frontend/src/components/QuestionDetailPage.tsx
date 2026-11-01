@@ -78,6 +78,7 @@ export default function QuestionDetailPage({
               chunkId: c.chunkId,
               label: c.label,
             })),
+            legalContext: detail.legalContext ?? [],
             abstained: false,
             abstentionReason: null,
             reviewRequired: false,
