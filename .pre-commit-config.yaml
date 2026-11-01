@@ -3,11 +3,14 @@ repos:
     rev: v5.0.0
     hooks:
       - id: end-of-file-fixer
+        # Official EU texts, kept byte for byte as the Publications Office serves them
+        exclude: ^docs/regulations/
       - id: trailing-whitespace
       - id: check-yaml
       - id: check-json
       - id: check-merge-conflict
       - id: mixed-line-ending
+        exclude: ^docs/regulations/
 
   - repo: local
     hooks:

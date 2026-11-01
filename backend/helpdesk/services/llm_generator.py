@@ -166,6 +166,8 @@ _STRONG_TERM_PATTERN = re.compile(
     r"|([A-Za-z0-9]{2,}:[A-Za-z0-9@_./-]{3,})"       # namespaced ids, e.g. stg:SCWW@86, netex:Line
     r"|([A-Z0-9][A-Za-z0-9_.-]*-[A-Za-z0-9_.-]*[A-Z0-9])"  # hyphenated IDs with uppercase/digits, e.g. SCWW-86, UK-2022, 93-RED-y11-1
     r"|([A-Za-z0-9_-]+\.(?:xsd|xml|yaml|json|ttl))"  # file names with known extensions
+    r"|((?:Article|Annex)\s+[0-9IVX]+(?:\(\w{1,4}\))*)"   # legal references, e.g. Article 4(1)(b), Annex II
+    r"|(\(EU\)\s+(?:No\s+)?\d{2,4}/\d+|\d{4}/\d+/EU)"   # act numbers, e.g. (EU) 2017/1926, 2010/40/EU
 )
 
 # Weak terms: PascalCase element names (single or multi-word) and ALL-CAPS
@@ -258,6 +260,56 @@ def _extract_key_terms(sentence: str) -> list[str]:
     return list(dict.fromkeys(strong + weak))
 
 
+# Article/annex references in the languages answers are written in; the number is checked against the chunk.
+_LEGAL_REFERENCE_PATTERN = re.compile(
+    r"\b(?:article|artikel|art\.|articolo|art[ií]culo|člen\w*|annex|anhang|annexe|allegato|anexo|prilog\w*)"
+    r"\s+([0-9]+|[IVX]+)\b",
+    re.IGNORECASE,
+)
+_QUOTED_SPAN_PATTERN = re.compile(r"[\"“‘'„«]([^\"”’'“»]{12,})[\"”’'“»]")
+_CONTENT_WORD_PATTERN = re.compile(r"[^\W\d_]{4,}")
+
+
+def _is_regulation_chunk(chunk: dict) -> bool:
+    return (chunk.get("docType") or chunk.get("doc_type")) == "regulation"
+
+
+def _has_legislation_evidence(chunks: list[dict], max_chunks: int) -> bool:
+    return any(_is_regulation_chunk(chunk) for chunk in chunks[:max_chunks])
+
+
+# Tokens that survive translation: acronyms (NAP, ITS), act numbers (2017/1926) and other numbers.
+_DISTINCTIVE_TOKEN_PATTERN = re.compile(r"\b(?:[A-Z]{2,}[A-Z0-9]*|\d{4}/\d+(?:/[A-Z]+)?|\d{3,})\b")
+
+
+def _regulation_citation_grounded(sentence: str, chunk: dict) -> bool:
+    """Whether a sentence citing an EU legislation chunk is supported by it (issue #91).
+
+    Legal prose has no element names, so the term checks used for standards evidence do not apply. The
+    sentence is grounded when it names an article or annex number the chunk has, quotes at least three
+    words of the chunk verbatim, shares two distinctive tokens with it (acronyms, act numbers: these
+    survive translation), or shares at least 40% of its content words with it.
+    """
+    text = str(chunk.get("text", "")).lower()
+    anchor = str(chunk.get("sourcePath", "")).lower().rsplit("#", 1)[-1]
+    for number in _LEGAL_REFERENCE_PATTERN.findall(sentence):
+        number = number.lower()
+        if anchor in (f"art_{number}", f"anx_{number}") or f"article {number}" in text or f"annex {number}" in text:
+            return True
+    for quoted in _QUOTED_SPAN_PATTERN.findall(sentence):
+        if len(quoted.split()) >= 3 and re.sub(r"\s+", " ", quoted.strip().lower()) in text:
+            return True
+    # An answer in another language paraphrases the English text; its acronyms and numbers stay the same.
+    # Only the body counts: the act's own name and number head every chunk of that act.
+    body = str(chunk.get("text", "")).split("\n", 1)[-1]
+    if len({t for t in _DISTINCTIVE_TOKEN_PATTERN.findall(sentence) if t in body}) >= 2:
+        return True
+    words = {word.lower() for word in _CONTENT_WORD_PATTERN.findall(sentence)}
+    if not words:
+        return False
+    return sum(1 for word in words if word in text) / len(words) >= 0.4
+
+
 def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
     """
     Verify that each [E#] citation is grounded in the referenced chunk's text.
@@ -295,6 +347,17 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
         if is_code_block and found_citations:
             logger.debug(f"Accepting code block citation without strict grounding: {sentence[:100]}")
             continue  # Skip to next sentence - code blocks are inherently technical
+
+        cited_chunks = [chunks[int(c) - 1] for c in found_citations if 0 < int(c) <= len(chunks)]
+        if cited_chunks and all(_is_regulation_chunk(chunk) for chunk in cited_chunks):
+            for citation_str, chunk in zip(found_citations, cited_chunks):
+                if not _regulation_citation_grounded(clean, chunk):
+                    raise LLMGenerationError(
+                        f"Citation [E{citation_str}] does not ground the claim: '{sentence[:150].strip()}'. "
+                        f"Cited chunk source: '{chunk.get('sourcePath', 'unknown')}'. Name the article, quote "
+                        "the provision verbatim, or cite the block that states it."
+                    )
+            continue
 
         strong_terms, weak_terms = _classify_terms(clean)
 
@@ -898,6 +961,15 @@ def question_language(question: str) -> str | None:
     return detect_question_language(question) or _classify_question_language_with_llm(question)
 
 
+LEGISLATION_RULE = (
+    "Some evidence blocks are EU legislation; their first line names the act. For those blocks rule 9 does not "
+    "apply. Instead, name the act and the article or annex point (e.g. 'Article 4(1)(b) of Delegated Regulation "
+    "(EU) 2017/1926') and quote the relevant wording verbatim. Do not add obligations, dates or interpretations "
+    "that the quoted text does not state. When an evidence block is a consolidated text and another is the act "
+    "that amended it, quote the consolidated text."
+)
+
+
 def _build_messages(
     question: str,
     chunks: list[dict],
@@ -1023,6 +1095,10 @@ def _build_messages(
             "When showing XML/JSON structures, use one fenced code block (```xml) with 6-15 lines from the evidence. "
             "Never synthesize or invent examples — only quote verbatim from the evidence blocks."
         )
+
+    # Legislation is quoted by article, not described by XML elements (issue #91).
+    if _has_legislation_evidence(chunks, max_chunks):
+        system_prompt = f"{system_prompt} {LEGISLATION_RULE}"
 
     faq_section = ""
     if faq_hint:
@@ -1253,8 +1329,13 @@ def _validate_generated_answer(answer: str, chunks: list[dict]) -> None:
     logger.info("[VALIDATE] All validators PASSED")
 
 
-def _append_feedback_message(messages: list[dict], rejected_answer: str, error_msg: str) -> list[dict]:
-    """Return a new messages list with a feedback turn appended for retry."""
+def _append_feedback_message(
+    messages: list[dict], rejected_answer: str, error_msg: str, legislation: bool = False
+) -> list[dict]:
+    """Return a new messages list with a feedback turn appended for retry.
+
+    With EU legislation in the evidence the fix asks for articles and quotes, not XML elements (#91).
+    """
     # Add specific guidance if the error is about file names
     file_name_hint = ""
     if "file name" in error_msg.lower() or "raw file" in error_msg.lower():
@@ -1282,6 +1363,25 @@ def _append_feedback_message(messages: list[dict], rejected_answer: str, error_m
     language_hint = ""
     if "language" in error_msg.lower() or "english" in error_msg.lower():
         language_hint = "\n- CRITICAL LANGUAGE REQUIREMENT: You MUST write your entire answer in the language of the question. Do NOT respond in English when the question is in another language. Write EVERYTHING in that language, including all text and explanations."
+
+    if legislation:
+        return messages + [
+            {"role": "assistant", "content": rejected_answer},
+            {
+                "role": "user",
+                "content": (
+                    f"Your previous answer was REJECTED.\nRejected answer: {rejected_answer[:400]}\n"
+                    f"Reason: {error_msg[:250]}\n\n"
+                    "REQUIRED FIX — Your new answer MUST:\n"
+                    "1. For EU legislation blocks, name the article or annex point in each cited sentence and "
+                    "quote the provision verbatim (in English, as in the evidence)\n"
+                    "2. Cite the block that states each claim; do not cite a block for what it does not say\n"
+                    "3. Not mention XML elements, attributes or code unless a standards block shows them\n"
+                    "4. Keep the response language of the question"
+                    f"{language_hint}"
+                ),
+            },
+        ]
 
     feedback = (
         f"Your previous answer was REJECTED. It did not meet requirements.\n"
@@ -1393,6 +1493,7 @@ def generate_answer_llm(
                 messages=messages,
                 rejected_answer=rejected_answer,
                 error_msg=rejection_reason,
+                legislation=_has_legislation_evidence(chunks, max_chunks),
             )
         else:
             retry_messages = messages
@@ -1682,6 +1783,7 @@ def stream_answer_llm(
             messages=messages,
             rejected_answer=rejected_answer,
             error_msg=rejection_reason,
+            legislation=_has_legislation_evidence(chunks, max_chunks),
         )
         # The retry is a second full LLM call with nothing sent meanwhile; tell the
         # caller so the client connection does not sit silent through both calls.

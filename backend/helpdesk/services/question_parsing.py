@@ -61,6 +61,17 @@ _STANDARD_KEYWORD_PATTERNS: dict[str, re.Pattern] = {
     "SIRI": re.compile(r"\bsiri\b", re.IGNORECASE),
     "OpRa": re.compile(r"\bopra\b", re.IGNORECASE),
     "Transmodel": re.compile(r"\btransmodel\b", re.IGNORECASE),
+    # The EU acts indexed as a source (services/regulations.py), by name, acronym or number, and the
+    # words for regulation/directive/legislation in the languages questions arrive in. Not "legal":
+    # NeTEx uses it for organisations (legal entity).
+    "EU legislation": re.compile(
+        r"\b(?:mmtis|its[ -]directive|naps?|national access points?|tel[ -]?tsi|tap[ -]?tsi|taf[ -]?tsi|tsi"
+        r"|eur-lex|delegated (?:act|regulation)|implementing (?:act|regulation)"
+        r"|regulations?|directives?|legislation|2017/1926|2024/490|2010/40(?:/eu)?|2023/2661|2026/253"
+        r"|uredb\w*|direktiv\w*|zakonodaj\w*|verordnung\w*|richtlinie\w*|gesetzgebung"
+        r"|r[eè]glements?|l[ée]gislation|regolament\w*|direttiv\w*|normativ\w*|reglamentos?|directivas?)\b",
+        re.IGNORECASE,
+    ),
 }
 
 _INTENT_PATTERNS = {

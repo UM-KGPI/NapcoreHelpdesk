@@ -66,6 +66,11 @@ ${COMPOSE} exec -T backend python manage.py migrate --noinput
 echo "==> Maintenance page off"
 rm -f "${MAINTENANCE_FLAG}"
 
+# EU legislation (issue #91) is indexed from docs/regulations/, which the pull above updates. Acts whose
+# file and parser are unchanged are skipped, so this is quick on most deploys. Runs with the site up.
+echo "==> Indexing EU legislation"
+${COMPOSE} exec -T backend python manage.py index_regulations
+
 echo "==> Removing dangling images"
 docker image prune -f
 

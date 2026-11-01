@@ -513,6 +513,24 @@ of the repository with it, push, and deploy. If the model changed, regenerate th
 environment file to point answers elsewhere (e.g. the official Transmodel site); empty keeps the
 old link to `transmodel.ttl`.
 
+### EU legislation
+
+The Helpdesk answers questions about the EU acts that govern the data (issue #91): MMTIS (Delegated
+Regulation (EU) 2017/1926) and the ITS Directive (2010/40/EU) as consolidated texts, TEL TSI
+(Implementing Regulation (EU) 2026/253), and the two amending acts (2024/490, 2023/2661). Answers cite
+the article on EUR-Lex. The texts are stored in `docs/regulations/` as the XHTML of the EU Publications
+Office (Cellar), and `deploy.sh` indexes them with `index_regulations` after each deploy; an act whose
+file and parser are unchanged is skipped.
+
+They are searched only when a question names an act or legislation (MMTIS, NAP, ITS Directive, TEL TSI,
+"regulation", the act numbers, also in German, French, Italian, Slovenian and Spanish). Without that,
+the legal text would compete with the standards in every question.
+
+To add an act or a newer consolidated version: add it to `ACTS` in
+`backend/helpdesk/services/regulations.py`, run `python manage.py index_regulations --fetch` locally
+(EUR-Lex itself refuses scripted downloads; Cellar serves the same text), review the new file in git,
+and deploy. A published text never changes: a new consolidated version has a new CELEX number.
+
 ### Database backup
 
 ```bash

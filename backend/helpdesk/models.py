@@ -65,6 +65,11 @@ class SourceChunk(TimestampedModel):
             models.Index(fields=["quality_score"]),
         ]
 
+    @property
+    def source_url(self) -> str:
+        """Final link of a source that is not a repository file, e.g. an article on EUR-Lex (issue #91)."""
+        return (self.structured_metadata or {}).get("sourceUrl", "")
+
     def __str__(self):
         return f"SourceChunk(chunk_id={self.chunk_id}, source_path={self.source_path})"
 
