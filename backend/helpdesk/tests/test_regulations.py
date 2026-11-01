@@ -34,6 +34,7 @@ from helpdesk.services.regulations import (
     extract_provisions,
     index_act,
     is_regulation_url,
+    legal_context,
     parse_act,
     provisions_naming,
     render_provisions,
@@ -370,3 +371,20 @@ class LinkedProvisionRetrievalTests(TestCase):
         self.assertEqual(trace["legalStatusStandards"], ["NeTEx"])
         self.assertEqual([c["chunkId"] for c in chunks[:2]], ["netex-readme", "reg-art4"])
         self.assertEqual(chunks[1]["sourceUrl"], f"{ACTS[0].url}#art_4")
+
+
+class LegalContextTests(SimpleTestCase):
+    def test_provisions_naming_the_answers_standards_are_listed_with_short_labels(self):
+        netex = legal_context(["NeTEx"])
+        self.assertEqual([item["label"] for item in netex], ["MMTIS Art. 4", "TEL TSI App. C"])
+        self.assertTrue(netex[0]["url"].endswith("CELEX:02017R1926-20240304#art_4"))
+        self.assertEqual([item["label"] for item in legal_context(["SIRI"])], ["MMTIS Art. 5"])
+        self.assertEqual(legal_context(["OpRa"]), [])
+
+    def test_the_line_is_shown_only_for_answers_about_a_named_standard(self):
+        from helpdesk.api.views import _legal_context
+
+        self.assertEqual(len(_legal_context("rag", ["NeTEx"])), 2)
+        self.assertEqual(_legal_context("abstain", ["NeTEx"]), [])
+        self.assertEqual(_legal_context("rag", []), [])
+        self.assertEqual(_legal_context("rag", ["NeTEx", SCOPE]), [])  # already about legislation

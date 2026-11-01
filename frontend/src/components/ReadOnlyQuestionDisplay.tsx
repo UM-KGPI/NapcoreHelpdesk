@@ -11,6 +11,7 @@
 import React from "react";
 import { citationDisplayName, groupCitationsBySource } from "../citationLabels";
 import AnswerMarkdown from "./AnswerMarkdown";
+import LegalContext from "./LegalContext";
 import type { ChatTurn } from "./UserChatWorkspace";
 
 interface ReadOnlyQuestionDisplayProps {
@@ -188,6 +189,7 @@ export default function ReadOnlyQuestionDisplay({
                       </ul>
                     </>
                   )}
+                  <LegalContext items={turn.answer.legalContext} />
                 </>
               )}
             </article>

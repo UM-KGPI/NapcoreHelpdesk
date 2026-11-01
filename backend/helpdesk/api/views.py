@@ -103,6 +103,18 @@ def _service_health_payload(check: str, status_value: str, **extra_fields) -> di
     return payload
 
 
+def _legal_context(mode: str, scope: list[str] | None) -> list[dict]:
+    """Provisions of the EU acts that name the standards an answer is about, for a "Legal context" line.
+
+    Empty for refusals, for answers that name no standard, and for answers already about legislation.
+    """
+    from helpdesk.services.regulations import SCOPE, legal_context
+
+    if mode == QuestionEvent.MODE_ABSTAIN or not scope or SCOPE in scope:
+        return []
+    return legal_context(list(scope))
+
+
 def _citation_url(chunk: dict) -> str:
     """Link target of a cited chunk.
 
@@ -1364,6 +1376,7 @@ class QuestionAnswerView(APIView):
                 "confidence": confidence,
                 "answer": answer_text,
                 "citations": citations,
+                "legalContext": _legal_context(mode, effective_scope),
                 "abstained": abstained,
                 "abstentionReason": abstention_reason,
                 "reviewRequired": review_required,
@@ -1831,6 +1844,7 @@ class QuestionAnswerStreamView(APIView):
                 "confidence": confidence,
                 "answer": answer_text,
                 "citations": citations,
+                "legalContext": _legal_context(mode, effective_scope),
                 "abstained": abstained,
                 "abstentionReason": abstention_reason,
                 "reviewRequired": review_required,
@@ -2006,6 +2020,7 @@ class QuestionEventDetailView(APIView):
                 "mode": event.mode,
                 "confidence": float(event.confidence),
                 "citations": citations,
+                "legalContext": _legal_context(event.mode, event.standards_scope),
                 "trace": event.trace or {},
                 "createdAt": event.created_at.isoformat().replace("+00:00", "Z"),
             },

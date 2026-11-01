@@ -1109,6 +1109,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Citation'
+        legalContext:
+          type: array
+          description: >-
+            Provisions of the indexed EU acts that name a standard the answer is about (e.g. MMTIS Art. 4 for
+            NeTEx), as EUR-Lex links. Empty for refusals, answers about no named standard, and answers
+            already about legislation.
+          items:
+            $ref: '#/components/schemas/LegalContextItem'
         abstained:
           type: boolean
         abstentionReason:
@@ -1135,6 +1143,17 @@ components:
           type: string
         label:
           type: string
+      additionalProperties: false
+    LegalContextItem:
+      type: object
+      required: [label, url]
+      properties:
+        label:
+          type: string
+          example: MMTIS Art. 4
+        url:
+          type: string
+          format: uri
       additionalProperties: false
     AnswerTrace:
       type: object
@@ -1371,6 +1390,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Citation'
+        legalContext:
+          type: array
+          description: >-
+            Provisions of the indexed EU acts that name a standard the answer is about (e.g. MMTIS Art. 4 for
+            NeTEx), as EUR-Lex links. Empty for refusals, answers about no named standard, and answers
+            already about legislation.
+          items:
+            $ref: '#/components/schemas/LegalContextItem'
         trace:
           type: object
           description: Same shape as AnswerTrace, persisted at answer time

@@ -22,6 +22,12 @@ export interface Citation {
   label?: string;
 }
 
+/** A provision of an EU act that names the standard an answer is about. */
+export interface LegalContextItem {
+  label: string;
+  url: string;
+}
+
 export interface AnswerTrace {
   requestId: string;
   questionEventId: string;
@@ -96,6 +102,7 @@ export interface AnswerResponse {
   confidence: number;
   answer: string;
   citations: Citation[];
+  legalContext?: LegalContextItem[];
   abstained: boolean;
   abstentionReason: string | null;
   reviewRequired: boolean;
@@ -287,6 +294,7 @@ export interface QuestionEventDetail {
   mode: AnswerMode;
   confidence: number;
   citations: QuestionEventCitation[];
+  legalContext?: LegalContextItem[];
   createdAt: string;
 }
 
