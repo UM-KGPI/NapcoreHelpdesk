@@ -30,6 +30,7 @@ from helpdesk.services.regulations import (
     Act,
     _chunk_records,
     build_vocabulary,
+    citation_title,
     extract_definitions,
     extract_provisions,
     index_act,
@@ -388,3 +389,19 @@ class LegalContextTests(SimpleTestCase):
         self.assertEqual(_legal_context("abstain", ["NeTEx"]), [])
         self.assertEqual(_legal_context("rag", []), [])
         self.assertEqual(_legal_context("rag", ["NeTEx", SCOPE]), [])  # already about legislation
+
+
+class CitationTitleTests(SimpleTestCase):
+    def test_cited_parts_of_acts_get_a_readable_title(self):
+        self.assertEqual(citation_title("02017R1926-20240304#art_4"), "MMTIS Art. 4")
+        self.assertEqual(citation_title("32026R0253#app_C"), "TEL TSI App. C")
+        # an amending act is named by its number, not by the act it amends
+        self.assertEqual(citation_title("32023L2661#rct_8"), "Directive (EU) 2023/2661 Recital 8")
+        self.assertEqual(citation_title("xsd/netex_part_1/a.xsd"), "")
+
+    def test_live_citations_carry_the_title(self):
+        from helpdesk.api.views import _citations_from_prompt_order
+
+        chunk = {**ARTICLE_3, "sourceUrl": f"{ARTICLE_3['repositoryUrl']}#art_3"}  # as indexed chunks carry it
+        (citation,) = _citations_from_prompt_order([chunk], "A NAP is a point of access [E1].")
+        self.assertEqual(citation["title"], "MMTIS Art. 3")

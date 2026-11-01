@@ -181,7 +181,7 @@ export default function ReadOnlyQuestionDisplay({
                             >
                               {citationDisplayName(group.primary)}
                             </a>
-                            {citationDisplayName(group.primary) !== group.primary.sourcePath && (
+                            {!group.primary.title && citationDisplayName(group.primary) !== group.primary.sourcePath && (
                               <span className="muted"> · {group.primary.sourcePath}</span>
                             )}
                           </li>
