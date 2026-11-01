@@ -5,7 +5,7 @@
  *
  * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
  * Crafted by: AI coding agents
- * Created: 2026-07-02  |  Modified: 2026-10-29
+ * Created: 2026-07-02  |  Modified: 2026-11-02
  */
 
 import systemContextDiagramUrl from "../assets/c4-system-context.svg";
@@ -45,13 +45,14 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           Directive 2010/40/EU and the TEL TSI (EU) 2026/253.
         </p>
         <ul>
-          <li><strong>Grounded answers:</strong> responses are based only on approved source repositories and the official EU legal texts, and cite the evidence they use; legal answers link to the article on EUR-Lex.</li>
-          <li><strong>Semantic technologies:</strong> the standards are modelled as linked data and stored in a GraphDB knowledge graph, with Transmodel as the shared reference model, helping the assistant find related concepts across standards.</li>
+          <li><strong>Grounded answers:</strong> responses are based only on approved source repositories and the official EU legal texts, and cite the evidence they use. A Transmodel definition links to its class page in the Transmodel model (with its package and diagrams), and a legal answer links to the article on EUR-Lex.</li>
+          <li><strong>Semantic technologies:</strong> the standards are modelled as linked data and stored in a GraphDB knowledge graph, with Transmodel as the shared reference model, helping the assistant find related concepts across standards. The terms the EU acts define form a vocabulary generated from the acts, linked to the standards the acts name.</li>
           <li><strong>Structure-aware answers:</strong> how two concepts are related (for example a LINE, its ROUTEs and the JOURNEY PATTERNs on them) and what two schemas have in common are computed from the standards' own structure, refreshed with every update of the source repositories, and cited as evidence.</li>
+          <li><strong>Legal context:</strong> answers about NeTEx, SIRI or Transmodel list the provisions of the EU acts that name the standard, and questions about a standard's legal status (for example whether it is mandatory) are answered from those provisions.</li>
           <li><strong>AI as controller and narrator:</strong> a controller model checks whether a matched FAQ fits or the sources should be searched, and a narration model writes the answer from the retrieved evidence. Both use the open-weight model <code>nvidia/Qwen3.6-35B-A3B-NVFP4</code>, hosted at the University of Maribor, Faculty of Electrical Engineering and Computer Science.</li>
           <li><strong>Honest about gaps:</strong> when the evidence is insufficient, the assistant says so instead of guessing.</li>
           <li><strong>Curated knowledge:</strong> editorially reviewed FAQ answers are used first, with search across the source repositories as a fallback.</li>
-          <li><strong>Your language:</strong> ask in any supported language and get the answer in the same language, so working in English is not required.</li>
+          <li><strong>Your language:</strong> ask in any supported language and get the answer in the same language, so working in English is not required. Sources are found by meaning, with a multilingual embedding model, not only by shared words.</li>
         </ul>
         <p>
           The name refers to NAPCORE, the EU coordination initiative for National Access Points to
@@ -69,7 +70,7 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
         <a className="about-diagram" href={systemContextDiagramUrl} target="_blank" rel="noreferrer">
           <img
             src={systemContextDiagramUrl}
-            alt="C4 system context: NAP operators, transport authorities, transport operators, standards implementers and ITS system integrators ask questions, and editors review answers. The helpdesk indexes the NeTEx, SIRI and OpRa repositories on GitHub, queries the GraphDB ontology store, uses a language model gateway at the University of Maribor, and downloads its multilingual embedding model once from Hugging Face."
+            alt="C4 system context: NAP operators, transport authorities, transport operators, standards implementers and ITS system integrators ask questions, and editors review answers. The helpdesk indexes the NeTEx, SIRI and OpRa repositories on GitHub and publishes the Transmodel model from its own repository there, indexes the EU legislation from the EU Publications Office and links answers to EUR-Lex, queries the GraphDB ontology store, uses a language model gateway at the University of Maribor, and downloads its multilingual embedding model once from Hugging Face."
           />
         </a>
       </section>
@@ -89,7 +90,7 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           both affiliated with University of Maribor,
           Faculty of Civil Engineering,
           Transportation Engineering and Architecture,
-          Chair of Construction and Transportation Informatics (<a href="https://kgpi.fgpa.um.si/" target="_blank" rel="noreferrer">kgpi.fgpa.um.si</a>). They defined the standards scope (NeTEx/SIRI/OpRa/Transmodel), the FAQ-first/RAG-fallback answer strategy, the citation and
+          Chair of Construction and Transportation Informatics (<a href="https://kgpi.fgpa.um.si/" target="_blank" rel="noreferrer">kgpi.fgpa.um.si</a>). They defined the scope (the standards NeTEx/SIRI/OpRa/Transmodel and, since November 2026, the EU legislation that governs their data: MMTIS, the ITS Directive and the TEL TSI), the FAQ-first/RAG-fallback answer strategy, the citation and
           abstention rules, and the editorial review workflow. The work is part of NAPCORE Task 4.3 Multimodal standards, led by Jorge Gonzalez, Multimodal and Digital Policy Officer at the French Ministry of Transport (DGITM). Active task partners are contributing during the pilot phase.
         </p>
         <p>
@@ -115,7 +116,7 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
         </p>
         <ul>
           <li>Small, scoped, conventionally-named commits (<code>feat(...)</code>, <code>fix(...)</code>, <code>chore(...)</code>, <code>docs(...)</code>).</li>
-          <li>CI quality gates (backend tests, OpenAPI schema, C4 diagram checks, Postgres integration) were added early and extended alongside features rather than bolted on at the end.</li>
+          <li>CI quality gates (backend tests, OpenAPI schema, C4 diagram checks, Postgres integration, a retrieval benchmark that fails when answer evidence gets worse, and an nginx configuration check) were added early and extended alongside features rather than bolted on at the end.</li>
           <li>Fixes and reverts follow closely behind features shipped to real usage (e.g. the deep-link, spell-check, and GraphRAG definition-retrieval work), reflecting a "ship, observe, correct quickly" loop rather than long pre-verification cycles.</li>
         </ul>
       </section>
@@ -169,8 +170,20 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
              repositories at their real commits, and the standard ontologies regenerated from
              upstream with a weekly drift check; a maintenance page during deploys; faster and
              sturdier answers, with retrieval in about half the time and a stream that reports
-             progress from the start, so long answers no longer time out. Collaborators
-             recently joined and contribute to the requirements and testing.</li>
+             progress from the start, so long answers no longer time out; since 27 October, sources
+             are found by meaning with a multilingual embedding model (multilingual-e5-small) running
+             in the helpdesk's own embedding service. Collaborators recently joined and contribute to
+             the requirements and testing.</li>
+          <li><strong>EU legislation &amp; linked source models</strong> (Nov 2026, ongoing): the
+             Transmodel model published as an Enterprise Architect HTML export, with each Transmodel
+             definition in an answer linking to its class page (package and diagrams) by the class's
+             EA GUID; the EU legislation added as a source: MMTIS, the ITS Directive and the TEL TSI
+             from the EU Publications Office, as consolidated texts together with the amending acts,
+             quoted by article and linked to EUR-Lex; a vocabulary of the 97 terms the acts define,
+             generated from their definitions articles, so questions such as "What is static travel
+             data?" reach the legislation; questions about a standard's legal status answered from the
+             provisions that name it, and a Legal context line under answers about NeTEx, SIRI and
+             Transmodel.</li>
         </ol>
         <p>
           Development is ongoing, and this timeline will grow as the project evolves.
