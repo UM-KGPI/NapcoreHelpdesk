@@ -69,8 +69,7 @@ Chair of Construction and Transportation Informatics (https://kgpi.fgpa.um.si/).
 Transmodel and, since November 2026, the EU legislation that governs their
 data: MMTIS, the ITS Directive and the TEL TSI), the FAQ-first/RAG-fallback
 answer strategy, the citation and abstention rules, and the editorial review
-workflow. The legislation scope was proposed by Brewenn Métayer, and Sara
-Guerra de Oliveira selected its official sources. The work is part of NAPCORE Task 4.3 Multimodal standards, led by Jorge Gonzalez, Multimodal and Digital Policy Officer at the French Ministry of Transport (DGITM). Active task partners are contributing during the pilot phase.
+workflow. The work is part of NAPCORE Task 4.3 Multimodal standards, led by Jorge Gonzalez, Multimodal and Digital Policy Officer at the French Ministry of Transport (DGITM). Active task partners are contributing during the pilot phase.
 
 Collaborators who joined recently make important contributions to the
 requirements and to testing:
