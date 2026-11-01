@@ -4,16 +4,21 @@ Retrieve semantic definitions and properties from ontology for concept queries.
 Extracts skos:definition, rdfs:label, and other semantic properties from GraphDB
 ontologies to provide authoritative definitions for schema concepts.
 
-Created: 2026-07-01
+Created: 2026-07-01  |  Modified: 2026-11-01
 """
 
 from __future__ import annotations
 
 import logging
+from functools import lru_cache
+from pathlib import Path
 from typing import Optional
+
+from django.conf import settings
 
 from helpdesk.services.graphdb_client import TRANSMODEL_ALIGNED_STANDARDS
 from helpdesk.services.transmodel_alignment import clean_definition
+from helpdesk.services.transmodel_guids import read_guid_section
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +27,7 @@ TRANSMODEL_SOURCE_PATH = "docs/ontology/standards/transmodel.ttl"
 TRANSMODEL_SOURCE_URL = (
     "https://github.com/UM-KGPI/NapcoreHelpdesk/blob/main/docs/ontology/standards/transmodel.ttl"
 )
+_TRANSMODEL_TTL = Path(__file__).resolve().parents[3] / "docs" / "ontology" / "standards" / "transmodel.ttl"
 
 # Graphs the definition query reads. The repository also holds legacy urn:graph:* graphs from older loads;
 # their rdfs:comment values differ (e.g. "Extracted from OpRa XSD source: opra.xsd. <definition>"), and
@@ -361,6 +367,25 @@ def _comparison_notes_by_transmodel_concept(definitions: list[dict]) -> dict[str
     return notes
 
 
+@lru_cache(maxsize=1)
+def _transmodel_guids() -> dict[str, str]:
+    try:
+        return read_guid_section(_TRANSMODEL_TTL.read_text(encoding="utf-8"))
+    except OSError:
+        logger.warning("Transmodel GUIDs unavailable: cannot read %s", _TRANSMODEL_TTL)
+        return {}
+
+
+def transmodel_class_url(local_name: str) -> str:
+    """Page of a Transmodel class in the published EA HTML export (issue #151), opened by its EA GUID.
+
+    Empty when no export is configured (TRANSMODEL_HTML_BASE_URL) or the class has no GUID.
+    """
+    base_url = getattr(settings, "TRANSMODEL_HTML_BASE_URL", "")
+    guid = _transmodel_guids().get(local_name)
+    return f"{base_url}/index.htm?guid={guid}" if base_url and guid else ""
+
+
 def _transmodel_definition_chunk(
     *,
     tm_concept: str,
@@ -411,6 +436,9 @@ Definition:
         "similarity_reason": "Reference definition from the Transmodel conceptual model",
         "repositoryUrl": TRANSMODEL_SOURCE_URL,
         "repository_url": TRANSMODEL_SOURCE_URL,
+        # Link target of the citation: the class page readers outside this repository can open (#82).
+        # repositoryUrl stays the file, so citation selection still treats all definitions as one source.
+        "sourceUrl": transmodel_class_url(local_name),
         "commitSha": "main",
         "commit_sha": "main",
         "embedding_vector": None,

@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 
 from django.test import SimpleTestCase
 
-from helpdesk.services.transmodel_guids import SECTION_MARKER, add_guid_section, read_guids
+from helpdesk.services.transmodel_guids import SECTION_MARKER, add_guid_section, read_guid_section, read_guids
 
 TTL = """@prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix tm: <https://transmodel-cen.eu/6.2/> .
@@ -70,3 +70,12 @@ class TransmodelGuidTests(SimpleTestCase):
         self.assertEqual(once, twice)
         self.assertEqual(once.count(SECTION_MARKER), 1)
         self.assertTrue(once.startswith(TTL.rstrip()))
+
+    def test_the_section_is_read_back_without_braces(self):
+        text, _ = add_guid_section(TTL, self.guids, "model.qea")
+
+        guids = read_guid_section(text)
+
+        self.assertEqual(guids["SINGLE_JOURNEY"], "SJ")
+        self.assertEqual(guids["VEHICLE_EQUIPMENT_PROFILE_12709"], "VEP-10")
+        self.assertEqual(read_guid_section(TTL), {})

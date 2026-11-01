@@ -9,7 +9,7 @@ and renders one tmalign:eaGuid literal per class. It never changes the triples a
 
 Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
 Crafted by: AI coding agents
-Created: 2026-10-26  |  Modified: 2026-10-26
+Created: 2026-10-26  |  Modified: 2026-11-01
 """
 
 from __future__ import annotations
@@ -74,6 +74,19 @@ def _guids_for(local_name: str, classes: set[str], guids: dict[str, dict]) -> li
         return [guids[suffixed.group(1)][int(suffixed.group(2))]]
     by_object = guids.get(local_name, {})
     return sorted({guid for object_id, guid in by_object.items() if f"{local_name}_{object_id}" not in classes})
+
+
+_GUID_TRIPLE = re.compile(r'^tm:([A-Za-z0-9_]+) tmalign:eaGuid "\{([^{}"]+)\}"', re.M)
+
+
+def read_guid_section(ttl_text: str) -> dict[str, str]:
+    """The EA GUID of each class from the generated section of transmodel.ttl, without braces.
+
+    {local name: GUID}, e.g. {"SINGLE_JOURNEY": "8E3A5314-957E-4033-9057-F6F7530A0111"}. A class with
+    several GUIDs gets the first one. Empty when the file has no GUID section.
+    """
+    _, marker, section = ttl_text.partition(SECTION_MARKER)
+    return dict(_GUID_TRIPLE.findall(section)) if marker else {}
 
 
 def add_guid_section(ttl_text: str, guids: dict[str, dict], model_name: str) -> tuple[str, dict]:

@@ -13,7 +13,7 @@ mapping only.
 
 Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
 Crafted by: AI coding agents
-Created: 2026-03-28  |  Modified: 2026-06-28
+Created: 2026-03-28  |  Modified: 2026-11-01
 """
 
 from collections import defaultdict
@@ -101,6 +101,24 @@ def _service_health_payload(check: str, status_value: str, **extra_fields) -> di
     }
     payload.update(extra_fields)
     return payload
+
+
+def _citation_url(chunk: dict) -> str:
+    """Link target of a cited chunk.
+
+    A chunk with a sourceUrl (e.g. a Transmodel class page) and a pre-built GitHub tree/blob URL are used
+    as they are; otherwise the URL is built from the repository, commit and file path.
+    """
+    if chunk.get("sourceUrl"):
+        return chunk["sourceUrl"]
+    repository_url = chunk.get("repositoryUrl", "")
+    if "/tree/" in repository_url or "/blob/" in repository_url:
+        return repository_url
+    return _build_file_url(
+        repo_url=repository_url,
+        commit_sha=chunk["commitSha"],
+        source_path=chunk.get("sourcePath", ""),
+    )
 
 
 def _build_file_url(repo_url: str, commit_sha: str, source_path: str) -> str:
@@ -313,15 +331,7 @@ def _select_citations(chunks: list[dict], max_citations: int) -> list[dict]:
 
         seen_sources.add(source_key)
         selected_repositories.add(repository_url)
-        # If repository_url is a pre-built GitHub tree/blob URL, use it as-is
-        if "/tree/" in repository_url or "/blob/" in repository_url:
-            final_url = repository_url
-        else:
-            final_url = _build_file_url(
-                repo_url=repository_url,
-                commit_sha=chunk["commitSha"],
-                source_path=source_path,
-            )
+        final_url = _citation_url(chunk)
         selected.append(
             {
                 "repositoryUrl": final_url,
@@ -342,15 +352,7 @@ def _select_citations(chunks: list[dict], max_citations: int) -> list[dict]:
         if source_key in seen_sources:
             continue
         seen_sources.add(source_key)
-        # If repository_url is a pre-built GitHub tree/blob URL, use it as-is
-        if "/tree/" in repository_url or "/blob/" in repository_url:
-            final_url = repository_url
-        else:
-            final_url = _build_file_url(
-                repo_url=repository_url,
-                commit_sha=chunk["commitSha"],
-                source_path=source_path,
-            )
+        final_url = _citation_url(chunk)
         selected.append(
             {
                 "repositoryUrl": final_url,
@@ -387,15 +389,7 @@ def _citations_from_prompt_order(chunks: list[dict], answer_text: str) -> list[d
 
     citations: list[dict] = []
     for index, chunk in enumerate(prompt_chunks[:keep_until], start=1):
-        repository_url = chunk.get("repositoryUrl", "")
-        if "/tree/" in repository_url or "/blob/" in repository_url:
-            final_url = repository_url
-        else:
-            final_url = _build_file_url(
-                repo_url=repository_url,
-                commit_sha=chunk["commitSha"],
-                source_path=chunk.get("sourcePath", ""),
-            )
+        final_url = _citation_url(chunk)
         citations.append(
             {
                 "repositoryUrl": final_url,
@@ -1994,7 +1988,12 @@ class QuestionEventDetailView(APIView):
             citations.append({
                 "label": link.label or None,
                 "sourcePath": link.source_path,
-                "repositoryUrl": _build_file_url(link.repository_url, link.commit_sha, link.source_path),
+                # A stored link outside GitHub is already the final URL (a Transmodel class page)
+                "repositoryUrl": (
+                    link.repository_url
+                    if link.repository_url.startswith("https://") and "github.com/" not in link.repository_url
+                    else _build_file_url(link.repository_url, link.commit_sha, link.source_path)
+                ),
                 "chunkId": link.chunk_id,
             })
 
