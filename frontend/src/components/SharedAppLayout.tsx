@@ -30,7 +30,7 @@ export default function SharedAppLayout({ appVersion }: SharedAppLayoutProps) {
     <div className="page-shell">
       <header className="app-title-header">
         <h1><Link to="/" className="app-title-link">NAPCORE Helpdesk</Link></h1>
-        <p className="app-subtitle">Knowledge-Grounded, Multilingual AI Helpdesk for Mobility Data Standards (Transmodel Ecosystem)</p>
+        <p className="app-subtitle">Knowledge-Grounded, Multilingual AI Helpdesk for Mobility Data Standards (Transmodel Ecosystem) and EU Legislation (MMTIS, ITS Directive, TEL TSI)</p>
         <p className="app-version-line">
           v{extractBaseVersion(appVersion)} · {" "}
           <NavLink to="/about" className="app-about-link">

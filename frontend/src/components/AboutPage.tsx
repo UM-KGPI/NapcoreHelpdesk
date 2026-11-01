@@ -40,10 +40,12 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
         </div>
         <p>
           NAPCORE Helpdesk helps implementers get reliable answers to their questions about the
-          European public transport data standards Transmodel, NeTEx, SIRI, and OpRa.
+          European public transport data standards Transmodel, NeTEx, SIRI, and OpRa, and about the EU
+          legislation that governs their data: the MMTIS Delegated Regulation (EU) 2017/1926, the ITS
+          Directive 2010/40/EU and the TEL TSI (EU) 2026/253.
         </p>
         <ul>
-          <li><strong>Grounded answers:</strong> responses are based only on approved source repositories and cite the evidence they use.</li>
+          <li><strong>Grounded answers:</strong> responses are based only on approved source repositories and the official EU legal texts, and cite the evidence they use; legal answers link to the article on EUR-Lex.</li>
           <li><strong>Semantic technologies:</strong> the standards are modelled as linked data and stored in a GraphDB knowledge graph, with Transmodel as the shared reference model, helping the assistant find related concepts across standards.</li>
           <li><strong>Structure-aware answers:</strong> how two concepts are related (for example a LINE, its ROUTEs and the JOURNEY PATTERNs on them) and what two schemas have in common are computed from the standards' own structure, refreshed with every update of the source repositories, and cited as evidence.</li>
           <li><strong>AI as controller and narrator:</strong> a controller model checks whether a matched FAQ fits or the sources should be searched, and a narration model writes the answer from the retrieved evidence. Both use the open-weight model <code>nvidia/Qwen3.6-35B-A3B-NVFP4</code>, hosted at the University of Maribor, Faculty of Electrical Engineering and Computer Science.</li>
