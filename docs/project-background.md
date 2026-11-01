@@ -74,9 +74,13 @@ workflow. The work is part of NAPCORE Task 4.3 Multimodal standards, led by Jorg
 Collaborators who joined recently make important contributions to the
 requirements and to testing:
 
+- David Ariño-Montoya
 - Thibaut Barrère
+- Valentina Carriero
+- Nenad Čuš Babič
 - Christophe Duquesne
 - Brewenn Métayer
+- Mario Scrocca
 - Tu-Tho Thai
 
 ## Development approach
