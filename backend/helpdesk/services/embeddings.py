@@ -66,8 +66,10 @@ def _hash_embed(text: str, dimension: int = EMBEDDING_DIMENSION) -> list[float]:
     return _normalize(vector)
 
 
-# Texts per request to the embedding service; a batch of 64 chunks takes seconds on 2 CPUs.
-SERVICE_BATCH_SIZE = 64
+# Texts per request to the embedding service. Each request must finish within
+# EMBEDDING_SERVICE_TIMEOUT_SECONDS: on prod (2 CPUs) long chunks embed at about 0.5 per second
+# (the MMTIS act's 31 took 62 s on 2026-11-01), so a batch of 64 can time out; 16 takes about 30 s.
+SERVICE_BATCH_SIZE = 16
 
 
 class EmbeddingServiceError(RuntimeError):
