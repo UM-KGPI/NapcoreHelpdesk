@@ -11,17 +11,28 @@ changes, see [Recent updates](recent-updates.md).
 
 NAPCORE Helpdesk helps implementers get reliable answers to their questions
 about the European public transport data standards Transmodel, NeTEx, SIRI,
-and OpRa.
+and OpRa, and about the EU legislation that governs their data: the MMTIS
+Delegated Regulation (EU) 2017/1926, the ITS Directive 2010/40/EU and the
+TEL TSI (EU) 2026/253.
 
 - **Grounded answers:** responses are based only on approved source
-  repositories and cite the evidence they use.
+  repositories and the official EU legal texts, and cite the evidence they
+  use. A Transmodel definition links to its class page in the Transmodel model
+  (with its package and diagrams), and a legal answer links to the article on
+  EUR-Lex.
 - **Semantic technologies:** the standards are modelled as linked data and
   stored in a GraphDB knowledge graph, with Transmodel as the shared reference
-  model, helping the assistant find related concepts across standards.
+  model, helping the assistant find related concepts across standards. The
+  terms the EU acts define form a vocabulary generated from the acts, linked
+  to the standards the acts name.
 - **Structure-aware answers:** how two concepts are related (for example a
   LINE, its ROUTEs and the JOURNEY PATTERNs on them) and what two schemas have
   in common are computed from the standards' own structure, refreshed with
   every update of the source repositories, and cited as evidence.
+- **Legal context:** answers about NeTEx, SIRI or Transmodel list the
+  provisions of the EU acts that name the standard, and questions about a
+  standard's legal status (for example whether it is mandatory) are answered
+  from those provisions.
 - **AI as controller and narrator:** a controller model checks whether a
   matched FAQ fits or the sources should be searched, and a narration model
   writes the answer from the retrieved evidence. Both use the open-weight model
@@ -32,7 +43,8 @@ and OpRa.
 - **Curated knowledge:** editorially reviewed FAQ answers are used
   first, with search across the source repositories as a fallback.
 - **Your language:** ask in any supported language and get the answer in the
-  same language, so working in English is not required.
+  same language, so working in English is not required. Sources are found by
+  meaning, with a multilingual embedding model, not only by shared words.
 
 The name refers to NAPCORE, the EU coordination initiative for National Access
 Points to transport data, which these standards serve (www.napcore.eu).
@@ -53,9 +65,12 @@ The requirements and domain design are by:
 both affiliated with University of Maribor
 Faculty of Civil Engineering,
 Transportation Engineering and Architecture,
-Chair of Construction and Transportation Informatics (https://kgpi.fgpa.um.si/). They defined the standards scope (NeTEx/SIRI/OpRa/
-Transmodel), the FAQ-first/RAG-fallback answer strategy, the citation and
-abstention rules, and the editorial review workflow. The work is part of NAPCORE Task 4.3 Multimodal standards, led by Jorge Gonzalez, Multimodal and Digital Policy Officer at the French Ministry of Transport (DGITM). Active task partners are contributing during the pilot phase.
+Chair of Construction and Transportation Informatics (https://kgpi.fgpa.um.si/). They defined the scope (the standards NeTEx/SIRI/OpRa/
+Transmodel and, since November 2026, the EU legislation that governs their
+data: MMTIS, the ITS Directive and the TEL TSI), the FAQ-first/RAG-fallback
+answer strategy, the citation and abstention rules, and the editorial review
+workflow. The legislation scope was proposed by Brewenn Métayer, and Sara
+Guerra de Oliveira selected its official sources. The work is part of NAPCORE Task 4.3 Multimodal standards, led by Jorge Gonzalez, Multimodal and Digital Policy Officer at the French Ministry of Transport (DGITM). Active task partners are contributing during the pilot phase.
 
 Collaborators who joined recently make important contributions to the
 requirements and to testing:
@@ -75,7 +90,8 @@ rather than planned in full up front:
 - Small, scoped, conventionally-named commits (`feat(...)`, `fix(...)`,
   `chore(...)`, `docs(...)`).
 - CI quality gates (backend tests, OpenAPI schema, C4 diagram checks, Postgres
-  integration) were added early and extended alongside features rather than
+  integration, a retrieval benchmark that fails when answer evidence gets
+  worse, and an nginx configuration check) were added early and extended alongside features rather than
   bolted on at the end.
 - Fixes and reverts follow closely behind features shipped to real usage
   (e.g. the deep-link, spell-check, and GraphRAG definition-retrieval work),
@@ -131,8 +147,22 @@ since. Broad phases, in order:
    standard ontologies regenerated from upstream with a weekly drift check;
    a maintenance page during deploys; faster and sturdier answers, with
    retrieval in about half the time and a stream that reports progress from
-   the start, so long answers no longer time out. Collaborators
-   recently joined and contribute to the requirements and testing.
+   the start, so long answers no longer time out; since 27 October, sources
+   are found by meaning with a multilingual embedding model
+   (multilingual-e5-small) running in the helpdesk's own embedding service.
+   Collaborators recently joined and contribute to the requirements and
+   testing.
+7. **EU legislation & linked source models** (Nov 2026, ongoing): the
+   Transmodel model published as an Enterprise Architect HTML export, with
+   each Transmodel definition in an answer linking to its class page (package
+   and diagrams) by the class's EA GUID; the EU legislation added as a source:
+   MMTIS, the ITS Directive and the TEL TSI from the EU Publications Office,
+   as consolidated texts together with the amending acts, quoted by article
+   and linked to EUR-Lex; a vocabulary of the 97 terms the acts define,
+   generated from their definitions articles, so questions such as "What is
+   static travel data?" reach the legislation; questions about a standard's
+   legal status answered from the provisions that name it, and a Legal
+   context line under answers about NeTEx, SIRI and Transmodel.
 
 See [Recent updates](recent-updates.md) for a detailed log of the latest
 phase. Development is ongoing, and this timeline will grow as the project
