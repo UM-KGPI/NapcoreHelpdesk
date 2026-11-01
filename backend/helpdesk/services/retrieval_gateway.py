@@ -346,7 +346,8 @@ def _postgres_hybrid_candidates(
             "structured_metadata",
             "quality_score",
         )
-        .order_by("-vector_similarity", "-lexical_rank")[:limit]
+        # id last: rows tied on both scores come back in a stable order, not in storage order
+        .order_by("-vector_similarity", "-lexical_rank", "id")[:limit]
     )
 
 
