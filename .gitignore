@@ -51,3 +51,6 @@ graphdb.license
 # Maintenance-mode flag (scripts/deploy.sh); the directory itself is tracked
 /maintenance/*
 !/maintenance/README
+
+# Transmodel EA HTML export, cloned by scripts/deploy.sh from its own repository (issue #151)
+/transmodel-html/

@@ -121,6 +121,8 @@ services:
       # creates it for the duration of a deploy). The directory is tracked in git so it
       # exists, owned by the deploy user, before the first `up`.
       - ./maintenance:/etc/nginx/maintenance:ro
+      # Transmodel EA HTML export (issue #151), cloned and updated by scripts/deploy.sh.
+      - ./transmodel-html:/usr/share/nginx/transmodel:ro
     depends_on:
       backend:
         condition: service_healthy

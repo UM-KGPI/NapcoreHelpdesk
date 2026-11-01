@@ -43,6 +43,7 @@ env = environ.Env(
     GITHUB_API_TOKEN=(str, ""),
     GITHUB_API_VERIFY_SSL=(bool, True),
     GITHUB_CA_BUNDLE=(str, ""),
+    TRANSMODEL_HTML_BASE_URL=(str, "https://kgpi.fgpa.um.si/napcore-helpdesk/transmodel"),
     LLM_ENABLED=(bool, False),
     LLM_PROVIDER=(str, "openai-compatible"),
     LLM_API_BASE_URL=(str, "https://api.openai.com/v1"),
@@ -306,6 +307,9 @@ ALLOWED_SOURCE_REPOSITORIES |= {
     SEED_REPO_SIRI,
     SEED_REPO_OPRA,
 }
+# Published Enterprise Architect HTML export of the Transmodel model (issue #151). Transmodel definitions
+# in answers link to the class page there by EA GUID; empty keeps the link to transmodel.ttl.
+TRANSMODEL_HTML_BASE_URL = env("TRANSMODEL_HTML_BASE_URL").strip().rstrip("/")
 GRAPH_RAG_ENABLED = env("GRAPH_RAG_ENABLED")
 SEMANTIC_LOW_CONFIDENCE_THRESHOLD = env("SEMANTIC_LOW_CONFIDENCE_THRESHOLD")
 EVIDENCE_GATE_ENABLED = env("EVIDENCE_GATE_ENABLED")

@@ -494,6 +494,25 @@ unchanged. Two limits: the page is served by the frontend container, so while th
 being recreated the proxy in front of it answers instead; and the directory must stay readable by
 others (the default for a cloned repository), or nginx cannot see the file.
 
+### Transmodel HTML export
+
+The Transmodel model is published as an Enterprise Architect HTML export at
+`https://kgpi.fgpa.um.si/napcore-helpdesk/transmodel/` (issue #151). Answers that cite a Transmodel
+definition link to the class page by its EA GUID, e.g. `…/transmodel/index.htm?guid=8E3A5314-957E-4033-9057-F6F7530A0111`
+for SINGLE JOURNEY; the GUIDs come from `tmalign:eaGuid` in `transmodel.ttl`.
+
+The export lives in its own public repository, [UM-KGPI/transmodel-html](https://github.com/UM-KGPI/transmodel-html).
+`deploy.sh` clones it into `/opt/napcore-helpdesk/transmodel-html` on the first deploy and resets it
+to that repository on every later one; the frontend container mounts it read-only. Never edit the
+checkout on the server.
+
+To publish a new export: export the same EA model that `transmodel.ttl` and its GUIDs come from
+(the source is named in the GUID section of the file), with EA's Publish → HTML, replace the content
+of the repository with it, push, and deploy. If the model changed, regenerate the GUIDs first
+(`add_transmodel_guids`) so answers and pages match. Set `TRANSMODEL_HTML_BASE_URL` in the
+environment file to point answers elsewhere (e.g. the official Transmodel site); empty keeps the
+old link to `transmodel.ttl`.
+
 ### Database backup
 
 ```bash

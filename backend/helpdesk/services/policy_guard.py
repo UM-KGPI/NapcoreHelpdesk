@@ -7,7 +7,7 @@ that the orchestration layer converts into an abstention response.
 
 Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
 Crafted by: AI coding agents
-Created: 2026-03-28  |  Modified: 2026-10-18
+Created: 2026-03-28  |  Modified: 2026-11-01
 """
 
 from __future__ import annotations
@@ -36,13 +36,17 @@ def _normalize_repository_url(raw_url: str) -> str:
 
 
 def _is_generated_ontology_source(raw_url: str) -> bool:
-    """True for the generated Transmodel ontology file cited as definition evidence.
+    """True for the Transmodel definition evidence: the generated ontology file or a Transmodel class page.
 
-    It lives in this project's own repository, which is not an approved source repository, so it is
-    matched by its exact file URL and not by repository.
+    The file lives in this project's own repository, which is not an approved source repository, so it is
+    matched by its exact file URL and not by repository. A class page is in the configured Transmodel HTML
+    export (TRANSMODEL_HTML_BASE_URL), opened by GUID.
     """
 
-    return raw_url.split("#", 1)[0].split("?", 1)[0] == TRANSMODEL_SOURCE_URL
+    if raw_url.split("#", 1)[0].split("?", 1)[0] == TRANSMODEL_SOURCE_URL:
+        return True
+    html_base_url = getattr(settings, "TRANSMODEL_HTML_BASE_URL", "")
+    return bool(html_base_url) and raw_url.startswith(f"{html_base_url}/index.htm?guid=")
 
 
 def evaluate_policy(answer_text: str, citations: list[dict]) -> dict:
