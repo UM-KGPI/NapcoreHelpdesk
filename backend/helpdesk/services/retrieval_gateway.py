@@ -346,8 +346,54 @@ def _postgres_hybrid_candidates(
             "structured_metadata",
             "quality_score",
         )
-        .order_by("-vector_similarity", "-lexical_rank")[:limit]
+        # id last: rows tied on both scores come back in a stable order, not in storage order
+        .order_by("-vector_similarity", "-lexical_rank", "id")[:limit]
     )
+
+
+MAX_LINKED_PROVISIONS = 2
+
+
+def _linked_provision_candidates(standards: list[str], score: float) -> list[dict]:
+    """Chunks of the provisions that name the standards (from the legislation vocabulary), as candidates.
+
+    For each provision, the first chunk that names the standard (a long appendix has several chunks).
+    """
+    from helpdesk.services.regulations import STANDARD_IDENTIFIERS, provisions_naming
+
+    found: list[dict] = []
+    seen: set[str] = set()
+    for standard in standards:
+        pattern = re.compile(STANDARD_IDENTIFIERS[standard])
+        for source_path in provisions_naming(standard):
+            if source_path in seen or len(found) >= MAX_LINKED_PROVISIONS:
+                continue
+            chunk = next(
+                (c for c in SourceChunk.objects.filter(source_path=source_path).order_by("chunk_id") if pattern.search(c.text)),
+                None,
+            )
+            if chunk is None:
+                continue
+            seen.add(source_path)
+            found.append(
+                {
+                    "text": chunk.text,
+                    "score": score,
+                    "repositoryUrl": chunk.repository_url,
+                    "sourceUrl": chunk.source_url,
+                    "commitSha": chunk.commit_sha,
+                    "sourcePath": chunk.source_path,
+                    "chunkId": chunk.chunk_id,
+                    "label": chunk.label,
+                    "standardsScope": chunk.standards_scope or [],
+                    "chunkType": chunk.chunk_type or "",
+                    "docType": chunk.doc_type or "",
+                    "heading": chunk.heading or "",
+                    "structuredMetadata": chunk.structured_metadata or {},
+                    "retrievalEventId": f"re-{uuid4().hex[:8]}",
+                }
+            )
+    return found
 
 
 def _scope_matches(chunk_scope: list[str], requested_scope: list[str] | None) -> bool:
@@ -1890,6 +1936,16 @@ def retrieve_chunks_with_trace(
         trimmed = candidates[:top_k]
     trimmed = _ensure_element_coverage(trimmed, candidates, question_element_names, top_k)
     trimmed = _ensure_source_coverage(trimmed, candidates, _question_service_paths(question), top_k)
+    # A question about a standard's legal status ("Is NeTEx mandatory in the EU?") gets the provisions that
+    # name that standard, next to the best standards evidence. They are added, not ranked: by similarity
+    # legal text would compete with the standards evidence in every question.
+    from helpdesk.services.question_parsing import legal_status_standards
+
+    legal_standards = legal_status_standards(question, question_concepts, scope)
+    if legal_standards and trimmed:
+        provisions = _linked_provision_candidates(legal_standards, score=float(trimmed[0].get("score") or 0.0))
+        provision_ids = {c["chunkId"] for c in provisions}
+        trimmed = (trimmed[:1] + provisions + [c for c in trimmed[1:] if c["chunkId"] not in provision_ids])[:top_k]
     _record_stage("candidateSelectionMs", stage_start)
 
     stage_start = time.perf_counter()
@@ -1966,5 +2022,6 @@ def retrieve_chunks_with_trace(
         "retrievalLatencyMs": round((time.time() - retrieval_start_time) * 1000, 1),
         "retrievalStageTimingsMs": stage_timing_ms,
         "allCandidates": candidates,  # Include all candidate chunks for LLM awareness
+        "legalStatusStandards": legal_standards,
     }
     return trimmed, trace

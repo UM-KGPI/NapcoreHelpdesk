@@ -453,7 +453,7 @@ class HybridCandidateCutoffTests(TestCase):
                 vector_distance=retrieval_gateway.CosineDistance("embedding_vector", query_vector),
             )
             .annotate(vector_similarity=1.0 - models.F("vector_distance"))
-            .order_by("-vector_similarity", "-lexical_rank")[:25]
+            .order_by("-vector_similarity", "-lexical_rank", "id")[:25]
         )
         result = list(
             retrieval_gateway._postgres_hybrid_candidates(

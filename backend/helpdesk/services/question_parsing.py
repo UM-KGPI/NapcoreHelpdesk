@@ -415,6 +415,47 @@ def names_indexed_act(text: str) -> bool:
     return bool(pattern and pattern.search(text or ""))
 
 
+# Obligation language in the languages questions arrive in, and words that put a question in a legal frame.
+_OBLIGATION_PATTERN = re.compile(
+    r"\b(?:mandatory|compulsory|obligator\w*|obligations?|required|requires?|requirements?|must|have to|has to"
+    r"|need to|pflicht\w*|verpflicht\w*|vorgeschrieben|obligatoire|exig\w*|obbligator\w*|obvez\w*|zahtev\w*"
+    r"|obligatori\w*)\b",
+    re.IGNORECASE,
+)
+# CamelCase schema artifact names, as in relevance_check.
+_ARTIFACT_TERM = re.compile(r"\b[A-Z][a-z]+[A-Z][A-Za-z]+\b")
+_LEGAL_FRAME_PATTERN = re.compile(r"\b(?:legal(?:ly)?|laws?|EU|European Union|union)\b", re.IGNORECASE)
+
+
+def legal_status_standards(text: str, concept_ids, scope: list[str] | None) -> list[str]:
+    """Standards in the scope whose legal status the question asks about ("Is NeTEx mandatory in the EU?").
+
+    The question names the standard, uses obligation language, and is about the standard as a whole: it
+    has a legal frame (legal, law, EU), or no standards concept matched anything but the standard's own
+    name and relations ("for", "required by"). "Which elements are mandatory in a NeTEx StopPlace?"
+    matches StopPlace, so it is a schema question.
+    """
+    named = [s for s in (scope or []) if s in _STANDARD_KEYWORD_PATTERNS and s != LEGISLATION_SCOPE]
+    if not named or LEGISLATION_SCOPE in (scope or []) or not _OBLIGATION_PATTERN.search(text or ""):
+        return []
+    if _LEGAL_FRAME_PATTERN.search(text):
+        return named
+    # A schema artifact named in the question (VehicleActivity) makes it a schema question. "NeTEx" has the
+    # same CamelCase shape, so the standards' own names do not count.
+    for artifact in _ARTIFACT_TERM.findall(text):
+        if not any(pattern.fullmatch(artifact) for pattern in _STANDARD_KEYWORD_PATTERNS.values()):
+            return []
+    for concept_id in concept_ids:
+        local = concept_id.split(":", 1)[-1]
+        if local[:1].islower():  # a relation (linkedTo, for, requiredBy), not a thing
+            continue
+        for alias in GRAPH_CONCEPT_ALIASES.get(concept_id, ()):
+            match = re.search(rf"(?<![\w-]){re.escape(alias)}s?(?![\w-])", text, re.IGNORECASE)
+            if match and not any(_STANDARD_KEYWORD_PATTERNS[s].fullmatch(match.group(0)) for s in named):
+                return []
+    return named
+
+
 def legislation_terms_in(text: str) -> list[str]:
     """Terms the indexed EU acts define that the question uses (docs/regulations/eu-legislation-definitions.ttl)."""
     patterns = _legislation_term_patterns()

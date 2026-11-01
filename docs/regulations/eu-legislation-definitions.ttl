@@ -592,3 +592,8 @@ eulex:TELTSI-data_quality a skos:Concept ;
     skos:definition "means the degree of fitness for use at which the characteristics of data satisfy the stated and implied level of accuracy, completeness, consistency, timeliness and uniqueness of datasets, and create actionable insights for other users under specified conditions."@en ;
     dct:source <https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32026R0253#art_3> ;
     skos:inScheme eulex:TELTSI .
+
+# Provisions that name a standard (eulex:namesStandard), generated from the same acts.
+eulex:MMTIS-art_4 a eulex:Provision ; dct:source <https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:02017R1926-20240304#art_4> ; eulex:namesStandard "NeTEx" , "Transmodel" .
+eulex:MMTIS-art_5 a eulex:Provision ; dct:source <https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:02017R1926-20240304#art_5> ; eulex:namesStandard "SIRI" .
+eulex:TELTSI-app_C a eulex:Provision ; dct:source <https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32026R0253#app_C> ; eulex:namesStandard "NeTEx" , "Transmodel" .

@@ -407,12 +407,63 @@ def render_vocabulary(definitions: list[Definition], shared_labels: set[str]) ->
     return "\n".join(lines)
 
 
+# How the acts name the standards: by name or by CEN number.
+STANDARD_IDENTIFIERS = {
+    "NeTEx": r"\bNeTEx\b|CEN/TS 16614",
+    "SIRI": r"\bSIRI\b|CEN/TS 15531",
+    "Transmodel": r"\bTransmodel\b|EN 12896",
+    "OpRa": r"\bOpRa\b",
+}
+_PROVISION_LINE = re.compile(r"^eulex:\S+ a eulex:Provision ; dct:source <[^#>]+CELEX:([^#>]+)#([^>]+)> ; eulex:namesStandard (.+) \.$")
+
+
+def extract_provisions() -> list[tuple[Act, str, list[str]]]:
+    """Provisions of the definitive acts that name a standard: (act, anchor, standards), in act order."""
+    provisions: list[tuple[Act, str, list[str]]] = []
+    for act in ACTS:
+        if act.celex not in _VOCABULARY_ACTS:
+            continue
+        named: dict[str, set[str]] = {}
+        for section in parse_act(act.path.read_bytes()):
+            for standard, pattern in STANDARD_IDENTIFIERS.items():
+                if re.search(pattern, section.text):
+                    named.setdefault(section.anchor, set()).add(standard)
+        provisions.extend((act, anchor, sorted(standards)) for anchor, standards in named.items())
+    return provisions
+
+
+def render_provisions(provisions: list[tuple[Act, str, list[str]]]) -> str:
+    lines = [
+        "",
+        "# Provisions that name a standard (eulex:namesStandard), generated from the same acts.",
+    ]
+    for act, anchor, standards in provisions:
+        names = " , ".join(f'"{s}"' for s in standards)
+        lines.append(
+            f"eulex:{_VOCABULARY_ACTS[act.celex]}-{anchor} a eulex:Provision ; dct:source <{act.url}#{anchor}> ; "
+            f"eulex:namesStandard {names} ."
+        )
+    return "\n".join(lines) + "\n"
+
+
 def build_vocabulary() -> tuple[str, int, int]:
     """The vocabulary TTL, with the number of concepts and of shared labels."""
     shared_labels = standards_labels()
     definitions = [d for act in ACTS if act.celex in _VOCABULARY_ACTS for d in extract_definitions(act, _VOCABULARY_ACTS[act.celex])]
-    text = render_vocabulary(definitions, shared_labels)
+    text = render_vocabulary(definitions, shared_labels) + render_provisions(extract_provisions())
     return text, len(definitions), text.count("# shared\n")
+
+
+def provisions_naming(standard: str, path: Path = VOCABULARY_PATH) -> list[str]:
+    """Source paths ("<CELEX>#<anchor>") of the provisions that name a standard, in act order."""
+    if not path.exists():
+        return []
+    found = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        match = _PROVISION_LINE.match(line.strip())
+        if match and f'"{standard}"' in match.group(3):
+            found.append(f"{match.group(1)}#{match.group(2)}")
+    return found
 
 
 def vocabulary_terms(path: Path = VOCABULARY_PATH) -> list[str]:
