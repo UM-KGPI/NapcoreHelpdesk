@@ -753,12 +753,12 @@ questions:
 
   - id: q092
     question: "What are the EU legal obligations for NeTEx adoption by transport authorities?"
-    intent: abstention
+    intent: regulatory
     tags: [netex, regulatory]
     expected_source_patterns: []
     min_hits: 0
     top_k_threshold: 10
-    note: "Regulatory statements require editorial grounding; abstention expected."
+    note: "Answered from EU legislation since #91: the provisions that name NeTEx (MMTIS Art. 4, TEL TSI App. C) are added to the evidence. No expected source, so the metric does not depend on the legislation being indexed."
 
   - id: q093
     question: "How does NeTEx compare to GTFS in terms of real-time data quality?"

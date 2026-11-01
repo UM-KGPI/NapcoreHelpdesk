@@ -965,8 +965,11 @@ LEGISLATION_RULE = (
     "Some evidence blocks are EU legislation; their first line names the act. For those blocks rule 9 does not "
     "apply. Instead, name the act and the article or annex point (e.g. 'Article 4(1)(b) of Delegated Regulation "
     "(EU) 2017/1926') and quote the relevant wording verbatim. Do not add obligations, dates or interpretations "
-    "that the quoted text does not state. When an evidence block is a consolidated text and another is the act "
-    "that amended it, quote the consolidated text."
+    "that the quoted text does not state. When a provision lists alternatives ('one of the following', 'or any "
+    "format proven compatible'), say that it is one of the options and name the others; do not call a single "
+    "option mandatory, and do not open the answer with a plain yes or no: open with what the provision requires. "
+    "When an evidence block is a consolidated text and another is the act that amended it, "
+    "quote the consolidated text."
 )
 
 

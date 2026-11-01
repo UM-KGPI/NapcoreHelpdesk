@@ -18,6 +18,7 @@ from helpdesk.services.llm_generator import (
 from helpdesk.services.policy_guard import evaluate_policy
 from helpdesk.services.question_parsing import (
     _legislation_term_covers,
+    legal_status_standards,
     legislation_terms_in,
     names_indexed_act,
     parse_question_to_semantic_query,
@@ -30,9 +31,12 @@ from helpdesk.services.regulations import (
     _chunk_records,
     build_vocabulary,
     extract_definitions,
+    extract_provisions,
     index_act,
     is_regulation_url,
     parse_act,
+    provisions_naming,
+    render_provisions,
     render_vocabulary,
     vocabulary_terms,
 )
@@ -292,3 +296,77 @@ class LegislationTermScopeTests(SimpleTestCase):
             with self.subTest(question=question):
                 self.assertTrue(names_indexed_act(question))
         self.assertFalse(names_indexed_act("Is there an API for NeTEx?"))  # a defined term, not an act
+
+
+PROVISIONS_XHTML = """<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"><body>
+<div id="art_4"><p class="title-article-norm">Article 4</p><p>(i) NeTEx CEN/TS 16614 and subsequent versions;</p></div>
+<div id="art_5"><p class="title-article-norm">Article 5</p><p>(i) SIRI CEN/TS 15531 and subsequent versions;</p></div>
+<div id="art_6"><p class="title-article-norm">Article 6</p><p>Data updates.</p></div>
+</body></html>""".encode()
+
+
+class ProvisionLinkTests(SimpleTestCase):
+    def test_provisions_that_name_a_standard_are_linked_to_it(self):
+        with TemporaryDirectory() as tmp:
+            path = Path(tmp) / "act.xhtml"
+            path.write_bytes(PROVISIONS_XHTML)
+            act = Act(ACTS[0].celex, ACTS[0].name, "consolidated", 0.9)
+            with patch.object(Act, "path", property(lambda self: path)), patch(
+                "helpdesk.services.regulations.ACTS", (act,)
+            ):
+                provisions = extract_provisions()
+            vocabulary = Path(tmp) / "vocabulary.ttl"
+            vocabulary.write_text(render_provisions(provisions), encoding="utf-8")
+            self.assertEqual(provisions_naming("NeTEx", vocabulary), [f"{act.celex}#art_4"])
+            self.assertEqual(provisions_naming("SIRI", vocabulary), [f"{act.celex}#art_5"])
+            self.assertEqual(provisions_naming("OpRa", vocabulary), [])
+
+
+class LegalStatusQuestionTests(SimpleTestCase):
+    aliases = {"tm:STOP_PLACE": {"stop place", "StopPlace"}, "tm:requiredBy": {"required by"}}
+
+    def check(self, question, scope):
+        with patch("helpdesk.services.question_parsing.GRAPH_CONCEPT_ALIASES", self.aliases):
+            concepts = [c for c, names in self.aliases.items() if any(n.lower() in question.lower() for n in names)]
+            return legal_status_standards(question, concepts, scope)
+
+    def test_questions_about_a_standards_legal_status(self):
+        self.assertEqual(self.check("Is NeTEx mandatory in the EU?", ["NeTEx"]), ["NeTEx"])
+        self.assertEqual(self.check("Do I have to publish SIRI data?", ["SIRI"]), ["SIRI"])
+        self.assertEqual(self.check("Is Transmodel required by law?", ["Transmodel"]), ["Transmodel"])  # relation
+        self.assertEqual(self.check("Ali je NeTEx obvezen?", ["NeTEx"]), ["NeTEx"])
+
+    def test_schema_questions_with_obligation_words_are_not(self):
+        self.assertEqual(self.check("Which elements are mandatory in a NeTEx stop place?", ["NeTEx"]), [])
+        self.assertEqual(self.check("Which attributes are required for a SIRI VehicleActivity?", ["SIRI"]), [])
+        self.assertEqual(self.check("How does SIRI use NeTEx?", ["NeTEx", "SIRI"]), [])  # no obligation
+        self.assertEqual(self.check("Is NeTEx mandatory under MMTIS?", ["NeTEx", SCOPE]), [])  # already scoped
+
+
+@override_settings(EMBEDDING_BACKEND="hash")
+class LinkedProvisionRetrievalTests(TestCase):
+    def test_a_legal_status_question_gets_the_linked_provision_next_to_the_standards_evidence(self):
+        from helpdesk.services.embeddings import build_text_embedding
+        from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
+
+        SourceChunk.objects.create(
+            repository_url="https://github.com/TransmodelEcosystem/NeTEx", commit_sha="abc", source_path="README.md",
+            chunk_id="netex-readme", label="README", text="NeTEx is a CEN Technical Specification for timetables.",
+            standards_scope=["NeTEx"], quality_score=0.8, doc_type="readme",
+            embedding_vector=build_text_embedding("NeTEx is a CEN Technical Specification for timetables."),
+        )
+        SourceChunk.objects.create(
+            repository_url=ACTS[0].url, commit_sha=ACTS[0].celex, source_path=f"{ACTS[0].celex}#art_4",
+            chunk_id="reg-art4", label="Article 4", text="Article 4\n(i) NeTEx CEN/TS 16614 and subsequent versions;",
+            standards_scope=[SCOPE], quality_score=0.9, doc_type="regulation",
+            structured_metadata={"sourceUrl": f"{ACTS[0].url}#art_4"},
+            embedding_vector=build_text_embedding("Article 4 NeTEx CEN/TS 16614"),
+        )
+        with patch("helpdesk.services.regulations.provisions_naming", return_value=[f"{ACTS[0].celex}#art_4"]):
+            chunks, trace = retrieve_chunks_with_trace(
+                question="Is NeTEx mandatory in the EU?", top_k=4, min_score=0.0, scope=["NeTEx"]
+            )
+        self.assertEqual(trace["legalStatusStandards"], ["NeTEx"])
+        self.assertEqual([c["chunkId"] for c in chunks[:2]], ["netex-readme", "reg-art4"])
+        self.assertEqual(chunks[1]["sourceUrl"], f"{ACTS[0].url}#art_4")
