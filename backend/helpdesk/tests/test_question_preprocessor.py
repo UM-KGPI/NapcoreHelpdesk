@@ -3,10 +3,7 @@ from __future__ import annotations
 from django.test import SimpleTestCase
 
 from helpdesk.services.llm_generator import _build_messages
-from helpdesk.services.question_preprocessor import (
-    detect_question_language,
-    preprocess_question,
-)
+from helpdesk.services.question_preprocessor import detect_question_language
 
 
 class DetectQuestionLanguageTests(SimpleTestCase):
@@ -54,22 +51,6 @@ class DetectQuestionLanguageTests(SimpleTestCase):
         ]:
             with self.subTest(question=question):
                 self.assertEqual(detect_question_language(question), expected)
-
-
-class PreprocessQuestionTests(SimpleTestCase):
-    def test_short_question_is_not_spellchecked_with_wrong_dictionary(self):
-        # Previously: Spanish dictionary turned "existe" into "este", and the
-        # French dictionary turned "exist" into "existe".
-        self.assertEqual(preprocess_question("Does SIRI-PT existe?", "English"), "Does SIRI-PT existe?")
-        self.assertEqual(preprocess_question("Does SIRI-PT exist?", "English"), "Does SIRI-PT exist?")
-
-    def test_space_before_question_mark_does_not_crash(self):
-        # A French typographic habit (space before "?") carried into an English
-        # question isolates "?" as its own token; stripped of punctuation it's
-        # the empty string, which used to crash the spellchecker correction path
-        # with an IndexError on clean_word[0] (HTTP 500 in production).
-        question = "What is the relation between a line and a journey ?"
-        self.assertEqual(preprocess_question(question, "English"), question)
 
 
 class PromptLanguageTests(SimpleTestCase):

@@ -469,6 +469,37 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(response.data["trace"]["semanticFallback"], "NO_CONCEPT_MATCH")
         self.assertFalse(retrieve_mock.called)
 
+    @patch("helpdesk.services.llm_generator.english_search_query", return_value=None)
+    @patch("helpdesk.api.views.parse_question_to_semantic_query")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_the_question_is_parsed_and_stored_as_asked(self, retrieve_mock, parse_mock, _english):
+        """No word of the question is "corrected": a dictionary spell checker used to turn "métadonnées" into
+        "étalonnées" and "real-time" into "mealtime" before parsing, search and storage."""
+
+        parse_mock.return_value = SimpleNamespace(
+            core_concept=UNKNOWN_CONCEPT_SENTINEL,
+            ambiguous_core_concept=False,
+            candidate_standards=[],
+            original_terms=[],
+            as_dict=lambda: {"coreConcept": UNKNOWN_CONCEPT_SENTINEL, "candidateStandards": []},
+        )
+        for index, question in enumerate(
+            [
+                "Quelles sont les métadonnées d'un PAN ?",
+                "How is vehicle occupancy reported in SIRI real-time data?",
+            ]
+        ):
+            with self.subTest(question=question):
+                self.client.post(
+                    reverse("answer-question"),
+                    {"question": question},
+                    format="json",
+                    HTTP_X_REQUEST_ID=f"req-as-asked-{index}",
+                    **self.auth_headers(),
+                )
+                self.assertEqual(parse_mock.call_args.kwargs["text"], question)
+                self.assertEqual(QuestionEvent.objects.get(request_id=f"req-as-asked-{index}").question, question)
+
     @patch("helpdesk.api.views.parse_question_to_semantic_query")
     @patch("helpdesk.api.views.retrieve_chunks_with_trace")
     def test_answer_reduces_scope_when_core_concept_is_ambiguous(self, retrieve_mock, parse_mock):
