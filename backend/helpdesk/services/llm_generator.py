@@ -285,17 +285,22 @@ _DISTINCTIVE_TOKEN_PATTERN = re.compile(r"\b(?:[A-Z]{2,}[A-Z0-9]*|\d{4}/\d+(?:/[
 def _regulation_citation_grounded(sentence: str, chunk: dict) -> bool:
     """Whether a sentence citing an EU legislation chunk is supported by it (issue #91).
 
-    Legal prose has no element names, so the term checks used for standards evidence do not apply. The
-    sentence is grounded when it names an article or annex number the chunk has, quotes at least three
+    Legal prose has no element names, so the term checks used for standards evidence do not apply. A
+    sentence that names an article or annex number must name one the chunk is or mentions. Otherwise the
+    sentence is grounded when it quotes at least three
     words of the chunk verbatim, shares two distinctive tokens with it (acronyms, act numbers: these
     survive translation), or shares at least 40% of its content words with it.
     """
     text = str(chunk.get("text", "")).lower()
     anchor = str(chunk.get("sourcePath", "")).lower().rsplit("#", 1)[-1]
-    for number in _LEGAL_REFERENCE_PATTERN.findall(sentence):
-        number = number.lower()
-        if anchor in (f"art_{number}", f"anx_{number}") or f"article {number}" in text or f"annex {number}" in text:
-            return True
+    # A sentence that names an article or annex must name one the cited block is, or mentions: a right
+    # quote under a wrong article number ("Article 4(4)" for a quote from Article 3(4)) is still wrong.
+    numbers = [number.lower() for number in _LEGAL_REFERENCE_PATTERN.findall(sentence)]
+    if numbers:
+        return any(
+            anchor in (f"art_{number}", f"anx_{number}") or f"article {number}" in text or f"annex {number}" in text
+            for number in numbers
+        )
     for quoted in _QUOTED_SPAN_PATTERN.findall(sentence):
         if len(quoted.split()) >= 3 and re.sub(r"\s+", " ", quoted.strip().lower()) in text:
             return True
@@ -352,10 +357,14 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
         if cited_chunks and all(_is_regulation_chunk(chunk) for chunk in cited_chunks):
             for citation_str, chunk in zip(found_citations, cited_chunks):
                 if not _regulation_citation_grounded(clean, chunk):
+                    # Say which provision the block is: told only "name the article", the model repeated a
+                    # paragraph number as the article number.
+                    provision = str(chunk.get("heading") or chunk.get("sourcePath", "unknown")).split(" — ")[0]
                     raise LLMGenerationError(
                         f"Citation [E{citation_str}] does not ground the claim: '{sentence[:150].strip()}'. "
-                        f"Cited chunk source: '{chunk.get('sourcePath', 'unknown')}'. Name the article, quote "
-                        "the provision verbatim, or cite the block that states it."
+                        f"The cited block [E{citation_str}] is {provision}: name that article with its own number "
+                        "(a numbered paragraph inside it is not an article number), quote the provision verbatim, "
+                        "or cite the block that states it."
                     )
             continue
 

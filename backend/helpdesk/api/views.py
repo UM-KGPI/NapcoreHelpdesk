@@ -112,6 +112,12 @@ def _citation_title(source_path: str) -> dict:
     return {"title": title} if title else {}
 
 
+def _min_evidence_results() -> int:
+    """As many evidence blocks as the answer prompt shows, so a lone chunk above the score threshold
+    does not leave the answer with one block (see retrieve_chunks_with_trace)."""
+    return max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 4)))
+
+
 def _legal_context(mode: str, scope: list[str] | None) -> list[dict]:
     """Provisions of the EU acts that name the standards an answer is about, for a "Legal context" line.
 
@@ -1101,6 +1107,7 @@ class QuestionAnswerView(APIView):
                 min_score=retrieval_min_score,
                 scope=effective_scope,
                 graph_rag_enabled=graph_rag_enabled,
+                min_results=_min_evidence_results(),
             )
             retrieved_chunks = chunks
             retrieval_event_ids = [chunk["retrievalEventId"] for chunk in chunks]
@@ -1171,6 +1178,7 @@ class QuestionAnswerView(APIView):
                 min_score=retrieval_min_score,
                 scope=effective_scope,
                 graph_rag_enabled=graph_rag_enabled,
+                min_results=_min_evidence_results(),
             )
 
             # Retry with a relaxed threshold to avoid abstaining on terse asks that still
@@ -1183,6 +1191,7 @@ class QuestionAnswerView(APIView):
                     min_score=relaxed_min_score,
                     scope=effective_scope,
                     graph_rag_enabled=graph_rag_enabled,
+                    min_results=_min_evidence_results(),
                 )
 
             retrieved_chunks = chunks
@@ -1553,6 +1562,7 @@ class QuestionAnswerStreamView(APIView):
                 min_score=retrieval_min_score,
                 scope=effective_scope,
                 graph_rag_enabled=graph_rag_enabled,
+                min_results=_min_evidence_results(),
             )
             retrieved_chunks = chunks
             retrieval_event_ids = [chunk["retrievalEventId"] for chunk in chunks]
@@ -1632,6 +1642,7 @@ class QuestionAnswerStreamView(APIView):
                 min_score=retrieval_min_score,
                 scope=effective_scope,
                 graph_rag_enabled=graph_rag_enabled,
+                min_results=_min_evidence_results(),
             )
             relaxed_min_score = min(retrieval_min_score, 0.45)
             if not chunks and relaxed_min_score < retrieval_min_score:
@@ -1642,6 +1653,7 @@ class QuestionAnswerStreamView(APIView):
                     min_score=relaxed_min_score,
                     scope=effective_scope,
                     graph_rag_enabled=graph_rag_enabled,
+                    min_results=_min_evidence_results(),
                 )
 
             retrieved_chunks = chunks

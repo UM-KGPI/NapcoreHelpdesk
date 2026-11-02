@@ -1351,8 +1351,14 @@ def retrieve_chunks_with_trace(
     min_score: float,
     scope: list[str] | None = None,
     graph_rag_enabled: bool = False,
+    min_results: int = 0,
 ) -> tuple[list[dict], dict]:
     """Retrieve chunks using hybrid vector and lexical ranking.
+
+    min_results: when at least one candidate reaches min_score but fewer than min_results do, the
+    next-best candidates fill up to min_results. Scores are rescaled within each question's candidates,
+    so in a pool of very similar passages (one act's articles) only the best one may reach an absolute
+    threshold, and an answer built on it alone misses what the others say.
 
     Ranking weights:
     - 50% vector similarity
@@ -1711,6 +1717,7 @@ def retrieve_chunks_with_trace(
 
     stage_start = time.perf_counter()
     candidates = []
+    below_threshold_candidates: list[dict] = []
     # With semantic vectors, similarity decides the ranking: it is rescaled to 0-1 over this
     # question's candidates (the model's similarities fall in a narrow band), and the legacy
     # floor and README penalty below, tuned for hash vectors, no longer override it. Both
@@ -1824,7 +1831,8 @@ def retrieve_chunks_with_trace(
         keyword_trap = lexical_score > 0.5 and vector_score < 0.35 and not graph_hit
 
         score = min(1.0, max(0.0, raw_score))
-        if score < min_score:
+        below_threshold = score < min_score
+        if below_threshold and not min_results:
             continue
 
         # Break ties deterministically; keyword-trap chunks rank below genuine matches.
@@ -1832,7 +1840,7 @@ def retrieve_chunks_with_trace(
         if keyword_trap:
             rank_score *= keyword_trap_penalty
 
-        candidates.append(
+        (below_threshold_candidates if below_threshold else candidates).append(
             {
                 "text": chunk.text,
                 "score": score,
@@ -1856,6 +1864,9 @@ def retrieve_chunks_with_trace(
                 "_graphProvenanceConceptIds": sorted(matching_concepts),
             }
         )
+    if candidates and len(candidates) < min_results:
+        below_threshold_candidates.sort(key=lambda value: value["_rankScore"], reverse=True)
+        candidates.extend(below_threshold_candidates[: min_results - len(candidates)])
     _record_stage("candidateScoringMs", stage_start)
 
     # Add XSD schema definitions if they were retrieved for domain concepts

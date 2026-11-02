@@ -188,6 +188,8 @@ class LegislationAnswerTests(SimpleTestCase):
             "Gemäß Artikel 7 gelten Fristen bis 2030.",  # wrong article
             "A NAP must be certified by ISO before 2030 and audited yearly by Brussels.",
             "Die MMTIS-Verordnung 2017/1926 wurde geändert.",  # the act's own name heads every chunk
+            # a verbatim quote under the wrong article number (the paragraph number taken for the article)
+            'Člen 4(4) določa: "National access points shall provide discovery services to data users".',
         ]:
             with self.subTest(sentence=sentence):
                 self.assertFalse(_regulation_citation_grounded(sentence, ARTICLE_3))
@@ -405,3 +407,41 @@ class CitationTitleTests(SimpleTestCase):
         chunk = {**ARTICLE_3, "sourceUrl": f"{ARTICLE_3['repositoryUrl']}#art_3"}  # as indexed chunks carry it
         (citation,) = _citations_from_prompt_order([chunk], "A NAP is a point of access [E1].")
         self.assertEqual(citation["title"], "MMTIS Art. 3")
+
+
+@override_settings(EMBEDDING_BACKEND="hash")
+class MinimumEvidenceTests(TestCase):
+    def setUp(self):
+        from helpdesk.services.embeddings import build_text_embedding
+
+        texts = [
+            "National access points shall provide discovery services and metadata to data users.",
+            "Member States shall reach an agreement on the metadata requirements.",
+            "The travel and traffic data and the corresponding metadata shall be accessible.",
+            "Data holders shall update the data in a timely manner.",
+            "This Regulation shall enter into force on the twentieth day.",
+        ]
+        for index, text in enumerate(texts):
+            SourceChunk.objects.create(
+                repository_url=ACTS[0].url, commit_sha=ACTS[0].celex, source_path=f"{ACTS[0].celex}#art_{index + 1}",
+                chunk_id=f"min-{index}", label=f"Article {index + 1}", text=text, standards_scope=[SCOPE],
+                quality_score=0.9, doc_type="regulation", embedding_vector=build_text_embedding(text),
+            )
+
+    def retrieve(self, min_score, min_results=0):
+        from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
+
+        chunks, _ = retrieve_chunks_with_trace(
+            question="What metadata does a national access point provide?", top_k=6, min_score=min_score,
+            scope=[SCOPE], min_results=min_results,
+        )
+        return chunks
+
+    def test_a_lone_chunk_above_the_threshold_is_joined_by_the_next_best(self):
+        scores = sorted((c["score"] for c in self.retrieve(0.0)), reverse=True)
+        threshold = (scores[0] + scores[1]) / 2  # only the best reaches it
+        self.assertEqual(len(self.retrieve(threshold)), 1)
+        self.assertEqual(len(self.retrieve(threshold, min_results=4)), 4)
+
+    def test_nothing_is_added_when_no_chunk_reaches_the_threshold(self):
+        self.assertEqual(self.retrieve(1.01, min_results=4), [])
