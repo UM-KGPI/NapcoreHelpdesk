@@ -1173,6 +1173,9 @@ components:
           type: array
           items:
             type: string
+        searchTranslation:
+          type: [string, "null"]
+          description: English rendering of a non-English question, also used for the search (and for parsing when the question as asked matched nothing); null for English questions.
         evidenceLinkIds:
           type: array
           items:

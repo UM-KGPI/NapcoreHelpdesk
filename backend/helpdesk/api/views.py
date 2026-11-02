@@ -60,7 +60,11 @@ from helpdesk.services.llm_model_recovery import check_gateway_models, get_cache
 from helpdesk.services.ontology_registry import current_ontology_version_payload
 from helpdesk.services.policy_guard import evaluate_policy
 from helpdesk.services.provenance_mapper import persist_evidence_provenance
-from helpdesk.services.question_parsing import parse_question_to_semantic_query, select_effective_scope
+from helpdesk.services.question_parsing import (
+    UNKNOWN_CONCEPT_SENTINEL,
+    parse_question_to_semantic_query,
+    select_effective_scope,
+)
 from helpdesk.services.semantic_abstention import semantic_abstention_message
 from helpdesk.services.index_builder import index_repository
 from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
@@ -110,6 +114,32 @@ def _citation_title(source_path: str) -> dict:
 
     title = citation_title(source_path)
     return {"title": title} if title else {}
+
+
+def _parse_question(question: str, requested_scope: list[str] | None):
+    """(semantic query, English rendering or None, the text the semantic query was parsed from).
+
+    A non-English question is rendered in English once (llm_generator.english_search_query). The concept
+    matching, the scope and the refusal rules work with English terms ("national access point",
+    "metadata"), so when the question as asked finds no standard, no scope and no concept, the English
+    rendering is parsed instead: "Welche Metadaten müssen Dateninhaber dem nationalen Zugangspunkt
+    bereitstellen?" was refused before any search. The rendering is also searched (retrieve_chunks_with_
+    trace); the answer is still written for the question as asked.
+    """
+    from helpdesk.services.llm_generator import english_search_query
+
+    english = english_search_query(question)
+    semantic_query = parse_question_to_semantic_query(text=question, requested_scope=requested_scope)
+    if (
+        english
+        and not requested_scope
+        and not semantic_query.candidate_standards
+        and semantic_query.core_concept == UNKNOWN_CONCEPT_SENTINEL
+    ):
+        english_query = parse_question_to_semantic_query(text=english, requested_scope=requested_scope)
+        if english_query.candidate_standards or english_query.core_concept != UNKNOWN_CONCEPT_SENTINEL:
+            return english_query, english, english
+    return semantic_query, english, question
 
 
 def _min_evidence_results() -> int:
@@ -1016,7 +1046,7 @@ class QuestionAnswerView(APIView):
         language = data.get("language", "en")
         question = preprocess_question(question, language)
         scope = data.get("standardsScope", [])
-        semantic_query = parse_question_to_semantic_query(text=question, requested_scope=scope)
+        semantic_query, english_question, parsed_question = _parse_question(question, scope)
         semantic_query_dict = semantic_query.as_dict() if hasattr(semantic_query, "as_dict") else {}
         effective_scope, needs_clarification = select_effective_scope(semantic_query, scope)
         semantic_disambiguation_required = False
@@ -1108,6 +1138,7 @@ class QuestionAnswerView(APIView):
                 scope=effective_scope,
                 graph_rag_enabled=graph_rag_enabled,
                 min_results=_min_evidence_results(),
+                english_question=english_question,
             )
             retrieved_chunks = chunks
             retrieval_event_ids = [chunk["retrievalEventId"] for chunk in chunks]
@@ -1158,7 +1189,7 @@ class QuestionAnswerView(APIView):
                 effective_scope=effective_scope,
                 requested_scope=scope,
                 allow_abstain=allow_abstain,
-                question=question,
+                question=parsed_question,
             )
         ) is not None:
             mode = QuestionEvent.MODE_ABSTAIN
@@ -1179,6 +1210,7 @@ class QuestionAnswerView(APIView):
                 scope=effective_scope,
                 graph_rag_enabled=graph_rag_enabled,
                 min_results=_min_evidence_results(),
+                english_question=english_question,
             )
 
             # Retry with a relaxed threshold to avoid abstaining on terse asks that still
@@ -1192,6 +1224,7 @@ class QuestionAnswerView(APIView):
                     scope=effective_scope,
                     graph_rag_enabled=graph_rag_enabled,
                     min_results=_min_evidence_results(),
+                    english_question=english_question,
                 )
 
             retrieved_chunks = chunks
@@ -1352,6 +1385,7 @@ class QuestionAnswerView(APIView):
             "questionEventId": str(event.id),
             "matchedFaqEntryId": matched_faq_entry_id,
             "retrievalEventIds": persisted_retrieval_ids,
+            "searchTranslation": english_question,
             "evidenceLinkIds": evidence_link_ids,
             "graphExpansionHops": graph_trace["graphExpansionHops"],
             "graphConceptIds": graph_trace["graphConceptIds"],
@@ -1472,7 +1506,7 @@ class QuestionAnswerStreamView(APIView):
         language = data.get("language", "en")
         question = preprocess_question(question, language)
         scope = data.get("standardsScope", [])
-        semantic_query = parse_question_to_semantic_query(text=question, requested_scope=scope)
+        semantic_query, english_question, parsed_question = _parse_question(question, scope)
         semantic_query_dict = semantic_query.as_dict() if hasattr(semantic_query, "as_dict") else {}
         effective_scope, needs_clarification = select_effective_scope(semantic_query, scope)
         semantic_disambiguation_required = False
@@ -1563,6 +1597,7 @@ class QuestionAnswerStreamView(APIView):
                 scope=effective_scope,
                 graph_rag_enabled=graph_rag_enabled,
                 min_results=_min_evidence_results(),
+                english_question=english_question,
             )
             retrieved_chunks = chunks
             retrieval_event_ids = [chunk["retrievalEventId"] for chunk in chunks]
@@ -1622,7 +1657,7 @@ class QuestionAnswerStreamView(APIView):
                 effective_scope=effective_scope,
                 requested_scope=scope,
                 allow_abstain=allow_abstain,
-                question=question,
+                question=parsed_question,
             )
         ) is not None:
             mode = QuestionEvent.MODE_ABSTAIN
@@ -1643,6 +1678,7 @@ class QuestionAnswerStreamView(APIView):
                 scope=effective_scope,
                 graph_rag_enabled=graph_rag_enabled,
                 min_results=_min_evidence_results(),
+                english_question=english_question,
             )
             relaxed_min_score = min(retrieval_min_score, 0.45)
             if not chunks and relaxed_min_score < retrieval_min_score:
@@ -1654,6 +1690,7 @@ class QuestionAnswerStreamView(APIView):
                     scope=effective_scope,
                     graph_rag_enabled=graph_rag_enabled,
                     min_results=_min_evidence_results(),
+                    english_question=english_question,
                 )
 
             retrieved_chunks = chunks
@@ -1824,6 +1861,7 @@ class QuestionAnswerStreamView(APIView):
             "questionEventId": str(event.id),
             "matchedFaqEntryId": matched_faq_entry_id,
             "retrievalEventIds": persisted_retrieval_ids,
+            "searchTranslation": english_question,
             "evidenceLinkIds": evidence_link_ids,
             "graphExpansionHops": graph_trace["graphExpansionHops"],
             "graphConceptIds": graph_trace["graphConceptIds"],

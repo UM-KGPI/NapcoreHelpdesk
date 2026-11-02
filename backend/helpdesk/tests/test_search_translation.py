@@ -77,3 +77,53 @@ class MergedSearchTests(SimpleTestCase):
         self.assertEqual([c["chunkId"] for c in chunks], ["as1"])
         self.assertNotIn("searchTranslation", trace)
         self.assertEqual(once.call_count, 1)
+
+
+GERMAN = "Welche Metadaten müssen Dateninhaber dem nationalen Zugangspunkt bereitstellen?"
+ENGLISH = "Which metadata must data holders provide to the national access point?"
+
+
+class ParseQuestionTests(SimpleTestCase):
+    @patch("helpdesk.services.llm_generator.english_search_query", return_value=ENGLISH)
+    def test_the_english_rendering_is_parsed_when_the_question_as_asked_matches_nothing(self, _english):
+        from helpdesk.api.views import _parse_question
+
+        semantic_query, english, parsed = _parse_question(GERMAN, [])
+        self.assertEqual(english, ENGLISH)
+        self.assertEqual(parsed, ENGLISH)
+        self.assertIn("EU legislation", semantic_query.candidate_standards)  # "national access point"
+
+    @patch("helpdesk.services.llm_generator.english_search_query", return_value="How does SIRI use NeTEx?")
+    def test_a_question_that_already_names_a_standard_keeps_its_own_parse(self, _english):
+        from helpdesk.api.views import _parse_question
+
+        semantic_query, english, parsed = _parse_question("Wie verwendet SIRI NeTEx?", [])
+        self.assertEqual(parsed, "Wie verwendet SIRI NeTEx?")
+        self.assertEqual(english, "How does SIRI use NeTEx?")  # still searched in English
+        self.assertEqual(sorted(semantic_query.candidate_standards), ["NeTEx", "SIRI"])
+
+    @patch("helpdesk.services.llm_generator.english_search_query", return_value=ENGLISH)
+    def test_a_requested_scope_is_not_overridden(self, _english):
+        from helpdesk.api.views import _parse_question
+
+        _, _, parsed = _parse_question(GERMAN, ["NeTEx"])
+        self.assertEqual(parsed, GERMAN)
+
+
+class SuppliedRenderingTests(SimpleTestCase):
+    @patch("helpdesk.services.llm_generator.english_search_query")
+    @patch("helpdesk.services.retrieval_gateway._retrieve_chunks_once")
+    def test_a_supplied_rendering_is_searched_without_translating_again(self, once, translate):
+        once.side_effect = lambda question, **_: (_chunks(question[:2]), {"allCandidates": []})
+        chunks, trace = retrieve_chunks_with_trace(GERMAN, top_k=3, min_score=0.0, english_question=ENGLISH)
+        translate.assert_not_called()
+        self.assertEqual([c["chunkId"] for c in chunks], ["Wh", "We"])
+        self.assertEqual(trace["searchTranslation"], ENGLISH)
+
+    @patch("helpdesk.services.llm_generator.english_search_query")
+    @patch("helpdesk.services.retrieval_gateway._retrieve_chunks_once")
+    def test_none_means_search_the_question_only(self, once, translate):
+        once.return_value = (_chunks("as1"), {"allCandidates": []})
+        retrieve_chunks_with_trace("What is a NAP?", top_k=3, min_score=0.0, english_question=None)
+        translate.assert_not_called()
+        self.assertEqual(once.call_count, 1)
