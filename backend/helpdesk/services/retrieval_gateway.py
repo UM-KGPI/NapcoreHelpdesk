@@ -1345,6 +1345,10 @@ def retrieve_chunks(
     return chunks
 
 
+# Default of retrieve_chunks_with_trace(english_question=...): compute the English rendering there.
+_TRANSLATE = object()
+
+
 def retrieve_chunks_with_trace(
     question: str,
     top_k: int,
@@ -1352,8 +1356,12 @@ def retrieve_chunks_with_trace(
     scope: list[str] | None = None,
     graph_rag_enabled: bool = False,
     min_results: int = 0,
+    english_question: str | None | object = _TRANSLATE,
 ) -> tuple[list[dict], dict]:
     """Retrieve chunks for a question; a non-English question is also searched in English.
+
+    english_question: the English rendering when the caller already has it (None: search the question
+    only); by default it is computed here.
 
     The sources are English, and an English rendering finds them more reliably than the question as asked
     (40 benchmark questions in Slovenian and German: hit@4 0.57 as asked, 0.75 searched both ways). Both
@@ -1362,7 +1370,7 @@ def retrieve_chunks_with_trace(
     from helpdesk.services.llm_generator import english_search_query
 
     arguments = dict(top_k=top_k, min_score=min_score, scope=scope, graph_rag_enabled=graph_rag_enabled, min_results=min_results)
-    english = english_search_query(question)
+    english = english_search_query(question) if english_question is _TRANSLATE else english_question
     chunks, trace = _retrieve_chunks_once(question=question, **arguments)
     if not english:
         return chunks, trace
