@@ -32,7 +32,7 @@ UNKNOWN_CONCEPT_SENTINEL = "unknown-concept"
 
 _IDENTIFIER_PATTERN = re.compile(r"\b[A-Z][A-Za-z0-9]{2,}\b")
 _WHITESPACE_PATTERN = re.compile(r"\s+")
-_TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
+_TOKEN_PATTERN = re.compile(r"[^\W_]+")
 _MAX_CORE_CONCEPT_CANDIDATES = 6
 
 _LOW_VALUE_TOKENS = {
@@ -214,7 +214,7 @@ class QuestionParsingService:
                 ordered_terms.append(normalized)
                 seen.add(key)
 
-        for token in re.split(r"[^A-Za-z0-9]+", text):
+        for token in re.split(r"[\W_]+", text):
             normalized = token.strip()
             if len(normalized) < 4:
                 continue

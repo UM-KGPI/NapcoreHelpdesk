@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.test import SimpleTestCase, override_settings
 
 from helpdesk.services.llm_generator import english_search_query
+from helpdesk.services.question_parsing import parse_question_to_semantic_query
 from helpdesk.services.retrieval_gateway import _merge_by_rank, retrieve_chunks_with_trace
 
 
@@ -81,6 +83,11 @@ class MergedSearchTests(SimpleTestCase):
 
 GERMAN = "Welche Metadaten müssen Dateninhaber dem nationalen Zugangspunkt bereitstellen?"
 ENGLISH = "Which metadata must data holders provide to the national access point?"
+def _parsed(standards: list[str], concept: str) -> SimpleNamespace:
+    return SimpleNamespace(candidate_standards=standards, core_concept=concept)
+
+
+FRENCH = "Quelles métadonnées les détenteurs de données doivent-ils fournir au point d'accès national ?"
 
 
 class ParseQuestionTests(SimpleTestCase):
@@ -101,6 +108,28 @@ class ParseQuestionTests(SimpleTestCase):
         self.assertEqual(parsed, "Wie verwendet SIRI NeTEx?")
         self.assertEqual(english, "How does SIRI use NeTEx?")  # still searched in English
         self.assertEqual(sorted(semantic_query.candidate_standards), ["NeTEx", "SIRI"])
+
+    @patch("helpdesk.services.llm_generator.english_search_query", return_value=ENGLISH)
+    @patch("helpdesk.api.views.parse_question_to_semantic_query")
+    def test_the_english_rendering_is_parsed_when_it_finds_a_standard_the_question_does_not(self, parse, _english):
+        from helpdesk.api.views import _parse_question
+
+        # As asked, the French question matched a concept through "point" alone, and no standard.
+        parse.side_effect = lambda text, requested_scope=None: (
+            _parsed(["EU legislation"], "transmodel:ACCESS") if text == ENGLISH else _parsed([], "transmodel:GARAGE_POINT")
+        )
+        semantic_query, _, parsed = _parse_question(FRENCH, [])
+        self.assertEqual(parsed, ENGLISH)
+        self.assertEqual(semantic_query.candidate_standards, ["EU legislation"])
+
+    @patch("helpdesk.services.llm_generator.english_search_query", return_value=ENGLISH)
+    @patch("helpdesk.api.views.parse_question_to_semantic_query")
+    def test_an_english_parse_that_finds_no_more_is_not_used(self, parse, _english):
+        from helpdesk.api.views import _parse_question
+
+        parse.side_effect = lambda text, requested_scope=None: _parsed([], "transmodel:ACCESS")
+        _, _, parsed = _parse_question(FRENCH, [])
+        self.assertEqual(parsed, FRENCH)
 
     @patch("helpdesk.services.llm_generator.english_search_query", return_value=ENGLISH)
     def test_a_requested_scope_is_not_overridden(self, _english):
@@ -127,3 +156,11 @@ class SuppliedRenderingTests(SimpleTestCase):
         retrieve_chunks_with_trace("What is a NAP?", top_k=3, min_score=0.0, english_question=None)
         translate.assert_not_called()
         self.assertEqual(once.call_count, 1)
+
+
+class AccentedWordTests(SimpleTestCase):
+    def test_accented_words_are_kept_whole(self):
+        terms = parse_question_to_semantic_query(text=FRENCH).original_terms
+        self.assertIn("métadonnées", terms)
+        self.assertIn("détenteurs", terms)
+        self.assertNotIn("tadonn", terms)
