@@ -970,6 +970,59 @@ def question_language(question: str) -> str | None:
     return detect_question_language(question) or _classify_question_language_with_llm(question)
 
 
+SEARCH_TRANSLATION_TIMEOUT_SECONDS = 10
+
+
+def english_search_query(question: str) -> str | None:
+    """An English rendering of a non-English question, to search with next to the question itself.
+
+    The sources are English. The multilingual embedding model places a Slovenian or German question near
+    the right topic, but less sharply than the English wording, and the keyword half of the search only
+    matches English words. None for English questions, when the language is unknown, when translation is
+    off (SEARCH_TRANSLATION_ENABLED) or no LLM is configured, and on any failure: the search then runs
+    with the question alone.
+    """
+    if not getattr(settings, "SEARCH_TRANSLATION_ENABLED", True) or not getattr(settings, "LLM_ENABLED", False):
+        return None
+    base_url = (settings.LLM_API_BASE_URL or "").strip()
+    language = question_language(question)
+    if not base_url or not language or language == "English":
+        return None
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "Translate the user's question into English for a search. Keep technical terms, acronyms and "
+                "schema names (NeTEx, SIRI, OpRa, Transmodel, StopPlace, MMTIS, NAP ...) unchanged. "
+                'Reply with JSON only: {"text": "<English question>"}.'
+            ),
+        },
+        {"role": "user", "content": question},
+    ]
+    try:
+        response = _request_chat_completion(
+            api_base_url=base_url,
+            api_key=(settings.LLM_API_KEY or "").strip(),
+            model=settings.LLM_MODEL,
+            timeout_seconds=min(settings.LLM_TIMEOUT_SECONDS, SEARCH_TRANSLATION_TIMEOUT_SECONDS),
+            temperature=0.0,
+            max_tokens=200,
+            messages=messages,
+        )
+        content = response["choices"][0]["message"]["content"]
+        try:
+            payload = json.loads(content)
+            # The model sometimes names the key differently; take the first text it returns.
+            text = payload.get("text") or next((v for v in payload.values() if isinstance(v, str) and v.strip()), "")
+        except (ValueError, AttributeError):
+            text = content
+        text = str(text).strip()
+    except Exception:
+        logger.warning("English search query failed for %r", question, exc_info=True)
+        return None
+    return text if text and text.lower() != question.strip().lower() else None
+
+
 LEGISLATION_RULE = (
     "Some evidence blocks are EU legislation; their first line names the act. For those blocks rule 9 does not "
     "apply. Instead, name the act and the article or annex point (e.g. 'Article 4(1)(b) of Delegated Regulation "

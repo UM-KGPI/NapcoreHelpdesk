@@ -1,0 +1,676 @@
+# Non-English questions with known sources, for measuring the English search of non-English questions
+# (retrieval_gateway.retrieve_chunks_with_trace). Not in the CI gate: CI has no LLM, so it would score them
+# without the translation. Run locally with an LLM and semantic embeddings:
+#   python manage.py run_retrieval_benchmark --input helpdesk/benchmarks/translated-questions.yaml --app-scope
+# The standards questions are benchmark-questions.yaml entries translated by the Helpdesk's LLM on
+# 2026-11-02 (id suffix -sl / -de); the legislation questions were written for issue #91.
+version: '1.0'
+description: Non-English retrieval questions (sl, de, fr) with expected sources.
+created: '2026-11-02'
+target_k:
+- 4
+- 6
+- 10
+questions:
+- id: q001-sl
+  question: Kaj je zamudena pot v OpRa in kako je modelirana?
+  intent: explanation
+  tags:
+  - translated
+  - sl
+  - opra
+  - delay
+  expected_source_patterns:
+  - opra_lateDatedVehicleJourney
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: What is a delayed journey in OpRa and how is it modelled?'
+- id: q001-de
+  question: Was ist eine verspätete Reise in OpRa und wie wird sie modelliert?
+  intent: explanation
+  tags:
+  - translated
+  - de
+  - opra
+  - delay
+  expected_source_patterns:
+  - opra_lateDatedVehicleJourney
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: What is a delayed journey in OpRa and how is it modelled?'
+- id: q008-sl
+  question: Kako izmenjujem podatke o zamudah dogodkov med sistemi z uporabo OpRa?
+  intent: example
+  tags:
+  - translated
+  - sl
+  - opra
+  - delay
+  - exchange
+  - example
+  expected_source_patterns:
+  - DelayedAndCancelled
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: How do I exchange delay event data between systems using OpRa?'
+- id: q008-de
+  question: Wie tausche ich Verzögerungsereignisdaten zwischen Systemen unter Verwendung von OpRa aus?
+  intent: example
+  tags:
+  - translated
+  - de
+  - opra
+  - delay
+  - exchange
+  - example
+  expected_source_patterns:
+  - DelayedAndCancelled
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: How do I exchange delay event data between systems using OpRa?'
+- id: q015-sl
+  question: Kako deluje sporočilo OpRa RequestLateDatedVehicleJourneys?
+  intent: explanation
+  tags:
+  - translated
+  - sl
+  - opra
+  - delay
+  - request-response
+  expected_source_patterns:
+  - RequestLateDated
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: How does the OpRa RequestLateDatedVehicleJourneys message work?'
+- id: q015-de
+  question: Wie funktioniert die OpRa-Nachricht RequestLateDatedVehicleJourneys?
+  intent: explanation
+  tags:
+  - translated
+  - de
+  - opra
+  - delay
+  - request-response
+  expected_source_patterns:
+  - RequestLateDated
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: How does the OpRa RequestLateDatedVehicleJourneys message work?'
+- id: q022-sl
+  question: Kako se dejanska kapaciteta vozila meri in izmenjuje v OpRa?
+  intent: explanation
+  tags:
+  - translated
+  - sl
+  - opra
+  - capacity
+  expected_source_patterns:
+  - ActualServiceDimensions
+  - opra_capacity
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: How is actual vehicle capacity measured and exchanged in OpRa?'
+- id: q022-de
+  question: Wie wird die tatsächliche Fahrzeugkapazität in OpRa gemessen und ausgetauscht?
+  intent: explanation
+  tags:
+  - translated
+  - de
+  - opra
+  - capacity
+  expected_source_patterns:
+  - ActualServiceDimensions
+  - opra_capacity
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: How is actual vehicle capacity measured and exchanged in OpRa?'
+- id: q029-sl
+  question: Kako OpRa primerja pričakovano dejansko kapaciteto storitve?
+  intent: explanation
+  tags:
+  - translated
+  - sl
+  - opra
+  - capacity
+  expected_source_patterns:
+  - ActualServiceDimensions
+  - opra_capacity
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: How does OpRa compare expected versus actual service capacity?'
+- id: q029-de
+  question: Wie vergleicht OpRa die erwartete mit der tatsächlichen Dienstleistungskapazität?
+  intent: explanation
+  tags:
+  - translated
+  - de
+  - opra
+  - capacity
+  expected_source_patterns:
+  - ActualServiceDimensions
+  - opra_capacity
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: How does OpRa compare expected versus actual service capacity?'
+- id: q036-sl
+  question: Kaj je PlannedServiceIntensity v OpRa?
+  intent: explanation
+  tags:
+  - translated
+  - sl
+  - opra
+  - service-intensity
+  expected_source_patterns:
+  - PlannedServiceIntensity
+  - opra_serviceIntensity
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: What is PlannedServiceIntensity in OpRa?'
+- id: q036-de
+  question: Was ist PlannedServiceIntensity in OpRa?
+  intent: explanation
+  tags:
+  - translated
+  - de
+  - opra
+  - service-intensity
+  expected_source_patterns:
+  - PlannedServiceIntensity
+  - opra_serviceIntensity
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: What is PlannedServiceIntensity in OpRa?'
+- id: q043-sl
+  question: Kako OpRa združuje podatke o intenzivnosti storitve s kazalniki zmogljivosti?
+  intent: explanation
+  tags:
+  - translated
+  - sl
+  - opra
+  - service-intensity
+  - capacity
+  expected_source_patterns:
+  - opra_serviceIntensity
+  - opra_capacity
+  - ExpectedServiceIntensity
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: How does OpRa combine service intensity data with capacity indicators?'
+- id: q043-de
+  question: Wie kombiniert OpRa Daten zur Serviceintensität mit Kapazitätsindikatoren?
+  intent: explanation
+  tags:
+  - translated
+  - de
+  - opra
+  - service-intensity
+  - capacity
+  expected_source_patterns:
+  - opra_serviceIntensity
+  - opra_capacity
+  - ExpectedServiceIntensity
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: How does OpRa combine service intensity data with capacity indicators?'
+- id: q050-sl
+  question: Kaj je NeTEx TimetableFrame in kaj vsebuje?
+  intent: explanation
+  tags:
+  - translated
+  - sl
+  - netex
+  - timetable
+  - frame
+  expected_source_patterns:
+  - netex_timetableFrame
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: What is the NeTEx TimetableFrame and what does it contain?'
+- id: q050-de
+  question: Was ist der NeTEx TimetableFrame und was enthält er?
+  intent: explanation
+  tags:
+  - translated
+  - de
+  - netex
+  - timetable
+  - frame
+  expected_source_patterns:
+  - netex_timetableFrame
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: What is the NeTEx TimetableFrame and what does it contain?'
+- id: q057-sl
+  question: Kaj je NeTEx CoupledJourney?
+  intent: explanation
+  tags:
+  - translated
+  - sl
+  - netex
+  - journey
+  expected_source_patterns:
+  - netex_coupledJourney
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: What is a NeTEx CoupledJourney?'
+- id: q057-de
+  question: Was ist eine NeTEx CoupledJourney?
+  intent: explanation
+  tags:
+  - translated
+  - de
+  - netex
+  - journey
+  expected_source_patterns:
+  - netex_coupledJourney
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: What is a NeTEx CoupledJourney?'
+- id: q064-sl
+  question: Katera datoteka NeTEx XSD definira čase vožnje vozil in postaje?
+  intent: explanation
+  tags:
+  - translated
+  - sl
+  - netex
+  - timetable
+  - xsd
+  expected_source_patterns:
+  - netex_part_2/part2_journeyTimes
+  - netex_call
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: What NeTEx XSD file defines vehicle journey times and calls?'
+- id: q064-de
+  question: Welche NeTEx-XSD-Datei definiert Fahrplanzeiten und Haltestellenaufrufe?
+  intent: explanation
+  tags:
+  - translated
+  - de
+  - netex
+  - timetable
+  - xsd
+  expected_source_patterns:
+  - netex_part_2/part2_journeyTimes
+  - netex_call
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: What NeTEx XSD file defines vehicle journey times and calls?'
+- id: q071-sl
+  question: Kaj je AllowedLineDirection v NeTEx?
+  intent: explanation
+  tags:
+  - translated
+  - sl
+  - netex
+  - line
+  - route
+  expected_source_patterns:
+  - netex_line
+  - netex_route
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: What is AllowedLineDirection in NeTEx?'
+- id: q071-de
+  question: Was ist AllowedLineDirection in NeTEx?
+  intent: explanation
+  tags:
+  - translated
+  - de
+  - netex
+  - line
+  - route
+  expected_source_patterns:
+  - netex_line
+  - netex_route
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: What is AllowedLineDirection in NeTEx?'
+- id: q078-sl
+  question: Preslikajte statistiko zamud OpRa na koncepte operativnih poti NeTEx.
+  intent: mapping
+  tags:
+  - translated
+  - sl
+  - opra
+  - netex
+  - delay
+  - cross-standard
+  expected_source_patterns:
+  - opra_lateDatedVehicleJourney
+  - netex_journeyPattern
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: Map OpRa delay statistics to NeTEx operational journey concepts.'
+- id: q078-de
+  question: OpRa-Verzögerungsstatistiken auf NeTEx-Begriffe für operative Fahrten abbilden.
+  intent: mapping
+  tags:
+  - translated
+  - de
+  - opra
+  - netex
+  - delay
+  - cross-standard
+  expected_source_patterns:
+  - opra_lateDatedVehicleJourney
+  - netex_journeyPattern
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: Map OpRa delay statistics to NeTEx operational journey concepts.'
+- id: q085-sl
+  question: Kako naj se podatke o uspešnosti OpRa interpretirajo v kontekstu voznorednika NeTEx?
+  intent: mapping
+  tags:
+  - translated
+  - sl
+  - opra
+  - netex
+  - performance
+  - cross-standard
+  expected_source_patterns:
+  - opra_serviceIntensity
+  - netex_timetableFrame
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: How should OpRa performance data be interpreted in a NeTEx timetable context?'
+- id: q085-de
+  question: Wie sollten OpRa-Leistungsdaten im Kontext eines NeTEx-Fahrplans interpretiert werden?
+  intent: mapping
+  tags:
+  - translated
+  - de
+  - opra
+  - netex
+  - performance
+  - cross-standard
+  expected_source_patterns:
+  - opra_serviceIntensity
+  - netex_timetableFrame
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: How should OpRa performance data be interpreted in a NeTEx timetable context?'
+- id: q102-sl
+  question: Prikažite mi primer zahteve in odgovora SIRI Stop Monitoring.
+  intent: example
+  tags:
+  - translated
+  - sl
+  - siri
+  - stop-monitoring
+  - example
+  expected_source_patterns:
+  - siri_exm_SM
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: Show me a SIRI Stop Monitoring request and response example.'
+- id: q102-de
+  question: Zeigen Sie mir ein Beispiel für eine SIRI-Haltestellenüberwachungsanfrage und -antwort.
+  intent: example
+  tags:
+  - translated
+  - de
+  - siri
+  - stop-monitoring
+  - example
+  expected_source_patterns:
+  - siri_exm_SM
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: Show me a SIRI Stop Monitoring request and response example.'
+- id: q109-sl
+  question: Ali lahko SIRI izmenjuje opozorila o cestnih delih?
+  intent: explanation
+  tags:
+  - translated
+  - sl
+  - siri
+  - situation-exchange
+  expected_source_patterns:
+  - exx_situationExchange_road
+  - siri_situation.xsd
+  - siri_situationExchange_service.xsd
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: Can SIRI exchange roadwork warnings?'
+- id: q109-de
+  question: Können SIRI-Protokollnachrichten für Straßenbaustellenwarnungen ausgetauscht werden?
+  intent: explanation
+  tags:
+  - translated
+  - de
+  - siri
+  - situation-exchange
+  expected_source_patterns:
+  - exx_situationExchange_road
+  - siri_situation.xsd
+  - siri_situationExchange_service.xsd
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: Can SIRI exchange roadwork warnings?'
+- id: q116-sl
+  question: Ali obstaja SIRI-ST in kaj ponuja storitev Stop Timetable?
+  intent: explanation
+  tags:
+  - translated
+  - sl
+  - siri
+  - stop-timetable
+  expected_source_patterns:
+  - siri_stopTimetable_service.xsd
+  - siri_exm_ST
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: Does SIRI-ST exist, and what does the Stop Timetable service deliver?'
+- id: q116-de
+  question: Gibt es SIRI-ST, und was liefert der Stop Timetable-Dienst?"
+  intent: explanation
+  tags:
+  - translated
+  - de
+  - siri
+  - stop-timetable
+  expected_source_patterns:
+  - siri_stopTimetable_service.xsd
+  - siri_exm_ST
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: Does SIRI-ST exist, and what does the Stop Timetable service deliver?'
+- id: q123-sl
+  question: Kaj pomeni CancelledDatedVehicleJourneyCount?
+  intent: explanation
+  tags:
+  - translated
+  - sl
+  - opra
+  - cancellation
+  - unnamed
+  expected_source_patterns:
+  - opra_cancelledDatedVehicleJourney
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: What does CancelledDatedVehicleJourneyCount mean?'
+- id: q123-de
+  question: Was bedeutet CancelledDatedVehicleJourneyCount?
+  intent: explanation
+  tags:
+  - translated
+  - de
+  - opra
+  - cancellation
+  - unnamed
+  expected_source_patterns:
+  - opra_cancelledDatedVehicleJourney
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: What does CancelledDatedVehicleJourneyCount mean?'
+- id: q130-sl
+  question: Kaj je TimetableFrame in kaj vsebuje?
+  intent: explanation
+  tags:
+  - translated
+  - sl
+  - netex
+  - timetable
+  - frame
+  - unnamed
+  expected_source_patterns:
+  - netex_timetableFrame
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: What is the TimetableFrame and what does it contain?'
+- id: q130-de
+  question: Was ist der TimetableFrame und was enthält er?
+  intent: explanation
+  tags:
+  - translated
+  - de
+  - netex
+  - timetable
+  - frame
+  - unnamed
+  expected_source_patterns:
+  - netex_timetableFrame
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: What is the TimetableFrame and what does it contain?'
+- id: q137-sl
+  question: Ali se lahko opozorila o cestnih delih izmenjujejo v realnem času?
+  intent: explanation
+  tags:
+  - translated
+  - sl
+  - siri
+  - situation-exchange
+  - unnamed
+  expected_source_patterns:
+  - exx_situationExchange_road
+  - siri_situation.xsd
+  - siri_situationExchange_service.xsd
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: Can roadwork warnings be exchanged in real time?'
+- id: q137-de
+  question: Können Warnungen vor Straßenbauarbeiten in Echtzeit ausgetauscht werden?
+  intent: explanation
+  tags:
+  - translated
+  - de
+  - siri
+  - situation-exchange
+  - unnamed
+  expected_source_patterns:
+  - exx_situationExchange_road
+  - siri_situation.xsd
+  - siri_situationExchange_service.xsd
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: Can roadwork warnings be exchanged in real time?'
+- id: q144-sl
+  question: Kakšna je povezava med NeTEx in Transmodel?
+  intent: explanation
+  tags:
+  - translated
+  - sl
+  - netex
+  - transmodel
+  - relation
+  - readme
+  expected_source_patterns:
+  - README.md
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: What is the relationship between NeTEx and Transmodel?'
+- id: q144-de
+  question: Was ist die Beziehung zwischen NeTEx und Transmodel?
+  intent: explanation
+  tags:
+  - translated
+  - de
+  - netex
+  - transmodel
+  - relation
+  - readme
+  expected_source_patterns:
+  - README.md
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: What is the relationship between NeTEx and Transmodel?'
+- id: leg01-sl
+  question: kakšna je vloga nap kot metapodatkovnega imenika?
+  intent: regulatory
+  tags:
+  - translated
+  - sl
+  - regulatory
+  expected_source_patterns:
+  - 02017R1926-20240304#art_3
+  - 02010L0040-20231220#art_5
+  - 32024R0490#rct_12
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: What is the role of the NAP as a metadata directory?'
+- id: leg02-sl
+  question: Kaj so metapodatki v NAP?
+  intent: regulatory
+  tags:
+  - translated
+  - sl
+  - regulatory
+  expected_source_patterns:
+  - 02017R1926-20240304#art_3
+  - 02010L0040-20231220#art_5
+  - 32024R0490#rct_12
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: What is the metadata in a NAP?'
+- id: leg03-de
+  question: Welche Metadaten müssen Dateninhaber dem nationalen Zugangspunkt bereitstellen?
+  intent: regulatory
+  tags:
+  - translated
+  - de
+  - regulatory
+  expected_source_patterns:
+  - 02017R1926-20240304#art_3
+  - 02010L0040-20231220#art_5
+  - 32024R0490#rct_12
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: Which metadata must data holders provide to the national access point?'
+- id: leg04-fr
+  question: Quelles normes le règlement MMTIS impose-t-il pour les données statiques de voyage ?
+  intent: regulatory
+  tags:
+  - translated
+  - fr
+  - regulatory
+  expected_source_patterns:
+  - 02017R1926-20240304#art_4
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: Which standards does MMTIS require for static travel data?'
+- id: leg05-de
+  question: Welchen Standard verlangt MMTIS für dynamische Reisedaten?
+  intent: regulatory
+  tags:
+  - translated
+  - de
+  - regulatory
+  expected_source_patterns:
+  - 02017R1926-20240304#art_5
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: Which standard does MMTIS require for dynamic travel data?'
+- id: leg06-sl
+  question: Kaj so statični potovalni podatki?
+  intent: regulatory
+  tags:
+  - translated
+  - sl
+  - regulatory
+  expected_source_patterns:
+  - 02017R1926-20240304#art_2
+  min_hits: 1
+  top_k_threshold: 10
+  note: 'English: What is static travel data?'
