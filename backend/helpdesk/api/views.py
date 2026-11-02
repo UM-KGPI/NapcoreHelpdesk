@@ -120,25 +120,27 @@ def _parse_question(question: str, requested_scope: list[str] | None):
 
     A non-English question is rendered in English once (llm_generator.english_search_query). The concept
     matching, the scope and the refusal rules work with English terms ("national access point",
-    "metadata"), so when the question as asked finds no standard, no scope and no concept, the English
-    rendering is parsed instead: "Welche Metadaten müssen Dateninhaber dem nationalen Zugangspunkt
-    bereitstellen?" was refused before any search. The rendering is also searched (retrieve_chunks_with_
-    trace); the answer is still written for the question as asked.
+    "metadata"), so the English rendering is parsed too, and used when it finds more: a standard where the
+    question as asked finds none, or a concept where it finds none. "Welche Metadaten müssen Dateninhaber
+    dem nationalen Zugangspunkt bereitstellen?" matched nothing and was refused; "Quelles métadonnées …
+    au point d'accès national ?" matched only a concept through the word "point" and was searched without
+    the legislation. The rendering is also searched (retrieve_chunks_with_trace); the answer is still
+    written for the question as asked.
     """
     from helpdesk.services.llm_generator import english_search_query
 
     english = english_search_query(question)
     semantic_query = parse_question_to_semantic_query(text=question, requested_scope=requested_scope)
-    if (
-        english
-        and not requested_scope
-        and not semantic_query.candidate_standards
-        and semantic_query.core_concept == UNKNOWN_CONCEPT_SENTINEL
-    ):
+    if english and not requested_scope:
         english_query = parse_question_to_semantic_query(text=english, requested_scope=requested_scope)
-        if english_query.candidate_standards or english_query.core_concept != UNKNOWN_CONCEPT_SENTINEL:
+        if _parse_strength(english_query) > _parse_strength(semantic_query):
             return english_query, english, english
     return semantic_query, english, question
+
+
+def _parse_strength(semantic_query) -> tuple[bool, bool]:
+    """What a parse found, compared standards first: (names a standard, matches a concept)."""
+    return bool(semantic_query.candidate_standards), semantic_query.core_concept != UNKNOWN_CONCEPT_SENTINEL
 
 
 def _min_evidence_results() -> int:

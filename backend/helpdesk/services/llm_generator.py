@@ -992,8 +992,11 @@ def english_search_query(question: str) -> str | None:
         {
             "role": "system",
             "content": (
-                "Translate the user's question into English for a search. Keep technical terms, acronyms and "
-                "schema names (NeTEx, SIRI, OpRa, Transmodel, StopPlace, MMTIS, NAP ...) unchanged. "
+                "Translate the user's question into English for a search. Keep standard and schema names "
+                "(NeTEx, SIRI, OpRa, Transmodel, StopPlace, MMTIS ...) unchanged. Any other abbreviation is "
+                "translated like a word: write the English abbreviation of the term it stands for, as in "
+                "PAN, PAP or NZP -> NAP (national access point) and STI or ITS -> ITS (intelligent transport "
+                "systems). "
                 'Reply with JSON only: {"text": "<English question>"}.'
             ),
         },
