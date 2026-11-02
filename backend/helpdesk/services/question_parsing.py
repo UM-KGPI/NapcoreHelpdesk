@@ -392,20 +392,39 @@ def _legislation_term_patterns() -> tuple[re.Pattern, re.Pattern, re.Pattern] | 
     )
 
 
+def _act_identifiers(act) -> set[str]:
+    """How a question names an act: its names in parentheses ("MMTIS", "ITS Directive") and its number."""
+    identifiers = set(re.findall(r"\(([^()]*[A-Za-z][^()]*)\)", act.name)) | set(re.findall(r"\d{4}/\d+(?:/EU)?", act.name))
+    identifiers.discard("EU")
+    return identifiers
+
+
+def _identifier_pattern(identifiers: set[str]) -> re.Pattern | None:
+    if not identifiers:
+        return None
+    alternatives = "|".join(re.escape(i).replace(r"\ ", r"[\s-]?") for i in sorted(identifiers, key=len, reverse=True))
+    return re.compile(rf"(?<![\w/])(?:{alternatives})(?![\w/])", re.IGNORECASE)
+
+
 @lru_cache(maxsize=1)
 def _legislation_identifier_pattern() -> re.Pattern | None:
     """The indexed acts by their names in parentheses ("MMTIS", "ITS Directive") and numbers ("2017/1926")."""
     from helpdesk.services.regulations import ACTS
 
-    identifiers: set[str] = set()
-    for act in ACTS:
-        identifiers.update(re.findall(r"\(([^()]*[A-Za-z][^()]*)\)", act.name))
-        identifiers.update(re.findall(r"\d{4}/\d+(?:/EU)?", act.name))
-    identifiers.discard("EU")
-    if not identifiers:
-        return None
-    alternatives = "|".join(re.escape(i).replace(r"\ ", r"[\s-]?") for i in sorted(identifiers, key=len, reverse=True))
-    return re.compile(rf"(?<![\w/])(?:{alternatives})(?![\w/])", re.IGNORECASE)
+    return _identifier_pattern(set().union(*(_act_identifiers(act) for act in ACTS)))
+
+
+@lru_cache(maxsize=1)
+def _act_patterns() -> tuple[tuple[str, re.Pattern], ...]:
+    from helpdesk.services.regulations import ACTS
+
+    patterns = ((act.celex, _identifier_pattern(_act_identifiers(act))) for act in ACTS)
+    return tuple((celex, pattern) for celex, pattern in patterns if pattern)
+
+
+def named_acts(text: str) -> list[str]:
+    """CELEX numbers of the indexed acts the question names ("MMTIS" names the consolidated 2017/1926)."""
+    return [celex for celex, pattern in _act_patterns() if pattern.search(text or "")]
 
 
 def names_indexed_act(text: str) -> bool:
@@ -454,6 +473,21 @@ def legal_status_standards(text: str, concept_ids, scope: list[str] | None) -> l
             if match and not any(_STANDARD_KEYWORD_PATTERNS[s].fullmatch(match.group(0)) for s in named):
                 return []
     return named
+
+
+# "Standard(s)" in the languages questions arrive in ("normes", "Normen", "norma", "estándares", "standardi").
+_STANDARD_WORD_PATTERN = re.compile(r"\b(?:standard\w*|norms?|normes?|normen|norma|normas|estándar(?:es)?)\b", re.IGNORECASE)
+
+
+def asks_for_named_standards(text: str, scope: list[str] | None) -> bool:
+    """Whether a legislation question asks which standards the acts name ("Which standards are mentioned in
+    the MMTIS regulation?"), without naming one: by similarity, "standards" alone finds the acts' scope
+    articles, not the provisions that list NeTEx or SIRI."""
+    if LEGISLATION_SCOPE not in (scope or []) or not _STANDARD_WORD_PATTERN.search(text or ""):
+        return False
+    return not any(
+        pattern.search(text) for name, pattern in _STANDARD_KEYWORD_PATTERNS.items() if name != LEGISLATION_SCOPE
+    )
 
 
 def legislation_terms_in(text: str) -> list[str]:

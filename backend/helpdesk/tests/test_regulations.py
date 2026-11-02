@@ -18,8 +18,10 @@ from helpdesk.services.llm_generator import (
 from helpdesk.services.policy_guard import evaluate_policy
 from helpdesk.services.question_parsing import (
     _legislation_term_covers,
+    asks_for_named_standards,
     legal_status_standards,
     legislation_terms_in,
+    named_acts,
     names_indexed_act,
     parse_question_to_semantic_query,
 )
@@ -374,6 +376,74 @@ class LinkedProvisionRetrievalTests(TestCase):
         self.assertEqual(trace["legalStatusStandards"], ["NeTEx"])
         self.assertEqual([c["chunkId"] for c in chunks[:2]], ["netex-readme", "reg-art4"])
         self.assertEqual(chunks[1]["sourceUrl"], f"{ACTS[0].url}#art_4")
+
+
+TEL_TSI = next(act for act in ACTS if "TEL TSI" in act.name)
+
+
+class NamedStandardsQuestionTests(SimpleTestCase):
+    def test_legislation_questions_about_standards_in_general(self):
+        for question in [
+            "Which standards are explicitly mentioned in the MMTIS regulation?",
+            "Quelles normes le règlement MMTIS impose-t-il ?",
+            "Welche Normen nennt die MMTIS-Verordnung?",
+        ]:
+            with self.subTest(question=question):
+                self.assertTrue(asks_for_named_standards(question, [SCOPE]))
+
+    def test_other_questions_are_not(self):
+        self.assertFalse(asks_for_named_standards("Is NeTEx mandatory under MMTIS?", [SCOPE]))  # names one
+        self.assertFalse(asks_for_named_standards("What is a NAP?", [SCOPE]))
+        self.assertFalse(asks_for_named_standards("Which standards does Transmodel build on?", ["Transmodel"]))
+
+    def test_the_acts_a_question_names(self):
+        self.assertIn(ACTS[0].celex, named_acts("Which standards does the MMTIS regulation name?"))
+        self.assertNotIn(TEL_TSI.celex, named_acts("Which standards does the MMTIS regulation name?"))
+        self.assertEqual(named_acts("Which standards does the TEL TSI name?"), [TEL_TSI.celex])
+        self.assertEqual(named_acts("Which standards do the acts name?"), [])
+
+
+@override_settings(EMBEDDING_BACKEND="hash")
+class NamedStandardsRetrievalTests(TestCase):
+    PROVISIONS = {
+        "NeTEx": [f"{ACTS[0].celex}#art_4", f"{TEL_TSI.celex}#app_C"],
+        "Transmodel": [f"{ACTS[0].celex}#art_4", f"{TEL_TSI.celex}#app_C"],
+        "SIRI": [f"{ACTS[0].celex}#art_5"],
+        "OpRa": [],
+    }
+
+    def setUp(self):
+        from helpdesk.services.embeddings import build_text_embedding
+
+        for act, anchor, text in [
+            (ACTS[0], "art_1", "Article 1 This Regulation establishes the necessary specifications and standards."),
+            (ACTS[0], "art_4", "Article 4 (i) NeTEx CEN/TS 16614 and subsequent versions;"),
+            (ACTS[0], "art_5", "Article 5 (ii) SIRI CEN/TS 15531 and subsequent versions;"),
+            (TEL_TSI, "app_C", "Appendix C NeTEx and Transmodel profiles."),
+        ]:
+            SourceChunk.objects.create(
+                repository_url=act.url, commit_sha=act.celex, source_path=f"{act.celex}#{anchor}",
+                chunk_id=f"reg-{act.celex}-{anchor}", label=anchor, text=text, standards_scope=[SCOPE],
+                quality_score=0.9, doc_type="regulation", embedding_vector=build_text_embedding(text),
+            )
+
+    def retrieve(self, question):
+        from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
+
+        with patch("helpdesk.services.regulations.provisions_naming", side_effect=lambda s: self.PROVISIONS[s]):
+            chunks, _ = retrieve_chunks_with_trace(
+                question=question, top_k=4, min_score=0.0, scope=[SCOPE], english_question=None
+            )
+        return [c["sourcePath"] for c in chunks]
+
+    def test_the_provisions_that_name_standards_in_the_named_act_are_added(self):
+        paths = self.retrieve("Which standards are explicitly mentioned in the MMTIS regulation?")
+        # One provision per standard first: NeTEx's Art. 4, then SIRI's Art. 5, not NeTEx's second.
+        self.assertEqual(paths[1:3], [f"{ACTS[0].celex}#art_4", f"{ACTS[0].celex}#art_5"])
+
+    def test_a_named_act_limits_the_provisions(self):
+        paths = self.retrieve("Which standards does the TEL TSI name?")
+        self.assertIn(f"{TEL_TSI.celex}#app_C", paths[:2])
 
 
 class LegalContextTests(SimpleTestCase):
