@@ -354,45 +354,52 @@ def _postgres_hybrid_candidates(
 MAX_LINKED_PROVISIONS = 2
 
 
-def _linked_provision_candidates(standards: list[str], score: float) -> list[dict]:
+def _linked_provision_candidates(standards: list[str], score: float, acts: list[str] | None = None) -> list[dict]:
     """Chunks of the provisions that name the standards (from the legislation vocabulary), as candidates.
 
-    For each provision, the first chunk that names the standard (a long appendix has several chunks).
+    One provision per standard before any standard gets a second, so "NeTEx and SIRI" gets both MMTIS
+    Art. 4 and Art. 5 under the cap; only provisions of `acts` (CELEX numbers) when given. For each
+    provision, the first chunk that names the standard (a long appendix has several chunks).
     """
+    from itertools import zip_longest
+
     from helpdesk.services.regulations import STANDARD_IDENTIFIERS, provisions_naming
 
+    per_standard = [
+        [(standard, path) for path in provisions_naming(standard) if not acts or path.split("#", 1)[0] in acts]
+        for standard in standards
+    ]
     found: list[dict] = []
     seen: set[str] = set()
-    for standard in standards:
+    for standard, source_path in (pair for row in zip_longest(*per_standard) for pair in row if pair):
         pattern = re.compile(STANDARD_IDENTIFIERS[standard])
-        for source_path in provisions_naming(standard):
-            if source_path in seen or len(found) >= MAX_LINKED_PROVISIONS:
-                continue
-            chunk = next(
-                (c for c in SourceChunk.objects.filter(source_path=source_path).order_by("chunk_id") if pattern.search(c.text)),
-                None,
-            )
-            if chunk is None:
-                continue
-            seen.add(source_path)
-            found.append(
-                {
-                    "text": chunk.text,
-                    "score": score,
-                    "repositoryUrl": chunk.repository_url,
-                    "sourceUrl": chunk.source_url,
-                    "commitSha": chunk.commit_sha,
-                    "sourcePath": chunk.source_path,
-                    "chunkId": chunk.chunk_id,
-                    "label": chunk.label,
-                    "standardsScope": chunk.standards_scope or [],
-                    "chunkType": chunk.chunk_type or "",
-                    "docType": chunk.doc_type or "",
-                    "heading": chunk.heading or "",
-                    "structuredMetadata": chunk.structured_metadata or {},
-                    "retrievalEventId": f"re-{uuid4().hex[:8]}",
-                }
-            )
+        if source_path in seen or len(found) >= MAX_LINKED_PROVISIONS:
+            continue
+        chunk = next(
+            (c for c in SourceChunk.objects.filter(source_path=source_path).order_by("chunk_id") if pattern.search(c.text)),
+            None,
+        )
+        if chunk is None:
+            continue
+        seen.add(source_path)
+        found.append(
+            {
+                "text": chunk.text,
+                "score": score,
+                "repositoryUrl": chunk.repository_url,
+                "sourceUrl": chunk.source_url,
+                "commitSha": chunk.commit_sha,
+                "sourcePath": chunk.source_path,
+                "chunkId": chunk.chunk_id,
+                "label": chunk.label,
+                "standardsScope": chunk.standards_scope or [],
+                "chunkType": chunk.chunk_type or "",
+                "docType": chunk.doc_type or "",
+                "heading": chunk.heading or "",
+                "structuredMetadata": chunk.structured_metadata or {},
+                "retrievalEventId": f"re-{uuid4().hex[:8]}",
+            }
+        )
     return found
 
 
@@ -2005,11 +2012,18 @@ def _retrieve_chunks_once(
     # A question about a standard's legal status ("Is NeTEx mandatory in the EU?") gets the provisions that
     # name that standard, next to the best standards evidence. They are added, not ranked: by similarity
     # legal text would compete with the standards evidence in every question.
-    from helpdesk.services.question_parsing import legal_status_standards
+    from helpdesk.services.question_parsing import asks_for_named_standards, legal_status_standards, named_acts
+    from helpdesk.services.regulations import STANDARD_IDENTIFIERS
 
     legal_standards = legal_status_standards(question, question_concepts, scope)
+    legal_acts = None
+    if not legal_standards and asks_for_named_standards(question, scope):
+        # "Which standards does MMTIS name?": the provisions that name any standard, in the act it names.
+        legal_standards, legal_acts = list(STANDARD_IDENTIFIERS), named_acts(question)
     if legal_standards and trimmed:
-        provisions = _linked_provision_candidates(legal_standards, score=float(trimmed[0].get("score") or 0.0))
+        provisions = _linked_provision_candidates(
+            legal_standards, score=float(trimmed[0].get("score") or 0.0), acts=legal_acts
+        )
         provision_ids = {c["chunkId"] for c in provisions}
         trimmed = (trimmed[:1] + provisions + [c for c in trimmed[1:] if c["chunkId"] not in provision_ids])[:top_k]
     _record_stage("candidateSelectionMs", stage_start)
