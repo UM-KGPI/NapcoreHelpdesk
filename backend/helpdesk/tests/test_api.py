@@ -1229,7 +1229,7 @@ class HelpdeskApiTests(APITestCase):
             reverse("promotion-candidates"),
             {"windowDays": 30, "minCount": 1},
             format="json",
-            **self.auth_headers(),
+            **self.auth_headers(roles=["editor"]),
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -1274,7 +1274,7 @@ class HelpdeskApiTests(APITestCase):
                 "maxEvents": 50,
             },
             format="json",
-            **self.auth_headers(),
+            **self.auth_headers(roles=["editor"]),
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -1322,7 +1322,7 @@ class HelpdeskApiTests(APITestCase):
             reverse("editorial-queue-metrics"),
             {"windowDays": 30, "slaHours": 72},
             format="json",
-            **self.auth_headers(),
+            **self.auth_headers(roles=["editor"]),
         )
 
         self.assertEqual(metrics_response.status_code, status.HTTP_200_OK)
@@ -1366,7 +1366,7 @@ class HelpdeskApiTests(APITestCase):
                 "priority": "high",
             },
             format="json",
-            **self.auth_headers(),
+            **self.auth_headers(roles=["editor"]),
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -1393,7 +1393,7 @@ class HelpdeskApiTests(APITestCase):
                 "priority": "normal",
             },
             format="json",
-            **self.auth_headers(),
+            **self.auth_headers(roles=["editor"]),
         )
 
         transition_response = self.client.post(
@@ -1429,7 +1429,7 @@ class HelpdeskApiTests(APITestCase):
                 "priority": "normal",
             },
             format="json",
-            **self.auth_headers(),
+            **self.auth_headers(roles=["editor"]),
         )
 
         approve_response = self.client.post(
@@ -1484,7 +1484,7 @@ class HelpdeskApiTests(APITestCase):
                 "priority": "normal",
             },
             format="json",
-            **self.auth_headers(),
+            **self.auth_headers(roles=["editor"]),
         )
 
         self.client.post(
@@ -1537,7 +1537,7 @@ class HelpdeskApiTests(APITestCase):
                 "priority": "normal",
             },
             format="json",
-            **self.auth_headers(),
+            **self.auth_headers(roles=["editor"]),
         )
 
         invalid_response = self.client.post(
@@ -1583,7 +1583,7 @@ class HelpdeskApiTests(APITestCase):
                 "priority": "normal",
             },
             format="json",
-            **self.auth_headers(),
+            **self.auth_headers(roles=["editor"]),
         )
 
         self.client.post(
@@ -1594,7 +1594,7 @@ class HelpdeskApiTests(APITestCase):
                 "priority": "high",
             },
             format="json",
-            **self.auth_headers(),
+            **self.auth_headers(roles=["editor"]),
         )
 
         response = self.client.get(
@@ -1639,7 +1639,7 @@ class HelpdeskApiTests(APITestCase):
                 "priority": "normal",
             },
             format="json",
-            **self.auth_headers(),
+            **self.auth_headers(roles=["editor"]),
         )
 
         reviewer_response = self.client.get(
@@ -1692,7 +1692,7 @@ class HelpdeskApiTests(APITestCase):
                 "priority": "normal",
             },
             format="json",
-            **self.auth_headers(),
+            **self.auth_headers(roles=["editor"]),
         )
 
         second_response = self.client.post(
@@ -1703,7 +1703,7 @@ class HelpdeskApiTests(APITestCase):
                 "priority": "high",
             },
             format="json",
-            **self.auth_headers(),
+            **self.auth_headers(roles=["editor"]),
         )
 
         # Force one item older than SLA threshold to validate overdue and aging counts.
@@ -1718,7 +1718,7 @@ class HelpdeskApiTests(APITestCase):
             reverse("editorial-queue-metrics"),
             {"windowDays": 30, "slaHours": 72},
             format="json",
-            **self.auth_headers(),
+            **self.auth_headers(roles=["editor"]),
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)

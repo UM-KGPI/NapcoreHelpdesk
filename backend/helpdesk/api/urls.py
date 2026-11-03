@@ -13,6 +13,7 @@ Created: 2026-03-28  |  Modified: 2026-06-28
 
 from django.urls import path
 
+from .auth_views import AuthConfigView, GitHubCallbackView, GitHubLoginView, MeView, UserDetailView, UsersView
 from .views import (
     DevTokenView,
     EditorialQueueMetricsView,
@@ -40,6 +41,12 @@ urlpatterns = [
     path("health/ready", HealthReadyView.as_view(), name="health-ready"),
     path("health/llm", HealthLLMView.as_view(), name="health-llm"),
     path("auth/dev-token", DevTokenView.as_view(), name="auth-dev-token"),
+    path("auth/config", AuthConfigView.as_view(), name="auth-config"),
+    path("auth/github/login", GitHubLoginView.as_view(), name="auth-github-login"),
+    path("auth/github/callback", GitHubCallbackView.as_view(), name="auth-github-callback"),
+    path("auth/me", MeView.as_view(), name="auth-me"),
+    path("auth/users", UsersView.as_view(), name="auth-users"),
+    path("auth/users/<int:account_id>", UserDetailView.as_view(), name="auth-user-detail"),
     path("questions/answer", QuestionAnswerView.as_view(), name="answer-question"),
     path("questions/answer/stream", QuestionAnswerStreamView.as_view(), name="answer-question-stream"),
     path("questions/events", QuestionEventsView.as_view(), name="questions-events"),

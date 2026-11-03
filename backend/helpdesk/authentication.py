@@ -5,9 +5,12 @@ Tokens are verified against the configured JWT_SECRET and must carry a
 'roles' claim. Role values are attached to the request object and checked
 downstream by the editorial workflow for transition authorization.
 
+A token of an editor account (sub "github:<id>", services/editor_accounts.py) gets the account's
+current roles, and is refused once the account is disabled or deleted.
+
 Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
 Crafted by: AI coding agents
-Created: 2026-03-28  |  Modified: 2026-06-28
+Created: 2026-03-28  |  Modified: 2026-11-03
 """
 
 from __future__ import annotations
@@ -57,6 +60,14 @@ class JWTBearerAuthentication(authentication.BaseAuthentication):
         subject = str(payload.get("sub") or "").strip()
         if not subject:
             raise exceptions.AuthenticationFailed("JWT subject claim 'sub' is required.")
+
+        from helpdesk.services.editor_accounts import GITHUB_SUBJECT_PREFIX, account_for_subject
+
+        if subject.startswith(GITHUB_SUBJECT_PREFIX):
+            account = account_for_subject(subject)
+            if account is None or not account.is_active:
+                raise exceptions.AuthenticationFailed("Editor account is disabled or no longer exists.")
+            payload = {**payload, "roles": list(account.roles), "login": account.github_login}
 
         # Use deterministic local usernames for principal mapping and permission checks.
         username = f"jwt-{subject}"[:150]

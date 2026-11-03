@@ -1163,3 +1163,38 @@ a {
   }
 
 }
+
+/* Editor sign-in (components/EditorAccess.tsx) and Users tab (components/UsersPanel.tsx) */
+.editor-account-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.editor-account-bar button {
+  width: auto;
+  margin: 0 0 0 auto;
+  padding: 0.35rem 0.9rem;
+}
+
+.editor-account-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+}
+
+.button-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  text-decoration: none;
+}
+
+.role-options {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.5rem 0.8rem;
+}

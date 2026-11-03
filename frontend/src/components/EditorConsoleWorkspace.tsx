@@ -29,6 +29,8 @@ import { citationDisplayName, groupCitationsBySource } from "../citationLabels";
 import AnswerMarkdown from "./AnswerMarkdown";
 import HarvestSourcesPanel from "./HarvestSourcesPanel";
 import type { HelpdeskApiClient } from "../api";
+import { useEditorAccess } from "./EditorAccess";
+import UsersPanel from "./UsersPanel";
 
 import type {
   AnswerResponse,
@@ -54,7 +56,7 @@ function formatAction(action: string): string {
 type TransitionAction = (typeof TRANSITION_ACTIONS)[number];
 type BoardStatus = (typeof BOARD_STATUSES)[number];
 type AskedStatusFilter = "" | BoardStatus;
-type EditorTab = "assist" | "editorial" | "faq" | "indexing";
+type EditorTab = "assist" | "editorial" | "faq" | "indexing" | "users";
 type SortDir = "asc" | "desc";
 type SortState = { col: string; dir: SortDir } | null;
 
@@ -151,6 +153,7 @@ async function copyDeepLinkToClipboard(questionId: string): Promise<void> {
 
 export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProps) {
   const [activeTab, setActiveTab] = useState<EditorTab>("indexing");
+  const editorAccess = useEditorAccess();
   const [askedStatusFilter, setAskedStatusFilter] = useState<AskedStatusFilter>("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [faqPage, setFaqPage] = useState(1);
@@ -305,10 +308,16 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
           <button type="button" className={activeTab === "faq" ? "tab-button tab-button-active" : "tab-button"} onClick={() => setActiveTab("faq")}>
             FAQs
           </button>
+          {editorAccess?.isAdmin && (
+            <button type="button" className={activeTab === "users" ? "tab-button tab-button-active" : "tab-button"} onClick={() => setActiveTab("users")}>
+              Users
+            </button>
+          )}
         </div>
         <p className="muted tab-strip-copy">
           {activeTab === "assist" && "Run a question, inspect the answer, and adjust request context only when needed."}
           {activeTab === "editorial" && "Triage answers and move queue items through workflow states."}
+          {activeTab === "users" && "Invite people by GitHub login and give them roles."}
           {activeTab === "faq" && "Browse approved answers with full answer text and evidence links."}
           {activeTab === "indexing" && "Refresh approved repositories and monitor indexing output."}
         </p>
@@ -810,6 +819,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
         )}
 
         {activeTab === "indexing" && <HarvestSourcesPanel client={apiClient} token={token} />}
+        {activeTab === "users" && editorAccess?.isAdmin && <UsersPanel client={editorAccess.client} />}
 
         {activeTab === "indexing" && (
           <section className="panel step-1-index">

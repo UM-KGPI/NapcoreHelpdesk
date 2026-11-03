@@ -41,6 +41,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from helpdesk.models import EditorialQueueItem, IndexRunMetric, QuestionEvent
+from helpdesk.services.editor_accounts import anonymous_roles
 from helpdesk.services.editorial_router import route_to_editorial_queue
 from helpdesk.services.editorial_workflow import (
     WorkflowTransitionForbidden,
@@ -613,6 +614,22 @@ def _request_roles(request):
     return roles
 
 
+EDITORIAL_ROLES = frozenset({"editor", "reviewer", "publisher", "admin"})
+
+
+def _forbid_without_editorial_role(request):
+    """403 for a token without an editorial role (the anonymous reader), else None."""
+
+    if _request_roles(request) & EDITORIAL_ROLES:
+        return None
+    return _error_response(
+        code="FORBIDDEN",
+        message="This needs a signed-in editor account.",
+        request_id=_request_id(request),
+        http_status=status.HTTP_403_FORBIDDEN,
+    )
+
+
 def _resolve_graph_rag_enabled(_options: dict) -> bool:
     """Graph retrieval runs unconditionally whenever GRAPH_RAG_ENABLED is true.
 
@@ -1004,7 +1021,8 @@ class DevTokenView(APIView):
         now = dt.datetime.now(dt.timezone.utc)
         payload = {
             "sub": settings.DEV_JWT_DEFAULT_SUBJECT,
-            "roles": settings.DEV_JWT_DEFAULT_ROLES,
+            # Reader only once editor accounts exist (services/editor_accounts.py).
+            "roles": anonymous_roles(),
             "iat": int(now.timestamp()),
             "exp": int((now + dt.timedelta(minutes=settings.DEV_JWT_TTL_MINUTES)).timestamp()),
         }
@@ -1972,6 +1990,9 @@ class QuestionEventsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        forbidden = _forbid_without_editorial_role(request)
+        if forbidden:
+            return forbidden
         # Return persisted question events so editorial intake does not depend on the current tab session.
         serializer = QuestionEventsListQuerySerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
@@ -2092,6 +2113,9 @@ class QuestionEventDetailView(APIView):
         )
 
     def delete(self, request, question_event_id):
+        forbidden = _forbid_without_editorial_role(request)
+        if forbidden:
+            return forbidden
         try:
             event = QuestionEvent.objects.get(id=question_event_id)
         except QuestionEvent.DoesNotExist:
@@ -2136,6 +2160,9 @@ class PromotionCandidatesView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        forbidden = _forbid_without_editorial_role(request)
+        if forbidden:
+            return forbidden
         # Aggregate historical question events into candidate FAQ intents.
         serializer = PromotionCandidatesQuerySerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
@@ -2206,6 +2233,9 @@ class EditorialSemanticClustersView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        forbidden = _forbid_without_editorial_role(request)
+        if forbidden:
+            return forbidden
         # Manual trigger endpoint for semantic clustering over recent question events.
         serializer = SemanticClustersQuerySerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
@@ -2224,6 +2254,9 @@ class EditorialQueueView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        forbidden = _forbid_without_editorial_role(request)
+        if forbidden:
+            return forbidden
         # Return paginated board rows for editorial triage and state transitions.
         serializer = EditorialQueueListQuerySerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
@@ -2286,6 +2319,9 @@ class EditorialQueueView(APIView):
         )
 
     def post(self, request):
+        forbidden = _forbid_without_editorial_role(request)
+        if forbidden:
+            return forbidden
         # Route already-generated answers to editorial review queues.
         request_id = _request_id(request)
         serializer = EditorialQueueRequestSerializer(data=request.data)
@@ -2387,6 +2423,9 @@ class EditorialQueueMetricsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        forbidden = _forbid_without_editorial_role(request)
+        if forbidden:
+            return forbidden
         # Compute queue health KPIs for board-level monitoring widgets.
         serializer = EditorialQueueMetricsQuerySerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)

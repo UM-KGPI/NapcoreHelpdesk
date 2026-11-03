@@ -359,6 +359,31 @@ export interface HarvestJobResponse {
   error: string | null;
 }
 
+export type EditorRole = "editor" | "reviewer" | "publisher" | "admin";
+
+// An editor account (Editor > Users); people sign in with GitHub.
+export interface EditorUser {
+  id: number;
+  githubLogin: string;
+  name: string;
+  avatarUrl: string;
+  roles: EditorRole[];
+  isActive: boolean;
+  // False for an invitation nobody has used yet.
+  signedInOnce: boolean;
+  invitedBy: string;
+  lastLoginAt: string | null;
+  createdAt: string;
+}
+
+export interface AuthMe {
+  subject: string;
+  kind: "account" | "anonymous";
+  roles: string[];
+  account: EditorUser | null;
+  githubSignIn: boolean;
+}
+
 export interface HealthResponse {
   status: "ok" | "degraded";
   service: string;

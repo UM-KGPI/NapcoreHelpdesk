@@ -141,14 +141,40 @@ LLM_MODEL=gpt-4o-mini
 GRAPHDB_ENABLED=True
 GRAPH_RAG_ENABLED=True
 
-# --- Keep this enabled until real authentication exists ---
+# --- Keep this enabled: it gives every visitor the anonymous token for asking questions ---
 DEV_JWT_AUTO_ISSUE=True
+
+# --- Editor sign-in with GitHub (see "Editor accounts" below) ---
+GITHUB_OAUTH_CLIENT_ID=<client id of the GitHub OAuth app>
+GITHUB_OAUTH_CLIENT_SECRET=<client secret>
+GITHUB_OAUTH_CALLBACK_URL=https://kgpi.fgpa.um.si/napcore-helpdesk/api/v1/auth/github/callback
+EDITOR_APP_URL=https://kgpi.fgpa.um.si/napcore-helpdesk/editor
+EDITOR_ADMIN_GITHUB_LOGINS=<your GitHub login>
 ```
 
-`DEV_JWT_AUTO_ISSUE=True` is how browsers get their token today: `POST /auth/dev-token` is the only way to
-obtain a JWT, and every visitor receives the same generic identity. The name suggests a development
-setting, but turning it off locks out every user whose browser has no cached token, and the Send button
-stays disabled with no error shown. Switch it off only after a scoped authentication system replaces it.
+`DEV_JWT_AUTO_ISSUE=True` is how browsers get their token for the public Q&A: `POST /auth/dev-token`
+issues the same anonymous identity to every visitor. Turning it off locks out every user whose browser
+has no cached token, and the Send button stays disabled with no error shown. Keep it on.
+
+### Editor accounts
+
+Without the `GITHUB_OAUTH_*` settings the anonymous token carries `DEV_JWT_DEFAULT_ROLES`
+(editor, reviewer, publisher), so anyone can use the editor. With a client id and secret set, the
+anonymous token is a `reader` (ask questions, give feedback) and `/editor` asks people to sign in with
+GitHub. Roles come from their editor account and are read at every request, so a change or a disabled
+account applies at once.
+
+1. Create a GitHub OAuth app (GitHub → Settings → Developer settings → OAuth Apps, or the
+   organisation's settings). Homepage URL `https://kgpi.fgpa.um.si/napcore-helpdesk/`, authorization
+   callback URL the `GITHUB_OAUTH_CALLBACK_URL` above. Generate a client secret.
+2. Add the five settings above to `.env.prod`. `EDITOR_ADMIN_GITHUB_LOGINS` lists the logins that
+   become admins at their first sign-in, so the first admin needs no invitation.
+3. Restart the backend (`docker compose -f docker-compose.prod.yml up -d`), open `/editor`, and sign in.
+4. In Editor → Users, invite the other editors by GitHub login with their roles: editor (queue answers),
+   reviewer (approve, reject, revoke), publisher (publish FAQs, harvest and index), admin (all, and users).
+
+For local development, register a second OAuth app with the callback
+`http://localhost:8000/api/v1/auth/github/callback` and set `EDITOR_APP_URL=http://localhost:5173/napcore-helpdesk/editor`.
 
 Protect the file:
 

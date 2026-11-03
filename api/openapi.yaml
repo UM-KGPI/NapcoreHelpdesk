@@ -1031,6 +1031,255 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/auth/config:
+    get:
+      tags: [Auth]
+      summary: Whether the editor offers GitHub sign-in
+      operationId: getAuthConfig
+      security: []
+      responses:
+        '200':
+          description: Sign-in configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [githubSignIn]
+                properties:
+                  githubSignIn:
+                    type: boolean
+  /api/v1/auth/github/login:
+    get:
+      tags: [Auth]
+      summary: Start the GitHub sign-in
+      operationId: startGitHubSignIn
+      description: Sets a short-lived state cookie and redirects the browser to GitHub.
+      security: []
+      responses:
+        '302':
+          description: Redirect to GitHub
+        '404':
+          description: GitHub sign-in is not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/auth/github/callback:
+    get:
+      tags: [Auth]
+      summary: GitHub sign-in callback
+      operationId: finishGitHubSignIn
+      description: |
+        Checks the state against the cookie, identifies the GitHub user and redirects to the editor
+        with the token in the URL fragment (#token=...&expiresIn=...), or with #authError=...&authMessage=...
+        (NOT_INVITED, ACCOUNT_DISABLED, NO_ROLES, STATE_MISMATCH, GITHUB_DENIED, GITHUB_ERROR).
+      security: []
+      parameters:
+        - {name: code, in: query, schema: {type: string}}
+        - {name: state, in: query, schema: {type: string}}
+      responses:
+        '302':
+          description: Redirect to the editor
+  /api/v1/auth/me:
+    get:
+      tags: [Auth]
+      summary: Who the token belongs to
+      operationId: getMe
+      responses:
+        '200':
+          description: The editor account or the anonymous reader
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthMe'
+        '401':
+          description: Unauthorized, or the editor account is disabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/auth/users:
+    get:
+      tags: [Auth]
+      summary: List editor accounts
+      operationId: listUsers
+      description: Requires the admin role.
+      responses:
+        '200':
+          description: Editor accounts
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [requestId, users, roles]
+                properties:
+                  requestId:
+                    type: string
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EditorUser'
+                  roles:
+                    type: array
+                    items:
+                      type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Auth]
+      summary: Invite a GitHub login with roles
+      operationId: inviteUser
+      description: Requires the admin role. The invitation is bound to the GitHub user at the first sign-in.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [githubLogin, roles]
+              properties:
+                githubLogin:
+                  type: string
+                roles:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: string
+                    enum: [editor, reviewer, publisher, admin]
+              additionalProperties: false
+      responses:
+        '201':
+          description: Account created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditorUserResponse'
+        '400':
+          description: Invalid login or roles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: The login already has an account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/auth/users/{accountId}:
+    parameters:
+      - {name: accountId, in: path, required: true, schema: {type: integer}}
+    patch:
+      tags: [Auth]
+      summary: Change roles or disable/enable an editor account
+      operationId: updateUser
+      description: Requires the admin role. The last active admin keeps the admin role and stays enabled.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                roles:
+                  type: array
+                  items:
+                    type: string
+                    enum: [editor, reviewer, publisher, admin]
+                isActive:
+                  type: boolean
+              additionalProperties: false
+      responses:
+        '200':
+          description: Account updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditorUserResponse'
+        '400':
+          description: Invalid roles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No such account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Would remove the last active admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [Auth]
+      summary: Remove an editor account
+      operationId: deleteUser
+      description: Requires the admin role. The last active admin cannot be removed.
+      responses:
+        '204':
+          description: Account removed
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No such account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Would remove the last active admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   securitySchemes:
     bearerAuth:
@@ -2135,6 +2384,62 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/HarvestSource'
+    EditorUser:
+      type: object
+      required: [id, githubLogin, name, avatarUrl, roles, isActive, signedInOnce, invitedBy, lastLoginAt, createdAt]
+      properties:
+        id:
+          type: integer
+        githubLogin:
+          type: string
+        name:
+          type: string
+        avatarUrl:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [editor, reviewer, publisher, admin]
+        isActive:
+          type: boolean
+        signedInOnce:
+          type: boolean
+        invitedBy:
+          type: string
+        lastLoginAt:
+          type: [string, "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+    EditorUserResponse:
+      type: object
+      required: [requestId, user]
+      properties:
+        requestId:
+          type: string
+        user:
+          $ref: '#/components/schemas/EditorUser'
+    AuthMe:
+      type: object
+      required: [subject, kind, roles, account, githubSignIn]
+      properties:
+        subject:
+          type: string
+        kind:
+          type: string
+          enum: [account, anonymous]
+        roles:
+          type: array
+          items:
+            type: string
+        account:
+          oneOf:
+            - $ref: '#/components/schemas/EditorUser'
+            - type: "null"
+        githubSignIn:
+          type: boolean
     IndexRepositoryResponse:
       type: object
       required: [status, requestId, repositoryUrl, repositoryPath, profile, incremental, prune, autoAllowedRepository, scannedFiles, skippedFiles, createdChunks, updatedChunks, deletedChunks]
