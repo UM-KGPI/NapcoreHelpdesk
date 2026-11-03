@@ -210,6 +210,21 @@ class LegislationAnswerTests(SimpleTestCase):
         self.assertIn(LEGISLATION_RULE, with_law)
         self.assertNotIn(LEGISLATION_RULE, without)
 
+    def test_prompt_keeps_a_legislation_chunk_whole(self):
+        # Art. 4 of MMTIS is ~1,700 characters; a 1,200 cut dropped (c) INSPIRE and paragraph 2.
+        tail = (
+            "(c) for the spatial network the requirements set out in Article 7 of Directive 2007/2/EC.\n"
+            "2. The static, historic and observed travel and traffic data listed in point 1 of the Annex, for "
+            "which NeTEx and DATEX II are applicable, shall be represented through minimum EU profiles."
+        )
+        article_4 = {**ARTICLE_3, "sourcePath": "02017R1926-20240304#art_4", "text": "x" * 1400 + "\n" + tail}
+        standards_chunk = {**article_4, "docType": "documentation", "sourcePath": "README.md"}
+        content = _build_messages(question="Which standards?", chunks=[article_4], max_chars_per_chunk=1200)[1]["content"]
+        self.assertIn("Directive 2007/2/EC", content)
+        self.assertIn("minimum EU profiles", content)
+        content = _build_messages(question="Which standards?", chunks=[standards_chunk], max_chars_per_chunk=1200)[1]["content"]
+        self.assertNotIn("Directive 2007/2/EC", content)
+
     def test_retry_feedback_asks_for_articles_not_xml(self):
         feedback = _append_feedback_message([], "rejected", "reason", legislation=True)[-1]["content"]
         self.assertIn("article", feedback)

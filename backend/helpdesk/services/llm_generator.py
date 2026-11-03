@@ -1052,7 +1052,11 @@ def _build_messages(
     context_lines = []
     focus_terms = _question_focus_terms(question)
     for index, chunk in enumerate(chunks[:max_chunks], start=1):
-        chunk_text = _trim_chunk_text(str(chunk.get("text", "")), max_chars=max_chars_per_chunk, focus_terms=focus_terms)
+        # A legislation chunk is one article (or part of one), bounded when the act is indexed. Its
+        # tail holds the last points of a list, so a cut dropped e.g. Art. 4(1)(c) and 4(2) of MMTIS
+        # and the answer named fewer standards than the article does.
+        limit = 0 if _is_regulation_chunk(chunk) else max_chars_per_chunk
+        chunk_text = _trim_chunk_text(str(chunk.get("text", "")), max_chars=limit, focus_terms=focus_terms)
         context_lines.append(
             "\n".join(
                 [
