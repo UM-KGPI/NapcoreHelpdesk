@@ -462,3 +462,33 @@ class EditorialQueueTransition(TimestampedModel):
             f"EditorialQueueTransition(queue_item_id={self.queue_item.queue_item_id}, "
             f"action={self.action}, from={self.from_status}, to={self.to_status})"
         )
+
+
+class EditorAccount(TimestampedModel):
+    """A person allowed into the editor, signed in with GitHub (services/editor_accounts.py).
+
+    An admin invites a GitHub login with roles; the first sign-in binds the account to the GitHub
+    user id, so a later rename of the login keeps the account. Disabling an account (is_active)
+    ends its access at the next request, as roles are read from here, not from the token.
+    """
+
+    ROLE_EDITOR = "editor"
+    ROLE_REVIEWER = "reviewer"
+    ROLE_PUBLISHER = "publisher"
+    ROLE_ADMIN = "admin"
+    ROLES = (ROLE_EDITOR, ROLE_REVIEWER, ROLE_PUBLISHER, ROLE_ADMIN)
+
+    github_login = models.CharField(max_length=39, unique=True)  # stored lower-case; GitHub logins are case-insensitive
+    github_id = models.BigIntegerField(null=True, blank=True, unique=True)
+    name = models.CharField(max_length=255, blank=True)
+    avatar_url = models.URLField(blank=True)
+    roles = models.JSONField(default=list, blank=True)
+    is_active = models.BooleanField(default=True)
+    invited_by = models.CharField(max_length=39, blank=True)
+    last_login_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["github_login"]
+
+    def __str__(self):
+        return f"EditorAccount({self.github_login}, roles={self.roles}, active={self.is_active})"

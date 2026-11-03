@@ -31,6 +31,7 @@ import { HelpdeskApiClient, StreamUnavailableError } from "./api";
 import { AuthProvider } from "./auth-context";
 import AboutPage from "./components/AboutPage";
 import EditorConsoleWorkspace from "./components/EditorConsoleWorkspace";
+import EditorAccess from "./components/EditorAccess";
 import EditorPageLayout from "./components/EditorPageLayout";
 import QuestionDetailPage from "./components/QuestionDetailPage";
 import SharedAppLayout from "./components/SharedAppLayout";
@@ -54,6 +55,8 @@ const TRANSITION_ACTIONS = [
   "reopen",
 ] as const;
 const TOKEN_STORAGE_KEY = "napcore.helpdesk.jwt";
+// The token of a signed-in editor account (GitHub); the token above stays the anonymous one.
+const EDITOR_TOKEN_STORAGE_KEY = "napcore.helpdesk.editorJwt";
 const AUTO_TOKEN_STORAGE_KEY = "napcore.helpdesk.autoToken";
 
 type TransitionAction = (typeof TRANSITION_ACTIONS)[number];
@@ -131,6 +134,20 @@ function detectBrowserLanguage(): string {
   const tag = (navigator.languages?.[0] ?? navigator.language ?? "en").split("-")[0].toLowerCase();
   return BROWSER_LANGUAGE_NAMES[tag] ?? "English";
 }
+
+// The GitHub sign-in callback returns to the editor with #token=... or #authError=...&authMessage=...
+// Read it once and remove it from the address bar.
+function readSignInResult(): { token: string; error: string } {
+  const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const token = params.get("token") ?? "";
+  const error = params.get("authError") ? params.get("authMessage") || params.get("authError") || "" : "";
+  if (token || error) {
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+  }
+  return { token, error };
+}
+
+const SIGN_IN_RESULT = readSignInResult();
 
 function isJwtExpired(token: string): boolean {
   try {
@@ -297,7 +314,12 @@ export default function App() {
     const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     return isDev ? 'http://localhost:8000/api/v1' : `${window.location.origin}${import.meta.env.BASE_URL}api/v1`;
   });
-  const [token, setToken] = useState(() => {
+  const [editorToken, setEditorToken] = useState(() => {
+    const stored = SIGN_IN_RESULT.token || (localStorage.getItem(EDITOR_TOKEN_STORAGE_KEY) ?? "");
+    return stored && !isJwtExpired(stored) ? stored : "";
+  });
+  const [signInError, setSignInError] = useState(SIGN_IN_RESULT.error);
+  const [readerToken, setReaderToken] = useState(() => {
     const stored = localStorage.getItem(TOKEN_STORAGE_KEY) ?? "";
     if (stored && isJwtExpired(stored)) {
       localStorage.removeItem(TOKEN_STORAGE_KEY);
@@ -309,6 +331,8 @@ export default function App() {
     const saved = localStorage.getItem(AUTO_TOKEN_STORAGE_KEY);
     return saved ? saved === "true" : true;
   });
+  // Requests go out with the editor's token when someone is signed in, else the anonymous one.
+  const token = editorToken || readerToken;
 
   const [question, setQuestion] = useState("How to use NeTEx for exchanging a timetable?");
   const [sessionId] = useState("sess-local");
@@ -346,7 +370,7 @@ export default function App() {
       apiBaseUrl,
       setApiBaseUrl,
       token,
-      setToken,
+      setToken: setReaderToken,
       autoTokenEnabled,
       setAutoTokenEnabled,
     }),
@@ -354,8 +378,12 @@ export default function App() {
   );
 
   useEffect(() => {
-    localStorage.setItem(TOKEN_STORAGE_KEY, token);
-  }, [token]);
+    localStorage.setItem(TOKEN_STORAGE_KEY, readerToken);
+  }, [readerToken]);
+
+  useEffect(() => {
+    localStorage.setItem(EDITOR_TOKEN_STORAGE_KEY, editorToken);
+  }, [editorToken]);
 
   useEffect(() => {
     localStorage.setItem(AUTO_TOKEN_STORAGE_KEY, String(autoTokenEnabled));
@@ -428,7 +456,7 @@ export default function App() {
         const devClient = new HelpdeskApiClient({ baseUrl: apiBaseUrl, token: "" });
         const issued = await devClient.issueDevToken();
         if (!cancelled) {
-          setToken(issued.token);
+          setReaderToken(issued.token);
         }
       } catch {
         // Keep manual token mode if the dev endpoint is disabled.
@@ -492,7 +520,9 @@ export default function App() {
     try {
       const devClient = new HelpdeskApiClient({ baseUrl: apiBaseUrl, token: "" });
       const issued = await devClient.issueDevToken();
-      setToken(issued.token);
+      setReaderToken(issued.token);
+      // An editor token refused by the server (expired, account disabled) ends the sign-in.
+      setEditorToken("");
       return issued.token;
     } catch {
       return null;
@@ -1059,6 +1089,15 @@ export default function App() {
               path="editor"
               element={
                 <EditorPageLayout>
+                  <EditorAccess
+                    client={client}
+                    token={token}
+                    signInError={signInError}
+                    onSignOut={() => {
+                      setEditorToken("");
+                      setSignInError("");
+                    }}
+                  >
                   <EditorWithQueryParams
                   question={question}
                   answerResult={answerResult}
@@ -1101,6 +1140,7 @@ export default function App() {
                   setIndexAutoAllowRepository={setIndexAutoAllowRepository}
                   onIndexRepository={onIndexRepository}
                   />
+                  </EditorAccess>
                 </EditorPageLayout>
               }
             />

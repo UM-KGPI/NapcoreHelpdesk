@@ -19,6 +19,9 @@ import type {
   EditorialSemanticClustersResponse,
   EditorialQueueResponse,
   EditorialQueueTransitionResponse,
+  AuthMe,
+  EditorRole,
+  EditorUser,
   HealthResponse,
   HarvestJobResponse,
   IndexRepositoryResponse,
@@ -378,6 +381,35 @@ export class HelpdeskApiClient {
 
   async getHarvestJob(jobId: string): Promise<HarvestJobResponse> {
     return this.request<HarvestJobResponse>(`/admin/sources/harvest/${encodeURIComponent(jobId)}`, { method: "GET" });
+  }
+
+  async getAuthConfig(): Promise<{ githubSignIn: boolean }> {
+    return this.request<{ githubSignIn: boolean }>("/auth/config", { method: "GET" }, false);
+  }
+
+  async getMe(): Promise<AuthMe> {
+    return this.request<AuthMe>("/auth/me", { method: "GET" });
+  }
+
+  // Where the browser goes to sign in with GitHub; the callback returns it to the editor.
+  githubSignInUrl(): string {
+    return `${this.baseUrl}/auth/github/login`;
+  }
+
+  async listUsers(): Promise<{ users: EditorUser[]; roles: EditorRole[] }> {
+    return this.request<{ users: EditorUser[]; roles: EditorRole[] }>("/auth/users", { method: "GET" });
+  }
+
+  async inviteUser(githubLogin: string, roles: EditorRole[]): Promise<{ user: EditorUser }> {
+    return this.request<{ user: EditorUser }>("/auth/users", { method: "POST", body: JSON.stringify({ githubLogin, roles }) });
+  }
+
+  async updateUser(id: number, changes: { roles?: EditorRole[]; isActive?: boolean }): Promise<{ user: EditorUser }> {
+    return this.request<{ user: EditorUser }>(`/auth/users/${id}`, { method: "PATCH", body: JSON.stringify(changes) });
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    await this.request<void>(`/auth/users/${id}`, { method: "DELETE" });
   }
 
   private async request<T>(path: string, init: RequestInit, withAuth = true): Promise<T> {

@@ -32,6 +32,12 @@ env = environ.Env(
     DEV_JWT_DEFAULT_SUBJECT=(str, "user-local"),
     DEV_JWT_DEFAULT_ROLES=(str, "editor,reviewer,publisher"),
     DEV_JWT_TTL_MINUTES=(int, 480),
+    GITHUB_OAUTH_CLIENT_ID=(str, ""),
+    GITHUB_OAUTH_CLIENT_SECRET=(str, ""),
+    GITHUB_OAUTH_CALLBACK_URL=(str, ""),
+    EDITOR_APP_URL=(str, ""),
+    EDITOR_ADMIN_GITHUB_LOGINS=(str, ""),
+    EDITOR_JWT_TTL_MINUTES=(int, 480),
     ALLOWED_SOURCE_REPOSITORIES=(
         str,
         "https://github.com/TransmodelEcosystem/NeTEx,https://github.com/TransmodelEcosystem/SIRI,https://github.com/TransmodelEcosystem/OpRa",
@@ -242,6 +248,21 @@ DEV_JWT_DEFAULT_ROLES = [
     for role in env("DEV_JWT_DEFAULT_ROLES", default="editor,reviewer,publisher").split(",")
     if role.strip()
 ]
+
+# Editor sign-in with GitHub (services/editor_accounts.py). With a client id and secret set, the
+# anonymous token above carries only the "reader" role (ask questions, give feedback) whatever
+# DEV_JWT_DEFAULT_ROLES says, and editorial work needs a signed-in account with roles.
+GITHUB_OAUTH_CLIENT_ID = env("GITHUB_OAUTH_CLIENT_ID").strip()
+GITHUB_OAUTH_CLIENT_SECRET = env("GITHUB_OAUTH_CLIENT_SECRET").strip()
+# The callback registered with the GitHub OAuth app, e.g. https://<host>/napcore-helpdesk/api/v1/auth/github/callback
+GITHUB_OAUTH_CALLBACK_URL = env("GITHUB_OAUTH_CALLBACK_URL").strip()
+# Where the callback returns the signed-in browser, e.g. https://<host>/napcore-helpdesk/editor
+EDITOR_APP_URL = env("EDITOR_APP_URL").strip() or "http://localhost:5173/napcore-helpdesk/editor"
+# GitHub logins that become admins on their first sign-in, so the first admin needs no invitation.
+EDITOR_ADMIN_GITHUB_LOGINS = {
+    login.strip().lower() for login in env("EDITOR_ADMIN_GITHUB_LOGINS").split(",") if login.strip()
+}
+EDITOR_JWT_TTL_MINUTES = env("EDITOR_JWT_TTL_MINUTES")
 DEV_JWT_TTL_MINUTES = env("DEV_JWT_TTL_MINUTES")
 
 ALLOWED_SOURCE_REPOSITORIES = {
