@@ -88,6 +88,13 @@ const DEFAULT_INDEX_REPO_PRESETS: IndexRepoPreset[] = [
     repoPath: "/app/repos/SIRI",
     profile: "siri",
   },
+  {
+    id: "mobilitydcat-ap",
+    label: "mobilityDCAT-AP",
+    repoUrl: "https://github.com/mobilityDCAT-AP/mobilityDCAT-AP",
+    repoPath: "/app/repos/mobilityDCAT-AP",
+    profile: "mobilitydcat-ap",
+  },
 ];
 
 const INDEX_REPO_PRESETS_CONFIG_PATH = `${import.meta.env.BASE_URL}index-repo-presets.json`;
@@ -1062,6 +1069,7 @@ export default function App() {
                   boardStatusMap={boardStatusMap}
                   busy={busy}
                   token={token}
+                  apiClient={client}
                   setQuestion={setQuestion}
                   setSelectedQuestionEventId={setSelectedQuestionEventId}
                   onAskQuestion={onAskQuestion}

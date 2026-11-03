@@ -79,6 +79,7 @@ from .serializers import (
     EditorialQueueMetricsQuerySerializer,
     EditorialQueueRequestSerializer,
     EditorialQueueTransitionRequestSerializer,
+    HarvestSourceRequestSerializer,
     IndexRepositoryRequestSerializer,
     PromotionCandidatesQuerySerializer,
     SemanticClustersQuerySerializer,
@@ -757,6 +758,7 @@ def _infer_standard_from_chunk(chunk: dict, effective_scope: list[str]) -> str |
         "OpRa": ["opra"],
         "SIRI": ["siri"],
         "Transmodel": ["transmodel"],
+        "mobilityDCAT-AP": ["mobilitydcat", "dcat"],
     }
     for standard in effective_scope:
         for alias in aliases.get(standard, []):
@@ -2454,6 +2456,125 @@ class EditorialQueueMetricsView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+def _forbid_without_index_role(request, request_id):
+    """The error response for a caller who may not harvest or index, else None."""
+
+    if _request_roles(request) & {"admin", "publisher"}:
+        return None
+    return _error_response(
+        code="FORBIDDEN",
+        message="Indexing requires admin or publisher role.",
+        request_id=request_id,
+        http_status=status.HTTP_403_FORBIDDEN,
+    )
+
+
+def _source_payload(source) -> dict:
+    """A configured source as the editor's Harvest & Index tab lists it, with what is indexed now."""
+
+    from helpdesk.models import OntologyAssetVersion, SourceChunk
+    from helpdesk.services.repository_urls import canonical_repository_url
+
+    chunks = SourceChunk.objects.filter(repository_url=canonical_repository_url(source.url))
+    latest = chunks.order_by("-updated_at").values("commit_sha", "updated_at").first()
+    ontology = None
+    if source.ontology:
+        record = OntologyAssetVersion.objects.filter(ontology_key=source.ontology.key).first()
+        ontology = {
+            "key": source.ontology.key,
+            "graphUri": source.ontology.graph_uri,
+            "version": record.version if record else None,
+            "lastLoadedAt": record.last_loaded_at.isoformat() if record and record.last_loaded_at else None,
+        }
+    return {
+        "name": source.name,
+        "repositoryUrl": source.url,
+        "profile": source.profile,
+        "checkoutPresent": (Path(settings.SOURCE_CHECKOUT_DIR) / source.name / ".git").is_dir(),
+        "indexedChunks": chunks.count(),
+        "indexedCommit": latest["commit_sha"] if latest else None,
+        "indexedAt": latest["updated_at"].isoformat() if latest else None,
+        "ontology": ontology,
+    }
+
+
+class SourcesView(APIView):
+    """The sources the knowledge base is harvested from (services/source_refresh.configured_sources)."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from helpdesk.services.source_refresh import configured_sources
+
+        request_id = _request_id(request)
+        forbidden = _forbid_without_index_role(request, request_id)
+        if forbidden:
+            return forbidden
+        return Response(
+            {"requestId": request_id, "sources": [_source_payload(source) for source in configured_sources()]},
+            status=status.HTTP_200_OK,
+        )
+
+
+class HarvestSourceView(APIView):
+    """Queue a harvest of one configured source: fetch, index, and load its ontology (tasks.harvest_source).
+
+    It runs in the Celery worker: a full index takes minutes, longer than the proxy in front of the API waits.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from helpdesk.services.source_refresh import find_source
+        from helpdesk.tasks import harvest_source
+
+        request_id = _request_id(request)
+        forbidden = _forbid_without_index_role(request, request_id)
+        if forbidden:
+            return forbidden
+        serializer = HarvestSourceRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        source = find_source(serializer.validated_data["source"])
+        if source is None:
+            return _error_response(
+                code="UNKNOWN_SOURCE",
+                message=f"No configured source named {serializer.validated_data['source']!r}.",
+                request_id=request_id,
+                http_status=status.HTTP_400_BAD_REQUEST,
+            )
+        job = harvest_source.delay(source.name, full=serializer.validated_data["full"])
+        return Response(
+            {"requestId": request_id, "jobId": job.id, "source": source.name, "state": "queued"},
+            status=status.HTTP_202_ACCEPTED,
+        )
+
+
+_HARVEST_STATES = {"PENDING": "queued", "RECEIVED": "queued", "STARTED": "running", "RETRY": "running"}
+
+
+class HarvestJobView(APIView):
+    """State of a queued harvest; the result is the refresh report (one row per source)."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, job_id: str):
+        from celery.result import AsyncResult
+
+        request_id = _request_id(request)
+        forbidden = _forbid_without_index_role(request, request_id)
+        if forbidden:
+            return forbidden
+        job = AsyncResult(job_id)
+        payload = {"requestId": request_id, "jobId": job_id, "result": None, "error": None}
+        if job.state == "SUCCESS":
+            payload.update(state="finished", result=job.result)
+        elif job.state in {"FAILURE", "REVOKED"}:
+            payload.update(state="error", error=str(job.result))
+        else:
+            payload["state"] = _HARVEST_STATES.get(job.state, "running")
+        return Response(payload, status=status.HTTP_200_OK)
 
 
 class IndexRepositoryView(APIView):

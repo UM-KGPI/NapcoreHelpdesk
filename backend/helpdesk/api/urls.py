@@ -22,6 +22,8 @@ from .views import (
     HealthLiveView,
     HealthLLMView,
     HealthReadyView,
+    HarvestJobView,
+    HarvestSourceView,
     IndexRepositoryView,
     PromotionCandidatesView,
     QuestionAnswerStreamView,
@@ -29,6 +31,7 @@ from .views import (
     QuestionEventDetailView,
     QuestionEventsView,
     QuestionFeedbackView,
+    SourcesView,
     TrendingQuestionsView,
 )
 
@@ -49,4 +52,7 @@ urlpatterns = [
     path("editorial/queue/metrics", EditorialQueueMetricsView.as_view(), name="editorial-queue-metrics"),
     path("editorial/queue/transition", EditorialQueueTransitionView.as_view(), name="editorial-queue-transition"),
     path("admin/index", IndexRepositoryView.as_view(), name="admin-index"),
+    path("admin/sources", SourcesView.as_view(), name="admin-sources"),
+    path("admin/sources/harvest", HarvestSourceView.as_view(), name="admin-sources-harvest"),
+    path("admin/sources/harvest/<str:job_id>", HarvestJobView.as_view(), name="admin-sources-harvest-job"),
 ]

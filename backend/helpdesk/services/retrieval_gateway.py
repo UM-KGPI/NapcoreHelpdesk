@@ -150,9 +150,10 @@ def _token_overlap_score(question: str, chunk_text: str) -> float:
     return len(overlap) / len(question_tokens)
 
 
-# Sources searched only when the question's scope names them: EU legislation (issue #91) would otherwise
-# compete with the standards in every question that names no standard.
-OPT_IN_SCOPES = ("EU legislation",)
+# Sources searched only when the question's scope names them: EU legislation (issue #91) and the
+# mobilityDCAT-AP metadata profile would otherwise compete with the standards in every question that
+# names no standard.
+OPT_IN_SCOPES = ("EU legislation", "mobilityDCAT-AP")
 
 
 def _scope_query_filter(scope: list[str] | None):
@@ -909,6 +910,7 @@ STANDARD_HINTS = {
     "SIRI": {"siri"},
     "Transmodel": {"transmodel"},
     "OpRa": {"opra"},
+    "mobilityDCAT-AP": {"mobilitydcat", "dcat"},
 }
 
 _STANDARD_SCOPE_ALIASES = {

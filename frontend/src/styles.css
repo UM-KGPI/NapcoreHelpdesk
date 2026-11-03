@@ -1091,6 +1091,10 @@ ul {
   padding-left: 1rem;
 }
 
+.error-text {
+  color: var(--danger);
+}
+
 .error-banner {
   margin-top: 1rem;
   border: 1px solid #f3c8b5;

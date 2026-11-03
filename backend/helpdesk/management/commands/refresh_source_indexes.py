@@ -45,11 +45,13 @@ class Command(BaseCommand):
 
         for name, row in result["results"].items():
             if row["status"] == "ok":
+                ontology = row.get("ontology")
+                ontology_note = f" ontology={ontology['key']}:{ontology['status']}" if ontology else ""
                 self.stdout.write(
                     f"{name}: ok {row['mode']} commit={row['commit'][:12]} scanned={row['scanned_files']} "
                     f"skipped={row['skipped_files']} created={row['created_chunks']} "
                     f"updated={row['updated_chunks']} deleted={row['deleted_chunks']} "
-                    f"alias_removed={row.get('alias_chunks_removed', 0)} ({row['seconds']}s)"
+                    f"alias_removed={row.get('alias_chunks_removed', 0)}{ontology_note} ({row['seconds']}s)"
                 )
             else:
                 self.stderr.write(f"{name}: FAILED {row['error']} ({row['seconds']}s)")

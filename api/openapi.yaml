@@ -933,6 +933,104 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/admin/sources:
+    get:
+      tags: [Operations]
+      summary: List the configured harvest sources
+      operationId: listSources
+      description: |
+        The repositories the knowledge base is harvested from, with what is indexed now and,
+        for a repository that publishes its own ontology, the loaded ontology version.
+        Requires admin or publisher role.
+      responses:
+        '200':
+          description: Configured sources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourcesResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Role insufficient
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/admin/sources/harvest:
+    post:
+      tags: [Operations]
+      summary: Queue a harvest of one configured source
+      operationId: harvestSource
+      description: |
+        Fetches the source repository into its checkout, indexes changed files (all files with full=true),
+        and loads its ontology into GraphDB when it changed. Runs in the background worker; poll the job.
+        Requires admin or publisher role.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HarvestSourceRequest'
+      responses:
+        '202':
+          description: Harvest queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarvestSourceAccepted'
+        '400':
+          description: Unknown source
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Role insufficient
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/admin/sources/harvest/{jobId}:
+    get:
+      tags: [Operations]
+      summary: State of a queued harvest
+      operationId: getHarvestJob
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job state; result holds the refresh report once finished
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarvestJobResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Role insufficient
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   securitySchemes:
     bearerAuth:
@@ -955,7 +1053,7 @@ components:
           type: array
           items:
             type: string
-            enum: [Transmodel, NeTEx, SIRI, OpRa, Profile Documentation, EU legislation]
+            enum: [Transmodel, NeTEx, SIRI, OpRa, Profile Documentation, EU legislation, mobilityDCAT-AP]
         language:
           type: string
           default: en
@@ -1951,6 +2049,92 @@ components:
           default: true
           description: Add unknown repository URL to in-process allow-list before indexing
       additionalProperties: false
+    HarvestSourceRequest:
+      type: object
+      required: [source]
+      properties:
+        source:
+          type: string
+          description: Configured source name (see GET /api/v1/admin/sources)
+        full:
+          type: boolean
+          default: false
+          description: Re-index all files and reload the ontology even if unchanged
+      additionalProperties: false
+    HarvestSourceAccepted:
+      type: object
+      required: [requestId, jobId, source, state]
+      properties:
+        requestId:
+          type: string
+        jobId:
+          type: string
+        source:
+          type: string
+        state:
+          type: string
+          enum: [queued]
+    HarvestJobResponse:
+      type: object
+      required: [requestId, jobId, state, result, error]
+      properties:
+        requestId:
+          type: string
+        jobId:
+          type: string
+        state:
+          type: string
+          enum: [queued, running, finished, error]
+        result:
+          type: [object, "null"]
+          description: Refresh report, status ok|partial|failed|skipped with one result row per source
+          additionalProperties: true
+        error:
+          type: [string, "null"]
+    HarvestSource:
+      type: object
+      required: [name, repositoryUrl, profile, checkoutPresent, indexedChunks, indexedCommit, indexedAt, ontology]
+      properties:
+        name:
+          type: string
+        repositoryUrl:
+          type: string
+          format: uri
+        profile:
+          type: string
+        checkoutPresent:
+          type: boolean
+        indexedChunks:
+          type: integer
+          minimum: 0
+        indexedCommit:
+          type: [string, "null"]
+        indexedAt:
+          type: [string, "null"]
+          format: date-time
+        ontology:
+          type: [object, "null"]
+          properties:
+            key:
+              type: string
+            graphUri:
+              type: string
+              format: uri
+            version:
+              type: [string, "null"]
+            lastLoadedAt:
+              type: [string, "null"]
+              format: date-time
+    SourcesResponse:
+      type: object
+      required: [requestId, sources]
+      properties:
+        requestId:
+          type: string
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/HarvestSource'
     IndexRepositoryResponse:
       type: object
       required: [status, requestId, repositoryUrl, repositoryPath, profile, incremental, prune, autoAllowedRepository, scannedFiles, skippedFiles, createdChunks, updatedChunks, deletedChunks]

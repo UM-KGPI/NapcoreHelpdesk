@@ -29,6 +29,7 @@ _PROMPT = """You screen questions for a helpdesk about European public-transport
 - SIRI: real-time data exchange (vehicle monitoring, estimated and production timetables, stop monitoring, connection monitoring, facility monitoring such as lifts and escalators, situation exchange such as disruptions and roadworks, general messages).
 - OpRa (Operational Raw Data): a format for exchanging historical operational data (offer, demand, capacity, efficiency, passenger counts, delays and cancellations).
 - Transmodel: the reference model behind them.
+- mobilityDCAT-AP (also DCAT-AP): the metadata profile for describing datasets on National Access Points (NAPs).
 
 Decide whether the question can be answered from the documentation of those standards.
 - "relevant": it is about public-transport data, concepts, messages or modelling that these standards cover, even if phrased briefly or in another language.

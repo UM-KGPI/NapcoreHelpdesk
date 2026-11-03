@@ -88,6 +88,7 @@ env = environ.Env(
     SEED_REPO_NETEX=(str, "https://github.com/TransmodelEcosystem/NeTEx"),
     SEED_REPO_SIRI=(str, "https://github.com/TransmodelEcosystem/SIRI"),
     SEED_REPO_OPRA=(str, "https://github.com/TransmodelEcosystem/OpRa"),
+    SEED_REPO_MOBILITYDCAT_AP=(str, "https://github.com/mobilityDCAT-AP/mobilityDCAT-AP"),
     GRAPH_RAG_ENABLED=(bool, True),
     SEMANTIC_LOW_CONFIDENCE_THRESHOLD=(float, 0.60),
     EVIDENCE_GATE_ENABLED=(bool, False),
@@ -303,10 +304,15 @@ CONTROLLER_LLM_CA_BUNDLE = env("CONTROLLER_LLM_CA_BUNDLE", default="").strip()
 SEED_REPO_NETEX = env("SEED_REPO_NETEX").strip() or "https://github.com/TransmodelEcosystem/NeTEx"
 SEED_REPO_SIRI = env("SEED_REPO_SIRI").strip() or "https://github.com/TransmodelEcosystem/SIRI"
 SEED_REPO_OPRA = env("SEED_REPO_OPRA").strip() or "https://github.com/TransmodelEcosystem/OpRa"
+# NAPCORE's metadata profile (CC BY 4.0): its text is indexed and its ontology loaded into GraphDB.
+SEED_REPO_MOBILITYDCAT_AP = (
+    env("SEED_REPO_MOBILITYDCAT_AP").strip() or "https://github.com/mobilityDCAT-AP/mobilityDCAT-AP"
+)
 ALLOWED_SOURCE_REPOSITORIES |= {
     SEED_REPO_NETEX,
     SEED_REPO_SIRI,
     SEED_REPO_OPRA,
+    SEED_REPO_MOBILITYDCAT_AP,
 }
 # Published Enterprise Architect HTML export of the Transmodel model (issue #151). Transmodel definitions
 # in answers link to the class page there by EA GUID; empty keeps the link to transmodel.ttl.
