@@ -2086,13 +2086,11 @@ components:
           type: string
           enum: [queued, running, finished, error]
         result:
-          type: object
-          nullable: true
+          type: [object, "null"]
           description: Refresh report, status ok|partial|failed|skipped with one result row per source
           additionalProperties: true
         error:
-          type: string
-          nullable: true
+          type: [string, "null"]
     HarvestSource:
       type: object
       required: [name, repositoryUrl, profile, checkoutPresent, indexedChunks, indexedCommit, indexedAt, ontology]
@@ -2110,15 +2108,12 @@ components:
           type: integer
           minimum: 0
         indexedCommit:
-          type: string
-          nullable: true
+          type: [string, "null"]
         indexedAt:
-          type: string
+          type: [string, "null"]
           format: date-time
-          nullable: true
         ontology:
-          type: object
-          nullable: true
+          type: [object, "null"]
           properties:
             key:
               type: string
@@ -2126,12 +2121,10 @@ components:
               type: string
               format: uri
             version:
-              type: string
-              nullable: true
+              type: [string, "null"]
             lastLoadedAt:
-              type: string
+              type: [string, "null"]
               format: date-time
-              nullable: true
     SourcesResponse:
       type: object
       required: [requestId, sources]
