@@ -6,7 +6,7 @@ can be dispatched via a task queue rather than blocking an API request.
 
 Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
 Crafted by: AI coding agents
-Created: 2026-03-28  |  Modified: 2026-06-28
+Created: 2026-03-28  |  Modified: 2026-11-03
 """
 
 from __future__ import annotations
@@ -31,6 +31,19 @@ def refresh_source_indexes() -> dict:
         failures = {name: row.get("error", "unknown error") for name, row in result["results"].items() if row["status"] != "ok"}
         raise SourceRefreshError(f"Source refresh {result['status']}: {failures or result.get('reason')}")
     return result
+
+
+@shared_task(name="helpdesk.harvest_source", bind=True)
+def harvest_source(self, name: str, full: bool = False) -> dict:
+    """Harvest one configured source for the editor (Harvest & Index): fetch, index, load its ontology.
+
+    Same path as the scheduled refresh, so both share the checkout and its lock. The result row is
+    returned, not raised, so the editor can show why a harvest failed or was skipped.
+    """
+
+    if self.request.id and not self.request.is_eager:  # eager runs (tests) have no result backend
+        self.update_state(state="STARTED", meta={"source": name})
+    return refresh_all_sources(only=[name], full=full)
 
 
 @shared_task(name="helpdesk.run_semantic_clustering_batch")

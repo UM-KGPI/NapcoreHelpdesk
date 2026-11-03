@@ -7,7 +7,7 @@ runs (skips unchanged files by content hash) and pruning of removed files.
 
 Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
 Crafted by: AI coding agents
-Created: 2026-03-28  |  Modified: 2026-06-28
+Created: 2026-03-28  |  Modified: 2026-11-03
 """
 
 from __future__ import annotations
@@ -27,6 +27,8 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlparse
 from urllib.request import Request, urlopen
 import xml.etree.ElementTree as ET
+from html import unescape as html_unescape
+from html.parser import HTMLParser
 
 import yaml
 import certifi
@@ -36,6 +38,7 @@ from helpdesk.services.embeddings import build_text_embeddings_batch, passage_te
 from helpdesk.services.repository_urls import canonical_repository_url
 
 
+MOBILITYDCAT_AP_SCOPE = "mobilityDCAT-AP"
 DEFAULT_EXTENSIONS = {".md", ".txt", ".yaml", ".yml", ".xml", ".xsd", ".json"}
 DELETE_BATCH_SIZE = 500
 XSD_NS = {"xs": "http://www.w3.org/2001/XMLSchema"}
@@ -83,8 +86,10 @@ def load_profile_rules(profile: str) -> dict:
 
     include_rules = data.get("include") or []
     exclude_rules = data.get("exclude") or []
-    if not isinstance(include_rules, list) or not isinstance(exclude_rules, list):
-        raise ValueError(f"Invalid profile format in {profile_file}: include/exclude must be lists")
+    # File types the profile adds to DEFAULT_EXTENSIONS (mobilityDCAT-AP publishes HTML and Turtle).
+    extensions = data.get("extensions") or []
+    if not isinstance(include_rules, list) or not isinstance(exclude_rules, list) or not isinstance(extensions, list):
+        raise ValueError(f"Invalid profile format in {profile_file}: include/exclude/extensions must be lists")
 
     merged_excludes: list[str] = []
     for rule in [*exclude_rules, *GLOBAL_EXCLUDE_RULES]:
@@ -95,6 +100,7 @@ def load_profile_rules(profile: str) -> dict:
     return {
         "include": [str(item) for item in include_rules],
         "exclude": merged_excludes,
+        "extensions": {f".{str(item).lower().lstrip('.')}" for item in extensions},
     }
 
 
@@ -147,6 +153,9 @@ def infer_scope(source_path: str, chunk_text: str, repo_url: str = "") -> list[s
         scope.add("SIRI")
     if "opra" in repo_lower:
         scope.add("OpRa")
+    # Repository only: NeTEx and SIRI documents that mention DCAT are not about this profile.
+    if "mobilitydcat-ap" in repo_lower:
+        scope.add(MOBILITYDCAT_AP_SCOPE)
     if "profile_documentation" in repo_lower or "hfjelstad" in repo_lower:
         scope.add("Profile Documentation")
 
@@ -255,6 +264,150 @@ def split_text(text: str, chunk_size: int, chunk_overlap: int) -> list[str]:
             break
         start = max(0, end - chunk_overlap)
     return chunks
+
+
+_HTML_SKIPPED_TAGS = {"script", "style", "head", "nav", "svg"}
+_HTML_HEADING_TAGS = {"h1", "h2", "h3", "h4", "h5", "h6"}
+_HTML_BLOCK_TAGS = {"p", "div", "section", "li", "dt", "dd", "pre", "br", "blockquote", "figcaption", "caption"}
+
+
+class _HtmlBlocks(HTMLParser):
+    """Collect (heading, block) pairs from HTML: one block per paragraph and one per table row.
+
+    A table row becomes "header: value" lines, so a property table row (name and URI, range,
+    cardinality, definition, usage note) reads as one self-contained block. A row that starts with
+    its own header cell (<th>Definition</th><td>...</td>, as in a class table) becomes "Definition: ...".
+    Only a row of header cells alone is a column header row.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.blocks: list[tuple[str, str]] = []
+        self.heading = ""
+        self._skip = 0
+        self._text: list[str] = []
+        self._in_heading = False
+        self._headers: list[str] = []
+        self._row: list[tuple[bool, str]] | None = None  # (is header cell, text)
+        self._cell: list[str] | None = None
+        self._cell_is_header = False
+
+    def _flush_text(self) -> None:
+        text = re.sub(r"\s+", " ", "".join(self._text)).strip()
+        self._text = []
+        if text:
+            self.blocks.append((self.heading, text))
+
+    def handle_starttag(self, tag, attrs):
+        if tag in _HTML_SKIPPED_TAGS:
+            self._skip += 1
+        elif self._skip:
+            return
+        elif tag in _HTML_HEADING_TAGS:
+            self._flush_text()
+            self._in_heading = True
+        elif tag == "tr":
+            self._flush_text()
+            self._row = []
+        elif tag in {"td", "th"} and self._row is not None:
+            self._cell, self._cell_is_header = [], tag == "th"
+        elif tag == "table":
+            self._flush_text()
+            self._headers = []
+        elif tag in _HTML_BLOCK_TAGS:
+            if self._cell is not None:
+                self._cell.append(" ")
+            else:
+                self._flush_text()
+
+    def handle_endtag(self, tag):
+        if tag in _HTML_SKIPPED_TAGS:
+            self._skip = max(0, self._skip - 1)
+        elif self._skip:
+            return
+        elif tag in _HTML_HEADING_TAGS and self._in_heading:
+            self.heading = re.sub(r"\s+", " ", "".join(self._text)).strip()
+            self._text, self._in_heading = [], False
+        elif tag in {"td", "th"} and self._cell is not None and self._row is not None:
+            self._row.append((self._cell_is_header, re.sub(r"\s+", " ", "".join(self._cell)).strip()))
+            self._cell = None
+        elif tag == "tr" and self._row is not None:
+            row, self._row = self._row, None
+            block = self._row_block(row)
+            if block:
+                self.blocks.append((self.heading, block))
+        elif tag in _HTML_BLOCK_TAGS and self._cell is None:
+            self._flush_text()
+
+    def _row_block(self, row: list[tuple[bool, str]]) -> str:
+        if row and all(is_header for is_header, _ in row):
+            self._headers = [text for _, text in row]
+            return ""
+        if row and row[0][0]:  # a row header: <th>label</th><td>value</td>...
+            values = " ".join(text for _, text in row[1:] if text)
+            return f"{row[0][1]}: {values}" if values else ""
+        return "\n".join(
+            f"{self._headers[i]}: {text}" if i < len(self._headers) and self._headers[i] else text
+            for i, (_, text) in enumerate(row)
+            if text
+        )
+
+    def handle_data(self, data):
+        if self._skip:
+            return
+        if self._cell is not None:
+            self._cell.append(data)
+        else:
+            self._text.append(data)
+
+    def close(self) -> None:
+        super().close()
+        self._flush_text()
+
+
+def split_html(text: str, max_chars: int = 1200, source_name: str = "") -> list[tuple[str, str, str]]:
+    """Split HTML into heading sections of readable text, with table rows kept whole.
+
+    Blocks under the same heading are packed up to max_chars; a block longer than that is split as prose.
+    A fragment without headings (an included table file) takes its heading from the file name. Each
+    chunk starts with its heading, as a Markdown section does: a property table row names its class
+    only there ("Properties for distribution").
+    """
+    parser = _HtmlBlocks()
+    try:
+        parser.feed(text)
+        parser.close()
+    except Exception:  # malformed markup: fall back to the tag-stripped text
+        plain = re.sub(r"\s+", " ", html_unescape(re.sub(r"<[^>]+>", " ", text))).strip()
+        return [(chunk, "prose", "") for chunk in split_text(plain, max_chars, max(0, max_chars // 6))]
+
+    fallback_heading = Path(source_name).stem.replace("-", " ").replace("_", " ").strip().capitalize()
+    results: list[tuple[str, str, str]] = []
+    current_heading: str | None = None
+    current: list[str] = []
+
+    def titled(heading: str, text: str) -> str:
+        return f"{heading}\n\n{text}" if heading else text
+
+    def flush() -> None:
+        if current:
+            heading = current_heading or fallback_heading
+            results.append((titled(heading, "\n\n".join(current)), "heading_section" if heading else "prose", heading))
+            current.clear()
+
+    for heading, block in parser.blocks:
+        title = heading or fallback_heading
+        budget = max_chars - len(title) - 2
+        if heading != current_heading or (current and sum(len(b) + 2 for b in current) + len(block) > budget):
+            flush()
+            current_heading = heading
+        if len(block) > budget:
+            for piece in split_text(block, max(200, budget), max(0, budget // 6)):
+                results.append((titled(title, piece), "prose", title))
+            continue
+        current.append(block)
+    flush()
+    return results
 
 
 def split_markdown(text: str, max_chars: int = 1200) -> list[tuple[str, str, str]]:
@@ -623,6 +776,8 @@ def split_structured(
         return split_xml(text, max_chars=chunk_size)
     if ext == ".xsd":
         return split_xsd_summary(text, source_name=source_name or "schema")
+    if ext in {".html", ".htm"}:
+        return split_html(text, max_chars=chunk_size, source_name=source_name)
     # Fallback: flat overlapping window, no structural metadata.
     chunks = split_text(text, chunk_size=chunk_size, chunk_overlap=chunk_overlap)
     return [(c, "prose", "") for c in chunks]
@@ -1041,7 +1196,6 @@ def index_repository(
     incremental skipping, and prune support.
     """
     start_ts = time.perf_counter()
-    include_exts = include_extensions or DEFAULT_EXTENSIONS
     stats = IndexStats()
     # One spelling per repository: chunk ids and stored URLs include it, so an
     # alias would otherwise index a second full copy of the same files.
@@ -1053,6 +1207,7 @@ def index_repository(
         selected_profile = load_profile_rules(profile)
         include_rules = (include_paths or []) + selected_profile["include"]
         exclude_rules = (exclude_paths or []) + selected_profile["exclude"]
+        include_exts = include_extensions or (DEFAULT_EXTENSIONS | selected_profile["extensions"])
 
         files = iter_source_files(repo_path, include_exts)
         commit_sha = current_commit_sha(repo_path)

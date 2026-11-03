@@ -20,7 +20,9 @@ import type {
   EditorialQueueResponse,
   EditorialQueueTransitionResponse,
   HealthResponse,
+  HarvestJobResponse,
   IndexRepositoryResponse,
+  SourcesResponse,
   PromotionCandidatesResponse,
   QuestionEventDetail,
   QuestionEventsResponse,
@@ -361,6 +363,21 @@ export class HelpdeskApiClient {
       method: "POST",
       body: JSON.stringify(payload),
     });
+  }
+
+  async listSources(): Promise<SourcesResponse> {
+    return this.request<SourcesResponse>("/admin/sources", { method: "GET" });
+  }
+
+  async harvestSource(source: string, full: boolean): Promise<{ jobId: string; source: string }> {
+    return this.request<{ jobId: string; source: string }>("/admin/sources/harvest", {
+      method: "POST",
+      body: JSON.stringify({ source, full }),
+    });
+  }
+
+  async getHarvestJob(jobId: string): Promise<HarvestJobResponse> {
+    return this.request<HarvestJobResponse>(`/admin/sources/harvest/${encodeURIComponent(jobId)}`, { method: "GET" });
   }
 
   private async request<T>(path: string, init: RequestInit, withAuth = true): Promise<T> {

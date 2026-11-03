@@ -317,6 +317,48 @@ export interface IndexRepositoryResponse {
   deletedChunks: number;
 }
 
+// A source the knowledge base is harvested from (Editor > Harvest & Index).
+export interface HarvestSource {
+  name: string;
+  repositoryUrl: string;
+  profile: string;
+  checkoutPresent: boolean;
+  indexedChunks: number;
+  indexedCommit: string | null;
+  indexedAt: string | null;
+  // Set when the repository publishes its own ontology, loaded into GraphDB on harvest.
+  ontology: { key: string; graphUri: string; version: string | null; lastLoadedAt: string | null } | null;
+}
+
+export interface SourcesResponse {
+  requestId: string;
+  sources: HarvestSource[];
+}
+
+export interface HarvestSourceRow {
+  status: "ok" | "failed";
+  repository: string;
+  error?: string;
+  commit?: string;
+  mode?: "full" | "incremental";
+  scanned_files?: number;
+  skipped_files?: number;
+  created_chunks?: number;
+  updated_chunks?: number;
+  deleted_chunks?: number;
+  ontology?: { key: string; graph: string; version: string; status: "loaded" | "unchanged" | "skipped"; reason?: string } | null;
+  seconds?: number;
+}
+
+export interface HarvestJobResponse {
+  requestId: string;
+  jobId: string;
+  state: "queued" | "running" | "finished" | "error";
+  // The refresh report: status "skipped" when another harvest holds the checkout lock.
+  result: { status: "ok" | "partial" | "failed" | "skipped"; reason?: string; results: Record<string, HarvestSourceRow> } | null;
+  error: string | null;
+}
+
 export interface HealthResponse {
   status: "ok" | "degraded";
   service: string;

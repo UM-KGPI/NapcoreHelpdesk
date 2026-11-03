@@ -27,6 +27,8 @@
 import React, { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { citationDisplayName, groupCitationsBySource } from "../citationLabels";
 import AnswerMarkdown from "./AnswerMarkdown";
+import HarvestSourcesPanel from "./HarvestSourcesPanel";
+import type { HelpdeskApiClient } from "../api";
 
 import type {
   AnswerResponse,
@@ -94,6 +96,7 @@ interface EditorConsoleWorkspaceProps {
   boardStatusMap: Map<string, string>;
   busy: boolean;
   token: string;
+  apiClient: HelpdeskApiClient;
   setQuestion: (value: string) => void;
   setSelectedQuestionEventId: (value: string) => void;
   onAskQuestion: (event: FormEvent<HTMLFormElement>) => Promise<void>;
@@ -170,6 +173,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
     boardStatusMap,
     busy,
     token,
+    apiClient,
     setQuestion,
     onAskQuestion,
     onLoadAskedQuestions,
@@ -805,11 +809,13 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
           </section>
         )}
 
+        {activeTab === "indexing" && <HarvestSourcesPanel client={apiClient} token={token} />}
+
         {activeTab === "indexing" && (
           <section className="panel step-1-index">
             <div className="panel-title-row">
               <h2>Refresh Source Index</h2>
-              <p className="muted">Trigger ingestion on a locally-cloned approved repository.</p>
+              <p className="muted">Trigger ingestion on a repository already cloned on the server (no fetch).</p>
             </div>
             <p className="muted">Incremental mode uses per-file content hashing, so unchanged files are skipped even when repository HEAD changes.</p>
             <div className="stack">

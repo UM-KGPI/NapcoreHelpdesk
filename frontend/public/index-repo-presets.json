@@ -19,5 +19,12 @@
     "repoUrl": "https://github.com/TransmodelEcosystem/SIRI",
     "repoPath": "/app/repos/SIRI",
     "profile": "siri"
+  },
+  {
+    "id": "mobilitydcat-ap",
+    "label": "mobilityDCAT-AP",
+    "repoUrl": "https://github.com/mobilityDCAT-AP/mobilityDCAT-AP",
+    "repoPath": "/app/repos/mobilityDCAT-AP",
+    "profile": "mobilitydcat-ap"
   }
 ]

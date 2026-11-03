@@ -14,7 +14,7 @@ Created: 2026-03-28  |  Modified: 2026-06-28
 from rest_framework import serializers
 
 
-STANDARDS_SCOPE_CHOICES = ["Transmodel", "NeTEx", "SIRI", "OpRa", "EU legislation"]
+STANDARDS_SCOPE_CHOICES = ["Transmodel", "NeTEx", "SIRI", "OpRa", "EU legislation", "mobilityDCAT-AP"]
 
 
 class AnswerOptionsSerializer(serializers.Serializer):
@@ -163,6 +163,14 @@ class EditorialQueueTransitionRequestSerializer(serializers.Serializer):
         ]
     )
     comment = serializers.CharField(required=False, allow_blank=True, default="")
+
+
+class HarvestSourceRequestSerializer(serializers.Serializer):
+    """Payload for harvesting one configured source from the editor (Harvest & Index)."""
+
+    source = serializers.CharField()
+    # Re-index every file, not only changed ones, and reload the ontology even if unchanged.
+    full = serializers.BooleanField(required=False, default=False)
 
 
 class IndexRepositoryRequestSerializer(serializers.Serializer):

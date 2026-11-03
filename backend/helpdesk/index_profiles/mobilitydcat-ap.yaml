@@ -1,0 +1,16 @@
+# mobilityDCAT-AP (https://github.com/mobilityDCAT-AP/mobilityDCAT-AP, CC BY 4.0): NAPCORE's metadata
+# profile for datasets on National Access Points. The specification is a ReSpec page (src/index.html)
+# that includes one HTML table per class and property group (src/tables/); the examples are Turtle.
+# The ontology itself (src/mobilitydcat-ap.ttl) is loaded into GraphDB, not indexed as text
+# (services/source_refresh.py); the SHACL shapes, build scripts and repository docs are not indexed.
+extensions:
+  - html
+  - ttl
+include:
+  - src/index.html
+  - src/tables/
+  - src/examples/
+  - README.md
+exclude:
+  - .github/
+  - src/shacl/
