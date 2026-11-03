@@ -1607,7 +1607,7 @@ class HelpdeskApiTests(APITestCase):
                 "pageSize": 10,
             },
             format="json",
-            **self.auth_headers(),
+            **self.auth_headers(roles=["editor"]),
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -1662,8 +1662,8 @@ class HelpdeskApiTests(APITestCase):
             format="json",
             **self.auth_headers(roles=["viewer"]),
         )
-        self.assertEqual(viewer_response.status_code, status.HTTP_200_OK)
-        self.assertEqual(viewer_response.data["items"][0]["allowedActions"], [])
+        # A role without editorial rights (the anonymous reader, a viewer) does not see the board.
+        self.assertEqual(viewer_response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_editorial_queue_metrics_returns_kpi_distributions_and_aging(self):
         """Ensure board metrics endpoint returns status and aging aggregates."""
