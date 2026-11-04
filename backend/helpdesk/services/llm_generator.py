@@ -23,6 +23,7 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
+from helpdesk.services import anthropic_chat
 from helpdesk.services.llm_options import answer_max_tokens, answer_request_options
 from helpdesk.services.service_abbreviations import services_in_question
 from helpdesk.services.question_preprocessor import LANGDETECT_LANGUAGE_NAMES, detect_question_language
@@ -1236,6 +1237,9 @@ def _build_messages(
     ]
 
 
+SUPPORTED_LLM_PROVIDERS = {"openai-compatible", anthropic_chat.PROVIDER}
+
+
 def _request_chat_completion(
     api_base_url: str,
     api_key: str,
@@ -1245,6 +1249,18 @@ def _request_chat_completion(
     max_tokens: int,
     messages: list[dict],
 ) -> dict:
+    if settings.LLM_PROVIDER == anthropic_chat.PROVIDER:
+        # Claude through the official SDK; same response shape. Every caller here expects a JSON answer.
+        return anthropic_chat.chat_completion(
+            api_key=settings.ANTHROPIC_API_KEY,
+            model=model,
+            messages=messages,
+            max_tokens=max_tokens,
+            timeout_seconds=timeout_seconds,
+            effort=settings.LLM_ANTHROPIC_EFFORT,
+            json_answer=True,
+        )
+
     def _send(model_to_use: str) -> dict:
         body = {
             "model": model_to_use,
@@ -1494,7 +1510,7 @@ def generate_answer_llm(
 
     if not settings.LLM_ENABLED:
         raise LLMGenerationError("LLM mode is disabled by configuration.")
-    if settings.LLM_PROVIDER != "openai-compatible":
+    if settings.LLM_PROVIDER not in SUPPORTED_LLM_PROVIDERS:
         raise LLMGenerationError(f"Unsupported LLM provider: {settings.LLM_PROVIDER}")
 
     max_chunks = max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 4)))
@@ -1762,7 +1778,7 @@ def stream_answer_llm(
     """
     if not settings.LLM_ENABLED:
         raise LLMGenerationError("LLM mode is disabled by configuration.")
-    if settings.LLM_PROVIDER != "openai-compatible":
+    if settings.LLM_PROVIDER not in SUPPORTED_LLM_PROVIDERS:
         raise LLMGenerationError(f"Unsupported LLM provider: {settings.LLM_PROVIDER}")
 
     primary_base_url = (settings.LLM_API_BASE_URL or "").strip()
@@ -1795,7 +1811,7 @@ def stream_answer_llm(
     def _collect_stream(active_messages: list[dict]) -> str:
         collected: list[str] = []
         try:
-            if settings.LLM_STREAMING:
+            if settings.LLM_STREAMING and settings.LLM_PROVIDER != anthropic_chat.PROVIDER:
                 for delta in _stream_request_chat_completion(
                     api_base_url=primary_base_url,
                     api_key=primary_api_key,
@@ -1807,8 +1823,8 @@ def stream_answer_llm(
                 ):
                     collected.append(delta)
             else:
-                # The gateway accepts only stream=false (LLM_STREAMING=False). Nothing is lost: the answer
-                # is buffered and validated before the client sees it either way.
+                # The gateway accepts only stream=false (LLM_STREAMING=False), or the provider is Anthropic.
+                # Nothing is lost: the answer is buffered and validated before the client sees it either way.
                 payload = _request_chat_completion(
                     api_base_url=primary_base_url,
                     api_key=primary_api_key,
@@ -1831,6 +1847,8 @@ def stream_answer_llm(
             raise LLMGenerationError(detail) from exc
         except error.URLError as exc:
             raise LLMGenerationError(f"LLM stream request failed: {exc.reason}") from exc
+        except anthropic_chat.AnthropicRequestError as exc:
+            raise LLMGenerationError(str(exc)) from exc
         text = "".join(collected)
         if not text.strip():
             raise LLMGenerationError("LLM stream response was empty.")

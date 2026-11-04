@@ -23,6 +23,7 @@ from urllib import error, request
 
 from django.conf import settings
 
+from helpdesk.services import anthropic_chat
 from helpdesk.services.llm_options import controller_max_tokens, controller_request_options
 from helpdesk.services.llm_model_recovery import (
     extract_authorized_model,
@@ -121,14 +122,53 @@ def _build_prompt(question: str, requested_scope: list[str], semantic_query: dic
     )
 
 
+# Providers reached over HTTP; the others run a local model binary (subprocess).
+HTTP_PROVIDERS = {"openai-compatible", anthropic_chat.PROVIDER}
+
+
+def anthropic_controller_call(*, messages: list[dict], max_tokens: int, timeout_seconds: float, json_answer: bool) -> dict:
+    """One controller-endpoint call to Claude (routing, vocabulary bridge, relevance check)."""
+
+    return anthropic_chat.chat_completion(
+        api_key=settings.ANTHROPIC_API_KEY,
+        model=settings.CONTROLLER_LLM_API_MODEL.strip(),
+        messages=messages,
+        max_tokens=max_tokens,
+        timeout_seconds=timeout_seconds,
+        effort=settings.CONTROLLER_LLM_ANTHROPIC_EFFORT,
+        json_answer=json_answer,
+    )
+
+
+def _uses_anthropic() -> bool:
+    return getattr(settings, "CONTROLLER_LLM_PROVIDER", "").strip().lower() == anthropic_chat.PROVIDER
+
+
 def _decide_via_http(*, question: str, requested_scope: list[str], semantic_query: dict | None = None) -> ControllerDecision:
     base_url = getattr(settings, "CONTROLLER_LLM_API_BASE_URL", "").strip()
     model = getattr(settings, "CONTROLLER_LLM_API_MODEL", "").strip()
+    timeout_seconds = int(getattr(settings, "CONTROLLER_LLM_TIMEOUT_SECONDS", 5))
+    max_tokens = controller_max_tokens(int(getattr(settings, "CONTROLLER_LLM_MAX_TOKENS", 96)))
+
+    if _uses_anthropic():
+        if not model:
+            raise ControllerLLMError("Controller Anthropic provider requires CONTROLLER_LLM_API_MODEL.")
+        prompt = _build_prompt(question=question, requested_scope=requested_scope, semantic_query=semantic_query)
+        try:
+            payload = anthropic_controller_call(
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=max_tokens,
+                timeout_seconds=timeout_seconds,
+                json_answer=True,
+            )
+        except anthropic_chat.AnthropicRequestError as exc:
+            raise ControllerLLMError(f"Controller request failed: {exc}") from exc
+        return _decision_from_payload(payload)
+
     if not base_url or not model:
         raise ControllerLLMError("Controller HTTP provider requires base URL and model.")
 
     api_key = getattr(settings, "CONTROLLER_LLM_API_KEY", "").strip()
-    timeout_seconds = int(getattr(settings, "CONTROLLER_LLM_TIMEOUT_SECONDS", 5))
 
     def _build_request(model_to_use: str) -> request.Request:
         body = {
@@ -144,7 +184,7 @@ def _decide_via_http(*, question: str, requested_scope: list[str], semantic_quer
                 }
             ],
             "temperature": float(getattr(settings, "CONTROLLER_LLM_TEMPERATURE", 0.0)),
-            "max_tokens": controller_max_tokens(int(getattr(settings, "CONTROLLER_LLM_MAX_TOKENS", 96))),
+            "max_tokens": max_tokens,
             # JSON mode, and thinking off: a reasoning model can spend the whole small budget on
             # reasoning and emit no JSON at all. Optional per gateway (services/llm_options.py).
             **controller_request_options(),
@@ -204,6 +244,10 @@ def _decide_via_http(*, question: str, requested_scope: list[str], semantic_quer
     except Exception as exc:
         raise ControllerLLMError(f"Controller HTTP request failed: {exc}") from exc
 
+    return _decision_from_payload(payload)
+
+
+def _decision_from_payload(payload: dict) -> ControllerDecision:
     choices = payload.get("choices") or []
     if not choices:
         raise ControllerLLMError("Controller HTTP response has no choices.")
@@ -235,7 +279,7 @@ def _decide_route_cached(
     requested_scope = list(scope_key)
     semantic_query = json.loads(semantic_key)
 
-    if provider == "openai-compatible":
+    if provider in HTTP_PROVIDERS:
         return _decide_via_http(
             question=question,
             requested_scope=requested_scope,
@@ -305,7 +349,7 @@ def decide_route_with_controller_llm(
         return None
 
     provider = getattr(settings, "CONTROLLER_LLM_PROVIDER", "subprocess").strip().lower() or "subprocess"
-    if provider == "openai-compatible":
+    if provider in HTTP_PROVIDERS:
         model_key = getattr(settings, "CONTROLLER_LLM_API_MODEL", "").strip()
     else:
         model_key = getattr(settings, "CONTROLLER_LLM_MODEL_PATH", "").strip()
