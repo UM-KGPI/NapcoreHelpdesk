@@ -370,6 +370,15 @@ SEMANTIC_CLUSTER_MAX_EVENTS = env("SEMANTIC_CLUSTER_MAX_EVENTS")
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://localhost:6379/1")
 
+# With DEBUG off, Django sends request errors (500s) only to mail_admins, which is not configured, so
+# their tracebacks went nowhere. Print them to stderr, where `docker compose logs backend` shows them.
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "loggers": {"django.request": {"handlers": ["console"], "level": "ERROR", "propagate": False}},
+}
+
 # The daily source refresh runs at SOURCE_REFRESH_HOUR:SOURCE_REFRESH_MINUTE UTC, only when enabled.
 CELERY_BEAT_SCHEDULE = build_beat_schedule(
     refresh_enabled=SOURCE_REFRESH_ENABLED,

@@ -867,6 +867,26 @@ class HealthLiveView(APIView):
         return Response(_service_health_payload(check="live", status_value="ok"), status=status.HTTP_200_OK)
 
 
+BROKER_CHECK_TIMEOUT_SECONDS = 3
+
+
+def _broker_status() -> str:
+    """"ok" if this process can open a connection to the Celery broker, else "unavailable".
+
+    It catches more than an unreachable Redis: a client library mismatch (kombu.VersionMismatch, the
+    2026-11-03 outage) also fails here, in the same way that it fails the worker and every .delay().
+    """
+    from config.celery import app as celery_app
+
+    try:
+        with celery_app.connection_for_write() as conn:
+            conn.ensure_connection(max_retries=1, interval_start=0, interval_step=0, timeout=BROKER_CHECK_TIMEOUT_SECONDS)
+    except Exception:
+        logger.warning("Celery broker check failed", exc_info=True)
+        return "unavailable"
+    return "ok"
+
+
 class HealthReadyView(APIView):
     permission_classes = [AllowAny]
 
@@ -882,8 +902,14 @@ class HealthReadyView(APIView):
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
 
+        # The broker only carries background work (harvests, the nightly refresh); questions are answered
+        # without it. So a broker failure marks the service degraded but keeps it ready (200): deploy.sh
+        # waits on this endpoint with the maintenance page up, and checks the broker field separately.
+        broker = _broker_status()
         return Response(
-            _service_health_payload(check="ready", status_value="ok", database="ok"),
+            _service_health_payload(
+                check="ready", status_value="ok" if broker == "ok" else "degraded", database="ok", broker=broker
+            ),
             status=status.HTTP_200_OK,
         )
 

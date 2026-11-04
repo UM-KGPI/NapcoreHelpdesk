@@ -148,7 +148,8 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(response.data["version"], settings.SERVICE_VERSION)
         self.assertEqual(response.data["buildRef"], settings.SERVICE_BUILD_REF)
 
-    def test_health_ready_reports_ok_with_database_probe(self):
+    @patch("helpdesk.api.views._broker_status", return_value="ok")
+    def test_health_ready_reports_ok_with_database_probe(self, _broker):
         """Ensure readiness endpoint reports healthy when database check succeeds."""
         response = self.client.get(reverse("health-ready"), format="json")
 
@@ -156,9 +157,26 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(response.data["status"], "ok")
         self.assertEqual(response.data["check"], "ready")
         self.assertEqual(response.data["database"], "ok")
+        self.assertEqual(response.data["broker"], "ok")
         self.assertEqual(response.data["service"], settings.SERVICE_NAME)
         self.assertEqual(response.data["version"], settings.SERVICE_VERSION)
         self.assertEqual(response.data["buildRef"], settings.SERVICE_BUILD_REF)
+
+    def test_health_ready_stays_ready_but_degraded_when_broker_fails(self):
+        """A broker failure (here kombu's VersionMismatch, as on 2026-11-03) is reported, not a 503:
+        questions are answered without Celery, and deploy.sh waits on this endpoint."""
+        from kombu.exceptions import VersionMismatch
+
+        with patch("config.celery.app.connection_for_write") as connection_for_write:
+            connection_for_write.return_value.__enter__.return_value.ensure_connection.side_effect = VersionMismatch(
+                "Redis transport requires redis-py versions 6.1.0 or later. You have 5.3.1"
+            )
+            response = self.client.get(reverse("health-ready"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["status"], "degraded")
+        self.assertEqual(response.data["database"], "ok")
+        self.assertEqual(response.data["broker"], "unavailable")
 
     @override_settings(DEV_JWT_AUTO_ISSUE=True)
     def test_dev_token_endpoint_issues_token_when_auto_issue_enabled(self):
