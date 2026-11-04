@@ -23,6 +23,7 @@ from urllib import error, request
 
 from django.conf import settings
 
+from helpdesk.services.llm_options import controller_max_tokens, controller_request_options
 from helpdesk.services.llm_model_recovery import (
     extract_authorized_model,
     remember_correction,
@@ -143,12 +144,10 @@ def _decide_via_http(*, question: str, requested_scope: list[str], semantic_quer
                 }
             ],
             "temperature": float(getattr(settings, "CONTROLLER_LLM_TEMPERATURE", 0.0)),
-            "max_tokens": int(getattr(settings, "CONTROLLER_LLM_MAX_TOKENS", 96)),
-            "response_format": {"type": "json_object"},
-            # Reasoning models (e.g. qwen3) can spend the whole small token budget
-            # on hidden chain-of-thought and emit no JSON at all. Disable thinking
-            # so the routing decision is returned directly.
-            "chat_template_kwargs": {"enable_thinking": False},
+            "max_tokens": controller_max_tokens(int(getattr(settings, "CONTROLLER_LLM_MAX_TOKENS", 96))),
+            # JSON mode, and thinking off: a reasoning model can spend the whole small budget on
+            # reasoning and emit no JSON at all. Optional per gateway (services/llm_options.py).
+            **controller_request_options(),
         }
         headers = {"Content-Type": "application/json"}
         if api_key:

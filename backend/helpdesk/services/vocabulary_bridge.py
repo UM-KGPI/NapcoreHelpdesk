@@ -19,6 +19,7 @@ from urllib import request
 from django.conf import settings
 
 from helpdesk.services.controller_llm import _build_ssl_context
+from helpdesk.services.llm_options import controller_max_tokens, controller_request_options
 from helpdesk.services.llm_model_recovery import resolve_effective_model
 from helpdesk.services import semantic_graph
 from helpdesk.services.semantic_graph import (
@@ -73,9 +74,8 @@ def _ask_for_terms(question: str) -> list[str]:
         "model": model,
         "messages": [{"role": "user", "content": _PROMPT + question}],
         "temperature": 0.0,
-        "max_tokens": 200,
-        "response_format": {"type": "json_object"},
-        "chat_template_kwargs": {"enable_thinking": False},
+        "max_tokens": controller_max_tokens(200),
+        **controller_request_options(),
     }
     headers = {"Content-Type": "application/json"}
     if api_key:

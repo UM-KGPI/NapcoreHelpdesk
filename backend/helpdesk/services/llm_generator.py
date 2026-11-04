@@ -23,6 +23,7 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
+from helpdesk.services.llm_options import answer_max_tokens, answer_request_options
 from helpdesk.services.service_abbreviations import services_in_question
 from helpdesk.services.question_preprocessor import LANGDETECT_LANGUAGE_NAMES, detect_question_language
 from helpdesk.services.llm_model_recovery import (
@@ -954,7 +955,7 @@ def _classify_question_language_with_llm(question: str) -> str | None:
             model=settings.LLM_MODEL,
             timeout_seconds=min(settings.LLM_TIMEOUT_SECONDS, LANGUAGE_CLASSIFIER_TIMEOUT_SECONDS),
             temperature=0.0,
-            max_tokens=20,
+            max_tokens=answer_max_tokens(20),
             messages=messages,
         )
         content = response["choices"][0]["message"]["content"]
@@ -1009,7 +1010,7 @@ def english_search_query(question: str) -> str | None:
             model=settings.LLM_MODEL,
             timeout_seconds=min(settings.LLM_TIMEOUT_SECONDS, SEARCH_TRANSLATION_TIMEOUT_SECONDS),
             temperature=0.0,
-            max_tokens=200,
+            max_tokens=answer_max_tokens(200),
             messages=messages,
         )
         content = response["choices"][0]["message"]["content"]
@@ -1250,13 +1251,10 @@ def _request_chat_completion(
             "messages": messages,
             "temperature": temperature,
             "max_tokens": max_tokens,
-            # Enforce JSON output to prevent hallucinations: model MUST output valid JSON
-            # with citations constrained to valid evidence indices
-            "response_format": {"type": "json_object"},
-            # Reasoning models (e.g. qwen3) can consume the entire token budget on
-            # hidden chain-of-thought before emitting any answer content, leaving
-            # the response empty. Disable thinking mode to get direct answers.
-            "chat_template_kwargs": {"enable_thinking": False},
+            # JSON mode (response_format) keeps the output to the JSON the validator checks, and
+            # chat_template_kwargs switches off a reasoning model's thinking (it can otherwise spend the
+            # whole budget before any answer). Both are optional per gateway: see services/llm_options.py.
+            **answer_request_options(),
         }
 
         headers = {
@@ -1332,7 +1330,7 @@ def _generate_answer_text(
                     model=target["model"],
                     timeout_seconds=target["timeout_seconds"],
                     temperature=settings.LLM_TEMPERATURE,
-                    max_tokens=settings.LLM_MAX_TOKENS,
+                    max_tokens=answer_max_tokens(settings.LLM_MAX_TOKENS),
                     messages=messages,
                 )
                 break
@@ -1674,12 +1672,9 @@ def _stream_request_chat_completion(
             "temperature": temperature,
             "max_tokens": max_tokens,
             "stream": True,
-            # Tokens are fully buffered and validated before any reach the client,
-            # so JSON mode is safe here and keeps output parseable like the sync path.
-            "response_format": {"type": "json_object"},
-            # See _request_chat_completion: avoid reasoning models exhausting the
-            # token budget on hidden chain-of-thought before any content is sent.
-            "chat_template_kwargs": {"enable_thinking": False},
+            # Tokens are fully buffered and validated before any reach the client, so JSON mode is
+            # safe here. Same optional fields as _request_chat_completion.
+            **answer_request_options(),
         }
         headers = {"Content-Type": "application/json"}
         if api_key:
@@ -1800,16 +1795,31 @@ def stream_answer_llm(
     def _collect_stream(active_messages: list[dict]) -> str:
         collected: list[str] = []
         try:
-            for delta in _stream_request_chat_completion(
-                api_base_url=primary_base_url,
-                api_key=primary_api_key,
-                model=settings.LLM_MODEL,
-                timeout_seconds=settings.LLM_TIMEOUT_SECONDS,
-                temperature=settings.LLM_TEMPERATURE,
-                max_tokens=settings.LLM_MAX_TOKENS,
-                messages=active_messages,
-            ):
-                collected.append(delta)
+            if settings.LLM_STREAMING:
+                for delta in _stream_request_chat_completion(
+                    api_base_url=primary_base_url,
+                    api_key=primary_api_key,
+                    model=settings.LLM_MODEL,
+                    timeout_seconds=settings.LLM_TIMEOUT_SECONDS,
+                    temperature=settings.LLM_TEMPERATURE,
+                    max_tokens=answer_max_tokens(settings.LLM_MAX_TOKENS),
+                    messages=active_messages,
+                ):
+                    collected.append(delta)
+            else:
+                # The gateway accepts only stream=false (LLM_STREAMING=False). Nothing is lost: the answer
+                # is buffered and validated before the client sees it either way.
+                payload = _request_chat_completion(
+                    api_base_url=primary_base_url,
+                    api_key=primary_api_key,
+                    model=settings.LLM_MODEL,
+                    timeout_seconds=settings.LLM_TIMEOUT_SECONDS,
+                    temperature=settings.LLM_TEMPERATURE,
+                    max_tokens=answer_max_tokens(settings.LLM_MAX_TOKENS),
+                    messages=active_messages,
+                )
+                choices = payload.get("choices") or []
+                collected.append(((choices[0].get("message") or {}).get("content") or "") if choices else "")
         except error.HTTPError as exc:
             try:
                 error_body = exc.read().decode("utf-8")

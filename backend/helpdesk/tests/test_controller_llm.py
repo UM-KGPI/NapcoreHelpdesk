@@ -110,6 +110,8 @@ class ControllerLLMServiceTests(SimpleTestCase):
         CONTROLLER_LLM_PROVIDER="openai-compatible",
         CONTROLLER_LLM_API_BASE_URL="https://llm.example.test/v1",
         CONTROLLER_LLM_API_MODEL="qwen3",
+        CONTROLLER_LLM_JSON_MODE=True,
+        CONTROLLER_LLM_DISABLE_THINKING=True,
     )
     @patch("helpdesk.services.llm_model_recovery.check_gateway_models")
     @patch("helpdesk.services.controller_llm.request.urlopen")
