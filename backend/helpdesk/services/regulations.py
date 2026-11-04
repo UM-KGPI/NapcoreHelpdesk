@@ -415,12 +415,22 @@ def render_vocabulary(definitions: list[Definition], shared_labels: set[str]) ->
     return "\n".join(lines)
 
 
-# How the acts name the standards: by name or by CEN number.
-STANDARD_IDENTIFIERS = {
-    "NeTEx": r"\bNeTEx\b|CEN/TS 16614",
-    "SIRI": r"\bSIRI\b|CEN/TS 15531",
-    "Transmodel": r"\bTransmodel\b|EN 12896",
+# How the acts name the standards: by name or by CEN number. An act may give only the number and the
+# formal title (TEL TSI: "EN 12896-1:2016 Public transport – Reference data model"), so both count.
+STANDARD_NAMES = {
+    "NeTEx": r"\bNeTEx\b",
+    "SIRI": r"\bSIRI\b",
+    "Transmodel": r"\bTransmodel\b",
     "OpRa": r"\bOpRa\b",
+}
+# SIRI is published as both EN 15531 and CEN/TS 15531 parts.
+STANDARD_NUMBERS = {
+    "NeTEx": r"CEN/TS 16614",
+    "SIRI": r"(?:CEN/TS|EN) 15531",
+    "Transmodel": r"EN 12896",
+}
+STANDARD_IDENTIFIERS = {
+    standard: "|".join(p for p in (name, STANDARD_NUMBERS.get(standard)) if p) for standard, name in STANDARD_NAMES.items()
 }
 _PROVISION_LINE = re.compile(
     r'^eulex:\S+ a eulex:Provision ; rdfs:label "([^"]+)"@en ; dct:source <([^#>]+CELEX:([^#>]+))#([^>]+)> ; '

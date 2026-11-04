@@ -179,7 +179,21 @@ _STRONG_TERM_PATTERN = re.compile(
     r"|([A-Za-z0-9_-]+\.(?:xsd|xml|yaml|json|ttl))"  # file names with known extensions
     r"|((?:Article|Annex)\s+[0-9IVX]+(?:\(\w{1,4}\))*)"   # legal references, e.g. Article 4(1)(b), Annex II
     r"|(\(EU\)\s+(?:No\s+)?\d{2,4}/\d+|\d{4}/\d+/EU)"   # act numbers, e.g. (EU) 2017/1926, 2010/40/EU
+    r"|((?:CEN/TS|CEN/TR|prEN|EN|ISO(?:/IEC)?|ETSI\s+(?:EN|TS))\s+\d{3,6}(?:-\d+)*(?::\d{4})?)"  # standards, e.g. EN 12896, CEN/TS 16614-1:2025
 )
+
+# A quotation of at least three words, in straight or typographic double quotes. Found verbatim in the cited
+# block it is the strongest grounding there is, even when every word in it is a common one.
+_QUOTATION_PATTERN = re.compile(r'["“]([^"“”]+?\s+[^"“”]+?\s+[^"“”]+?)["”]')
+
+
+def _quotation_found(sentence: str, chunks: list[dict]) -> bool:
+    """Whether a quotation in the sentence appears verbatim in one of the chunks."""
+    quotes = [_comparable(q.strip(" .,;:")) for q in _QUOTATION_PATTERN.findall(sentence)]
+    if not quotes:
+        return False
+    haystacks = [_comparable(str(chunk.get("text", ""))) for chunk in chunks]
+    return any(quote and quote in haystack for quote in quotes for haystack in haystacks)
 
 # Weak terms: PascalCase element names (single or multi-word) and ALL-CAPS
 # Transmodel concept names, which the standards write in capitals by convention
@@ -492,6 +506,8 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
         if not strong_terms and not weak_terms:
             if _is_evidence_scope_statement(sentence):
                 continue
+            if _quotation_found(sentence, cited_chunks):
+                continue  # 'The block states that "Many NeTEx concepts are taken directly from Transmodel" [E3].'
             if found_citations:  # Has citations but NO specific terms = potential hallucination
                 # No citations, no terms, not code = hallucination
                 raise LLMGenerationError(

@@ -492,6 +492,19 @@ def asks_for_named_standards(text: str, scope: list[str] | None) -> bool:
     )
 
 
+def standards_named_in_legislation_question(text: str, scope: list[str] | None) -> list[str]:
+    """Standards a legislation question names ("Does the TEL TSI reference Transmodel?"), in the order of
+    _STANDARD_KEYWORD_PATTERNS. An act may name a standard only by its number and formal title, which
+    similarity does not connect to the name the question uses."""
+    if LEGISLATION_SCOPE not in (scope or []):
+        return []
+    return [
+        name
+        for name, pattern in _STANDARD_KEYWORD_PATTERNS.items()
+        if name != LEGISLATION_SCOPE and pattern.search(text or "")
+    ]
+
+
 def legislation_terms_in(text: str) -> list[str]:
     """Terms the indexed EU acts define that the question uses (docs/regulations/eu-legislation-definitions.ttl)."""
     patterns = _legislation_term_patterns()
