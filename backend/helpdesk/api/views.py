@@ -1485,6 +1485,9 @@ class QuestionAnswerView(APIView):
             "citationClickCount": event.citation_click_count,
             "llmRejectedAnswer": (generated.get("rejected_answer") if isinstance(locals().get("generated"), dict) else None),
             "llmRejectionReason": (generated.get("rejection_reason") if isinstance(locals().get("generated"), dict) else None),
+            # False when the answer was served although its retry failed validation too (it is then marked
+            # for review); None when no LLM answer was generated.
+            "llmAnswerValidated": (generated.get("answer_validated") if isinstance(locals().get("generated"), dict) else None),
         }
 
         # Persist trace to event for later retrieval
@@ -1958,6 +1961,9 @@ class QuestionAnswerStreamView(APIView):
             "citationClickCount": event.citation_click_count,
             "llmRejectedAnswer": (generated.get("rejected_answer") if isinstance(locals().get("generated"), dict) else None),
             "llmRejectionReason": (generated.get("rejection_reason") if isinstance(locals().get("generated"), dict) else None),
+            # False when the answer was served although its retry failed validation too (it is then marked
+            # for review); None when no LLM answer was generated.
+            "llmAnswerValidated": (generated.get("answer_validated") if isinstance(locals().get("generated"), dict) else None),
         }
 
         # Persist trace to event

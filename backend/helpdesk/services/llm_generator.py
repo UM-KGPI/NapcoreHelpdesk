@@ -34,6 +34,13 @@ from helpdesk.services.llm_model_recovery import (
 )
 
 
+# An answer whose retry also failed validation is still served (e7dbeb4, d1950a9: a real on-topic answer beats
+# the generic template), but it must not look like a validated one. It goes to editorial review and its
+# confidence is capped below the review threshold (0.82) yet above the 0.72 at which views label an answer
+# LOW_RETRIEVAL_CONFIDENCE: retrieval was fine, the answer failed validation.
+UNVALIDATED_ANSWER_MAX_CONFIDENCE = 0.80
+
+
 class LLMGenerationError(Exception):
     """Raised when LLM generation cannot be completed safely."""
 
@@ -1682,6 +1689,7 @@ def generate_answer_llm(
 
     rejected_answer: str | None = None
     rejection_reason: str | None = None
+    answer_validated = True
 
     # First attempt: generation and validation run separately so the rejected
     # answer text (not just the validator's error) is available for retry feedback.
@@ -1745,11 +1753,12 @@ def generate_answer_llm(
             # as-is rather than paying for a third generation call — the feedback
             # was the best guidance we could provide.
             logger.warning(
-                "LLM retry failed validation too; using the retry answer as-is. Reason: %s",
+                "LLM retry failed validation too; using the retry answer as-is, marked for review. Reason: %s",
                 str(retry_error)[:200],
                 extra={"question": question[:120]},
             )
             rejection_reason = f"{rejection_reason} | retry also failed: {retry_error}"[:500]
+            answer_validated = False
 
     _validate_grounded_example_output(question=question, answer=answer, chunks=chunks)
 
@@ -1787,10 +1796,14 @@ def generate_answer_llm(
         f"Answer preview: {answer[:80]}"
     )
 
+    if not answer_validated:
+        confidence = min(confidence, UNVALIDATED_ANSWER_MAX_CONFIDENCE)
+
     return {
         "answer": answer,
         "confidence": confidence,
-        "review_required": confidence < 0.82,
+        "review_required": confidence < 0.82 or not answer_validated,
+        "answer_validated": answer_validated,
         "provider": settings.LLM_PROVIDER,
         "model": (request_targets[0]["model"]),
         "rejected_answer": rejected_answer,
@@ -1985,6 +1998,7 @@ def stream_answer_llm(
     # First attempt
     rejected_answer: str | None = None
     rejection_reason: str | None = None
+    answer_validated = True
     try:
         full_answer = _collect_stream(messages)
 
@@ -2037,14 +2051,17 @@ def stream_answer_llm(
             # propagates - use the retry's answer as-is rather than raising.
             logger.warning(
                 "Stream retry failed validation too; using raw retry answer instead of "
-                "falling back to the deterministic template. Reason: %s",
+                "falling back to the deterministic template, marked for review. Reason: %s",
                 str(retry_error)[:200],
                 extra={"question": question[:120]},
             )
             rejection_reason = f"{rejection_reason} | retry also failed: {retry_error}"[:500]
+            answer_validated = False
 
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
     confidence = min(0.94, max(0.60, float(top_score)))
+    if not answer_validated:
+        confidence = min(confidence, UNVALIDATED_ANSWER_MAX_CONFIDENCE)
 
     # Validation passed — now yield the buffered answer so the client receives
     # only valid content. Emit multi-character slices, not single characters:
@@ -2059,7 +2076,8 @@ def stream_answer_llm(
         {
             "answer": full_answer,
             "confidence": confidence,
-            "review_required": confidence < 0.82,
+            "review_required": confidence < 0.82 or not answer_validated,
+            "answer_validated": answer_validated,
             "provider": settings.LLM_PROVIDER,
             "model": settings.LLM_MODEL,
             "rejected_answer": rejected_answer,
