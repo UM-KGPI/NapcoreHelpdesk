@@ -18,7 +18,7 @@ from urllib import request
 
 from django.conf import settings
 
-from helpdesk.services.controller_llm import _build_ssl_context
+from helpdesk.services.controller_llm import _build_ssl_context, _uses_anthropic, anthropic_controller_call
 from helpdesk.services.llm_options import controller_max_tokens, controller_request_options
 from helpdesk.services.llm_model_recovery import resolve_effective_model
 from helpdesk.services import semantic_graph
@@ -60,6 +60,16 @@ def parse_terms(content: str) -> list[str]:
 
 
 def _ask_for_terms(question: str) -> list[str]:
+    if _uses_anthropic():
+        payload = anthropic_controller_call(
+            messages=[{"role": "user", "content": _PROMPT + question}],
+            max_tokens=controller_max_tokens(200),
+            timeout_seconds=int(getattr(settings, "VOCABULARY_BRIDGE_TIMEOUT_SECONDS", 3)),
+            json_answer=True,
+        )
+        choices = payload.get("choices") or []
+        return parse_terms(str((choices[0].get("message") or {}).get("content") or "") if choices else "")
+
     base_url = settings.CONTROLLER_LLM_API_BASE_URL.strip()
     api_key = getattr(settings, "CONTROLLER_LLM_API_KEY", "").strip()
     model = resolve_effective_model(

@@ -65,6 +65,8 @@ env = environ.Env(
     LLM_DISABLE_THINKING=(bool, True),
     LLM_STREAMING=(bool, True),
     LLM_REASONING_TOKEN_ALLOWANCE=(int, 0),
+    ANTHROPIC_API_KEY=(str, ""),
+    LLM_ANTHROPIC_EFFORT=(str, "low"),
     EMBEDDING_BACKEND=(str, "hash"),
     EMBEDDING_SERVICE_URL=(str, "http://embedder:8090"),
     EMBEDDING_SERVICE_TIMEOUT_SECONDS=(int, 120),
@@ -98,6 +100,7 @@ env = environ.Env(
     CONTROLLER_LLM_JSON_MODE=(str, ""),
     CONTROLLER_LLM_DISABLE_THINKING=(str, ""),
     CONTROLLER_LLM_REASONING_TOKEN_ALLOWANCE=(str, ""),
+    CONTROLLER_LLM_ANTHROPIC_EFFORT=(str, ""),
     SEED_REPO_NETEX=(str, "https://github.com/TransmodelEcosystem/NeTEx"),
     SEED_REPO_SIRI=(str, "https://github.com/TransmodelEcosystem/SIRI"),
     SEED_REPO_OPRA=(str, "https://github.com/TransmodelEcosystem/OpRa"),
@@ -307,6 +310,15 @@ LLM_JSON_MODE = env("LLM_JSON_MODE")
 LLM_DISABLE_THINKING = env("LLM_DISABLE_THINKING")
 LLM_STREAMING = env("LLM_STREAMING")
 LLM_REASONING_TOKEN_ALLOWANCE = env("LLM_REASONING_TOKEN_ALLOWANCE")
+# LLM_PROVIDER / CONTROLLER_LLM_PROVIDER = "anthropic": Claude through the official SDK
+# (helpdesk/services/anthropic_chat.py). LLM_MODEL / CONTROLLER_LLM_API_MODEL then name a Claude model
+# (e.g. claude-opus-5-5); base URL and VERIFY_SSL settings are not used. Effort (low|medium|high|xhigh|max)
+# sets how much the model thinks before answering; thinking tokens count towards max_tokens.
+ANTHROPIC_API_KEY = env("ANTHROPIC_API_KEY").strip()
+_ANTHROPIC_EFFORTS = {"low", "medium", "high", "xhigh", "max"}
+LLM_ANTHROPIC_EFFORT = env("LLM_ANTHROPIC_EFFORT").strip().lower() or "low"
+if LLM_ANTHROPIC_EFFORT not in _ANTHROPIC_EFFORTS:
+    raise ImproperlyConfigured(f"LLM_ANTHROPIC_EFFORT must be one of {sorted(_ANTHROPIC_EFFORTS)}.")
 # "hash" (default) or "semantic". Semantic needs the embedding service (compose profile
 # "semantic") and every chunk re-embedded with it: hash and semantic vectors cannot be mixed.
 EMBEDDING_BACKEND = env("EMBEDDING_BACKEND").strip().lower()
@@ -354,6 +366,9 @@ CONTROLLER_LLM_DISABLE_THINKING = _bool_or(env("CONTROLLER_LLM_DISABLE_THINKING"
 CONTROLLER_LLM_REASONING_TOKEN_ALLOWANCE = int(
     env("CONTROLLER_LLM_REASONING_TOKEN_ALLOWANCE").strip() or LLM_REASONING_TOKEN_ALLOWANCE
 )
+CONTROLLER_LLM_ANTHROPIC_EFFORT = env("CONTROLLER_LLM_ANTHROPIC_EFFORT").strip().lower() or LLM_ANTHROPIC_EFFORT
+if CONTROLLER_LLM_ANTHROPIC_EFFORT not in _ANTHROPIC_EFFORTS:
+    raise ImproperlyConfigured(f"CONTROLLER_LLM_ANTHROPIC_EFFORT must be one of {sorted(_ANTHROPIC_EFFORTS)}.")
 
 SEED_REPO_NETEX = env("SEED_REPO_NETEX").strip() or "https://github.com/TransmodelEcosystem/NeTEx"
 SEED_REPO_SIRI = env("SEED_REPO_SIRI").strip() or "https://github.com/TransmodelEcosystem/SIRI"

@@ -915,11 +915,26 @@ class HealthReadyView(APIView):
 
 
 def _describe_llm_provider(
-    *, label: str, enabled: bool, base_url: str, configured_model: str, api_key: str, verify_ssl: bool, ca_bundle: str, live: bool
+    *,
+    label: str,
+    enabled: bool,
+    base_url: str,
+    configured_model: str,
+    api_key: str,
+    verify_ssl: bool,
+    ca_bundle: str,
+    live: bool,
+    backend: str = "openai-compatible",
 ) -> dict:
     """Build one provider's status block: config, cached self-heal state, and an optional live gateway probe."""
     if not enabled:
         return {"provider": label, "enabled": False, "status": "disabled"}
+
+    from helpdesk.services import anthropic_chat
+
+    if backend == anthropic_chat.PROVIDER:
+        # Claude via the Anthropic API: no gateway alias drift to self-heal, so no cached correction.
+        base_url = "https://api.anthropic.com"
 
     cached_correction = get_cached_correction(base_url, configured_model)
     block = {
@@ -935,7 +950,11 @@ def _describe_llm_provider(
         block["status"] = "unknown" if cached_correction is None else "degraded"
         return block
 
-    probe = check_gateway_models(api_base_url=base_url, api_key=api_key, verify_ssl=verify_ssl, ca_bundle=ca_bundle)
+    if backend == anthropic_chat.PROVIDER:
+        probe = anthropic_chat.check_models(api_key=settings.ANTHROPIC_API_KEY)
+    else:
+        probe = check_gateway_models(api_base_url=base_url, api_key=api_key, verify_ssl=verify_ssl, ca_bundle=ca_bundle)
+    block["backend"] = backend
     block["gatewayReachable"] = probe["reachable"]
     if probe["error"]:
         block["probeError"] = probe["error"]
@@ -983,16 +1002,18 @@ class HealthLLMView(APIView):
             verify_ssl=settings.LLM_VERIFY_SSL,
             ca_bundle=settings.LLM_CA_BUNDLE,
             live=live,
+            backend=settings.LLM_PROVIDER,
         )
         controller_block = _describe_llm_provider(
             label="controller_routing",
-            enabled=settings.CONTROLLER_LLM_ENABLED and settings.CONTROLLER_LLM_PROVIDER == "openai-compatible",
+            enabled=settings.CONTROLLER_LLM_ENABLED and settings.CONTROLLER_LLM_PROVIDER in {"openai-compatible", "anthropic"},
             base_url=settings.CONTROLLER_LLM_API_BASE_URL,
             configured_model=settings.CONTROLLER_LLM_API_MODEL,
             api_key=settings.CONTROLLER_LLM_API_KEY,
             verify_ssl=settings.CONTROLLER_LLM_VERIFY_SSL,
             ca_bundle=settings.CONTROLLER_LLM_CA_BUNDLE,
             live=live,
+            backend=settings.CONTROLLER_LLM_PROVIDER,
         )
 
         statuses = {llm_block["status"], controller_block["status"]}

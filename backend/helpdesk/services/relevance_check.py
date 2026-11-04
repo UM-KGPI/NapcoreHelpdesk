@@ -14,7 +14,7 @@ from urllib import request
 
 from django.conf import settings
 
-from helpdesk.services.controller_llm import _build_ssl_context
+from helpdesk.services.controller_llm import _build_ssl_context, _uses_anthropic, anthropic_controller_call
 from helpdesk.services.llm_options import controller_max_tokens, controller_request_options
 from helpdesk.services.llm_model_recovery import resolve_effective_model
 
@@ -70,6 +70,15 @@ def _verdict(content: str) -> bool:
 
 @lru_cache(maxsize=512)
 def _ask(question: str) -> bool:
+    if _uses_anthropic():
+        payload = anthropic_controller_call(
+            messages=[{"role": "user", "content": _PROMPT.format(question=question)}],
+            max_tokens=controller_max_tokens(8),
+            timeout_seconds=int(getattr(settings, "RELEVANCE_CHECK_TIMEOUT_SECONDS", 10)),
+            json_answer=False,
+        )
+        return _verdict(payload["choices"][0]["message"]["content"])
+
     base_url = getattr(settings, "CONTROLLER_LLM_API_BASE_URL", "").strip()
     model = getattr(settings, "CONTROLLER_LLM_API_MODEL", "").strip()
     if not base_url or not model:
