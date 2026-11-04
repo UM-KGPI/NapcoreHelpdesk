@@ -161,10 +161,12 @@ def _validate_citations_to_chunks(answer: str, chunks: list[dict]) -> None:
 
 
 # Strong terms: specific enough that a match is meaningful evidence of grounding.
+# Code spans are paired in order (see _code_spans): a pattern alternative could pair the closing backtick
+# of one span with the opening backtick of the next and turn ") and departure (" into a term.
+_CODE_SPAN_PATTERN = re.compile(r"`([^`\n]+)`")
 _STRONG_TERM_PATTERN = re.compile(
-    r"`([^`]{4,})`"                                   # backtick-quoted identifiers
-    r'|"([A-Za-z0-9_.:/\\@#-]{6,})"'                 # double-quoted technical strings (≥6 chars)
-    r"|([A-Za-z0-9]{2,}:[A-Za-z0-9@_./-]{3,})"       # namespaced ids, e.g. stg:SCWW@86, netex:Line
+    r'"([A-Za-z0-9_.:/\\@#-]{6,})"'                  # double-quoted technical strings (≥6 chars)
+    r"|([A-Za-z][A-Za-z0-9]+:[A-Za-z0-9@_./-]{3,})"  # namespaced ids, e.g. stg:SCWW@86, netex:Line (not times like 14:32)
     r"|([A-Z0-9][A-Za-z0-9_.-]*-[A-Za-z0-9_.-]*[A-Z0-9])"  # hyphenated IDs with uppercase/digits, e.g. SCWW-86, UK-2022, 93-RED-y11-1
     r"|([A-Za-z0-9_-]+\.(?:xsd|xml|yaml|json|ttl))"  # file names with known extensions
     r"|((?:Article|Annex)\s+[0-9IVX]+(?:\(\w{1,4}\))*)"   # legal references, e.g. Article 4(1)(b), Annex II
@@ -176,8 +178,19 @@ _STRONG_TERM_PATTERN = re.compile(
 # (e.g. "STOP PLACE", "TAXI RANK", "VEHICLE MEETING POINT").
 # Matches: Time, Departure, DepartureTime, ScheduledStop, STOP PLACE, etc.
 _WEAK_TERM_PATTERN = re.compile(
-    r"([A-Z]{3,}(?:\s+[A-Z]{3,})*"      # ALL-CAPS Transmodel concepts, single or multi-word
-    r"|[A-Z][a-z]+(?:[A-Z][a-z]+)*)"    # PascalCase: starts with uppercase, followed by lowercase(s)
+    r"\b([A-Z]{3,}(?:\s+[A-Z]{3,})*"      # ALL-CAPS Transmodel concepts, single or multi-word, whole words
+    r"|[A-Z][a-z]+(?:[A-Z][a-z]+)*)\b"    # PascalCase: starts with uppercase, followed by lowercase(s)
+)
+
+# A single capitalised word is an element name ("Departure") only where English would not capitalise it
+# anyway: not at the start of a sentence, list item, heading or bold label ("**What it measures:**"), and
+# not a common English word. Otherwise "What", "This" or "None" were checked against the evidence.
+_SENTENCE_START_BEFORE = re.compile(r"(?:^|[.!?:;]\s+|[-*•]\s+|\*\*\s*|\(\s*|[\"“'‘]\s*)$")
+_COMMON_CAPITALISED_WORDS = frozenset(
+    "a an the this that these those there their they it its what which who whom whose where when why how "
+    "none some any each every all both other others another such same also only however therefore thus "
+    "according based note see example examples here in on at for from with without into by of as if "
+    "yes no not and or but so because while although though since unlike like".split()
 )
 
 # Terms so generic they appear in virtually every NeTEx/standards document and
@@ -234,13 +247,22 @@ def _classify_terms(sentence: str) -> tuple[list[str], list[str]]:
     (file names, namespaced IDs, hyphenated IDs, backtick-quoted strings).
     Weak terms are PascalCase/camelCase element names that may appear anywhere.
     """
+    strong: list[str] = []
+    # Code spans first, paired in order. A backticked name is an identifier even when it is a common word
+    # (`Journey` is a NeTEx element), so the ubiquitous-term filter does not apply to it.
+    for span in _CODE_SPAN_PATTERN.findall(sentence):
+        span = span.strip().strip("<>/").strip()
+        if len(span) >= 4:
+            strong.append(span)
+    sentence = _CODE_SPAN_PATTERN.sub(" ", sentence)
+
     # Strip XML/HTML tag brackets but keep content so element names are found
     # e.g., "<Departure>" becomes " Departure "
     clean_sentence = re.sub(r"[<>]", " ", sentence)
 
-    strong: list[str] = []
     for match in _STRONG_TERM_PATTERN.finditer(clean_sentence):
         term = next((g for g in match.groups() if g), None)
+        term = term.rstrip(".") if term else term  # "netex:Line." at the end of a sentence
         if term and len(term) >= 4 and term.lower() not in _UBIQUITOUS_TERMS:
             strong.append(term)
 
@@ -248,9 +270,16 @@ def _classify_terms(sentence: str) -> tuple[list[str], list[str]]:
     seen = set(t.lower() for t in strong)
     for match in _WEAK_TERM_PATTERN.finditer(clean_sentence):
         term = match.group(1)
-        if term and len(term) >= 4 and term.lower() not in _UBIQUITOUS_TERMS and term.lower() not in seen:
-            weak.append(term)
-            seen.add(term.lower())
+        if not term or len(term) < 4 or term.lower() in _UBIQUITOUS_TERMS or term.lower() in seen:
+            continue
+        single_word = term[0].isupper() and term[1:].islower()
+        if single_word and (
+            term.lower() in _COMMON_CAPITALISED_WORDS
+            or _SENTENCE_START_BEFORE.search(clean_sentence[: match.start()])
+        ):
+            continue
+        weak.append(term)
+        seen.add(term.lower())
 
     return list(dict.fromkeys(strong)), list(dict.fromkeys(weak))
 
@@ -316,6 +345,76 @@ def _regulation_citation_grounded(sentence: str, chunk: dict) -> bool:
     return sum(1 for word in words if word in text) / len(words) >= 0.4
 
 
+# A sentence about the evidence itself ("The evidence contains no formal definition", "[E2] and [E3] concern
+# fare structures, so they do not answer the question") has no technical term to check and must not be
+# rejected for it: the prompt asks the model to say what the evidence does not cover.
+_EVIDENCE_NOUN = re.compile(
+    r"\b(?:evidence|blocks?|excerpts?|examples?|definitions?|documentation|snippets?|sources?|schemas?|files?"
+    r"|documented|described|defined|shown|listed|mentioned|descriptions?)\b",
+    re.IGNORECASE,
+)
+_LIMIT_WORD = re.compile(
+    r"\b(?:not|no|none|nothing|only|cannot|can't|doesn't|don't|isn't|aren't|without|truncated|lacks?|missing)\b",
+    re.IGNORECASE,
+)
+_LEADING_CITATION = re.compile(r"^\s*(?:[-*•]\s+)?(?:\*\*)?\s*\[E\d+\]")
+
+
+def _is_evidence_scope_statement(text: str) -> bool:
+    """True for a sentence that describes the evidence's coverage, not a technical claim."""
+    if _LEADING_CITATION.match(text):
+        return True  # "[E2] is an example of an estimated timetable response."
+    plain = CITATION_PATTERN.sub(" ", text)
+    mentions_evidence = bool(_EVIDENCE_NOUN.search(plain)) or len(CITATION_PATTERN.findall(text)) > 1
+    return mentions_evidence and bool(_LIMIT_WORD.search(plain))
+
+
+# A citation followed by one of these is the subject of what follows: "[E1] describes GroupSave ticket
+# discount conditions, [E2] discusses FARE PRICE".
+_SUBJECT_CITATION_VERB = re.compile(
+    r"^\s*\)?\s*(?:is|are|was|were|describes?|discusses?|concerns?|covers?|contains?|shows?|mentions?|defines?"
+    r"|gives?|provides?|has|have|lists?|only|also|documents?|presents?|refers?)\b",
+    re.IGNORECASE,
+)
+
+
+def _comparable(text: str) -> str:
+    return re.sub(r"[\s_-]+", " ", text.lower())
+
+
+def _has_words(text: str) -> bool:
+    return bool(re.search(r"[^\W\d_]", text))
+
+
+def _citation_segments(sentence: str) -> list[tuple[str, str]]:
+    """(citation number, the text that citation supports).
+
+    Normally the text since the previous citation: in "...a JOURNEY" [E1]; the SIRI element
+    `AimedLatestPassengerAccessTime` [E3]" the element belongs to [E3], not [E1]. A citation used as a subject
+    ("[E2] discusses FARE PRICE") or standing first supports the text after it; one that directly follows
+    another ("`AbstractObject` [E1][E2]") shares that one's text; failing all, the whole sentence.
+    """
+    matches = list(CITATION_PATTERN.finditer(sentence))
+    segments: list[tuple[str, str]] = []
+    for index, match in enumerate(matches):
+        previous_end = matches[index - 1].end() if index else 0
+        next_start = matches[index + 1].start() if index + 1 < len(matches) else len(sentence)
+        before = sentence[previous_end : match.start()]
+        after = sentence[match.end() : next_start]
+        if _SUBJECT_CITATION_VERB.match(after) and _has_words(after):
+            own = after
+        elif _has_words(before):
+            own = before
+        elif index and segments:
+            own = segments[-1][1]  # "[E1][E2]": the same text
+        elif _has_words(after):
+            own = after  # a leading citation: "[E3] This block is an example, not the definition."
+        else:
+            own = CITATION_PATTERN.sub(" ", sentence)
+        segments.append((match.group(1), own))
+    return segments
+
+
 def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
     """
     Verify that each [E#] citation is grounded in the referenced chunk's text.
@@ -343,6 +442,8 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
             continue
 
         clean = CITATION_PATTERN.sub("", sentence)
+        if not re.search(r"[^\W\d_]", clean):
+            continue  # A citation on its own ("[E3].") supports the sentence before it.
 
         # Check if sentence contains code blocks (```) or XML tags - these are more lenient
         is_code_block = "```" in sentence or ("<" in sentence and ">" in sentence)
@@ -378,8 +479,11 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
             if term_clean in _UBIQUITOUS_TERMS and len(term_clean) >= 4:
                 ubiquitous_terms.append(term_clean)
 
-        # CRITICAL: Cited sentences MUST have specific technical content (strong or weak terms)
+        # CRITICAL: Cited sentences MUST have specific technical content (strong or weak terms),
+        # unless the sentence only describes what the evidence covers.
         if not strong_terms and not weak_terms:
+            if _is_evidence_scope_statement(sentence):
+                continue
             if found_citations:  # Has citations but NO specific terms = potential hallucination
                 # No citations, no terms, not code = hallucination
                 raise LLMGenerationError(
@@ -391,27 +495,35 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
             else:
                 continue  # No citations, no terms - skip
 
-        for citation_str in found_citations:
+        for citation_str, segment in _citation_segments(sentence):
             idx = int(citation_str) - 1
             if idx < 0 or idx >= len(chunks):
                 continue  # Range already rejected by _validate_citations_to_chunks
+            if _is_evidence_scope_statement(segment):
+                continue  # "EstimatedCall: the evidence contains no formal definition [E1]" names what is absent.
+            segment_strong, segment_weak = _classify_terms(segment)
+            if segment_strong or segment_weak:
+                strong_terms, weak_terms = segment_strong, segment_weak
+            elif _is_evidence_scope_statement(sentence):
+                continue  # "The evidence blocks [E1] through [E4] cover only ...": nothing of its own to check.
+            else:
+                strong_terms, weak_terms = _classify_terms(clean)
 
             chunk = chunks[idx]
-            chunk_text_lower = str(chunk.get("text", "")).lower()
-            chunk_source_lower = str(chunk.get("sourcePath", "")).lower()
-            haystack = chunk_text_lower + " " + chunk_source_lower
+            # "_", "-" and spaces compare equal: "TAP TSI" names the source path tap_tsi.
+            haystack = _comparable(str(chunk.get("text", "")) + " " + str(chunk.get("sourcePath", "")))
 
             if strong_terms:
                 # Strong terms present: require at least one strong match.
                 # A weak-only match is not accepted — it would allow hallucinated
                 # file names/IDs to pass because a generic term like "NeTEx" matches.
-                grounded = any(term.lower() in haystack for term in strong_terms)
+                grounded = any(_comparable(term) in haystack for term in strong_terms)
                 if not grounded:
                     logger.debug(
                         f"Citation [E{citation_str}] grounding check FAILED: strong terms {strong_terms} not found in chunk source '{chunk.get('sourcePath', 'unknown')}'"
                     )
             elif weak_terms:
-                grounded = any(term.lower() in haystack for term in weak_terms)
+                grounded = any(_comparable(term) in haystack for term in weak_terms)
                 if not grounded:
                     logger.debug(
                         f"Citation [E{citation_str}] grounding check FAILED: weak terms {weak_terms} not found in chunk source '{chunk.get('sourcePath', 'unknown')}'"
@@ -419,7 +531,7 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
             else:
                 # No strong or weak terms; check ubiquitous terms (these are more lenient)
                 # Ubiquitous terms appear everywhere, so we just require at least one match
-                grounded = any(term.lower() in haystack for term in ubiquitous_terms)
+                grounded = any(_comparable(term) in haystack for term in ubiquitous_terms)
                 if not grounded:
                     logger.debug(
                         f"Citation [E{citation_str}] grounding check FAILED: ubiquitous terms {ubiquitous_terms} not found in chunk source '{chunk.get('sourcePath', 'unknown')}'"
