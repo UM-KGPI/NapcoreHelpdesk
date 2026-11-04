@@ -353,6 +353,8 @@ def _postgres_hybrid_candidates(
 
 
 MAX_LINKED_PROVISIONS = 2
+# Further chunks of a linked provision's section, when it is split (see _linked_provision_candidates).
+MAX_PROVISION_SIBLINGS = 1
 
 
 def _linked_provision_candidates(standards: list[str], score: float, acts: list[str] | None = None) -> list[dict]:
@@ -360,7 +362,9 @@ def _linked_provision_candidates(standards: list[str], score: float, acts: list[
 
     One provision per standard before any standard gets a second, so "NeTEx and SIRI" gets both MMTIS
     Art. 4 and Art. 5 under the cap; only provisions of `acts` (CELEX numbers) when given. For each
-    provision, the first chunk that names the standard (a long appendix has several chunks).
+    provision, the first chunk that names the standard: a long appendix has several chunks, and a table
+    split across two (TEL TSI Appendix C: NeTEx in one, EN 12896 and EN 15531 in the next) gives each
+    standard its own chunk.
     """
     from itertools import zip_longest
 
@@ -374,33 +378,93 @@ def _linked_provision_candidates(standards: list[str], score: float, acts: list[
     seen: set[str] = set()
     for standard, source_path in (pair for row in zip_longest(*per_standard) for pair in row if pair):
         pattern = re.compile(STANDARD_IDENTIFIERS[standard])
-        if source_path in seen or len(found) >= MAX_LINKED_PROVISIONS:
-            continue
+        if len(found) >= MAX_LINKED_PROVISIONS:
+            break
         chunk = next(
             (c for c in SourceChunk.objects.filter(source_path=source_path).order_by("chunk_id") if pattern.search(c.text)),
             None,
         )
-        if chunk is None:
+        if chunk is None or chunk.chunk_id in seen:
             continue
-        seen.add(source_path)
-        found.append(
-            {
-                "text": chunk.text,
-                "score": score,
-                "repositoryUrl": chunk.repository_url,
-                "sourceUrl": chunk.source_url,
-                "commitSha": chunk.commit_sha,
-                "sourcePath": chunk.source_path,
-                "chunkId": chunk.chunk_id,
-                "label": chunk.label,
-                "standardsScope": chunk.standards_scope or [],
-                "chunkType": chunk.chunk_type or "",
-                "docType": chunk.doc_type or "",
-                "heading": chunk.heading or "",
-                "structuredMetadata": chunk.structured_metadata or {},
-                "retrievalEventId": f"re-{uuid4().hex[:8]}",
-            }
+        seen.add(chunk.chunk_id)
+        found.append(_added_candidate(chunk, score))
+    # The rest of a list split across chunks (TEL TSI Appendix C: EN 12896 in one chunk, the NeTEx parts in
+    # the one before): the other chunks of the same section that name any standard.
+    any_standard = re.compile("|".join(STANDARD_IDENTIFIERS.values()))
+    siblings: list[dict] = []
+    for provision in list(found):
+        for chunk in SourceChunk.objects.filter(
+            source_path=provision["sourcePath"], heading=provision["heading"]
+        ).order_by("chunk_id"):
+            if len(siblings) >= MAX_PROVISION_SIBLINGS:
+                break
+            if chunk.chunk_id not in seen and any_standard.search(chunk.text):
+                seen.add(chunk.chunk_id)
+                siblings.append(_added_candidate(chunk, score))
+    return found + siblings
+
+
+def _added_candidate(chunk: SourceChunk, score: float) -> dict:
+    """A chunk added next to the ranked evidence, in the shape retrieval returns."""
+    return {
+        "text": chunk.text,
+        "score": score,
+        "repositoryUrl": chunk.repository_url,
+        "sourceUrl": chunk.source_url,
+        "commitSha": chunk.commit_sha,
+        "sourcePath": chunk.source_path,
+        "chunkId": chunk.chunk_id,
+        "label": chunk.label,
+        "standardsScope": chunk.standards_scope or [],
+        "chunkType": chunk.chunk_type or "",
+        "docType": chunk.doc_type or "",
+        "heading": chunk.heading or "",
+        "structuredMetadata": chunk.structured_metadata or {},
+        "retrievalEventId": f"re-{uuid4().hex[:8]}",
+    }
+
+
+MAX_STANDARD_IDENTITY_CHUNKS = 1
+
+
+def _standard_identity_candidates(provisions: list[dict], score: float) -> list[dict]:
+    """For standards a provision names only by number ("EN 12896-1:2016 … Reference data model"), the
+    standards chunk that gives the name and the number together ("Transmodel V6.2 (EN 12896 series)").
+
+    Without it the answer cannot tell that the act names the standard the question asks about. The
+    chunk naming the most of the needed standards comes first; standards sources only, never an act.
+    """
+    from helpdesk.services.regulations import SCOPE as LEGISLATION_SCOPE, STANDARD_NAMES, STANDARD_NUMBERS
+
+    needed: list[str] = []
+    for provision in provisions:
+        text = str(provision.get("text", ""))
+        for standard, number in STANDARD_NUMBERS.items():
+            if re.search(number, text) and not re.search(STANDARD_NAMES[standard], text) and standard not in needed:
+                needed.append(standard)
+    found: list[dict] = []
+    while needed and len(found) < MAX_STANDARD_IDENTITY_CHUNKS:
+        digits = re.search(r"\d+", STANDARD_NUMBERS[needed[0]]).group(0)
+        candidates = (
+            SourceChunk.objects.filter(text__contains=digits)
+            .exclude(standards_scope__contains=[LEGISLATION_SCOPE])
+            .exclude(chunk_id__in=[c["chunkId"] for c in found])
+            .order_by("-quality_score", "chunk_id")[:50]
         )
+
+        def covered(chunk: SourceChunk) -> list[str]:
+            return [
+                s for s in needed if re.search(STANDARD_NAMES[s], chunk.text) and re.search(STANDARD_NUMBERS[s], chunk.text)
+            ]
+
+        best = max(
+            (c for c in candidates if needed[0] in covered(c)), key=lambda c: len(covered(c)), default=None
+        )
+        if best is None:
+            needed.pop(0)
+            continue
+        found.append(_added_candidate(best, score))
+        needed = [s for s in needed if s not in covered(best)]
     return found
 
 
@@ -2014,7 +2078,12 @@ def _retrieve_chunks_once(
     # A question about a standard's legal status ("Is NeTEx mandatory in the EU?") gets the provisions that
     # name that standard, next to the best standards evidence. They are added, not ranked: by similarity
     # legal text would compete with the standards evidence in every question.
-    from helpdesk.services.question_parsing import asks_for_named_standards, legal_status_standards, named_acts
+    from helpdesk.services.question_parsing import (
+        asks_for_named_standards,
+        legal_status_standards,
+        named_acts,
+        standards_named_in_legislation_question,
+    )
     from helpdesk.services.regulations import STANDARD_IDENTIFIERS
 
     legal_standards = legal_status_standards(question, question_concepts, scope)
@@ -2022,12 +2091,17 @@ def _retrieve_chunks_once(
     if not legal_standards and asks_for_named_standards(question, scope):
         # "Which standards does MMTIS name?": the provisions that name any standard, in the act it names.
         legal_standards, legal_acts = list(STANDARD_IDENTIFIERS), named_acts(question)
+    if not legal_standards:
+        # "Does the TEL TSI reference Transmodel?": the provisions that name that standard, in the act it names.
+        legal_standards = [s for s in standards_named_in_legislation_question(question, scope) if s in STANDARD_IDENTIFIERS]
+        legal_acts = named_acts(question) or None
     if legal_standards and trimmed:
-        provisions = _linked_provision_candidates(
-            legal_standards, score=float(trimmed[0].get("score") or 0.0), acts=legal_acts
-        )
-        provision_ids = {c["chunkId"] for c in provisions}
-        trimmed = (trimmed[:1] + provisions + [c for c in trimmed[1:] if c["chunkId"] not in provision_ids])[:top_k]
+        top_score = float(trimmed[0].get("score") or 0.0)
+        provisions = _linked_provision_candidates(legal_standards, score=top_score, acts=legal_acts)
+        added = provisions + _standard_identity_candidates(provisions, score=top_score)
+        added_ids = {c["chunkId"] for c in added}
+        trimmed = (trimmed[:1] + [c for c in added if c["chunkId"] != trimmed[0].get("chunkId")]
+                   + [c for c in trimmed[1:] if c["chunkId"] not in added_ids])[:top_k]
     _record_stage("candidateSelectionMs", stage_start)
 
     stage_start = time.perf_counter()

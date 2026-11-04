@@ -99,6 +99,15 @@ class GroundingFalsePositiveTests(SimpleTestCase):
         _validate_citation_grounding("[E1] is a simple carrier example for TAP TSI fares data.", [tap])
 
 
+    def test_a_verbatim_quotation_is_grounded(self):
+        readme = _chunk("Note: Many NeTEx concepts are taken directly from Transmodel.", "README.md")
+        _validate_citation_grounding('The same block states that "Many NeTEx concepts are taken directly from Transmodel" [E1].', [readme])
+
+    def test_standard_numbers_are_identifiers(self):
+        strong, _ = _classify_terms("Appendix C lists EN 12896-1:2016 and CEN/TS 16614-1:2025, and ISO 19115.")
+        self.assertEqual(strong, ["EN 12896-1:2016", "CEN/TS 16614-1:2025", "ISO 19115"])
+
+
 class GroundingStillCatchesTests(SimpleTestCase):
     def test_generic_filler_is_rejected(self):
         with self.assertRaisesRegex(LLMGenerationError, "without specific technical content"):
@@ -107,6 +116,15 @@ class GroundingStillCatchesTests(SimpleTestCase):
     def test_a_hallucinated_element_is_rejected(self):
         with self.assertRaisesRegex(LLMGenerationError, "does not ground the claim"):
             _validate_citation_grounding("Capacity is reported in the `PlannedFleetSizeReport` element [E1].", [CAPACITY])
+
+    def test_a_misquotation_without_identifiers_is_still_rejected(self):
+        readme = _chunk("Note: Many NeTEx concepts are taken directly from Transmodel.", "README.md")
+        with self.assertRaisesRegex(LLMGenerationError, "without specific technical content"):
+            _validate_citation_grounding('The block says "all of the concepts are the same" [E1].', [readme])
+
+    def test_a_standard_number_cited_to_the_wrong_block_is_rejected(self):
+        with self.assertRaisesRegex(LLMGenerationError, "does not ground"):
+            _validate_citation_grounding("The act lists EN 12896-1:2016 [E1].", [CAPACITY])
 
     def test_an_element_cited_to_the_wrong_block_is_rejected(self):
         with self.assertRaisesRegex(LLMGenerationError, r"Citation \[E1\] does not ground"):

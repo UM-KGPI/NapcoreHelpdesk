@@ -24,6 +24,7 @@ from helpdesk.services.question_parsing import (
     named_acts,
     names_indexed_act,
     parse_question_to_semantic_query,
+    standards_named_in_legislation_question,
 )
 from helpdesk.services.regulations import (
     ACTS,
@@ -453,12 +454,84 @@ class NamedStandardsRetrievalTests(TestCase):
 
     def test_the_provisions_that_name_standards_in_the_named_act_are_added(self):
         paths = self.retrieve("Which standards are explicitly mentioned in the MMTIS regulation?")
-        # One provision per standard first: NeTEx's Art. 4, then SIRI's Art. 5, not NeTEx's second.
-        self.assertEqual(paths[1:3], [f"{ACTS[0].celex}#art_4", f"{ACTS[0].celex}#art_5"])
+        # One provision per standard first: NeTEx's Art. 4 and SIRI's Art. 5, not NeTEx's second; a provision
+        # that already ranks first is not added a second time.
+        self.assertEqual(set(paths[:3]) >= {f"{ACTS[0].celex}#art_4", f"{ACTS[0].celex}#art_5"}, True)
+        self.assertEqual(len(paths), len(set(paths)))
 
     def test_a_named_act_limits_the_provisions(self):
         paths = self.retrieve("Which standards does the TEL TSI name?")
         self.assertIn(f"{TEL_TSI.celex}#app_C", paths[:2])
+
+
+class StandardInActQuestionTests(SimpleTestCase):
+    def test_a_legislation_question_that_names_a_standard(self):
+        self.assertEqual(
+            standards_named_in_legislation_question("TEL TSI contains Transmodel related standards?", ["Transmodel", SCOPE]),
+            ["Transmodel"],
+        )
+        self.assertEqual(
+            standards_named_in_legislation_question("Does MMTIS require NeTEx or SIRI?", [SCOPE]), ["NeTEx", "SIRI"]
+        )
+
+    def test_other_questions_are_not(self):
+        self.assertEqual(standards_named_in_legislation_question("What is Transmodel?", ["Transmodel"]), [])
+        self.assertEqual(standards_named_in_legislation_question("What does MMTIS define?", [SCOPE]), [])
+
+
+@override_settings(EMBEDDING_BACKEND="hash")
+class StandardInActRetrievalTests(TestCase):
+    """TEL TSI Appendix C names Transmodel only as "EN 12896-1:2016 … Reference data model", in the second
+    chunk of a table whose first chunk lists the NeTEx parts (prod question req-mw2q8asj-0xxnna)."""
+
+    def setUp(self):
+        from helpdesk.services.embeddings import build_text_embedding
+
+        heading = "Appendix C — C.4.A List of referenced standards"
+        rows = [
+            ("reg-tel-0001", "art_1", "Article 1", "Article 1 This Regulation establishes a TSI for telematics applications."),
+            ("reg-tel-0247", "app_C", heading, "[P.1] CEN/TS 16614-1:2025 Public transport – Network and Timetable Exchange (NeTEx)"),
+            ("reg-tel-0248", "app_C", heading, "[P.5] EN 15531-2:2022 Public transport – Service interface\n"
+             "[P.7] EN 12896-1:2016 Public transport – Reference data model – Part 1: Common concepts"),
+        ]
+        for chunk_id, anchor, chunk_heading, text in rows:
+            SourceChunk.objects.create(
+                repository_url=TEL_TSI.url, commit_sha=TEL_TSI.celex, source_path=f"{TEL_TSI.celex}#{anchor}",
+                chunk_id=chunk_id, label=anchor, heading=chunk_heading, text=text, standards_scope=[SCOPE],
+                quality_score=0.9, doc_type="regulation", embedding_vector=build_text_embedding(text),
+            )
+        readme = ("NeTEx is published as CEN/TS 16614. It is based on Transmodel V6.2 (EN 12896 series) and SIRI "
+                  "(CEN/TS 15531-4/-5 and EN 15531-1/-2/-3).")
+        SourceChunk.objects.create(
+            repository_url="https://github.com/TransmodelEcosystem/NeTEx", commit_sha="abc", source_path="README.md",
+            chunk_id="netex-readme", label="README", heading="Overview", text=readme,
+            standards_scope=["NeTEx", "SIRI", "Transmodel"], quality_score=0.8, doc_type="readme",
+            embedding_vector=build_text_embedding(readme),
+        )
+
+    def test_the_provision_its_sibling_and_the_standards_identity_are_added(self):
+        from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
+
+        with patch("helpdesk.services.regulations.provisions_naming",
+                   side_effect=lambda s: [f"{TEL_TSI.celex}#app_C"] if s == "Transmodel" else []):
+            chunks, trace = retrieve_chunks_with_trace(
+                question="TEL TSI contains Transmodel related standards?", top_k=4, min_score=0.0,
+                scope=[SCOPE], english_question=None,
+            )
+        ids = [c["chunkId"] for c in chunks]
+        self.assertEqual(trace["legalStatusStandards"], ["Transmodel"])
+        self.assertIn("reg-tel-0248", ids)  # names EN 12896
+        self.assertIn("reg-tel-0247", ids)  # the rest of the list
+        self.assertIn("netex-readme", ids)  # says EN 12896 is Transmodel
+
+    def test_the_standard_numbers(self):
+        from helpdesk.services.regulations import STANDARD_IDENTIFIERS
+        import re
+
+        self.assertRegex("EN 15531-2:2022 Public transport", STANDARD_IDENTIFIERS["SIRI"])
+        self.assertRegex("CEN/TS 15531-4", STANDARD_IDENTIFIERS["SIRI"])
+        self.assertRegex("EN 12896-1:2016", STANDARD_IDENTIFIERS["Transmodel"])
+        self.assertIsNone(re.search(STANDARD_IDENTIFIERS["SIRI"], "EN 12896-1:2016"))
 
 
 class LegalContextTests(SimpleTestCase):
@@ -466,7 +539,8 @@ class LegalContextTests(SimpleTestCase):
         netex = legal_context(["NeTEx"])
         self.assertEqual([item["label"] for item in netex], ["MMTIS Art. 4", "TEL TSI App. C"])
         self.assertTrue(netex[0]["url"].endswith("CELEX:02017R1926-20240304#art_4"))
-        self.assertEqual([item["label"] for item in legal_context(["SIRI"])], ["MMTIS Art. 5"])
+        # TEL TSI App. C names SIRI by number only (EN 15531-2:2022).
+        self.assertEqual([item["label"] for item in legal_context(["SIRI"])], ["MMTIS Art. 5", "TEL TSI App. C"])
         self.assertEqual(legal_context(["OpRa"]), [])
 
     def test_the_line_is_shown_only_for_answers_about_a_named_standard(self):

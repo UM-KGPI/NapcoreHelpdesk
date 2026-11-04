@@ -597,4 +597,4 @@ eulex:TELTSI-data_quality a skos:Concept ;
 # Provisions that name a standard (eulex:namesStandard), generated from the same acts.
 eulex:MMTIS-art_4 a eulex:Provision ; rdfs:label "MMTIS Art. 4"@en ; dct:source <https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:02017R1926-20240304#art_4> ; eulex:namesStandard "NeTEx" , "Transmodel" .
 eulex:MMTIS-art_5 a eulex:Provision ; rdfs:label "MMTIS Art. 5"@en ; dct:source <https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:02017R1926-20240304#art_5> ; eulex:namesStandard "SIRI" .
-eulex:TELTSI-app_C a eulex:Provision ; rdfs:label "TEL TSI App. C"@en ; dct:source <https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32026R0253#app_C> ; eulex:namesStandard "NeTEx" , "Transmodel" .
+eulex:TELTSI-app_C a eulex:Provision ; rdfs:label "TEL TSI App. C"@en ; dct:source <https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32026R0253#app_C> ; eulex:namesStandard "NeTEx" , "SIRI" , "Transmodel" .
