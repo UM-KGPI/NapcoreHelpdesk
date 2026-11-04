@@ -74,5 +74,20 @@ ${COMPOSE} exec -T backend python manage.py index_regulations
 echo "==> Removing dangling images"
 docker image prune -f
 
+# Background work (harvests, the nightly refresh) needs the broker and a running worker. On 2026-11-03 a
+# rebuild broke both (kombu VersionMismatch) and nothing noticed for 15 hours, so a deploy fails here.
+# It runs last, with the site up: questions are answered without Celery.
+echo "==> Checking Celery broker and worker"
+if ! ${COMPOSE} exec -T backend curl -sf http://localhost:8000/api/v1/health/ready | grep -q '"broker":"ok"'; then
+  echo "ERROR: the backend cannot reach the Celery broker (health/ready broker != ok)." >&2
+  ${COMPOSE} exec -T backend curl -s http://localhost:8000/api/v1/health/ready >&2 || true
+  exit 1
+fi
+if ! timeout 90 bash -c "until ${COMPOSE} exec -T celery-worker celery -A config inspect ping --timeout 5 >/dev/null 2>&1; do sleep 5; done"; then
+  echo "ERROR: celery-worker did not answer a ping within 90 s. Last worker log lines:" >&2
+  ${COMPOSE} logs --tail 30 celery-worker >&2 || true
+  exit 1
+fi
+
 echo "==> Deploy complete"
 ${COMPOSE} ps
