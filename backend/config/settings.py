@@ -61,6 +61,10 @@ env = environ.Env(
     LLM_TIMEOUT_SECONDS=(int, 20),
     LLM_MAX_TOKENS=(int, 4000),
     LLM_TEMPERATURE=(float, 0.2),
+    LLM_JSON_MODE=(bool, True),
+    LLM_DISABLE_THINKING=(bool, True),
+    LLM_STREAMING=(bool, True),
+    LLM_REASONING_TOKEN_ALLOWANCE=(int, 0),
     EMBEDDING_BACKEND=(str, "hash"),
     EMBEDDING_SERVICE_URL=(str, "http://embedder:8090"),
     EMBEDDING_SERVICE_TIMEOUT_SECONDS=(int, 120),
@@ -91,6 +95,9 @@ env = environ.Env(
     CONTROLLER_LLM_API_MODEL=(str, ""),
     CONTROLLER_LLM_VERIFY_SSL=(bool, True),
     CONTROLLER_LLM_CA_BUNDLE=(str, ""),
+    CONTROLLER_LLM_JSON_MODE=(str, ""),
+    CONTROLLER_LLM_DISABLE_THINKING=(str, ""),
+    CONTROLLER_LLM_REASONING_TOKEN_ALLOWANCE=(str, ""),
     SEED_REPO_NETEX=(str, "https://github.com/TransmodelEcosystem/NeTEx"),
     SEED_REPO_SIRI=(str, "https://github.com/TransmodelEcosystem/SIRI"),
     SEED_REPO_OPRA=(str, "https://github.com/TransmodelEcosystem/OpRa"),
@@ -293,6 +300,13 @@ LLM_CA_BUNDLE = env("LLM_CA_BUNDLE", default="").strip() or GITHUB_CA_BUNDLE
 LLM_TIMEOUT_SECONDS = env("LLM_TIMEOUT_SECONDS")
 LLM_MAX_TOKENS = env("LLM_MAX_TOKENS")
 LLM_TEMPERATURE = env("LLM_TEMPERATURE")
+# Optional request fields, for gateways that reject them (helpdesk/services/llm_options.py). A managed
+# model-as-a-service endpoint may accept only plain non-streaming chat calls: then set JSON_MODE,
+# DISABLE_THINKING and STREAMING to False, and give the model's reasoning a token allowance.
+LLM_JSON_MODE = env("LLM_JSON_MODE")
+LLM_DISABLE_THINKING = env("LLM_DISABLE_THINKING")
+LLM_STREAMING = env("LLM_STREAMING")
+LLM_REASONING_TOKEN_ALLOWANCE = env("LLM_REASONING_TOKEN_ALLOWANCE")
 # "hash" (default) or "semantic". Semantic needs the embedding service (compose profile
 # "semantic") and every chunk re-embedded with it: hash and semantic vectors cannot be mixed.
 EMBEDDING_BACKEND = env("EMBEDDING_BACKEND").strip().lower()
@@ -321,6 +335,25 @@ CONTROLLER_LLM_API_KEY = env("CONTROLLER_LLM_API_KEY", default="").strip() or LL
 CONTROLLER_LLM_API_MODEL = env("CONTROLLER_LLM_API_MODEL", default="").strip() or LLM_MODEL
 CONTROLLER_LLM_VERIFY_SSL = env("CONTROLLER_LLM_VERIFY_SSL")
 CONTROLLER_LLM_CA_BUNDLE = env("CONTROLLER_LLM_CA_BUNDLE", default="").strip()
+
+
+def _bool_or(value: str, fallback: bool) -> bool:
+    value = value.strip().lower()
+    if not value:
+        return fallback
+    if value in {"1", "true", "yes", "on"}:
+        return True
+    if value in {"0", "false", "no", "off"}:
+        return False
+    raise ImproperlyConfigured(f"Expected a boolean, got {value!r}.")
+
+
+# Unset: the same as the LLM_* setting, like the controller's base URL, key and model above.
+CONTROLLER_LLM_JSON_MODE = _bool_or(env("CONTROLLER_LLM_JSON_MODE"), LLM_JSON_MODE)
+CONTROLLER_LLM_DISABLE_THINKING = _bool_or(env("CONTROLLER_LLM_DISABLE_THINKING"), LLM_DISABLE_THINKING)
+CONTROLLER_LLM_REASONING_TOKEN_ALLOWANCE = int(
+    env("CONTROLLER_LLM_REASONING_TOKEN_ALLOWANCE").strip() or LLM_REASONING_TOKEN_ALLOWANCE
+)
 
 SEED_REPO_NETEX = env("SEED_REPO_NETEX").strip() or "https://github.com/TransmodelEcosystem/NeTEx"
 SEED_REPO_SIRI = env("SEED_REPO_SIRI").strip() or "https://github.com/TransmodelEcosystem/SIRI"

@@ -407,7 +407,7 @@ class LLMGeneratorTests(SimpleTestCase):
         self.assertNotIn("<", result["answer"])
 
 
-    @override_settings(LLM_ENABLED=True, LLM_PROVIDER="openai-compatible", LLM_API_BASE_URL="https://llm.example.test")
+    @override_settings(LLM_ENABLED=True, LLM_PROVIDER="openai-compatible", LLM_API_BASE_URL="https://llm.example.test", LLM_STREAMING=True)
     @patch("helpdesk.services.llm_generator._validate_grounded_example_output")
     @patch("helpdesk.services.llm_generator._validate_answer_language")
     @patch("helpdesk.services.llm_generator._validate_generated_answer")
@@ -641,7 +641,7 @@ class StreamMalformedJsonTests(SimpleTestCase):
     BROKEN = '{": ": "Timetables use a frame, see `xmlns:netex=", "http://www.netex.org.uk/netex` [E1].'
 
     def _events(self, responses):
-        with override_settings(LLM_ENABLED=True, LLM_PROVIDER="openai-compatible", LLM_API_BASE_URL="https://llm.example.test"), \
+        with override_settings(LLM_ENABLED=True, LLM_PROVIDER="openai-compatible", LLM_API_BASE_URL="https://llm.example.test", LLM_STREAMING=True), \
                 patch("helpdesk.services.llm_generator._stream_request_chat_completion", side_effect=[iter([r]) for r in responses]), \
                 patch("helpdesk.services.llm_generator._validate_generated_answer"), \
                 patch("helpdesk.services.llm_generator._validate_answer_language"), \

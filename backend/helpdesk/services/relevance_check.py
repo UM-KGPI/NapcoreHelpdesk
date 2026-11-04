@@ -15,6 +15,7 @@ from urllib import request
 from django.conf import settings
 
 from helpdesk.services.controller_llm import _build_ssl_context
+from helpdesk.services.llm_options import controller_max_tokens, controller_request_options
 from helpdesk.services.llm_model_recovery import resolve_effective_model
 
 logger = logging.getLogger(__name__)
@@ -87,8 +88,8 @@ def _ask(question: str) -> bool:
         "model": effective_model,
         "messages": [{"role": "user", "content": _PROMPT.format(question=question)}],
         "temperature": 0.0,
-        "max_tokens": 8,
-        "chat_template_kwargs": {"enable_thinking": False},
+        "max_tokens": controller_max_tokens(8),
+        **controller_request_options(json_mode=False),
     }
     headers = {"Content-Type": "application/json"}
     if api_key:
