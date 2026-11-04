@@ -1611,6 +1611,11 @@ components:
           type: [string, "null"]
         llmRejectionReason:
           type: [string, "null"]
+        llmAnswerValidated:
+          type: [boolean, "null"]
+          description: >-
+            False when the answer was served although its retry also failed validation (the answer is then
+            marked for review and its confidence capped at 0.80); null when no LLM answer was generated.
       additionalProperties: false
     AnswerFeedbackRequest:
       type: object
