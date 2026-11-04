@@ -876,33 +876,34 @@ def _is_pure_boilerplate(answer: str) -> bool:
     return has_all
 
 
+def _normalized_language(name: str | None) -> str:
+    name = (name or "").strip().lower()
+    return "english" if name == "en" else name
+
+
 def _validate_answer_language(answer: str, question: str, target_language: str | None = None) -> None:
-    """
-    Validate that answer is in the same language as the question.
+    """Reject an answer written in a different language than the question's (target_language).
 
-    If question is non-English but answer is in English, raise error to trigger retry
-    with more aggressive language instruction.
+    Both directions count: an English answer to a German question, and a German or Dutch answer to an
+    English question (Claude Haiku 5.5 wrote 7 of 147 English benchmark answers in the language of the
+    evidence, 2026-11-04). Nothing is checked when the question's language is unknown or the answer's
+    language cannot be detected with confidence; the detector's own failures are logged, never raised.
     """
-    if not target_language or target_language.lower() in ("en", "english"):
-        return  # English questions don't need language validation
-
-    # Detect the language of the answer
+    target = _normalized_language(target_language)
+    if not target:
+        return
     try:
         from helpdesk.services.question_preprocessor import detect_question_language
-        answer_lang = detect_question_language(answer)
 
-        # Normalize language names for comparison
-        target_normalized = target_language.lower().strip()
-        answer_normalized = (answer_lang or "").lower().strip()
-
-        # Check if answer is in a different language (especially if it's English)
-        if answer_normalized in ("english", "en") and target_normalized not in ("english", "en"):
-            raise LLMGenerationError(
-                f"Answer is in English but question is in {target_language}. "
-                f"LLM did not respect language instruction. Please retry."
-            )
-    except Exception as e:
-        logger.warning(f"Language validation check failed: {e}")
+        answer_language = _normalized_language(detect_question_language(answer))
+    except Exception:
+        logger.warning("Answer language detection failed", exc_info=True)
+        return
+    if answer_language and answer_language != target:
+        raise LLMGenerationError(
+            f"Answer language is {answer_language.title()}, but the question is in {target.title()}. "
+            f"Write the whole answer in {target.title()}."
+        )
 
 
 def _validate_answer_has_specificity(answer: str) -> None:
@@ -1213,7 +1214,14 @@ def _build_messages(
     effective_language = detected_language
 
     _lang = (effective_language or "").strip().lower()
-    if _lang and _lang not in ("en", "english"):
+    if _lang in ("en", "english"):
+        # Named, not "the question's language": with evidence in German or Dutch (OpRa), a model told
+        # only to match the question drifted into the evidence's language.
+        language_instruction = (
+            " Respond in English, even when evidence blocks are in another language."
+            " Keep technical terms, class names, XML tags, and identifiers as they appear in the evidence."
+        )
+    elif _lang:
         language_instruction = (
             f" Respond in {effective_language}. Keep technical terms, class names, XML tags, and identifiers in English."
         )
@@ -1544,7 +1552,11 @@ def _append_feedback_message(
     # Add specific guidance for language errors
     language_hint = ""
     if "language" in error_msg.lower() or "english" in error_msg.lower():
-        language_hint = "\n- CRITICAL LANGUAGE REQUIREMENT: You MUST write your entire answer in the language of the question. Do NOT respond in English when the question is in another language. Write EVERYTHING in that language, including all text and explanations."
+        language_hint = (
+            "\n- CRITICAL LANGUAGE REQUIREMENT: write your entire answer in the language the rejection reason "
+            "names (the question's language), whatever language the evidence blocks are in. Keep technical "
+            "terms, class names, XML tags, and identifiers as they appear in the evidence."
+        )
 
     if legislation:
         return messages + [
@@ -1611,6 +1623,8 @@ def generate_answer_llm(
 
     max_chunks = max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 4)))
     max_chars_per_chunk = max(200, int(getattr(settings, "LLM_MAX_EVIDENCE_CHARS_PER_CHUNK", 1200)))
+    # Detected once: the prompt names it, and _validate_answer_language checks the answer against it.
+    target_language = question_language(question)
     messages = _build_messages(
         question=question,
         chunks=chunks,
@@ -1620,7 +1634,7 @@ def generate_answer_llm(
         faq_hint=faq_hint,
         language=language,
         all_candidates=all_candidates,
-        detected_language=question_language(question),
+        detected_language=target_language,
     )
 
     primary_base_url = (settings.LLM_API_BASE_URL or "").strip()
@@ -1658,6 +1672,7 @@ def generate_answer_llm(
     answer: str | None = None
     try:
         answer = _generate_answer_text(chunks=chunks, messages=messages, request_targets=request_targets)
+        _validate_answer_language(answer=answer, question=question, target_language=target_language)
         _validate_generated_answer(answer=answer, chunks=chunks)
     except LLMGenerationError as first_error:
         rejected_answer = answer or ""
@@ -1707,6 +1722,7 @@ def generate_answer_llm(
                 "rejection_reason": rejection_reason,
             }
         try:
+            _validate_answer_language(answer=answer, question=question, target_language=target_language)
             _validate_generated_answer(answer=answer, chunks=chunks)
         except LLMGenerationError as retry_error:
             # Retry failed validation too, but it did produce an answer. Keep it

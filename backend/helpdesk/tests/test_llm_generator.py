@@ -250,7 +250,7 @@ class LLMGeneratorTests(SimpleTestCase):
             ),
         ]
         generate_answer_llm(
-            question="A different question about NeTEx stops?",
+            question="How are stops represented in NeTEx?",
             chunks=[
                 {
                     "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx",

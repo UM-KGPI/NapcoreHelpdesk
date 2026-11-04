@@ -27,6 +27,22 @@ DetectorFactory.seed = 0
 MIN_DETECTION_WORDS = 3
 MIN_DETECTION_CONFIDENCE = 0.90
 
+# langdetect is also confidently wrong on short English fragments: "How does work in schema?" -> Dutch,
+# "What does a message look like?" -> Afrikaans, both at 0.99999 (4 of 147 benchmark questions, 2026-11-04).
+# The answer prompt then asks for a Dutch answer to an English question. English function words that are
+# not words of Dutch, German, French or Afrikaans settle it: a text built from them is English. (Overlaps
+# such as "in", "is", "was", "of", "die", "a" and "en" are deliberately left out.)
+ENGLISH_FUNCTION_WORDS = frozenset(
+    "the what how does do did which where when why who whom whose with between about using through "
+    "should would could can cannot must there their these those this that are been being from into "
+    "any each my your our they you we it its look like used use need needs required".split()
+)
+MIN_ENGLISH_FUNCTION_WORDS = 2
+MIN_ENGLISH_FUNCTION_WORD_SHARE = 0.25
+# A question opening with one of these is English ("Does support autonomous vehicle journey data modelling?"
+# -> French at 0.99999). "Is", "Was" and "Wie" are left out: they open Dutch and German questions too.
+ENGLISH_QUESTION_OPENERS = frozenset("what how does do did which where when why who whose can could should would are".split())
+
 # Full name for every language code langdetect's model can output (55 langs).
 # An LLM can answer in any of these languages.
 LANGDETECT_LANGUAGE_NAMES = {
@@ -89,6 +105,16 @@ def _strip_technical_terms(question: str) -> str:
     return " ".join(word for word in question.split() if not _looks_like_schema_identifier(word))
 
 
+def _reads_as_english(text: str) -> bool:
+    words = [word.lower() for word in re.findall(r"[^\W\d_]+", text)]
+    if not words:
+        return False
+    if words[0] in ENGLISH_QUESTION_OPENERS:
+        return True
+    hits = sum(1 for word in words if word in ENGLISH_FUNCTION_WORDS)
+    return hits >= MIN_ENGLISH_FUNCTION_WORDS and hits / len(words) >= MIN_ENGLISH_FUNCTION_WORD_SHARE
+
+
 def _detect_question_language(question: str) -> Optional[str]:
     """
     Detect the actual language of the question text using langdetect.
@@ -110,6 +136,9 @@ def _detect_question_language(question: str) -> Optional[str]:
             detected_code = detections[0].lang  # Best match
             detected_name = LANGDETECT_LANGUAGE_NAMES.get(detected_code)
             confidence = detections[0].prob
+            if detected_name and detected_code != "en" and _reads_as_english(stripped):
+                logger.debug(f"langdetect said {detected_name} for English function words; using English: {stripped!r}")
+                return LANGDETECT_LANGUAGE_NAMES["en"]
             if detected_name and confidence >= MIN_DETECTION_CONFIDENCE:
                 logger.debug(f"Detected question language: {detected_name} (code={detected_code}, confidence={confidence:.2f})")
                 return detected_name
