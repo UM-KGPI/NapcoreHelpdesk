@@ -1,0 +1,1592 @@
+{
+ "source": "https://inspire.ec.europa.eu/codelist/",
+ "codelists": [
+  {
+   "name": "RestrictionTypeValue",
+   "id": "http://inspire.ec.europa.eu/codelist/RestrictionTypeValue",
+   "label": "Restriction Type",
+   "definition": "Possible restrictions on vehicles that can access a transport element.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RestrictionTypeValue/maximumDoubleAxleWeight",
+     "label": "maximum double axle weight",
+     "definition": "The maximum weight per double axle of a vehicle allowed at a transport element.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RestrictionTypeValue/maximumDraught",
+     "label": "maximum draught",
+     "definition": "The maximum draught of a vehicle allowed on a transport element.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RestrictionTypeValue/maximumFlightLevel",
+     "label": "maximum flight level",
+     "definition": "The maximum flight level allowed for a vehicle at a transport element.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RestrictionTypeValue/maximumHeight",
+     "label": "maximum height",
+     "definition": "The maximum height of a vehicle which can pass under another object.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RestrictionTypeValue/maximumLength",
+     "label": "maximum length",
+     "definition": "The maximum length of a vehicle allowed at a transport element.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RestrictionTypeValue/maximumSingleAxleWeight",
+     "label": "maximum single axle weight",
+     "definition": "The maximum weight per single axle of a vehicle allowed at a transport element.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RestrictionTypeValue/maximumTotalWeight",
+     "label": "maximum total weight",
+     "definition": "The maximum total weight of a vehicle allowed at a transport element.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RestrictionTypeValue/maximumTripleAxleWeight",
+     "label": "maximum triple axle weight",
+     "definition": "The maximum weight per triple axle of a vehicle allowed at a transport element.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RestrictionTypeValue/maximumWidth",
+     "label": "maximum width",
+     "definition": "The maximum width of a vehicle allowed on a transport element.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RestrictionTypeValue/minimumFlightLevel",
+     "label": "minimum flight level",
+     "definition": "The minimum flight level allowed for a vehicle at a transport element.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "AccessRestrictionValue",
+   "id": "http://inspire.ec.europa.eu/codelist/AccessRestrictionValue",
+   "label": "Access Restriction",
+   "definition": "Types of access restrictions for a transport element.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AccessRestrictionValue/forbiddenLegally",
+     "label": "forbidden legally",
+     "definition": "Access to the transport element is forbidden by law.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AccessRestrictionValue/physicallyImpossible",
+     "label": "physically impossible",
+     "definition": "Access to the transport element is physically impossible due to the presence of barriers or other physical obstacles.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AccessRestrictionValue/private",
+     "label": "private",
+     "definition": "Access to the transport element is restricted because it is privately owned.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AccessRestrictionValue/publicAccess",
+     "label": "public access",
+     "definition": "The transport element is open to public access.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AccessRestrictionValue/seasonal",
+     "label": "seasonal",
+     "definition": "Access to the transport element depends on the season.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AccessRestrictionValue/toll",
+     "label": "toll",
+     "definition": "Access to the transport element is subject to toll.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "TransportTypeValue",
+   "id": "http://inspire.ec.europa.eu/codelist/TransportTypeValue",
+   "label": "Transport type",
+   "definition": "Possible types on transport networks.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/TransportTypeValue/road",
+     "label": "road",
+     "definition": "The transport network consists of transport by road",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/TransportTypeValue/air",
+     "label": "air",
+     "definition": "The transport network consists of transport by air",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/TransportTypeValue/rail",
+     "label": "rail",
+     "definition": "The transport network consists of transport by rail",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/TransportTypeValue/water",
+     "label": "water",
+     "definition": "The transport network consists of transport by water",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/TransportTypeValue/cable",
+     "label": "cable",
+     "definition": "The transport network consists of transport by cable",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "AreaConditionValue",
+   "id": "http://inspire.ec.europa.eu/codelist/AreaConditionValue",
+   "label": "Area Condition",
+   "definition": "Speed limit restriction depending on the area.",
+   "description": "SOURCE [Euroroads].",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AreaConditionValue/inNationalPark",
+     "label": "in national park",
+     "definition": "Speed limit restriction inside national park.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AreaConditionValue/insideCities",
+     "label": "inside cities",
+     "definition": "Speed limit restriction inside cities.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AreaConditionValue/nearRailroadCrossing",
+     "label": "near railroad crossing",
+     "definition": "Speed limit restriction near rail road crossing.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AreaConditionValue/nearSchool",
+     "label": "near school",
+     "definition": "Speed limit restriction near school.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AreaConditionValue/outsideCities",
+     "label": "outside cities",
+     "definition": "Speed limit restriction outside cities.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AreaConditionValue/trafficCalmingArea",
+     "label": "traffic calming area",
+     "definition": "Speed limit restriction in traffic calming area.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "FormOfRoadNodeValue",
+   "id": "http://inspire.ec.europa.eu/codelist/FormOfRoadNodeValue",
+   "label": "Form Of Road Node",
+   "definition": "Functions of road nodes.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfRoadNodeValue/enclosedTrafficArea",
+     "label": "enclosed traffic area",
+     "definition": "The road node is situated inside and/or represents an enclosed traffic area. A traffic area is an area with no internal structure of legally defined driving directions. At least two roads are connected to the area.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfRoadNodeValue/junction",
+     "label": "junction",
+     "definition": "Road node where three or more road links connect.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfRoadNodeValue/levelCrossing",
+     "label": "level crossing",
+     "definition": "A road node where the road network is a crossed by a railway at the same level.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfRoadNodeValue/pseudoNode",
+     "label": "pseudo node",
+     "definition": "Exactly two road links connect to the road node.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfRoadNodeValue/roadEnd",
+     "label": "road end",
+     "definition": "Only one road link connects to the road node. It signifies the end of a road.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfRoadNodeValue/roadServiceArea",
+     "label": "road service area",
+     "definition": "Surface annexed to a road and devoted to offer particular services for it.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfRoadNodeValue/roundabout",
+     "label": "roundabout",
+     "definition": "The road node represents or is a part of a roundabout. A roundabout is a road which forms a ring on which traffic travelling in only one direction is allowed.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfRoadNodeValue/trafficSquare",
+     "label": "traffic square",
+     "definition": "Area (partly) enclosed by roads which is used for non-traffic purposes and which is not a roundabout.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "RoadSurfaceCategoryValue",
+   "id": "http://inspire.ec.europa.eu/codelist/RoadSurfaceCategoryValue",
+   "label": "Road Surface Category",
+   "definition": "Values to indicate whether a road is paved or not paved.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RoadSurfaceCategoryValue/paved",
+     "label": "paved",
+     "definition": "Road with a hard paved surface.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RoadSurfaceCategoryValue/unpaved",
+     "label": "unpaved",
+     "definition": "Road not paved.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "SpeedLimitSourceValue",
+   "id": "http://inspire.ec.europa.eu/codelist/SpeedLimitSourceValue",
+   "label": "Speed Limit Source",
+   "definition": "Possible sources for speed limits.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/SpeedLimitSourceValue/fixedTrafficSign",
+     "label": "fixed traffic sign",
+     "definition": "Source is a fixed traffic sign (site specific administrative order, explicit speed limit).",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/SpeedLimitSourceValue/regulation",
+     "label": "regulation",
+     "definition": "Source is a regulation (national regulation, rule or 'implicit speed limit').",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/SpeedLimitSourceValue/variableTrafficSign",
+     "label": "variable traffic sign",
+     "definition": "Source is a variable traffic sign.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "VehicleTypeValue",
+   "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue",
+   "label": "Vehicle Type",
+   "definition": "Possible types of vehicles.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/allVehicle",
+     "label": "all vehicle",
+     "definition": "Any vehicle, not including pedestrians.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/bicycle",
+     "label": "bicycle",
+     "definition": "A pedal-driven two-wheeled vehicle.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/carWithTrailer",
+     "label": "car with trailer",
+     "definition": "A passenger car with an attached trailer.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/deliveryTruck",
+     "label": "delivery truck",
+     "definition": "A truck vehicle of relatively small size, whose principal use is for delivery of goods and materials.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/emergencyVehicle",
+     "label": "emergency vehicle",
+     "definition": "A vehicle engaged in emergency response, including but not limited to police, ambulance and fire.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/employeeVehicle",
+     "label": "employee vehicle",
+     "definition": "A vehicle operated by an employee of an organization that is used according to that organization's procedures.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/facilityVehicle",
+     "label": "facility vehicle",
+     "definition": "A vehicle dedicated to a localized area within a private or restricted estate.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/farmVehicle",
+     "label": "farm vehicle",
+     "definition": "Vehicle commonly associated with farming activities.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/highOccupancyVehicle",
+     "label": "high occupancy vehicle",
+     "definition": "Vehicle populated with a number of occupants corresponding to (or exceeding) the specified minimum number of passengers.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/lightRail",
+     "label": "light rail",
+     "definition": "Train-like transport vehicle limited to a rail network within a limited area.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/mailVehicle",
+     "label": "mail vehicle",
+     "definition": "A vehicle that collects, carries or delivers mail.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/militaryVehicle",
+     "label": "military vehicle",
+     "definition": "Vehicle authorized by a military authority.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/moped",
+     "label": "moped",
+     "definition": "Two or three wheeled vehicle equipped with internal combustion engine, with size less than 50 cc and maximum speed that does not exceed 45 km/h (28mph).",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/motorcycle",
+     "label": "motorcycle",
+     "definition": "Two or three wheeled vehicle equipped with internal combustion engine, with size more than 50 cc and maximum speed that does exceed 45 km/h (28mph).",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/passengerCar",
+     "label": "passenger car",
+     "definition": "A small vehicle designed for private transport of people.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/pedestrian",
+     "label": "pedestrian",
+     "definition": "A person on foot.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/privateBus",
+     "label": "private bus",
+     "definition": "A vehicle designed for transport of large groups of people, privately owned or chartered.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/publicBus",
+     "label": "public bus",
+     "definition": "A vehicle designed for transport of large groups of people that is generally characterised by published routes and schedules.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/residentialVehicle",
+     "label": "residential vehicle",
+     "definition": "A vehicle whose owner is resident (or a guest) of particular street or town area.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/schoolBus",
+     "label": "school bus",
+     "definition": "Vehicle operated on behalf of a school to transport students.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/snowChainEquippedVehicle",
+     "label": "snow chain equipped vehicle",
+     "definition": "Any vehicle equipped with snow chains.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/tanker",
+     "label": "tanker",
+     "definition": "A truck with more than two axles used to transport liquid or gas loads in bulk.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/taxi",
+     "label": "taxi",
+     "definition": "A vehicle licensed for hire usually fitted with a meter.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/transportTruck",
+     "label": "transport truck",
+     "definition": "A truck vehicle for long range transport of goods.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/trolleyBus",
+     "label": "trolley bus",
+     "definition": "A bus-like mass transport vehicle hooked up to an electrical network for power supply.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/vehicleForDisabledPerson",
+     "label": "vehicle for disabled person",
+     "definition": "A vehicle with supporting identification that designates a vehicle for disabled persons.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/vehicleWithExplosiveLoad",
+     "label": "vehicle with explosive load",
+     "definition": "Vehicle transporting explosive cargo.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/vehicleWithOtherDangerousLoad",
+     "label": "vehicle with other dangerous load",
+     "definition": "Vehicle transporting dangerous cargo other than explosive or water-polluting loads.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/VehicleTypeValue/vehicleWithWaterPollutingLoad",
+     "label": "vehicle with water polluting load",
+     "definition": "Vehicle transporting water-polluting cargo.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "WeatherConditionValue",
+   "id": "http://inspire.ec.europa.eu/codelist/WeatherConditionValue",
+   "label": "Weather Condition",
+   "definition": "Values to indicate weather conditions that affect speed limits.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/WeatherConditionValue/fog",
+     "label": "fog",
+     "definition": "Speed applies when fog is present.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/WeatherConditionValue/ice",
+     "label": "ice",
+     "definition": "Speed applies when ice is present.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/WeatherConditionValue/rain",
+     "label": "rain",
+     "definition": "Speed applies when rain is present.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/WeatherConditionValue/smog",
+     "label": "smog",
+     "definition": "Speed applies when a certain amount of smog is present.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/WeatherConditionValue/snow",
+     "label": "snow",
+     "definition": "Speed applies when snow is present.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "FormOfWayValue",
+   "id": "http://inspire.ec.europa.eu/codelist/FormOfWayValue",
+   "label": "Form Of Way",
+   "definition": "Classification based on the physical properties of the road link.",
+   "description": "SOURCE Based on [Euroroads].",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfWayValue/bicycleRoad",
+     "label": "bicycle road",
+     "definition": "Road where bicycles are the only vehicles allowed.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfWayValue/dualCarriageway",
+     "label": "dual carriageway",
+     "definition": "Road with physically separated carriageways regardless of the number of lanes, which is not a motorway or a freeway.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfWayValue/entranceOrExitCarPark",
+     "label": "entrance or exit car park",
+     "definition": "Road specially designed to enter or to leave a parking area.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfWayValue/entranceOrExitService",
+     "label": "entrance or exit service",
+     "definition": "Road used only to enter or to leave a service.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfWayValue/freeway",
+     "label": "freeway",
+     "definition": "Road having no single level crossings with other roads.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfWayValue/motorway",
+     "label": "motorway",
+     "definition": "Road to which regulations will normally apply with regards to entry and use. It has two or more mostly physically separated carriageways and no single level-crossings.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfWayValue/pedestrianZone",
+     "label": "pedestrian zone",
+     "definition": "Area with a road network which is especially designed for use by pedestrians.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfWayValue/serviceRoad",
+     "label": "service road",
+     "definition": "Road running parallel to, and designed to connect, a road with a relatively high connectivity function with roads with a lower connectivity function.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfWayValue/singleCarriageway",
+     "label": "single carriageway",
+     "definition": "Road where the traffic is not separated by any physical object.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfWayValue/slipRoad",
+     "label": "slip road",
+     "definition": "Road especially designed to enter or exit another road.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfWayValue/tractorRoad",
+     "label": "tractor road",
+     "definition": "Arranged road only usable for a tractor (farm vehicle or forest machine) or terrain vehicle (a vehicle with higher ground clearance, big wheels and 4 wheel drive).",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfWayValue/walkway",
+     "label": "walkway",
+     "definition": "Road reserved for pedestrian use and closed for regular vehicular use by a physically barrier.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "RoadServiceTypeValue",
+   "id": "http://inspire.ec.europa.eu/codelist/RoadServiceTypeValue",
+   "label": "Road Service Type",
+   "definition": "Types of road service areas.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RoadServiceTypeValue/busStation",
+     "label": "bus station",
+     "definition": "The road service is a bus stop.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RoadServiceTypeValue/parking",
+     "label": "parking",
+     "definition": "The road service area is a parking facility.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RoadServiceTypeValue/restArea",
+     "label": "rest area",
+     "definition": "The road service is a rest area.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RoadServiceTypeValue/toll",
+     "label": "toll",
+     "definition": "Area that provides toll services such as ticket dispensers or toll payment services.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "ServiceFacilityValue",
+   "id": "http://inspire.ec.europa.eu/codelist/ServiceFacilityValue",
+   "label": "Service Facility",
+   "definition": "Possible service facilities available at a road service area.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/ServiceFacilityValue/drinks",
+     "label": "drinks",
+     "definition": "Drinks are available.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/ServiceFacilityValue/food",
+     "label": "food",
+     "definition": "Food is available.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/ServiceFacilityValue/fuel",
+     "label": "fuel",
+     "definition": "Fuel is available.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/ServiceFacilityValue/picnicArea",
+     "label": "picnic area",
+     "definition": "A picnic area is present.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/ServiceFacilityValue/playground",
+     "label": "playground",
+     "definition": "A playground area is present.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/ServiceFacilityValue/shop",
+     "label": "shop",
+     "definition": "A shop is present.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/ServiceFacilityValue/toilets",
+     "label": "toilets",
+     "definition": "Toilets are present.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "MinMaxLaneValue",
+   "id": "http://inspire.ec.europa.eu/codelist/MinMaxLaneValue",
+   "label": "Minimum or maximum track number",
+   "definition": "Values to indicate whether number of lanes are counted as the maximum, minimum or average number.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/MinMaxLaneValue/maximum",
+     "label": "maximum",
+     "definition": "The number of lanes is the maximum value for a given part of the road network",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/MinMaxLaneValue/average",
+     "label": "average",
+     "definition": "The number of lanes is the average value for a given part of the road network",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/MinMaxLaneValue/minimum",
+     "label": "minimum",
+     "definition": "The number of lanes is the minimum value for a given part of the road network",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "SpeedLimitMinMaxValue",
+   "id": "http://inspire.ec.europa.eu/codelist/SpeedLimitMinMaxValue",
+   "label": "Nature of speed limit",
+   "definition": "Possible values to indicate the nature of a speed limit.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/SpeedLimitMinMaxValue/recommendedMinimum",
+     "label": "recommendedMinimum",
+     "definition": "Speed limit is a recommended minimum value",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/SpeedLimitMinMaxValue/recommendedMaximum",
+     "label": "recommendedMaximum",
+     "definition": "Speed limit is a recommended maximum value",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/SpeedLimitMinMaxValue/maximum",
+     "label": "maximum",
+     "definition": "Speed limit is a maximum value",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/SpeedLimitMinMaxValue/minimum",
+     "label": "minimum",
+     "definition": "Speed limit is a minimum value",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "FunctionalRoadClassValue",
+   "id": "http://inspire.ec.europa.eu/codelist/FunctionalRoadClassValue",
+   "label": "Functional road class",
+   "definition": "Values for the functional road classification. This classification is based on the importance of the role that the road performs in the road network.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FunctionalRoadClassValue/fourthClass",
+     "label": "fourthClass",
+     "definition": "The fifth most important roads in a given network",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FunctionalRoadClassValue/thirdClass",
+     "label": "thirdClass",
+     "definition": "The fourth most important roads in a given network",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FunctionalRoadClassValue/seventhClass",
+     "label": "seventhClass",
+     "definition": "The eighth most important roads in a given network",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FunctionalRoadClassValue/eighthClass",
+     "label": "eighthClass",
+     "definition": "The ninth most important roads in a given network",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FunctionalRoadClassValue/mainRoad",
+     "label": "mainRoad",
+     "definition": "The most important roads in a given network",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FunctionalRoadClassValue/firstClass",
+     "label": "firstClass",
+     "definition": "The second most important roads in a given network",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FunctionalRoadClassValue/ninthClass",
+     "label": "ninthClass",
+     "definition": "The least important roads in a given network",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FunctionalRoadClassValue/secondClass",
+     "label": "secondClass",
+     "definition": "The third most important roads in a given network",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FunctionalRoadClassValue/fifthClass",
+     "label": "fifthClass",
+     "definition": "The sixth most important roads in a given network",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FunctionalRoadClassValue/sixthClass",
+     "label": "sixthClass",
+     "definition": "The seventh most important roads in a given network",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "FormOfRailwayNodeValue",
+   "id": "http://inspire.ec.europa.eu/codelist/FormOfRailwayNodeValue",
+   "label": "Form Of Railway Node",
+   "definition": "The possible functions of a railway node within the railway network.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfRailwayNodeValue/railwayEnd",
+     "label": "railway end",
+     "definition": "Only one railway link connects to the railway node. It signifies the end of a railway line.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfRailwayNodeValue/railwayStop",
+     "label": "railway stop",
+     "definition": "A place in the railway network where trains stop to load/unload cargo or to let passengers get on and off the train.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfRailwayNodeValue/levelCrossing",
+     "label": "level Crossing",
+     "definition": "A railway node where the railway network is a crossed by a road at the same level.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfRailwayNodeValue/junction",
+     "label": "junction",
+     "definition": "A railway node where the railway network has a mechanism consisting on a railroad track with two movable rails and the necessary connections, which let vehicles turn from one track to another.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfRailwayNodeValue/pseudoNode",
+     "label": "pseudo node",
+     "definition": "A railway node which represents a point where one or more attributes of the railway links connected to it change their value, or a point necessary to describe the geometry of the network.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "RailwayTypeValue",
+   "id": "http://inspire.ec.europa.eu/codelist/RailwayTypeValue",
+   "label": "Railway Type",
+   "definition": "The possible types of railway transport.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RailwayTypeValue/cogRailway",
+     "label": "cog railway",
+     "definition": "A railway transport which allows the vehicles to operate on steep gradients, consisting of a railway provided with a toothed rack rail (usually between the running rails) where vehicles are fitted with one or more cog wheels or pinions that mesh with this rack rail.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RailwayTypeValue/funicular",
+     "label": "funicular",
+     "definition": "A railway transport consisting of a cable attached to a vehicle on rails which moves them up and down a very steep slope. Where possible the ascending and descending vehicles counterbalance each other.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RailwayTypeValue/magneticLevitation",
+     "label": "magnetic levitation",
+     "definition": "A railway transport based on a single rail which acts as guideway of a vehicle and supports it by means of a magnetic levitation mechanism.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RailwayTypeValue/metro",
+     "label": "metro",
+     "definition": "An urban railway transport system used in large urban areas, which runs on a separate track from other transport systems, is usually electrically powered and in some cases runs under ground.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RailwayTypeValue/monorail",
+     "label": "monorail",
+     "definition": "A railway transport based on a single rail which acts as both its only support and guideway.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RailwayTypeValue/suspendedRail",
+     "label": "suspended rail",
+     "definition": "A railway transport based on a single rail, acting as both support and guideway, from which a vehicle is suspended to move along the railway.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RailwayTypeValue/train",
+     "label": "train",
+     "definition": "A railway transport usually consisting of two parallel rails on which a powered-vehicle or train machine pulls a connected series of vehicles to move them along the railway in order to transport freight or passengers from one destination to another.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RailwayTypeValue/tramway",
+     "label": "tramway",
+     "definition": "A railway transport system used in urban areas, which often runs at street level, sharing road space with motor traffic and pedestrians. Tramways are usually electrically powered.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "RailwayUseValue",
+   "id": "http://inspire.ec.europa.eu/codelist/RailwayUseValue",
+   "label": "Railway Use",
+   "definition": "The possible uses of railways.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RailwayUseValue/cargo",
+     "label": "cargo",
+     "definition": "The use of railway is exclusively for cargo operations.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RailwayUseValue/carShuttle",
+     "label": "car shuttle",
+     "definition": "The use of railway is exclusively to perform car shuttle transport.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RailwayUseValue/mixed",
+     "label": "mixed",
+     "definition": "The use of railway is mixed. It is used to transport passengers and cargo.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RailwayUseValue/passengers",
+     "label": "passengers",
+     "definition": "The use of railway is exclusively to transport passengers.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "MinMaxTrackValue",
+   "id": "http://inspire.ec.europa.eu/codelist/MinMaxTrackValue",
+   "label": "Min Max track",
+   "definition": "Values to indicate whether number of tracks are counted as the maximum, minimum or average number.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/MinMaxTrackValue/average",
+     "label": "average",
+     "definition": "The number of tracks is the average value for a given part of the railway network",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/MinMaxTrackValue/minimum",
+     "label": "minimum",
+     "definition": "The number of tracks is the minimum value for a given part of the railway network",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/MinMaxTrackValue/maximum",
+     "label": "maximum",
+     "definition": "The number of tracks is the maximum value for a given part of the railway network",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "TrackGaugeCategoryValue",
+   "id": "http://inspire.ec.europa.eu/codelist/TrackGaugeCategoryValue",
+   "label": "Track Gauge category",
+   "definition": "The possible categories of railways concerning its nominal track gauge.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/TrackGaugeCategoryValue/narrow",
+     "label": "narrow",
+     "definition": "The nominal track gauge property is narrower than the standard one",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/TrackGaugeCategoryValue/broad",
+     "label": "broad",
+     "definition": "The nominal track gauge property is broader than the standard one",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/TrackGaugeCategoryValue/standard",
+     "label": "standard",
+     "definition": "The nominal track gauge property is equal to the European standard (1435 millimetres)",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/TrackGaugeCategoryValue/notApplicable",
+     "label": "notApplicable",
+     "definition": "The definition of a nominal track gauge property is not applicable to the type of railway transport",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "CablewayTypeValue",
+   "id": "http://inspire.ec.europa.eu/codelist/CablewayTypeValue",
+   "label": "Cableway Type",
+   "definition": "The possible types of cableway transport.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/CablewayTypeValue/cabinCableCar",
+     "label": "cabin cable car",
+     "definition": "A cableway transport whose vehicles consist of a suspended cabin for carrying groups of people and/or goods inside it from one location to another.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/CablewayTypeValue/chairLift",
+     "label": "chair lift",
+     "definition": "A cableway transport whose vehicles consist of suspended chairs for carrying individuals or groups of people from one location to another via a steel cable or rope which is looped around two points.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/CablewayTypeValue/skiTow",
+     "label": "ski tow",
+     "definition": "A cableway transport for pulling skiers and snowboarders uphill.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "FerryUseValue",
+   "id": "http://inspire.ec.europa.eu/codelist/FerryUseValue",
+   "label": "Ferry Use",
+   "definition": "Types of transport carried out by a ferry.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FerryUseValue/cars",
+     "label": "cars",
+     "definition": "Ferry carries cars.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FerryUseValue/other",
+     "label": "other",
+     "definition": "Ferry carries others forms of transport than passengers, cars, trucks or trains.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FerryUseValue/passengers",
+     "label": "passengers",
+     "definition": "Ferry carries passengers.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FerryUseValue/train",
+     "label": "train",
+     "definition": "Ferry carries trains.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FerryUseValue/trucks",
+     "label": "trucks",
+     "definition": "Ferry carries trucks.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "FormOfWaterwayNodeValue",
+   "id": "http://inspire.ec.europa.eu/codelist/FormOfWaterwayNodeValue",
+   "label": "Form Of Waterway Node",
+   "definition": "Function of a Waterway Node in the water transport network.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfWaterwayNodeValue/junctionFork",
+     "label": "junction fork",
+     "definition": "Infrastructure elements where one vessel traffic flow crosses another vessel traffic flow or points where vessel traffic flows divide or come together.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfWaterwayNodeValue/lockComplex",
+     "label": "lock complex",
+     "definition": "Lock or group of locks, intended for raising and lowering boats between stretches of water of different levels on river and canal waterways.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfWaterwayNodeValue/movableBridge",
+     "label": "movable bridge",
+     "definition": "Bridge that can be raised or turned to allow the passage of ships.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfWaterwayNodeValue/shipLift",
+     "label": "ship lift",
+     "definition": "A machine for transporting boats between water bodies at two different elevations, which is used as an alternative to the canal locks.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfWaterwayNodeValue/waterTerminal",
+     "label": "water terminal",
+     "definition": "The location where goods are transhipped.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/FormOfWaterwayNodeValue/turningBasin",
+     "label": "turning basin",
+     "definition": "A place where a canal or narrow waterway is widened to allow boats to turn around.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "CEMTClassValue",
+   "id": "http://inspire.ec.europa.eu/codelist/CEMTClassValue",
+   "label": "CEMT class",
+   "definition": "Inland waterway classification according to CEMT (European Conference of Ministers of Transport) Resolution No 92/2.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/CEMTClassValue/VII",
+     "label": "VII",
+     "definition": "Inland waterway belonging to CEMT-class VII, defined by the European Conference of Ministers of Transport, Resolution No.92/2 - Table 1",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/CEMTClassValue/VIb",
+     "label": "VIb",
+     "definition": "Inland waterway belonging to CEMT-class VIb, defined by the European Conference of Ministers of Transport, Resolution No.92/2 - Table 1",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/CEMTClassValue/I",
+     "label": "I",
+     "definition": "Inland waterway belonging to CEMT-class I, defined by the European Conference of Ministers of Transport, Resolution No.92/2 - Table 1",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/CEMTClassValue/Vb",
+     "label": "Vb",
+     "definition": "Inland waterway belonging to CEMT-class Vb, defined by the European Conference of Ministers of Transport, Resolution No.92/2 - Table 1",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/CEMTClassValue/VIc",
+     "label": "VIc",
+     "definition": "Inland waterway belonging to CEMT-class VIc, defined by the European Conference of Ministers of Transport, Resolution No.92/2 - Table 1",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/CEMTClassValue/III",
+     "label": "III",
+     "definition": "Inland waterway belonging to CEMT-class III, defined by the European Conference of Ministers of Transport, Resolution No.92/2 - Table 1",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/CEMTClassValue/II",
+     "label": "II",
+     "definition": "Inland waterway belonging to CEMT-class II, defined by the European Conference of Ministers of Transport, Resolution No.92/2 - Table 1",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/CEMTClassValue/Va",
+     "label": "Va",
+     "definition": "Inland waterway belonging to CEMT-class Va, defined by the European Conference of Ministers of Transport, Resolution No.92/2 - Table 1",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/CEMTClassValue/VIa",
+     "label": "VIa",
+     "definition": "Inland waterway belonging to CEMT-class VIa, defined by the European Conference of Ministers of Transport, Resolution No.92/2 - Table 1",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/CEMTClassValue/IV",
+     "label": "IV",
+     "definition": "Inland waterway belonging to CEMT-class IV, defined by the European Conference of Ministers of Transport, Resolution No.92/2 - Table 1",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "AerodromeCategoryValue",
+   "id": "http://inspire.ec.europa.eu/codelist/AerodromeCategoryValue",
+   "label": "Aerodrome Category",
+   "definition": "Aerodrome possible categories concerning the scope and importance of the air traffic services offered from and to it.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AerodromeCategoryValue/domesticNational",
+     "label": "domestic national",
+     "definition": "Aerodrome serving domestic national air traffic services.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AerodromeCategoryValue/domesticRegional",
+     "label": "domestic regional",
+     "definition": "Aerodrome serving domestic regional air traffic services.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AerodromeCategoryValue/international",
+     "label": "international",
+     "definition": "Aerodrome serving international air traffic services.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "AerodromeTypeValue",
+   "id": "http://inspire.ec.europa.eu/codelist/AerodromeTypeValue",
+   "label": "Aerodrome Type",
+   "definition": "A code specifying whether a particular entity occurrence is an Aerodrome or a Heliport.",
+   "description": "SOURCE [CodeAirportHeliportType - AIXM5.0].",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AerodromeTypeValue/aerodromeHeliport",
+     "label": "aerodrome heliport",
+     "definition": "Aerodrome with heliport landing area.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AerodromeTypeValue/aerodromeOnly",
+     "label": "aerodrome only",
+     "definition": "Aerodrome only.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AerodromeTypeValue/heliportOnly",
+     "label": "heliport only",
+     "definition": "Heliport only.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AerodromeTypeValue/landingSite",
+     "label": "landing site",
+     "definition": "Landing site.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "AirRouteLinkClassValue",
+   "id": "http://inspire.ec.europa.eu/codelist/AirRouteLinkClassValue",
+   "label": "Air Route Link Class",
+   "definition": "The type of the route from the navigation point of view.",
+   "description": "SOURCE [CodeRouteNavigationType - AIXM5.0].\\n\\nNOTE These values enumerate the possible usages of a AirRouteLink.\\n\\nEXAMPLES Conventional, RNAV.",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AirRouteLinkClassValue/conventional",
+     "label": "conventional",
+     "definition": "Conventional navigation route: An air route which does neither use Area Navigation nor TACAN navigation for air traffic services.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AirRouteLinkClassValue/RNAV",
+     "label": "RNAV",
+     "definition": "Area navigation route: An air route which uses Area Navigation (RNAV) for air traffic services.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AirRouteLinkClassValue/TACAN",
+     "label": "TACAN",
+     "definition": "TACAN route: An air route which uses TACAN Navigation for air traffic services.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "AirRouteTypeValue",
+   "id": "http://inspire.ec.europa.eu/codelist/AirRouteTypeValue",
+   "label": "Air Route Type",
+   "definition": "The route classification as ATS route or North Atlantic Tracks.",
+   "description": "SOURCE [CodeRouteType - AIXM5.0].",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AirRouteTypeValue/ATS",
+     "label": "ATS",
+     "definition": "ATS Route as described in ICAO Annex 11.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AirRouteTypeValue/NAT",
+     "label": "NAT",
+     "definition": "North Atlantic Track (part of Organized Track System).",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "AirspaceAreaTypeValue",
+   "id": "http://inspire.ec.europa.eu/codelist/AirspaceAreaTypeValue",
+   "label": "Airspace Area Type",
+   "definition": "Recognised types of Airspace.",
+   "description": "SOURCE [CodeAirspaceType - AIXM5.0].",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AirspaceAreaTypeValue/ATZ",
+     "label": "Airport Traffic Zone",
+     "definition": "Airspace of defined dimensions established around an airport for the protection of airport traffic.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AirspaceAreaTypeValue/CTA",
+     "label": "control area",
+     "definition": "A controlled airspace extending upwards from a specified limit above the earth.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AirspaceAreaTypeValue/CTR",
+     "label": "control zone",
+     "definition": "A controlled airspace extending upwards from the surface of the earth to a specified upper limit.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AirspaceAreaTypeValue/D",
+     "label": "Danger area",
+     "definition": "Danger area. Airspace of defined dimensions within which activities dangerous to the flight of aircraft may exist at specified times.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AirspaceAreaTypeValue/FIR",
+     "label": "Flight Information Region",
+     "definition": "Airspace of defined dimensions within which flight information service and alerting service are provided. Might, for example, be used if service provided by more than one unit.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AirspaceAreaTypeValue/P",
+     "label": "Prohibited area",
+     "definition": "Prohibited area. Airspace of defined dimensions, above the land areas or territorial waters of a State, within which the flight of aircraft is prohibited.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AirspaceAreaTypeValue/R",
+     "label": "Restricted area",
+     "definition": "Restricted area. Airspace of defined dimensions, above the land areas or territorial waters of a State, within which the flight of aircraft is restricted in accordance with certain specified conditions.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AirspaceAreaTypeValue/TMA",
+     "label": "terminal control area",
+     "definition": "Control area normally established at the confluence of ATS routes in the vicinity of one or more major aerodromes. Mainly used in Europe under the Flexible Use of Airspace concept.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AirspaceAreaTypeValue/UIR",
+     "label": "Upper flight Information Region",
+     "definition": "An upper airspace of defined dimensions within which flight information service and alerting service are provided. Each state determines its definition for upper airspace.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "AirUseRestrictionValue",
+   "id": "http://inspire.ec.europa.eu/codelist/AirUseRestrictionValue",
+   "label": "Air Use Restriction",
+   "definition": "The use restrictions for an air network object.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AirUseRestrictionValue/reservedForMilitary",
+     "label": "reserved for military",
+     "definition": "The air network object is exclusively for military use.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/AirUseRestrictionValue/temporalRestrictions",
+     "label": "temporal restrictions",
+     "definition": "The temporal restrictions apply to the use of the air network object.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "NavaidTypeValue",
+   "id": "http://inspire.ec.europa.eu/codelist/NavaidTypeValue",
+   "label": "Navaid Type",
+   "definition": "Types of Navaid Services.",
+   "description": "SOURCE [AIXM5.0].",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/NavaidTypeValue/DME",
+     "label": "DME",
+     "definition": "Distance Measuring Equipment.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/NavaidTypeValue/ILS",
+     "label": "ILS",
+     "definition": "Instrument Landing System.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/NavaidTypeValue/ILS-DME",
+     "label": "ILS-DME",
+     "definition": "ILS with collocated DME.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/NavaidTypeValue/LOC",
+     "label": "LOC",
+     "definition": "Localizer.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/NavaidTypeValue/LOC-DME",
+     "label": "LOC-DME",
+     "definition": "LOC and DME collocated.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/NavaidTypeValue/MKR",
+     "label": "MKR",
+     "definition": "Marker Beacon.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/NavaidTypeValue/MLS",
+     "label": "MLS",
+     "definition": "Microwave Landing System.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/NavaidTypeValue/MLS-DME",
+     "label": "MLS-DME",
+     "definition": "MLS with collocated DME.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/NavaidTypeValue/NDB",
+     "label": "NDB",
+     "definition": "Non-Directional Radio Beacon.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/NavaidTypeValue/NDB-DME",
+     "label": "NDB-DME",
+     "definition": "NDB and DME collocated.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/NavaidTypeValue/NDB-MKR",
+     "label": "NDB-MKR",
+     "definition": "Non-Directional Radio Beacon and Marker Beacon.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/NavaidTypeValue/TACAN",
+     "label": "TACAN",
+     "definition": "Tactical Air Navigation Beacon.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/NavaidTypeValue/TLS",
+     "label": "TLS",
+     "definition": "Transponder Landing System.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/NavaidTypeValue/VOR",
+     "label": "VOR",
+     "definition": "VHF Omnidirectional Radio Range.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/NavaidTypeValue/VOR-DME",
+     "label": "VOR-DME",
+     "definition": "VOR and DME collocated.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/NavaidTypeValue/VORTAC",
+     "label": "VORTAC",
+     "definition": "VOR and TACAN collocated.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "PointRoleValue",
+   "id": "http://inspire.ec.europa.eu/codelist/PointRoleValue",
+   "label": "Point Role",
+   "definition": "Role of the Runway Centreline Point.",
+   "description": "SOURCE [AIXM5.0].",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/PointRoleValue/end",
+     "label": "end",
+     "definition": "Physical end of a runway direction.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/PointRoleValue/mid",
+     "label": "mid",
+     "definition": "The mid point of the runway.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/PointRoleValue/start",
+     "label": "start",
+     "definition": "Physical start of a runway direction.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/PointRoleValue/threshold",
+     "label": "threshold",
+     "definition": "The beginning of that portion of the runway usable for landing.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "RunwayTypeValue",
+   "id": "http://inspire.ec.europa.eu/codelist/RunwayTypeValue",
+   "label": "Runway Type",
+   "definition": "A code that makes a distinction between runways for airplanes and FATO for helicopters.",
+   "description": "SOURCE [CodeRunwayType - AIXM5.0].",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RunwayTypeValue/FATO",
+     "label": "FATO",
+     "definition": "Final Approach and Take Off Area for helicopters.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RunwayTypeValue/runway",
+     "label": "runway",
+     "definition": "Runway for airplanes.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "SurfaceCompositionValue",
+   "id": "http://inspire.ec.europa.eu/codelist/SurfaceCompositionValue",
+   "label": "Surface Composition",
+   "definition": "A code indicating the composition of a surface.",
+   "description": "SOURCE [CodeSurfaceCompositionType - AIXM5.0].\\n\\nEXAMPLES Asphalt, concrete.",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/SurfaceCompositionValue/asphalt",
+     "label": "asphalt",
+     "definition": "Surface made of an asphalt layer.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/SurfaceCompositionValue/concrete",
+     "label": "concrete",
+     "definition": "Surface made of a concrete layer.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/SurfaceCompositionValue/grass",
+     "label": "grass",
+     "definition": "Surface consisting of a grass layer.",
+     "description": ""
+    }
+   ]
+  },
+  {
+   "name": "RoadPartValue",
+   "id": "http://inspire.ec.europa.eu/codelist/RoadPartValue",
+   "label": "Road Part",
+   "definition": "Indication to which part of a road the value of a measurement applies.",
+   "description": "",
+   "values": [
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RoadPartValue/carriageway",
+     "label": "carriageway",
+     "definition": "The part of a road which is reserved for traffic.",
+     "description": ""
+    },
+    {
+     "id": "http://inspire.ec.europa.eu/codelist/RoadPartValue/pavedSurface",
+     "label": "paved surface",
+     "definition": "The part of the road which is paved.",
+     "description": ""
+    }
+   ]
+  }
+ ]
+}

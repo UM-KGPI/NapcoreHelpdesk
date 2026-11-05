@@ -151,9 +151,9 @@ def _token_overlap_score(question: str, chunk_text: str) -> float:
 
 
 # Sources searched only when the question's scope names them: EU legislation (issue #91), the
-# mobilityDCAT-AP metadata profile and NAPCORE's own material (napcore.eu) would otherwise compete with
-# the standards in every question that names no standard.
-OPT_IN_SCOPES = ("EU legislation", "mobilityDCAT-AP", "NAPCORE")
+# mobilityDCAT-AP metadata profile, NAPCORE's own material (napcore.eu) and the INSPIRE Transport Networks
+# specification would otherwise compete with the standards in every question that names no standard.
+OPT_IN_SCOPES = ("EU legislation", "mobilityDCAT-AP", "NAPCORE", "INSPIRE")
 
 
 def _scope_query_filter(scope: list[str] | None):
@@ -308,7 +308,7 @@ def _question_lexemes(question: str) -> list[str]:
 
 # Standard names are never a question's topic, though a small standard's name is rare in a shared scope
 # ("opra" among NeTEx and OpRa chunks).
-STANDARD_NAME_LEXEMES = frozenset({"netex", "siri", "opra", "transmodel", "datex", "gtfs", "napcor", "mobilitydcat"})
+STANDARD_NAME_LEXEMES = frozenset({"netex", "siri", "opra", "transmodel", "datex", "gtfs", "napcor", "mobilitydcat", "inspir"})
 
 
 def _rare_lexemes(lexemes: list[str], scope: list[str] | None) -> list[str]:
@@ -1045,6 +1045,7 @@ STANDARD_HINTS = {
     "Transmodel": {"transmodel"},
     "OpRa": {"opra"},
     "mobilityDCAT-AP": {"mobilitydcat", "dcat"},
+    "INSPIRE": {"inspire"},
 }
 
 _STANDARD_SCOPE_ALIASES = {
