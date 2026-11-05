@@ -65,9 +65,14 @@ _STANDARD_KEYWORD_PATTERNS: dict[str, re.Pattern] = {
     "Transmodel": re.compile(r"\btransmodel\b", re.IGNORECASE),
     # NAPCORE's metadata profile, also asked about as DCAT-AP or DCAT (its base vocabularies).
     "mobilityDCAT-AP": re.compile(r"\b(?:mobility\s*-?\s*)?dcat(?:\s*-?\s*ap)?\b", re.IGNORECASE),
-    # The INSPIRE Transport Networks specification and code lists (services/inspire.py). The INSPIRE
-    # legal acts are in "EU legislation"; a question naming the INSPIRE Directive gets both scopes.
-    "INSPIRE": re.compile(r"\binspire\b", re.IGNORECASE),
+    # The INSPIRE Transport Networks specification and code lists (services/inspire.py). "INSPIRE" as part
+    # of the Directive's name ("INSPIRE Directive", "INSPIRE-Richtlinie", "direktiva INSPIRE") names the act,
+    # which is in "EU legislation", not the specification.
+    "INSPIRE": re.compile(
+        r"(?<!directive )(?<!direktiva )(?<!directiva )(?<!direttiva )(?<!directive de la )(?<!richtlinie )"
+        r"\binspire\b(?![\s-]*(?:directive|richtlinie|direktiv\w*|directiva|direttiva))",
+        re.IGNORECASE,
+    ),
     # Words for legislation in the languages questions arrive in. The indexed acts themselves (names,
     # acronyms, numbers) and the terms they define come from services/regulations.py, see
     # _legislation_identifier_pattern. Not "legal": NeTEx uses it for organisations (legal entity).
