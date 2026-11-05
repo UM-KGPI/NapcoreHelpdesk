@@ -183,6 +183,15 @@ for access, and collaborators can there report issues, propose features,
 submit pull requests, or review the codebase and architecture. See [Contributing](../CONTRIBUTING.md) for development flow and
 commit conventions.
 
+## License
+
+Originally developed by the University of Maribor, Chair of Construction and
+Transportation Informatics (KGPI) ([kgpi.fgpa.um.si](https://kgpi.fgpa.um.si/)).
+The source code is licensed under the GNU Affero General Public License v3.0
+(AGPL-3.0-only), with additional attribution terms under its section 7; see
+the [README](../README.md#license) and [LICENSE](../LICENSE). Content taken
+from the standards, EU legislation and napcore.eu keeps its original terms.
+
 ## Where to go next
 
 - [Architecture overview](architecture-overview.md): system design and runtime flow
