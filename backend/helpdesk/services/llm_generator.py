@@ -326,8 +326,25 @@ def _is_regulation_chunk(chunk: dict) -> bool:
     return (chunk.get("docType") or chunk.get("doc_type")) == "regulation"
 
 
+def _is_napcore_chunk(chunk: dict) -> bool:
+    return (chunk.get("docType") or chunk.get("doc_type")) == "napcore"
+
+
+def _is_prose_chunk(chunk: dict) -> bool:
+    """Legislation and NAPCORE documents: prose without element names, grounded by quotes and shared words."""
+    return _is_regulation_chunk(chunk) or _is_napcore_chunk(chunk)
+
+
 def _has_legislation_evidence(chunks: list[dict], max_chunks: int) -> bool:
     return any(_is_regulation_chunk(chunk) for chunk in chunks[:max_chunks])
+
+
+def _has_napcore_evidence(chunks: list[dict], max_chunks: int) -> bool:
+    return any(_is_napcore_chunk(chunk) for chunk in chunks[:max_chunks])
+
+
+def _has_prose_evidence(chunks: list[dict], max_chunks: int) -> bool:
+    return any(_is_prose_chunk(chunk) for chunk in chunks[:max_chunks])
 
 
 # Tokens that survive translation: acronyms (NAP, ITS), act numbers (2017/1926) and other numbers.
@@ -372,7 +389,8 @@ def _regulation_citation_grounded(sentence: str, chunk: dict) -> bool:
 # rejected for it: the prompt asks the model to say what the evidence does not cover.
 _EVIDENCE_NOUN = re.compile(
     r"\b(?:evidence|blocks?|excerpts?|examples?|definitions?|documentation|snippets?|sources?|schemas?|files?"
-    r"|documented|described|defined|shown|listed|mentioned|descriptions?)\b",
+    r"|documented|described|describes?|defined|shown|listed|mentioned|descriptions?"
+    r"|cited\s+(?:text|passage|provision|document)s?)\b",
     re.IGNORECASE,
 )
 _LIMIT_WORD = re.compile(
@@ -478,18 +496,30 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
             continue  # Skip to next sentence - code blocks are inherently technical
 
         cited_chunks = [chunks[int(c) - 1] for c in found_citations if 0 < int(c) <= len(chunks)]
-        if cited_chunks and all(_is_regulation_chunk(chunk) for chunk in cited_chunks):
+        if cited_chunks and all(_is_prose_chunk(chunk) for chunk in cited_chunks):
+            # "The cited text in [E3] does not describe Transmodel." says what a block does not cover; it has
+            # nothing of its own to ground, as for standards evidence below.
+            if _is_evidence_scope_statement(sentence):
+                continue
             for citation_str, chunk in zip(found_citations, cited_chunks):
-                if not _regulation_citation_grounded(clean, chunk):
-                    # Say which provision the block is: told only "name the article", the model repeated a
-                    # paragraph number as the article number.
-                    provision = str(chunk.get("heading") or chunk.get("sourcePath", "unknown")).split(" — ")[0]
+                if _regulation_citation_grounded(clean, chunk):
+                    continue
+                if _is_napcore_chunk(chunk):
                     raise LLMGenerationError(
                         f"Citation [E{citation_str}] does not ground the claim: '{sentence[:150].strip()}'. "
-                        f"The cited block [E{citation_str}] is {provision}: name that article with its own number "
-                        "(a numbered paragraph inside it is not an article number), quote the provision verbatim, "
-                        "or cite the block that states it."
+                        f"The cited block [E{citation_str}] is the NAPCORE document "
+                        f"'{str(chunk.get('heading') or chunk.get('sourcePath', 'unknown'))[:80]}': quote its wording "
+                        "verbatim, or cite the block that states it."
                     )
+                # Say which provision the block is: told only "name the article", the model repeated a
+                # paragraph number as the article number.
+                provision = str(chunk.get("heading") or chunk.get("sourcePath", "unknown")).split(" — ")[0]
+                raise LLMGenerationError(
+                    f"Citation [E{citation_str}] does not ground the claim: '{sentence[:150].strip()}'. "
+                    f"The cited block [E{citation_str}] is {provision}: name that article with its own number "
+                    "(a numbered paragraph inside it is not an article number), quote the provision verbatim, "
+                    "or cite the block that states it."
+                )
             continue
 
         strong_terms, weak_terms = _classify_terms(clean)
@@ -1176,6 +1206,14 @@ LEGISLATION_RULE = (
 )
 
 
+NAPCORE_RULE = (
+    "Some evidence blocks are NAPCORE documents (napcore.eu pages, NAPCORE deliverables and reports); their "
+    "first line names the document. For those blocks rule 9 does not apply. Instead, name the document and quote "
+    "or closely restate its wording. Do not add facts, figures, dates or recommendations that the block does not "
+    "state, and do not present NAPCORE's guidance or positions as legal obligations."
+)
+
+
 def _build_messages(
     question: str,
     chunks: list[dict],
@@ -1192,8 +1230,8 @@ def _build_messages(
     for index, chunk in enumerate(chunks[:max_chunks], start=1):
         # A legislation chunk is one article (or part of one), bounded when the act is indexed. Its
         # tail holds the last points of a list, so a cut dropped e.g. Art. 4(1)(c) and 4(2) of MMTIS
-        # and the answer named fewer standards than the article does.
-        limit = 0 if _is_regulation_chunk(chunk) else max_chars_per_chunk
+        # and the answer named fewer standards than the article does. NAPCORE chunks are bounded too.
+        limit = 0 if _is_prose_chunk(chunk) else max_chars_per_chunk
         chunk_text = _trim_chunk_text(str(chunk.get("text", "")), max_chars=limit, focus_terms=focus_terms)
         context_lines.append(
             "\n".join(
@@ -1316,6 +1354,8 @@ def _build_messages(
     # Legislation is quoted by article, not described by XML elements (issue #91).
     if _has_legislation_evidence(chunks, max_chunks):
         system_prompt = f"{system_prompt} {LEGISLATION_RULE}"
+    if _has_napcore_evidence(chunks, max_chunks):
+        system_prompt = f"{system_prompt} {NAPCORE_RULE}"
 
     faq_section = ""
     if faq_hint:
@@ -1563,7 +1603,8 @@ def _append_feedback_message(
 ) -> list[dict]:
     """Return a new messages list with a feedback turn appended for retry.
 
-    With EU legislation in the evidence the fix asks for articles and quotes, not XML elements (#91).
+    With EU legislation or NAPCORE documents in the evidence the fix asks for articles, documents and quotes,
+    not XML elements (#91).
     """
     # Add specific guidance if the error is about file names
     file_name_hint = ""
@@ -1607,7 +1648,8 @@ def _append_feedback_message(
                     f"Reason: {error_msg[:250]}\n\n"
                     "REQUIRED FIX — Your new answer MUST:\n"
                     "1. For EU legislation blocks, name the article or annex point in each cited sentence and "
-                    "quote the provision verbatim (in English, as in the evidence)\n"
+                    "quote the provision verbatim (in English, as in the evidence); for NAPCORE documents, name "
+                    "the document and quote its wording\n"
                     "2. Cite the block that states each claim; do not cite a block for what it does not say\n"
                     "3. Not mention XML elements, attributes or code unless a standards block shows them\n"
                     "4. Keep the response language of the question"
@@ -1730,7 +1772,7 @@ def generate_answer_llm(
                 messages=messages,
                 rejected_answer=rejected_answer,
                 error_msg=rejection_reason,
-                legislation=_has_legislation_evidence(chunks, max_chunks),
+                legislation=_has_prose_evidence(chunks, max_chunks),
             )
         else:
             retry_messages = messages
@@ -2041,7 +2083,7 @@ def stream_answer_llm(
             messages=messages,
             rejected_answer=rejected_answer,
             error_msg=rejection_reason,
-            legislation=_has_legislation_evidence(chunks, max_chunks),
+            legislation=_has_prose_evidence(chunks, max_chunks),
         )
         # The retry is a second full LLM call with nothing sent meanwhile; tell the
         # caller so the client connection does not sit silent through both calls.

@@ -71,6 +71,12 @@ rm -f "${MAINTENANCE_FLAG}"
 echo "==> Indexing EU legislation"
 ${COMPOSE} exec -T backend python manage.py index_regulations
 
+# NAPCORE's own material (napcore.eu pages and deliverables) is indexed from docs/napcore/text/ the same way:
+# unchanged snapshots are skipped. It runs detached: the first run embeds about 3,000 chunks (about 100 min on
+# prod's embedder), longer than this job may take. Progress: /tmp/index_napcore_site.log in the backend container.
+echo "==> Indexing napcore.eu (detached)"
+${COMPOSE} exec -d -T backend sh -c 'python manage.py index_napcore_site > /tmp/index_napcore_site.log 2>&1'
+
 echo "==> Removing dangling images"
 docker image prune -f
 
