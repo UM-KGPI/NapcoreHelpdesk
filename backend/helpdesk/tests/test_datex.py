@@ -182,3 +182,14 @@ class IndexDatexTests(TestCase):
         unscoped = SourceChunk.objects.filter(_scope_query_filter(None))
         self.assertTrue(unscoped.filter(chunk_id="siri-datex").exists())
         self.assertFalse(unscoped.filter(doc_type="datex").exists())
+
+
+class ChunkIdTests(SimpleTestCase):
+    def test_pages_whose_names_share_a_long_prefix_get_distinct_chunk_ids(self):
+        base = f"https://docs.datex2.eu/v{datex.VERSION}/recommended-profiles/" + "x" * 120
+        ids = {
+            datex.page_records(Snapshot(url=f"{base}{suffix}/", title="T", text="## T\nSome text."))[0]["chunk_id"]
+            for suffix in ("a", "b")
+        }
+        self.assertEqual(len(ids), 2)
+        self.assertTrue(all(len(i) <= 128 for i in ids))

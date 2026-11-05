@@ -26,6 +26,7 @@ Created: 2026-11-06  |  Modified: 2026-11-06
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import sqlite3
@@ -233,7 +234,7 @@ def model_records(model: dict) -> list[dict]:
         for part, piece in enumerate(_pieces(text, head)):
             records.append(
                 {
-                    "chunk_id": f"datex-model-{key}-{part:02d}"[:128],
+                    "chunk_id": f"datex-model-{_key(key)}-{part:02d}",
                     "source_path": f"datex-model-v{model['version']}/{key}",
                     "label": f"DATEX II {element['kind']} {element['name']} ({element['namespace']})"[:255],
                     "heading": head[:512],
@@ -304,6 +305,11 @@ def fetch_pages(out_dir: Path, report=None) -> dict[str, int]:
     return counts
 
 
+def _key(name: str) -> str:
+    """A chunk id part: a readable prefix plus a hash of the whole name (long page names share a prefix)."""
+    return f"{name[:60]}-{hashlib.sha1(name.encode('utf-8')).hexdigest()[:8]}"
+
+
 def page_records(snapshot: Snapshot) -> list[dict]:
     key = page_name(snapshot.url)
     records = []
@@ -311,7 +317,7 @@ def page_records(snapshot: Snapshot) -> list[dict]:
         label = f"DATEX II documentation: {snapshot.title}" + (f" — {heading}" if heading and heading != snapshot.title else "")
         records.append(
             {
-                "chunk_id": f"datex-doc-{key}-{index:03d}"[:128],
+                "chunk_id": f"datex-doc-{_key(key)}-{index:03d}",
                 "source_path": f"docs.datex2.eu/v{VERSION}/{key}",
                 "label": label[:255],
                 "heading": (heading or snapshot.title)[:512],
