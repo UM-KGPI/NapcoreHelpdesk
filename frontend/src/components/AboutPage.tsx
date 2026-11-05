@@ -5,7 +5,7 @@
  *
  * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
  * Crafted by: AI coding agents
- * Created: 2026-07-02  |  Modified: 2026-11-02
+ * Created: 2026-07-02  |  Modified: 2026-11-05
  */
 
 import systemContextDiagramUrl from "../assets/c4-system-context.svg";
@@ -211,6 +211,17 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           <li>Review the codebase and architecture</li>
           <li>Follow development progress</li>
         </ul>
+      </section>
+
+      <section className="panel">
+        <div className="panel-title-row">
+          <h2>License</h2>
+        </div>
+        <p>
+          Originally developed by the University of Maribor, Chair of Construction and Transportation Informatics (KGPI) (<a href="https://kgpi.fgpa.um.si/" target="_blank" rel="noreferrer">kgpi.fgpa.um.si</a>).
+          The source code is licensed under the <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noreferrer">GNU Affero General Public License v3.0</a> (AGPL-3.0-only), with additional attribution terms under its section 7.
+          Content taken from the standards, EU legislation and napcore.eu keeps its original terms.
+        </p>
       </section>
 
       <section className="panel">
