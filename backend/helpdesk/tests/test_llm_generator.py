@@ -670,9 +670,12 @@ class QuestionLanguageTests(SimpleTestCase):
             return_value={"choices": [{"message": {"content": content}}]},
         )
 
-    def test_a_detectable_question_does_not_call_the_llm(self):
+    def test_a_long_detectable_question_does_not_call_the_llm(self):
+        # Short non-English detections are confirmed by the LLM (MIN_TRUSTED_DETECTION_WORDS); long ones are not.
         with self._llm_says('{"language": "English"}') as llm:
-            self.assertEqual(question_language("Wofür wird SIRI verwendet?"), "German")
+            self.assertEqual(
+                question_language("Wofür wird SIRI im öffentlichen Verkehr verwendet und wer setzt es ein?"), "German"
+            )
         llm.assert_not_called()
 
     def test_a_short_question_gets_its_language_from_the_llm(self):
