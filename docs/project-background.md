@@ -13,7 +13,10 @@ NAPCORE Helpdesk helps implementers get reliable answers to their questions
 about the European public transport data standards Transmodel, NeTEx, SIRI,
 and OpRa, and about the EU legislation that governs their data: the MMTIS
 Delegated Regulation (EU) 2017/1926, the ITS Directive 2010/40/EU and the
-TEL TSI (EU) 2026/253.
+TEL TSI (EU) 2026/253. Questions that name them are also answered from the
+road traffic standard DATEX II and TN-ITS (its Part 14 for road attribute
+updates), and from the INSPIRE Transport Networks specification that MMTIS
+requires for the spatial network.
 
 - **Grounded answers:** responses are based only on approved source
   repositories and the official EU legal texts, and cite the evidence they
@@ -165,7 +168,10 @@ since. Broad phases, in order:
    generated from their definitions articles, so questions such as "What is
    static travel data?" reach the legislation; questions about a standard's
    legal status answered from the provisions that name it, and a Legal
-   context line under answers about NeTEx, SIRI and Transmodel.
+   context line under answers about NeTEx, SIRI and Transmodel; sources
+   searched only when a question names them: the INSPIRE Directive and the
+   Transport Networks rules with their data specification and code lists,
+   DATEX II v3.7 (its data model and documentation) and TN-ITS.
 
 See [Recent updates](recent-updates.md) for a detailed log of the latest
 phase. Development is ongoing, and this timeline will grow as the project
