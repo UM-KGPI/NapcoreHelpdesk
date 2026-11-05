@@ -148,6 +148,21 @@ GUIDELINES = {
     "docType": "napcore",
     "heading": "Guidelines Compliance Assessment v3",
 }
+MMTIS_ART_3 = {
+    "text": "Delegated Regulation (EU) 2017/1926 (MMTIS)\nArticle 3\n\n1. Each Member State shall set up a national access "
+    "point. The national access point shall constitute a single point of access for data users.\n3. National access "
+    "points shall provide discovery services to data users.",
+    "sourcePath": "02017R1926-20240304#art_3",
+    "docType": "regulation",
+    "heading": "Article 3 — National access points",
+}
+DESCRIPTION_NAPS = {
+    "text": "NAPCORE (napcore.eu): Description NAPs\n\nA National Access Point (NAP) is a node in which ITS-related data "
+    "are concentrated and published in the form of datasets.",
+    "sourcePath": "napcore.eu/description-naps",
+    "docType": "napcore",
+    "heading": "Description NAPs",
+}
 TEL_TSI_APP_C = {
     "text": "Implementing Regulation (EU) 2026/253 (TEL TSI)\nAppendix C\n\n[P.7] EN 12896-1:2016 Public transport – Reference data model",
     "sourcePath": "32026R0253#app_C",
@@ -170,3 +185,22 @@ class ProseGroundingTests(SimpleTestCase):
     def test_a_sentence_about_what_a_prose_block_does_not_say_passes(self):
         # Prod 0.97.83: both attempts were rejected with "name that article with its own number".
         _validate_citation_grounding("The cited text in [E1] does not describe Transmodel.", [TEL_TSI_APP_C])
+
+    def test_quotes_from_an_act_and_a_napcore_page_in_one_run_are_checked_separately(self):
+        # Prod 0.97.84, "What is a national access point?": `." [E1]` is no sentence boundary, so the act's quote
+        # and the page's quote formed one "sentence" that was checked whole against [E2] and rejected.
+        _validate_citation_grounding(
+            'Article 3(1) provides: "Each Member State shall set up a national access point. The national access '
+            'point shall constitute a single point of access for data users." [E1] Article 3(3) provides: "National '
+            'access points shall provide discovery services to data users." [E1] The NAPCORE document states: '
+            '"A National Access Point (NAP) is a node in which ITS-related data are concentrated." [E2]',
+            [MMTIS_ART_3, DESCRIPTION_NAPS],
+        )
+
+    def test_each_citation_in_such_a_run_still_needs_its_own_support(self):
+        with self.assertRaisesRegex(LLMGenerationError, r"\[E2\]"):
+            _validate_citation_grounding(
+                'Article 3(1) provides: "The national access point shall constitute a single point of access for data '
+                'users." [E1] The NAPCORE document adds that fines of 10,000 lev apply to late submitters [E2]',
+                [MMTIS_ART_3, DESCRIPTION_NAPS],
+            )

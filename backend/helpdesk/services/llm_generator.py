@@ -501,8 +501,13 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
             # nothing of its own to ground, as for standards evidence below.
             if _is_evidence_scope_statement(sentence):
                 continue
-            for citation_str, chunk in zip(found_citations, cited_chunks):
-                if _regulation_citation_grounded(clean, chunk):
+            # Each citation is checked against its own text only: a quote that ends in `." [E1]` is no
+            # sentence boundary for the split above, so one "sentence" can carry an act's quote [E1] and a
+            # NAPCORE page's quote [E2], and the whole of it matches neither block.
+            segments = _citation_segments(sentence)
+            for position, (citation_str, chunk) in enumerate(zip(found_citations, cited_chunks)):
+                own = CITATION_PATTERN.sub("", segments[position][1]) if position < len(segments) else ""
+                if _regulation_citation_grounded(own if _has_words(own) else clean, chunk):
                     continue
                 if _is_napcore_chunk(chunk):
                     raise LLMGenerationError(
