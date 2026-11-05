@@ -518,3 +518,56 @@ class SimilarityRankingSwitchTests(TestCase):
     @override_settings(EMBEDDING_BACKEND="semantic")
     def test_semantic_ranks_the_closer_chunk_first(self):
         self.assertEqual(self._ranked_ids()[0], "readme-1")
+
+
+class LexicalRecallTests(TestCase):
+    """With semantic vectors, chunks holding a question's rare term join the vector-ranked pool (prod
+    2026-11-05: "Does SIRI define roadworks?" never reached the DATEX II RoadWorks definitions)."""
+
+    def setUp(self):
+        from helpdesk.models import SourceChunk
+
+        def chunk(name: str, text: str) -> None:
+            SourceChunk.objects.create(
+                repository_url="https://github.com/TransmodelEcosystem/SIRI",
+                commit_sha="abc",
+                source_path=f"xsd/{name}.xsd",
+                chunk_id=f"recall-{name}",
+                label=name,
+                text=text,
+                standards_scope=["SIRI"],
+                quality_score=0.8,
+                doc_type="schema",
+                embedding_vector=[0.0] * 1536,
+            )
+
+        chunk("datex", "RoadWorks: highway maintenance, repair and construction works on a road.")
+        for index in range(3):
+            chunk(f"general_{index}", f"SIRI defines the service delivery {index}.")
+
+    def test_standard_identity_concepts(self):
+        from helpdesk.services.retrieval_gateway import _is_standard_identity_concept
+
+        self.assertTrue(_is_standard_identity_concept("siri:Siri"))
+        self.assertTrue(_is_standard_identity_concept("opra:Opra"))
+        self.assertFalse(_is_standard_identity_concept("netex:Parking"))
+        self.assertFalse(_is_standard_identity_concept("transmodel:fare"))
+
+    def test_rare_terms_and_the_chunks_that_hold_them(self):
+        from django.db import connection
+
+        from helpdesk.services import retrieval_gateway
+
+        if connection.vendor != "postgresql":
+            self.skipTest("text search needs PostgreSQL")
+        with patch.object(retrieval_gateway, "RARE_TERM_MAX_CHUNKS", 2):
+            rare = retrieval_gateway.question_rare_lexemes("Does SIRI define roadworks?", ["SIRI"])
+            recalled = retrieval_gateway._lexical_recall_candidates("Does SIRI define roadworks?", 8, ["SIRI"])
+        self.assertEqual(rare, ["roadwork"])  # "siri" and "defin" are in every chunk
+        self.assertEqual([chunk.source_path for chunk in recalled], ["xsd/datex.xsd"])
+        self.assertGreater(recalled[0].lexical_rank, 0)
+
+    def test_no_rare_term_recalls_nothing(self):
+        from helpdesk.services import retrieval_gateway
+
+        self.assertEqual(retrieval_gateway._lexical_recall_candidates("What is SIRI?", 8, ["SIRI"], rare=[]), [])

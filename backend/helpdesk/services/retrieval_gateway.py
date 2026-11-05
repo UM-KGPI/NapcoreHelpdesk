@@ -289,6 +289,76 @@ def _postgres_fts_candidates(question: str, top_k: int, scope: list[str] | None 
     )
 
 
+# The text-search expression of migration 0022_sourcechunk_text_search_index: a filter written exactly like
+# the index expression lets PostgreSQL use the GIN index instead of building every chunk's tsvector
+# (~3 s per pass over NeTEx).
+TEXT_SEARCH_MATCH = "to_tsvector('english'::regconfig, text) @@ to_tsquery('simple'::regconfig, %s)"
+# A question term found in at most this many chunks of the scope is rare: it names the topic ("roadwork"),
+# where common ones ("siri", "defin") name the standard or the question form. Counting stops one past it.
+RARE_TERM_MAX_CHUNKS = 200
+
+
+def _question_lexemes(question: str) -> list[str]:
+    """The question's terms as the English text-search configuration stems them ("roadworks" -> "roadwork")."""
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT tsvector_to_array(to_tsvector('english'::regconfig, %s))", [question])
+        row = cursor.fetchone()
+    return [lexeme for lexeme in (row[0] if row else []) if re.fullmatch(r"[a-z0-9]{3,}", lexeme)]
+
+
+# Standard names are never a question's topic, though a small standard's name is rare in a shared scope
+# ("opra" among NeTEx and OpRa chunks).
+STANDARD_NAME_LEXEMES = frozenset({"netex", "siri", "opra", "transmodel", "datex", "gtfs", "napcor", "mobilitydcat"})
+
+
+def _rare_lexemes(lexemes: list[str], scope: list[str] | None) -> list[str]:
+    filtered = SourceChunk.objects.filter(_scope_query_filter(scope))
+    rare = []
+    for lexeme in lexemes:
+        if lexeme in STANDARD_NAME_LEXEMES:
+            continue
+        matches = filtered.extra(where=[TEXT_SEARCH_MATCH], params=[lexeme])
+        if 0 < len(matches.values_list("id", flat=True)[: RARE_TERM_MAX_CHUNKS + 1]) <= RARE_TERM_MAX_CHUNKS:
+            rare.append(lexeme)
+    return rare
+
+
+def _is_standard_identity_concept(concept_id: str) -> bool:
+    """A concept that stands for a whole standard: "siri:Siri", "opra:Opra"."""
+    prefix, _, local = concept_id.partition(":")
+    return bool(local) and local.lower() == prefix.lower()
+
+
+def question_rare_lexemes(question: str, scope: list[str] | None) -> list[str]:
+    """The question's rare terms in the scope (see RARE_TERM_MAX_CHUNKS); empty without PostgreSQL."""
+    if connection.vendor != "postgresql":
+        return []
+    return _rare_lexemes(_question_lexemes(question), scope)
+
+
+def _lexical_recall_candidates(question: str, limit: int, scope: list[str] | None = None, rare: list[str] | None = None) -> list:
+    """Chunks that contain the question's rare terms, for the candidate pool when vectors are semantic.
+
+    The hybrid pool is the top rows by vector similarity; the lexical rank only orders them. Semantic
+    vectors miss a rare exact term: for "Does SIRI define roadworks?" the DATEX II RoadWorks definitions
+    bundled with SIRI never reached the pool, which held only general SIRI chunks (prod 2026-11-05).
+    Matching all terms would not help (those chunks do not say "SIRI"), so any rare term counts.
+    """
+    if limit <= 0 or connection.vendor != "postgresql" or not all([SearchQuery, SearchRank, SearchVector]):
+        return []
+    if rare is None:
+        rare = question_rare_lexemes(question, scope)
+    if not rare:
+        return []
+    query = " | ".join(rare)
+    return list(
+        SourceChunk.objects.filter(_scope_query_filter(scope))
+        .extra(where=[TEXT_SEARCH_MATCH], params=[query])
+        .annotate(lexical_rank=SearchRank(_search_vector(), SearchQuery(query, search_type="raw", config="simple")))
+        .order_by("-lexical_rank", "id")[:limit]
+    )
+
+
 def _postgres_hybrid_candidates(
     question: str,
     query_embedding: list[float],
@@ -1557,6 +1627,23 @@ def _retrieve_chunks_once(
         bridged_concepts = set(bridged_question_concepts(question)) - question_concepts
         question_concepts |= bridged_concepts
         _record_stage("vocabularyBridgeMs", stage_start)
+    rare_lexemes: list[str] = []
+    if semantic_enabled():
+        stage_start = time.perf_counter()
+        rare_lexemes = question_rare_lexemes(question, scope)
+        # "Does SIRI define roadworks?" parses to the concept siri:Siri. In a search scoped to SIRI alone it
+        # names nothing more specific (with NeTEx and OpRa in scope it does tell them apart), yet its graph neighbours (ServiceDelivery, VehicleMonitoringDelivery) were
+        # boosted over the RoadWorks definitions. It is dropped when the question has a topic of its own (a
+        # rare term); for "What is SIRI?" it is the topic and stays.
+        identity_concepts = {
+            concept
+            for concept in question_concepts
+            if _is_standard_identity_concept(concept) and scope and len(scope) == 1
+            and concept.partition(":")[0].lower() == scope[0].lower()
+        }
+        if identity_concepts and rare_lexemes:
+            question_concepts -= identity_concepts
+        _record_stage("rareTermMs", stage_start)
 
     graph_expansion_source = "none"
     if graph_rag_enabled and question_concepts:
@@ -1681,6 +1768,17 @@ def _retrieve_chunks_once(
             pooled = list(postgres_candidates)
             pooled_ids = {chunk.id for chunk in pooled}
             postgres_candidates = pooled + [c for c in opt_in_candidates if c.id not in pooled_ids]
+    if postgres_candidates is not None and semantic_enabled():
+        pooled = list(postgres_candidates)
+        pooled_ids = {chunk.id for chunk in pooled}
+        lexical_pool_size = max(0, int(getattr(settings, "RETRIEVAL_LEXICAL_POOL_SIZE", 8)))
+        postgres_candidates = pooled + [
+            chunk
+            for chunk in _lexical_recall_candidates(
+                question=question, limit=lexical_pool_size, scope=scope, rare=rare_lexemes
+            )
+            if chunk.id not in pooled_ids
+        ]
     _record_stage("postgresCandidateQueryMs", stage_start)
 
     stage_start = time.perf_counter()
