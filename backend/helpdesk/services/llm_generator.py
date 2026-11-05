@@ -1118,8 +1118,11 @@ def _classify_question_language_with_llm(question: str) -> str | None:
             "role": "system",
             "content": (
                 "Identify the natural language the user's question is written in. Ignore technical terms, "
-                "acronyms and schema names such as SIRI, NeTEx or StopPlace. "
-                'Reply with JSON only: {"language": "<English name of the language>"}.'
+                "acronyms and schema names such as SIRI, NeTEx or StopPlace. Closely related languages are easy "
+                "to confuse (Slovenian, Croatian, Serbian and Bosnian; Czech and Slovak; Danish, Norwegian and "
+                "Swedish; Spanish, Portuguese, Catalan and Italian): decide by the words, particles and spellings "
+                "that belong to only one of them, not by the language family. Reply with JSON only, no other text: "
+                '{"evidence": "<the words that decide, at most 10 words>", "language": "<English name of the language>"}.'
             ),
         },
         {"role": "user", "content": question},
@@ -1128,14 +1131,15 @@ def _classify_question_language_with_llm(question: str) -> str | None:
         response = _request_chat_completion(
             api_base_url=base_url,
             api_key=(settings.LLM_API_KEY or "").strip(),
-            model=settings.LLM_MODEL,
+            model=settings.LANGUAGE_CLASSIFIER_MODEL,
             timeout_seconds=min(settings.LLM_TIMEOUT_SECONDS, LANGUAGE_CLASSIFIER_TIMEOUT_SECONDS),
             temperature=0.0,
-            max_tokens=answer_max_tokens(20),
+            max_tokens=answer_max_tokens(60),
             messages=messages,
         )
         content = response["choices"][0]["message"]["content"]
-        name = str(json.loads(content).get("language", "")).strip().title()
+        # The first JSON object: the model sometimes adds a second thought after it.
+        name = str(json.loads(re.search(r"\{[^{}]*\}", content).group(0)).get("language", "")).strip().title()
     except Exception:
         logger.warning("LLM language classification failed for %r", question, exc_info=True)
         return None

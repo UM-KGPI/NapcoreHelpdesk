@@ -298,6 +298,12 @@ LLM_API_BASE_URL = env("LLM_API_BASE_URL").strip() or "https://api.openai.com/v1
 # Allow reusing a GitHub token for GitHub Models when a dedicated LLM key is not set.
 LLM_API_KEY = env("LLM_API_KEY", default="").strip() or GITHUB_API_TOKEN
 LLM_MODEL = env("LLM_MODEL").strip() or "gpt-4o-mini"
+# The model that names a short question's language (llm_generator._classify_question_language_with_llm).
+# Haiku 5.5 calls short Slovenian questions Croatian ("Kako SIRI opisuje zamude?", 5 of 5 runs); Sonnet 5.5
+# names them right (2026-11-05). Empty: Sonnet 5.5 with the Anthropic provider, otherwise LLM_MODEL.
+LANGUAGE_CLASSIFIER_MODEL = env("LANGUAGE_CLASSIFIER_MODEL", default="").strip() or (
+    "claude-sonnet-5-5" if LLM_PROVIDER == "anthropic" else LLM_MODEL
+)
 LLM_VERIFY_SSL = env("LLM_VERIFY_SSL")
 LLM_CA_BUNDLE = env("LLM_CA_BUNDLE", default="").strip() or GITHUB_CA_BUNDLE
 LLM_TIMEOUT_SECONDS = env("LLM_TIMEOUT_SECONDS")
