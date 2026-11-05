@@ -75,7 +75,21 @@ _STANDARD_KEYWORD_PATTERNS: dict[str, re.Pattern] = {
         r"|r[eè]glements?|l[ée]gislation|regolament\w*|direttiv\w*|normativ\w*|reglamentos?|directivas?)\b",
         re.IGNORECASE,
     ),
+    # NAPCORE, the coordination platform of the National Access Points and National Bodies: its pages and
+    # deliverables on napcore.eu (services/napcore_site.py). Also the NAP / National Body vocabulary in the
+    # languages questions arrive in, since those questions are answered from NAPCORE's material.
+    "NAPCORE": re.compile(
+        r"\b(?:napcore|naps?|national access points?|national bod(?:y|ies)|compliance assessments?"
+        r"|self[- ]declarations?|mobility data days|nacionaln\w* dostopn\w* to[čc]k\w*|nacionaln\w* organ\w*"
+        r"|nationale[nr]? zugangspunkt\w*|points? d'acc[èe]s nationa\w*|punto de acceso nacional"
+        r"|punto di accesso nazionale)\b",
+        re.IGNORECASE,
+    ),
 }
+
+# Scopes in _STANDARD_KEYWORD_PATTERNS that are sources about the standards, not standards themselves.
+NAPCORE_SCOPE = "NAPCORE"
+_NON_STANDARD_SCOPES = frozenset({"EU legislation", NAPCORE_SCOPE})
 
 _INTENT_PATTERNS = {
     "normative_status": [r"\bshall\b", r"\bmust\b", r"\bshould\b", r"\bmay\b"],
@@ -157,8 +171,14 @@ class QuestionParsingService:
             # matched lies inside that term ("travel" in "travel data", "service" in "travel information
             # service"). "Show example for transport operator in NeTEx" and "How are transport operators
             # linked to lines?" stay standards questions.
-            if not candidate_standards and _legislation_term_covers(text, direct_concepts):
-                candidate_standards = [LEGISLATION_SCOPE]
+            # NAPCORE is not a standard: "What is a national access point?" gets NAPCORE's pages and the acts.
+            names_standard = any(c not in _NON_STANDARD_SCOPES for c in candidate_standards)
+            if (
+                not names_standard
+                and LEGISLATION_SCOPE not in candidate_standards
+                and _legislation_term_covers(text, direct_concepts)
+            ):
+                candidate_standards = [*candidate_standards, LEGISLATION_SCOPE]
 
         concept_confidence = self._concept_confidence(core_concepts)
         intent_confidence = self._intent_confidence(intent=intent, requested_scope=requested_scope)
@@ -456,7 +476,7 @@ def legal_status_standards(text: str, concept_ids, scope: list[str] | None) -> l
     name and relations ("for", "required by"). "Which elements are mandatory in a NeTEx StopPlace?"
     matches StopPlace, so it is a schema question.
     """
-    named = [s for s in (scope or []) if s in _STANDARD_KEYWORD_PATTERNS and s != LEGISLATION_SCOPE]
+    named = [s for s in (scope or []) if s in _STANDARD_KEYWORD_PATTERNS and s not in _NON_STANDARD_SCOPES]
     if not named or LEGISLATION_SCOPE in (scope or []) or not _OBLIGATION_PATTERN.search(text or ""):
         return []
     if _LEGAL_FRAME_PATTERN.search(text):
@@ -488,7 +508,7 @@ def asks_for_named_standards(text: str, scope: list[str] | None) -> bool:
     if LEGISLATION_SCOPE not in (scope or []) or not _STANDARD_WORD_PATTERN.search(text or ""):
         return False
     return not any(
-        pattern.search(text) for name, pattern in _STANDARD_KEYWORD_PATTERNS.items() if name != LEGISLATION_SCOPE
+        pattern.search(text) for name, pattern in _STANDARD_KEYWORD_PATTERNS.items() if name not in _NON_STANDARD_SCOPES
     )
 
 
@@ -501,7 +521,7 @@ def standards_named_in_legislation_question(text: str, scope: list[str] | None) 
     return [
         name
         for name, pattern in _STANDARD_KEYWORD_PATTERNS.items()
-        if name != LEGISLATION_SCOPE and pattern.search(text or "")
+        if name not in _NON_STANDARD_SCOPES and pattern.search(text or "")
     ]
 
 

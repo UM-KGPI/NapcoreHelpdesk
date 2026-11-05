@@ -12,6 +12,8 @@ redis>=5.0,<6.0
 PyJWT>=2.8,<3.0
 # Claude provider (LLM_PROVIDER=anthropic, helpdesk/services/anthropic_chat.py).
 anthropic>=2.4,<3.0
+# napcore.eu deliverables as text (index_napcore_site --fetch, helpdesk/services/napcore_site.py).
+pypdf>=6.21,<7.0
 jsonschema>=4.22,<5.0
 PyYAML>=6.0,<7.0
 certifi>=2024.8.30,<2027.0.0
