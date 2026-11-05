@@ -105,6 +105,12 @@ class ParseSpecTests(SimpleTestCase):
         )
         self.assertTrue(record["text"].startswith(inspire.SPEC_TITLE))
 
+    def test_map_styling_ranks_below_the_data_model(self):
+        spec = SPEC + "\n== Portrayal\n\n==== Styles for the layer TN.RoadTransportNetwork.RoadLink\n\n" + "Black line. " * 20 + "\n"
+        records = {r["heading"].rsplit(" › ", 1)[-1]: r for r in inspire.spec_records(spec)}
+        self.assertEqual(records["Styles for the layer TN.RoadTransportNetwork.RoadLink"]["quality_score"], 0.5)
+        self.assertEqual(records["RoadLink"]["quality_score"], 0.85)
+
     def test_code_lists_are_found_in_the_links(self):
         self.assertEqual(inspire.codelist_names(SPEC), ["FormOfRoadNodeValue"])
 

@@ -51,9 +51,12 @@ MAX_CHUNK_CHARS = 1500
 # A section shorter than this joins the next one (headings with only an introductory sentence).
 MIN_SECTION_CHARS = 120
 # Part of the stored content hash: bump it when parsing or chunking changes, so the next run re-indexes.
-PARSER_VERSION = "1"
+PARSER_VERSION = "2"
 _USER_AGENT = "NAPCORE-Helpdesk-indexer/1.0 (+https://kgpi.fgpa.um.si/napcore-helpdesk/)"
 _CODELIST_REFERENCE = re.compile(r"inspire\.ec\.europa\.eu/codelist/([A-Za-z]+Value)\b")
+# Chapters that are not the data model: map styling of the view services, the bibliography and the test
+# suite. They name every spatial object type, so without a lower quality they outrank its definition.
+_SECONDARY_CHAPTERS = ("Portrayal", "Bibliography", "Abstract Test Suite")
 
 
 def spec_url(line: int | None = None) -> str:
@@ -260,6 +263,7 @@ def spec_chunks(sections: list[SpecSection]) -> list[tuple[str, str, int]]:
 def spec_records(spec_text: str) -> list[dict]:
     records = []
     for index, (heading, text, line) in enumerate(spec_chunks(parse_spec(spec_text))):
+        secondary = heading.split(" › ", 1)[0].startswith(_SECONDARY_CHAPTERS)
         label = f"INSPIRE Transport Networks: {heading.rsplit(' › ', 1)[-1]}"
         records.append(
             {
@@ -269,7 +273,7 @@ def spec_records(spec_text: str) -> list[dict]:
                 "heading": heading[:512],
                 # The document's name leads the text, so the answer can name it and lexical search finds it.
                 "text": f"{SPEC_TITLE}\n{heading}\n\n{text}",
-                "quality_score": 0.85,
+                "quality_score": 0.5 if secondary else 0.85,
                 "structured_metadata": {"sourceUrl": spec_url(line), "title": SPEC_TITLE, "tag": SPEC_TAG},
             }
         )
