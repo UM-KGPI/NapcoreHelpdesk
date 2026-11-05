@@ -3,14 +3,16 @@ repos:
     rev: v5.0.0
     hooks:
       - id: end-of-file-fixer
-        # Official EU texts, kept byte for byte as the Publications Office serves them
-        exclude: ^docs/regulations/
+        # Official texts kept byte for byte as published: EU acts (Publications Office) and the
+        # INSPIRE specification (pinned release of INSPIRE-MIF/technical-guidelines)
+        exclude: ^docs/(regulations|inspire)/
       - id: trailing-whitespace
+        exclude: ^docs/inspire/
       - id: check-yaml
       - id: check-json
       - id: check-merge-conflict
       - id: mixed-line-ending
-        exclude: ^docs/regulations/
+        exclude: ^docs/(regulations|inspire)/
 
   - repo: local
     hooks:

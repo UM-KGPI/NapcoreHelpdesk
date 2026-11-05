@@ -15,6 +15,7 @@ from __future__ import annotations
 from django.conf import settings
 
 from helpdesk.services.ontology_evidence import TRANSMODEL_SOURCE_URL
+from helpdesk.services.inspire import is_inspire_url
 from helpdesk.services.napcore_site import is_napcore_url
 from helpdesk.services.regulations import is_regulation_url
 from helpdesk.services.repository_urls import canonical_repository_url
@@ -79,6 +80,9 @@ def evaluate_policy(answer_text: str, citations: list[dict]) -> dict:
             continue
         # napcore.eu is NAPCORE's own site; its documents are approved by being in the pinned list.
         if is_napcore_url(citation.get("repositoryUrl", "")):
+            continue
+        # The pinned INSPIRE specification and registry code lists are approved by being indexed from docs/inspire/.
+        if is_inspire_url(citation.get("repositoryUrl", "")):
             continue
         repo_url = _normalize_repository_url(citation.get("repositoryUrl", ""))
         if repo_url not in approved_canonical:
