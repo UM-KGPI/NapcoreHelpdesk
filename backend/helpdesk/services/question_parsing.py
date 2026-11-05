@@ -75,6 +75,8 @@ _STANDARD_KEYWORD_PATTERNS: dict[str, re.Pattern] = {
     ),
     # DATEX II, the road traffic and travel information standard (CEN/TS 16157; services/datex.py).
     "DATEX II": re.compile(r"\bdatex(?:\s*-?\s*(?:ii|2|3))?\b|\b16157\b", re.IGNORECASE),
+    # TN-ITS, road attribute updates (CEN/TS 17268; DATEX II Part 14 is CEN/TS 16157-14).
+    "TN-ITS": re.compile(r"\btn\s*-?\s*its\b|\b17268\b|\b16157-14\b", re.IGNORECASE),
     # Words for legislation in the languages questions arrive in. The indexed acts themselves (names,
     # acronyms, numbers) and the terms they define come from services/regulations.py, see
     # _legislation_identifier_pattern. Not "legal": NeTEx uses it for organisations (legal entity).

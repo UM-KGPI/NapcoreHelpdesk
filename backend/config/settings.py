@@ -105,6 +105,7 @@ env = environ.Env(
     SEED_REPO_SIRI=(str, "https://github.com/TransmodelEcosystem/SIRI"),
     SEED_REPO_OPRA=(str, "https://github.com/TransmodelEcosystem/OpRa"),
     SEED_REPO_MOBILITYDCAT_AP=(str, "https://github.com/mobilityDCAT-AP/mobilityDCAT-AP"),
+    SEED_REPO_TNITS=(str, "https://github.com/ERTICO-TN-ITS/TN-ITS-Open"),
     GRAPH_RAG_ENABLED=(bool, True),
     SEMANTIC_LOW_CONFIDENCE_THRESHOLD=(float, 0.60),
     EVIDENCE_GATE_ENABLED=(bool, False),
@@ -384,11 +385,14 @@ SEED_REPO_OPRA = env("SEED_REPO_OPRA").strip() or "https://github.com/Transmodel
 SEED_REPO_MOBILITYDCAT_AP = (
     env("SEED_REPO_MOBILITYDCAT_AP").strip() or "https://github.com/mobilityDCAT-AP/mobilityDCAT-AP"
 )
+# TN-ITS (CEN/TS 17268, DATEX II Part 14): road attribute updates; schemas, code lists and examples.
+SEED_REPO_TNITS = env("SEED_REPO_TNITS").strip() or "https://github.com/ERTICO-TN-ITS/TN-ITS-Open"
 ALLOWED_SOURCE_REPOSITORIES |= {
     SEED_REPO_NETEX,
     SEED_REPO_SIRI,
     SEED_REPO_OPRA,
     SEED_REPO_MOBILITYDCAT_AP,
+    SEED_REPO_TNITS,
 }
 # Published Enterprise Architect HTML export of the Transmodel model (issue #151). Transmodel definitions
 # in answers link to the class page there by EA GUID; empty keeps the link to transmodel.ttl.

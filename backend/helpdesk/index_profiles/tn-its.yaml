@@ -1,0 +1,21 @@
+# TN-ITS (https://github.com/ERTICO-TN-ITS/TN-ITS-Open): the digital files of CEN/TS 17268:2018, the exchange
+# of road attribute updates from road authorities to map makers, maintained by ERTICO's TN-ITS platform. Its
+# second release is DATEX II Part 14 (CEN/TS 16157-14). Indexed: the XSD schemas and API, the code lists as
+# SKOS (OWL/codelists, with definitions), the OWL model and the example messages. Not indexed: the same code
+# lists as GML dictionaries (XSD/codelists), the INSPIRE model copy, tools and office documents.
+# The repository states no licence (to be clarified with ERTICO before deploying this source).
+extensions:
+  - ttl
+include:
+  - README.md
+  - XSD/schemas/
+  - XSD/api/
+  - XSD/lrm/
+  - OWL/codelists/
+  - OWL/core/
+  - Examples/
+exclude:
+  - Tools/
+  - Documents/
+  - OWL/inspire/
+  - XSD/codelists/

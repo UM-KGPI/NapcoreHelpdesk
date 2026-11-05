@@ -1302,7 +1302,7 @@ components:
           type: array
           items:
             type: string
-            enum: [Transmodel, NeTEx, SIRI, OpRa, Profile Documentation, EU legislation, mobilityDCAT-AP, NAPCORE, INSPIRE, DATEX II]
+            enum: [Transmodel, NeTEx, SIRI, OpRa, Profile Documentation, EU legislation, mobilityDCAT-AP, NAPCORE, INSPIRE, DATEX II, TN-ITS]
         language:
           type: string
           default: en

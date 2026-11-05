@@ -787,6 +787,7 @@ def _infer_standard_from_chunk(chunk: dict, effective_scope: list[str]) -> str |
         "mobilityDCAT-AP": ["mobilitydcat", "dcat"],
         "INSPIRE": ["inspire"],
         "DATEX II": ["datex"],
+        "TN-ITS": ["tn-its", "tnits"],
     }
     for standard in effective_scope:
         for alias in aliases.get(standard, []):

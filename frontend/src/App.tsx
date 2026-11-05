@@ -98,6 +98,13 @@ const DEFAULT_INDEX_REPO_PRESETS: IndexRepoPreset[] = [
     repoPath: "/app/repos/mobilityDCAT-AP",
     profile: "mobilitydcat-ap",
   },
+  {
+    id: "tn-its",
+    label: "TN-ITS",
+    repoUrl: "https://github.com/ERTICO-TN-ITS/TN-ITS-Open",
+    repoPath: "/app/repos/TN-ITS-Open",
+    profile: "tn-its",
+  },
 ];
 
 const INDEX_REPO_PRESETS_CONFIG_PATH = `${import.meta.env.BASE_URL}index-repo-presets.json`;
