@@ -152,3 +152,8 @@ def _detect_question_language(question: str) -> Optional[str]:
 def detect_question_language(question: str) -> Optional[str]:
     """Public wrapper: detect a question's language from its text (not browser locale)."""
     return _detect_question_language(question)
+
+
+def natural_word_count(question: str) -> int:
+    """The number of words left once schema identifiers are removed: the text langdetect judges."""
+    return len(re.findall(r"[^\W\d_]+", _strip_technical_terms(question)))

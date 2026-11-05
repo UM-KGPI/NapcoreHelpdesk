@@ -107,3 +107,34 @@ class QuestionDetectionTests(SimpleTestCase):
         self.assertEqual(detect_question_language("Was ist eine verspätete Reise in OpRa und wie wird sie modelliert?"), "German")
         self.assertEqual(detect_question_language("Kaj je zamudena pot v OpRa in kako je modelirana?"), "Slovenian")
         self.assertIsNone(detect_question_language("Wie verwendet SIRI NeTEx?"))
+
+
+class ShortQuestionLanguageTests(SimpleTestCase):
+    """question_language(): a short non-English detection is confirmed by the LLM classifier."""
+
+    CLASSIFIER = "helpdesk.services.llm_generator._classify_question_language_with_llm"
+
+    def test_a_short_slovenian_question_langdetect_reads_as_italian_gets_the_classifier_language(self):
+        # Prod 2026-11-05: langdetect said Italian at 0.99999 and the answer came back in Italian.
+        from helpdesk.services.llm_generator import question_language
+        from helpdesk.services.question_preprocessor import detect_question_language
+
+        question = "Ali SIRI definira dela na cesti?"
+        self.assertEqual(detect_question_language(question), "Italian")
+        with patch(self.CLASSIFIER, return_value="Slovenian") as classify:
+            self.assertEqual(question_language(question), "Slovenian")
+        classify.assert_called_once_with(question)
+
+    def test_a_classifier_failure_keeps_the_detected_language(self):
+        from helpdesk.services.llm_generator import question_language
+
+        with patch(self.CLASSIFIER, return_value=None):
+            self.assertEqual(question_language("Ali SIRI definira dela na cesti?"), "Italian")
+
+    def test_english_and_long_questions_make_no_classifier_call(self):
+        from helpdesk.services.llm_generator import question_language
+
+        with patch(self.CLASSIFIER) as classify:
+            self.assertEqual(question_language("How does SIRI define roadworks?"), "English")
+            self.assertEqual(question_language("Kaj je zamudena pot v OpRa in kako je modelirana v podatkovnem modelu?"), "Slovenian")
+        classify.assert_not_called()

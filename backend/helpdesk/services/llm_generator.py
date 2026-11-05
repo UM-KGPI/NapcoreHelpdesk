@@ -26,7 +26,11 @@ logger = logging.getLogger(__name__)
 from helpdesk.services import anthropic_chat
 from helpdesk.services.llm_options import answer_max_tokens, answer_request_options
 from helpdesk.services.service_abbreviations import services_in_question
-from helpdesk.services.question_preprocessor import LANGDETECT_LANGUAGE_NAMES, detect_question_language
+from helpdesk.services.question_preprocessor import (
+    LANGDETECT_LANGUAGE_NAMES,
+    detect_question_language,
+    natural_word_count,
+)
 from helpdesk.services.llm_model_recovery import (
     extract_authorized_model,
     remember_correction,
@@ -1138,9 +1142,21 @@ def _classify_question_language_with_llm(question: str) -> str | None:
     return name if name in LANGDETECT_LANGUAGE_NAMES.values() else None
 
 
+# langdetect is confidently wrong on short questions in languages that share word forms: "Ali SIRI definira
+# dela na cesti?" (Slovenian) -> Italian at 0.99999 (prod 2026-11-05, answered in Italian). Below this many
+# words a non-English detection is confirmed by the LLM classifier; English needs no confirmation (its
+# misreadings are caught by the function-word check), and longer questions are left to langdetect.
+MIN_TRUSTED_DETECTION_WORDS = 8
+
+
 def question_language(question: str) -> str | None:
-    """The question's language: the word-based detector first, the LLM when it cannot judge."""
-    return detect_question_language(question) or _classify_question_language_with_llm(question)
+    """The question's language: the word-based detector, confirmed or replaced by the LLM where it is unreliable."""
+    detected = detect_question_language(question)
+    if detected is None:
+        return _classify_question_language_with_llm(question)
+    if detected != LANGDETECT_LANGUAGE_NAMES["en"] and natural_word_count(question) < MIN_TRUSTED_DETECTION_WORDS:
+        return _classify_question_language_with_llm(question) or detected
+    return detected
 
 
 SEARCH_TRANSLATION_TIMEOUT_SECONDS = 10
