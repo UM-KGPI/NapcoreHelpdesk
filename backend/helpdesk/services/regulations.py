@@ -11,7 +11,7 @@ the amending acts stay indexed for questions about what changed.
 
 Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
 Crafted by: AI coding agents
-Created: 2026-11-01  |  Modified: 2026-11-01
+Created: 2026-11-01  |  Modified: 2026-11-05
 """
 
 from __future__ import annotations
@@ -50,6 +50,11 @@ class Act:
     name: str  # how answers name the act
     kind: str  # "consolidated", "act" or "amending"
     quality: float
+    # Only these parts of the act's annexes and appendices are indexed: (anchor, section number) pairs,
+    # e.g. ("anx_II", "7.") keeps section 7 of Annex II. None indexes every part. Articles and recitals
+    # are always indexed. For acts that cover far more than mobility data (the INSPIRE rules have 34
+    # spatial data themes; only Transport Networks concerns these standards).
+    annex_sections: tuple[tuple[str, str], ...] | None = None
 
     @property
     def url(self) -> str:
@@ -82,6 +87,22 @@ ACTS: tuple[Act, ...] = (
         0.6,
     ),
     Act("32023L2661", "Directive (EU) 2023/2661 amending Directive 2010/40/EU (ITS Directive)", "amending", 0.6),
+    # MMTIS Art. 4(1)(c): "for the spatial network the requirements set out in Article 7 of Directive
+    # 2007/2/EC". Article 7 is implemented by Regulation 1089/2010, whose Annex II section 7 is the
+    # Transport Networks theme. Ranked below the mobility acts: they support MMTIS, not replace it.
+    Act(
+        "02007L0002-20241126",
+        "Directive 2007/2/EC (INSPIRE), consolidated text of 26 November 2024",
+        "consolidated",
+        0.8,
+    ),
+    Act(
+        "02010R1089-20231119",
+        "Regulation (EU) No 1089/2010 (INSPIRE spatial data interoperability), consolidated text of 19 November 2023",
+        "consolidated",
+        0.8,
+        annex_sections=(("anx_II", "7."),),
+    ),
 )
 
 
@@ -246,6 +267,21 @@ def parse_act(xhtml: bytes) -> list[Section]:
     return sections
 
 
+def select_sections(act: Act, sections: list[Section]) -> list[Section]:
+    """The sections of an act that are indexed: all of them, or only act.annex_sections of its annexes."""
+    if act.annex_sections is None:
+        return sections
+
+    def kept(section: Section) -> bool:
+        if not section.anchor.startswith(("anx_", "app_")):
+            return True
+        # "Annex — 7.2. Structure of …": the section number follows the first " — ".
+        number = section.heading.partition(" — ")[2]
+        return any(section.anchor == anchor and number.startswith(prefix) for anchor, prefix in act.annex_sections)
+
+    return [section for section in sections if kept(section)]
+
+
 def _chunk_records(act: Act, sections: list[Section]) -> list[dict]:
     records = []
     for index, section in enumerate(sections):
@@ -277,7 +313,7 @@ def index_act(act: Act) -> tuple[str, int]:
     if indexed and indexed.content_hash == content_hash:
         return "unchanged", SourceChunk.objects.filter(repository_url=act.url).count()
 
-    records = _chunk_records(act, parse_act(content))
+    records = _chunk_records(act, select_sections(act, parse_act(content)))
     embeddings = build_text_embeddings_batch(
         [
             build_chunk_embedding_text(

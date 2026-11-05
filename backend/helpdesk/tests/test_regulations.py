@@ -39,10 +39,12 @@ from helpdesk.services.regulations import (
     index_act,
     is_regulation_url,
     legal_context,
+    Section,
     parse_act,
     provisions_naming,
     render_provisions,
     render_vocabulary,
+    select_sections,
     vocabulary_terms,
 )
 from helpdesk.services.retrieval_gateway import _scope_matches
@@ -116,6 +118,47 @@ class ParseActTests(SimpleTestCase):
         for act in ACTS:
             with self.subTest(act=act.celex):
                 self.assertTrue(any(s.anchor.startswith("art_") for s in parse_act(act.path.read_bytes())))
+
+
+INSPIRE_DIRECTIVE = next(act for act in ACTS if act.celex.startswith("02007L0002"))
+INSPIRE_REGULATION = next(act for act in ACTS if act.celex.startswith("02010R1089"))
+
+
+class AnnexSectionTests(SimpleTestCase):
+    """Only the configured annex sections of a broad act are indexed (INSPIRE: Transport Networks)."""
+
+    SECTIONS = [
+        Section("art_1", "Article 1 — Subject Matter and Scope", "a"),
+        Section("rct_1", "Recitals", "b"),
+        Section("anx_I", "Annex — 2. COMMON DATA TYPES", "c"),
+        Section("anx_II", "Annex — 6. HYDROGRAPHY", "d"),
+        Section("anx_II", "Annex — 7. TRANSPORT NETWORKS", "e"),
+        Section("anx_II", "Annex — 7.2. Structure of the Spatial Data Theme Transport Networks", "f"),
+        Section("anx_II", "Annex — 17. NOT TRANSPORT", "g"),
+        Section("anx_IV", "Annex — 7.1. Elsewhere", "h"),
+    ]
+
+    def test_articles_recitals_and_listed_sections_are_kept(self):
+        act = Act("x", "x", "consolidated", 0.8, annex_sections=(("anx_II", "7."),))
+        self.assertEqual([s.text for s in select_sections(act, self.SECTIONS)], ["a", "b", "e", "f"])
+
+    def test_without_a_selection_everything_is_kept(self):
+        self.assertEqual(select_sections(ACTS[0], self.SECTIONS), self.SECTIONS)
+
+    def test_inspire_regulation_keeps_only_transport_networks_from_its_annexes(self):
+        sections = select_sections(INSPIRE_REGULATION, parse_act(INSPIRE_REGULATION.path.read_bytes()))
+        annex = [s for s in sections if s.anchor.startswith("anx_")]
+        self.assertTrue(annex)
+        self.assertTrue(all(s.anchor == "anx_II" and s.heading.startswith("Annex — 7.") for s in annex))
+        self.assertTrue(any("Transport" in s.text for s in annex))
+        self.assertTrue(any(s.anchor == "art_7" for s in sections))
+        self.assertLess(len(sections), 300)  # the whole act parses into ~1,800 sections
+
+    def test_inspire_acts_are_named_by_name_and_number(self):
+        self.assertIn(INSPIRE_DIRECTIVE.celex, named_acts("What does Article 7 of the INSPIRE Directive require?"))
+        self.assertIn(INSPIRE_DIRECTIVE.celex, named_acts("Which data does Directive 2007/2/EC cover?"))
+        self.assertIn(INSPIRE_REGULATION.celex, named_acts("What does Regulation 1089/2010 say about road links?"))
+        self.assertNotIn(INSPIRE_DIRECTIVE.celex, named_acts("Which standards does the MMTIS regulation name?"))
 
 
 @override_settings(EMBEDDING_BACKEND="hash")
