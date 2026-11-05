@@ -687,6 +687,12 @@ class QuestionLanguageTests(SimpleTestCase):
             question="Wie verwendet SIRI NeTEx?", chunks=[], scope=[], detected_language=language
         )[0]["content"])
 
+    def test_the_first_json_object_counts_and_the_classifier_model_is_used(self):
+        reply = '{"evidence": "Ali, zamude", "language": "Slovenian"} Wait, {"language": "Croatian"}'
+        with self._llm_says(reply) as llm, self.settings(LANGUAGE_CLASSIFIER_MODEL="claude-sonnet-5-5"):
+            self.assertEqual(question_language("Kako SIRI opisuje zamude?"), "Slovenian")
+        self.assertEqual(llm.call_args.kwargs["model"], "claude-sonnet-5-5")
+
     def test_an_unknown_name_or_a_failed_call_keeps_the_generic_instruction(self):
         with self._llm_says('{"language": "Klingon"}'):
             self.assertIsNone(question_language("Wie verwendet SIRI NeTEx?"))
