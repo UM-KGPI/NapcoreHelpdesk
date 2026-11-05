@@ -128,7 +128,12 @@ class ScopeAndPolicyTests(SimpleTestCase):
     def test_a_question_naming_inspire_gets_the_scope(self):
         scan = QuestionParsingService()._scan_standard_keywords
         self.assertIn("INSPIRE", scan("How does INSPIRE model a road link?"))
-        self.assertEqual(sorted(scan("What does the INSPIRE Directive require?")), ["EU legislation", "INSPIRE"])
+        # The Directive's name names the act, not the specification.
+        for question in ("What does the INSPIRE Directive require?", "Welche Netzdienste verlangt die INSPIRE-Richtlinie?",
+                         "Kaj zahteva direktiva INSPIRE?"):
+            with self.subTest(question=question):
+                self.assertNotIn("INSPIRE", scan(question))
+        self.assertIn("INSPIRE", scan("Does the INSPIRE Directive require the INSPIRE road link model?"))
         self.assertNotIn("INSPIRE", scan("How does NeTEx model a stop place?"))
 
     def test_citations_of_the_pinned_spec_and_registry_are_allowed(self):
