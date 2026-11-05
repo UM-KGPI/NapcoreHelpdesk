@@ -489,7 +489,7 @@ class NamedStandardsRetrievalTests(TestCase):
     def retrieve(self, question):
         from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 
-        with patch("helpdesk.services.regulations.provisions_naming", side_effect=lambda s: self.PROVISIONS[s]):
+        with patch("helpdesk.services.regulations.provisions_naming", side_effect=lambda s: self.PROVISIONS.get(s, [])):
             chunks, _ = retrieve_chunks_with_trace(
                 question=question, top_k=4, min_score=0.0, scope=[SCOPE], english_question=None
             )

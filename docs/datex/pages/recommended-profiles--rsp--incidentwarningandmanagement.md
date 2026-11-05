@@ -1,0 +1,6 @@
+url: https://docs.datex2.eu/v3.7/recommended-profiles/rsp/incidentwarningandmanagement/
+title: Title TODO: incidentwarningandmanagement
+
+## Title TODO: incidentwarningandmanagement
+Content will follow as soon as possible.
+Go back to the previous page

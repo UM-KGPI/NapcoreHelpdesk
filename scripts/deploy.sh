@@ -74,10 +74,11 @@ ${COMPOSE} exec -T backend python manage.py index_regulations
 # NAPCORE's own material (napcore.eu pages and deliverables) is indexed from docs/napcore/text/ the same way:
 # unchanged snapshots are skipped. It runs detached: the first run embeds about 3,000 chunks (about 100 min on
 # prod's embedder), longer than this job may take. Progress: /tmp/index_napcore_site.log in the backend container.
-# The INSPIRE Transport Networks specification and code lists (docs/inspire/) follow in the same detached job,
-# so the two never compete for the embedder. Progress: /tmp/index_inspire.log.
-echo "==> Indexing napcore.eu and INSPIRE (detached)"
-${COMPOSE} exec -d -T backend sh -c 'python manage.py index_napcore_site > /tmp/index_napcore_site.log 2>&1; python manage.py index_inspire > /tmp/index_inspire.log 2>&1'
+# The INSPIRE Transport Networks specification and code lists (docs/inspire/) and the DATEX II model and
+# documentation (docs/datex/) follow in the same detached job, so they never compete for the embedder.
+# Progress: /tmp/index_inspire.log and /tmp/index_datex.log.
+echo "==> Indexing napcore.eu, INSPIRE and DATEX II (detached)"
+${COMPOSE} exec -d -T backend sh -c 'python manage.py index_napcore_site > /tmp/index_napcore_site.log 2>&1; python manage.py index_inspire > /tmp/index_inspire.log 2>&1; python manage.py index_datex > /tmp/index_datex.log 2>&1'
 
 echo "==> Removing dangling images"
 docker image prune -f

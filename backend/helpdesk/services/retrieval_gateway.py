@@ -151,18 +151,25 @@ def _token_overlap_score(question: str, chunk_text: str) -> float:
 
 
 # Sources searched only when the question's scope names them: EU legislation (issue #91), the
-# mobilityDCAT-AP metadata profile, NAPCORE's own material (napcore.eu) and the INSPIRE Transport Networks
-# specification would otherwise compete with the standards in every question that names no standard.
-OPT_IN_SCOPES = ("EU legislation", "mobilityDCAT-AP", "NAPCORE", "INSPIRE")
+# mobilityDCAT-AP metadata profile, NAPCORE's own material (napcore.eu), the INSPIRE Transport Networks
+# specification and DATEX II would otherwise compete with the standards in every question that names no
+# standard.
+OPT_IN_SCOPES = ("EU legislation", "mobilityDCAT-AP", "NAPCORE", "INSPIRE", "DATEX II")
+# A chunk that also belongs to one of these is never opt-in: SIRI's copy of the DATEX II situation schema
+# (scope DATEX II and SIRI) stays in the unscoped search, as it was before DATEX II became a source.
+CORE_SCOPES = ("NeTEx", "SIRI", "OpRa", "Transmodel")
 
 
 def _scope_query_filter(scope: list[str] | None):
     """Build JSON scope filter compatible with PostgreSQL JSON array fields."""
 
     if not scope:
+        core = models.Q()
+        for standard in CORE_SCOPES:
+            core |= models.Q(standards_scope__contains=[standard])
         unscoped = models.Q()
         for opt_in in OPT_IN_SCOPES:
-            unscoped &= ~models.Q(standards_scope__contains=[opt_in])
+            unscoped &= ~models.Q(standards_scope__contains=[opt_in]) | core
         return unscoped
 
     scoped_filter = models.Q()
@@ -540,7 +547,7 @@ def _standard_identity_candidates(provisions: list[dict], score: float) -> list[
 
 def _scope_matches(chunk_scope: list[str], requested_scope: list[str] | None) -> bool:
     if not requested_scope:
-        return not set(chunk_scope).intersection(OPT_IN_SCOPES)
+        return bool(set(chunk_scope).intersection(CORE_SCOPES)) or not set(chunk_scope).intersection(OPT_IN_SCOPES)
     return bool(set(chunk_scope).intersection(set(requested_scope)))
 
 
@@ -1046,6 +1053,7 @@ STANDARD_HINTS = {
     "OpRa": {"opra"},
     "mobilityDCAT-AP": {"mobilitydcat", "dcat"},
     "INSPIRE": {"inspire"},
+    "DATEX II": {"datex"},
 }
 
 _STANDARD_SCOPE_ALIASES = {

@@ -812,7 +812,7 @@ questions:
     expected_source_patterns: []
     min_hits: 0
     top_k_threshold: 10
-    note: "DATEX II is out of scope (Transmodel family only); abstention expected."
+    note: "OpRa's capacity indicators have no DATEX II counterpart in the indexed sources; abstention expected. DATEX II is an opt-in source since the DATEX II source was added; the CI index has none of it."
 
   - id: q099
     question: "How does the Norwegian national NeTEx profile handle delayed journey representation?"
