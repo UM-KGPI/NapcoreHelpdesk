@@ -1073,6 +1073,7 @@ export default function App() {
               <SharedAppLayout
                 appVersion={frontendVersion}
                 backendBuildRef={backendBuildRef}
+                apiBaseUrl={apiBaseUrl}
               />
             }
           >

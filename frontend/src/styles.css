@@ -400,6 +400,21 @@ h1 {
   width: 100%;
 }
 
+.service-status-banner {
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid #e3c27a;
+  border-radius: 8px;
+  background: #fdf3dc;
+  color: var(--ink);
+  font-size: 0.95rem;
+}
+
+.chat-progress-slow {
+  margin: 0.35rem 0 0;
+  color: var(--danger);
+}
+
 .chat-progress {
   margin-top: 0.25rem;
 }
