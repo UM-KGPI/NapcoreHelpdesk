@@ -154,7 +154,7 @@ def _token_overlap_score(question: str, chunk_text: str) -> float:
 # mobilityDCAT-AP metadata profile, NAPCORE's own material (napcore.eu), the INSPIRE Transport Networks
 # specification and DATEX II would otherwise compete with the standards in every question that names no
 # standard.
-OPT_IN_SCOPES = ("EU legislation", "mobilityDCAT-AP", "NAPCORE", "INSPIRE", "DATEX II")
+OPT_IN_SCOPES = ("EU legislation", "mobilityDCAT-AP", "NAPCORE", "INSPIRE", "DATEX II", "TN-ITS")
 # A chunk that also belongs to one of these is never opt-in: SIRI's copy of the DATEX II situation schema
 # (scope DATEX II and SIRI) stays in the unscoped search, as it was before DATEX II became a source.
 CORE_SCOPES = ("NeTEx", "SIRI", "OpRa", "Transmodel")
@@ -315,7 +315,7 @@ def _question_lexemes(question: str) -> list[str]:
 
 # Standard names are never a question's topic, though a small standard's name is rare in a shared scope
 # ("opra" among NeTEx and OpRa chunks).
-STANDARD_NAME_LEXEMES = frozenset({"netex", "siri", "opra", "transmodel", "datex", "gtfs", "napcor", "mobilitydcat", "inspir"})
+STANDARD_NAME_LEXEMES = frozenset({"netex", "siri", "opra", "transmodel", "datex", "gtfs", "napcor", "mobilitydcat", "inspir", "tnit"})
 
 
 def _rare_lexemes(lexemes: list[str], scope: list[str] | None) -> list[str]:
@@ -1054,6 +1054,7 @@ STANDARD_HINTS = {
     "mobilityDCAT-AP": {"mobilitydcat", "dcat"},
     "INSPIRE": {"inspire"},
     "DATEX II": {"datex"},
+    "TN-ITS": {"tnits", "tn-its"},
 }
 
 _STANDARD_SCOPE_ALIASES = {

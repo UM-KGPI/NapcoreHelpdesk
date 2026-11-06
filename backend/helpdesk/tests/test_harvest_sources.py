@@ -248,7 +248,7 @@ class HarvestApiTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assert_matches_schema("SourcesResponse", response.json())
         rows = {row["name"]: row for row in response.json()["sources"]}
-        self.assertEqual(set(rows), {"NeTEx", "SIRI", "OpRa", "mobilityDCAT-AP"})
+        self.assertEqual(set(rows), {"NeTEx", "SIRI", "OpRa", "mobilityDCAT-AP", "TN-ITS"})
         row = rows["mobilityDCAT-AP"]
         self.assertEqual((row["indexedChunks"], row["indexedCommit"]), (1, "c" * 40))
         self.assertEqual((row["ontology"]["version"], row["ontology"]["lastLoadedAt"]), ("3.0.0", None))
@@ -286,3 +286,37 @@ class HarvestApiTests(APITestCase):
                 payload = response.json()
                 self.assert_matches_schema("HarvestJobResponse", payload)
                 self.assertEqual((payload["state"], payload["result"], payload["error"]), (state, result, error))
+
+
+TNITS_URL = "https://github.com/ERTICO-TN-ITS/TN-ITS-Open"
+
+
+class TnItsSourceTests(SimpleTestCase):
+    """TN-ITS (CEN/TS 17268, DATEX II Part 14) is a harvested source with its own opt-in scope."""
+
+    def test_it_is_a_configured_source(self):
+        source = find_source("TN-ITS")
+        self.assertIsNotNone(source)
+        self.assertEqual((source.url, source.profile, source.ontology), (TNITS_URL, "tn-its", None))
+
+    def test_the_profile_adds_turtle_and_keeps_out_tools_and_the_gml_code_lists(self):
+        from helpdesk.services.index_builder import _matches_profile
+
+        profile = load_profile_rules("tn-its")
+        self.assertEqual(profile["extensions"], {".ttl"})
+        include, exclude = profile["include"], profile["exclude"]
+        self.assertTrue(_matches_profile("OWL/codelists/FuelTypeCode.ttl", include, exclude))
+        self.assertTrue(_matches_profile("XSD/schemas/RoadFeatures.xsd", include, exclude))
+        self.assertFalse(_matches_profile("XSD/codelists/FuelTypeCode.xml", include, exclude))
+        self.assertFalse(_matches_profile("Tools/Scripts/x.py", include, exclude))
+
+    def test_chunks_are_tagged_tn_its_and_datex_ii_only(self):
+        self.assertEqual(infer_scope("OWL/core/tnits-owl.ttl", "speed limit as in NeTEx", TNITS_URL), ["DATEX II", "TN-ITS"])
+
+    def test_it_is_searched_only_when_the_question_names_tn_its_or_datex_ii(self):
+        self.assertFalse(_scope_matches(["DATEX II", "TN-ITS"], None))
+        self.assertTrue(_scope_matches(["DATEX II", "TN-ITS"], ["TN-ITS"]))
+        self.assertTrue(_scope_matches(["DATEX II", "TN-ITS"], ["DATEX II"]))
+        for question in ("What is a road feature in TN-ITS?", "Which code lists does CEN/TS 17268 use?", "TNITS speed limits"):
+            with self.subTest(question=question):
+                self.assertIn("TN-ITS", parse_question_to_semantic_query(question).candidate_standards)

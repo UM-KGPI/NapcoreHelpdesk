@@ -205,3 +205,39 @@ questions:
   min_hits: 1
   top_k_threshold: 10
   note: "SIRI bundles the DATEX II situation schema; its chunks keep the SIRI scope (memory: #246 regression)."
+# TN-ITS (github.com/ERTICO-TN-ITS/TN-ITS-Open; CEN/TS 17268, DATEX II Part 14)
+- id: src-tn01
+  question: Which road feature types can TN-ITS exchange?
+  intent: explanation
+  tags: [tn-its, codelist]
+  expected_source_patterns: ['OWL/codelists/RoadFeatureTypeCode.ttl', 'XSD/schemas/RoadFeatures.xsd']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-tn02
+  question: How does TN-ITS describe a charging point road feature?
+  intent: explanation
+  tags: [tn-its, codelist]
+  expected_source_patterns: ['OWL/codelists/RoadFeatureTypeCode.ttl', 'OWL/codelists/ChargingPointUsageTypeCode.ttl']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-tn03
+  question: Which fuel types does the TN-ITS fuel type code list contain?
+  intent: explanation
+  tags: [tn-its, codelist]
+  expected_source_patterns: ['OWL/codelists/FuelTypeCode.ttl']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-tn04
+  question: How is a road feature update encoded in a TN-ITS dataset?
+  intent: explanation
+  tags: [tn-its, schema]
+  expected_source_patterns: ['XSD/schemas/Update.xsd', 'XSD/schemas/Dataset.xsd', 'XSD/schemas/RoadFeatures.xsd', 'Examples/']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-tn05
+  question: Can you show an example of a TN-ITS road data set?
+  intent: example
+  tags: [tn-its, example]
+  expected_source_patterns: ['Examples/Example_RoadDataSet.xml', 'Examples/Example_FeatureCollection']
+  min_hits: 1
+  top_k_threshold: 10

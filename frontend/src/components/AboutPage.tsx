@@ -5,7 +5,7 @@
  *
  * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
  * Crafted by: AI coding agents
- * Created: 2026-07-02  |  Modified: 2026-11-05
+ * Created: 2026-07-02  |  Modified: 2026-11-06
  */
 
 import systemContextDiagramUrl from "../assets/c4-system-context.svg";
@@ -42,7 +42,9 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           NAPCORE Helpdesk helps implementers get reliable answers to their questions about the
           European public transport data standards Transmodel, NeTEx, SIRI, and OpRa, and about the EU
           legislation that governs their data: the MMTIS Delegated Regulation (EU) 2017/1926, the ITS
-          Directive 2010/40/EU and the TEL TSI (EU) 2026/253.
+          Directive 2010/40/EU and the TEL TSI (EU) 2026/253. Questions that name them are also answered
+          from the road traffic standard DATEX II and TN-ITS (its Part 14 for road attribute updates), and
+          from the INSPIRE Transport Networks specification that MMTIS requires for the spatial network.
         </p>
         <ul>
           <li><strong>Grounded answers:</strong> responses are based only on approved source repositories and the official EU legal texts, and cite the evidence they use. A Transmodel definition links to its class page in the Transmodel model (with its package and diagrams), and a legal answer links to the article on EUR-Lex.</li>
@@ -187,7 +189,9 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
              generated from their definitions articles, so questions such as "What is static travel
              data?" reach the legislation; questions about a standard's legal status answered from the
              provisions that name it, and a Legal context line under answers about NeTEx, SIRI and
-             Transmodel.</li>
+             Transmodel; sources searched only when a question names them: the INSPIRE Directive and the
+             Transport Networks rules with their data specification and code lists, DATEX II v3.7 (its data
+             model and documentation) and TN-ITS.</li>
         </ol>
         <p>
           Development is ongoing, and this timeline will grow as the project evolves.

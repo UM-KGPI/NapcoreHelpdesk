@@ -39,6 +39,7 @@ from helpdesk.services.repository_urls import canonical_repository_url
 
 
 MOBILITYDCAT_AP_SCOPE = "mobilityDCAT-AP"
+TNITS_SCOPE = "TN-ITS"
 DEFAULT_EXTENSIONS = {".md", ".txt", ".yaml", ".yml", ".xml", ".xsd", ".json"}
 DELETE_BATCH_SIZE = 500
 XSD_NS = {"xs": "http://www.w3.org/2001/XMLSchema"}
@@ -156,6 +157,10 @@ def infer_scope(source_path: str, chunk_text: str, repo_url: str = "") -> list[s
     # Repository only: NeTEx and SIRI documents that mention DCAT are not about this profile.
     if "mobilitydcat-ap" in repo_lower:
         scope.add(MOBILITYDCAT_AP_SCOPE)
+    # TN-ITS's own repository only; it is DATEX II Part 14, so a DATEX II question finds it too.
+    if "tn-its" in repo_lower:
+        scope.update({TNITS_SCOPE, "DATEX II"})
+        return sorted(scope)
     if "profile_documentation" in repo_lower or "hfjelstad" in repo_lower:
         scope.add("Profile Documentation")
 

@@ -90,6 +90,7 @@ def configured_sources() -> list[SourceRepository]:
             "mobilitydcat-ap",
             ontology=MOBILITYDCAT_AP_ONTOLOGY,
         ),
+        SourceRepository("TN-ITS", settings.SEED_REPO_TNITS, "tn-its"),
     ]
 
 
