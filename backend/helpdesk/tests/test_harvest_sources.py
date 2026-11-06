@@ -297,7 +297,9 @@ class TnItsSourceTests(SimpleTestCase):
     def test_it_is_a_configured_source(self):
         source = find_source("TN-ITS")
         self.assertIsNotNone(source)
-        self.assertEqual((source.url, source.profile, source.ontology), (TNITS_URL, "tn-its", None))
+        self.assertEqual((source.url, source.profile), (TNITS_URL, "tn-its"))
+        # Its own OWL is loaded into the knowledge graph (#279).
+        self.assertEqual(source.ontology.path, "OWL/core/tnits-owl.ttl")
 
     def test_the_profile_adds_turtle_and_keeps_out_tools_and_the_gml_code_lists(self):
         from helpdesk.services.index_builder import _matches_profile
