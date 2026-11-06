@@ -416,7 +416,7 @@ def _legislation_term_patterns() -> tuple[re.Pattern, re.Pattern, re.Pattern] | 
 
 def _act_identifiers(act) -> set[str]:
     """How a question names an act: its names in parentheses ("MMTIS", "ITS Directive") and its number."""
-    identifiers = set(re.findall(r"\(([^()]*[A-Za-z][^()]*)\)", act.name)) | set(re.findall(r"\d{4}/\d+(?:/EU)?", act.name))
+    identifiers = set(re.findall(r"\(([^()]*[A-Za-z][^()]*)\)", act.name)) | set(re.findall(r"\d{4}/\d+(?:/E[UC])?", act.name))
     identifiers.discard("EU")
     return identifiers
 

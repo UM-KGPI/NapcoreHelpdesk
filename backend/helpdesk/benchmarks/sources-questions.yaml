@@ -1,0 +1,99 @@
+# Retrieval questions for the opt-in sources (EU legislation, INSPIRE, and later DATEX II and TN-ITS).
+# Not in the CI gate: the CI index has none of these sources. Run locally with semantic embeddings:
+#   python manage.py run_retrieval_benchmark --input helpdesk/benchmarks/sources-questions.yaml --app-scope
+# The "regression" questions were answered before a source was added; they show whether the new
+# chunks crowd out the existing evidence.
+version: '1.0'
+description: Retrieval questions for opt-in sources, with expected sources.
+created: '2026-11-05'
+target_k:
+- 4
+- 6
+- 10
+questions:
+# EU legislation already indexed (regression checks)
+- id: src-leg01
+  question: What is the role of the national access point as a metadata directory under MMTIS?
+  intent: explanation
+  tags: [legislation, regression]
+  expected_source_patterns: ['02017R1926-20240304#art_3']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-leg02
+  question: Which standards does MMTIS require for static travel and traffic data?
+  intent: explanation
+  tags: [legislation, regression]
+  expected_source_patterns: ['02017R1926-20240304#art_4']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-leg03
+  question: Which standard does MMTIS require for dynamic travel data?
+  intent: explanation
+  tags: [legislation, regression]
+  expected_source_patterns: ['02017R1926-20240304#art_5']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-leg04
+  question: What are static travel data according to MMTIS?
+  intent: definition
+  tags: [legislation, regression]
+  expected_source_patterns: ['02017R1926-20240304#art_2']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-leg05
+  question: Does the TEL TSI reference Transmodel?
+  intent: explanation
+  tags: [legislation, regression]
+  expected_source_patterns: ['32026R0253#app_C']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-leg06
+  question: What does MMTIS require for the spatial network?
+  intent: explanation
+  tags: [legislation, inspire]
+  expected_source_patterns: ['02017R1926-20240304#art_4']
+  min_hits: 1
+  top_k_threshold: 10
+# INSPIRE legal acts (Directive 2007/2/EC, Regulation 1089/2010 Annex II section 7)
+- id: src-insp01
+  question: What does Article 7 of the INSPIRE Directive require?
+  intent: explanation
+  tags: [inspire, legislation]
+  expected_source_patterns: ['02007L0002-20241126#art_7']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-insp02
+  question: Which spatial data themes does Annex I of the INSPIRE Directive list?
+  intent: explanation
+  tags: [inspire, legislation]
+  expected_source_patterns: ['02007L0002-20241126#anx_I']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-insp03
+  question: Which spatial object types does Regulation 1089/2010 define for the road transport network?
+  intent: explanation
+  tags: [inspire, legislation]
+  expected_source_patterns: ['02010R1089-20231119#anx_II']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-insp04
+  question: What metadata does the INSPIRE Directive require for spatial data sets?
+  intent: explanation
+  tags: [inspire, legislation]
+  expected_source_patterns: ['02007L0002-20241126#art_5']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-insp05
+  question: Which network services must Member States operate under the INSPIRE Directive?
+  intent: explanation
+  tags: [inspire, legislation]
+  expected_source_patterns: ['02007L0002-20241126#art_11']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-insp06
+  question: Welche Netzdienste verlangt die INSPIRE-Richtlinie?
+  intent: explanation
+  tags: [inspire, legislation, translated, de]
+  expected_source_patterns: ['02007L0002-20241126#art_11']
+  min_hits: 1
+  top_k_threshold: 10
