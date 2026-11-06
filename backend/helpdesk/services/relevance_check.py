@@ -31,12 +31,13 @@ _PROMPT = """You screen questions for a helpdesk about European public-transport
 - OpRa (Operational Raw Data): a format for exchanging historical operational data (offer, demand, capacity, efficiency, passenger counts, delays and cancellations).
 - Transmodel: the reference model behind them.
 - mobilityDCAT-AP (also DCAT-AP): the metadata profile for describing datasets on National Access Points (NAPs).
+- DATEX II: road traffic and travel information (situations such as roadworks and accidents, traffic data, variable message signs, parking, energy infrastructure and charging points, traffic management and regulations, location referencing), also TN-ITS road attribute updates.
 - INSPIRE: the EU spatial data rules (Directive 2007/2/EC, Regulation 1089/2010) that MMTIS requires for the spatial network, in particular the Transport Networks theme (road, rail, water, air and cable networks).
 - NAPCORE: the EU coordination platform of the National Access Points and National Bodies (its working groups, deliverables, data quality frameworks, compliance assessment and the EU legislation the NAPs implement).
 
 Decide whether the question can be answered from the documentation of those standards and NAPCORE's material.
 - "relevant": it is about public-transport data, concepts, messages or modelling that these standards cover, even if phrased briefly or in another language.
-- "irrelevant": it is about something else (general knowledge, other software, other standards such as GTFS, DATEX II or OpenStreetMap) or it is too vague to tell what is being asked.
+- "irrelevant": it is about something else (general knowledge, other software, other standards such as GTFS or OpenStreetMap) or it is too vague to tell what is being asked.
 
 Question: {question}
 

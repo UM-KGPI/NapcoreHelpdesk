@@ -458,12 +458,14 @@ STANDARD_NAMES = {
     "SIRI": r"\bSIRI\b",
     "Transmodel": r"\bTransmodel\b",
     "OpRa": r"\bOpRa\b",
+    "DATEX II": r"\bDATEX II\b",
 }
 # SIRI is published as both EN 15531 and CEN/TS 15531 parts.
 STANDARD_NUMBERS = {
     "NeTEx": r"CEN/TS 16614",
     "SIRI": r"(?:CEN/TS|EN) 15531",
     "Transmodel": r"EN 12896",
+    "DATEX II": r"(?:CEN/TS|EN) 16157",
 }
 STANDARD_IDENTIFIERS = {
     standard: "|".join(p for p in (name, STANDARD_NUMBERS.get(standard)) if p) for standard, name in STANDARD_NAMES.items()

@@ -140,3 +140,68 @@ questions:
   expected_source_patterns: ['dataspecification_tn.adoc#L1555']
   min_hits: 1
   top_k_threshold: 10
+# DATEX II v3.7 (docs/datex/: model elements and documentation pages)
+- id: src-dx01
+  question: How does DATEX II model roadworks?
+  intent: explanation
+  tags: [datex, model]
+  expected_source_patterns: ['datex-model-v3.7/Situation.Roadworks', 'rtti-670--4-sn-c-roadworks', 'rtti-962--drd-5-roadworks']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-dx02
+  question: Which values does the DATEX II roadworks scale enumeration have?
+  intent: explanation
+  tags: [datex, model]
+  expected_source_patterns: ['datex-model-v3.7/Situation.RoadworksScaleEnum']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-dx03
+  question: What is a situation record in DATEX II?
+  intent: definition
+  tags: [datex, model]
+  expected_source_patterns: ['datex-model-v3.7/Situation.SituationRecord', 'levels--mastering--situation']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-dx04
+  question: How does DATEX II describe an electric charging point?
+  intent: explanation
+  tags: [datex, model]
+  expected_source_patterns: ['EnergyInfrastructure.ElectricChargingPoint']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-dx05
+  question: What is a VMS controller in DATEX II?
+  intent: definition
+  tags: [datex, model]
+  expected_source_patterns: ['datex-model-v3.7/Vms.VmsController']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-dx06
+  question: What are the levels of DATEX II and what does the basic level cover?
+  intent: explanation
+  tags: [datex, docs]
+  expected_source_patterns: ['docs.datex2.eu/v3.7/levels--basics', 'docs.datex2.eu/v3.7/levels--using']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-dx07
+  question: How are speed limits expressed as traffic regulations in DATEX II?
+  intent: explanation
+  tags: [datex, model]
+  expected_source_patterns: ['datex-model-v3.7/TrafficRegulation.SpeedLimit']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-dx08
+  question: Wie beschreibt DATEX II einen Ladepunkt für Elektrofahrzeuge?
+  intent: explanation
+  tags: [datex, model, translated, de]
+  expected_source_patterns: ['EnergyInfrastructure.ElectricChargingPoint']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-dx09
+  question: Does SIRI define roadworks?
+  intent: explanation
+  tags: [siri, datex, regression]
+  expected_source_patterns: ['xsd/datex2/']
+  min_hits: 1
+  top_k_threshold: 10
+  note: "SIRI bundles the DATEX II situation schema; its chunks keep the SIRI scope (memory: #246 regression)."

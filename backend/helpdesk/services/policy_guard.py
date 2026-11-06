@@ -15,6 +15,7 @@ from __future__ import annotations
 from django.conf import settings
 
 from helpdesk.services.ontology_evidence import TRANSMODEL_SOURCE_URL
+from helpdesk.services.datex import is_datex_url
 from helpdesk.services.inspire import is_inspire_url
 from helpdesk.services.napcore_site import is_napcore_url
 from helpdesk.services.regulations import is_regulation_url
@@ -83,6 +84,9 @@ def evaluate_policy(answer_text: str, citations: list[dict]) -> dict:
             continue
         # The pinned INSPIRE specification and registry code lists are approved by being indexed from docs/inspire/.
         if is_inspire_url(citation.get("repositoryUrl", "")):
+            continue
+        # The DATEX II portal pages and model of the pinned release are indexed from docs/datex/.
+        if is_datex_url(citation.get("repositoryUrl", "")):
             continue
         repo_url = _normalize_repository_url(citation.get("repositoryUrl", ""))
         if repo_url not in approved_canonical:

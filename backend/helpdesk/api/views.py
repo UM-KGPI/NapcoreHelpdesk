@@ -111,13 +111,14 @@ def _service_health_payload(check: str, status_value: str, **extra_fields) -> di
 def _citation_title(source_path: str) -> dict:
     """{"title": "MMTIS Art. 4"} for a cited part of an EU act ({"title": "NAPCORE: …"} for a napcore.eu
     document), else nothing: the frontend shows the title instead of the raw source path."""
-    from helpdesk.services import inspire, napcore_site
+    from helpdesk.services import datex, inspire, napcore_site
     from helpdesk.services.regulations import citation_title
 
     title = (
         citation_title(source_path)
         or napcore_site.citation_title(source_path)
         or inspire.citation_title(source_path)
+        or datex.citation_title(source_path)
     )
     return {"title": title} if title else {}
 
@@ -785,6 +786,7 @@ def _infer_standard_from_chunk(chunk: dict, effective_scope: list[str]) -> str |
         "Transmodel": ["transmodel"],
         "mobilityDCAT-AP": ["mobilitydcat", "dcat"],
         "INSPIRE": ["inspire"],
+        "DATEX II": ["datex"],
     }
     for standard in effective_scope:
         for alias in aliases.get(standard, []):

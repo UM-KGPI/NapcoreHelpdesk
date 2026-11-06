@@ -41,4 +41,4 @@ questions:
   - {id: a35, category: other_language, question: "Qu'est-ce qu'un arrêt?"}
   - {id: a36, category: unrelated_standard, expect: abstain, question: "What does GTFS say about stop times?"}
   - {id: a37, category: unrelated_standard, expect: abstain, question: "How do I use the OpenStreetMap API?"}
-  - {id: a38, category: unrelated_standard, question: "Explain DATEX II traffic messages."}
+  - {id: a38, category: indexed_standard, expect: answer, question: "Explain DATEX II traffic messages."}

@@ -14,7 +14,7 @@ Created: 2026-03-28  |  Modified: 2026-06-28
 from rest_framework import serializers
 
 
-STANDARDS_SCOPE_CHOICES = ["Transmodel", "NeTEx", "SIRI", "OpRa", "EU legislation", "mobilityDCAT-AP", "NAPCORE", "INSPIRE"]
+STANDARDS_SCOPE_CHOICES = ["Transmodel", "NeTEx", "SIRI", "OpRa", "EU legislation", "mobilityDCAT-AP", "NAPCORE", "INSPIRE", "DATEX II"]
 
 
 class AnswerOptionsSerializer(serializers.Serializer):
