@@ -132,9 +132,8 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           <h2>Knowledge pool</h2>
         </div>
         <p>
-          The Helpdesk answers only from the sources below. Anything outside them, for example the GTFS
-          specification itself or DATEX II versions before 3.7, is not in the pool: the Helpdesk then says it cannot answer rather than
-          answering from general knowledge. Every answer cites the documents it used.
+          The Helpdesk answers only from the sources below. For anything outside them, the Helpdesk says it
+          cannot answer rather than answering from general knowledge. Every answer cites the documents it used.
         </p>
 
         <h3>Public transport standards: searched for every question</h3>
