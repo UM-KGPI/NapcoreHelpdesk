@@ -1198,6 +1198,138 @@ class HelpdeskApiTests(APITestCase):
         self.assertIn("LLM grounded answer", response.data["answer"])
         self.assertTrue(llm_mock.called)
 
+    _NON_ANSWER_CHUNKS = (
+        [
+            {
+                "text": "parkingSite: named according to DATEX II Package ParkingSite.",
+                "score": 0.97,
+                "repositoryUrl": "https://github.com/ERTICO-TN-ITS/TN-ITS-Open",
+                "commitSha": "abc123",
+                "sourcePath": "OWL/codelists/RoadFeatureTypeCode.ttl",
+                "chunkId": "chunk-non-answer-1",
+                "label": "RoadFeatureTypeCode",
+                "retrievalEventId": "re-non-answer-001",
+            }
+        ],
+        {
+            "graphRagVariant": "control",
+            "graphExpansionHops": 0,
+            "graphExpansionSource": "none",
+            "graphConceptIds": [],
+            "graphCandidatesAdded": 0,
+            "graphEvidenceCount": 0,
+            "graphScoreContribution": 0.0,
+            "graphProvenanceChainCount": 0,
+            "semanticAlignmentScore": 0.8,
+            "retrievalLatencyMs": 5.0,
+        },
+    )
+    _NON_ANSWER_TEXT = "The evidence does not define SituationRecord; [E1] is a code list entry for parkingSite."
+
+    def _post_non_answer_question(self, url_name: str, request_id: str, allow_abstain: bool = True):
+        return self.client.post(
+            reverse(url_name),
+            {
+                "question": "In DATEX II, what is a SituationRecord?",
+                "generationProfile": "llm-ready",
+                "options": {"allowAbstain": allow_abstain},
+            },
+            format="json",
+            HTTP_X_REQUEST_ID=request_id,
+            **self.auth_headers(),
+        )
+
+    @override_settings(LLM_ENABLED=True)
+    @patch("helpdesk.api.views.generate_answer_llm")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_answer_the_llm_marks_as_unanswered_is_an_abstention(self, retrieve_mock, llm_mock):
+        """A high retrieval score must not make "the evidence does not say" look like a confident answer."""
+        retrieve_mock.return_value = copy.deepcopy(self._NON_ANSWER_CHUNKS)
+        llm_mock.return_value = {
+            "answer": self._NON_ANSWER_TEXT,
+            "confidence": 0.94,
+            "review_required": False,
+            "evidence_answers_question": False,
+            "provider": "anthropic",
+            "model": "test-model",
+        }
+
+        response = self._post_non_answer_question("answer-question", "req-non-answer-001")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_matches_schema("AnswerResponse", response.data)
+        self.assertEqual(response.data["mode"], "abstain")
+        self.assertTrue(response.data["abstained"])
+        self.assertEqual(response.data["abstentionReason"], "INSUFFICIENT_EVIDENCE")
+        self.assertEqual(response.data["confidence"], 0.0)
+        self.assertTrue(response.data["reviewRequired"])
+        # The model's own explanation stays: it is in the user's language and says what the evidence covers.
+        self.assertIn("does not define SituationRecord", response.data["answer"])
+
+    @override_settings(LLM_ENABLED=True)
+    @patch("helpdesk.api.views.generate_answer_llm")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_answer_without_abstention_still_drops_confidence_of_a_non_answer(self, retrieve_mock, llm_mock):
+        retrieve_mock.return_value = copy.deepcopy(self._NON_ANSWER_CHUNKS)
+        llm_mock.return_value = {
+            "answer": self._NON_ANSWER_TEXT,
+            "confidence": 0.94,
+            "review_required": False,
+            "evidence_answers_question": False,
+        }
+
+        response = self._post_non_answer_question("answer-question", "req-non-answer-002", allow_abstain=False)
+
+        self.assertEqual(response.data["mode"], "rag")
+        self.assertFalse(response.data["abstained"])
+        self.assertEqual(response.data["confidence"], 0.0)
+        self.assertTrue(response.data["reviewRequired"])
+
+    @override_settings(LLM_ENABLED=True)
+    @patch("helpdesk.api.views.generate_answer_llm")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_answer_without_a_verdict_keeps_its_confidence(self, retrieve_mock, llm_mock):
+        retrieve_mock.return_value = copy.deepcopy(self._NON_ANSWER_CHUNKS)
+        llm_mock.return_value = {"answer": "parkingSite is a road feature type [E1].", "confidence": 0.9, "review_required": False}
+
+        response = self._post_non_answer_question("answer-question", "req-non-answer-003")
+
+        self.assertEqual(response.data["mode"], "rag")
+        self.assertFalse(response.data["abstained"])
+        self.assertEqual(response.data["confidence"], 0.9)
+
+    @override_settings(LLM_ENABLED=True)
+    @patch("helpdesk.api.views.stream_answer_llm")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_answer_stream_the_llm_marks_as_unanswered_is_an_abstention(self, retrieve_mock, stream_mock):
+        retrieve_mock.return_value = copy.deepcopy(self._NON_ANSWER_CHUNKS)
+
+        def fake_stream(**kwargs):
+            yield ("token", self._NON_ANSWER_TEXT)
+            yield (
+                "done",
+                {
+                    "answer": self._NON_ANSWER_TEXT,
+                    "confidence": 0.94,
+                    "review_required": False,
+                    "evidence_answers_question": False,
+                    "provider": "anthropic",
+                    "model": "test-model",
+                    "rejected_answer": None,
+                    "rejection_reason": None,
+                },
+            )
+
+        stream_mock.side_effect = fake_stream
+        response = self._post_non_answer_question("answer-question-stream", "req-non-answer-004")
+
+        body = b"".join(response.streaming_content).decode("utf-8")
+        events = [json.loads(part[len("data:"):]) for part in body.split("\n\n") if part.startswith("data:")]
+        answer = events[-1]["answer"]
+        self.assertEqual(answer["mode"], "abstain")
+        self.assertTrue(answer["abstained"])
+        self.assertEqual(answer["confidence"], 0.0)
+
     @override_settings(LLM_ENABLED=True)
     @patch("helpdesk.api.views.generate_answer")
     @patch("helpdesk.api.views.generate_answer_llm")
