@@ -39,9 +39,8 @@ requires for the spatial network. The full list is under
   from those provisions.
 - **AI as controller and narrator:** a controller model checks whether a
   matched FAQ fits or the sources should be searched, and a narration model
-  writes the answer from the retrieved evidence. Both use the open-weight model
-  `nvidia/Qwen3.6-35B-A3B-NVFP4`, hosted at the University of Maribor, Faculty
-  of Electrical Engineering and Computer Science.
+  writes the answer from the retrieved evidence. Both are large language models
+  used through an API.
 - **Honest about gaps:** when the evidence is insufficient, the assistant says
   so instead of guessing.
 - **Curated knowledge:** editorially reviewed FAQ answers are used
