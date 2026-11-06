@@ -75,6 +75,11 @@ These are searched only when the question mentions them (for example "In DATEX
 II, what is a SituationRecord?"), so they do not crowd out the public transport
 standards in other answers.
 
+**Tip:** name the standard in your question. "What is a SituationRecord?" is
+answered from SIRI; "In DATEX II, what is a SituationRecord?" is answered from
+DATEX II. Without the name, the Helpdesk may answer from the public transport
+standards instead, or say it cannot answer.
+
 | Name | What is included | Source |
 |---|---|---|
 | **DATEX II v3.7** | Road traffic and travel information: the data model (classes, enumerations, data types) and the documentation portal | [docs.datex2.eu](https://docs.datex2.eu/v3.7/) |
