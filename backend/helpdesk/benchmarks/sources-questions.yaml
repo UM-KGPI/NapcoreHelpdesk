@@ -241,3 +241,39 @@ questions:
   expected_source_patterns: ['Examples/Example_RoadDataSet.xml', 'Examples/Example_FeatureCollection']
   min_hits: 1
   top_k_threshold: 10
+# mobilityDCAT-AP (github.com/mobilityDCAT-AP/mobilityDCAT-AP; opt-in scope). Expected: the specification pages.
+- id: src-md01
+  question: In mobilityDCAT-AP, what is a Distribution?
+  intent: definition
+  tags: [mobilitydcat-ap, class]
+  expected_source_patterns: ['src/index.html', 'src/tables/properties-for-distribution.html']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-md02
+  question: What does the mobility theme property mean in mobilityDCAT-AP?
+  intent: definition
+  tags: [mobilitydcat-ap, property]
+  expected_source_patterns: ['src/index.html', 'src/tables/properties-for-dataset.html']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-md03
+  question: Which properties are mandatory for a Dataset in mobilityDCAT-AP?
+  intent: explanation
+  tags: [mobilitydcat-ap, property]
+  expected_source_patterns: ['src/tables/properties-for-dataset.html', 'src/tables/quick-reference-of-classes-and-properties.html']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-md04
+  question: How does mobilityDCAT-AP describe the georeferencing method of a dataset?
+  intent: explanation
+  tags: [mobilitydcat-ap, property]
+  expected_source_patterns: ['src/index.html', 'src/tables/properties-for-dataset.html']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-md05
+  question: Can you show an example of a mobilityDCAT-AP catalogue record?
+  intent: example
+  tags: [mobilitydcat-ap, example]
+  expected_source_patterns: ['src/examples/']
+  min_hits: 1
+  top_k_threshold: 10

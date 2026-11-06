@@ -762,6 +762,98 @@ def split_xsd_summary(text: str, source_name: str, max_declarations: int = 250) 
     return [(chunk, "schema_fragment", source_name) for chunk in fallback[:3]]
 
 
+# Bumped when split_turtle changes: it is part of each Turtle file's content hash, so the next incremental
+# index re-chunks .ttl files that have not changed themselves.
+TURTLE_CHUNKER_VERSION = "1"
+
+_TURTLE_TYPE = re.compile(r"(?:^|[\s;])(?:a|rdf:type)\s+([A-Za-z][\w-]*:[\w.-]+|<[^>\s]+>)")
+
+
+def _turtle_statements(text: str) -> list[str]:
+    """Top-level Turtle statements (subject plus its predicates, up to the closing "."), prefixes dropped.
+
+    A small scanner, not a parser: it skips strings (also triple-quoted), IRIs and comments, so a "." inside
+    them or in a number does not end a statement."""
+    statements: list[str] = []
+    start = 0
+    depth = 0
+    i = 0
+    n = len(text)
+    while i < n:
+        ch = text[i]
+        if ch == "#":
+            newline = text.find("\n", i)
+            i = n if newline < 0 else newline
+            continue
+        if ch in "\"'":
+            quote = ch * 3 if text.startswith(ch * 3, i) else ch
+            i += len(quote)
+            while i < n and not text.startswith(quote, i):
+                i += 2 if text[i] == "\\" else 1
+            i += len(quote)
+            continue
+        if ch == "<":
+            close = text.find(">", i)
+            if close > 0 and not any(c.isspace() for c in text[i + 1 : close]):
+                i = close + 1
+                continue
+        if ch in "[(":
+            depth += 1
+        elif ch in "])":
+            depth = max(0, depth - 1)
+        elif ch == "." and depth == 0 and (i + 1 == n or text[i + 1].isspace()):
+            statement = text[start : i + 1].strip()
+            if statement and not statement.lower().startswith(("@prefix", "@base", "prefix", "base")):
+                statements.append(statement)
+            start = i + 1
+        i += 1
+    tail = text[start:].strip()
+    if tail:
+        statements.append(tail)
+    return statements
+
+
+def _turtle_type(statement: str) -> str:
+    match = _TURTLE_TYPE.search(statement)
+    return match.group(1) if match else ""
+
+
+def split_turtle(text: str, max_chars: int) -> list[tuple[str, str, str]]:
+    """Chunks of whole resource descriptions, so a record (an example's dcat:CatalogRecord, a code list entry)
+    is never cut in two. Consecutive statements of the same rdf:type are packed up to max_chars; a new type
+    starts a new chunk. The heading names the types in the chunk. A statement longer than max_chars is split
+    as prose. Text with no statements (not Turtle after all) falls back to prose."""
+    statements = _turtle_statements(text)
+    if not statements:
+        return [(c, "prose", "") for c in split_text(text, chunk_size=max_chars, chunk_overlap=max_chars // 6)]
+    results: list[tuple[str, str, str]] = []
+    current: list[str] = []
+    current_types: list[str] = []
+
+    def flush() -> None:
+        if current:
+            heading = ", ".join(dict.fromkeys(t for t in current_types if t))
+            results.append(("\n\n".join(current), "prose", heading))
+        current.clear()
+        current_types.clear()
+
+    for statement in statements:
+        statement_type = _turtle_type(statement)
+        if len(statement) > max_chars:
+            flush()
+            for piece in split_text(statement, chunk_size=max_chars, chunk_overlap=max_chars // 6):
+                results.append((piece, "prose", statement_type))
+            continue
+        size = sum(len(part) + 2 for part in current) + len(statement)
+        new_type = bool(statement_type) and bool(current_types) and statement_type not in current_types
+        if current and (size > max_chars or new_type):
+            flush()
+        current.append(statement)
+        current_types.append(statement_type)
+    flush()
+    return results
+
+
 def split_structured(
     text: str,
     extension: str,
@@ -783,6 +875,8 @@ def split_structured(
         return split_xsd_summary(text, source_name=source_name or "schema")
     if ext in {".html", ".htm"}:
         return split_html(text, max_chars=chunk_size, source_name=source_name)
+    if ext == ".ttl":
+        return split_turtle(text, max_chars=chunk_size)
     # Fallback: flat overlapping window, no structural metadata.
     chunks = split_text(text, chunk_size=chunk_size, chunk_overlap=chunk_overlap)
     return [(c, "prose", "") for c in chunks]
@@ -1233,7 +1327,8 @@ def index_repository(
 
             # Skip unchanged files in incremental mode using per-file content fingerprint.
             # This avoids full re-upserts when repository HEAD changes but file content does not.
-            content_hash = build_content_hash(raw_text)
+            chunker_marker = f"turtle-chunker {TURTLE_CHUNKER_VERSION}\n" if file_path.suffix.lower() == ".ttl" else ""
+            content_hash = build_content_hash(chunker_marker + raw_text)
             if incremental:
                 indexed_file = IndexedSourceFile.objects.filter(
                     repository_url=repo_url,
