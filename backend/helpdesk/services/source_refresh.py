@@ -77,6 +77,14 @@ MOBILITYDCAT_AP_ONTOLOGY = SourceOntology(
 )
 
 
+# TN-ITS publishes an OWL ontology of its data model (classes, properties, skos:definition of each).
+TNITS_ONTOLOGY = SourceOntology(
+    key="tn-its",
+    path="OWL/core/tnits-owl.ttl",
+    graph_uri="https://napcore.eu/graph/standards/tn-its",
+)
+
+
 def configured_sources() -> list[SourceRepository]:
     """The repositories the knowledge base is built from."""
 
@@ -90,7 +98,7 @@ def configured_sources() -> list[SourceRepository]:
             "mobilitydcat-ap",
             ontology=MOBILITYDCAT_AP_ONTOLOGY,
         ),
-        SourceRepository("TN-ITS", settings.SEED_REPO_TNITS, "tn-its"),
+        SourceRepository("TN-ITS", settings.SEED_REPO_TNITS, "tn-its", ontology=TNITS_ONTOLOGY),
     ]
 
 

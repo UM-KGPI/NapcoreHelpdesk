@@ -81,6 +81,7 @@ from helpdesk.services.semantic_graph import (
     CONCEPT_TO_TRANSMODEL,
     GRAPH_CONCEPT_ALIASES,
     TRANSMODEL_TO_CONCEPTS,
+    concepts_in_scope,
     expand_graph_concepts_with_distance,
     extract_graph_concepts,
     get_concept_canonical_terms,
@@ -1061,6 +1062,7 @@ _STANDARD_SCOPE_ALIASES = {
     "netex": "netex",
     "siri": "siri",
     "opra": "opra",
+    "tn-its": "tn-its",
 }
 
 # Namespace-root and structural predicate concepts that are so broad they appear in virtually
@@ -1172,6 +1174,7 @@ def _graph_score_adjustment(
     label: str,
     heading: str,
     hinted_doc_types: set[str] | None = None,
+    scope: list[str] | None = None,
 ) -> tuple[float, bool, set[str]]:
     """Score adjustment for graph reasoning with provenance tracking.
 
@@ -1182,7 +1185,7 @@ def _graph_score_adjustment(
         return 0.0, False, set()
 
     chunk_concepts = extract_graph_concepts(
-        "\n".join([chunk_text, source_path, label, heading])
+        "\n".join([chunk_text, source_path, label, heading]), scope=scope
     )
     if not chunk_concepts:
         return 0.0, False, set()
@@ -1629,12 +1632,14 @@ def _retrieve_chunks_once(
     # Concept extraction happens BEFORE embedding so canonical domain terms
     # are present in the query vector and align with indexed document vocabulary.
     stage_start = time.perf_counter()
-    question_concepts = extract_graph_concepts(question, word_variants=True) if graph_rag_enabled else set()
+    question_concepts = (
+        extract_graph_concepts(question, word_variants=True, scope=scope) if graph_rag_enabled else set()
+    )
     _record_stage("conceptExtractMs", stage_start)
     bridged_concepts: set[str] = set()
     if graph_rag_enabled:
         stage_start = time.perf_counter()
-        bridged_concepts = set(bridged_question_concepts(question)) - question_concepts
+        bridged_concepts = concepts_in_scope(bridged_question_concepts(question), scope) - question_concepts
         question_concepts |= bridged_concepts
         _record_stage("vocabularyBridgeMs", stage_start)
     rare_lexemes: list[str] = []
@@ -1692,7 +1697,7 @@ def _retrieve_chunks_once(
             graph_expansion_source = "memory"
         expanded_concepts = _cap_expanded_concepts(
             question_concepts=question_concepts,
-            expanded_concepts=set(concept_distances),
+            expanded_concepts=concepts_in_scope(concept_distances, scope),
             max_concepts=graph_expansion_max_concepts,
             concept_distances=concept_distances,
         )
@@ -2053,6 +2058,7 @@ def _retrieve_chunks_once(
             label=chunk.label,
             heading=getattr(chunk, "heading", "") or "",
             hinted_doc_types=hinted_doc_types,
+            scope=scope,
         )
         raw_score += graph_adjustment
 
@@ -2251,7 +2257,8 @@ def _retrieve_chunks_once(
                     str(candidate.get("sourcePath", "")),
                     str(candidate.get("label", "")),
                 ]
-            )
+            ),
+            scope=scope,
         )
         graph_concepts_in_trimmed.update(chunk_concepts)
     _record_stage("coverageMetricsMs", stage_start)

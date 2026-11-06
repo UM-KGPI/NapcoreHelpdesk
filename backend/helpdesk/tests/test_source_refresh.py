@@ -317,3 +317,13 @@ class AliasSpellingTests(TestCase):
         self.assertEqual(result["results"]["OpRa"]["alias_chunks_removed"], 3)
         self.assertFalse(SourceChunk.objects.filter(repository_url=self.OLD).exists())
         self.assertGreaterEqual(SourceChunk.objects.filter(repository_url=self.CANONICAL).count(), 25)
+
+
+class SourceOntologyConfigTests(SimpleTestCase):
+    def test_tn_its_loads_its_own_owl_into_its_graph(self):
+        from helpdesk.services.source_refresh import find_source
+
+        ontology = find_source("TN-ITS").ontology
+        self.assertEqual(ontology.path, "OWL/core/tnits-owl.ttl")
+        self.assertEqual(ontology.graph_uri, "https://napcore.eu/graph/standards/tn-its")
+        self.assertEqual(ontology.key, "tn-its")

@@ -237,3 +237,93 @@ class ConceptsNamedByTermsTests(SimpleTestCase):
 
     def test_associations_are_never_named(self):
         self.assertEqual(self._concepts(["RELATES TO"]), set())
+
+
+class OptInConceptScopeTests(SimpleTestCase):
+    """TN-ITS concepts count only for questions whose scope names TN-ITS, like TN-ITS's text passages."""
+
+    ALIASES = {
+        "netex:DataSource": {"data source"},
+        "tnits:Dataset": {"Dataset"},
+        "tnits:SpeedLimit": {"speed limit"},
+    }
+
+    def _extract(self, text, scope=None):
+        with patch.object(semantic_graph, "GRAPH_CONCEPT_ALIASES", self.ALIASES):
+            return semantic_graph.extract_graph_concepts(text, word_variants=True, scope=scope)
+
+    def test_tn_its_concepts_are_left_out_of_a_question_that_does_not_name_tn_its(self):
+        question = "Which data source publishes the speed limit dataset?"
+        self.assertEqual(self._extract(question), {"netex:DataSource"})
+        self.assertEqual(self._extract(question, scope=["NeTEx", "SIRI"]), {"netex:DataSource"})
+
+    def test_tn_its_concepts_count_when_the_scope_names_tn_its(self):
+        question = "Which data source publishes the speed limit dataset?"
+        self.assertEqual(
+            self._extract(question, scope=["tn-its"]), {"netex:DataSource", "tnits:Dataset", "tnits:SpeedLimit"}
+        )
+
+    def test_terms_never_name_opt_in_concepts(self):
+        # The vocabulary bridge (legislation, everyday wording) works on the core standards only.
+        with patch.object(semantic_graph, "GRAPH_CONCEPT_ALIASES", self.ALIASES):
+            self.assertEqual(semantic_graph.concepts_named_by_terms(["SPEED LIMIT"]), set())
+
+    def test_concepts_in_scope_filters_a_set(self):
+        concepts = {"netex:DataSource", "tnits:Dataset"}
+        self.assertEqual(semantic_graph.concepts_in_scope(concepts, None), {"netex:DataSource"})
+        self.assertEqual(semantic_graph.concepts_in_scope(concepts, ["TN-ITS"]), concepts)
+
+
+class OntologyReloadTests(SimpleTestCase):
+    """A source ontology loaded after the process read the labels (nightly refresh) is picked up without a restart."""
+
+    def _run(self, *, latest_loaded_at, read_at, last_check_ago=10_000, aliases=None):
+        import datetime as dt
+
+        tables = {"tnits:Dataset": {"Dataset"}} if aliases is None else aliases
+        live_aliases = {"netex:Line": {"line"}}
+        live_relations: dict = {}
+        aggregate = patch(
+            "helpdesk.models.OntologyAssetVersion.objects.aggregate", return_value={"latest": latest_loaded_at}
+        )
+        with aggregate, patch.object(semantic_graph, "GRAPH_CONCEPT_ALIASES", live_aliases), patch.object(
+            semantic_graph, "GRAPH_RELATIONS", live_relations
+        ), patch.object(semantic_graph, "_ONTOLOGY_READ_AT", read_at), patch.object(
+            semantic_graph, "_last_ontology_check", semantic_graph.time.monotonic() - last_check_ago
+        ), patch.object(semantic_graph, "_load_ontology", return_value={"concepts": {}}), patch.object(
+            semantic_graph, "_build_concept_aliases_from_ontology", return_value=tables
+        ), patch.object(semantic_graph, "_build_graph_relations_from_ontology", return_value={"tnits:Dataset": set()}):
+            reloaded = semantic_graph.reload_ontology_if_updated()
+            return reloaded, dict(live_aliases), dict(live_relations)
+
+    def test_rereads_after_a_later_load(self):
+        import datetime as dt
+
+        read_at = dt.datetime(2026, 11, 6, 9, 0, tzinfo=dt.timezone.utc)
+        reloaded, aliases, relations = self._run(latest_loaded_at=read_at + dt.timedelta(hours=1), read_at=read_at)
+        self.assertTrue(reloaded)
+        self.assertEqual(aliases, {"tnits:Dataset": {"Dataset"}})  # updated in place, so other modules see it
+        self.assertIn("tnits:Dataset", relations)
+
+    def test_keeps_the_tables_when_nothing_was_loaded_since(self):
+        import datetime as dt
+
+        read_at = dt.datetime(2026, 11, 6, 9, 0, tzinfo=dt.timezone.utc)
+        reloaded, aliases, _ = self._run(latest_loaded_at=read_at - dt.timedelta(hours=1), read_at=read_at)
+        self.assertFalse(reloaded)
+        self.assertEqual(aliases, {"netex:Line": {"line"}})
+
+    def test_checks_at_most_every_few_minutes(self):
+        import datetime as dt
+
+        read_at = dt.datetime(2026, 11, 6, 9, 0, tzinfo=dt.timezone.utc)
+        reloaded, _, _ = self._run(latest_loaded_at=read_at + dt.timedelta(hours=1), read_at=read_at, last_check_ago=5)
+        self.assertFalse(reloaded)
+
+    def test_an_empty_read_keeps_the_old_tables(self):
+        import datetime as dt
+
+        read_at = dt.datetime(2026, 11, 6, 9, 0, tzinfo=dt.timezone.utc)
+        reloaded, aliases, _ = self._run(latest_loaded_at=read_at + dt.timedelta(hours=1), read_at=read_at, aliases={})
+        self.assertFalse(reloaded)
+        self.assertEqual(aliases, {"netex:Line": {"line"}})
