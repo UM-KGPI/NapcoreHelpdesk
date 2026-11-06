@@ -16,9 +16,13 @@ import hashlib
 import logging
 import os
 import re
+import threading
+import time
 from functools import lru_cache
 from pathlib import Path
 from typing import Iterable
+
+from django.utils import timezone
 
 from helpdesk.models import SourceChunk
 
@@ -65,6 +69,7 @@ def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
         "http://napcore.example.org/ontology/siri#": "siri",
         "https://transmodel-cen.eu/6.2/": "transmodel",
         "https://transmodel-cen.eu/6.2#": "transmodel",
+        "http://spec.tn-its.eu/owl/tnits-owl#": "tnits",
     }
 
     def _iri_to_concept_id(iri: str) -> str | None:
@@ -195,6 +200,7 @@ def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
         "opra": "https://transmodel-cen.eu/opra/1.0",
         "siri": "https://siri.org.uk/siri/1.3",
         "transmodel": "https://transmodel-cen.eu/6.2",
+        "tnits": "http://spec.tn-its.eu/owl/tnits-owl",
     }
     return {"namespaces": namespaces, "concepts": concepts}
 
@@ -294,6 +300,8 @@ def _load_transmodel_pivot_from_static_files() -> tuple[dict[str, str], dict[str
 
 
 # Load ontologies at module initialization
+# When this process read the labels; None when GraphDB import is skipped (tests, local checks).
+_ONTOLOGY_READ_AT = None if SKIP_GRAPHDB_IMPORT else timezone.now()
 _ONTOLOGY = _load_ontology()
 GRAPH_CONCEPT_ALIASES = _build_concept_aliases_from_ontology(_ONTOLOGY)
 
@@ -320,6 +328,22 @@ TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
 
 def _concept_namespace(concept_id: str) -> str:
     return (concept_id.split(":", 1)[0] if ":" in concept_id else "unknown").lower()
+
+
+# Concepts of sources searched only when a question names them (retrieval_gateway.OPT_IN_SCOPES), by concept
+# namespace. Like those sources' text passages, they are kept out of every question whose scope does not name
+# the source: TN-ITS labels such as "Dataset" or "Identifier" must not steer a public transport question.
+OPT_IN_CONCEPT_SOURCES = {"tnits": "TN-ITS"}
+
+
+def concept_in_scope(concept_id: str, scope: list[str] | None) -> bool:
+    """Whether a concept may be used for a question with this scope (see OPT_IN_CONCEPT_SOURCES)."""
+    source = OPT_IN_CONCEPT_SOURCES.get(_concept_namespace(concept_id))
+    return source is None or source.lower() in {(name or "").strip().lower() for name in scope or []}
+
+
+def concepts_in_scope(concepts: Iterable[str], scope: list[str] | None) -> set[str]:
+    return {concept for concept in concepts if concept_in_scope(concept, scope)}
 
 
 
@@ -487,16 +511,65 @@ def _build_graph_relations_from_ontology(ontology: dict) -> dict[str, set[str]]:
 # Build graph relations from ontology
 GRAPH_RELATIONS = _build_graph_relations_from_ontology(_ONTOLOGY)
 
+# A source's own ontology (mobilityDCAT-AP, TN-ITS) is loaded by the nightly refresh or an editor's harvest,
+# usually after this process read the labels above. gunicorn workers are not recycled, so without a re-read its
+# concepts would be matched only from the next restart. At most every ONTOLOGY_RECHECK_SECONDS, a question checks
+# whether any ontology was loaded after the last read, and if so the tables are rebuilt in place (other modules
+# hold references to them).
+ONTOLOGY_RECHECK_SECONDS = 300
+_last_ontology_check = time.monotonic()
+_ontology_reload_lock = threading.Lock()
 
-def extract_graph_concepts(text: str, *, word_variants: bool = False) -> set[str]:
+
+def reload_ontology_if_updated() -> bool:
+    """Re-read the concept labels and relations if an ontology was loaded since they were read; True if re-read."""
+    global _ONTOLOGY_READ_AT, _last_ontology_check
+    if _ONTOLOGY_READ_AT is None or time.monotonic() - _last_ontology_check < ONTOLOGY_RECHECK_SECONDS:
+        return False
+    if not _ontology_reload_lock.acquire(blocking=False):
+        return False
+    try:
+        _last_ontology_check = time.monotonic()
+        from django.db.models import Max
+
+        from helpdesk.models import OntologyAssetVersion
+
+        latest = OntologyAssetVersion.objects.aggregate(latest=Max("last_loaded_at"))["latest"]
+        if latest is None or latest <= _ONTOLOGY_READ_AT:
+            return False
+        read_at = timezone.now()
+        ontology = _load_ontology()
+        aliases = _build_concept_aliases_from_ontology(ontology)
+        if not aliases:
+            return False
+        relations = _build_graph_relations_from_ontology(ontology)
+        GRAPH_CONCEPT_ALIASES.clear()
+        GRAPH_CONCEPT_ALIASES.update(aliases)
+        GRAPH_RELATIONS.clear()
+        GRAPH_RELATIONS.update(relations)
+        _ONTOLOGY_READ_AT = read_at
+        logger.info("Re-read the standards ontology after an ontology load: %d concepts", len(aliases))
+        return True
+    except Exception:  # keep answering with the labels already read
+        logger.warning("Re-reading the standards ontology failed", exc_info=True)
+        return False
+    finally:
+        _ontology_reload_lock.release()
+
+
+def extract_graph_concepts(text: str, *, word_variants: bool = False, scope: list[str] | None = None) -> set[str]:
     """Concepts whose labels occur in the text.
 
     word_variants is for a user's question: class labels then also match plurals
     and words without a short prefix (see _alias_matches_question). Indexed chunk
-    text keeps the strict match."""
+    text keeps the strict match. Concepts of opt-in sources count only when `scope`
+    names the source (concept_in_scope)."""
+    reload_ontology_if_updated()
     normalized_text = _normalize_for_matching(text)
     concepts: set[str] = set()
     for concept_id, aliases in (GRAPH_CONCEPT_ALIASES or _FALLBACK_GRAPH_CONCEPT_ALIASES).items():
+        if not concept_in_scope(concept_id, scope):
+            continue
         # Word variants are for class names only. Association labels such as
         # "relates to" or "used as" are verb phrases, and their verb forms would
         # match ordinary question wording.
@@ -521,7 +594,7 @@ def concepts_named_by_terms(terms: list[str]) -> set[str]:
             continue
         best_length, best = 0, set()
         for concept_id, aliases in aliases_by_concept.items():
-            if not _is_class_concept(concept_id):
+            if not _is_class_concept(concept_id) or not concept_in_scope(concept_id, None):
                 continue
             for alias in aliases:
                 length = len(_normalize_for_matching(alias).split())

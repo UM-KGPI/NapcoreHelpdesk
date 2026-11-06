@@ -352,3 +352,20 @@ class GraphDbClientTests(TestCase):
                 artifact_rule_standards={"unknown-standard"},
                 replace=False,
             )
+
+
+class TnItsGraphScopeTests(TestCase):
+    def test_tn_its_scope_reads_its_own_graph(self):
+        from helpdesk.services.graphdb_client import build_graph_scope_for_standards
+
+        graphs = build_graph_scope_for_standards({"tn-its"}, include_artifact_rules=False)
+        # The TN-ITS graph first; the Transmodel reference graphs follow, as for every scoped query.
+        self.assertEqual(graphs[0], "https://napcore.eu/graph/standards/tn-its")
+        self.assertIn("https://napcore.eu/graph/standards/transmodel", graphs)
+
+    def test_tn_its_concept_ids_round_trip(self):
+        from helpdesk.services.graphdb_client import _iri_to_concept_id, _to_iri
+
+        iri = "http://spec.tn-its.eu/owl/tnits-owl#RoadFeature"
+        self.assertEqual(_iri_to_concept_id(iri), "tnits:RoadFeature")
+        self.assertEqual(_to_iri("tnits:RoadFeature"), iri)

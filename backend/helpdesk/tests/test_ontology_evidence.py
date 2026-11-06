@@ -98,6 +98,7 @@ class RetrieveConceptDefinitionsTests(SimpleTestCase):
             "https://napcore.eu/graph/standards/opra",
             "https://napcore.eu/graph/standards/transmodel",
             "https://napcore.eu/graph/alignments/transmodel-netex",
+            "https://napcore.eu/graph/standards/tn-its",
         ):
             self.assertIn(f"FROM <{graph}>", sent_query)
         self.assertNotIn("urn:graph:", sent_query)
@@ -231,3 +232,37 @@ class FormatDefinitionsAsChunksTests(SimpleTestCase):
 
         self.assertEqual(len(chunks), 1)
         self.assertNotIn("Transmodel", chunks[0]["text"])
+
+
+class TnItsDefinitionTests(SimpleTestCase):
+    def test_tn_its_definition_cites_the_tn_its_ontology(self):
+        chunks = format_definitions_as_chunks(
+            [
+                {
+                    "concept": "http://spec.tn-its.eu/owl/tnits-owl#RoadFeatureDataset",
+                    "definition": "A dataset containing road feature with optional update information.",
+                    "prefLabel": "",
+                    "altLabels": [],
+                    "type": "http://www.w3.org/2002/07/owl#Class",
+                }
+            ],
+            commit_shas={"TN-ITS": "5e68a9bdfde650618c717c3926ea82710962a0a2"},
+        )
+
+        self.assertEqual(len(chunks), 1)
+        chunk = chunks[0]
+        self.assertEqual(chunk["standards_scope"], ["TN-ITS"])
+        self.assertEqual(chunk["sourcePath"], "OWL/core/tnits-owl.ttl")
+        self.assertEqual(
+            chunk["repositoryUrl"],
+            "https://github.com/ERTICO-TN-ITS/TN-ITS-Open/blob/5e68a9bdfde650618c717c3926ea82710962a0a2/OWL/core/tnits-owl.ttl",
+        )
+        self.assertEqual(chunk["chunkId"], "ontology-def-tnits-roadfeaturedataset")
+        self.assertIn("Standard: TN-ITS", chunk["text"])
+        self.assertIn("road feature with optional update information", chunk["text"])
+
+    def test_tn_its_link_falls_back_to_the_default_branch(self):
+        chunk = format_definitions_as_chunks(
+            [{"concept": "http://spec.tn-its.eu/owl/tnits-owl#Dataset", "definition": "Abstract dataset.", "altLabels": []}]
+        )[0]
+        self.assertIn("/blob/master/OWL/core/tnits-owl.ttl", chunk["repositoryUrl"])

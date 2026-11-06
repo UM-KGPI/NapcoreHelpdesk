@@ -51,6 +51,8 @@ DEFAULT_NAMESPACES = {
     "siri": "https://siri.org.uk/siri/1.3#",
     "transmodel": "https://transmodel-cen.eu/6.2/",
     "nch": "https://napcore.eu/ontology/helpdesk#",
+    # TN-ITS's own OWL (source_refresh.TNITS_ONTOLOGY), loaded on each refresh of the TN-ITS repository.
+    "tnits": "http://spec.tn-its.eu/owl/tnits-owl#",
 }
 
 _NETEX_IRI_PREFIXES = (
@@ -112,6 +114,9 @@ STANDARD_GRAPH_SCOPE = {
     "transmodel": [
         "https://napcore.eu/graph/standards/transmodel",
     ],
+    "tn-its": [
+        "https://napcore.eu/graph/standards/tn-its",
+    ],
 }
 
 # Named graphs whose source file was removed. A replace load deletes them so
@@ -148,6 +153,7 @@ STANDARD_ALIASES = {
     "opra": "opra",
     "siri": "siri",
     "transmodel": "transmodel",
+    "tn-its": "tn-its",
 }
 
 

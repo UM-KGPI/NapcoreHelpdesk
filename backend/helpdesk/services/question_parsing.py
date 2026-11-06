@@ -153,7 +153,9 @@ class QuestionParsingService:
         intent = self._detect_intent(normalized)
         normativity = self._detect_normativity(normalized)
 
-        direct_concepts = extract_graph_concepts(normalized, word_variants=True)
+        # Opt-in sources' concepts (TN-ITS) only when the question's scope names the source.
+        concept_scope = requested_scope or self._scan_standard_keywords(normalized)
+        direct_concepts = extract_graph_concepts(normalized, word_variants=True, scope=concept_scope)
         expanded_concepts = expand_graph_concepts(direct_concepts, hops=1)
         all_concepts = direct_concepts | expanded_concepts
 

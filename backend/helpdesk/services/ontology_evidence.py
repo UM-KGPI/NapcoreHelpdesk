@@ -36,7 +36,13 @@ DEFINITION_GRAPHS = (
     "https://napcore.eu/graph/standards/transmodel",
     *(f"https://napcore.eu/graph/standards/{standard}" for standard in TRANSMODEL_ALIGNED_STANDARDS),
     *(f"https://napcore.eu/graph/alignments/transmodel-{standard}" for standard in TRANSMODEL_ALIGNED_STANDARDS),
+    # TN-ITS's own OWL. Its concepts reach this query only when the question names TN-ITS
+    # (semantic_graph.concept_in_scope), so listing the graph here changes no other answer.
+    "https://napcore.eu/graph/standards/tn-its",
 )
+
+TNITS_NAMESPACE = "http://spec.tn-its.eu/owl/tnits-owl#"
+TNITS_ONTOLOGY_PATH = "OWL/core/tnits-owl.ttl"
 
 # Values of tmalign:transmodelDefinitionStatus (see alignments/transmodel-*-align.ttl).
 _DEFINITION_STATUS_NOTES = {
@@ -180,7 +186,8 @@ def retrieve_concept_definitions(
 
 
 STANDARD_REPOSITORIES = {
-    standard: f"https://github.com/TransmodelEcosystem/{standard}" for standard in ("NeTEx", "SIRI", "OpRa")
+    **{standard: f"https://github.com/TransmodelEcosystem/{standard}" for standard in ("NeTEx", "SIRI", "OpRa")},
+    "TN-ITS": "https://github.com/ERTICO-TN-ITS/TN-ITS-Open",
 }
 
 
@@ -285,9 +292,6 @@ Definition:
             tm_name = definition.get("tm_label", "") or tm_concept.rsplit("/", 1)[-1]
             chunk_text += f"Transmodel concept: {tm_name} (skos:exactMatch)\n"
 
-        chunk_id_str = f"ontology-def-{concept_name.lower()}"
-        chunk_id_int = hash(chunk_id_str) % (10 ** 8)
-
         # Determine repository and commit based on standard
         repo_name = standard
         # Use version tags for official schema releases
@@ -295,8 +299,26 @@ Definition:
             "NeTEx": "v2.0",
             "OpRa": "main",  # the repository has no v1.0 tag
             "SIRI": "v2.1",
+            "TN-ITS": "master",
         }
         commit_sha = (commit_shas or {}).get(standard) or version_map.get(standard, "main")
+
+        if standard == "TN-ITS":
+            # Defined in the repository's own OWL, not in an XSD.
+            source_path = TNITS_ONTOLOGY_PATH
+            blob_url = f"{STANDARD_REPOSITORIES[standard]}/blob/{commit_sha}/{source_path}"
+            chunks.append(
+                _definition_chunk(
+                    concept_name=concept_name,
+                    standard=standard,
+                    chunk_text=chunk_text,
+                    source_path=source_path,
+                    blob_url=blob_url,
+                    commit_sha=commit_sha,
+                    similarity_reason="Authoritative definition from the TN-ITS ontology",
+                )
+            )
+            continue
 
         # Use XSD source file path if available, ensure xsd/ prefix
         # Source should be the actual XSD file: netex_part_2/.../file.xsd
@@ -319,31 +341,56 @@ Definition:
         # Format: github.com/{owner}/{repo}/blob/{version}/{path}/file.xsd
         blob_url = f"https://github.com/TransmodelEcosystem/{repo_name}/blob/{commit_sha}/{source_path}"
 
-        chunk = {
-            "id": chunk_id_int,
-            "chunkId": chunk_id_str,
-            "chunk_id": chunk_id_str,
-            "retrievalEventId": f"ontology-{chunk_id_int}",
-            "sourcePath": source_path,  # Use camelCase to match LLM generator expectations
-            "source_path": source_path,  # Also keep snake_case for compatibility
-            "label": f"Definition: {concept_name}",
-            "text": chunk_text.strip(),
-            "doc_type": "ontology-definition",
-            "quality_score": 0.98,  # Highest quality - authoritative ontology source
-            "standards_scope": [standard] if standard else [],
-            "match_type": "semantic_definition",
-            "similarity_reason": "Authoritative definition from XSD schema",
-            "repositoryUrl": blob_url,  # Use camelCase to match LLM generator expectations
-            "repository_url": blob_url,  # Also keep snake_case for compatibility
-            "commitSha": commit_sha,  # Use camelCase to match LLM generator expectations
-            "commit_sha": commit_sha,  # Also keep snake_case for compatibility
-            "embedding_vector": None,
-            "heading": f"{concept_name} - {standard} Definition",
-        }
-
-        chunks.append(chunk)
+        chunks.append(
+            _definition_chunk(
+                concept_name=concept_name,
+                standard=standard,
+                chunk_text=chunk_text,
+                source_path=source_path,
+                blob_url=blob_url,
+                commit_sha=commit_sha,
+                similarity_reason="Authoritative definition from XSD schema",
+            )
+        )
 
     return chunks
+
+
+def _definition_chunk(
+    *,
+    concept_name: str,
+    standard: str,
+    chunk_text: str,
+    source_path: str,
+    blob_url: str,
+    commit_sha: str,
+    similarity_reason: str,
+) -> dict:
+    # NeTEx/SIRI/OpRa ids are unchanged; TN-ITS names (Dataset, Identifier) also occur in them.
+    prefix = "ontology-def-tnits-" if standard == "TN-ITS" else "ontology-def-"
+    chunk_id_str = f"{prefix}{concept_name.lower()}"
+    chunk_id_int = hash(chunk_id_str) % (10 ** 8)
+    return {
+        "id": chunk_id_int,
+        "chunkId": chunk_id_str,
+        "chunk_id": chunk_id_str,
+        "retrievalEventId": f"ontology-{chunk_id_int}",
+        "sourcePath": source_path,  # Use camelCase to match LLM generator expectations
+        "source_path": source_path,  # Also keep snake_case for compatibility
+        "label": f"Definition: {concept_name}",
+        "text": chunk_text.strip(),
+        "doc_type": "ontology-definition",
+        "quality_score": 0.98,  # Highest quality - authoritative ontology source
+        "standards_scope": [standard] if standard else [],
+        "match_type": "semantic_definition",
+        "similarity_reason": similarity_reason,
+        "repositoryUrl": blob_url,  # Use camelCase to match LLM generator expectations
+        "repository_url": blob_url,  # Also keep snake_case for compatibility
+        "commitSha": commit_sha,  # Use camelCase to match LLM generator expectations
+        "commit_sha": commit_sha,  # Also keep snake_case for compatibility
+        "embedding_vector": None,
+        "heading": f"{concept_name} - {standard} Definition",
+    }
 
 
 def _comparison_notes_by_transmodel_concept(definitions: list[dict]) -> dict[str, list[str]]:
@@ -466,6 +513,8 @@ def _extract_concept_info(concept_iri: str) -> tuple[str, str]:
     # Extract standard
     if concept_iri.startswith(TRANSMODEL_NAMESPACE):
         standard = "Transmodel"
+    elif concept_iri.startswith(TNITS_NAMESPACE):
+        standard = "TN-ITS"
     elif "netex" in concept_iri.lower():
         standard = "NeTEx"
     elif "opra" in concept_iri.lower():
@@ -490,6 +539,7 @@ def _ensure_uri(concept_id: str) -> str:
         "opra": "https://transmodel-cen.eu/opra/1.0#",
         "siri": "https://siri.org.uk/siri/1.3#",
         "transmodel": "https://transmodel-cen.eu/6.2/",
+        "tnits": TNITS_NAMESPACE,
     }
     for prefix, namespace in prefix_map.items():
         if concept_id.startswith(f"{prefix}:"):
