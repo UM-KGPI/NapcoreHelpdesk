@@ -160,6 +160,12 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           These are searched only when the question mentions them (for example "In DATEX II, what is a
           SituationRecord?"), so they do not crowd out the public transport standards in other answers.
         </p>
+        <p>
+          <strong>Tip:</strong> name the standard in your question. "What is a SituationRecord?" is answered
+          from the copy of the DATEX II schema inside SIRI; "In DATEX II, what is a SituationRecord?" is
+          answered from DATEX II v3.7 itself. Without the name,
+          the Helpdesk may answer from the public transport standards instead, or say it cannot answer.
+        </p>
         <div className="table-wrap">
           <table className="board-table">
             <thead>
