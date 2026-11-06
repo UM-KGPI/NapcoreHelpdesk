@@ -3,8 +3,9 @@
  *
  * Polls GET /status (backend: helpdesk/services/service_status.py). The backend reports an index run or a
  * saturated host; this component adds what only the browser can see: the server returning the maintenance
- * 503, or not answering (network error, timeout, a proxy's 502/504). "Not answering" needs two failed polls
- * in a row, so one dropped request never flashes a warning.
+ * 503, the outer proxy's own 502/504 error page (shown at once), or not answering at all (network error,
+ * timeout, any other 5xx). "Not answering" needs two failed polls in a row, so one dropped request never
+ * flashes a warning.
  *
  * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
  * Crafted by: AI coding agents
@@ -23,11 +24,16 @@ export type ServiceCondition =
   | { kind: "ok" }
   | { kind: "busy"; indexingSources: string[]; highLoad: boolean }
   | { kind: "maintenance" }
+  | { kind: "restarting" }
   | { kind: "failed" };
 
 interface StatusReason {
   code?: unknown;
   sources?: unknown;
+}
+
+function errorCode(body: unknown): unknown {
+  return (body as { error?: { code?: unknown } } | null)?.error?.code;
 }
 
 /** Turns one poll's outcome into a condition. `status` is the HTTP status, or null when the request failed. */
@@ -36,9 +42,12 @@ export function interpretStatusResponse(status: number | null, body: unknown): S
   // A backend without the endpoint (an older version mid-deploy) is answering, so nothing to report.
   if (status === 404) return { kind: "ok" };
   if (status === 503) {
-    const code = (body as { error?: { code?: unknown } } | null)?.error?.code;
-    return code === "SERVICE_UNAVAILABLE" ? { kind: "maintenance" } : { kind: "failed" };
+    return errorCode(body) === "SERVICE_UNAVAILABLE" ? { kind: "maintenance" } : { kind: "failed" };
   }
+  // The kgpi.fgpa.um.si proxy answers 502/504 with this code when the Helpdesk cannot be reached
+  // (docs/outer-proxy). That is a deploy's container restart or a real outage, which the browser cannot tell
+  // apart, so it gets wording that fits both, at once: unlike a dropped request, it is a definite answer.
+  if ((status === 502 || status === 504) && errorCode(body) === "UPSTREAM_UNAVAILABLE") return { kind: "restarting" };
   if (status < 200 || status >= 300) return { kind: "failed" };
   if (typeof body !== "object" || body === null) return { kind: "failed" };
 
@@ -62,6 +71,8 @@ export function bannerMessage(condition: ServiceCondition, consecutiveFailures: 
       return null;
     case "maintenance":
       return "The Helpdesk is being updated. Please try again in a few minutes.";
+    case "restarting":
+      return "The Helpdesk is being updated or restarting. Please try again in a few minutes.";
     case "failed":
       return consecutiveFailures >= FAILURES_BEFORE_UNREACHABLE
         ? "The Helpdesk server is not responding. It may be restarting or overloaded; please try again in a few minutes."
