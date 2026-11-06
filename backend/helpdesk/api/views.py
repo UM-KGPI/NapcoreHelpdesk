@@ -879,6 +879,20 @@ class HealthLiveView(APIView):
         return Response(_service_health_payload(check="live", status_value="ok"), status=status.HTTP_200_OK)
 
 
+class ServiceStatusView(APIView):
+    """Whether answers are slower than usual right now (an index run, a saturated host). Public, like the
+    health checks: the frontend polls it to show a banner, and nothing in it is secret."""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        from helpdesk.services.service_status import current_status
+
+        response = Response(current_status(), status=status.HTTP_200_OK)
+        response["Cache-Control"] = "no-store"
+        return response
+
+
 BROKER_CHECK_TIMEOUT_SECONDS = 3
 
 

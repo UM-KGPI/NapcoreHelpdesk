@@ -520,6 +520,29 @@ unchanged. Two limits: the page is served by the frontend container, so while th
 being recreated the proxy in front of it answers instead; and the directory must stay readable by
 others (the default for a cloned repository), or nginx cannot see the file.
 
+### "Slower than usual" banner
+
+The site is up but slow while sources are being indexed or the host is saturated, and no
+maintenance page appears then. For that case the web app polls `GET /api/v1/status` (public, every
+60 s, every 20 s while something is wrong) and shows a banner under the header:
+
+- **Indexing**: an index or re-embedding command (`index_datex`, `index_inspire`, `index_napcore_site`,
+  `index_regulations`, `refresh_source_indexes`, `reembed_chunks`, `build_source_index`) is running in
+  the backend container. Read from `/proc`, so it covers the detached runs `deploy.sh` starts there.
+  The nightly refresh runs in `celery-worker` and is not seen this way, only through the load.
+- **Busy**: the host's 1-minute load average per CPU is at least `STATUS_BUSY_LOAD_PER_CPU`
+  (`.env.prod`, default `1.0`).
+- **Maintenance**: the maintenance 503 above.
+- **Not responding**: two polls in a row failed (network error, timeout, a 502/504 from the outer
+  proxy). This one is the browser's own conclusion, so it also appears when the whole host is down,
+  as long as the page was already open.
+
+The chat also says "taking longer than usual" once an answer has been pending for 20 s.
+
+The outer proxy in front of the server (nginx on kgpi.fgpa.um.si, which also serves the KGPI site)
+is not part of this repository. When the whole host is down it answers with its own bare 502; a
+custom `error_page` there is the only way to show a page to visitors who load the site at that moment.
+
 ### Transmodel HTML export
 
 The Transmodel model is published as an Enterprise Architect HTML export at

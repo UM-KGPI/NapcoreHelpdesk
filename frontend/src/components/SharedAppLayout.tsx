@@ -6,16 +6,18 @@
  *
  * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
  * Crafted by: AI coding agents
- * Created: 2026-03-29  |  Modified: 2026-06-28
+ * Created: 2026-03-29  |  Modified: 2026-11-06
  */
 
 import { Outlet, NavLink, Link } from "react-router-dom";
 
 import { useAuth } from "../auth-context";
+import ServiceStatusBanner from "./ServiceStatusBanner";
 
 interface SharedAppLayoutProps {
   appVersion: string;
   backendBuildRef: string;
+  apiBaseUrl: string;
 }
 
 function extractBaseVersion(appVersion: string): string {
@@ -23,7 +25,7 @@ function extractBaseVersion(appVersion: string): string {
   return baseVersion;
 }
 
-export default function SharedAppLayout({ appVersion }: SharedAppLayoutProps) {
+export default function SharedAppLayout({ appVersion, apiBaseUrl }: SharedAppLayoutProps) {
   useAuth();
 
   return (
@@ -38,6 +40,7 @@ export default function SharedAppLayout({ appVersion }: SharedAppLayoutProps) {
           </NavLink>
         </p>
       </header>
+      <ServiceStatusBanner apiBaseUrl={apiBaseUrl} />
       <Outlet />
     </div>
   );

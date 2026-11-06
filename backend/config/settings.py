@@ -286,6 +286,10 @@ ALLOWED_SOURCE_REPOSITORIES = {
     if value.strip()
 }
 
+# The user-facing "slower than usual" banner (GET /api/v1/status) appears once the host's 1-minute load average
+# per CPU reaches this value. Retrieval is CPU-bound, so answers slow down from about one runnable task per CPU.
+STATUS_BUSY_LOAD_PER_CPU = env.float("STATUS_BUSY_LOAD_PER_CPU", default=1.0)
+
 SOURCE_REFRESH_ENABLED = env("SOURCE_REFRESH_ENABLED")
 SOURCE_REFRESH_HOUR = env("SOURCE_REFRESH_HOUR")
 SOURCE_REFRESH_MINUTE = env("SOURCE_REFRESH_MINUTE")

@@ -8,10 +8,10 @@
  *
  * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
  * Crafted by: AI coding agents
- * Created: 2026-03-29  |  Modified: 2026-06-28
+ * Created: 2026-03-29  |  Modified: 2026-11-06
  */
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 
 import type { AnswerResponse } from "../types";
@@ -19,6 +19,9 @@ import { citationDisplayName, citationMarker, groupCitationsBySource } from "../
 import AnswerMarkdown from "./AnswerMarkdown";
 import LegalContext from "./LegalContext";
 import InspiredByOthersPanel from "./InspiredByOthersPanel";
+
+// Most answers take 7-15 s. Past this, say that it is slow, so a long wait doesn't look like a hang.
+export const SLOW_ANSWER_MS = 20_000;
 
 export interface ChatTurn {
   id: string;
@@ -66,6 +69,14 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
   const chatLogRef = useRef<HTMLDivElement | null>(null);
   const latestUserTurnRef = useRef<HTMLElement | null>(null);
   const [feedbackPendingByRequestId, setFeedbackPendingByRequestId] = useState<Record<string, boolean>>({});
+  const [answerIsSlow, setAnswerIsSlow] = useState(false);
+
+  useEffect(() => {
+    setAnswerIsSlow(false);
+    if (!busy) return;
+    const timer = setTimeout(() => setAnswerIsSlow(true), SLOW_ANSWER_MS);
+    return () => clearTimeout(timer);
+  }, [busy]);
 
   const buildAnswerWithEvidenceText = (turn: ChatTurn): string => {
     const answerText = turn.text.trim();
@@ -394,6 +405,11 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
             <div className="chat-progress" role="status" aria-live="polite" aria-label="Generating answer">
               <div className="chat-progress-bar" />
               <p className="chat-progress-label muted tiny">Generating answer...</p>
+              {answerIsSlow && (
+                <p className="chat-progress-slow tiny">
+                  This is taking longer than usual. The answer is still being prepared; please keep this page open.
+                </p>
+              )}
             </div>
           )}
         </form>
