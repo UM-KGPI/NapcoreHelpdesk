@@ -39,6 +39,7 @@ from pathlib import Path
 
 from helpdesk.models import IndexedSourceFile, SourceChunk
 from helpdesk.services.embeddings import build_text_embeddings_batch
+from helpdesk.services.service_status import mark_embedding
 from helpdesk.services.index_builder import build_chunk_embedding_text, build_content_hash
 from helpdesk.services.napcore_site import Snapshot, chunk_snapshot, html_to_text, read_snapshot
 
@@ -337,6 +338,7 @@ EMBED_PAUSE_SECONDS = 0.5
 
 def _embed(texts: list[str]) -> list[list[float]]:
     """Embed a few texts at a time with pauses on prod's small embedder (see napcore_site._embed)."""
+    mark_embedding()
     from helpdesk.services.embeddings import semantic_enabled
 
     if not semantic_enabled():
