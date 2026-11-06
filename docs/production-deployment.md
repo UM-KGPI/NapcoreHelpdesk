@@ -539,10 +539,11 @@ maintenance page appears then. For that case the web app polls `GET /api/v1/stat
 
 The chat also says "taking longer than usual" once an answer has been pending for 20 s.
 
-The outer proxy in front of the server (nginx on kgpi.fgpa.um.si, which also serves the KGPI site)
-is not part of this repository. When the whole host is down it answers with its own bare 502; a
-custom `error_page` there is the only way to show a page to visitors who load the site at that moment.
-The ready-to-install change, for whoever runs that proxy, is in [docs/outer-proxy/](outer-proxy/README.md).
+The outer proxy in front of the Helpdesk (the systemd nginx on the same host, which also serves the
+KGPI site) is not part of this repository. Since 6 November 2026 it shows its own "temporarily
+unavailable" page, or JSON for API calls, when the Helpdesk cannot be reached (502/504). It also
+allows 120 s per request, where it used to cut off at 60 s. What was installed, and how to roll it
+back: [docs/outer-proxy/](outer-proxy/README.md).
 
 ### Transmodel HTML export
 

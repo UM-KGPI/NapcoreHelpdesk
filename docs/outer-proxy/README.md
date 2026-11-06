@@ -1,7 +1,8 @@
 # Error page on the kgpi.fgpa.um.si proxy
 
 The NAPCORE Helpdesk is served at `https://kgpi.fgpa.um.si/napcore-helpdesk/` through the nginx on
-kgpi.fgpa.um.si, which also serves the KGPI website. That nginx is not managed from this repository.
+kgpi.fgpa.um.si, which also serves the KGPI website. That nginx runs on the Helpdesk host, but it is
+not managed from this repository (see "Installed on 6 November 2026" below).
 
 When the Helpdesk host does not answer (overloaded, rebooting, or Docker restarting), this proxy
 returns its default bare `502 Bad Gateway` page. This happened on 6 November 2026, 01:04–01:09 UTC.
@@ -59,13 +60,30 @@ To see the page without stopping the Helpdesk, temporarily point a test location
 Alternatively, wait for the next Helpdesk deploy: the restart window is about 30 s, and the
 Helpdesk's own maintenance page covers most of it.
 
-## Optional: timeout
+## Timeout
 
-Requests through the proxy were seen to end at exactly 60 s (October 2026). This matches nginx's
-default `proxy_read_timeout`, but the proxy's configuration was not checked. The Helpdesk's own nginx
-and gunicorn allow 120 s. Slow answers under load can therefore end in a 504 at this proxy, although
-the Helpdesk would have finished. If that is acceptable to change, set
-`proxy_read_timeout 120s;` in the same location.
+The Helpdesk's own nginx and gunicorn allow 120 s. Before 6 November 2026 the proxy had no
+`proxy_read_timeout` for this location, so nginx's 60 s default applied. That explains the 504s
+at exactly 60 s seen in October: slow answers were cut off at the proxy, although the Helpdesk
+would have finished them. The location now sets `proxy_read_timeout 120s;`, which matches.
 
-Tested with nginx 1.27 against a closed upstream port (502), an unreachable upstream (504), and an
-upstream answering 503 itself (passed through unchanged). The proxy runs nginx 1.30.6.
+## Installed on 6 November 2026
+
+- nginx 1.30.6 under systemd, on the Helpdesk host itself. Config file:
+  `/etc/nginx/sites-enabled/kgpi.fgpa.um.si.conf`.
+- Upstreams: the Helpdesk is at `127.0.0.1:8080` (`location /napcore-helpdesk/`, 443 block), and
+  WordPress at `127.0.0.1:8000` (`location /`). The port 80 block only redirects to https.
+- Added in the `/napcore-helpdesk/` location: `proxy_read_timeout 120s;` and the `error_page`
+  line. The named location was added next to it, verbatim from `napcore-helpdesk-errors.conf`.
+- Error files are in `/var/www/napcore-helpdesk-errors/` (755/644). SELinux is permissive.
+- Backup of the previous config: `/etc/nginx/kgpi.fgpa.um.si.conf.bak-2026-11-06` (outside
+  `sites-enabled`, so nginx does not load it). Rollback: copy it back, `nginx -t`, reload.
+- Checked on the server with temporary `__errortest` locations, since removed:
+  - `/napcore-helpdesk/__errortest` → 502 text/html, with `Cache-Control: no-store` and `Retry-After: 60`.
+  - `/napcore-helpdesk/api/__errortest` → 502, `UPSTREAM_UNAVAILABLE` JSON.
+  - The Helpdesk and the KGPI site still return 200.
+  - The 504 path was not triggered on the server. It uses the same `error_page` line, and it was
+    tested locally (below).
+
+Tested locally with nginx 1.27 against a closed upstream port (502), an upstream read timeout
+(504), and an upstream answering 503 itself (passed through unchanged).
