@@ -54,10 +54,8 @@ Points to transport data, which these standards serve (www.napcore.eu).
 
 ## Knowledge pool
 
-The Helpdesk answers only from the sources below. Anything outside them, for
-example the GTFS specification itself or DATEX II versions before 3.7, is not
-in the pool: the Helpdesk then says it cannot answer rather than answering from
-general knowledge. Every answer cites the documents it used. Pool as of
+The Helpdesk answers only from the sources below. For anything outside them, the
+Helpdesk says it cannot answer rather than answering from general knowledge. Every answer cites the documents it used. Pool as of
 6 November 2026.
 
 ### Public transport standards: searched for every question
