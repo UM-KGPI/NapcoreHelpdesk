@@ -76,8 +76,8 @@ II, what is a SituationRecord?"), so they do not crowd out the public transport
 standards in other answers.
 
 **Tip:** name the standard in your question. "What is a SituationRecord?" is
-answered from SIRI; "In DATEX II, what is a SituationRecord?" is answered from
-DATEX II. Without the name, the Helpdesk may answer from the public transport
+answered from the copy of the DATEX II schema inside SIRI; "In DATEX II, what
+is a SituationRecord?" is answered from DATEX II v3.7 itself. Without the name, the Helpdesk may answer from the public transport
 standards instead, or say it cannot answer.
 
 | Name | What is included | Source |
