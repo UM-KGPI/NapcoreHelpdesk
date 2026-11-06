@@ -25,6 +25,70 @@ function extractBuildInfo(appVersion: string): string {
   return buildMetadata || "dev";
 }
 
+// The knowledge pool as of 6 November 2026. Keep in sync with the sources in backend/helpdesk/services
+// (regulations.ACTS, datex, inspire, napcore_site, source_refresh) and with docs/project-background.md.
+const EURLEX = "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:";
+
+const CORE_STANDARDS = [
+  {
+    name: "Transmodel",
+    what: "The reference data model for public transport (v6.2): its concepts and definitions, and the class pages of the published model with packages and diagrams.",
+    url: "/napcore-helpdesk/transmodel/",
+    source: "Transmodel model export",
+  },
+  { name: "NeTEx", what: "Network and timetable exchange: XSD schemas, examples and documentation.", url: "https://github.com/TransmodelEcosystem/NeTEx", source: "TransmodelEcosystem/NeTEx" },
+  { name: "SIRI", what: "Real-time service information: XSD schemas, examples and documentation.", url: "https://github.com/TransmodelEcosystem/SIRI", source: "TransmodelEcosystem/SIRI" },
+  { name: "OpRa", what: "Operating raw data exchange: XSD schemas, examples and documentation.", url: "https://github.com/TransmodelEcosystem/OpRa", source: "TransmodelEcosystem/OpRa" },
+];
+
+const NAMED_SOURCES = [
+  {
+    name: "DATEX II v3.7",
+    what: "Road traffic and travel information: the data model (classes, enumerations, data types) and the documentation portal.",
+    url: "https://docs.datex2.eu/v3.7/",
+    source: "docs.datex2.eu",
+  },
+  {
+    name: "TN-ITS",
+    what: "Updates of road attributes such as speed limits (DATEX II Part 14): schemas, code lists, ontology and examples.",
+    url: "https://github.com/ERTICO-TN-ITS/TN-ITS-Open",
+    source: "ERTICO-TN-ITS/TN-ITS-Open",
+  },
+  {
+    name: "INSPIRE Transport Networks",
+    what: "The data specification on transport networks (Technical Guidelines D2.8.I.7, v2025.1), which MMTIS requires for the spatial network, and its 35 code lists.",
+    url: "https://github.com/INSPIRE-MIF/technical-guidelines/tree/v2025.1/data/tn",
+    source: "INSPIRE-MIF, INSPIRE registry",
+  },
+  {
+    name: "mobilityDCAT-AP",
+    what: "The metadata profile for describing mobility data in National Access Point catalogues, with its ontology.",
+    url: "https://github.com/mobilityDCAT-AP/mobilityDCAT-AP",
+    source: "mobilityDCAT-AP/mobilityDCAT-AP",
+  },
+  {
+    name: "NAPCORE",
+    what: "NAPCORE's own pages, news and published deliverables, for questions about NAPCORE, National Access Points and National Bodies.",
+    url: "https://napcore.eu/",
+    source: "napcore.eu",
+  },
+];
+
+const EU_ACTS = [
+  { name: "MMTIS", act: "Delegated Regulation (EU) 2017/1926", version: "consolidated text of 4 March 2024", celex: "02017R1926-20240304" },
+  { name: "MMTIS amendment", act: "Delegated Regulation (EU) 2024/490", version: "as adopted", celex: "32024R0490" },
+  { name: "ITS Directive", act: "Directive 2010/40/EU", version: "consolidated text of 20 December 2023", celex: "02010L0040-20231220" },
+  { name: "ITS Directive amendment", act: "Directive (EU) 2023/2661", version: "as adopted", celex: "32023L2661" },
+  { name: "TEL TSI", act: "Implementing Regulation (EU) 2026/253", version: "as adopted", celex: "32026R0253" },
+  { name: "INSPIRE Directive", act: "Directive 2007/2/EC", version: "consolidated text of 26 November 2024", celex: "02007L0002-20241126" },
+  {
+    name: "INSPIRE interoperability rules",
+    act: "Regulation (EU) No 1089/2010",
+    version: "consolidated text of 19 November 2023; articles and Annex II section 7 (Transport Networks) only",
+    celex: "02010R1089-20231119",
+  },
+];
+
 export default function AboutPage({ appVersion }: AboutPageProps) {
   return (
     <section className="about-page">
@@ -45,13 +109,14 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           Directive 2010/40/EU and the TEL TSI (EU) 2026/253. Questions that name them are also answered
           from the road traffic standard DATEX II and TN-ITS (its Part 14 for road attribute updates), and
           from the INSPIRE Transport Networks specification that MMTIS requires for the spatial network.
+          The full list is under <a href="#knowledge-pool">Knowledge pool</a> below.
         </p>
         <ul>
           <li><strong>Grounded answers:</strong> responses are based only on approved source repositories and the official EU legal texts, and cite the evidence they use. A Transmodel definition links to its class page in the Transmodel model (with its package and diagrams), and a legal answer links to the article on EUR-Lex.</li>
           <li><strong>Semantic technologies:</strong> the standards are modelled as linked data and stored in a GraphDB knowledge graph, with Transmodel as the shared reference model, helping the assistant find related concepts across standards. The terms the EU acts define form a vocabulary generated from the acts, linked to the standards the acts name.</li>
           <li><strong>Structure-aware answers:</strong> how two concepts are related (for example a LINE, its ROUTEs and the JOURNEY PATTERNs on them) and what two schemas have in common are computed from the standards' own structure, refreshed with every update of the source repositories, and cited as evidence.</li>
           <li><strong>Legal context:</strong> answers about NeTEx, SIRI or Transmodel list the provisions of the EU acts that name the standard, and questions about a standard's legal status (for example whether it is mandatory) are answered from those provisions.</li>
-          <li><strong>AI as controller and narrator:</strong> a controller model checks whether a matched FAQ fits or the sources should be searched, and a narration model writes the answer from the retrieved evidence. Both use the open-weight model <code>nvidia/Qwen3.6-35B-A3B-NVFP4</code>, hosted at the University of Maribor, Faculty of Electrical Engineering and Computer Science.</li>
+          <li><strong>AI as controller and narrator:</strong> a controller model checks whether a matched FAQ fits or the sources should be searched, and a narration model writes the answer from the retrieved evidence. Both are large language models used through an API.</li>
           <li><strong>Honest about gaps:</strong> when the evidence is insufficient, the assistant says so instead of guessing.</li>
           <li><strong>Curated knowledge:</strong> editorially reviewed FAQ answers are used first, with search across the source repositories as a fallback.</li>
           <li><strong>Your language:</strong> ask in any supported language and get the answer in the same language, so working in English is not required. Sources are found by meaning, with a multilingual embedding model, not only by shared words.</li>
@@ -59,6 +124,86 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
         <p>
           The name refers to NAPCORE, the EU coordination initiative for National Access Points to
           transport data, which these standards serve (<a href="https://www.napcore.eu" target="_blank" rel="noreferrer">www.napcore.eu</a>).
+        </p>
+      </section>
+
+      <section className="panel" id="knowledge-pool">
+        <div className="panel-title-row">
+          <h2>Knowledge pool</h2>
+        </div>
+        <p>
+          The Helpdesk answers only from the sources below. Anything outside them, for example the GTFS
+          specification itself or DATEX II versions before 3.7, is not in the pool: the Helpdesk then says it cannot answer rather than
+          answering from general knowledge. Every answer cites the documents it used.
+        </p>
+
+        <h3>Public transport standards: searched for every question</h3>
+        <p>The NeTEx, SIRI and OpRa repositories are refreshed every night from their GitHub repositories.</p>
+        <div className="table-wrap">
+          <table className="board-table">
+            <thead>
+              <tr><th>Standard</th><th>What is included</th><th>Source</th></tr>
+            </thead>
+            <tbody>
+              {CORE_STANDARDS.map((item) => (
+                <tr key={item.name}>
+                  <td><strong>{item.name}</strong></td>
+                  <td>{item.what}</td>
+                  <td><a href={item.url} target="_blank" rel="noreferrer">{item.source}</a></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Further standards and sources: searched when a question names them</h3>
+        <p>
+          These are searched only when the question mentions them (for example "In DATEX II, what is a
+          SituationRecord?"), so they do not crowd out the public transport standards in other answers.
+        </p>
+        <div className="table-wrap">
+          <table className="board-table">
+            <thead>
+              <tr><th>Name</th><th>What is included</th><th>Source</th></tr>
+            </thead>
+            <tbody>
+              {NAMED_SOURCES.map((item) => (
+                <tr key={item.name}>
+                  <td><strong>{item.name}</strong></td>
+                  <td>{item.what}</td>
+                  <td><a href={item.url} target="_blank" rel="noreferrer">{item.source}</a></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <h3>EU legislation</h3>
+        <p>
+          The official texts from the EU Publications Office, quoted by article and linked to EUR-Lex. They
+          are searched when a question is about the law: when it names an act, asks about regulations or
+          directives, or uses a term the acts define (for example "static travel data"). Answers about
+          NeTEx, SIRI and Transmodel also show a Legal context line with the provisions that name the standard.
+        </p>
+        <div className="table-wrap">
+          <table className="board-table">
+            <thead>
+              <tr><th>Short name</th><th>Act</th><th>Version indexed</th></tr>
+            </thead>
+            <tbody>
+              {EU_ACTS.map((item) => (
+                <tr key={item.celex}>
+                  <td><strong>{item.name}</strong></td>
+                  <td><a href={`${EURLEX}${item.celex}`} target="_blank" rel="noreferrer">{item.act}</a></td>
+                  <td>{item.version}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="muted tiny">
+          Pool as of 6 November 2026. Missing a standard or act you need? Tell us with the feedback buttons
+          under an answer, or contact the team (see Contributing below).
         </p>
       </section>
 
@@ -72,7 +217,7 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
         <a className="about-diagram" href={systemContextDiagramUrl} target="_blank" rel="noreferrer">
           <img
             src={systemContextDiagramUrl}
-            alt="C4 system context: NAP operators, transport authorities, transport operators, standards implementers and ITS system integrators ask questions, and editors review answers. The helpdesk indexes the NeTEx, SIRI and OpRa repositories on GitHub and publishes the Transmodel model from its own repository there, indexes the EU legislation from the EU Publications Office and links answers to EUR-Lex, queries the GraphDB ontology store, uses a language model gateway at the University of Maribor, and downloads its multilingual embedding model once from Hugging Face."
+            alt="C4 system context: NAP operators, transport authorities, transport operators, standards implementers and ITS system integrators ask questions, and editors review answers. The helpdesk indexes the NeTEx, SIRI and OpRa repositories on GitHub and publishes the Transmodel model from its own repository there, indexes the EU legislation from the EU Publications Office and links answers to EUR-Lex, queries the GraphDB ontology store, uses a large language model through an API, and downloads its multilingual embedding model once from Hugging Face."
           />
         </a>
       </section>

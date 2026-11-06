@@ -16,7 +16,8 @@ Delegated Regulation (EU) 2017/1926, the ITS Directive 2010/40/EU and the
 TEL TSI (EU) 2026/253. Questions that name them are also answered from the
 road traffic standard DATEX II and TN-ITS (its Part 14 for road attribute
 updates), and from the INSPIRE Transport Networks specification that MMTIS
-requires for the spatial network.
+requires for the spatial network. The full list is under
+[Knowledge pool](#knowledge-pool) below.
 
 - **Grounded answers:** responses are based only on approved source
   repositories and the official EU legal texts, and cite the evidence they
@@ -38,9 +39,8 @@ requires for the spatial network.
   from those provisions.
 - **AI as controller and narrator:** a controller model checks whether a
   matched FAQ fits or the sources should be searched, and a narration model
-  writes the answer from the retrieved evidence. Both use the open-weight model
-  `nvidia/Qwen3.6-35B-A3B-NVFP4`, hosted at the University of Maribor, Faculty
-  of Electrical Engineering and Computer Science.
+  writes the answer from the retrieved evidence. Both are large language models
+  used through an API.
 - **Honest about gaps:** when the evidence is insufficient, the assistant says
   so instead of guessing.
 - **Curated knowledge:** editorially reviewed FAQ answers are used
@@ -51,6 +51,57 @@ requires for the spatial network.
 
 The name refers to NAPCORE, the EU coordination initiative for National Access
 Points to transport data, which these standards serve (www.napcore.eu).
+
+## Knowledge pool
+
+The Helpdesk answers only from the sources below. Anything outside them, for
+example the GTFS specification itself or DATEX II versions before 3.7, is not
+in the pool: the Helpdesk then says it cannot answer rather than answering from
+general knowledge. Every answer cites the documents it used. Pool as of
+6 November 2026.
+
+### Public transport standards: searched for every question
+
+NeTEx, SIRI and OpRa are refreshed every night from their GitHub repositories.
+
+| Standard | What is included | Source |
+|---|---|---|
+| **Transmodel** | The reference data model for public transport (v6.2): its concepts and definitions, and the class pages of the published model with packages and diagrams | [Transmodel model export](https://kgpi.fgpa.um.si/napcore-helpdesk/transmodel/) |
+| **NeTEx** | Network and timetable exchange: XSD schemas, examples and documentation | [TransmodelEcosystem/NeTEx](https://github.com/TransmodelEcosystem/NeTEx) |
+| **SIRI** | Real-time service information: XSD schemas, examples and documentation | [TransmodelEcosystem/SIRI](https://github.com/TransmodelEcosystem/SIRI) |
+| **OpRa** | Operating raw data exchange: XSD schemas, examples and documentation | [TransmodelEcosystem/OpRa](https://github.com/TransmodelEcosystem/OpRa) |
+
+### Further standards and sources: searched when a question names them
+
+These are searched only when the question mentions them (for example "In DATEX
+II, what is a SituationRecord?"), so they do not crowd out the public transport
+standards in other answers.
+
+| Name | What is included | Source |
+|---|---|---|
+| **DATEX II v3.7** | Road traffic and travel information: the data model (classes, enumerations, data types) and the documentation portal | [docs.datex2.eu](https://docs.datex2.eu/v3.7/) |
+| **TN-ITS** | Updates of road attributes such as speed limits (DATEX II Part 14): schemas, code lists, ontology and examples | [ERTICO-TN-ITS/TN-ITS-Open](https://github.com/ERTICO-TN-ITS/TN-ITS-Open) |
+| **INSPIRE Transport Networks** | The data specification on transport networks (Technical Guidelines D2.8.I.7, v2025.1), which MMTIS requires for the spatial network, and its 35 code lists | [INSPIRE-MIF](https://github.com/INSPIRE-MIF/technical-guidelines/tree/v2025.1/data/tn), INSPIRE registry |
+| **mobilityDCAT-AP** | The metadata profile for describing mobility data in National Access Point catalogues, with its ontology | [mobilityDCAT-AP/mobilityDCAT-AP](https://github.com/mobilityDCAT-AP/mobilityDCAT-AP) |
+| **NAPCORE** | NAPCORE's own pages, news and published deliverables, for questions about NAPCORE, National Access Points and National Bodies | [napcore.eu](https://napcore.eu/) |
+
+### EU legislation
+
+The official texts from the EU Publications Office, quoted by article and linked
+to EUR-Lex. They are searched when a question is about the law: when it names
+an act, asks about regulations or directives, or uses a term the acts define
+(for example "static travel data"). Answers about NeTEx, SIRI and Transmodel
+also show a Legal context line with the provisions that name the standard.
+
+| Short name | Act | Version indexed |
+|---|---|---|
+| **MMTIS** | [Delegated Regulation (EU) 2017/1926](https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:02017R1926-20240304) | consolidated text of 4 March 2024 |
+| **MMTIS amendment** | [Delegated Regulation (EU) 2024/490](https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32024R0490) | as adopted |
+| **ITS Directive** | [Directive 2010/40/EU](https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:02010L0040-20231220) | consolidated text of 20 December 2023 |
+| **ITS Directive amendment** | [Directive (EU) 2023/2661](https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32023L2661) | as adopted |
+| **TEL TSI** | [Implementing Regulation (EU) 2026/253](https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32026R0253) | as adopted |
+| **INSPIRE Directive** | [Directive 2007/2/EC](https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:02007L0002-20241126) | consolidated text of 26 November 2024 |
+| **INSPIRE interoperability rules** | [Regulation (EU) No 1089/2010](https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:02010R1089-20231119) | consolidated text of 19 November 2023; articles and Annex II section 7 (Transport Networks) only |
 
 ## System context
 
