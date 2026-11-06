@@ -24,6 +24,7 @@ from pathlib import Path
 
 from helpdesk.models import IndexedSourceFile, SourceChunk
 from helpdesk.services.embeddings import build_text_embeddings_batch
+from helpdesk.services.service_status import mark_embedding
 from helpdesk.services.index_builder import build_chunk_embedding_text, build_content_hash
 
 SCOPE = "EU legislation"
@@ -314,6 +315,7 @@ def index_act(act: Act) -> tuple[str, int]:
         return "unchanged", SourceChunk.objects.filter(repository_url=act.url).count()
 
     records = _chunk_records(act, select_sections(act, parse_act(content)))
+    mark_embedding()
     embeddings = build_text_embeddings_batch(
         [
             build_chunk_embedding_text(
