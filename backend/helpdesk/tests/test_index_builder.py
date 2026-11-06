@@ -776,3 +776,53 @@ class TrackedSourceFilesTests(SimpleTestCase):
                 files = index_builder.iter_source_files(repo, {".md"})
 
         self.assertEqual([p.relative_to(repo).as_posix() for p in files], ["README.md"])
+
+
+class SplitTurtleTests(SimpleTestCase):
+    """Turtle files are chunked by whole resource descriptions (src-md05: an example's dcat:CatalogRecord was
+    cut between two fixed-size chunks)."""
+
+    EXAMPLE = """@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+# A comment with a full stop. Not a statement end.
+<https://example.org/catalog> a dcat:Catalog ;
+    dct:title "Example catalogue. With a dot."@en ;
+    dcat:record <https://example.org/record> .
+
+<https://example.org/record> a dcat:CatalogRecord ;
+    dct:issued "2019-12-04"^^<http://www.w3.org/2001/XMLSchema#date> ;
+    dct:description \"\"\"Multi-line.
+    It ends a sentence .
+    Still the same literal.\"\"\" .
+
+<https://example.org/dataset> a dcat:Dataset ;
+    dcat:spatialResolutionInMeters 1.5 ;
+    dct:temporal [ a dct:PeriodOfTime ; dcat:startDate "2020-01-01" ] .
+"""
+
+    def test_each_resource_type_gets_its_own_chunk(self):
+        from helpdesk.services.index_builder import split_turtle
+
+        chunks = split_turtle(self.EXAMPLE, max_chars=1200)
+        self.assertEqual([heading for _, _, heading in chunks], ["dcat:Catalog", "dcat:CatalogRecord", "dcat:Dataset"])
+        record = chunks[1][0]
+        self.assertTrue(record.startswith("<https://example.org/record> a dcat:CatalogRecord"))
+        self.assertIn("Still the same literal.", record)  # a "." inside a literal does not end the statement
+        self.assertIn("1.5", chunks[2][0])  # nor does a decimal point
+        self.assertIn("dct:PeriodOfTime", chunks[2][0])  # nor one inside [ ... ]
+        self.assertFalse(any("@prefix" in text for text, _, _ in chunks))
+
+    def test_same_type_statements_are_packed_up_to_the_limit(self):
+        from helpdesk.services.index_builder import split_turtle
+
+        codes = "\n".join(f"<http://x/code{i}> a skos:Concept ; skos:prefLabel \"code {i}\" ." for i in range(30))
+        chunks = split_turtle(codes, max_chars=300)
+        self.assertGreater(len(chunks), 1)
+        self.assertTrue(all(len(text) <= 300 for text, _, _ in chunks))
+        self.assertTrue(all(text.count("a skos:Concept") == text.count("skos:prefLabel") for text, _, _ in chunks))
+
+    def test_dispatch_and_fallback(self):
+        from helpdesk.services.index_builder import split_structured
+
+        self.assertEqual(split_structured(self.EXAMPLE, ".ttl")[1][2], "dcat:CatalogRecord")
+        self.assertTrue(split_structured("", ".ttl") == [] or all(t == "prose" for _, t, _ in split_structured("", ".ttl")))
