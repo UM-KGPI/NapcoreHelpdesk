@@ -533,9 +533,13 @@ maintenance page appears then. For that case the web app polls `GET /api/v1/stat
 - **Busy**: the host's 1-minute load average per CPU is at least `STATUS_BUSY_LOAD_PER_CPU`
   (`.env.prod`, default `1.0`).
 - **Maintenance**: the maintenance 503 above.
-- **Not responding**: two polls in a row failed (network error, timeout, a 502/504 from the outer
-  proxy). This one is the browser's own conclusion, so it also appears when the whole host is down,
-  as long as the page was already open.
+- **Being updated or restarting**: the outer proxy's own error reply (502/504 with
+  `UPSTREAM_UNAVAILABLE`, see docs/outer-proxy). Shown at once. It appears for about 30 s in every
+  deploy, while the frontend container is replaced, and during a real outage. The browser cannot tell
+  the two apart, so the wording fits both.
+- **Not responding**: two polls in a row failed in any other way (network error, timeout, another
+  5xx). This one is the browser's own conclusion, so it also appears when the proxy itself cannot be
+  reached, as long as the page was already open.
 
 The chat also says "taking longer than usual" once an answer has been pending for 20 s.
 

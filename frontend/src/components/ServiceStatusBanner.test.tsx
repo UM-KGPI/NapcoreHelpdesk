@@ -31,6 +31,13 @@ describe("interpretStatusResponse", () => {
     expect(bannerMessage(condition, 0)).toContain("being updated");
   });
 
+  it("shows the outer proxy's unavailable reply at once, worded for a deploy or an outage", () => {
+    const condition = interpretStatusResponse(502, { error: { code: "UPSTREAM_UNAVAILABLE", message: "…" } });
+    expect(condition).toEqual({ kind: "restarting" });
+    expect(bannerMessage(condition, 0)).toBe("The Helpdesk is being updated or restarting. Please try again in a few minutes.");
+    expect(interpretStatusResponse(504, { error: { code: "UPSTREAM_UNAVAILABLE" } })).toEqual({ kind: "restarting" });
+  });
+
   it("treats a missing endpoint (older backend) as ok", () => {
     expect(interpretStatusResponse(404, null)).toEqual({ kind: "ok" });
   });
