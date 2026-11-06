@@ -97,3 +97,46 @@ questions:
   expected_source_patterns: ['02007L0002-20241126#art_11']
   min_hits: 1
   top_k_threshold: 10
+# INSPIRE Transport Networks specification (D2.8.I.7, docs/inspire/) and registry code lists
+- id: src-insp07
+  question: What is a RoadLink in INSPIRE?
+  intent: definition
+  tags: [inspire, spec]
+  expected_source_patterns: ['dataspecification_tn.adoc#L3148']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-insp08
+  question: How does INSPIRE Transport Networks model a railway link?
+  intent: explanation
+  tags: [inspire, spec]
+  expected_source_patterns: ['dataspecification_tn.adoc#L3904']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-insp09
+  question: Which values does the INSPIRE code list FormOfWayValue have?
+  intent: explanation
+  tags: [inspire, codelist]
+  expected_source_patterns: ['codelist/FormOfWayValue']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-insp10
+  question: How are speed limits represented in INSPIRE transport networks?
+  intent: explanation
+  tags: [inspire, spec]
+  expected_source_patterns: ['dataspecification_tn.adoc#L2933', 'codelist/SpeedLimitSourceValue']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-insp11
+  question: What is a ferry crossing in the INSPIRE water transport network?
+  intent: definition
+  tags: [inspire, spec]
+  expected_source_patterns: ['dataspecification_tn.adoc#L4887']
+  min_hits: 1
+  top_k_threshold: 10
+- id: src-insp12
+  question: Kaj je v INSPIRE prometnem omrežju marker post?
+  intent: definition
+  tags: [inspire, spec, translated, sl]
+  expected_source_patterns: ['dataspecification_tn.adoc#L1555']
+  min_hits: 1
+  top_k_threshold: 10
