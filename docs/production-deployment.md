@@ -542,6 +542,7 @@ The chat also says "taking longer than usual" once an answer has been pending fo
 The outer proxy in front of the server (nginx on kgpi.fgpa.um.si, which also serves the KGPI site)
 is not part of this repository. When the whole host is down it answers with its own bare 502; a
 custom `error_page` there is the only way to show a page to visitors who load the site at that moment.
+The ready-to-install change, for whoever runs that proxy, is in [docs/outer-proxy/](outer-proxy/README.md).
 
 ### Transmodel HTML export
 
