@@ -698,3 +698,37 @@ class QuestionLanguageTests(SimpleTestCase):
             self.assertIsNone(question_language("Wie verwendet SIRI NeTEx?"))
         with patch("helpdesk.services.llm_generator._request_chat_completion", side_effect=OSError("down")):
             self.assertIsNone(question_language("Wie verwendet SIRI NeTEx?"))
+
+
+class EvidenceAnswersQuestionTests(SimpleTestCase):
+    """The model's verdict on its own answer, read from the JSON it returns (language-independent)."""
+
+    def test_reads_the_verdict_from_the_json_response(self):
+        from helpdesk.services.llm_generator import _evidence_answers_question
+
+        self.assertIs(
+            _evidence_answers_question('{"answer": "Die Evidenz enthält keine Definition.", "evidence_answers_question": false}'),
+            False,
+        )
+        self.assertIs(_evidence_answers_question('{"answer": "LineRef [E1].", "evidence_answers_question": true}'), True)
+
+    def test_recovers_the_verdict_from_malformed_json(self):
+        from helpdesk.services.llm_generator import _evidence_answers_question
+
+        self.assertIs(_evidence_answers_question('{"answer": "an "unescaped" quote", "evidence_answers_question": false}'), False)
+
+    def test_no_verdict_is_none(self):
+        from helpdesk.services.llm_generator import _evidence_answers_question
+
+        self.assertIsNone(_evidence_answers_question('{"answer": "LineRef [E1].", "citations_used": ["E1"]}'))
+        self.assertIsNone(_evidence_answers_question("Plain prose answer [E1]."))
+        self.assertIsNone(_evidence_answers_question('{"answer": "x", "evidence_answers_question": "no"}'))
+
+    def test_prompt_asks_for_the_verdict(self):
+        prompt = _build_messages(
+            question="What is a SituationRecord?",
+            chunks=[{"repositoryUrl": "r", "commitSha": "c", "sourcePath": "p", "chunkId": "1", "text": "t", "score": 0.9}],
+            scope=[],
+        )[0]["content"]
+        self.assertIn('"evidence_answers_question": true', prompt)
+        self.assertIn("do not answer the question at all", prompt)

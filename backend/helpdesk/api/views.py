@@ -673,6 +673,16 @@ def _evidence_coverage_level(chunks: list[dict], avg_score: float) -> str:
     return "low"
 
 
+def _non_answer_outcome(*, allow_abstain: bool) -> tuple[str, float, bool, bool, str | None]:
+    """(mode, confidence, review_required, abstained, abstention_reason) for an LLM answer that says the
+    evidence does not answer the question. Its text stays (it is in the user's language and says what the
+    evidence does cover), but it is not an answer: confidence 0 rather than the retrieval score, and an
+    abstention, so the editorial queue and the FAQ candidates treat the question as unresolved."""
+    if not allow_abstain:
+        return QuestionEvent.MODE_RAG, 0.0, True, False, None
+    return QuestionEvent.MODE_ABSTAIN, 0.0, True, True, QuestionEvent.REASON_INSUFFICIENT_EVIDENCE
+
+
 def _classify_partial_evidence(
     *,
     mode: str,
@@ -1396,6 +1406,10 @@ class QuestionAnswerView(APIView):
                     # Policy-approved RAG response.
                     mode = QuestionEvent.MODE_RAG
                     review_required = policy["review_required"] or review_required
+                    if llm_generated and generated.get("evidence_answers_question") is False:
+                        mode, confidence, review_required, abstained, abstention_reason = _non_answer_outcome(
+                            allow_abstain=allow_abstain
+                        )
 
             if mode == QuestionEvent.MODE_RAG and retrieved_chunks:
                 rule_result = evaluate_semantic_rules(
@@ -1878,6 +1892,10 @@ class QuestionAnswerStreamView(APIView):
                 else:
                     mode = QuestionEvent.MODE_RAG
                     review_required = policy["review_required"] or review_required
+                    if llm_generated and generated.get("evidence_answers_question") is False:
+                        mode, confidence, review_required, abstained, abstention_reason = _non_answer_outcome(
+                            allow_abstain=allow_abstain
+                        )
 
             if mode == QuestionEvent.MODE_RAG and retrieved_chunks:
                 rule_result = evaluate_semantic_rules(

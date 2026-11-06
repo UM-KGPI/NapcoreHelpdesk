@@ -737,6 +737,26 @@ def _strip_json_suffix(answer: str) -> str:
 _LENIENT_ANSWER_FIELD_PATTERN = re.compile(r'"answer"\s*:\s*("(?:[^"\\]|\\.)*")(?=\s*(?:,\s*"[^"]*"\s*:|\}))', re.DOTALL)
 
 
+_EVIDENCE_FLAG_PATTERN = re.compile(r'"evidence_answers_question"\s*:\s*(true|false)')
+
+
+def _evidence_answers_question(text: str) -> bool | None:
+    """The model's own verdict on whether the evidence answers the question, from its JSON response.
+
+    False marks a non-answer ("the evidence does not contain ..."), whatever language it is written in;
+    retrieval scores cannot tell, since the blocks were the best matches found. None when the response
+    carries no verdict (plain text, an older prompt): callers then leave confidence as it is.
+    """
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError:
+        match = _EVIDENCE_FLAG_PATTERN.search(text)
+        return None if match is None else match.group(1) == "true"
+    if isinstance(parsed, dict) and isinstance(parsed.get("evidence_answers_question"), bool):
+        return parsed["evidence_answers_question"]
+    return None
+
+
 def _unwrap_json_answer(text: str) -> str:
     """
     Extract the prose answer from a JSON-mode LLM response.
@@ -1344,7 +1364,10 @@ def _build_messages(
         "   - If you cannot find specific technical details in evidence, say so explicitly\n"
         "\n"
         "OUTPUT FORMAT (strict JSON):\n"
-        '{"answer": "Your answer text here with [E1] [E2] citations inline.", "citations_used": ["E1", "E2"]}'
+        '{"answer": "Your answer text here with [E1] [E2] citations inline.", "citations_used": ["E1", "E2"], '
+        '"evidence_answers_question": true}'
+        "\nSet evidence_answers_question to false only when the evidence blocks do not answer the question at all, "
+        "so that your answer says it cannot answer it. Set it to true when they answer it fully or in part.\n"
         "\n\nMARKDOWN FORMATTING:\n"
         "- Use `backticks` for technical content: XML elements, attributes, filenames, class names, values.\n"
         "- Use triple backticks for code blocks: ```xml ... ```\n"
@@ -1536,8 +1559,11 @@ def _generate_answer_text(
     chunks: list[dict],
     messages: list[dict],
     request_targets: list[dict],
+    signals: dict | None = None,
 ) -> str:
     """Execute one LLM call and return the post-processed (unvalidated) answer text.
+
+    When `signals` is given, it receives "evidence_answers_question" (see _evidence_answers_question).
 
     Validation is deliberately separate (see _validate_generated_answer) so a
     rejected answer stays available verbatim for retry feedback instead of
@@ -1585,6 +1611,8 @@ def _generate_answer_text(
 
     logger.info(f"[LLM_RAW] Raw response (first 250 chars): {answer[:250]}")
 
+    if signals is not None:
+        signals["evidence_answers_question"] = _evidence_answers_question(answer)
     answer = _unwrap_json_answer(answer)
 
     # Strip trailing JSON metadata object before any other processing.
@@ -1777,8 +1805,9 @@ def generate_answer_llm(
     # First attempt: generation and validation run separately so the rejected
     # answer text (not just the validator's error) is available for retry feedback.
     answer: str | None = None
+    signals: dict = {}
     try:
-        answer = _generate_answer_text(chunks=chunks, messages=messages, request_targets=request_targets)
+        answer = _generate_answer_text(chunks=chunks, messages=messages, request_targets=request_targets, signals=signals)
         _validate_answer_language(answer=answer, question=question, target_language=target_language)
         _validate_generated_answer(answer=answer, chunks=chunks)
     except LLMGenerationError as first_error:
@@ -1802,7 +1831,9 @@ def generate_answer_llm(
         else:
             retry_messages = messages
         try:
-            answer = _generate_answer_text(chunks=chunks, messages=retry_messages, request_targets=request_targets)
+            answer = _generate_answer_text(
+                chunks=chunks, messages=retry_messages, request_targets=request_targets, signals=signals
+            )
         except Exception as fatal_error:
             # Even the second attempt failed. This is a critical issue.
             # Return an honest error message instead of letting exception propagate to fallback.
@@ -1887,6 +1918,7 @@ def generate_answer_llm(
         "confidence": confidence,
         "review_required": confidence < 0.82 or not answer_validated,
         "answer_validated": answer_validated,
+        "evidence_answers_question": signals.get("evidence_answers_question"),
         "provider": settings.LLM_PROVIDER,
         "model": (request_targets[0]["model"]),
         "rejected_answer": rejected_answer,
@@ -2082,10 +2114,12 @@ def stream_answer_llm(
     rejected_answer: str | None = None
     rejection_reason: str | None = None
     answer_validated = True
+    evidence_answers_question: bool | None = None
     try:
         full_answer = _collect_stream(messages)
 
         logger.info(f"[STREAM_LLM_RAW] Raw response (first 250 chars): {full_answer[:250]}")
+        evidence_answers_question = _evidence_answers_question(full_answer)
         full_answer = _unwrap_json_answer(full_answer)
 
         # Strip hallucinated file names; evidence file names are preserved.
@@ -2116,6 +2150,7 @@ def stream_answer_llm(
         full_answer = _collect_stream(retry_messages)
 
         logger.info(f"[STREAM_RETRY_RAW] Retry response (first 250 chars): {full_answer[:250]}")
+        evidence_answers_question = _evidence_answers_question(full_answer)
         full_answer = _unwrap_json_answer(full_answer)
 
         # Strip hallucinated file names; evidence file names are preserved.
@@ -2161,6 +2196,7 @@ def stream_answer_llm(
             "confidence": confidence,
             "review_required": confidence < 0.82 or not answer_validated,
             "answer_validated": answer_validated,
+            "evidence_answers_question": evidence_answers_question,
             "provider": settings.LLM_PROVIDER,
             "model": settings.LLM_MODEL,
             "rejected_answer": rejected_answer,
