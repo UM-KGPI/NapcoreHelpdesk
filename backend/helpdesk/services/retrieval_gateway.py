@@ -77,6 +77,7 @@ from helpdesk.services.relation_paths import (
 from helpdesk.services.schema_overlap import format_overlap_chunk, overlap_for_schemas
 from helpdesk.services.service_abbreviations import expand_abbreviations, services_in_question
 from helpdesk.services.vocabulary_bridge import bridged_question_concepts
+from helpdesk.services.property_terms import question_property_concepts
 from helpdesk.services.semantic_graph import (
     CONCEPT_TO_TRANSMODEL,
     GRAPH_CONCEPT_ALIASES,
@@ -1707,6 +1708,12 @@ def _retrieve_chunks_once(
         bridged_concepts = concepts_in_scope(bridged_question_concepts(question), scope) - question_concepts
         question_concepts |= bridged_concepts
         _record_stage("vocabularyBridgeMs", stage_start)
+    property_concepts: set[str] = set()
+    if graph_rag_enabled and getattr(settings, "PROPERTY_TERMS_ENABLED", True):
+        stage_start = time.perf_counter()
+        property_concepts = question_property_concepts(question, question_concepts, scope)
+        question_concepts |= property_concepts
+        _record_stage("propertyTermsMs", stage_start)
     rare_lexemes: list[str] = []
     if semantic_enabled():
         stage_start = time.perf_counter()
@@ -2352,6 +2359,7 @@ def _retrieve_chunks_once(
         "graphExpansionSource": graph_expansion_source,
         "graphConceptIds": sorted(expanded_concepts) if graph_rag_enabled else [],
         "bridgedConceptIds": sorted(bridged_concepts),
+        "propertyConceptIds": sorted(property_concepts),
         "schemaOverlapAdded": schema_overlap_added,
         "graphConceptCap": graph_expansion_max_concepts if graph_rag_enabled else 0,
         "graphCandidatesAdded": graph_candidates_added if graph_rag_enabled else 0,
