@@ -818,8 +818,106 @@ def split_xsd_summary(text: str, source_name: str, max_declarations: int = 250) 
     if chunks:
         return chunks
 
+    # A schema without declarations (siri_all_functionalServices.xsd, netex_all_objects_*.xsd) includes other
+    # schemas and says in its metadata what they are. Its raw text, cut into three 800-character windows, lost
+    # most of that text and split words ("SIRI-ET E" | "stimated Timetable"), so the service names were
+    # missing from the block that described the services (prod "What is SIRI used for?", 2026-11-07).
+    document = _schema_document_chunks(root, source_name)
+    if document:
+        return document
+
     fallback = split_text(text, chunk_size=800, chunk_overlap=120)
     return [(chunk, "schema_fragment", source_name) for chunk in fallback[:3]]
+
+
+SCHEMA_DOCUMENT_MAX_CHARS = 1500
+# Metadata elements that describe what a schema is; the rest (Publisher, Rights, Category, Format) is boilerplate.
+_SCHEMA_DOCUMENT_TAGS = ("Title", "Description")
+_SCHEMA_LINE_BREAK_TAGS = {"p", "li", "br", "div", "ul", "ol"}
+
+
+def _local_name(tag) -> str:
+    return tag.rsplit("}", 1)[-1] if isinstance(tag, str) else ""
+
+
+def _element_lines(element) -> list[str]:
+    """An element's text as lines: one per paragraph and per list item ("- ...")."""
+    parts: list[str] = []
+
+    def walk(node) -> None:
+        local = _local_name(node.tag)
+        if local in _SCHEMA_LINE_BREAK_TAGS:
+            parts.append("\n- " if local == "li" else "\n")
+        if node.text:
+            parts.append(node.text)
+        for child in node:
+            walk(child)
+            if child.tail:
+                parts.append(child.tail)
+        if local in _SCHEMA_LINE_BREAK_TAGS:
+            parts.append("\n")
+
+    walk(element)
+    lines = [" ".join(line.split()) for line in "".join(parts).split("\n")]
+    return [line for line in lines if line and line != "-"]
+
+
+def _split_at_words(line: str, max_chars: int) -> list[str]:
+    """A line in pieces of at most max_chars, cut between words (a single longer word stays whole)."""
+    pieces: list[str] = []
+    current = ""
+    for word in line.split(" "):
+        if current and len(current) + 1 + len(word) > max_chars:
+            pieces.append(current)
+            current = word
+        else:
+            current = f"{current} {word}" if current else word
+    if current:
+        pieces.append(current)
+    return pieces
+
+
+def _schema_has_declarations(root) -> bool:
+    return any(root.findall(f"./xs:{kind}", XSD_NS) for kind in ("element", "complexType", "simpleType", "group"))
+
+
+def _schema_document_chunks(root, source_name: str) -> list[tuple[str, str, str]]:
+    """Chunks of a declaration-less schema's own description: title, description, root documentation and the
+    schemas it includes, packed at line boundaries."""
+    lines: list[str] = []
+    annotation = root.find("./xs:annotation", XSD_NS)
+    if annotation is not None:
+        # A Format block's Description ("XML schema, W3C Recommendation 2001") is about the file format.
+        parents = {child: parent for parent in annotation.iter() for child in parent}
+        for node in annotation.iter():
+            local = _local_name(node.tag)
+            if local not in _SCHEMA_DOCUMENT_TAGS or _local_name(parents.get(node, annotation).tag) == "Format":
+                continue
+            lines.extend(f"Title: {line}" if local == "Title" else line for line in _element_lines(node))
+        for documentation in annotation.findall("./xs:documentation", XSD_NS):
+            lines.extend(_element_lines(documentation))
+    included = [
+        Path(node.get("schemaLocation", "")).name
+        for kind in ("include", "import")
+        for node in root.findall(f"./xs:{kind}", XSD_NS)
+        if node.get("schemaLocation")
+    ]
+    if included:
+        lines.append(f"Schema {source_name} includes: " + ", ".join(dict.fromkeys(included)))
+    if not lines:
+        return []
+    chunks: list[str] = []
+    current = ""
+    for line in lines:
+        pieces = _split_at_words(line, SCHEMA_DOCUMENT_MAX_CHARS)
+        for piece in pieces:
+            if current and len(current) + 1 + len(piece) > SCHEMA_DOCUMENT_MAX_CHARS:
+                chunks.append(current)
+                current = ""
+            current = f"{current}\n{piece}" if current else piece
+    if current:
+        chunks.append(current)
+    return [(chunk, "schema_fragment", source_name) for chunk in chunks]
 
 
 # Bumped when split_turtle changes: it is part of each Turtle file's content hash, so the next incremental
@@ -829,13 +927,26 @@ TURTLE_CHUNKER_VERSION = "1"
 XSD_CHUNKER_VERSION = "1"
 
 
-def chunker_marker(suffix: str) -> str:
+# The same for the chunks of a schema without declarations (_schema_document_chunks). Kept apart from
+# XSD_CHUNKER_VERSION so a change re-chunks (and re-embeds) only those files, 97 of 1,136, not every schema.
+XSD_DOCUMENT_CHUNKER_VERSION = "1"
+
+
+def chunker_marker(suffix: str, text: str = "") -> str:
     """Prefix of a file's content hash naming the chunker version, for the file types with a versioned chunker."""
     suffix = suffix.lower()
     if suffix == ".ttl":
         return f"turtle-chunker {TURTLE_CHUNKER_VERSION}\n"
     if suffix == ".xsd":
-        return f"xsd-chunker {XSD_CHUNKER_VERSION}\n"
+        marker = f"xsd-chunker {XSD_CHUNKER_VERSION}\n"
+        if text:
+            try:
+                root = ET.fromstring(text)
+            except ET.ParseError:
+                return marker
+            if not _schema_has_declarations(root):
+                marker += f"xsd-document-chunker {XSD_DOCUMENT_CHUNKER_VERSION}\n"
+        return marker
     return ""
 
 _TURTLE_TYPE = re.compile(r"(?:^|[\s;])(?:a|rdf:type)\s+([A-Za-z][\w-]*:[\w.-]+|<[^>\s]+>)")
@@ -1399,7 +1510,7 @@ def index_repository(
 
             # Skip unchanged files in incremental mode using per-file content fingerprint.
             # This avoids full re-upserts when repository HEAD changes but file content does not.
-            content_hash = build_content_hash(chunker_marker(file_path.suffix) + raw_text)
+            content_hash = build_content_hash(chunker_marker(file_path.suffix, raw_text) + raw_text)
             if incremental:
                 indexed_file = IndexedSourceFile.objects.filter(
                     repository_url=repo_url,
