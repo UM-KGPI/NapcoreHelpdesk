@@ -459,6 +459,50 @@ def _citation_segments(sentence: str) -> list[tuple[str, str]]:
     return segments
 
 
+# Share of a plain sentence's content words that its cited block must contain. A sentence that says in
+# plain words what a definition or documentation says ("A journey pattern is an ordered list of scheduled
+# stop points and timing points on a single route [E1]") names no element and was rejected as unspecific,
+# although every word is the block's own (local replay 2026-11-07, see PLAIN_SENTENCE_MIN_OVERLAP use).
+PLAIN_SENTENCE_MIN_OVERLAP = 0.6
+
+
+def _plain_sentence_grounded(sentence: str, cited_chunks: list[dict]) -> bool:
+    """Whether each citation's own text in a sentence without technical terms is worded from its block.
+
+    Each citation is judged on the text it supports (_citation_segments); at least
+    PLAIN_SENTENCE_MIN_OVERLAP of its content words (four or more letters) must occur in the cited block.
+    """
+    if not cited_chunks:
+        return False
+    segments = _citation_segments(sentence)
+    if len(segments) != len(cited_chunks):
+        segments = [("", CITATION_PATTERN.sub(" ", sentence))] * len(cited_chunks)
+    for (_, own), chunk in zip(segments, cited_chunks):
+        words = {word.lower() for word in _CONTENT_WORD_PATTERN.findall(CITATION_PATTERN.sub(" ", own))}
+        if len(words) < 3:
+            words = {word.lower() for word in _CONTENT_WORD_PATTERN.findall(CITATION_PATTERN.sub(" ", sentence))}
+        if not words:
+            return False
+        text = str(chunk.get("text", "")).lower()
+        if sum(1 for word in words if word in text) / len(words) < PLAIN_SENTENCE_MIN_OVERLAP:
+            return False
+        # Common words ("default", "false", "journey") occur in many blocks; three words in a row from the
+        # sentence occur in the block it was worded from, rarely in another.
+        if not _shares_word_run(own if len(_PLAIN_WORD.findall(own)) >= 3 else sentence, text):
+            return False
+    return True
+
+
+_PLAIN_WORD = re.compile(r"[^\W_]+")
+
+
+def _shares_word_run(sentence: str, text: str, length: int = 3) -> bool:
+    """Whether `length` consecutive words of the sentence occur, in order and adjacent, in the text."""
+    words = _PLAIN_WORD.findall(CITATION_PATTERN.sub(" ", sentence).lower())
+    text_words = " " + " ".join(_PLAIN_WORD.findall(text)) + " "
+    return any(f" {' '.join(words[i:i + length])} " in text_words for i in range(len(words) - length + 1))
+
+
 def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
     """
     Verify that each [E#] citation is grounded in the referenced chunk's text.
@@ -547,6 +591,8 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
                 continue
             if _quotation_found(sentence, cited_chunks):
                 continue  # 'The block states that "Many NeTEx concepts are taken directly from Transmodel" [E3].'
+            if _plain_sentence_grounded(sentence, cited_chunks):
+                continue  # "A journey pattern is an ordered list of scheduled stop points ... [E1]."
             if found_citations:  # Has citations but NO specific terms = potential hallucination
                 # No citations, no terms, not code = hallucination
                 raise LLMGenerationError(

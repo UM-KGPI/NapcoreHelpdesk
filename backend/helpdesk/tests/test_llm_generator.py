@@ -10,6 +10,8 @@ from django.test import SimpleTestCase, override_settings
 from helpdesk.services import llm_model_recovery
 from helpdesk.services.grounded_generator import generate_answer
 from helpdesk.services.llm_generator import (
+    _plain_sentence_grounded,
+    _validate_citation_grounding,
     COMPOSITION_RULE,
     LLMGenerationError,
     _build_messages,
@@ -759,3 +761,34 @@ class AnswerCompositionPromptTests(SimpleTestCase):
         self.assertNotIn("ANSWER COMPOSITION", user_prompt)
         self.assertIn("6. Do NOT paraphrase or infer beyond what is explicitly stated in the evidence", system_prompt)
         self.assertIn("   - Specific attribute names (e.g., scheduleRelationship, time)", system_prompt)
+
+
+class PlainSentenceGroundingTests(SimpleTestCase):
+    DEFINITION = {
+        "sourcePath": "xsd/netex_part_1/part1_networkDescription/netex_route_version.xsd",
+        "text": "Concept definition: FerryCrossing. Definition: A special waterway aimed at supporting the transport "
+        "of passengers, vehicles or other cargo/freight across a water body.",
+    }
+    OTHER = {
+        "sourcePath": "xsd/netex_part_2/part2_journeyTimes/netex_vehicleJourney_version.xsd",
+        "text": "Elements for a VEHICLE JOURNEY. Departure time of the journey at its first point.",
+    }
+
+    def test_a_definition_in_plain_words_is_grounded(self):
+        sentence = "A ferry crossing is defined as a special waterway aimed at supporting the transport of passengers [E1]."
+        self.assertTrue(_plain_sentence_grounded(sentence, [self.DEFINITION]))
+        _validate_citation_grounding(sentence, [self.DEFINITION])  # no longer rejected as unspecific
+
+    def test_the_same_sentence_citing_another_block_is_not(self):
+        sentence = "A ferry crossing is defined as a special waterway aimed at supporting the transport of passengers [E1]."
+        self.assertFalse(_plain_sentence_grounded(sentence, [self.OTHER]))
+        with self.assertRaises(LLMGenerationError):
+            _validate_citation_grounding(sentence, [self.OTHER])
+
+    def test_shared_words_without_a_shared_word_run_are_not_enough(self):
+        sentence = "Every special vehicle may transport passengers across water [E1]."
+        self.assertFalse(_plain_sentence_grounded(sentence, [self.DEFINITION]))
+
+    def test_a_loose_paraphrase_is_not(self):
+        sentence = "It offers boats so people can get over a lake or a river [E1]."
+        self.assertFalse(_plain_sentence_grounded(sentence, [self.DEFINITION]))
