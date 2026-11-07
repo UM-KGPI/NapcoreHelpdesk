@@ -603,6 +603,60 @@ def _extract_xsd_child_elements(node: ET.Element, limit: int = 12) -> list[str]:
     return child_names
 
 
+_ENUMERATION_PATHS = (
+    "./xs:restriction/xs:enumeration",
+    "./xs:simpleType/xs:restriction/xs:enumeration",
+)
+_ENUMERATION_LIMIT = 60
+_CHILD_DOCUMENTATION_CHARS = 200
+
+
+def _own_documentation(node: ET.Element) -> str:
+    """The node's own annotation, not one of a nested declaration."""
+    return _first_nonempty_text(
+        [doc.text or "" for doc in node.findall("./xs:annotation/xs:documentation", XSD_NS)]
+    )
+
+
+def _extract_xsd_enumerations(node: ET.Element, limit: int = _ENUMERATION_LIMIT) -> tuple[list[str], int]:
+    """The allowed values of a simple type, each with its documentation, and how many were left out.
+
+    The summary kept only the type's own documentation ("Allowed values for Seat Allocation Method."), so an
+    answer could not name the values (prod question 653, 2026-11-07)."""
+    values: list[str] = []
+    total = 0
+    for path in _ENUMERATION_PATHS:
+        for enumeration in node.findall(path, XSD_NS):
+            value = (enumeration.get("value") or "").strip()
+            if not value:
+                continue
+            total += 1
+            if len(values) >= limit:
+                continue
+            documentation = _own_documentation(enumeration)
+            values.append(f"{value} ({documentation})" if documentation else value)
+    return values, total - len(values)
+
+
+def _extract_xsd_child_documentation(node: ET.Element, limit: int = 12) -> list[str]:
+    """Documentation of the child elements declared in place; a referenced child has a chunk of its own.
+
+    SeatingCapacity and StandingCapacity are declared inside CapacityGroup, so their meaning was in no chunk."""
+    lines: list[str] = []
+    for path in _CHILD_ELEMENT_PATHS:
+        for child in node.findall(path, XSD_NS):
+            name = (child.get("name") or "").strip()
+            documentation = _own_documentation(child)
+            if not name or not documentation:
+                continue
+            if len(documentation) > _CHILD_DOCUMENTATION_CHARS:
+                documentation = documentation[: _CHILD_DOCUMENTATION_CHARS - 1].rstrip() + "…"
+            lines.append(f"{name}: {documentation}")
+            if len(lines) >= limit:
+                return lines
+    return lines
+
+
 def _extract_xsd_attributes(node: ET.Element, limit: int = 12) -> list[str]:
     attributes: list[str] = []
     for path in _ATTRIBUTE_PATHS:
@@ -730,6 +784,12 @@ def _build_xsd_summary_text(node: ET.Element, source_name: str) -> tuple[str, st
         parts.append(f"Attributes: {', '.join(attributes)}")
     if documentation:
         parts.append(f"Documentation: {documentation}")
+    enumerations, more = _extract_xsd_enumerations(node)
+    if enumerations:
+        parts.append("Allowed values: " + "; ".join(enumerations) + (f"; … and {more} more" if more else ""))
+    child_documentation = _extract_xsd_child_documentation(node)
+    if child_documentation:
+        parts.append("Child element documentation:\n" + "\n".join(f"- {line}" for line in child_documentation))
 
     return "\n".join(parts), declaration_name
 
@@ -765,6 +825,18 @@ def split_xsd_summary(text: str, source_name: str, max_declarations: int = 250) 
 # Bumped when split_turtle changes: it is part of each Turtle file's content hash, so the next incremental
 # index re-chunks .ttl files that have not changed themselves.
 TURTLE_CHUNKER_VERSION = "1"
+# The same for split_xsd_summary: 1 added enumeration values and the documentation of child elements.
+XSD_CHUNKER_VERSION = "1"
+
+
+def chunker_marker(suffix: str) -> str:
+    """Prefix of a file's content hash naming the chunker version, for the file types with a versioned chunker."""
+    suffix = suffix.lower()
+    if suffix == ".ttl":
+        return f"turtle-chunker {TURTLE_CHUNKER_VERSION}\n"
+    if suffix == ".xsd":
+        return f"xsd-chunker {XSD_CHUNKER_VERSION}\n"
+    return ""
 
 _TURTLE_TYPE = re.compile(r"(?:^|[\s;])(?:a|rdf:type)\s+([A-Za-z][\w-]*:[\w.-]+|<[^>\s]+>)")
 
@@ -1327,8 +1399,7 @@ def index_repository(
 
             # Skip unchanged files in incremental mode using per-file content fingerprint.
             # This avoids full re-upserts when repository HEAD changes but file content does not.
-            chunker_marker = f"turtle-chunker {TURTLE_CHUNKER_VERSION}\n" if file_path.suffix.lower() == ".ttl" else ""
-            content_hash = build_content_hash(chunker_marker + raw_text)
+            content_hash = build_content_hash(chunker_marker(file_path.suffix) + raw_text)
             if incremental:
                 indexed_file = IndexedSourceFile.objects.filter(
                     repository_url=repo_url,
