@@ -900,3 +900,60 @@ class XsdSummaryValuesTests(SimpleTestCase):
         self.assertTrue(chunker_marker(".XSD").startswith("xsd-chunker "))
         self.assertTrue(chunker_marker(".ttl").startswith("turtle-chunker "))
         self.assertEqual(chunker_marker(".xml"), "")
+
+
+class XsdDocumentChunkTests(SimpleTestCase):
+    """A schema without declarations is indexed from its own description (siri_all_functionalServices.xsd)."""
+
+    XSD = """<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:annotation><xsd:appinfo><Metadata xmlns="http://www.govtalk.gov.uk/CM/gms-xs">
+    <Description><p>SIRI comprises a modular set of functional services.
+      <ul><li>SIRI-PT Production Timetable: Exchanges planned timetables.</li><li>SIRI-ET Estimated Timetable: Exchanges real-time updates to timetables.</li></ul></p></Description>
+    <Format><Description>XML schema, W3C Recommendation 2001</Description></Format>
+    <Publisher>Somebody Ltd</Publisher>
+    <Title>Current SIRI functional services</Title>
+  </Metadata></xsd:appinfo></xsd:annotation>
+  <xsd:include schemaLocation="siri_estimatedTimetable_service.xsd"/>
+  <xsd:include schemaLocation="siri_productionTimetable_service.xsd"/>
+</xsd:schema>"""
+
+    def _chunks(self, text):
+        from helpdesk.services.index_builder import split_xsd_summary
+
+        return [chunk for chunk, _, _ in split_xsd_summary(text, source_name="siri_all_functionalServices.xsd")]
+
+    def test_description_list_items_become_lines(self):
+        text = "\n".join(self._chunks(self.XSD))
+        self.assertIn("- SIRI-ET Estimated Timetable: Exchanges real-time updates to timetables.", text)
+        self.assertIn("Title: Current SIRI functional services", text)
+
+    def test_boilerplate_is_left_out(self):
+        text = "\n".join(self._chunks(self.XSD))
+        self.assertNotIn("W3C Recommendation", text)
+        self.assertNotIn("Somebody Ltd", text)
+        self.assertNotIn("<?xml", text)
+
+    def test_included_schemas_are_listed(self):
+        self.assertIn(
+            "includes: siri_estimatedTimetable_service.xsd, siri_productionTimetable_service.xsd", self._chunks(self.XSD)[-1]
+        )
+
+    def test_long_text_is_packed_at_line_and_word_boundaries(self):
+        items = "".join(f"<li>SIRI-X{i} Service number {i}: provides information.</li>" for i in range(120))
+        text = self.XSD.replace("<li>SIRI-PT", items + "<li>SIRI-PT")
+        chunks = self._chunks(text)
+        self.assertGreater(len(chunks), 3)
+        for chunk in chunks:
+            self.assertLessEqual(len(chunk), 1500)
+            for line in chunk.split("\n"):
+                if line.startswith("- SIRI-X"):
+                    self.assertTrue(line.endswith("provides information."), line)
+
+    def test_only_declaration_less_schemas_get_the_document_marker(self):
+        from helpdesk.services.index_builder import chunker_marker
+
+        self.assertIn("xsd-document-chunker", chunker_marker(".xsd", self.XSD))
+        with_type = self.XSD.replace("</xsd:schema>", '<xsd:simpleType name="X"><xsd:restriction base="xsd:string"/></xsd:simpleType></xsd:schema>')
+        self.assertNotIn("xsd-document-chunker", chunker_marker(".xsd", with_type))
+        self.assertEqual(chunker_marker(".xsd"), chunker_marker(".xsd", with_type))
