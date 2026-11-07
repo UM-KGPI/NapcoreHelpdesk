@@ -1259,6 +1259,23 @@ NAPCORE_RULE = (
 )
 
 
+# How the answer is put together, for every question type (prod question 653, 2026-11-07: the answer
+# opened with what the evidence lacks, defined the context word "vehicle", and went block by block).
+# The type rules above say what to start with; this says how the rest reads.
+COMPOSITION_RULE = (
+    "ANSWER COMPOSITION:\n"
+    "- Start with one or two sentences that answer the question directly. If the evidence answers only part of "
+    "it, start with that part; say what is missing only at the end, in one sentence.\n"
+    "- The question's subject is what it asks about; the rest is context. In 'How are delays reported at a "
+    "stop?' the subject is delays and 'stop' is context. Do not define, quote or describe a context concept.\n"
+    "- Organise the answer by topic, not by evidence block: put together what several blocks say about the same "
+    "thing. When the answer covers two or more topics, start each with a short bold lead-in.\n"
+    "- Say what an element is for in plain words, then name it in backticks, e.g. 'the method used to allocate "
+    "the seat (`SeatAllocationMethod`)'. The plain words must not say more than the evidence.\n"
+    "- Leave out evidence that does not help answer the question, even if it is in the blocks.\n"
+)
+
+
 def _build_messages(
     question: str,
     chunks: list[dict],
@@ -1337,6 +1354,22 @@ def _build_messages(
             " Detect the language of the question and respond in that same language."
             " Keep technical terms, class names, XML tags, and identifiers in English."
         )
+    composition = getattr(settings, "ANSWER_COMPOSITION_ENABLED", True)
+    if composition:
+        rule_6 = (
+            "6. Do NOT infer beyond what is explicitly stated in the evidence; a restatement in plain words must "
+            "not say more than the evidence does"
+        )
+        rule_9_names = (
+            "   - The specific XML element and attribute names (e.g., <DepartureTime>, scheduleRelationship) that the "
+            "evidence gives for the question's subject; do not list names that do not help answer the question"
+        )
+    else:
+        rule_6 = "6. Do NOT paraphrase or infer beyond what is explicitly stated in the evidence"
+        rule_9_names = (
+            "   - Specific XML element names (e.g., <DepartureTime>, <Journey>, <Call>)\n"
+            "   - Specific attribute names (e.g., scheduleRelationship, time)"
+        )
     system_prompt = (
         "You are a standards helpdesk assistant. You have access to EXACTLY the evidence blocks listed below. "
         "You MUST output valid JSON only. Do not output any text outside the JSON structure.\n"
@@ -1348,12 +1381,11 @@ def _build_messages(
         "4. If you recognize a source from your training (e.g., known file or standard example) but it is not in [E#], do NOT mention it\n"
         "5. If you cannot answer from provided evidence, say so clearly — but write that sentence in the "
         "response language from the LANGUAGE REQUIREMENT above, not English (unless English is the response language)\n"
-        "6. Do NOT paraphrase or infer beyond what is explicitly stated in the evidence\n"
+        f"{rule_6}\n"
         "7. Stay within requested standards scope\n"
         "8. NEVER write file names in answer text. Reference sources ONLY via [E#] citations.\n"
         "9. REQUIRED CONTENT — Your answer MUST include:\n"
-        "   - Specific XML element names (e.g., <DepartureTime>, <Journey>, <Call>)\n"
-        "   - Specific attribute names (e.g., scheduleRelationship, time)\n"
+        f"{rule_9_names}\n"
         "   - Citations [E#] pointing to the evidence block with that element\n"
         "   - If the evidence shows code examples, include the relevant snippet\n"
         "10. FORBIDDEN PATTERNS — NEVER generate:\n"
@@ -1456,6 +1488,7 @@ def _build_messages(
         "- If a block is an XML/JSON example file (.xml), describe it as an 'example'\n"
         "- If a requested detail is not in the evidence, explicitly state that — in the response language, not English "
         "(unless English is the response language)\n\n"
+        f"{COMPOSITION_RULE + chr(10) if composition else ''}"
         "Write your answer:"
     )
 

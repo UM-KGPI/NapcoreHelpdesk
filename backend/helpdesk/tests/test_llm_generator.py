@@ -10,6 +10,7 @@ from django.test import SimpleTestCase, override_settings
 from helpdesk.services import llm_model_recovery
 from helpdesk.services.grounded_generator import generate_answer
 from helpdesk.services.llm_generator import (
+    COMPOSITION_RULE,
     LLMGenerationError,
     _build_messages,
     _stream_request_chat_completion,
@@ -732,3 +733,29 @@ class EvidenceAnswersQuestionTests(SimpleTestCase):
         )[0]["content"]
         self.assertIn('"evidence_answers_question": true', prompt)
         self.assertIn("do not answer the question at all", prompt)
+
+
+class AnswerCompositionPromptTests(SimpleTestCase):
+    CHUNK = {"repositoryUrl": "r", "commitSha": "c", "sourcePath": "a.xsd", "chunkId": "1", "text": "t"}
+
+    def _messages(self):
+        return _build_messages(question="What is X?", chunks=[self.CHUNK], scope=[], detected_language="en")
+
+    @override_settings(ANSWER_COMPOSITION_ENABLED=True)
+    def test_rules_are_the_last_instructions_before_the_answer(self):
+        user_prompt = self._messages()[1]["content"]
+        self.assertIn(COMPOSITION_RULE, user_prompt)
+        self.assertLess(user_prompt.index(COMPOSITION_RULE), user_prompt.index("Write your answer:"))
+
+    @override_settings(ANSWER_COMPOSITION_ENABLED=True)
+    def test_element_names_only_for_the_question_subject(self):
+        system_prompt = self._messages()[0]["content"]
+        self.assertIn("that the evidence gives for the question's subject", system_prompt)
+        self.assertNotIn("Do NOT paraphrase", system_prompt)
+
+    @override_settings(ANSWER_COMPOSITION_ENABLED=False)
+    def test_off_restores_the_previous_prompt(self):
+        system_prompt, user_prompt = (message["content"] for message in self._messages())
+        self.assertNotIn("ANSWER COMPOSITION", user_prompt)
+        self.assertIn("6. Do NOT paraphrase or infer beyond what is explicitly stated in the evidence", system_prompt)
+        self.assertIn("   - Specific attribute names (e.g., scheduleRelationship, time)", system_prompt)
