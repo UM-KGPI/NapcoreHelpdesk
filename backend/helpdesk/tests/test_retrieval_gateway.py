@@ -571,3 +571,89 @@ class LexicalRecallTests(TestCase):
         from helpdesk.services import retrieval_gateway
 
         self.assertEqual(retrieval_gateway._lexical_recall_candidates("What is SIRI?", 8, ["SIRI"], rare=[]), [])
+
+
+class NamedExampleTests(TestCase):
+    """An example asked for by type name is added after the best evidence (Turtle example chunks)."""
+
+    REPO = "https://github.com/mobilityDCAT-AP/mobilityDCAT-AP"
+
+    def _chunk(self, path: str, chunk_id: str, heading: str, doc_type: str = "example", scope=None):
+        from helpdesk.models import SourceChunk
+        from helpdesk.services.embeddings import build_text_embedding
+
+        text = f"<urn:{chunk_id}> a {heading.split(',')[0]} ."
+        return SourceChunk.objects.create(
+            repository_url=self.REPO,
+            commit_sha="abc",
+            source_path=path,
+            chunk_id=chunk_id,
+            label=path,
+            heading=heading,
+            text=text,
+            standards_scope=scope or ["mobilityDCAT-AP"],
+            doc_type=doc_type,
+            embedding_vector=build_text_embedding(text),
+        )
+
+    def test_name_words_split_type_names(self):
+        from helpdesk.services.retrieval_gateway import _name_words
+
+        self.assertEqual(_name_words("dcat:CatalogRecord"), ["catalog", "record"])
+        self.assertEqual(_name_words("mobilitydcatap:MobilityDataStandard"), ["mobility", "data", "standard"])
+        self.assertEqual(_name_words("http://spec.tn-its.eu/owl/tnits-owl#RoadFeatureDataset"), ["road", "feature", "dataset"])
+
+    def test_word_matches_spelling_variants_and_plurals_only_for_longer_words(self):
+        from helpdesk.services.retrieval_gateway import _word_matches
+
+        self.assertTrue(_word_matches("catalogue", "catalog"))
+        self.assertTrue(_word_matches("records", "record"))
+        self.assertTrue(_word_matches("record", "record"))
+        self.assertFalse(_word_matches("data", "dataset"))
+        self.assertFalse(_word_matches("map", "mapping"))
+
+    def test_most_specific_type_wins_one_chunk_per_file(self):
+        from helpdesk.services.retrieval_gateway import _named_example_candidates
+
+        self._chunk("src/examples/example-complete.ttl", "c-catalog", "dcat:Catalog")
+        self._chunk("src/examples/example-complete.ttl", "c-record", "dcat:CatalogRecord")
+        self._chunk("src/examples/example-complete.ttl", "c-record-2", "dcat:CatalogRecord, foaf:Agent")
+        self._chunk("src/examples/example-minimum.ttl", "m-record", "dcat:CatalogRecord")
+        self._chunk("src/examples/example-minimum.ttl", "m-dataset", "dcat:Dataset")
+        found = _named_example_candidates(
+            "Can you show an example of a mobilityDCAT-AP catalogue record?", ["mobilityDCAT-AP"], score=0.9
+        )
+        self.assertEqual([c["chunkId"] for c in found], ["c-record", "m-record"])
+        self.assertTrue(all(c["score"] == 0.9 for c in found))
+
+    def test_nothing_without_a_named_type_scope_or_example_chunk(self):
+        from helpdesk.services.retrieval_gateway import _named_example_candidates
+
+        self._chunk("src/examples/example-complete.ttl", "c-record", "dcat:CatalogRecord")
+        self._chunk("src/index.html", "spec", "Class catalogue record", doc_type="guide")
+        self._chunk("other/example.ttl", "other", "dcat:CatalogRecord", scope=["TN-ITS"])
+        question = "Can you show an example of a mobilityDCAT-AP catalogue record?"
+        self.assertEqual(_named_example_candidates("Show an example of a mobilityDCAT-AP dataset.", ["mobilityDCAT-AP"], 0.9), [])
+        self.assertEqual(_named_example_candidates(question, None, 0.9), [])
+        self.assertEqual([c["chunkId"] for c in _named_example_candidates(question, ["mobilityDCAT-AP"], 0.9)], ["c-record"])
+
+    def test_retrieval_adds_the_example_after_the_top_result(self):
+        from helpdesk.services.embeddings import build_text_embedding
+        from helpdesk.models import SourceChunk
+        from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
+
+        for idx in range(4):
+            text = f"Class catalogue record. A description of a dataset's entry in the catalogue. Part {idx}."
+            SourceChunk.objects.create(
+                repository_url=self.REPO, commit_sha="abc", source_path=f"src/tables/class-{idx}.html",
+                chunk_id=f"spec-{idx}", label="Class catalogue record", heading="Class catalogue record",
+                text=text, standards_scope=["mobilityDCAT-AP"], doc_type="guide", quality_score=0.92,
+                embedding_vector=build_text_embedding(text),
+            )
+        self._chunk("src/examples/example-complete.ttl", "c-record", "dcat:CatalogRecord")
+        chunks, _ = retrieve_chunks_with_trace(
+            question="Can you show an example of a mobilityDCAT-AP catalogue record?",
+            top_k=4, min_score=0.0, scope=["mobilityDCAT-AP"], english_question=None,
+        )
+        self.assertEqual(chunks[1]["chunkId"], "c-record")
+        self.assertEqual(len(chunks), 4)
