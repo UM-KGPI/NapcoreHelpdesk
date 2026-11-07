@@ -826,3 +826,77 @@ class SplitTurtleTests(SimpleTestCase):
 
         self.assertEqual(split_structured(self.EXAMPLE, ".ttl")[1][2], "dcat:CatalogRecord")
         self.assertTrue(split_structured("", ".ttl") == [] or all(t == "prose" for _, t, _ in split_structured("", ".ttl")))
+
+
+class XsdSummaryValuesTests(SimpleTestCase):
+    """XSD summaries carry enumeration values and the documentation of children declared in place."""
+
+    XSD = """<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.netex.org.uk/netex" targetNamespace="http://www.netex.org.uk/netex">
+  <xsd:simpleType name="SeatAllocationMethodEnumeration">
+    <xsd:annotation><xsd:documentation>Allowed values for Seat Allocation Method.</xsd:documentation></xsd:annotation>
+    <xsd:restriction base="xsd:normalizedString">
+      <xsd:enumeration value="autoAssigned">
+        <xsd:annotation><xsd:documentation>A seat will be assigned automatically by an algorithm.</xsd:documentation></xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="seatMap"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  <xsd:element name="Orientation">
+    <xsd:annotation><xsd:documentation>Orientation of the seat.</xsd:documentation></xsd:annotation>
+    <xsd:simpleType>
+      <xsd:restriction base="xsd:string">
+        <xsd:enumeration value="forwards"/>
+        <xsd:enumeration value="backwards"/>
+      </xsd:restriction>
+    </xsd:simpleType>
+  </xsd:element>
+  <xsd:group name="CapacityGroup">
+    <xsd:annotation><xsd:documentation>Capacity type Elements for a PASSENGER CAPACITY REQUIREMENT.</xsd:documentation></xsd:annotation>
+    <xsd:sequence>
+      <xsd:element name="SeatingCapacity" type="NumberOfPassengers" minOccurs="0">
+        <xsd:annotation><xsd:documentation>The seating capacity of vehicles of the type.</xsd:documentation></xsd:annotation>
+      </xsd:element>
+      <xsd:element name="StandingCapacity" type="NumberOfPassengers" minOccurs="0"/>
+      <xsd:element ref="PassengerCapacity" minOccurs="0"/>
+    </xsd:sequence>
+  </xsd:group>
+</xsd:schema>"""
+
+    def _summaries(self, text=None):
+        from helpdesk.services.index_builder import split_xsd_summary
+
+        return {heading: chunk for chunk, _, heading in split_xsd_summary(text or self.XSD, source_name="x.xsd")}
+
+    def test_enumeration_values_with_their_documentation(self):
+        summary = self._summaries()["SeatAllocationMethodEnumeration"]
+        self.assertIn("Documentation: Allowed values for Seat Allocation Method.", summary)
+        self.assertIn(
+            "Allowed values: autoAssigned (A seat will be assigned automatically by an algorithm.); seatMap", summary
+        )
+
+    def test_values_of_an_inline_simple_type(self):
+        self.assertIn("Allowed values: forwards; backwards", self._summaries()["Orientation"])
+
+    def test_long_enumerations_are_cut_with_a_count(self):
+        values = "".join(f'<xsd:enumeration value="v{i}"/>' for i in range(65))
+        text = self.XSD.replace('<xsd:enumeration value="seatMap"/>', values)
+        summary = self._summaries(text)["SeatAllocationMethodEnumeration"]
+        self.assertIn("v58", summary)
+        self.assertNotIn("v59;", summary)
+        self.assertTrue(summary.endswith("; … and 6 more"))
+
+    def test_documentation_of_children_declared_in_place(self):
+        summary = self._summaries()["CapacityGroup"]
+        self.assertIn("Child element documentation:\n- SeatingCapacity: The seating capacity of vehicles of the type.", summary)
+        self.assertNotIn("- StandingCapacity", summary)  # no documentation of its own
+        self.assertNotIn("- PassengerCapacity", summary)  # a reference: documented in its own chunk
+        self.assertNotIn("Allowed values", summary)
+
+    def test_chunker_versions_are_part_of_the_content_hash(self):
+        from helpdesk.services.index_builder import chunker_marker
+
+        self.assertTrue(chunker_marker(".xsd").startswith("xsd-chunker "))
+        self.assertTrue(chunker_marker(".XSD").startswith("xsd-chunker "))
+        self.assertTrue(chunker_marker(".ttl").startswith("turtle-chunker "))
+        self.assertEqual(chunker_marker(".xml"), "")
