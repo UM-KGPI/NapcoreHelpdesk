@@ -1239,3 +1239,21 @@ questions:
     expected_source_patterns: [README.md]
     min_hits: 1
     top_k_threshold: 10
+
+  # Prod question 653 (2026-11-07): "seat allocation" is a property name (seatAllocationMethod), not a class
+  # label; only the context word "vehicle" matched a concept.
+  - id: q148
+    question: "What is NeTEx telling us about seat allocation in public transport vehicle ?"
+    intent: explanation
+    tags: [netex, schema, property-name]
+    expected_source_patterns: [netex_spotAllocation_version.xsd, netex_vehicleSeating_support.xsd]
+    min_hits: 1
+    top_k_threshold: 10
+
+  - id: q149
+    question: "How are wheelchair spaces described in NeTEx?"
+    intent: explanation
+    tags: [netex, schema, property-name]
+    expected_source_patterns: [netex_equipmentVehiclePassenger_version.xsd]
+    min_hits: 1
+    top_k_threshold: 10

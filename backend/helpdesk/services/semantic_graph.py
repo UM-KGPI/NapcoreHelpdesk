@@ -40,6 +40,37 @@ STRICT_ONTOLOGY_VALIDATION = _env_truthy("NAPCORE_ONTOLOGY_STRICT_VALIDATION", d
 SKIP_GRAPHDB_IMPORT = _env_truthy("NAPCORE_SKIP_GRAPHDB_IMPORT", default=False)
 
 
+_IRI_PREFIX_MAP: dict[str, str] = {
+    "https://netex.org.uk/netex/2.0#": "netex",
+    "https://netex.org.uk/netex/2.0/": "netex",
+    "http://napcore.example.org/ontology/netex#": "netex",
+    "https://netex.org.uk/netex/2.0#": "netex",
+    "https://netex.org.uk/netex/2.0/": "netex",
+    "https://napcore.eu/ontology/netex#": "netex",
+    "http://napcore.eu/ontology/netex#": "netex",
+    "http://napcore.example.org/ontology/netex#": "netex",
+    "https://transmodel-cen.eu/opra/1.0#": "opra",
+    "https://transmodel-cen.eu/opra/1.0/": "opra",
+    "https://napcore.eu/ontology/opra#": "opra",
+    "http://napcore.eu/ontology/opra#": "opra",
+    "http://napcore.example.org/ontology/opra#": "opra",
+    "https://siri.org.uk/siri/1.3#": "siri",
+    "https://siri.org.uk/siri/1.3/": "siri",
+    "http://napcore.example.org/ontology/siri#": "siri",
+    "https://transmodel-cen.eu/6.2/": "transmodel",
+    "https://transmodel-cen.eu/6.2#": "transmodel",
+    "http://spec.tn-its.eu/owl/tnits-owl#": "tnits",
+}
+
+
+def iri_to_concept_id(iri: str) -> str | None:
+    """The concept ID ("netex:StopPlace") of an IRI in a loaded standard ontology, else None."""
+    for prefix_iri, ns in _IRI_PREFIX_MAP.items():
+        if iri.startswith(prefix_iri):
+            return f"{ns}:{iri[len(prefix_iri):]}"
+    return None
+
+
 def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
     """Load concept aliases from a live GraphDB SPARQL endpoint.
 
@@ -50,33 +81,7 @@ def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
     from urllib.parse import quote_plus
     from urllib.request import Request, urlopen
 
-    _IRI_PREFIX_MAP: dict[str, str] = {
-        "https://netex.org.uk/netex/2.0#": "netex",
-        "https://netex.org.uk/netex/2.0/": "netex",
-        "http://napcore.example.org/ontology/netex#": "netex",
-        "https://netex.org.uk/netex/2.0#": "netex",
-        "https://netex.org.uk/netex/2.0/": "netex",
-        "https://napcore.eu/ontology/netex#": "netex",
-        "http://napcore.eu/ontology/netex#": "netex",
-        "http://napcore.example.org/ontology/netex#": "netex",
-        "https://transmodel-cen.eu/opra/1.0#": "opra",
-        "https://transmodel-cen.eu/opra/1.0/": "opra",
-        "https://napcore.eu/ontology/opra#": "opra",
-        "http://napcore.eu/ontology/opra#": "opra",
-        "http://napcore.example.org/ontology/opra#": "opra",
-        "https://siri.org.uk/siri/1.3#": "siri",
-        "https://siri.org.uk/siri/1.3/": "siri",
-        "http://napcore.example.org/ontology/siri#": "siri",
-        "https://transmodel-cen.eu/6.2/": "transmodel",
-        "https://transmodel-cen.eu/6.2#": "transmodel",
-        "http://spec.tn-its.eu/owl/tnits-owl#": "tnits",
-    }
-
-    def _iri_to_concept_id(iri: str) -> str | None:
-        for prefix_iri, ns in _IRI_PREFIX_MAP.items():
-            if iri.startswith(prefix_iri):
-                return f"{ns}:{iri[len(prefix_iri):]}"
-        return None
+    _iri_to_concept_id = iri_to_concept_id
 
     def _sparql_get(sparql: str) -> list[dict]:
         url = f"{endpoint_url.rstrip('/')}?query={quote_plus(sparql)}"
