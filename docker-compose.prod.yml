@@ -72,7 +72,10 @@ services:
 
   celery-worker:
     <<: *backend-base
-    command: celery -A config worker -l info
+    # Without --concurrency Celery starts one process per host CPU: 40 on production, about 1.9 GB
+    # of idle processes against the 2 GB limit (2026-11-07). The worker runs the nightly refresh,
+    # harvests and clustering batches; two at a time is enough.
+    command: celery -A config worker -l info --concurrency ${CELERY_WORKER_CONCURRENCY:-2}
     volumes:
       - ./docs:/app/docs:ro
       - /opt/napcore-helpdesk/VERSION:/app/VERSION:ro
