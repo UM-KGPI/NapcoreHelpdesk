@@ -502,6 +502,71 @@ def _added_candidate(chunk: SourceChunk, score: float) -> dict:
     }
 
 
+MAX_NAMED_EXAMPLES = 2
+# Example chunks read per question: the chunks with a heading, which only Turtle examples have.
+_NAMED_EXAMPLE_SCAN_LIMIT = 2000
+
+
+def _name_words(type_name: str) -> list[str]:
+    """The words of a type name: "dcat:CatalogRecord" -> ["catalog", "record"]."""
+    local = type_name.rsplit(":", 1)[-1].rsplit("#", 1)[-1]
+    return [w.lower() for w in re.findall(r"[A-Z]+(?![a-z])|[A-Z]?[a-z]+|\d+", local)]
+
+
+def _word_matches(asked: str, named: str) -> bool:
+    """Same word, or one starts with the other and the shorter has five letters or more.
+
+    This covers spelling variants and plurals ("catalogue" / "Catalog", "records" / "Record") without a
+    word list.
+    """
+    if asked == named:
+        return True
+    shorter, longer = sorted((asked, named), key=len)
+    return len(shorter) >= 5 and longer.startswith(shorter)
+
+
+def _named_example_candidates(question: str, scope: list[str] | None, score: float) -> list[dict]:
+    """Example chunks of the scope whose heading names the type the question asks an example of.
+
+    A Turtle example is chunked by resource, and the chunk heading lists the resource types
+    ("dcat:CatalogRecord"). The text says "dcat:CatalogRecord" where the question says "catalogue record",
+    so by similarity the chunk ranked 93rd of 236 mobilityDCAT-AP chunks and never reached the candidate
+    pool (prod 2026-11-07); the spec tables about the class took its place. The type whose words the
+    question names with the most words wins ("catalogue record": CatalogRecord, not Catalog), and at most
+    one chunk per file, the one that describes fewest types.
+    """
+    if not scope:
+        return []
+    question_words = set(re.findall(r"[a-z0-9]+", question.lower()))
+    best_words = 0
+    matches: list[tuple[int, SourceChunk]] = []
+    chunks = (
+        SourceChunk.objects.filter(_scope_query_filter(scope), doc_type="example")
+        .exclude(heading="")
+        .order_by("source_path", "chunk_id")[:_NAMED_EXAMPLE_SCAN_LIMIT]
+    )
+    for chunk in chunks:
+        types = [t.strip() for t in chunk.heading.split(",") if t.strip()]
+        named = 0
+        for type_name in types:
+            words = [w for w in _name_words(type_name) if len(w) >= 3]
+            if words and all(any(_word_matches(q, w) for q in question_words) for w in words):
+                named = max(named, len(words))
+        if not named or named < best_words:
+            continue
+        if named > best_words:
+            best_words, matches = named, []
+        matches.append((len(types), chunk))
+    found: list[dict] = []
+    seen_paths: set[str] = set()
+    for _, chunk in sorted(matches, key=lambda pair: (pair[0], pair[1].source_path, pair[1].chunk_id)):
+        if chunk.source_path in seen_paths or len(found) >= MAX_NAMED_EXAMPLES:
+            continue
+        seen_paths.add(chunk.source_path)
+        found.append(_added_candidate(chunk, score))
+    return found
+
+
 MAX_STANDARD_IDENTITY_CHUNKS = 1
 
 
@@ -2221,6 +2286,17 @@ def _retrieve_chunks_once(
         added_ids = {c["chunkId"] for c in added}
         trimmed = (trimmed[:1] + [c for c in added if c["chunkId"] != trimmed[0].get("chunkId")]
                    + [c for c in trimmed[1:] if c["chunkId"] not in added_ids])[:top_k]
+    # "Show an example of a catalogue record": the example of that type, added after the best evidence.
+    # By similarity a Turtle example rarely reaches the pool (_named_example_candidates).
+    named_examples_added = 0
+    if "example" in hinted_doc_types and trimmed:
+        examples = _named_example_candidates(question, scope, score=float(trimmed[0].get("score") or 0.0))
+        example_ids = {c["chunkId"] for c in examples}
+        trimmed_ids = {c.get("chunkId") for c in trimmed}
+        named_examples_added = sum(1 for c in examples if c["chunkId"] not in trimmed_ids)
+        if examples:
+            trimmed = (trimmed[:1] + [c for c in examples if c["chunkId"] != trimmed[0].get("chunkId")]
+                       + [c for c in trimmed[1:] if c["chunkId"] not in example_ids])[:top_k]
     _record_stage("candidateSelectionMs", stage_start)
 
     stage_start = time.perf_counter()
@@ -2283,7 +2359,7 @@ def _retrieve_chunks_once(
         "graphEvidenceCount": graph_hits if graph_rag_enabled else 0,
         "graphScoreContribution": round(graph_total / len(trimmed), 4) if graph_rag_enabled and trimmed else 0.0,
         "graphProvenanceChainCount": len(provenance_chains) if graph_rag_enabled else 0,
-        "exampleChunksAdded": example_chunks_added,
+        "exampleChunksAdded": example_chunks_added + named_examples_added,
         "ontologyDefinitionsAdded": ontology_definitions_added,
         "relationPathsAdded": relation_paths_added,
         "repositoryCoverageCount": repository_coverage_count,
