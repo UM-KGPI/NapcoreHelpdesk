@@ -20,7 +20,7 @@ describe("GeneratedExampleBlock", () => {
       />,
     );
     expect(screen.getByText("Generated example")).toBeTruthy();
-    expect(screen.getByText(/not taken from the standard · valid against NeTEx 2\.0/)).toBeTruthy();
+    expect(screen.getByText(/Generated for this question · valid against NeTEx 2\.0/)).toBeTruthy();
     expect(screen.getByText(/commit 37ff1e4/)).toBeTruthy();
     expect(screen.getByText(/<ResourceFrame>/)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Download as PublicationDelivery" })).toBeTruthy();

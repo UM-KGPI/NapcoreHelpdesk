@@ -47,7 +47,7 @@ export default function GeneratedExampleBlock({ example }: { example?: Generated
     <section className="generated-example" aria-label="Generated NeTEx example">
       <h4>Generated example</h4>
       <p className="tiny generated-example-badge">
-        Generated for this question, not taken from the standard · valid against {version}
+        Generated for this question · valid against {version}
         {commit} · built from the cited evidence
       </p>
       <pre>
