@@ -148,4 +148,8 @@ def presence_evidence(question: str, scope: list[str] | None, english_question: 
             break
     for chunk in chunks:
         chunk.setdefault("retrievalEventId", f"re-presence-{abs(hash(chunk.get('chunkId'))) % 10**8}")
+        # Put first on purpose, like the schema's own blocks: the answer's confidence is read from the first
+        # block's score, and a definition block without one dropped it to the 0.6 floor.
+        if not chunk.get("score"):
+            chunk["score"] = 1.0
     return chunks

@@ -79,3 +79,18 @@ class PromptTests(SimpleTestCase):
         user = _build_messages("Does NeTEx have a driver?", [chunk], existence=True)[1]["content"]
         self.assertTrue(user.endswith(EXISTENCE_RULE + "\n\nWrite your answer:"))
         self.assertNotIn("WHETHER THE STANDARD HAS IT", _build_messages("Does NeTEx have a driver?", [chunk])[1]["content"])
+
+
+class ScoreTests(SimpleTestCase):
+    def test_every_evidence_block_has_a_score(self):
+        definition = {"sourcePath": "docs/ontology/standards/transmodel.ttl#DRIVER", "chunkId": "d", "text": "DRIVER"}
+        element = {"sourcePath": "xsd/a.xsd", "chunkId": "e", "text": "DriverRef", "score": 1.0}
+        with patch.object(presence, "presence_concepts", return_value=["transmodel:DRIVER"]), patch(
+            "helpdesk.services.retrieval_gateway.retrieve_concept_definitions", return_value=[{}]
+        ), patch("helpdesk.services.retrieval_gateway.format_definitions_as_chunks", return_value=[dict(definition)]), patch(
+            "helpdesk.services.retrieval_gateway.indexed_commit_shas", return_value={}
+        ), patch.object(presence, "_element_names", return_value=["DriverRef"]), patch(
+            "helpdesk.services.schema_structure.definition_chunk", return_value=dict(element)
+        ):
+            chunks = presence.presence_evidence("Does NeTEx have a driver?", ["NeTEx"])
+        self.assertEqual([c["score"] for c in chunks], [1.0, 1.0])
