@@ -98,8 +98,56 @@ class TriggerTests(SimpleTestCase):
         self.assertEqual(generator.missing_values("<Seats>50", ["50", "20"]), ["20"])
 
 
+class QuestionWordTests(SimpleTestCase):
+    def test_content_words_singular_without_stopwords(self):
+        question = "Show a NeTEx example of a coach with 49 seats and 1 wheelchair area"
+        self.assertEqual(generator._question_words(question), ["coach", "seat", "wheelchair", "area"])
+        self.assertEqual(generator._counted_question_words(question), ["seat", "wheelchair"])
+
+    def test_declarations_block(self):
+        block = generator.declarations_block(
+            [
+                {"name": "SeatingCapacity", "parents": ["PassengerCapacity"], "documentation": "The seating capacity."},
+                {"name": "Quay", "parents": [], "documentation": "A place."},
+            ]
+        )
+        self.assertIn("- SeatingCapacity (child of PassengerCapacity): The seating capacity.", block)
+        self.assertIn("- Quay: A place.", block)
+
+
 @override_settings(LLM_ENABLED=True)
 class GenerationTests(SimpleTestCase):
+    def setUp(self):
+        patcher = patch.object(generator, "schema_declarations", return_value=[])
+        self.declarations = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_schema_declarations_go_to_the_model_only_after_a_failed_attempt(self):
+        self.declarations.return_value = [
+            {"name": "SeatingCapacity", "parents": ["PassengerCapacity"], "documentation": "The seating capacity."}
+        ]
+        replies = [_reply(FRAME.replace("SeatingCapacity", "NumberOfSeats")), _reply(FRAME)]
+        verdicts = [{"valid": False, "errors": ["line 1: Element 'NumberOfSeats': This element is not expected."]}, {"valid": True, "errors": []}]
+        with patch.object(generator, "_ask_model", side_effect=replies) as ask, patch.object(
+            generator, "validate_fragment", side_effect=verdicts
+        ):
+            result = generator.generate_netex_example(BUS, [NETEX_CHUNK], ["NeTEx"])
+        first_prompt = ask.call_args_list[0].args[0][1]["content"]
+        self.assertNotIn("SCHEMA DECLARATIONS", first_prompt)
+        feedback = ask.call_args_list[1].args[0][-1]["content"]
+        self.assertIn("SCHEMA DECLARATIONS", feedback)
+        self.assertIn("SeatingCapacity (child of PassengerCapacity)", feedback)
+        self.declarations.assert_called_once()
+        self.assertEqual(result["schemaDeclarations"], 1)
+
+    def test_no_declarations_fetched_when_the_first_attempt_is_valid(self):
+        with patch.object(generator, "_ask_model", return_value=_reply(FRAME)), patch.object(
+            generator, "validate_fragment", return_value={"valid": True, "errors": []}
+        ):
+            result = generator.generate_netex_example(BUS, [NETEX_CHUNK], ["NeTEx"])
+        self.declarations.assert_not_called()
+        self.assertEqual(result["schemaDeclarations"], 0)
+
     def test_valid_first_attempt(self):
         elements = [
             {"name": "SeatingCapacity", "parent": "PassengerCapacity", "documentation": "The seating capacity of vehicles of the type."},
@@ -244,6 +292,28 @@ class ValidatorServiceTests(SimpleTestCase):
                 {"name": "Capacity", "parent": "ResourceFrame", "documentation": "Capacity of the frame's vehicles."},
             ],
         )
+
+    def test_search_declarations_by_word_with_their_parents(self):
+        found = self.holder.element_docs.search(["capacity"])
+        # The matches, then the declarations of their parents (so the model sees what ResourceFrame is).
+        self.assertEqual(
+            [(d["name"], d["parents"]) for d in found],
+            [("Capacity", ["ResourceFrame"]), ("Capacity", []), ("ResourceFrame", ["dataObjects"])],
+        )
+        self.assertEqual(found[0]["documentation"], "Capacity of the frame's vehicles.")
+        self.assertEqual(found[2]["documentation"], "A coherent set of reference values.")
+        # A word in the name counts double: "frame" is in ResourceFrame's name and in Name's text.
+        self.assertEqual(self.holder.element_docs.search(["frame"])[0]["name"], "ResourceFrame")
+        self.assertEqual(self.holder.element_docs.search(["xyz"]), [])
+
+    def test_counted_words_prefer_number_valued_elements(self):
+        docs = self.holder.element_docs
+        docs.docs["SeatingCapacity"] = [("CapacityGroup", "The seating capacity of vehicles.")]
+        docs.docs["SeatEquipment"] = [("EquipmentGroup", "A seat.")]
+        docs.element_type["SeatingCapacity"] = "NumberOfPassengers"
+        docs.element_type["SeatEquipment"] = "SeatEquipment_VersionStructure"
+        self.assertEqual(docs.search(["seat"])[0]["name"], "SeatEquipment")  # both in name and text; shorter text wins
+        self.assertEqual(docs.search(["seat"], counted=["seat"])[0]["name"], "SeatingCapacity")
 
     def test_element_documentation_fallbacks(self):
         docs = self.holder.element_docs
