@@ -1677,6 +1677,11 @@ components:
           type: [string, "null"]
         llmRejectionReason:
           type: [string, "null"]
+        llmDroppedAnswer:
+          type: [string, "null"]
+          description: >-
+            For an example request with a valid generated example: the answer text that failed validation
+            and was left out of the answer (the example and its schema notes stand alone); null otherwise.
         llmAnswerValidated:
           type: [boolean, "null"]
           description: >-

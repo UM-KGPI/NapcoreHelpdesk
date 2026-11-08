@@ -1323,20 +1323,37 @@ COMPOSITION_RULE = (
 
 
 # When the answer comes with a fragment generated for the question and validated against the NeTEx XSD
-# (services/netex_example_generator.py), the text explains it (prod req-mw7j8wr6-t4l19q, 2026-11-08: the
-# text said "I cannot provide one" above a valid two-quay StopPlace).
-GENERATED_EXAMPLE_RULE = (
-    "GENERATED EXAMPLE: right after your answer, the user sees an XML fragment that was written for this "
-    "question, with the question's values, and validated against the NeTEx schema; it is labelled as generated, "
-    "not taken from the standard. Do not write that fragment yourself and do not say that you cannot provide an "
-    "example. Your FIRST sentence must say that the generated example below shows what the question asks for "
-    "(in the response language); if no evidence block has an example with the question's values, add that in the "
-    "same sentence. Do not start with what the evidence lacks. Then explain from "
-    "the evidence how such an example is built: which elements hold the question's values and which element "
-    "contains them, citing [E#]. You may quote one short snippet (at most 10 lines) from one evidence block that "
-    "shows the same structure in the standard's own examples. Keep the answer short: leave out evidence that does "
-    "not show how such an example is built; if no block shows it, say so in one sentence and stop."
-)
+# (services/netex_example_generator.py), the fragment and its schema notes are shown first and are the
+# answer; the text adds only what the evidence says about the fragment's elements, and may be empty.
+# (Prod req-mw7j8wr6-t4l19q, 2026-11-08: the text said "I cannot provide one" above a valid example.)
+def generated_example_rule(elements: list[str]) -> str:
+    return (
+        "EXAMPLE ALREADY SHOWN: above your text the user sees a NeTEx fragment generated for this question and "
+        f"validated against the NeTEx schema, using these elements: {', '.join(elements)}. Each element's "
+        "definition from the schema is shown with it. Do not describe, mention or repeat that fragment, do not "
+        "define these elements, and do not say what the evidence lacks. Write only what the evidence adds about "
+        "these elements: allowed values and types, required or usual sibling elements and attributes, which "
+        "parent they belong in, and how the standard's own examples use them. At most four sentences, each cited "
+        "[E#], then at most one verbatim snippet (at most 10 lines, in a ```xml block) from one evidence block "
+        "that uses the same elements. If the evidence adds nothing about these elements, return exactly: "
+        '{"answer": "", "citations_used": [], "evidence_answers_question": true}'
+    )
+
+
+def _nothing_to_add(chunks: list[dict]) -> dict:
+    """The text's result when the example and its schema notes already say what the evidence has."""
+    top_score = chunks[0].get("score", 0.0) if chunks else 0.0
+    return {
+        "answer": "",
+        "confidence": min(0.94, max(0.60, float(top_score))),
+        "review_required": False,
+        "answer_validated": True,
+        "evidence_answers_question": True,
+        "provider": settings.LLM_PROVIDER,
+        "model": settings.LLM_MODEL,
+        "rejected_answer": None,
+        "rejection_reason": None,
+    }
 
 
 def _build_messages(
@@ -1349,7 +1366,7 @@ def _build_messages(
     language: str | None = None,
     all_candidates: list[dict] | None = None,
     detected_language: str | None = None,
-    generated_example: bool = False,
+    example_elements: list[str] | None = None,
 ) -> list[dict]:
     context_lines = []
     focus_terms = _question_focus_terms(question)
@@ -1470,8 +1487,8 @@ def _build_messages(
         "- Use **bold** for emphasis only, not for technical terms.\n"
         "- Standard markdown for lists, headers, and paragraphs.\n"
     )
-    if generated_example:
-        pass  # GENERATED_EXAMPLE_RULE goes last in the user prompt, where the model follows it; no quote-only rule.
+    if example_elements:
+        pass  # generated_example_rule goes last in the user prompt, where the model follows it; no quote-only rule.
     elif _question_requests_verbatim_example(question):
         system_prompt = (
             f"{system_prompt} "
@@ -1555,11 +1572,11 @@ def _build_messages(
         "- If a requested detail is not in the evidence, explicitly state that — in the response language, not English "
         "(unless English is the response language)\n\n"
         f"{COMPOSITION_RULE + chr(10) if composition else ''}"
-        f"{GENERATED_EXAMPLE_RULE + chr(10) + chr(10) if generated_example else ''}"
+        f"{generated_example_rule(example_elements) + chr(10) + chr(10) if example_elements else ''}"
         "Write your answer:"
     )
 
-    if not generated_example and _question_requests_verbatim_example(question) and "?" in question and any(w in question.lower() for w in ["is there", "do you have", "any", "list"]):
+    if not example_elements and _question_requests_verbatim_example(question) and "?" in question and any(w in question.lower() for w in ["is there", "do you have", "any", "list"]):
         user_prompt += "(This question asks for examples: list ALL matching examples found in evidence with their source paths, then provide sample code if available.)"
 
     return [
@@ -1839,9 +1856,12 @@ def generate_answer_llm(
     faq_hint: str | None = None,
     language: str | None = None,
     all_candidates: list[dict] | None = None,
-    generated_example: bool = False,
+    example_elements: list[str] | None = None,
 ) -> dict:
     """Generate a grounded answer through a configurable OpenAI-compatible API.
+
+    With `example_elements` (a valid generated example is shown first, using these elements), the text
+    only adds what the evidence says about them and may be empty: see generated_example_rule.
 
     Attempts generation up to twice: the first attempt uses the standard prompt;
     if a grounding validator rejects the answer, a second attempt is made with
@@ -1870,7 +1890,7 @@ def generate_answer_llm(
         language=language,
         all_candidates=all_candidates,
         detected_language=target_language,
-        generated_example=generated_example,
+        example_elements=example_elements,
     )
 
     primary_base_url = (settings.LLM_API_BASE_URL or "").strip()
@@ -1910,6 +1930,8 @@ def generate_answer_llm(
     signals: dict = {}
     try:
         answer = _generate_answer_text(chunks=chunks, messages=messages, request_targets=request_targets, signals=signals)
+        if example_elements and not answer.strip():
+            return _nothing_to_add(chunks)
         _validate_answer_language(answer=answer, question=question, target_language=target_language)
         _validate_generated_answer(answer=answer, chunks=chunks)
     except LLMGenerationError as first_error:
@@ -1961,6 +1983,8 @@ def generate_answer_llm(
                 "rejected_answer": rejected_answer,
                 "rejection_reason": rejection_reason,
             }
+        if example_elements and not answer.strip():
+            return _nothing_to_add(chunks)
         try:
             _validate_answer_language(answer=answer, question=question, target_language=target_language)
             _validate_generated_answer(answer=answer, chunks=chunks)
@@ -2121,7 +2145,7 @@ def stream_answer_llm(
     faq_hint: str | None = None,
     language: str | None = None,
     all_candidates: list[dict] | None = None,
-    generated_example: bool = False,
+    example_elements: list[str] | None = None,
 ) -> Generator[tuple[str, object], None, None]:
     """
     Generator yielding (event_type, payload) tuples for streaming narration.
@@ -2162,7 +2186,7 @@ def stream_answer_llm(
         language=language,
         all_candidates=all_candidates,
         detected_language=detected_language,
-        generated_example=generated_example,
+        example_elements=example_elements,
     )
 
     # Buffer all tokens before yielding any — validation must pass the full
@@ -2225,6 +2249,9 @@ def stream_answer_llm(
         logger.info(f"[STREAM_LLM_RAW] Raw response (first 250 chars): {full_answer[:250]}")
         evidence_answers_question = _evidence_answers_question(full_answer)
         full_answer = _unwrap_json_answer(full_answer)
+        if example_elements and not full_answer.strip():
+            yield ("done", _nothing_to_add(chunks))
+            return
 
         # Strip hallucinated file names; evidence file names are preserved.
         full_answer = _strip_json_suffix(full_answer)
@@ -2256,6 +2283,9 @@ def stream_answer_llm(
         logger.info(f"[STREAM_RETRY_RAW] Retry response (first 250 chars): {full_answer[:250]}")
         evidence_answers_question = _evidence_answers_question(full_answer)
         full_answer = _unwrap_json_answer(full_answer)
+        if example_elements and not full_answer.strip():
+            yield ("done", _nothing_to_add(chunks))
+            return
 
         # Strip hallucinated file names; evidence file names are preserved.
         full_answer = _strip_json_suffix(full_answer)

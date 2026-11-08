@@ -879,6 +879,10 @@ service, `netex-validator` (`backend/helpdesk/netex_validator_service.py`):
   is, in the schema's words, with no model involved.
 - A question value counts as modelled only when it is the whole content of an element or attribute
   (`<SeatingCapacity>50</SeatingCapacity>`), never when mentioned inside a `Name` or `Description` text.
+- With a valid example the example is the answer and comes first. The text is then generated from a second
+  search for the example's element names (not the question's words), told to add only what the evidence
+  says about those elements in at most four sentences, and may be empty; text that fails validation is left
+  out (`trace.llmDroppedAnswer`). The page shows it under "In the standard" only when there is any.
 
 Settings: `NETEX_EXAMPLE_GENERATOR_ENABLED` (default `True`), `NETEX_VALIDATOR_URL` (default
 `http://netex-validator:8091`), `NETEX_VALIDATOR_MEM_LIMIT` (default `512m`), `NETEX_VALIDATOR_CPUS`

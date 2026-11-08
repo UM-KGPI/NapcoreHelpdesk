@@ -77,6 +77,15 @@ class TriggerTests(SimpleTestCase):
             self.assertEqual(generator.named_values("A NeTEx example of a Stop"), [])
         generator._concept_label_words._cache = None
 
+    def test_example_element_names_skip_generic_elements(self):
+        example = {
+            "valid": True,
+            "elementNotes": [{"name": n, "documentation": "..."} for n in ["ResourceFrame", "VehicleType", "Name", "Description", "PassengerCapacity", "SeatingCapacity"]],
+        }
+        self.assertEqual(generator.example_element_names(example), ["ResourceFrame", "VehicleType", "PassengerCapacity", "SeatingCapacity"])
+        self.assertEqual(generator.example_element_names({"valid": False, "errors": []}), [])
+        self.assertEqual(generator.example_element_names(None), [])
+
     def test_values_must_be_whole_element_or_attribute_contents(self):
         self.assertEqual(generator.missing_values("<SeatingCapacity>500</SeatingCapacity>", ["50"]), ["50"])
         self.assertEqual(generator.missing_values("<SeatingCapacity> 50 </SeatingCapacity>", ["50"]), [])

@@ -67,7 +67,7 @@ from helpdesk.services.question_parsing import (
 )
 from helpdesk.services.semantic_abstention import semantic_abstention_message
 from helpdesk.services.index_builder import index_repository
-from helpdesk.services.netex_example_generator import generate_netex_example
+from helpdesk.services.netex_example_generator import example_element_names, generate_netex_example
 from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 from helpdesk.services.retrieval_event_logger import log_retrieval_events
 from helpdesk.services.rule_engine import evaluate_semantic_rules
@@ -1169,6 +1169,7 @@ class QuestionAnswerView(APIView):
         abstained = False
         abstention_reason = None
         generated_example = None
+        dropped_answer = None
         review_required = True
         matched_faq_entry_id = None
         retrieval_event_ids = []
@@ -1359,6 +1360,24 @@ class QuestionAnswerView(APIView):
                 # The example first, so the text can explain it instead of saying none exists.
                 generated_example = generate_netex_example(question, chunks, effective_scope)
                 example_ready = bool(generated_example and generated_example.get("valid"))
+                example_elements = example_element_names(generated_example)
+                if example_elements:
+                    # The text is about the example's elements: search for them, not for the question's words
+                    # ("bus with 50 seats" finds deck plans; "PassengerCapacity SeatingCapacity" finds its definition).
+                    element_chunks, element_trace = retrieve_chunks_with_trace(
+                        question=question,
+                        top_k=retrieval_top_k,
+                        min_score=relaxed_min_score,
+                        scope=effective_scope,
+                        graph_rag_enabled=graph_rag_enabled,
+                        min_results=_min_evidence_results(),
+                        english_question=f"{english_question or question} {' '.join(example_elements)}",
+                    )
+                    if element_chunks:
+                        chunks, graph_trace = element_chunks, element_trace
+                        retrieved_chunks = chunks
+                        retrieval_event_ids = [chunk["retrievalEventId"] for chunk in chunks]
+                        all_candidates = graph_trace.get("allCandidates", [])
                 use_llm = generation_profile == "llm-ready" and settings.LLM_ENABLED
                 llm_generated = False
                 if use_llm:
@@ -1369,7 +1388,7 @@ class QuestionAnswerView(APIView):
                             scope=effective_scope,
                             language=language,
                             all_candidates=all_candidates,
-                            generated_example=example_ready,
+                            example_elements=example_elements or None,
                         )
                         llm_generated = True
                     except LLMGenerationError:
@@ -1396,7 +1415,15 @@ class QuestionAnswerView(APIView):
                     citations = _citations_from_prompt_order(chunks=chunks, answer_text=answer_text)
                 else:
                     citations = _select_citations(chunks=chunks, max_citations=max_citations)
-                policy = evaluate_policy(answer_text=answer_text, citations=citations)
+                if example_ready and generated.get("answer_validated") is False:
+                    # Example requests: text that failed validation is noise next to a valid example.
+                    dropped_answer, answer_text = answer_text, ""
+                if example_ready and not answer_text.strip():
+                    # The example and its schema notes are the answer; the text had nothing to add.
+                    policy = {"allowed": True, "reason": None, "review_required": False}
+                    citations = []
+                else:
+                    policy = evaluate_policy(answer_text=answer_text, citations=citations)
                 if not policy["allowed"]:
                     if allow_abstain:
                         # Policy block -> abstain rather than returning potentially unsafe claims.
@@ -1548,6 +1575,7 @@ class QuestionAnswerView(APIView):
             "citationClickCount": event.citation_click_count,
             "llmRejectedAnswer": (generated.get("rejected_answer") if isinstance(locals().get("generated"), dict) else None),
             "llmRejectionReason": (generated.get("rejection_reason") if isinstance(locals().get("generated"), dict) else None),
+            "llmDroppedAnswer": dropped_answer,
             # False when the answer was served although its retry failed validation too (it is then marked
             # for review); None when no LLM answer was generated.
             "llmAnswerValidated": (generated.get("answer_validated") if isinstance(locals().get("generated"), dict) else None),
@@ -1659,6 +1687,7 @@ class QuestionAnswerStreamView(APIView):
         abstained = False
         abstention_reason = None
         generated_example = None
+        dropped_answer = None
         review_required = True
         matched_faq_entry_id = None
         retrieval_event_ids = []
@@ -1857,6 +1886,24 @@ class QuestionAnswerStreamView(APIView):
                 # The example first, so the text can explain it instead of saying none exists.
                 generated_example = generate_netex_example(question, chunks, effective_scope)
                 example_ready = bool(generated_example and generated_example.get("valid"))
+                example_elements = example_element_names(generated_example)
+                if example_elements:
+                    # The text is about the example's elements: search for them, not for the question's words
+                    # ("bus with 50 seats" finds deck plans; "PassengerCapacity SeatingCapacity" finds its definition).
+                    element_chunks, element_trace = retrieve_chunks_with_trace(
+                        question=question,
+                        top_k=retrieval_top_k,
+                        min_score=relaxed_min_score,
+                        scope=effective_scope,
+                        graph_rag_enabled=graph_rag_enabled,
+                        min_results=_min_evidence_results(),
+                        english_question=f"{english_question or question} {' '.join(example_elements)}",
+                    )
+                    if element_chunks:
+                        chunks, graph_trace = element_chunks, element_trace
+                        retrieved_chunks = chunks
+                        retrieval_event_ids = [chunk["retrievalEventId"] for chunk in chunks]
+                        all_candidates = graph_trace.get("allCandidates", [])
                 llm_generated = False
                 if use_llm:
                     # Stream tokens to the client; accumulate for post-stream processing.
@@ -1868,7 +1915,7 @@ class QuestionAnswerStreamView(APIView):
                             scope=effective_scope,
                             language=language,
                             all_candidates=all_candidates,
-                            generated_example=example_ready,
+                            example_elements=example_elements or None,
                         ):
                             if event_type == "token":
                                 yield self._sse({"type": "token", "delta": payload})
@@ -1903,7 +1950,15 @@ class QuestionAnswerStreamView(APIView):
                     citations = _citations_from_prompt_order(chunks=chunks, answer_text=answer_text)
                 else:
                     citations = _select_citations(chunks=chunks, max_citations=max_citations)
-                policy = evaluate_policy(answer_text=answer_text, citations=citations)
+                if example_ready and generated.get("answer_validated") is False:
+                    # Example requests: text that failed validation is noise next to a valid example.
+                    dropped_answer, answer_text = answer_text, ""
+                if example_ready and not answer_text.strip():
+                    # The example and its schema notes are the answer; the text had nothing to add.
+                    policy = {"allowed": True, "reason": None, "review_required": False}
+                    citations = []
+                else:
+                    policy = evaluate_policy(answer_text=answer_text, citations=citations)
                 if not policy["allowed"]:
                     if allow_abstain:
                         mode = QuestionEvent.MODE_ABSTAIN
@@ -2047,6 +2102,7 @@ class QuestionAnswerStreamView(APIView):
             "citationClickCount": event.citation_click_count,
             "llmRejectedAnswer": (generated.get("rejected_answer") if isinstance(locals().get("generated"), dict) else None),
             "llmRejectionReason": (generated.get("rejection_reason") if isinstance(locals().get("generated"), dict) else None),
+            "llmDroppedAnswer": dropped_answer,
             # False when the answer was served although its retry failed validation too (it is then marked
             # for review); None when no LLM answer was generated.
             "llmAnswerValidated": (generated.get("answer_validated") if isinstance(locals().get("generated"), dict) else None),

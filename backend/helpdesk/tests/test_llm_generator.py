@@ -800,12 +800,31 @@ class GeneratedExamplePromptTests(SimpleTestCase):
              "sourcePath": "examples/stop.xml", "chunkId": "c1", "text": "<StopPlace><quays><Quay/></quays></StopPlace>"}
 
     def test_rule_replaces_the_quote_only_example_rule(self):
-        from helpdesk.services.llm_generator import GENERATED_EXAMPLE_RULE, _build_messages
+        from helpdesk.services.llm_generator import _build_messages, generated_example_rule
 
-        system, user = (m["content"] for m in _build_messages(self.QUESTION, [self.CHUNK], generated_example=True))
-        self.assertTrue(user.endswith(GENERATED_EXAMPLE_RULE + "\n\nWrite your answer:"))
+        elements = ["SiteFrame", "StopPlace", "Quay"]
+        system, user = (m["content"] for m in _build_messages(self.QUESTION, [self.CHUNK], example_elements=elements))
+        self.assertTrue(user.endswith(generated_example_rule(elements) + "\n\nWrite your answer:"))
+        self.assertIn("using these elements: SiteFrame, StopPlace, Quay", user)
+        self.assertIn('return exactly: {"answer": ""', user)
         self.assertNotIn("Never synthesize or invent examples", system)
 
         system, user = (m["content"] for m in _build_messages(self.QUESTION, [self.CHUNK]))
-        self.assertNotIn(GENERATED_EXAMPLE_RULE, user)
+        self.assertNotIn("EXAMPLE ALREADY SHOWN", user)
         self.assertIn("Never synthesize or invent examples", system)
+
+    @override_settings(LLM_ENABLED=True, LLM_PROVIDER="openai-compatible", LLM_API_BASE_URL="http://llm", LLM_API_KEY="k")
+    def test_an_empty_answer_next_to_an_example_is_nothing_to_add(self):
+        from unittest.mock import patch
+
+        from helpdesk.services import llm_generator
+
+        reply = {"choices": [{"message": {"content": '{"answer": "", "citations_used": [], "evidence_answers_question": true}'}}]}
+        with patch.object(llm_generator, "_request_chat_completion", return_value=reply), patch.object(
+            llm_generator, "question_language", return_value="en"
+        ):
+            result = llm_generator.generate_answer_llm(self.QUESTION, [dict(self.CHUNK, score=0.9)], example_elements=["Quay"])
+        self.assertEqual(result["answer"], "")
+        self.assertTrue(result["answer_validated"])
+        self.assertFalse(result["review_required"])
+        self.assertEqual(result["confidence"], 0.9)
