@@ -85,6 +85,7 @@ from helpdesk.services.semantic_graph import (
     concepts_in_scope,
     expand_graph_concepts_with_distance,
     extract_graph_concepts,
+    extract_text_concepts_cached,
     get_concept_canonical_terms,
 )
 
@@ -143,8 +144,14 @@ def _ensure_seed_chunks() -> None:
         )
 
 
+@lru_cache(maxsize=256)
+def _question_token_set(question: str) -> frozenset[str]:
+    # The same question is scored against thousands of chunks per pass.
+    return frozenset(normalize_text_tokens(question))
+
+
 def _token_overlap_score(question: str, chunk_text: str) -> float:
-    question_tokens = set(normalize_text_tokens(question))
+    question_tokens = _question_token_set(question)
     if not question_tokens:
         return 0.0
     chunk_tokens = set(normalize_text_tokens(chunk_text))
@@ -1284,8 +1291,8 @@ def _graph_score_adjustment(
     if not graph_enabled:
         return 0.0, False, set()
 
-    chunk_concepts = extract_graph_concepts(
-        "\n".join([chunk_text, source_path, label, heading]), scope=scope
+    chunk_concepts = extract_text_concepts_cached(
+        "\n".join([chunk_text, source_path, label, heading]), scope=scope, extractor=extract_graph_concepts
     )
     if not chunk_concepts:
         return 0.0, False, set()
@@ -1360,6 +1367,16 @@ def _graph_alias_match_score(
     return 0.0
 
 
+@lru_cache(maxsize=4096)
+def _alias_profile(alias: str) -> tuple[str, float, frozenset[str]] | None:
+    """An alias as _graph_alias_match_score uses it: lowered, its specificity bonus, its tokens."""
+    alias_lower = (alias or "").strip().lower()
+    if not alias_lower:
+        return None
+    specificity = min(0.75, (len(_normalize_tokens(alias_lower)) * 0.12) + (min(len(alias_lower), 24) * 0.01))
+    return alias_lower, specificity, _token_set(alias_lower)
+
+
 def _graph_candidate_rank_score(
     chunk: SourceChunk,
     aliases: set[str],
@@ -1373,19 +1390,22 @@ def _graph_candidate_rank_score(
     lowered_path = source_path.lower().strip()
     doc_type = (getattr(chunk, "doc_type", "") or "").lower()
 
-    score = max(
-        (
-            _graph_alias_match_score(
-                alias,
-                source_path=source_path,
-                label=label,
-                heading=heading,
-                text=text,
-            )
-            for alias in aliases
-        ),
-        default=0.0,
-    )
+    # As _graph_alias_match_score for each alias, with each field lowered and tokenized once per chunk instead
+    # of once per alias (a pass ranks ~4,000 chunks against dozens of aliases: 2.3 s of 7 s, local 2026-11-08).
+    fields = [
+        (base, value.lower(), frozenset(_normalize_tokens(value)))
+        for base, value in ((1.10, source_path), (0.85, label), (0.75, heading), (0.40, text))
+    ]
+    score = 0.0
+    for alias in aliases:
+        profile = _alias_profile(alias)
+        if profile is None:
+            continue
+        alias_lower, specificity, alias_tokens = profile
+        for base, lowered, tokens in fields:
+            if alias_lower in lowered or (alias_tokens and alias_tokens <= tokens):
+                score = max(score, base + specificity)
+                break
 
     if question:
         score += _token_overlap_score(

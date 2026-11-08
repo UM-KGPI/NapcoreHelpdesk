@@ -1436,14 +1436,20 @@ class QuestionAnswerView(APIView):
                 if example_elements:
                     # The text is about the example's elements: search for them, not for the question's words
                     # ("bus with 50 seats" finds deck plans; "PassengerCapacity SeatingCapacity" finds its definition).
-                    element_chunks, element_trace = retrieve_chunks_with_trace(
-                        question=question,
-                        top_k=retrieval_top_k,
-                        min_score=relaxed_min_score,
-                        scope=effective_scope,
-                        graph_rag_enabled=graph_rag_enabled,
-                        min_results=_min_evidence_results(),
-                        english_question=f"{english_question or question} {' '.join(example_elements)}",
+                    element_chunks, element_trace = _example_element_evidence(
+                        generated_example,
+                        example_elements,
+                        chunks,
+                        graph_trace,
+                        lambda: retrieve_chunks_with_trace(
+                            question=question,
+                            top_k=retrieval_top_k,
+                            min_score=relaxed_min_score,
+                            scope=effective_scope,
+                            graph_rag_enabled=graph_rag_enabled,
+                            min_results=_min_evidence_results(),
+                            english_question=f"{english_question or question} {' '.join(example_elements)}",
+                        ),
                     )
                     # The standard's own examples that use the elements holding the question's values come
                     # first: the text says how the standard fills them (SeatingCapacity, WheelchairPlaceCapacity).
@@ -1712,6 +1718,38 @@ KEEPALIVE_EVENT = ": keep-alive\n\n"  # an SSE comment: clients ignore it, netwo
 class _StreamFailure:
     def __init__(self, error: BaseException):
         self.error = error
+
+
+MAX_EXAMPLE_DEFINITIONS = 3
+MAX_EXAMPLE_BLOCKS = 2
+
+
+def _example_element_evidence(generated_example, example_elements, chunks, graph_trace, search):
+    """Evidence about the example's elements, for the text next to it. A generated example needs a search
+    for its elements ("bus with 50 seats": PassengerCapacity, SeatingCapacity). One taken verbatim from the
+    standard's examples gets the schema's definitions of its elements and the question's own search
+    instead: a second full search took ~10 s of ~22 s (local 2026-11-08), over 20 s on prod."""
+    if (generated_example or {}).get("origin") != "standard":
+        return search()
+    # The elements holding the question's values first, then the example's objects; not its frame or the
+    # frame's list wrappers (SiteFrame, stopPlaces).
+    wanted = value_element_names(generated_example) + [e for e in example_elements if e[:1].isupper() and not e.endswith("Frame")]
+    definitions = []
+    for element in dict.fromkeys(wanted):
+        chunk = definition_chunk(element)
+        if chunk and chunk["chunkId"] not in {c["chunkId"] for c in definitions}:
+            definitions.append(chunk)
+        if len(definitions) >= MAX_EXAMPLE_DEFINITIONS:
+            break
+    # And the standard's example blocks with the example's object, so the text can say how the standard's
+    # examples fill it (without them: "the VehicleType definition is not in the evidence", local 2026-11-09).
+    from helpdesk.services.retrieval_gateway import examples_using_elements
+
+    main = main_object(generated_example)
+    using = examples_using_elements([main], limit=MAX_EXAMPLE_BLOCKS) if main else []
+    added = definitions + [c for c in using if c["chunkId"] not in {d["chunkId"] for d in definitions}]
+    ids = {c["chunkId"] for c in added}
+    return added + [c for c in chunks if c.get("chunkId") not in ids], graph_trace
 
 
 def with_keepalive(events, interval: float):
@@ -2053,14 +2091,20 @@ class QuestionAnswerStreamView(APIView):
                 if example_elements:
                     # The text is about the example's elements: search for them, not for the question's words
                     # ("bus with 50 seats" finds deck plans; "PassengerCapacity SeatingCapacity" finds its definition).
-                    element_chunks, element_trace = retrieve_chunks_with_trace(
-                        question=question,
-                        top_k=retrieval_top_k,
-                        min_score=relaxed_min_score,
-                        scope=effective_scope,
-                        graph_rag_enabled=graph_rag_enabled,
-                        min_results=_min_evidence_results(),
-                        english_question=f"{english_question or question} {' '.join(example_elements)}",
+                    element_chunks, element_trace = _example_element_evidence(
+                        generated_example,
+                        example_elements,
+                        chunks,
+                        graph_trace,
+                        lambda: retrieve_chunks_with_trace(
+                            question=question,
+                            top_k=retrieval_top_k,
+                            min_score=relaxed_min_score,
+                            scope=effective_scope,
+                            graph_rag_enabled=graph_rag_enabled,
+                            min_results=_min_evidence_results(),
+                            english_question=f"{english_question or question} {' '.join(example_elements)}",
+                        ),
                     )
                     # The standard's own examples that use the elements holding the question's values come
                     # first: the text says how the standard fills them (SeatingCapacity, WheelchairPlaceCapacity).
