@@ -198,6 +198,21 @@ class GenerationTests(SimpleTestCase):
         self.assertTrue(result["errors"][0].startswith("the value 20 from the question is missing"), result["errors"])
         self.assertNotIn("xml", result)
 
+    def test_a_failed_model_call_is_retried(self):
+        with patch.object(generator, "_ask_model", side_effect=[TimeoutError("The read operation timed out"), _reply(FRAME)]) as ask, patch.object(
+            generator, "validate_fragment", return_value={"valid": True, "errors": []}
+        ):
+            result = generator.generate_netex_example(BUS, [NETEX_CHUNK], ["NeTEx"])
+        self.assertTrue(result["valid"])
+        self.assertEqual((result["attempts"], ask.call_count), (2, 2))
+
+    def test_model_failing_every_time_gives_no_example(self):
+        with patch.object(generator, "_ask_model", side_effect=TimeoutError("timed out")) as ask:
+            result = generator.generate_netex_example(BUS, [NETEX_CHUNK], ["NeTEx"])
+        self.assertFalse(result["valid"])
+        self.assertEqual(ask.call_count, generator.MAX_ATTEMPTS)
+        self.assertTrue(result["errors"][0].startswith("generation failed"))
+
     def test_validator_down_gives_no_example(self):
         with patch.object(generator, "_ask_model", return_value=_reply(FRAME)), patch.object(
             generator, "validate_fragment", side_effect=generator.ValidatorUnavailable("validator unreachable")

@@ -18,6 +18,8 @@ import type { AnswerResponse } from "../types";
 import { citationDisplayName, citationMarker, groupCitationsBySource } from "../citationLabels";
 import GeneratedExampleBlock from "./GeneratedExample";
 import AnswerBody from "./AnswerBody";
+import { downloadExampleDocument } from "./generatedExampleActions";
+import { answerBodyText, generatedExampleText } from "./answerText";
 import LegalContext from "./LegalContext";
 import InspiredByOthersPanel from "./InspiredByOthersPanel";
 
@@ -80,7 +82,8 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
   }, [busy]);
 
   const buildAnswerWithEvidenceText = (turn: ChatTurn): string => {
-    const answerText = turn.text.trim();
+    // The generated example (when valid) first, then the text, then the evidence list: what the page shows.
+    const answerText = answerBodyText(turn.text, turn.answer?.generatedExample);
     if (!answerText) {
       return "";
     }
@@ -157,6 +160,13 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
       lines.push(`## ${turn.role === "assistant" ? "Assistant" : "User"}`);
       lines.push(`Timestamp: ${turn.createdAt}`);
       lines.push("");
+      const exampleText = turn.role === "assistant" ? generatedExampleText(turn.answer?.generatedExample) : "";
+      if (exampleText) {
+        lines.push(exampleText);
+        if (turn.text.trim()) {
+          lines.push("", "### In the standard");
+        }
+      }
       lines.push(turn.text || "");
       if (turn.answer && turn.answer.citations.length > 0) {
         lines.push("");
@@ -283,71 +293,88 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
               {turn.answer && (
                 <>
                   <div className="chat-answer-actions" role="group" aria-label="Answer actions">
-                    <button
-                      type="button"
-                      className="chat-icon-button"
-                      onClick={() => {
-                        void copyDeepLinkToClipboard(turn);
-                      }}
-                      title="Copy deep link to share this Q&A"
-                      aria-label="Copy deep link to share this Q&A"
-                    >
-                      🔗
-                    </button>
-                    <button
-                      type="button"
-                      className="chat-icon-button"
-                      onClick={() => {
-                        void copyAnswerToClipboard(turn);
-                      }}
-                      title="Copy answer to clipboard"
-                      aria-label="Copy answer to clipboard"
-                    >
-                      📋
-                    </button>
-                    <button
-                      type="button"
-                      className="chat-icon-button"
-                      onClick={exportChatAsTextMarkdown}
-                      title="Export chat to Markdown text file"
-                      aria-label="Export chat to Markdown text file"
-                    >
-                      💾
-                    </button>
-                    <button
-                      type="button"
-                      className={`chat-icon-button ${(turn.answer.trace.userLikes ?? false) ? "chat-icon-button-active" : ""}`}
-                      onClick={() => {
-                        const requestId = turn.requestId ?? turn.answer?.trace.requestId;
-                        if (!requestId) {
-                          return;
-                        }
-                        const currentLike = turn.answer?.trace.userLikes ?? false;
-                        void setFeedback(requestId, { userLikes: !currentLike, userDislikes: false, answerSuccess: currentLike ? null : true });
-                      }}
-                      disabled={feedbackPendingByRequestId[turn.requestId ?? turn.answer.trace.requestId] === true}
-                      title="Good answer"
-                      aria-label="Good answer"
-                    >
-                      👍
-                    </button>
-                    <button
-                      type="button"
-                      className={`chat-icon-button ${(turn.answer.trace.userDislikes ?? false) ? "chat-icon-button-active" : ""}`}
-                      onClick={() => {
-                        const requestId = turn.requestId ?? turn.answer?.trace.requestId;
-                        if (!requestId) {
-                          return;
-                        }
-                        const currentDislike = turn.answer?.trace.userDislikes ?? false;
-                        void setFeedback(requestId, { userLikes: false, userDislikes: !currentDislike, answerSuccess: currentDislike ? null : false });
-                      }}
-                      disabled={feedbackPendingByRequestId[turn.requestId ?? turn.answer.trace.requestId] === true}
-                      title="Answer could be better"
-                      aria-label="Answer could be better"
-                    >
-                      👎
-                    </button>
+                    <div className="chat-answer-actions-feedback">
+                      <button
+                        type="button"
+                        className={`chat-icon-button ${(turn.answer.trace.userLikes ?? false) ? "chat-icon-button-active" : ""}`}
+                        onClick={() => {
+                          const requestId = turn.requestId ?? turn.answer?.trace.requestId;
+                          if (!requestId) {
+                            return;
+                          }
+                          const currentLike = turn.answer?.trace.userLikes ?? false;
+                          void setFeedback(requestId, { userLikes: !currentLike, userDislikes: false, answerSuccess: currentLike ? null : true });
+                        }}
+                        disabled={feedbackPendingByRequestId[turn.requestId ?? turn.answer.trace.requestId] === true}
+                        title="Good answer"
+                        aria-label="Good answer"
+                      >
+                        👍
+                      </button>
+                      <button
+                        type="button"
+                        className={`chat-icon-button ${(turn.answer.trace.userDislikes ?? false) ? "chat-icon-button-active" : ""}`}
+                        onClick={() => {
+                          const requestId = turn.requestId ?? turn.answer?.trace.requestId;
+                          if (!requestId) {
+                            return;
+                          }
+                          const currentDislike = turn.answer?.trace.userDislikes ?? false;
+                          void setFeedback(requestId, { userLikes: false, userDislikes: !currentDislike, answerSuccess: currentDislike ? null : false });
+                        }}
+                        disabled={feedbackPendingByRequestId[turn.requestId ?? turn.answer.trace.requestId] === true}
+                        title="Answer could be better"
+                        aria-label="Answer could be better"
+                      >
+                        👎
+                      </button>
+                    </div>
+                    <div className="chat-answer-actions-tools">
+                      <button
+                        type="button"
+                        className="chat-icon-button"
+                        onClick={() => {
+                          void copyAnswerToClipboard(turn);
+                        }}
+                        title="Copy answer to clipboard"
+                        aria-label="Copy answer to clipboard"
+                      >
+                        📋
+                      </button>
+                      {turn.answer.generatedExample?.valid && (
+                        <>
+                          <button
+                            type="button"
+                            className="chat-icon-button"
+                            onClick={() => downloadExampleDocument(turn.answer!.generatedExample!)}
+                            title="Download generated example as XML file"
+                            aria-label="Download generated example as XML file"
+                          >
+                            ⬇️
+                          </button>
+                        </>
+                      )}
+                      <button
+                        type="button"
+                        className="chat-icon-button"
+                        onClick={exportChatAsTextMarkdown}
+                        title="Export chat to Markdown text file"
+                        aria-label="Export chat to Markdown text file"
+                      >
+                        💾
+                      </button>
+                      <button
+                        type="button"
+                        className="chat-icon-button"
+                        onClick={() => {
+                          void copyDeepLinkToClipboard(turn);
+                        }}
+                        title="Copy deep link to share this Q&A"
+                        aria-label="Copy deep link to share this Q&A"
+                      >
+                        🔗
+                      </button>
+                    </div>
                   </div>
                   {turn.answer.citations.length > 0 && (
                     <>
