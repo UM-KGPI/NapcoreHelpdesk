@@ -1342,16 +1342,21 @@ COMPOSITION_RULE = (
 # (services/netex_example_generator.py), the fragment and its schema notes are shown first and are the
 # answer; the text adds only what the evidence says about the fragment's elements, and may be empty.
 # (Prod req-mw7j8wr6-t4l19q, 2026-11-08: the text said "I cannot provide one" above a valid example.)
-def generated_example_rule(elements: list[str]) -> str:
+def generated_example_rule(elements: list[str], fragment: str = "") -> str:
+    """The text's brief next to a valid generated example: it sees the fragment, and adds how the
+    standard's own examples fill the same elements (they come first among the evidence blocks)."""
+    shown = f"\n```xml\n{fragment.strip()}\n```\n" if fragment.strip() else " "
     return (
-        "EXAMPLE ALREADY SHOWN: above your text the user sees a NeTEx fragment generated for this question and "
-        f"validated against the NeTEx schema, using these elements: {', '.join(elements)}. Each element's "
-        "definition from the schema is shown with it. Do not describe, mention or repeat that fragment, do not "
-        "define these elements, and do not say what the evidence lacks. Write only what the evidence adds about "
-        "these elements: allowed values and types, required or usual sibling elements and attributes, which "
-        "parent they belong in, and how the standard's own examples use them. At most four sentences, each cited "
-        "[E#], then at most one verbatim snippet (at most 10 lines, in a ```xml block) from one evidence block "
-        "that uses the same elements. If the evidence adds nothing about these elements, return exactly: "
+        "EXAMPLE ALREADY SHOWN: above your text the user sees this NeTEx fragment, generated for the "
+        f"question and validated against the NeTEx schema:{shown}It uses these elements: {', '.join(elements)}. "
+        "Above it the user is told which element holds each value of the question, and below it each "
+        "element's definition from the schema. Do not repeat or describe the fragment, do not define these "
+        "elements, and do not say what the evidence lacks. Write only what the evidence adds about the "
+        "elements that hold the question's values, as the standard's own examples use them: where they sit, "
+        "which elements usually come with them, allowed values and types. Prefer evidence blocks that use "
+        "those elements; leave out blocks that do not. At most four sentences, each cited [E#], then at most "
+        "one verbatim snippet (at most 10 lines, in a ```xml block) from one evidence block that uses the same "
+        'elements. If the evidence adds nothing about these elements, return exactly: '
         '{"answer": "", "citations_used": [], "evidence_answers_question": true}'
     )
 
@@ -1399,9 +1404,11 @@ def _build_messages(
     detected_language: str | None = None,
     example_elements: list[str] | None = None,
     structure_element: str | None = None,
+    example_fragment: str = "",
 ) -> list[dict]:
     context_lines = []
-    focus_terms = _question_focus_terms(question)
+    # With a generated example, trimming keeps its elements (those holding the question's values first) in view.
+    focus_terms = list(dict.fromkeys(list(example_elements or []) + list(_question_focus_terms(question))))
     for index, chunk in enumerate(chunks[:max_chunks], start=1):
         # A legislation chunk is one article (or part of one), bounded when the act is indexed. Its
         # tail holds the last points of a list, so a cut dropped e.g. Art. 4(1)(c) and 4(2) of MMTIS
@@ -1604,7 +1611,7 @@ def _build_messages(
         "- If a requested detail is not in the evidence, explicitly state that — in the response language, not English "
         "(unless English is the response language)\n\n"
         f"{COMPOSITION_RULE + chr(10) if composition else ''}"
-        f"{generated_example_rule(example_elements) + chr(10) + chr(10) if example_elements else ''}"
+        f"{generated_example_rule(example_elements, example_fragment) + chr(10) + chr(10) if example_elements else ''}"
         f"{schema_structure_rule(structure_element) + chr(10) + chr(10) if structure_element else ''}"
         "Write your answer:"
     )
@@ -1891,6 +1898,7 @@ def generate_answer_llm(
     all_candidates: list[dict] | None = None,
     example_elements: list[str] | None = None,
     structure_element: str | None = None,
+    example_fragment: str = "",
 ) -> dict:
     """Generate a grounded answer through a configurable OpenAI-compatible API.
 
@@ -1926,6 +1934,7 @@ def generate_answer_llm(
         detected_language=target_language,
         example_elements=example_elements,
         structure_element=structure_element,
+        example_fragment=example_fragment,
     )
 
     primary_base_url = (settings.LLM_API_BASE_URL or "").strip()
@@ -2182,6 +2191,7 @@ def stream_answer_llm(
     all_candidates: list[dict] | None = None,
     example_elements: list[str] | None = None,
     structure_element: str | None = None,
+    example_fragment: str = "",
 ) -> Generator[tuple[str, object], None, None]:
     """
     Generator yielding (event_type, payload) tuples for streaming narration.
@@ -2224,6 +2234,7 @@ def stream_answer_llm(
         detected_language=detected_language,
         example_elements=example_elements,
         structure_element=structure_element,
+        example_fragment=example_fragment,
     )
 
     # Buffer all tokens before yielding any — validation must pass the full

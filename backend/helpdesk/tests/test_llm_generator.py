@@ -805,7 +805,9 @@ class GeneratedExamplePromptTests(SimpleTestCase):
         elements = ["SiteFrame", "StopPlace", "Quay"]
         system, user = (m["content"] for m in _build_messages(self.QUESTION, [self.CHUNK], example_elements=elements))
         self.assertTrue(user.endswith(generated_example_rule(elements) + "\n\nWrite your answer:"))
-        self.assertIn("using these elements: SiteFrame, StopPlace, Quay", user)
+        with_fragment = _build_messages(self.QUESTION, [self.CHUNK], example_elements=elements, example_fragment="<SiteFrame/>")[1]["content"]
+        self.assertIn("```xml\n<SiteFrame/>\n```", with_fragment)
+        self.assertIn("It uses these elements: SiteFrame, StopPlace, Quay.", user)
         self.assertIn('return exactly: {"answer": ""', user)
         self.assertNotIn("Never synthesize or invent examples", system)
 

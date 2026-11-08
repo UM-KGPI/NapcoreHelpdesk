@@ -19,14 +19,32 @@ describe("GeneratedExampleBlock", () => {
         }}
       />,
     );
-    expect(screen.getByText("Generated example")).toBeTruthy();
-    expect(screen.getByText(/Generated for this question · valid against NeTEx 2\.0/)).toBeTruthy();
+    expect(screen.getByRole("heading").textContent).toBe("Generated example for this question (valid against NeTEx 2.0, commit 37ff1e4)");
     expect(screen.getByText(/commit 37ff1e4/)).toBeTruthy();
     expect(screen.getByText(/<ResourceFrame>/)).toBeTruthy();
     // The block's one button is the download, next to the fragment; copying is the answer's Copy answer.
     expect(screen.getAllByRole("button").map((b) => b.getAttribute("aria-label"))).toEqual([
       "Download generated example as XML file",
     ]);
+  });
+
+  it("says where each value of the question goes, before the fragment", () => {
+    render(
+      <GeneratedExampleBlock
+        example={{
+          valid: true,
+          attempts: 1,
+          xml: "<ResourceFrame/>",
+          valuePlaces: [
+            { value: "49", element: "SeatingCapacity", path: ["ResourceFrame", "vehicleTypes", "VehicleType", "capacities", "PassengerCapacity"] },
+            { value: "1", element: "WheelchairPlaceCapacity", path: ["ResourceFrame", "vehicleTypes", "VehicleType", "capacities", "PassengerCapacity"] },
+          ],
+        }}
+      />,
+    );
+    const lead = screen.getByRole("list", { name: "Where the question's values go" });
+    expect(lead.textContent).toContain("49 → SeatingCapacity in VehicleType › capacities › PassengerCapacity");
+    expect(lead.textContent).toContain("1 → WheelchairPlaceCapacity");
   });
 
   it("explains each element in the schema's words", () => {
@@ -56,7 +74,7 @@ describe("GeneratedExampleBlock", () => {
   it("never shows XML that did not validate", () => {
     render(<GeneratedExampleBlock example={{ valid: false, attempts: 3, errors: ["line 1: ..."] }} />);
     expect(screen.getByText(/No NeTEx example valid against the schema/)).toBeTruthy();
-    expect(screen.queryByText("Generated example")).toBeNull();
+    expect(screen.queryByText(/^Generated example/)).toBeNull();
   });
 
   it("renders nothing when no example was asked for", () => {

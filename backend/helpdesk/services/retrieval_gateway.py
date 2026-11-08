@@ -503,6 +503,35 @@ def _added_candidate(chunk: SourceChunk, score: float) -> dict:
     }
 
 
+def examples_using_elements(elements: list[str], limit: int = 3, repository: str = "netex") -> list[dict]:
+    """The standard's own example chunks that use the given elements, most of them first, one per file.
+
+    For a generated example, the text is about how the standard fills the elements that hold the
+    question's values; similarity search found a rail example without WheelchairPlaceCapacity for "a
+    coach with 49 seats and 1 wheelchair area" while nine example files use it. A text lookup on the
+    element tags (about 80 ms) finds them directly.
+    """
+    tags = [f"<{name}>" for name in elements if re.fullmatch(r"[A-Za-z][\w.-]*", name)][:4]
+    if not tags:
+        return []
+    base = SourceChunk.objects.filter(repository_url__icontains=repository, source_path__startswith="examples/")
+    found: list[dict] = []
+    files: set[str] = set()
+    # All tags first, then fewer: a chunk using every value element shows them together.
+    for size in range(len(tags), 0, -1):
+        query = base
+        for tag in tags[:size]:
+            query = query.filter(text__contains=tag)
+        for chunk in query.order_by("source_path", "chunk_id")[:40]:
+            if chunk.source_path in files or chunk.source_path.startswith(".mylocal"):
+                continue
+            files.add(chunk.source_path)
+            found.append(_added_candidate(chunk, 1.0))
+            if len(found) >= limit:
+                return found
+    return found
+
+
 MAX_NAMED_EXAMPLES = 2
 # Example chunks read per question: the chunks with a heading, which only Turtle examples have.
 _NAMED_EXAMPLE_SCAN_LIMIT = 2000

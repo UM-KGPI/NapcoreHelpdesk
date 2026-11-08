@@ -1235,11 +1235,16 @@ a {
 }
 .generated-example-badge {
   color: #6b5500;
-  margin: 0 0 0.5rem;
+  font-weight: normal;
+  font-size: 0.85em;
 }
 .generated-example pre {
   max-height: 24rem;
   overflow: auto;
+}
+.generated-example-lead {
+  margin: 0 0 0.5rem;
+  padding-left: 1.1rem;
 }
 /* The download button sits in the fragment's top-right corner, part of the code it downloads. */
 .generated-example-code {

@@ -1,7 +1,7 @@
 /**
  * The body of an assistant turn. A block taken from the schema comes first when there is one: a valid
  * generated example (an "example with values" question) or what an element contains (a "what does X
- * contain" question). The text follows under "In the standard", only when there is any: it then adds
+ * contain" question). The text follows it, without a heading (every answer is source-grounded), only when there is any: it then adds
  * what the evidence says, and is left out when it had nothing to add or failed validation. Without a
  * block, the text alone, as before.
  */
@@ -32,9 +32,6 @@ export default function AnswerBody({
       {block}
       {text.trim() ? (
         <div className="answer-in-standard">
-          <p className="tiny">
-            <strong>In the standard</strong>
-          </p>
           <AnswerMarkdown text={text} />
         </div>
       ) : null}

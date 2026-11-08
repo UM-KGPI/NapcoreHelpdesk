@@ -68,7 +68,7 @@ from helpdesk.services.question_parsing import (
 )
 from helpdesk.services.semantic_abstention import semantic_abstention_message
 from helpdesk.services.index_builder import index_repository
-from helpdesk.services.netex_example_generator import example_element_names, generate_netex_example
+from helpdesk.services.netex_example_generator import example_element_names, generate_netex_example, value_element_names
 from helpdesk.services.schema_structure import schema_structure_for
 from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 from helpdesk.services.retrieval_event_logger import log_retrieval_events
@@ -174,14 +174,29 @@ def _min_evidence_results() -> int:
     return max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 4)))
 
 
-def _legal_context(mode: str, scope: list[str] | None) -> list[dict]:
+# Words that make a question about law or obligation: only then is the "Legal context" line relevant.
+# Before 2026-11-08 every NeTEx answer carried "MMTIS Art. 4 · TEL TSI App. C", schema questions included.
+_LEGAL_INTENT = re.compile(
+    r"\b(?:mandatory|obligat\w*|oblig\w*|required\s+(?:by|under|to)|requirements?\s+(?:of|in|under)|must\s+(?:I|we|a|an|the)\b"
+    r"|compulsory|regulat\w*|directive|delegated|implementing\s+act|legislat\w*|legal\w*|law|laws|lawful|complian\w*|comply"
+    r"|national\s+access\s+point|NAPs?\b|MMTIS|RTTI|SRTI|SSTP|TSI|EUR-Lex|article|art\.)",
+    re.IGNORECASE,
+)
+
+
+def _asks_about_law(question: str) -> bool:
+    return bool(_LEGAL_INTENT.search(question or ""))
+
+
+def _legal_context(mode: str, scope: list[str] | None, question: str = "") -> list[dict]:
     """Provisions of the EU acts that name the standards an answer is about, for a "Legal context" line.
 
-    Empty for refusals, for answers that name no standard, and for answers already about legislation.
+    Only when the question asks about law or obligation (_LEGAL_INTENT). Empty for refusals, for answers
+    that name no standard, and for answers already about legislation (they cite the acts themselves).
     """
     from helpdesk.services.regulations import SCOPE, legal_context
 
-    if mode == QuestionEvent.MODE_ABSTAIN or not scope or SCOPE in scope:
+    if mode == QuestionEvent.MODE_ABSTAIN or not scope or SCOPE in scope or not _asks_about_law(question):
         return []
     return legal_context(list(scope))
 
@@ -1390,6 +1405,13 @@ class QuestionAnswerView(APIView):
                         min_results=_min_evidence_results(),
                         english_question=f"{english_question or question} {' '.join(example_elements)}",
                     )
+                    # The standard's own examples that use the elements holding the question's values come
+                    # first: the text says how the standard fills them (SeatingCapacity, WheelchairPlaceCapacity).
+                    from helpdesk.services.retrieval_gateway import examples_using_elements
+
+                    using = examples_using_elements(value_element_names(generated_example))
+                    using_ids = {chunk["chunkId"] for chunk in using}
+                    element_chunks = (using + [c for c in element_chunks if c["chunkId"] not in using_ids])[:retrieval_top_k]
                     if element_chunks:
                         chunks, graph_trace = element_chunks, element_trace
                         retrieved_chunks = chunks
@@ -1407,6 +1429,7 @@ class QuestionAnswerView(APIView):
                             all_candidates=all_candidates,
                             example_elements=example_elements or None,
                             structure_element=schema_structure["element"] if structure_shown else None,
+                            example_fragment=(generated_example or {}).get("xml", "") if example_ready else "",
                         )
                         llm_generated = True
                     except LLMGenerationError:
@@ -1612,7 +1635,7 @@ class QuestionAnswerView(APIView):
                 "confidence": confidence,
                 "answer": answer_text,
                 "citations": citations,
-                "legalContext": _legal_context(mode, effective_scope),
+                "legalContext": _legal_context(mode, effective_scope, question),
                 "abstained": abstained,
                 "abstentionReason": abstention_reason,
                 "reviewRequired": review_required,
@@ -1923,6 +1946,13 @@ class QuestionAnswerStreamView(APIView):
                         min_results=_min_evidence_results(),
                         english_question=f"{english_question or question} {' '.join(example_elements)}",
                     )
+                    # The standard's own examples that use the elements holding the question's values come
+                    # first: the text says how the standard fills them (SeatingCapacity, WheelchairPlaceCapacity).
+                    from helpdesk.services.retrieval_gateway import examples_using_elements
+
+                    using = examples_using_elements(value_element_names(generated_example))
+                    using_ids = {chunk["chunkId"] for chunk in using}
+                    element_chunks = (using + [c for c in element_chunks if c["chunkId"] not in using_ids])[:retrieval_top_k]
                     if element_chunks:
                         chunks, graph_trace = element_chunks, element_trace
                         retrieved_chunks = chunks
@@ -1941,6 +1971,7 @@ class QuestionAnswerStreamView(APIView):
                             all_candidates=all_candidates,
                             example_elements=example_elements or None,
                             structure_element=schema_structure["element"] if structure_shown else None,
+                            example_fragment=(generated_example or {}).get("xml", "") if example_ready else "",
                         ):
                             if event_type == "token":
                                 yield self._sse({"type": "token", "delta": payload})
@@ -2147,7 +2178,7 @@ class QuestionAnswerStreamView(APIView):
                 "confidence": confidence,
                 "answer": answer_text,
                 "citations": citations,
-                "legalContext": _legal_context(mode, effective_scope),
+                "legalContext": _legal_context(mode, effective_scope, question),
                 "abstained": abstained,
                 "abstentionReason": abstention_reason,
                 "reviewRequired": review_required,
@@ -2329,7 +2360,7 @@ class QuestionEventDetailView(APIView):
                 "mode": event.mode,
                 "confidence": float(event.confidence),
                 "citations": citations,
-                "legalContext": _legal_context(event.mode, event.standards_scope),
+                "legalContext": _legal_context(event.mode, event.standards_scope, event.question),
                 "generatedExample": (event.trace or {}).get("generatedExample"),
                 "schemaStructure": (event.trace or {}).get("schemaStructure"),
                 "trace": event.trace or {},

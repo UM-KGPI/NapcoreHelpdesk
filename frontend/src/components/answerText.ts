@@ -4,16 +4,18 @@
  * cover the blocks too.
  */
 import { citationDisplayName, citationMarker } from "../citationLabels";
+import { validityNote } from "./GeneratedExample";
 import type { AnswerResponse, GeneratedExample, SchemaStructure } from "../types";
 
 export function generatedExampleText(example?: GeneratedExample | null): string {
   if (!example?.valid || !example.xml) {
     return "";
   }
-  const version = example.schemaVersion ? `NeTEx ${example.schemaVersion}` : "NeTEx";
-  const commit = example.schemaCommit ? ` (commit ${example.schemaCommit.slice(0, 7)})` : "";
   const lines = [
-    `Generated example (generated for this question · valid against ${version}${commit} · built from the cited evidence):`,
+    `Generated example for this question (${validityNote(example)}):`,
+    ...(example.valuePlaces ?? []).map(
+      (place) => `- ${place.value} → ${place.element}${place.path.length ? ` in ${place.path.slice(-3).join(" › ")}` : ""}`,
+    ),
     "```xml",
     example.xml,
     "```",
@@ -55,17 +57,16 @@ export function blockText(example?: GeneratedExample | null, structure?: SchemaS
   return generatedExampleText(example) || schemaStructureText(structure);
 }
 
-/** The block first, then the text under "In the standard" when both exist; whichever exists otherwise. */
+/** The block first, then the text when both exist; whichever exists otherwise. */
 export function answerBodyText(
   text: string,
   example?: GeneratedExample | null,
   structure?: SchemaStructure | null,
-  heading = "In the standard:",
 ): string {
   const block = blockText(example, structure);
   const answerText = text.trim();
   if (block && answerText) {
-    return `${block}\n\n${heading}\n${answerText}`;
+    return `${block}\n\n${answerText}`;
   }
   return block || answerText;
 }
