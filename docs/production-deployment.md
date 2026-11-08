@@ -881,6 +881,10 @@ service, `netex-validator` (`backend/helpdesk/netex_validator_service.py`):
   documentation contains the question's words (`GET /declarations?q=seat+wheelchair` on the validator:
   element, possible parents, definition). Text retrieval alone missed `SeatingCapacity` for "a coach with
   49 seats"; `generatedExample.schemaDeclarations` counts what the model was given.
+- "What does X contain / which elements or attributes does X have" (NeTEx scope) is answered from the same
+  index with no model: `GET /structure?element=X` gives X's own child elements, those inherited from each
+  base type, and its attributes, each with the schema's definition (`answer.schemaStructure`, shown first;
+  `SCHEMA_STRUCTURE_ENABLED`, default `True`). The text then only adds what the evidence says about using X.
 - A question value counts as modelled only when it is the whole content of an element or attribute
   (`<SeatingCapacity>50</SeatingCapacity>`), never when mentioned inside a `Name` or `Description` text.
 - With a valid example the example is the answer and comes first. The text is then generated from a second

@@ -96,6 +96,7 @@ env = environ.Env(
     # Generated NeTEx fragments for "example with values" questions, validated against the XSD
     # (netex_example_generator).
     NETEX_EXAMPLE_GENERATOR_ENABLED=(bool, True),
+    SCHEMA_STRUCTURE_ENABLED=(bool, True),
     NETEX_VALIDATOR_URL=(str, "http://netex-validator:8091"),
     CONTROLLER_LLM_CTX_SIZE=(int, 2048),
     CONTROLLER_LLM_MAX_TOKENS=(int, 96),
@@ -362,6 +363,8 @@ VOCABULARY_BRIDGE_TIMEOUT_SECONDS = env("VOCABULARY_BRIDGE_TIMEOUT_SECONDS")
 PROPERTY_TERMS_ENABLED = env("PROPERTY_TERMS_ENABLED")
 ANSWER_COMPOSITION_ENABLED = env("ANSWER_COMPOSITION_ENABLED")
 NETEX_EXAMPLE_GENERATOR_ENABLED = env("NETEX_EXAMPLE_GENERATOR_ENABLED")
+# "What does X contain" answered from the NeTEx schema index (services/schema_structure.py).
+SCHEMA_STRUCTURE_ENABLED = env("SCHEMA_STRUCTURE_ENABLED")
 NETEX_VALIDATOR_URL = env("NETEX_VALIDATOR_URL").strip()
 CONTROLLER_LLM_CTX_SIZE = env("CONTROLLER_LLM_CTX_SIZE")
 CONTROLLER_LLM_MAX_TOKENS = env("CONTROLLER_LLM_MAX_TOKENS")

@@ -115,6 +115,15 @@ export interface GeneratedExample {
   schemaDeclarations?: number;
 }
 
+/** What an element contains according to the NeTEx schema (own children first, then inherited), no model involved. */
+export interface SchemaStructure {
+  element: string;
+  documentation?: string;
+  source?: string;
+  groups: { owner: string; inherited: boolean; children: { name: string; documentation: string }[] }[];
+  attributes: { name: string; documentation: string; owner: string }[];
+}
+
 export interface AnswerResponse {
   answerId: string;
   mode: AnswerMode;
@@ -126,6 +135,7 @@ export interface AnswerResponse {
   abstentionReason: string | null;
   reviewRequired: boolean;
   generatedExample?: GeneratedExample | null;
+  schemaStructure?: SchemaStructure | null;
   trace: AnswerTrace;
 }
 
@@ -317,6 +327,7 @@ export interface QuestionEventDetail {
   citations: QuestionEventCitation[];
   legalContext?: LegalContextItem[];
   generatedExample?: GeneratedExample | null;
+  schemaStructure?: SchemaStructure | null;
   createdAt: string;
 }
 

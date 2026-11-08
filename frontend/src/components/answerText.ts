@@ -1,9 +1,9 @@
 /**
- * Plain-text rendering of a generated NeTEx example, for "Copy answer" and "Export chat": the same
- * content the page shows (badge, fragment, what each element is), so those two actions cover the
- * example too and no separate "copy fragment" is needed.
+ * Plain-text rendering of the blocks taken from the schema (a generated example, or what an element
+ * contains), for "Copy answer" and "Export chat": the same content the page shows, so those two actions
+ * cover the blocks too.
  */
-import type { GeneratedExample } from "../types";
+import type { GeneratedExample, SchemaStructure } from "../types";
 
 export function generatedExampleText(example?: GeneratedExample | null): string {
   if (!example?.valid || !example.xml) {
@@ -26,12 +26,45 @@ export function generatedExampleText(example?: GeneratedExample | null): string 
   return lines.join("\n");
 }
 
-/** The example first, then the text under "In the standard" when both exist; whichever exists otherwise. */
-export function answerBodyText(text: string, example?: GeneratedExample | null, heading = "In the standard:"): string {
-  const exampleText = generatedExampleText(example);
-  const answerText = text.trim();
-  if (exampleText && answerText) {
-    return `${exampleText}\n\n${heading}\n${answerText}`;
+export function schemaStructureText(structure?: SchemaStructure | null): string {
+  if (!structure) {
+    return "";
   }
-  return exampleText || answerText;
+  const lines = [`What ${structure.element} contains, from the NeTEx schema${structure.source ? ` (${structure.source})` : ""}:`];
+  if (structure.documentation) {
+    lines.push(structure.documentation);
+  }
+  for (const group of structure.groups) {
+    lines.push("", group.inherited ? `Inherited as ${group.owner}:` : "Its own elements:");
+    for (const child of group.children) {
+      lines.push(`- ${child.name}: ${child.documentation}`);
+    }
+  }
+  if (structure.attributes.length > 0) {
+    lines.push("", "Attributes:");
+    for (const attribute of structure.attributes) {
+      lines.push(`- ${attribute.name}: ${attribute.documentation}`);
+    }
+  }
+  return lines.join("\n");
+}
+
+/** The block shown first, as text: the valid example when there is one, else the structure, else nothing. */
+export function blockText(example?: GeneratedExample | null, structure?: SchemaStructure | null): string {
+  return generatedExampleText(example) || schemaStructureText(structure);
+}
+
+/** The block first, then the text under "In the standard" when both exist; whichever exists otherwise. */
+export function answerBodyText(
+  text: string,
+  example?: GeneratedExample | null,
+  structure?: SchemaStructure | null,
+  heading = "In the standard:",
+): string {
+  const block = blockText(example, structure);
+  const answerText = text.trim();
+  if (block && answerText) {
+    return `${block}\n\n${heading}\n${answerText}`;
+  }
+  return block || answerText;
 }

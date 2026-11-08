@@ -68,6 +68,7 @@ from helpdesk.services.question_parsing import (
 from helpdesk.services.semantic_abstention import semantic_abstention_message
 from helpdesk.services.index_builder import index_repository
 from helpdesk.services.netex_example_generator import example_element_names, generate_netex_example
+from helpdesk.services.schema_structure import schema_structure_for
 from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 from helpdesk.services.retrieval_event_logger import log_retrieval_events
 from helpdesk.services.rule_engine import evaluate_semantic_rules
@@ -1170,6 +1171,7 @@ class QuestionAnswerView(APIView):
         abstention_reason = None
         generated_example = None
         dropped_answer = None
+        schema_structure = None
         review_required = True
         matched_faq_entry_id = None
         retrieval_event_ids = []
@@ -1357,6 +1359,9 @@ class QuestionAnswerView(APIView):
                     semantic_fallback = "PARTIAL_EVIDENCE"
                 answer_text = "I do not have sufficient approved-source evidence to answer this safely."
             else:
+                # What the element contains, from the schema, for "what does X contain" questions (no model).
+                schema_structure = schema_structure_for(question, effective_scope)
+                structure_shown = bool(schema_structure)
                 # The example first, so the text can explain it instead of saying none exists.
                 generated_example = generate_netex_example(question, chunks, effective_scope)
                 example_ready = bool(generated_example and generated_example.get("valid"))
@@ -1389,6 +1394,7 @@ class QuestionAnswerView(APIView):
                             language=language,
                             all_candidates=all_candidates,
                             example_elements=example_elements or None,
+                            structure_element=schema_structure["element"] if structure_shown else None,
                         )
                         llm_generated = True
                     except LLMGenerationError:
@@ -1415,11 +1421,11 @@ class QuestionAnswerView(APIView):
                     citations = _citations_from_prompt_order(chunks=chunks, answer_text=answer_text)
                 else:
                     citations = _select_citations(chunks=chunks, max_citations=max_citations)
-                if example_ready and generated.get("answer_validated") is False:
-                    # Example requests: text that failed validation is noise next to a valid example.
+                if (example_ready or structure_shown) and generated.get("answer_validated") is False:
+                    # With a block from the schema (example or structure), text that failed validation is noise.
                     dropped_answer, answer_text = answer_text, ""
-                if example_ready and not answer_text.strip():
-                    # The example and its schema notes are the answer; the text had nothing to add.
+                if (example_ready or structure_shown) and not answer_text.strip():
+                    # The block from the schema is the answer; the text had nothing to add.
                     policy = {"allowed": True, "reason": None, "review_required": False}
                     citations = []
                 else:
@@ -1446,7 +1452,7 @@ class QuestionAnswerView(APIView):
                     mode = QuestionEvent.MODE_RAG
                     review_required = policy["review_required"] or review_required
                     # A valid generated example answers an example request the evidence alone cannot.
-                    if llm_generated and generated.get("evidence_answers_question") is False and not example_ready:
+                    if llm_generated and generated.get("evidence_answers_question") is False and not (example_ready or structure_shown):
                         mode, confidence, review_required, abstained, abstention_reason = _non_answer_outcome(
                             allow_abstain=allow_abstain
                         )
@@ -1580,6 +1586,7 @@ class QuestionAnswerView(APIView):
             # for review); None when no LLM answer was generated.
             "llmAnswerValidated": (generated.get("answer_validated") if isinstance(locals().get("generated"), dict) else None),
             "generatedExample": generated_example,
+            "schemaStructure": schema_structure,
         }
 
         # Persist trace to event for later retrieval
@@ -1598,6 +1605,7 @@ class QuestionAnswerView(APIView):
                 "abstentionReason": abstention_reason,
                 "reviewRequired": review_required,
                 "generatedExample": generated_example,
+                "schemaStructure": schema_structure,
                 "trace": trace_response,
             },
             status=status.HTTP_200_OK,
@@ -1688,6 +1696,7 @@ class QuestionAnswerStreamView(APIView):
         abstention_reason = None
         generated_example = None
         dropped_answer = None
+        schema_structure = None
         review_required = True
         matched_faq_entry_id = None
         retrieval_event_ids = []
@@ -1883,6 +1892,9 @@ class QuestionAnswerStreamView(APIView):
                 use_llm = generation_profile == "llm-ready" and settings.LLM_ENABLED
                 if use_llm:
                     yield self._status("generating")
+                # What the element contains, from the schema, for "what does X contain" questions (no model).
+                schema_structure = schema_structure_for(question, effective_scope)
+                structure_shown = bool(schema_structure)
                 # The example first, so the text can explain it instead of saying none exists.
                 generated_example = generate_netex_example(question, chunks, effective_scope)
                 example_ready = bool(generated_example and generated_example.get("valid"))
@@ -1916,6 +1928,7 @@ class QuestionAnswerStreamView(APIView):
                             language=language,
                             all_candidates=all_candidates,
                             example_elements=example_elements or None,
+                            structure_element=schema_structure["element"] if structure_shown else None,
                         ):
                             if event_type == "token":
                                 yield self._sse({"type": "token", "delta": payload})
@@ -1950,11 +1963,11 @@ class QuestionAnswerStreamView(APIView):
                     citations = _citations_from_prompt_order(chunks=chunks, answer_text=answer_text)
                 else:
                     citations = _select_citations(chunks=chunks, max_citations=max_citations)
-                if example_ready and generated.get("answer_validated") is False:
-                    # Example requests: text that failed validation is noise next to a valid example.
+                if (example_ready or structure_shown) and generated.get("answer_validated") is False:
+                    # With a block from the schema (example or structure), text that failed validation is noise.
                     dropped_answer, answer_text = answer_text, ""
-                if example_ready and not answer_text.strip():
-                    # The example and its schema notes are the answer; the text had nothing to add.
+                if (example_ready or structure_shown) and not answer_text.strip():
+                    # The block from the schema is the answer; the text had nothing to add.
                     policy = {"allowed": True, "reason": None, "review_required": False}
                     citations = []
                 else:
@@ -1979,7 +1992,7 @@ class QuestionAnswerStreamView(APIView):
                     mode = QuestionEvent.MODE_RAG
                     review_required = policy["review_required"] or review_required
                     # A valid generated example answers an example request the evidence alone cannot.
-                    if llm_generated and generated.get("evidence_answers_question") is False and not example_ready:
+                    if llm_generated and generated.get("evidence_answers_question") is False and not (example_ready or structure_shown):
                         mode, confidence, review_required, abstained, abstention_reason = _non_answer_outcome(
                             allow_abstain=allow_abstain
                         )
@@ -2107,6 +2120,7 @@ class QuestionAnswerStreamView(APIView):
             # for review); None when no LLM answer was generated.
             "llmAnswerValidated": (generated.get("answer_validated") if isinstance(locals().get("generated"), dict) else None),
             "generatedExample": generated_example,
+            "schemaStructure": schema_structure,
         }
 
         # Persist trace to event
@@ -2126,6 +2140,7 @@ class QuestionAnswerStreamView(APIView):
                 "abstentionReason": abstention_reason,
                 "reviewRequired": review_required,
                 "generatedExample": generated_example,
+                "schemaStructure": schema_structure,
                 "trace": trace_response,
             },
         })
@@ -2304,6 +2319,7 @@ class QuestionEventDetailView(APIView):
                 "citations": citations,
                 "legalContext": _legal_context(event.mode, event.standards_scope),
                 "generatedExample": (event.trace or {}).get("generatedExample"),
+                "schemaStructure": (event.trace or {}).get("schemaStructure"),
                 "trace": event.trace or {},
                 "createdAt": event.created_at.isoformat().replace("+00:00", "Z"),
             },

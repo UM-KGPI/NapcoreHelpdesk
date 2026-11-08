@@ -19,7 +19,7 @@ import { citationDisplayName, citationMarker, groupCitationsBySource } from "../
 import GeneratedExampleBlock from "./GeneratedExample";
 import AnswerBody from "./AnswerBody";
 import { downloadExampleDocument } from "./generatedExampleActions";
-import { answerBodyText, generatedExampleText } from "./answerText";
+import { answerBodyText, blockText } from "./answerText";
 import LegalContext from "./LegalContext";
 import InspiredByOthersPanel from "./InspiredByOthersPanel";
 
@@ -83,7 +83,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
 
   const buildAnswerWithEvidenceText = (turn: ChatTurn): string => {
     // The generated example (when valid) first, then the text, then the evidence list: what the page shows.
-    const answerText = answerBodyText(turn.text, turn.answer?.generatedExample);
+    const answerText = answerBodyText(turn.text, turn.answer?.generatedExample, turn.answer?.schemaStructure);
     if (!answerText) {
       return "";
     }
@@ -160,7 +160,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
       lines.push(`## ${turn.role === "assistant" ? "Assistant" : "User"}`);
       lines.push(`Timestamp: ${turn.createdAt}`);
       lines.push("");
-      const exampleText = turn.role === "assistant" ? generatedExampleText(turn.answer?.generatedExample) : "";
+      const exampleText = turn.role === "assistant" ? blockText(turn.answer?.generatedExample, turn.answer?.schemaStructure) : "";
       if (exampleText) {
         lines.push(exampleText);
         if (turn.text.trim()) {
@@ -286,7 +286,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
             >
               <p className="chat-role">{turn.role}</p>
               {turn.role === "assistant" ? (
-                <AnswerBody text={turn.text} example={turn.answer?.generatedExample} />
+                <AnswerBody text={turn.text} example={turn.answer?.generatedExample} structure={turn.answer?.schemaStructure} />
               ) : (
                 <p>{turn.text}</p>
               )}
