@@ -80,6 +80,7 @@ export default function QuestionDetailPage({
               title: c.title,
             })),
             legalContext: detail.legalContext ?? [],
+            generatedExample: detail.generatedExample ?? null,
             abstained: false,
             abstentionReason: null,
             reviewRequired: false,

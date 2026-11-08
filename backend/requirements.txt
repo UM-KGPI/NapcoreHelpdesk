@@ -20,3 +20,5 @@ certifi>=2024.8.30,<2027.0.0
 langdetect>=1.0.9,<2.0
 # Semantic embeddings (embedding service only; see helpdesk/embedding_service.py).
 fastembed>=0.9.1,<0.10
+# NeTEx XSD validation of generated example fragments (helpdesk/services/netex_example_generator.py).
+lxml>=6.0,<7.0

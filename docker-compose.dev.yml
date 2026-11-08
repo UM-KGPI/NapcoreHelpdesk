@@ -120,6 +120,21 @@ services:
     mem_limit: ${EMBEDDER_MEM_LIMIT:-1536m}
     cpus: ${EMBEDDER_CPUS:-2.0}
 
+  # Validates the NeTEx example generator's fragments against NeTEx_publication.xsd (one compiled schema for
+  # every backend worker; see helpdesk/netex_validator_service.py).
+  netex-validator:
+    <<: *backend-build
+    restart: unless-stopped
+    working_dir: /app/backend
+    command: python -m helpdesk.netex_validator_service
+    volumes:
+      - ./backend:/app/backend
+      - ../NeTEx:/app/repos/NeTEx:ro
+    ports:
+      - "8091:8091"
+    mem_limit: ${NETEX_VALIDATOR_MEM_LIMIT:-512m}
+    cpus: ${NETEX_VALIDATOR_CPUS:-1.0}
+
   celery-beat:
     <<: *backend-base
     command: celery -A config beat -l info

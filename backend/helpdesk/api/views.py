@@ -67,6 +67,7 @@ from helpdesk.services.question_parsing import (
 )
 from helpdesk.services.semantic_abstention import semantic_abstention_message
 from helpdesk.services.index_builder import index_repository
+from helpdesk.services.netex_example_generator import generate_netex_example
 from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 from helpdesk.services.retrieval_event_logger import log_retrieval_events
 from helpdesk.services.rule_engine import evaluate_semantic_rules
@@ -1427,6 +1428,15 @@ class QuestionAnswerView(APIView):
         answer_text = _drop_markers_without_citation(answer_text=answer_text, citations=citations)
         answer_text, citations = _merge_citations_of_same_source(answer_text=answer_text, citations=citations)
 
+        # A NeTEx fragment for "example with values" questions, validated against the XSD (None otherwise).
+        # Also when the answer abstained for lack of a direct answer: no example in the standard has the
+        # question's values, which is exactly when a generated one helps. Never after a policy block.
+        generated_example = (
+            generate_netex_example(question, retrieved_chunks, effective_scope)
+            if retrieved_chunks
+            and (mode == QuestionEvent.MODE_RAG or abstention_reason == QuestionEvent.REASON_INSUFFICIENT_EVIDENCE)
+            else None
+        )
         answer_id = f"ans-{uuid4().hex[:12]}"
         # Persist the orchestration outcome as a question event before child trace records.
         event = log_question_event(
@@ -1528,6 +1538,7 @@ class QuestionAnswerView(APIView):
             # False when the answer was served although its retry failed validation too (it is then marked
             # for review); None when no LLM answer was generated.
             "llmAnswerValidated": (generated.get("answer_validated") if isinstance(locals().get("generated"), dict) else None),
+            "generatedExample": generated_example,
         }
 
         # Persist trace to event for later retrieval
@@ -1545,6 +1556,7 @@ class QuestionAnswerView(APIView):
                 "abstained": abstained,
                 "abstentionReason": abstention_reason,
                 "reviewRequired": review_required,
+                "generatedExample": generated_example,
                 "trace": trace_response,
             },
             status=status.HTTP_200_OK,
@@ -1910,6 +1922,15 @@ class QuestionAnswerStreamView(APIView):
         answer_text = _drop_markers_without_citation(answer_text=answer_text, citations=citations)
         answer_text, citations = _merge_citations_of_same_source(answer_text=answer_text, citations=citations)
 
+        # A NeTEx fragment for "example with values" questions, validated against the XSD (None otherwise).
+        # Also when the answer abstained for lack of a direct answer: no example in the standard has the
+        # question's values, which is exactly when a generated one helps. Never after a policy block.
+        generated_example = (
+            generate_netex_example(question, retrieved_chunks, effective_scope)
+            if retrieved_chunks
+            and (mode == QuestionEvent.MODE_RAG or abstention_reason == QuestionEvent.REASON_INSUFFICIENT_EVIDENCE)
+            else None
+        )
         answer_id = f"ans-{uuid4().hex[:12]}"
 
         event = log_question_event(
@@ -2008,6 +2029,7 @@ class QuestionAnswerStreamView(APIView):
             # False when the answer was served although its retry failed validation too (it is then marked
             # for review); None when no LLM answer was generated.
             "llmAnswerValidated": (generated.get("answer_validated") if isinstance(locals().get("generated"), dict) else None),
+            "generatedExample": generated_example,
         }
 
         # Persist trace to event
@@ -2026,6 +2048,7 @@ class QuestionAnswerStreamView(APIView):
                 "abstained": abstained,
                 "abstentionReason": abstention_reason,
                 "reviewRequired": review_required,
+                "generatedExample": generated_example,
                 "trace": trace_response,
             },
         })
@@ -2203,6 +2226,7 @@ class QuestionEventDetailView(APIView):
                 "confidence": float(event.confidence),
                 "citations": citations,
                 "legalContext": _legal_context(event.mode, event.standards_scope),
+                "generatedExample": (event.trace or {}).get("generatedExample"),
                 "trace": event.trace or {},
                 "createdAt": event.created_at.isoformat().replace("+00:00", "Z"),
             },

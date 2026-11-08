@@ -1213,3 +1213,25 @@ a {
   border-radius: 10px;
   padding: 0.5rem 0.8rem;
 }
+
+/* Generated NeTEx example under an answer (components/GeneratedExample.tsx). */
+.generated-example {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid #8a6d00;
+  background: rgba(138, 109, 0, 0.06);
+}
+.generated-example h4 {
+  margin: 0 0 0.25rem;
+}
+.generated-example-badge {
+  color: #6b5500;
+  margin: 0 0 0.5rem;
+}
+.generated-example pre {
+  max-height: 24rem;
+  overflow: auto;
+}
+.generated-example-actions button {
+  font-size: inherit;
+}

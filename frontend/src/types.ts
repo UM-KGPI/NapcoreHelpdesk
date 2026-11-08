@@ -98,6 +98,21 @@ export interface CrossStandardEvidencePartition {
   normativitySignals: Array<"mandatory" | "optional">;
 }
 
+/** A NeTEx fragment generated for an "example with values" question, validated against the XSD. */
+export interface GeneratedExample {
+  valid: boolean;
+  attempts: number;
+  xml?: string;
+  document?: string;
+  schema?: string;
+  schemaVersion?: string;
+  schemaCommit?: string;
+  evidenceChunkIds?: string[];
+  errors?: string[];
+  generationMs?: number;
+  validationMs?: number;
+}
+
 export interface AnswerResponse {
   answerId: string;
   mode: AnswerMode;
@@ -108,6 +123,7 @@ export interface AnswerResponse {
   abstained: boolean;
   abstentionReason: string | null;
   reviewRequired: boolean;
+  generatedExample?: GeneratedExample | null;
   trace: AnswerTrace;
 }
 
@@ -298,6 +314,7 @@ export interface QuestionEventDetail {
   confidence: number;
   citations: QuestionEventCitation[];
   legalContext?: LegalContextItem[];
+  generatedExample?: GeneratedExample | null;
   createdAt: string;
 }
 

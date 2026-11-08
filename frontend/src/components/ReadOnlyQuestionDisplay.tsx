@@ -11,6 +11,7 @@
 import React from "react";
 import { citationDisplayName, groupCitationsBySource } from "../citationLabels";
 import AnswerMarkdown from "./AnswerMarkdown";
+import GeneratedExampleBlock from "./GeneratedExample";
 import LegalContext from "./LegalContext";
 import type { ChatTurn } from "./UserChatWorkspace";
 
@@ -189,6 +190,7 @@ export default function ReadOnlyQuestionDisplay({
                       </ul>
                     </>
                   )}
+                  <GeneratedExampleBlock example={turn.answer.generatedExample} />
                   <LegalContext items={turn.answer.legalContext} />
                 </>
               )}
