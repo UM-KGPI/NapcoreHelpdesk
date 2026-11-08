@@ -516,3 +516,101 @@ class PartTests(SimpleTestCase):
             places = generator.part_places(fragment, "a stop place with an elevator")
         self.assertEqual([(p["value"], p["element"]) for p in places], [("an elevator", "LiftEquipment")])
         self.assertEqual(places[0]["path"], ["SiteFrame", "stopPlaces", "StopPlace", "placeEquipments"])
+
+
+LIFT = "How do I describe a lift in a station in NeTEx? Show me an example in XML."
+
+
+class PlainExampleRequestTests(SimpleTestCase):
+    """An example request without values, counts or parts (prod req-mw8cczxw, 2026-11-08): an excerpt of the
+    class the question is about, from the standard's own example files."""
+
+    def test_uses_the_concept_element(self):
+        found = {"valid": True, "origin": "standard", "validated": True, "sourcePath": "examples/a.xml"}
+        with patch.object(generator, "concept_elements", return_value=["LiftEquipment"]) as elements, patch.object(
+            generator, "_from_standard", return_value=found
+        ) as standard:
+            self.assertIs(generator.generate_netex_example(LIFT, [], ["NeTEx"]), found)
+        elements.assert_called_once()
+        self.assertEqual(standard.call_args.args[2], "LiftEquipment")
+
+    def test_no_concept_no_example(self):
+        with patch.object(generator, "concept_elements", return_value=[]), patch.object(generator, "_from_standard") as standard:
+            self.assertIsNone(generator.generate_netex_example(LIFT, [], ["NeTEx"]))
+        standard.assert_not_called()
+
+    def test_concept_matching_failure_is_no_example(self):
+        with patch.object(generator, "concept_elements", side_effect=RuntimeError("no index")):
+            self.assertIsNone(generator.generate_netex_example(LIFT, [], ["NeTEx"]))
+
+    def test_not_an_example_request(self):
+        with patch.object(generator, "concept_elements") as elements:
+            self.assertIsNone(generator.generate_netex_example("What is a StopPlace in NeTEx?", [], ["NeTEx"]))
+        elements.assert_not_called()
+
+    def test_a_valid_excerpt_is_preferred(self):
+        invalid = {"validated": False, "sourcePath": "examples/old.xml"}
+        valid = {"validated": True, "sourcePath": "examples/new.xml"}
+        with patch.object(generator, "_from_standard", side_effect=[invalid, valid]) as standard:
+            self.assertIs(generator._plain_standard_example(LIFT, ["NeTEx"], ["LiftEquipment"]), valid)
+        # The second try leaves out the file of the first.
+        self.assertEqual(standard.call_args_list[1].args[3], frozenset({"examples/old.xml"}))
+
+    def test_without_a_valid_excerpt_the_first_is_shown(self):
+        invalid = {"validated": False, "sourcePath": "examples/old.xml"}
+        def lookup(question, scope, element, exclude, max_between):
+            return invalid if not exclude and element == "LiftEquipment" else None
+
+        with patch.object(generator, "_from_standard", side_effect=lookup):
+            self.assertIs(generator._plain_standard_example(LIFT, ["NeTEx"], ["LiftEquipment", "LiftCallEquipment"]), invalid)
+
+
+from django.test import TestCase  # noqa: E402
+
+
+class PlainStandardExcerptTests(TestCase):
+    NESTED = (
+        '<PublicationDelivery xmlns="http://www.netex.org.uk/netex"><dataObjects><SiteFrame version="1" id="x:SF">'
+        '<stopPlaces><StopPlace version="1" id="x:SP" dataSourceRef="x:DS"><pathLinks><SitePathLink version="1" id="x:PL">'
+        '<placeEquipments><LiftEquipment version="1" id="x:L1"><Name>Deep lift</Name></LiftEquipment></placeEquipments>'
+        "</SitePathLink></pathLinks></StopPlace></stopPlaces></SiteFrame></dataObjects></PublicationDelivery>"
+    )
+    SHALLOW = (
+        '<PublicationDelivery xmlns="http://www.netex.org.uk/netex"><dataObjects><SiteFrame version="1" id="y:SF">'
+        '<stopPlaces><StopPlace version="1" id="y:SP" dataSourceRef="y:DS"><placeEquipments>'
+        '<LiftEquipment version="1" id="y:L1"><Name>Station lift</Name></LiftEquipment></placeEquipments>'
+        "</StopPlace></stopPlaces></SiteFrame></dataObjects></PublicationDelivery>"
+    )
+
+    def setUp(self):
+        from helpdesk.models import SourceChunk
+
+        self.root = tempfile.TemporaryDirectory()
+        repo = Path(self.root.name) / "NeTEx" / "examples"
+        repo.mkdir(parents=True)
+        for name, text in (("a_deep.xml", self.NESTED), ("b_shallow.xml", self.SHALLOW)):
+            (repo / name).write_text(text)
+            SourceChunk.objects.create(
+                repository_url="https://github.com/TransmodelEcosystem/NeTEx", commit_sha="abc", source_path=f"examples/{name}",
+                chunk_id=name, text=text, embedding_vector=[0.0] * 1535 + [1.0],
+            )
+
+    def tearDown(self):
+        self.root.cleanup()
+
+    def test_depth_limit_exclusion_and_shell_references_dropped(self):
+        with override_settings(SOURCE_CHECKOUT_DIR=self.root.name):
+            shallow = generator.standard_example(LIFT, ["NeTEx"], "LiftEquipment", max_between=2)
+            none_direct = generator.standard_example(LIFT, ["NeTEx"], "LiftEquipment", max_between=0)
+            deep = generator.standard_example(LIFT, ["NeTEx"], "LiftEquipment", exclude=frozenset({"examples/b_shallow.xml"}))
+            deep_limited = generator.standard_example(
+                LIFT, ["NeTEx"], "LiftEquipment", exclude=frozenset({"examples/b_shallow.xml"}), max_between=2
+            )
+        self.assertEqual(shallow["sourcePath"], "examples/b_shallow.xml")
+        self.assertIn("<StopPlace", shallow["fragment"])
+        self.assertIn("Station lift", shallow["fragment"])
+        # The stop place is a shell around the lift: its reference to a data source outside the excerpt goes.
+        self.assertNotIn("dataSourceRef", shallow["fragment"])
+        self.assertIsNone(none_direct)
+        self.assertEqual(deep["sourcePath"], "examples/a_deep.xml")
+        self.assertIsNone(deep_limited)

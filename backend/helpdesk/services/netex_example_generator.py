@@ -159,16 +159,47 @@ def other_question(question: str) -> str:
     return " ".join(asked)
 
 
-def wants_generated_example(question: str, scope: list[str] | None) -> bool:
-    """A request for a NeTEx example with concrete values ("a bus with 50 seats and 20 standing places")."""
+def asks_for_netex_example(question: str, scope: list[str] | None) -> bool:
+    """A request for a NeTEx example, with or without values."""
     if not getattr(settings, "NETEX_EXAMPLE_GENERATOR_ENABLED", True):
         return False
     names = {(name or "").strip().lower() for name in scope or []}
     if "netex" not in names and "netex" not in (question or "").lower():
         return False
-    if not _EXAMPLE_WORDS.search(question or ""):
+    return bool(_EXAMPLE_WORDS.search(question or ""))
+
+
+def wants_generated_example(question: str, scope: list[str] | None) -> bool:
+    """A request for a NeTEx example with concrete values ("a bus with 50 seats and 20 standing places")."""
+    if not asks_for_netex_example(question, scope):
         return False
     return bool(requested_values(question) or counted_words(question) or wanted_parts(question))
+
+
+MAX_EXAMPLE_CONCEPTS = 2
+
+
+def concept_elements(question: str) -> list[str]:
+    """The NeTEx elements of the classes the question is about, best first, that the standard's examples use: "How do I
+    describe a lift in a station? Show me an example." -> LiftEquipment (prod req-mw8cczxw, 2026-11-08: a
+    plain example request named no values or parts, so no example was made, though the standard's example
+    files have lifts). The classes come from concept matching (concept_presence.presence_concepts); the
+    first two are tried, as the nearest one is not always the one meant ("ticket machine": TICKET VALIDATOR
+    EQUIPMENT, then TICKETING EQUIPMENT)."""
+    from helpdesk.models import SourceChunk
+    from helpdesk.services.concept_presence import presence_concepts
+    from helpdesk.services.semantic_graph import TRANSMODEL_TO_CONCEPTS
+
+    in_examples = SourceChunk.objects.filter(repository_url__icontains="netex", source_path__startswith="examples/")
+    found: list[str] = []
+    for concept in presence_concepts(question)[:MAX_EXAMPLE_CONCEPTS]:
+        own = [concept] if concept.startswith("netex:") else []
+        for netex in own or sorted(c for c in TRANSMODEL_TO_CONCEPTS.get(concept, ()) if c.startswith("netex:")):
+            name = netex.split(":", 1)[1]
+            if name[:1].isupper() and name not in found and in_examples.filter(has_tag(name)).exists():
+                found.append(name)
+                break
+    return found
 
 
 # --- validation (netex-validator service, helpdesk/netex_validator_service.py) -------------------
@@ -530,7 +561,13 @@ def _pruned(obj, keep: set, local, max_leaves: int = 6):
     return shell
 
 
-def standard_example(question: str, scope: list[str] | None = None) -> dict | None:
+def standard_example(
+    question: str,
+    scope: list[str] | None = None,
+    element: str = "",
+    exclude: frozenset = frozenset(),
+    max_between: int | None = None,
+) -> dict | None:
     """An object from the standard's own example files with the shape the question asks for, when the
     question gives counts or parts but no other values: "a stop place with two quays" (exactly two Quay),
     "a stop place with an elevator" (at least one LiftEquipment inside). Verbatim, so grounded by
@@ -542,7 +579,7 @@ def standard_example(question: str, scope: list[str] | None = None) -> dict | No
     from helpdesk.models import SourceChunk
 
     shapes, parts = counted_shapes(question), wanted_parts(question)
-    if not shapes and not parts:
+    if not shapes and not parts and not element:
         return None
     numbers = {written for _, written, _ in shapes}
     if [value for value in requested_values(question) if value not in numbers]:
@@ -560,7 +597,9 @@ def standard_example(question: str, scope: list[str] | None = None) -> dict | No
             return None
         at_least.append((noun, element))
     subject = example_subject(question)
-    subject_element = resolve_element(subject) if subject else ""
+    # A plain example request ("show me an example of a lift"): an object of the element itself.
+    plain = bool(element) and not shapes and not parts
+    subject_element = element if plain else (resolve_element(subject) if subject else "")
     elements = [e for _, e in exact] + [e for _, e in at_least]
     # Files that use every element, each in any of their chunks: in a 4,000-line file the StopPlace and its
     # LiftEquipment sit in different chunks.
@@ -585,7 +624,7 @@ def standard_example(question: str, scope: list[str] | None = None) -> dict | No
     local = lambda tag: etree.QName(tag).localname if isinstance(tag, str) else ""  # noqa: E731
     checkout_root = Path(getattr(settings, "SOURCE_CHECKOUT_DIR", "/app/repos"))
     best = None  # (score, excerpt?, -lines, fragment, row, object name)
-    for source_path, row in ranked[:MAX_STANDARD_FILES]:
+    for source_path, row in [item for item in ranked if item[0] not in exclude][:MAX_STANDARD_FILES]:
         score = name_score(source_path)
         if best is not None and score < best[0]:
             break
@@ -609,6 +648,10 @@ def standard_example(question: str, scope: list[str] | None = None) -> dict | No
             frame_index = next((i for i, a in enumerate(ancestors) if local(a.tag).endswith("Frame")), None)
             if frame_index is None:
                 continue
+            # Ancestors between the frame's list and the object are kept as shells without their other
+            # children, which the schema may require (a SitePathLink's From and To before placeEquipments).
+            if max_between is not None and frame_index - 1 > max_between:
+                continue
             whole = copy.deepcopy(obj)
             # Size in elements: a parsed file without blank text serialises to one line.
             excerpt = sum(1 for e in obj.iter() if isinstance(e.tag, str)) > MAX_STANDARD_EXAMPLE_ELEMENTS
@@ -621,10 +664,13 @@ def standard_example(question: str, scope: list[str] | None = None) -> dict | No
                     )
                 whole = _pruned(obj, keep, local)
             chain = list(reversed(ancestors[: frame_index + 1]))  # frame ... direct parent
-            top = etree.Element(chain[0].tag, attrib=dict(chain[0].attrib))
+            # A shell's references (dataSourceRef="nptg:NaPTAN") point to objects the excerpt leaves out, and
+            # the schema's keyrefs then fail; the object itself is kept whole.
+            shell_attrib = lambda node: {k: v for k, v in node.attrib.items() if not k.endswith("Ref")}  # noqa: E731
+            top = etree.Element(chain[0].tag, attrib=shell_attrib(chain[0]))
             current = top
             for node in chain[1:]:
-                current = etree.SubElement(current, node.tag, attrib=dict(node.attrib))
+                current = etree.SubElement(current, node.tag, attrib=shell_attrib(node))
             current.append(whole)
             for element in top.iter():
                 if isinstance(element.tag, str):
@@ -770,12 +816,14 @@ def _ask_model(messages: list[dict]) -> str:
     return str(response["choices"][0]["message"]["content"] or "")
 
 
-def _from_standard(question: str, scope: list[str] | None) -> dict | None:
+def _from_standard(
+    question: str, scope: list[str] | None, element: str = "", exclude: frozenset = frozenset(), max_between: int | None = None
+) -> dict | None:
     """The answer's example taken from the standard (standard_example), checked against the XSD and
     described like a generated one. None when the standard has no example with the question's shape."""
     started = time.perf_counter()
     try:
-        found = standard_example(question, scope)
+        found = standard_example(question, scope, element, exclude, max_between)
     except Exception as exc:  # a broken file or the index unavailable: generate instead
         logger.warning("standard example lookup failed: %s", exc)
         return None
@@ -810,6 +858,30 @@ def _from_standard(question: str, scope: list[str] | None) -> dict | None:
     }
 
 
+MAX_PLAIN_EXAMPLE_FILES = 3
+
+
+def _plain_standard_example(question: str, scope: list[str] | None, elements: list[str]) -> dict | None:
+    """The first excerpt from the standard's examples that validates, for each element in turn and up to
+    three files each; objects placed directly in a frame's list first, then those at most two levels below
+    one (a stop place's placeEquipments), then any (a lift in Wimbledon's station sits on a path link, whose
+    shell broke the schema). Without a valid one, the first excerpt found, shown as not
+    valid."""
+    first = None
+    for element in elements:
+        for max_between in (0, 2, None):
+            exclude: frozenset = frozenset()
+            for _ in range(MAX_PLAIN_EXAMPLE_FILES):
+                found = _from_standard(question, scope, element, exclude, max_between)
+                if found is None:
+                    break
+                if found["validated"]:
+                    return found
+                first = first or found
+                exclude = exclude | {found["sourcePath"]}
+    return first
+
+
 def generate_netex_example(
     question: str, chunks: list[dict], scope: list[str] | None = None, english_question: str | None = None
 ) -> dict | None:
@@ -824,7 +896,17 @@ def generate_netex_example(
     english = (english_question or "").strip()
     if not wants_generated_example(question, scope):
         if not english or not wants_generated_example(english, scope):
-            return None
+            # No values, counts or parts: an example of the class the question is about, verbatim from
+            # the standard's example files (nothing to generate).
+            text = english or question
+            if not (asks_for_netex_example(question, scope) or asks_for_netex_example(text, scope)):
+                return None
+            try:
+                elements = concept_elements(text)
+            except Exception as exc:  # concept matching or the index unavailable: no example, as before
+                logger.info("example concept not found: %s", exc)
+                return None
+            return _plain_standard_example(text, scope, elements)
     shape_question = question if counted_shapes(question) else (english or question)
     found = _from_standard(shape_question, scope)
     if found is not None:
