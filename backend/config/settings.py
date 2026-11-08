@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import environ
@@ -8,8 +9,13 @@ from config.beat_schedule import build_beat_schedule
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+# The repo's VERSION file. The dev stack mounts the repo at /app/repo and points here, because a bind
+# mount of the single file goes stale when a version bump replaces it (git writes a new inode).
+VERSION_FILE = Path(os.environ.get("VERSION_FILE") or (BASE_DIR.parent / "VERSION"))
+
+
 def _read_repo_version(default: str = "0.1.0") -> str:
-    version_file = BASE_DIR.parent / "VERSION"
+    version_file = VERSION_FILE
     try:
         version = version_file.read_text(encoding="utf-8").strip()
     except Exception:

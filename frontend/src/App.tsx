@@ -371,6 +371,10 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [backendBuildRef, setBackendBuildRef] = useState("");
+  const [backendVersion, setBackendVersion] = useState("");
+  // The version shown is the running service's (from /health/live), so a long-lived dev frontend
+  // container never shows the version it was created with; the build-time value is the fallback.
+  const appVersion = backendVersion ? (backendBuildRef ? `${backendVersion}+${backendBuildRef}` : backendVersion) : frontendVersion;
   const client = useMemo(() => new HelpdeskApiClient({ baseUrl: apiBaseUrl, token }), [apiBaseUrl, token]);
   const authValue = useMemo(
     () => ({
@@ -402,10 +406,13 @@ export default function App() {
         const response = await fetch(`${apiBaseUrl}/health/live`, { cache: "no-store" });
         if (!response.ok) return;
         const data: unknown = await response.json();
-        if (typeof data === "object" && data !== null && "buildRef" in data) {
-          const buildRef = (data as Record<string, unknown>).buildRef;
+        if (typeof data === "object" && data !== null) {
+          const { buildRef, version } = data as Record<string, unknown>;
           if (typeof buildRef === "string") {
             setBackendBuildRef(buildRef);
+          }
+          if (typeof version === "string" && version) {
+            setBackendVersion(version);
           }
         }
       } catch {
@@ -1071,7 +1078,7 @@ export default function App() {
             path="/"
             element={
               <SharedAppLayout
-                appVersion={frontendVersion}
+                appVersion={appVersion}
                 backendBuildRef={backendBuildRef}
                 apiBaseUrl={apiBaseUrl}
               />
@@ -1161,7 +1168,7 @@ export default function App() {
                 />
               }
             />
-            <Route path="about" element={<AboutPage appVersion={frontendVersion} backendBuildRef={backendBuildRef} />} />
+            <Route path="about" element={<AboutPage appVersion={appVersion} backendBuildRef={backendBuildRef} />} />
           </Route>
         </Routes>
 
