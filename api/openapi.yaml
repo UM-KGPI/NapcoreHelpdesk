@@ -1472,8 +1472,57 @@ components:
             [INSUFFICIENT_EVIDENCE, POLICY_BLOCK, RETRIEVAL_LOW_QUALITY, UNKNOWN, null]
         reviewRequired:
           type: boolean
+        generatedExample:
+          description: >-
+            A NeTEx XML fragment generated for a question that asks for an example with concrete values,
+            validated against NeTEx_publication.xsd of the indexed NeTEx checkout. Null when the question
+            does not ask for one.
+          oneOf:
+            - $ref: '#/components/schemas/GeneratedExample'
+            - type: "null"
         trace:
           $ref: '#/components/schemas/AnswerTrace'
+      additionalProperties: false
+    GeneratedExample:
+      type: object
+      required: [valid, attempts]
+      properties:
+        valid:
+          type: boolean
+          description: True when the fragment passed the XSD and contains every value the question gives.
+        attempts:
+          type: integer
+          minimum: 0
+        xml:
+          type: string
+          description: One NeTEx frame, indented; present only when valid.
+        document:
+          type: string
+          description: >-
+            The validated document: a minimal PublicationDelivery around the frame; present only when valid.
+        schema:
+          type: string
+          example: xsd/NeTEx_publication.xsd
+        schemaVersion:
+          type: string
+          example: "2.0"
+        schemaCommit:
+          type: string
+        evidenceChunkIds:
+          type: array
+          items:
+            type: string
+        errors:
+          type: array
+          description: Why no valid fragment was produced; present only when not valid.
+          items:
+            type: string
+        generationMs:
+          type: integer
+          description: Time spent waiting for the model, over all attempts.
+        validationMs:
+          type: integer
+          description: Time spent waiting for the NeTEx validator, over all attempts.
       additionalProperties: false
     Citation:
       type: object
@@ -1616,6 +1665,10 @@ components:
           description: >-
             False when the answer was served although its retry also failed validation (the answer is then
             marked for review and its confidence capped at 0.80); null when no LLM answer was generated.
+        generatedExample:
+          oneOf:
+            - $ref: '#/components/schemas/GeneratedExample'
+            - type: "null"
       additionalProperties: false
     AnswerFeedbackRequest:
       type: object
@@ -1756,6 +1809,10 @@ components:
             already about legislation.
           items:
             $ref: '#/components/schemas/LegalContextItem'
+        generatedExample:
+          oneOf:
+            - $ref: '#/components/schemas/GeneratedExample'
+            - type: "null"
         trace:
           type: object
           description: Same shape as AnswerTrace, persisted at answer time

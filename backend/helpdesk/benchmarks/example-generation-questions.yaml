@@ -1,0 +1,41 @@
+# NeTEx example generator benchmark (2026-11-08). Success: the fragment validates against
+# NeTEx_publication.xsd and contains every value the question gives.
+description: 'Questions for the NeTEx example generator (services/netex_example_generator.py): each asks for a NeTEx example
+  with concrete values. Run with: python manage.py run_example_benchmark'
+questions:
+- id: gen01
+  question: Show me a NeTEx example for a bus with 50 seats and 20 standing places
+- id: gen02
+  question: Give a NeTEx example of a stop place named "Ljubljana Bus Station" with two quays
+- id: gen03
+  question: Show a NeTEx example of a line with public code "6" operated by the operator "LPP"
+- id: gen04
+  question: NeTEx example of a scheduled stop point named "Kongresni trg"
+- id: gen05
+  question: Show a NeTEx example of a day type called "Weekdays"
+- id: gen06
+  question: Give me a NeTEx example of a service journey departing at 07:15
+- id: gen07
+  question: Show a NeTEx example of a tram vehicle type with a length of 32 metres
+- id: gen08
+  question: NeTEx example of a fare zone named "Zone 1"
+- id: gen09
+  question: Show me a NeTEx example of a parking with 120 spaces
+- id: gen10
+  question: Give a NeTEx example of a quay with public code "A3"
+- id: gen11
+  question: Show a NeTEx example of an operator named "Arriva Slovenija"
+- id: gen12
+  question: NeTEx example of a route named "Route 1 outbound"
+- id: gen13
+  question: Show me a NeTEx example of a notice with the text "No service on public holidays"
+- id: gen14
+  question: Give a NeTEx example of a journey pattern with 3 stop points
+- id: gen15
+  question: Show a NeTEx example of a coach with 49 seats and 1 wheelchair area
+- id: gen16
+  question: NeTEx example of a timetabled passing time arriving at 08:30
+- id: gen17
+  question: Show a NeTEx example of a vehicle with registration number "LJ 123-AB"
+- id: gen18
+  question: Give a NeTEx example of a stop place with a parking of 40 spaces

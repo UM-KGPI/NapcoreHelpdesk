@@ -859,3 +859,24 @@ report the build reference `dev` until the next deploy.
    `EMBEDDER_CPUS` can go back to 2 afterwards: answering embeds one question at a time.
 
 4. To go back to hash: `reembed_chunks --swap` again, set `EMBEDDING_BACKEND=hash` in `backend/.env.prod`, and `$C up -d`.
+
+## 14. NeTEx example validator
+
+A question that asks for a NeTEx example with concrete values ("a bus with 50 seats and 20 standing places")
+gets a generated fragment under the answer, labelled as generated and shown only when it validates against
+`NeTEx_publication.xsd` (`backend/helpdesk/services/netex_example_generator.py`). Validation runs in its own
+service, `netex-validator` (`backend/helpdesk/netex_validator_service.py`):
+
+- It compiles the schema from the NeTEx checkout in the `source-repos` volume (read-only) when it starts:
+  about 20 s and 170 MB. Its health check gives 503 until then; answers meanwhile show no generated example.
+- It checks the checkout's commit every 5 minutes and recompiles after a source refresh, answering with the
+  previous schema in the meantime.
+- A validation takes about 20 ms (100 ms for a 15 kB frame); the model's writing takes 1–4 s per attempt,
+  at most three attempts. Each answer's trace has `generatedExample.generationMs` and `validationMs`.
+
+Settings: `NETEX_EXAMPLE_GENERATOR_ENABLED` (default `True`), `NETEX_VALIDATOR_URL` (default
+`http://netex-validator:8091`), `NETEX_VALIDATOR_MEM_LIMIT` (default `512m`), `NETEX_VALIDATOR_CPUS`
+(default `1.0`). Check it with `$C exec -T netex-validator curl -s localhost:8091/health`.
+
+Measure the generator with `$C exec -T backend python manage.py run_example_benchmark` (18 questions,
+`backend/helpdesk/benchmarks/example-generation-questions.yaml`).

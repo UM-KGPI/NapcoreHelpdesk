@@ -101,6 +101,27 @@ services:
       retries: 3
       start_period: 180s
 
+  # Validates the NeTEx example generator's fragments against NeTEx_publication.xsd from the indexed NeTEx
+  # checkout: one compiled schema (about 170 MB, 20 s to compile) for every backend worker, and the
+  # model-written XML parsed outside the backend. Recompiles after a source refresh moves the checkout.
+  netex-validator:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    working_dir: /app/backend
+    command: python -m helpdesk.netex_validator_service
+    volumes:
+      - source-repos:/app/repos:ro
+    mem_limit: ${NETEX_VALIDATOR_MEM_LIMIT:-512m}
+    cpus: ${NETEX_VALIDATOR_CPUS:-1.0}
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8091/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+
   celery-beat:
     <<: *backend-base
     command: celery -A config beat -l info

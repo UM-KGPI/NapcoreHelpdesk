@@ -17,6 +17,7 @@ import type { FormEvent } from "react";
 import type { AnswerResponse } from "../types";
 import { citationDisplayName, citationMarker, groupCitationsBySource } from "../citationLabels";
 import AnswerMarkdown from "./AnswerMarkdown";
+import GeneratedExampleBlock from "./GeneratedExample";
 import LegalContext from "./LegalContext";
 import InspiredByOthersPanel from "./InspiredByOthersPanel";
 
@@ -373,6 +374,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                       </ul>
                     </>
                   )}
+                  <GeneratedExampleBlock example={turn.answer.generatedExample} />
                   <LegalContext items={turn.answer.legalContext} />
                   <p className="muted tiny">
                     requestId: {turn.requestId ?? turn.answer.trace.requestId} · mode: {turn.answer.mode} · confidence: {turn.answer.confidence.toFixed(2)}

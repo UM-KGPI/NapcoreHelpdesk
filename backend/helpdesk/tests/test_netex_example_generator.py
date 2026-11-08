@@ -1,0 +1,201 @@
+from __future__ import annotations
+
+import json
+import tempfile
+from pathlib import Path
+from unittest.mock import patch
+
+from django.test import SimpleTestCase, override_settings
+
+from helpdesk import netex_validator_service as service
+from helpdesk.services import netex_example_generator as generator
+
+NETEX_CHUNK = {
+    "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx",
+    "sourcePath": "xsd/netex_framework/netex_reusableComponents/netex_vehicleType_version.xsd",
+    "chunkId": "c1",
+    "text": "PassengerCapacity: SeatingCapacity, StandingCapacity",
+}
+FRAME = (
+    '<ResourceFrame version="1" id="hd:RF:1"><vehicleTypes><VehicleType version="1" id="hd:VT:1">'
+    "<SeatingCapacity>50</SeatingCapacity><StandingCapacity>20</StandingCapacity></VehicleType></vehicleTypes>"
+    "</ResourceFrame>"
+)
+BUS = "Show me a NeTEx example for a bus with 50 seats and 20 standing places"
+
+
+def _reply(xml: str) -> str:
+    return json.dumps({"xml": xml})
+
+
+class TriggerTests(SimpleTestCase):
+    def test_example_with_values_in_netex_scope(self):
+        self.assertTrue(generator.wants_generated_example(BUS, ["NeTEx"]))
+
+    def test_needs_concrete_values(self):
+        self.assertFalse(generator.wants_generated_example("Show me a NeTEx example for a bus", ["NeTEx"]))
+
+    def test_needs_an_example_request(self):
+        self.assertFalse(generator.wants_generated_example("How many seats can a NeTEx bus with 50 seats have?", ["NeTEx"]))
+
+    def test_needs_netex(self):
+        self.assertFalse(generator.wants_generated_example("Show a SIRI example for line 6", ["SIRI"]))
+
+    @override_settings(NETEX_EXAMPLE_GENERATOR_ENABLED=False)
+    def test_can_be_switched_off(self):
+        self.assertFalse(generator.wants_generated_example(BUS, ["NeTEx"]))
+
+    def test_requested_values_are_numbers_and_quoted_names(self):
+        self.assertEqual(
+            generator.requested_values('A stop place named "Ljubljana Bus Station" with 2 quays'),
+            ["Ljubljana Bus Station", "2"],
+        )
+
+    def test_one_character_quoted_values_and_no_quote_across_two(self):
+        self.assertEqual(
+            generator.requested_values('A line with public code "6" operated by the operator "LPP"'), ["6", "LPP"]
+        )
+        self.assertEqual(generator.requested_values("Don't show a stop named “Kongresni trg”"), ["Kongresni trg"])
+
+    def test_values_match_whole_tokens(self):
+        self.assertEqual(generator.missing_values("<SeatingCapacity>500</SeatingCapacity>", ["50"]), ["50"])
+        self.assertEqual(generator.missing_values("<SeatingCapacity>50</SeatingCapacity>", ["50"]), [])
+
+
+@override_settings(LLM_ENABLED=True)
+class GenerationTests(SimpleTestCase):
+    def test_valid_first_attempt(self):
+        with patch.object(generator, "_ask_model", return_value=_reply(FRAME)), patch.object(
+            generator, "validate_fragment", return_value={"valid": True, "errors": [], "schemaVersion": "2.0", "commit": "abc"}
+        ):
+            result = generator.generate_netex_example(BUS, [NETEX_CHUNK], ["NeTEx"])
+        self.assertTrue(result["valid"])
+        self.assertEqual(result["attempts"], 1)
+        self.assertEqual(result["xml"], generator.indented_fragment(FRAME))
+        self.assertIn("<dataObjects>", result["document"])
+        self.assertEqual((result["schemaVersion"], result["schemaCommit"]), ("2.0", "abc"))
+        self.assertIn("generationMs", result)
+        self.assertIn("validationMs", result)
+
+    def test_validator_errors_go_back_to_the_model(self):
+        replies = [_reply(FRAME.replace("SeatingCapacity", "NumberOfSeats")), _reply(FRAME)]
+        verdicts = [
+            {"valid": False, "errors": ["line 1: Element 'NumberOfSeats': This element is not expected."]},
+            {"valid": True, "errors": []},
+        ]
+        with patch.object(generator, "_ask_model", side_effect=replies) as ask, patch.object(
+            generator, "validate_fragment", side_effect=verdicts
+        ):
+            result = generator.generate_netex_example(BUS, [NETEX_CHUNK], ["NeTEx"])
+        self.assertTrue(result["valid"])
+        self.assertEqual(result["attempts"], 2)
+        feedback = ask.call_args_list[1].args[0][-1]["content"]
+        self.assertIn("NumberOfSeats", feedback)
+
+    def test_a_valid_fragment_without_the_values_is_retried(self):
+        with patch.object(generator, "_ask_model", return_value=_reply(FRAME.replace(">20<", ">25<"))), patch.object(
+            generator, "validate_fragment", return_value={"valid": True, "errors": []}
+        ):
+            result = generator.generate_netex_example(BUS, [NETEX_CHUNK], ["NeTEx"])
+        self.assertFalse(result["valid"])
+        self.assertEqual(result["attempts"], generator.MAX_ATTEMPTS)
+        self.assertIn("the value 20 from the question is missing", result["errors"])
+        self.assertNotIn("xml", result)
+
+    def test_validator_down_gives_no_example(self):
+        with patch.object(generator, "_ask_model", return_value=_reply(FRAME)), patch.object(
+            generator, "validate_fragment", side_effect=generator.ValidatorUnavailable("validator unreachable")
+        ):
+            result = generator.generate_netex_example(BUS, [NETEX_CHUNK], ["NeTEx"])
+        self.assertFalse(result["valid"])
+        self.assertNotIn("xml", result)
+
+    def test_no_netex_evidence(self):
+        siri = {**NETEX_CHUNK, "repositoryUrl": "https://github.com/TransmodelEcosystem/SIRI"}
+        with patch.object(generator, "_ask_model") as ask:
+            result = generator.generate_netex_example(BUS, [siri], ["NeTEx"])
+        ask.assert_not_called()
+        self.assertFalse(result["valid"])
+
+    def test_not_requested_returns_none(self):
+        self.assertIsNone(generator.generate_netex_example("What is a VehicleType?", [NETEX_CHUNK], ["NeTEx"]))
+
+    def test_fragment_read_from_a_reply_that_is_not_json(self):
+        self.assertEqual(generator._extract_fragment("Here it is:\n" + FRAME + "\nDone."), FRAME)
+
+
+TINY_XSD = """<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.netex.org.uk/netex"
+  targetNamespace="http://www.netex.org.uk/netex" elementFormDefault="qualified" version="2.0">
+  <xsd:element name="PublicationDelivery">
+    <xsd:complexType><xsd:sequence>
+      <xsd:element name="PublicationTimestamp" type="xsd:dateTime"/>
+      <xsd:element name="ParticipantRef" type="xsd:string"/>
+      <xsd:element name="dataObjects"><xsd:complexType><xsd:sequence>
+        <xsd:element name="ResourceFrame"><xsd:complexType><xsd:sequence>
+          <xsd:element name="Name" type="xsd:string"/>
+        </xsd:sequence><xsd:attribute name="id" type="xsd:string"/></xsd:complexType></xsd:element>
+      </xsd:sequence></xsd:complexType></xsd:element>
+    </xsd:sequence><xsd:attribute name="version" type="xsd:string"/></xsd:complexType>
+  </xsd:element>
+</xsd:schema>
+"""
+
+
+class ValidatorServiceTests(SimpleTestCase):
+    def setUp(self):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        self.checkout = Path(directory.name)
+        (self.checkout / "xsd").mkdir()
+        (self.checkout / service.SCHEMA_ENTRY).write_text(TINY_XSD)
+        git = self.checkout / ".git" / "refs" / "heads"
+        git.mkdir(parents=True)
+        (self.checkout / ".git" / "HEAD").write_text("ref: refs/heads/main\n")
+        (git / "main").write_text("1234abcd\n")
+        self.holder = service.SchemaHolder(self.checkout)
+        self.holder.load()
+
+    def test_loads_the_checkout_schema_and_commit(self):
+        status = self.holder.status()
+        self.assertEqual((status["status"], status["schemaVersion"], status["commit"]), ("ok", "2.0", "1234abcd"))
+
+    def test_valid_fragment(self):
+        result = self.holder.validate('<ResourceFrame id="hd:RF:1"><Name>Bus</Name></ResourceFrame>')
+        self.assertEqual(result["valid"], True)
+
+    def test_errors_name_the_element_and_count_lines_from_the_fragment(self):
+        result = self.holder.validate('<ResourceFrame id="hd:RF:1">\n<Seats>50</Seats>\n</ResourceFrame>')
+        self.assertFalse(result["valid"])
+        self.assertTrue(result["errors"][0].startswith("line 2: Element 'Seats'"), result["errors"])
+
+    def test_malformed_xml(self):
+        result = self.holder.validate("<ResourceFrame><Name>Bus</ResourceFrame>")
+        self.assertFalse(result["valid"])
+        self.assertIn("Not well-formed", result["errors"][0])
+
+    def test_entities_are_not_expanded(self):
+        fragment = '<!DOCTYPE x [<!ENTITY e SYSTEM "file:///etc/passwd">]><ResourceFrame><Name>&e;</Name></ResourceFrame>'
+        result = self.holder.validate(fragment)
+        self.assertFalse(result["valid"])
+        self.assertNotIn("root:", json.dumps(result))
+
+    def test_reload_when_the_commit_moves(self):
+        (self.checkout / ".git" / "refs" / "heads" / "main").write_text("5678ef\n")
+        self.holder._checked = 0
+        with patch.object(service.threading, "Thread") as thread:
+            self.holder.reload_if_moved()
+        thread.assert_called_once()
+
+
+class FormattingTests(SimpleTestCase):
+    def test_fragment_is_indented_without_a_namespace(self):
+        self.assertEqual(
+            generator.indented_fragment('<ResourceFrame id="hd:RF:1"><Name>Bus</Name></ResourceFrame>'),
+            '<ResourceFrame id="hd:RF:1">\n  <Name>Bus</Name>\n</ResourceFrame>',
+        )
+
+    def test_document_is_the_wrapped_fragment(self):
+        document = generator.publication_document('<ResourceFrame id="hd:RF:1"><Name>Bus</Name></ResourceFrame>')
+        self.assertTrue(document.startswith('<?xml version="1.0" encoding="UTF-8"?>\n<PublicationDelivery xmlns="http://www.netex.org.uk/netex"'))
+        self.assertIn("<dataObjects>\n    <ResourceFrame", document)
