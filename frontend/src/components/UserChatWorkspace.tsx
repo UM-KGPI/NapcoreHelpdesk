@@ -18,7 +18,7 @@ import type { AnswerResponse } from "../types";
 import { citationDisplayName, citationMarker, groupCitationsBySource } from "../citationLabels";
 import GeneratedExampleBlock from "./GeneratedExample";
 import AnswerBody from "./AnswerBody";
-import { downloadPublicationDelivery } from "./generatedExampleActions";
+import { downloadExampleDocument } from "./generatedExampleActions";
 import { answerBodyText, generatedExampleText } from "./answerText";
 import LegalContext from "./LegalContext";
 import InspiredByOthersPanel from "./InspiredByOthersPanel";
@@ -346,9 +346,9 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                           <button
                             type="button"
                             className="chat-icon-button"
-                            onClick={() => downloadPublicationDelivery(turn.answer!.generatedExample!)}
-                            title="Download generated example as PublicationDelivery"
-                            aria-label="Download generated example as PublicationDelivery"
+                            onClick={() => downloadExampleDocument(turn.answer!.generatedExample!)}
+                            title="Download generated example as XML file"
+                            aria-label="Download generated example as XML file"
                           >
                             ⬇️
                           </button>
