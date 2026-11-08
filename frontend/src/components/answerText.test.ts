@@ -25,7 +25,7 @@ describe("answerText", () => {
   });
 
   it("puts the example before the text, under a heading, and copes with either missing", () => {
-    expect(answerBodyText("Plain answer.", example)).toMatch(/^Generated example[\s\S]*\n\nIn the standard:\nPlain answer\.$/);
+    expect(answerBodyText("Plain answer.", example)).toMatch(/^Generated example[\s\S]*```\n[\s\S]*\n\nPlain answer\.$/);
     expect(answerBodyText("", example)).toBe(generatedExampleText(example));
     expect(answerBodyText("Plain answer.", null)).toBe("Plain answer.");
   });

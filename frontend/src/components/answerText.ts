@@ -56,17 +56,16 @@ export function blockText(example?: GeneratedExample | null, structure?: SchemaS
   return generatedExampleText(example) || schemaStructureText(structure);
 }
 
-/** The block first, then the text under "In the standard" when both exist; whichever exists otherwise. */
+/** The block first, then the text when both exist; whichever exists otherwise. */
 export function answerBodyText(
   text: string,
   example?: GeneratedExample | null,
   structure?: SchemaStructure | null,
-  heading = "In the standard:",
 ): string {
   const block = blockText(example, structure);
   const answerText = text.trim();
   if (block && answerText) {
-    return `${block}\n\n${heading}\n${answerText}`;
+    return `${block}\n\n${answerText}`;
   }
   return block || answerText;
 }

@@ -167,7 +167,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
       if (exampleText) {
         lines.push(exampleText);
         if (turn.text.trim()) {
-          lines.push("", "### In the standard");
+          lines.push("");
         }
       }
       lines.push(turn.text || "");

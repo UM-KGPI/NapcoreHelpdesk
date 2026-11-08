@@ -8,10 +8,13 @@ afterEach(cleanup);
 const example = { valid: true, attempts: 1, xml: "<SiteFrame/>", schemaVersion: "2.0" };
 
 describe("AnswerBody", () => {
-  it("puts a valid generated example before the text, under 'In the standard'", () => {
+  it("puts a valid generated example before the text, with no heading over the text", () => {
     const { container } = render(<AnswerBody text="A `Quay` sits inside `quays` [E1]." example={example} />);
     const headings = Array.from(container.querySelectorAll("h4, strong")).map((node) => node.textContent);
-    expect(headings.findIndex((h) => (h ?? "").startsWith("Generated example"))).toBeLessThan(headings.indexOf("In the standard"));
+    expect(headings.findIndex((h) => (h ?? "").startsWith("Generated example"))).toBeGreaterThanOrEqual(0);
+    expect(screen.queryByText("In the standard")).toBeNull();
+    const html = container.innerHTML;
+    expect(html.indexOf("Generated example")).toBeLessThan(html.indexOf("sits inside"));
     expect(screen.getByText(/sits inside/)).toBeTruthy();
   });
 

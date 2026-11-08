@@ -32,9 +32,10 @@ describe("SchemaStructureBlock", () => {
     expect(container.textContent).toBe("");
   });
 
-  it("comes first in the answer body, with the text under 'In the standard'", () => {
+  it("comes first in the answer body, with the text after it and no heading over the text", () => {
     render(<AnswerBody text="Examples fill `quays` [E1]." structure={structure} />);
-    expect(screen.getByText("In the standard")).toBeTruthy();
+    expect(screen.queryByText("In the standard")).toBeNull();
+    expect(screen.getByText(/Examples fill/)).toBeTruthy();
     expect(screen.getByText(/What/)).toBeTruthy();
   });
 
@@ -43,7 +44,7 @@ describe("SchemaStructureBlock", () => {
     expect(text.startsWith("What StopPlace contains, from the NeTEx schema")).toBe(true);
     expect(text).toContain("- quays: QUAYs within the STOP PLACE.");
     expect(text).toContain("Inherited as Site:");
-    expect(text.endsWith("In the standard:\nPlain.")).toBe(true);
+    expect(text.endsWith("\n\nPlain.")).toBe(true);
     expect(schemaStructureText(null)).toBe("");
   });
 });
