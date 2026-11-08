@@ -154,6 +154,62 @@ def validate_fragment(fragment: str) -> dict:
 
 NETEX_NAMESPACE = "http://www.netex.org.uk/netex"
 
+_QUESTION_STOPWORDS = frozenset(
+    "show give make write create example examples sample snippet fragment with and the for from that this what "
+    "which have into where when please would could there about named called".split()
+)
+
+
+def _stem(word: str) -> str:
+    lowered = word.lower()
+    return lowered[:-1] if lowered.endswith("s") and len(lowered) > 4 else lowered
+
+
+def _question_words(question: str) -> list[str]:
+    """The question's content words, singular ("seats" -> "seat"), for the schema declaration search."""
+    stems: list[str] = []
+    for word in re.findall(r"[^\W\d_]{4,}", question or ""):
+        if word.lower() in _QUESTION_STOPWORDS or word.lower() in _NOT_NAMES:
+            continue
+        if _stem(word) not in stems:
+            stems.append(_stem(word))
+    return stems
+
+
+def _counted_question_words(question: str) -> list[str]:
+    """Words that follow a number ("49 seats", "1 wheelchair area" -> seat, wheelchair): the thing counted,
+    which the schema holds in a number-valued element."""
+    return list(dict.fromkeys(_stem(word) for word in re.findall(r"\d+\s+([^\W\d_]{4,})", question or "")))
+
+
+def schema_declarations(question: str, limit: int = 40) -> list[dict]:
+    """Element declarations of the NeTEx schema whose name or documentation matches the question's words,
+    from the validator's index: {"name", "parents", "documentation"}. The evidence for the elements a
+    question needs, independent of text retrieval ("coach with 49 seats" retrieved deck plans and no
+    capacity element). Empty when the validator is unreachable."""
+    from urllib import error, parse, request
+
+    words = _question_words(question)
+    if not words:
+        return []
+    query = {"q": " ".join(words), "c": " ".join(_counted_question_words(question))}
+    url = settings.NETEX_VALIDATOR_URL.rstrip("/") + "/declarations?" + parse.urlencode(query)
+    try:
+        with request.urlopen(url, timeout=VALIDATOR_TIMEOUT_SECONDS) as response:
+            return list(json.loads(response.read()).get("declarations") or [])[:limit]
+    except (error.URLError, OSError, ValueError) as exc:
+        logger.info("NeTEx schema declarations not available: %s", exc)
+        return []
+
+
+def declarations_block(declarations: list[dict]) -> str:
+    lines = []
+    for declaration in declarations:
+        parents = declaration.get("parents") or []
+        where = f" (child of {', '.join(parents)})" if parents else ""
+        lines.append(f"- {declaration.get('name')}{where}: {declaration.get('documentation')}")
+    return "SCHEMA DECLARATIONS (element, where it belongs, definition):\n" + "\n".join(lines)
+
 
 def _indented(xml: str) -> str:
     """The XML indented two spaces per level. Only for validated fragments: a DOCTYPE inside the
@@ -240,9 +296,12 @@ _PROMPT = (
     "You write NeTEx XML for a standards helpdesk. Write ONE NeTEx frame (for example a ResourceFrame, "
     "ServiceFrame, SiteFrame or TimetableFrame, with version and id attributes) that shows what the question "
     "asks, using the values it gives. Put each object in the frame the evidence examples put it in (vehicle "
-    "types, for example, in a ResourceFrame). Use only element and attribute names that appear in the evidence blocks "
-    "(schema definitions and example files), in the order the schema definitions give. Give every element that "
-    "needs one a version and an id; use the prefix 'hd:' for ids. Do not add elements the question does not "
+    "types, for example, in a ResourceFrame). Use only element and attribute names that appear in the schema "
+    "declarations and the evidence blocks (schema definitions and example files), in the order the schema "
+    "definitions give; put a declared element under one of the parents its declaration names. Give every element that "
+    "needs one a version and an id; use the prefix 'hd:' for ids. Every reference element (...Ref) must point "
+    "to an object defined in the same frame: define that object too, even if the question does not mention it. "
+    "Otherwise do not add elements the question does not "
     "need. Use only the values the question gives; where the schema needs another value, use a plain placeholder "
     "('Quay 1', 'Line 1'). Add no real-world facts the question does not give, such as coordinates, addresses, "
     "full names of organisations or opening times. The frame goes inside <dataObjects> of a PublicationDelivery; do not write the PublicationDelivery, "
@@ -307,9 +366,13 @@ def generate_netex_example(question: str, chunks: list[dict], scope: list[str] |
         {"role": "user", "content": f"Question:\n{question}\n\nValues to use: {', '.join(values)}\n\nEVIDENCE BLOCKS:\n{evidence}"},
     ]
     errors: list[str] = []
+    # Schema declarations go only into the feedback after a failed attempt: given up front they lowered
+    # the benchmark from 18 to 12 of 20 (elements from unrelated contexts tempt the model away from the
+    # evidence); after a failure they supply the elements the evidence lacked.
+    declarations: list[dict] | None = None
     # Time spent waiting for the model and for the validator, so the validator's share of an answer's
-    # latency shows in the trace.
-    timing = {"generationMs": 0, "validationMs": 0}
+    # latency shows in the trace; and how many schema declarations the model was given.
+    timing = {"generationMs": 0, "validationMs": 0, "schemaDeclarations": 0}
 
     def timed(key: str, call):
         started = time.perf_counter()
@@ -354,11 +417,20 @@ def generate_netex_example(question: str, chunks: list[dict], scope: list[str] |
                 "evidenceChunkIds": [chunk.get("chunkId") for chunk in used],
                 **timing,
             }
+        if declarations is None:
+            declarations = schema_declarations(question)
+            timing["schemaDeclarations"] = len(declarations)
+        schema_part = (
+            "\n\n" + declarations_block(declarations) + "\nPrefer these elements, under the parents given, for what the question asks."
+            if declarations
+            else ""
+        )
         messages = messages + [
             {"role": "assistant", "content": content},
             {
                 "role": "user",
                 "content": "The frame is not valid NeTEx:\n- " + "\n- ".join(errors)
+                + schema_part
                 + "\nFix these errors and return the whole frame again as JSON {\"xml\": \"...\"}.",
             },
         ]

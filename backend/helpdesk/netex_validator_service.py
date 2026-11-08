@@ -7,6 +7,11 @@ One process compiles NeTEx_publication.xsd from the indexed NeTEx checkout (abou
 model-written XML is parsed outside the backend process.
 
     GET  /health    -> {"status": "ok" | "loading" | "error", "schemaVersion": "2.0", "commit": "...", ...}
+    GET  /declarations?q=coach+seat+wheelchair+area&c=seat+wheelchair   (c: words that follow a number)
+                    -> {"declarations": [{"name": "SeatingCapacity", "parents": ["PassengerCapacity"],
+                                          "documentation": "The seating capacity of vehicles of the type. ..."}]}
+                    element declarations whose name or documentation contains the words, best first: the
+                    generator's evidence for the elements a question needs, independent of text retrieval.
     POST /validate  {"fragment": "<ResourceFrame ...>...</ResourceFrame>"}
                     -> {"valid": bool, "errors": ["line 3: ...", ...], "schemaVersion": "2.0", "commit": "...",
                         "elements": [{"name": "SeatingCapacity", "parent": "PassengerCapacity",
@@ -37,6 +42,7 @@ import time
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 NETEX_NAMESPACE = "http://www.netex.org.uk/netex"
 CHECKOUT = Path(os.environ.get("NETEX_VALIDATOR_CHECKOUT", "/app/repos/NeTEx"))
@@ -45,6 +51,9 @@ CHECK_SECONDS = int(os.environ.get("NETEX_VALIDATOR_CHECK_SECONDS", "300"))
 MAX_FRAGMENT_BYTES = 200_000
 MAX_ERRORS = 5
 MAX_ELEMENT_NOTES = 40
+MAX_DECLARATIONS = 20
+MAX_PARENT_DECLARATIONS = 15
+MAX_PARENTS = 12  # alphabetical; PassengerCapacity has eleven, VehicleType among the last
 XSD_NS = "http://www.w3.org/2001/XMLSchema"
 _WRAPPER_ELEMENTS = frozenset({"PublicationDelivery", "PublicationTimestamp", "ParticipantRef", "dataObjects"})
 
@@ -127,6 +136,8 @@ class ElementDocs:
         self.docs: dict[str, list[tuple[str, str]]] = {}  # element name -> [(container, documentation)]
         self.element_type: dict[str, str] = {}  # element name -> type name; a global declaration wins
         self.links: dict[str, set[str]] = {}  # container -> base types and groups it uses
+        self.refs: dict[str, set[str]] = {}  # global element name -> containers that reference it
+        self.parents: dict[str, set[str]] = {}  # container -> elements whose content comes from it
         self.files = 0
 
     @staticmethod
@@ -144,6 +155,8 @@ class ElementDocs:
         for node in root.iter(f"{{{XSD_NS}}}element"):
             name = node.get("name")
             if not name:
+                if node.get("ref"):
+                    self.refs.setdefault(_local(node.get("ref")), set()).add(self._container(node))
                 continue
             documentation = " ".join(
                 " ".join((doc.text or "").split())
@@ -171,6 +184,77 @@ class ElementDocs:
                 self.add_schema(etree.parse(str(path), parser=_parser()).getroot())
             except (etree.XMLSyntaxError, OSError) as exc:
                 logger.warning("element documentation: %s skipped: %s", path.name, exc)
+        self.index_parents()
+
+    def index_parents(self) -> None:
+        """For each container, the elements whose content comes from it: the possible parents of the
+        elements declared there (CapacityGroup -> PassengerCapacity)."""
+        self.parents = {}
+        for element in self.element_type:
+            for container in self._containers_of(element):
+                self.parents.setdefault(container, set()).add(element)
+
+    def _parents_of(self, name: str, container: str) -> list[str]:
+        containers = {container} if container else self.refs.get(name, set())
+        found = {parent for c in containers for parent in self.parents.get(c, ())} - {name}
+        return sorted(found)[:MAX_PARENTS]
+
+    def _is_count(self, name: str) -> bool:
+        """Whether the element holds a number (its type: NumberOfPassengers, xsd:integer, ...)."""
+        type_name = self.element_type.get(name, "").lower()
+        return any(part in type_name for part in ("number", "integer", "count", "capacity", "decimal", "quantity"))
+
+    def search(self, words: list[str], counted: list[str] = (), limit: int = MAX_DECLARATIONS) -> list[dict]:
+        """Declarations whose name or documentation contains the words (lower-cased substrings).
+
+        Each word gets its own best matches (so "wheelchair area" compounds cannot crowd out
+        SeatingCapacity), merged best first. A word in the name counts double; a declaration with known
+        parents beats one without; for a `counted` word (one that follows a number in the question:
+        "49 seats") an element that holds a number counts extra. {"name", "parents", "documentation"}.
+        """
+        stems = [word.lower() for word in words if len(word) >= 4]
+        if not stems:
+            return []
+        per_word = max(4, limit // max(1, len(stems)) + 2)
+        ranked: dict[tuple[str, str], tuple[tuple, list[str]]] = {}
+        for stem in stems:
+            matches = []
+            for name, declarations in self.docs.items():
+                in_name = stem in name.lower()
+                for container, text in declarations:
+                    score = (2 if in_name else 0) + (1 if stem in text.lower() else 0)
+                    if not score:
+                        continue
+                    if stem in counted and self._is_count(name):
+                        score += 2
+                    parents = self._parents_of(name, container)
+                    matches.append(((-score, 0 if parents else 1, len(text)), name, container, text, parents))
+            matches.sort(key=lambda match: match[0])
+            for key, name, container, text, parents in matches[:per_word]:
+                current = ranked.get((name, container))
+                if current is None or key < current[0]:
+                    ranked[(name, container)] = (key, [name, container, text, parents])
+        ordered = sorted(ranked.values(), key=lambda item: item[0])[:limit]
+        results = [{"name": name, "parents": parents, "documentation": text} for _, (name, _, text, parents) in ordered]
+        return self._with_parent_declarations(results, limit + MAX_PARENT_DECLARATIONS)
+
+    def _with_parent_declarations(self, results: list[dict], limit: int) -> list[dict]:
+        """The results followed by the declarations of their parents (one hop up), so the model sees what
+        each parent is: "Seats (child of CarModelProfile)" against "SeatingCapacity (child of
+        PassengerCapacity)" reads differently once PassengerCapacity and CarModelProfile are defined too."""
+        seen = {result["name"] for result in results}
+        extra = []
+        for result in results:
+            for parent in result["parents"]:
+                if parent in seen or not self.docs.get(parent):
+                    continue
+                seen.add(parent)
+                # Text from the global declaration when there is one, else the first; parents from every
+                # declaration (PassengerCapacity is declared globally and, by name, in the vehicle type group).
+                _, text = next(((c, t) for c, t in self.docs[parent] if c == ""), self.docs[parent][0])
+                parents = sorted({p for c, _ in self.docs[parent] for p in self._parents_of(parent, c)})[:MAX_PARENTS]
+                extra.append({"name": parent, "parents": parents, "documentation": text})
+        return (results + extra)[:limit]
 
     def _containers_of(self, parent: str) -> dict[str, int]:
         """Containers the parent's content can come from, with their distance along the type chain."""
@@ -306,6 +390,12 @@ def make_handler(holder: SchemaHolder):
             self.wfile.write(body)
 
         def do_GET(self):  # noqa: N802
+            if self.path.startswith("/declarations"):
+                parameters = parse_qs(urlparse(self.path).query)
+                words = re.findall(r"[^\W\d_]{4,}", parameters.get("q", [""])[0])[:12]
+                counted = [word.lower() for word in re.findall(r"[^\W\d_]{4,}", parameters.get("c", [""])[0])]
+                self._reply(200, {"declarations": holder.element_docs.search(words, counted=counted)})
+                return
             if self.path != "/health":
                 self._reply(404, {"error": "not found"})
                 return

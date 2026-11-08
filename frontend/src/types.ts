@@ -112,6 +112,7 @@ export interface GeneratedExample {
   errors?: string[];
   generationMs?: number;
   validationMs?: number;
+  schemaDeclarations?: number;
 }
 
 export interface AnswerResponse {

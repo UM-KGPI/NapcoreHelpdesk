@@ -877,6 +877,10 @@ service, `netex-validator` (`backend/helpdesk/netex_validator_service.py`):
   start, under a second), chosen through the parent element's type when a name is declared in several
   places. The answer shows them under the fragment as `generatedExample.elementNotes`: what each element
   is, in the schema's words, with no model involved.
+- The model's evidence for an example is the retrieved blocks plus the schema declarations whose name or
+  documentation contains the question's words (`GET /declarations?q=seat+wheelchair` on the validator:
+  element, possible parents, definition). Text retrieval alone missed `SeatingCapacity` for "a coach with
+  49 seats"; `generatedExample.schemaDeclarations` counts what the model was given.
 - A question value counts as modelled only when it is the whole content of an element or attribute
   (`<SeatingCapacity>50</SeatingCapacity>`), never when mentioned inside a `Name` or `Description` text.
 - With a valid example the example is the answer and comes first. The text is then generated from a second
