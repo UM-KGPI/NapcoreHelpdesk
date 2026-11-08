@@ -78,6 +78,11 @@ class OrderTests(SimpleTestCase):
 
 
 class BatchTests(TestCase):
+    def setUp(self):
+        patcher = patch.object(vectors, "BUILD_PAUSE_FACTOR", 0.0)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_batches_are_saved_as_they_are_embedded(self):
         from helpdesk.models import ConceptVector
 
@@ -100,3 +105,17 @@ class BatchTests(TestCase):
             self.assertEqual(ConceptVector.objects.count(), vectors.EMBED_BATCH)
             self.assertEqual(vectors.build_concept_vectors()["embedded"], 3)
         self.assertEqual(vectors.index_status(), {"conceptVectors": vectors.EMBED_BATCH + 3})
+
+
+class PauseTests(TestCase):
+    def test_each_batch_is_followed_by_a_pause_as_long_as_it_took(self):
+        classes = [
+            {"concept_id": f"transmodel:P{i}", "standard": "transmodel", "label": f"P{i}", "alt_labels": [], "definition": "d", "implemented_by": []}
+            for i in range(vectors.EMBED_BATCH * 2)
+        ]
+        with patch.object(vectors, "ontology_classes", return_value=classes), patch.object(
+            vectors, "_embed", side_effect=lambda texts, kind: [[0.1] * vectors.DIMENSION for _ in texts]
+        ), patch("time.sleep") as sleep:
+            vectors.build_concept_vectors()
+        # Two batches: one pause between them, none after the last.
+        self.assertEqual(sleep.call_count, 1)

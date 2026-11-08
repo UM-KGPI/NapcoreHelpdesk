@@ -29,9 +29,12 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 DIMENSION = 384
-# As the retrieval embedding client (embeddings.SERVICE_BATCH_SIZE): larger batches of long texts multiply
-# the embedder's memory, and prod caps it (EMBEDDER_MEM_LIMIT, 1.5 GiB); 64 per request built locally only.
-EMBED_BATCH = 16
+# The embedder also serves every question's search, one request at a time. A build batch makes questions wait
+# behind it (prod 2026-11-08: 16 per batch kept the embedder at 2 CPUs and a question took 54 s instead of
+# 14 s), so batches are small and each is followed by a pause as long as it took: the build uses at most
+# about half of the embedder's time. A full build is a one-off; later builds embed only changed classes.
+EMBED_BATCH = 4
+BUILD_PAUSE_FACTOR = 1.0
 _CLASSES_QUERY = """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -128,9 +131,14 @@ def build_concept_vectors() -> dict:
         if row is None or row.text_hash != item["text_hash"] or row.vector is None:
             changed.append(item)
     # Embedded and saved batch by batch: a failure keeps what was done, and the next run continues from there.
+    import time
+
     for start in range(0, len(changed), EMBED_BATCH):
         batch = changed[start : start + EMBED_BATCH]
+        started = time.monotonic()
         vectors = _embed([item["text"] for item in batch], "passage")
+        if start + EMBED_BATCH < len(changed):
+            time.sleep((time.monotonic() - started) * BUILD_PAUSE_FACTOR)
         for item, vector in zip(batch, vectors):
             ConceptVector.objects.update_or_create(
                 concept_id=item["concept_id"],
