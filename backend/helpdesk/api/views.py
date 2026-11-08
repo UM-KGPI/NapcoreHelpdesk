@@ -21,9 +21,10 @@ import datetime as dt
 from datetime import timedelta
 import json
 import logging
-from pathlib import Path
+import os
 import re
 import subprocess
+from pathlib import Path
 from urllib.parse import quote
 from uuid import uuid4
 
@@ -98,12 +99,23 @@ def _request_id(request):
     return request.headers.get("X-Request-Id") or f"req-{uuid4().hex[:12]}"
 
 
+def _service_version() -> str:
+    """The version the service reports: SERVICE_VERSION when set in the environment (production builds),
+    else the repo's VERSION file read now, so a running dev stack reports a bump without a restart."""
+    if os.environ.get("SERVICE_VERSION"):
+        return settings.SERVICE_VERSION
+    try:
+        return Path(settings.VERSION_FILE).read_text(encoding="utf-8").strip() or settings.SERVICE_VERSION
+    except OSError:
+        return settings.SERVICE_VERSION
+
+
 def _service_health_payload(check: str, status_value: str, **extra_fields) -> dict:
     payload = {
         "status": status_value,
         "service": settings.SERVICE_NAME,
         "check": check,
-        "version": settings.SERVICE_VERSION,
+        "version": _service_version(),
         "buildRef": settings.SERVICE_BUILD_REF,
     }
     payload.update(extra_fields)

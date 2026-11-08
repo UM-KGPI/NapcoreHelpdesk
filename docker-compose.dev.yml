@@ -11,6 +11,7 @@ x-backend-base: &backend-base
     - ./backend/.env
   environment: &backend-env
     DJANGO_SECRET_KEY: docker-dev-secret-key
+    VERSION_FILE: /app/repo/VERSION
     DJANGO_DEBUG: "True"
     DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend
     POSTGRES_DB: napcore_helpdesk
@@ -80,7 +81,7 @@ services:
       - ./docs:/app/docs:ro
       - ./scripts:/app/scripts:ro
       - ./api:/app/api:ro
-      - ./VERSION:/app/VERSION:ro
+      - ./:/app/repo:ro  # VERSION read via a directory mount: a file mount goes stale after a version bump
       - ../NeTEx:/app/repos/NeTEx:ro
       - ../OpRa:/app/repos/OpRa:ro
       - ../SIRI:/app/repos/SIRI:ro
@@ -102,7 +103,7 @@ services:
     volumes:
       - ./backend:/app/backend
       - ./docs:/app/docs:ro
-      - ./VERSION:/app/VERSION:ro
+      - ./:/app/repo:ro  # VERSION read via a directory mount: a file mount goes stale after a version bump
     depends_on:
       backend:
         condition: service_started
@@ -143,7 +144,7 @@ services:
     volumes:
       - ./backend:/app/backend
       - ./docs:/app/docs:ro
-      - ./VERSION:/app/VERSION:ro
+      - ./:/app/repo:ro  # VERSION read via a directory mount: a file mount goes stale after a version bump
     depends_on:
       backend:
         condition: service_started

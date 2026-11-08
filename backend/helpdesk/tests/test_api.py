@@ -1429,6 +1429,20 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(response.data["mode"], "abstain")
         self.assertFalse(response.data["generatedExample"]["valid"])
 
+    def test_health_reports_the_version_file_as_it_is_now(self):
+        import os
+        import tempfile
+
+        with tempfile.NamedTemporaryFile("w", suffix="VERSION", delete=False) as handle:
+            handle.write("9.9.9\n")
+        self.addCleanup(os.unlink, handle.name)
+        environment = {k: v for k, v in os.environ.items() if k != "SERVICE_VERSION"}
+        with patch.dict(os.environ, environment, clear=True), override_settings(VERSION_FILE=handle.name):
+            self.assertEqual(self.client.get(reverse("health-live")).data["version"], "9.9.9")
+            with open(handle.name, "w") as again:
+                again.write("9.9.10\n")
+            self.assertEqual(self.client.get(reverse("health-live")).data["version"], "9.9.10")
+
     _STRUCTURE = {
         "element": "StopPlace",
         "documentation": "Version of a named place where public transport may be accessed.",
