@@ -413,3 +413,70 @@ class FormattingTests(SimpleTestCase):
         document = generator.publication_document('<ResourceFrame id="hd:RF:1"><Name>Bus</Name></ResourceFrame>')
         self.assertTrue(document.startswith('<?xml version="1.0" encoding="UTF-8"?>\n<PublicationDelivery xmlns="http://www.netex.org.uk/netex"'))
         self.assertIn("<dataObjects>\n    <ResourceFrame", document)
+
+
+class CompositionTests(SimpleTestCase):
+    def test_other_question_is_the_part_besides_the_example(self):
+        self.assertEqual(
+            generator.other_question("How do you describe a stop place in NeTEx? Show me an example with two quays."),
+            "How do you describe a stop place in NeTEx?",
+        )
+        self.assertEqual(generator.other_question("What is a Quay and show me an example of one"), "What is a Quay")
+        self.assertEqual(generator.other_question("Show me a NeTEx example for a bus with 50 seats"), "")
+
+    def test_counted_shapes_and_nouns(self):
+        self.assertEqual(generator.counted_shapes("a stop place with two quays and 3 entrances"), [(2, "two", "quays"), (3, "3", "entrances")])
+        with patch("helpdesk.services.semantic_graph.GRAPH_CONCEPT_ALIASES", {}):
+            self.assertEqual(generator.element_for_noun("quays")[0], "Quay")
+            self.assertEqual(generator.element_for_noun("facilities")[0], "Facility")
+
+    def test_count_places_and_counts_satisfy_numbers(self):
+        fragment = (
+            '<SiteFrame version="1" id="hd:SF"><stopPlaces><StopPlace version="1" id="hd:SP"><quays>'
+            '<Quay version="1" id="hd:Q1"/><Quay version="1" id="hd:Q2"/></quays></StopPlace></stopPlaces></SiteFrame>'
+        )
+        with patch("helpdesk.services.semantic_graph.GRAPH_CONCEPT_ALIASES", {}):
+            places = generator.count_places(fragment, "a stop place with 2 quays")
+            self.assertEqual([(p["value"], p["element"], p["count"]) for p in places], [("2", "Quay", 2)])
+            self.assertEqual(places[0]["path"], ["SiteFrame", "stopPlaces", "StopPlace", "quays"])
+            # "2" is not element content but is met as a count, so the fragment is not sent back.
+            self.assertEqual(generator._unmet_values(fragment, ["2"], "a stop place with 2 quays"), [])
+            self.assertEqual(generator._unmet_values(fragment, ["3"], "a stop place with 3 quays"), ["3"])
+
+    def test_standard_example_only_for_counts_without_values(self):
+        # A name the standard's examples will not have: generate, without looking.
+        with patch("helpdesk.models.SourceChunk.objects") as objects:
+            self.assertIsNone(generator.standard_example("Show a NeTEx example of Ljubljana Bus Station with two quays"))
+            self.assertIsNone(generator.standard_example("Show a NeTEx example of a bus"))
+        objects.filter.assert_not_called()
+
+    def test_tag_condition_matches_exact_element_names(self):
+        condition = str(generator.has_tag("Seat"))
+        self.assertIn("'<Seat>'", condition)
+        self.assertIn("'<Seat '", condition)
+        self.assertNotIn("'<Seat'", condition)
+
+    def test_non_english_question_triggers_on_its_english_rendering(self):
+        question = "Pokaži mi NeTEx primer za avtobus s 50 sedeži in 20 stojišči"
+        self.assertFalse(generator.wants_generated_example(question, ["NeTEx"]))
+        with patch.object(generator, "_from_standard", return_value=None), patch.object(
+            generator, "_ask_model", return_value=_reply(FRAME)
+        ), patch.object(generator, "validate_fragment", return_value={"valid": True, "errors": []}), override_settings(LLM_ENABLED=True):
+            result = generator.generate_netex_example(
+                question, [NETEX_CHUNK], ["NeTEx"], english_question="Show me a NeTEx example for a bus with 50 seats and 20 standing places"
+            )
+        self.assertTrue(result["valid"])
+        self.assertEqual(result["origin"], "generated")
+
+
+class SnippetTests(SimpleTestCase):
+    def test_snippets_become_whole_elements(self):
+        from helpdesk.services.llm_generator import OMISSION_MARKER, _complete_xml_snippets, complete_xml_elements
+
+        cut = '<Quay version="any" id="q1">\n  <Centroid>\n    <Location/>\n  </Centroid>\n  <Lighting>wellLit</Lighting>'
+        whole = complete_xml_elements(cut)
+        self.assertTrue(whole.endswith(f"{OMISSION_MARKER}\n</Quay>"), whole)
+        self.assertEqual(complete_xml_elements("<IsFoldup>true</IsFoldup>\n</SeatEquipment>\n<A>1</A>"), "<A>1</A>")
+        self.assertEqual(complete_xml_elements("</a></b>"), "")
+        self.assertEqual(complete_xml_elements("<siri:Foo>1</siri:Foo>"), "<siri:Foo>1</siri:Foo>")
+        self.assertEqual(_complete_xml_snippets("Text.\n\n```xml\n</b>\n```\n\nMore."), "Text.\n\nMore.")

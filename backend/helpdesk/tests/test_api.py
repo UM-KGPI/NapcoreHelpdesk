@@ -2225,3 +2225,20 @@ class DropMarkersWithoutCitationTests(SimpleTestCase):
         from helpdesk.api.views import _drop_markers_without_citation
 
         self.assertEqual(_drop_markers_without_citation("Nothing to cite [E1].", []), "Nothing to cite.")
+
+
+class LackSentenceTests(SimpleTestCase):
+    def test_sentences_saying_the_evidence_lacks_something_are_removed_next_to_a_block(self):
+        from helpdesk.api.views import _without_lack_sentences
+
+        self.assertEqual(
+            _without_lack_sentences(
+                "The evidence does not contain a Ljubljana Bus Station example, so I cannot show one. A `StopPlace` lists its quays [E3]."
+            ),
+            "A `StopPlace` lists its quays [E3].",
+        )
+        self.assertEqual(
+            _without_lack_sentences("A `Quay` sits in `quays` [E1]. The evidence does not state a complete list.\n\n```xml\n<Quay/>\n```"),
+            "A `Quay` sits in `quays` [E1].\n\n```xml\n<Quay/>\n```",
+        )
+        self.assertEqual(_without_lack_sentences("Examples fill `LineRef` [E3]."), "Examples fill `LineRef` [E3].")

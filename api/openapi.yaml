@@ -1547,7 +1547,9 @@ components:
       properties:
         valid:
           type: boolean
-          description: True when the fragment passed the XSD and contains every value the question gives.
+          description: >-
+            True when there is an example to show: a generated fragment that passed the XSD and holds every value
+            of the question, or an excerpt of the standard's examples with the asked-for shape (see origin).
         attempts:
           type: integer
           minimum: 0
@@ -1586,7 +1588,27 @@ components:
                 items:
                   type: string
                 example: [ResourceFrame, vehicleTypes, VehicleType, capacities, PassengerCapacity]
+              count:
+                type: integer
+                minimum: 1
+                description: For a count in the question ("two quays"), how many of the element the fragment has.
             additionalProperties: false
+        origin:
+          type: string
+          enum: [generated, standard]
+          description: >-
+            generated: written for the question and validated against the XSD. standard: an excerpt of one of
+            the standard's own example files with the shape the question asks for (counts, no other values).
+        validated:
+          type: boolean
+          description: Whether the fragment passed the XSD on its own; an excerpt can fail on references outside it.
+        sourcePath:
+          type: string
+          description: For origin standard, the example file the excerpt comes from.
+        sourceUrl:
+          type: string
+        repositoryUrl:
+          type: string
         elementNotes:
           type: array
           description: >-

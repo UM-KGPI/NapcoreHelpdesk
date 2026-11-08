@@ -8,10 +8,29 @@
 import { downloadExampleDocument } from "./generatedExampleActions";
 import type { GeneratedExample } from "../types";
 
-/** "valid against NeTEx 2.0, commit 37ff1e4": the version and commit the fragment was validated against. */
+/** "valid against NeTEx 2.0, commit 37ff1e4"; for an excerpt that did not validate on its own, "as published, commit …". */
 export function validityNote(example: GeneratedExample): string {
   const version = example.schemaVersion ? `NeTEx ${example.schemaVersion}` : "NeTEx";
-  return `valid against ${version}${example.schemaCommit ? `, commit ${example.schemaCommit.slice(0, 7)}` : ""}`;
+  const commit = example.schemaCommit ? `, commit ${example.schemaCommit.slice(0, 7)}` : "";
+  if (example.origin === "standard" && example.validated === false) {
+    return `as published${commit}`;
+  }
+  return `valid against ${version}${commit}`;
+}
+
+/** The example's title line: generated for the question, or taken from a named file of the standard. */
+export function exampleTitle(example: GeneratedExample): string {
+  if (example.origin === "standard") {
+    const file = (example.sourcePath ?? "").split("/").pop() || "the standard's examples";
+    return `Example from the standard: ${file}`;
+  }
+  return "Generated example for this question";
+}
+
+/** "two → 2 × Quay in StopPlace › quays", "49 → SeatingCapacity in … › PassengerCapacity". */
+export function placeText(place: { value: string; element: string; path: string[]; count?: number }): string {
+  const where = place.path.length ? ` in ${place.path.slice(-3).join(" › ")}` : "";
+  return place.count ? `${place.value} → ${place.count} × ${place.element}${where}` : `${place.value} → ${place.element}${where}`;
 }
 
 export default function GeneratedExampleBlock({ example }: { example?: GeneratedExample | null }) {
@@ -26,16 +45,26 @@ export default function GeneratedExampleBlock({ example }: { example?: Generated
     );
   }
   return (
-    <section className="generated-example" aria-label="Generated NeTEx example">
+    <section className="generated-example" aria-label={example.origin === "standard" ? "NeTEx example from the standard" : "Generated NeTEx example"}>
       <h4>
-        Generated example for this question{" "}
+        {example.origin === "standard" && example.sourceUrl ? (
+          <>
+            Example from the standard:{" "}
+            <a href={example.sourceUrl} target="_blank" rel="noreferrer">
+              {(example.sourcePath ?? "").split("/").pop()}
+            </a>
+          </>
+        ) : (
+          exampleTitle(example)
+        )}{" "}
         <span className="generated-example-badge">({validityNote(example)})</span>
       </h4>
       {example.valuePlaces && example.valuePlaces.length > 0 ? (
         <ul className="generated-example-lead" aria-label="Where the question's values go">
           {example.valuePlaces.map((place) => (
             <li key={`${place.value}-${place.element}`}>
-              <strong>{place.value}</strong> → <code>{place.element}</code>
+              <strong>{place.value}</strong> → {place.count ? `${place.count} × ` : ""}
+              <code>{place.element}</code>
               {place.path.length > 0 ? (
                 <span className="muted"> in {place.path.slice(-3).join(" › ")}</span>
               ) : null}

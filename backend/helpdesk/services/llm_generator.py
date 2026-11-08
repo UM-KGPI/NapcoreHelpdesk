@@ -123,6 +123,7 @@ def _validate_grounded_example_output(question: str, answer: str, chunks: list[d
             for line in block.splitlines()
             if len(_normalize_grounded_line(line)) >= 8
             and any(marker in line for marker in ["<", ">", "/", "="])
+            and line.strip() != OMISSION_MARKER  # added by complete_xml_elements, not quoted
         ]
         if not block_lines:
             continue
@@ -914,6 +915,60 @@ _INTRODUCER_COMMA_PATTERN = re.compile(r"\b(such as|e\.g\.|including),", re.IGNO
 _REPEATED_CITATION_PATTERN = re.compile(r"\[E(\d+)\](?:[ \t]*\[E\1\])+")
 
 
+OMISSION_MARKER = "<!-- … -->"
+_XML_TAG = re.compile(r"<!--.*?-->|<\?.*?\?>|<(/?)([A-Za-z_][\w:.-]*)(?:\s[^<>]*?)?(/?)>", re.S)
+_XML_FENCE = re.compile(r"```(?:xml)?[ \t]*\n(.*?)\n?```", re.S | re.I)
+
+
+def complete_xml_elements(xml: str) -> str:
+    """An XML excerpt made of whole elements: "" when it holds no element.
+
+    A quoted snippet cut by a line limit starts inside an element ("</SeatEquipment>" first) or ends inside
+    one (<Quay> opened, never closed). What comes before a closing tag whose element opened before the
+    excerpt is dropped; elements still open at the end (or at a mismatched closing tag) are closed after a
+    "<!-- … -->" line, so the verbatim content stays and the shortening is visible. Tags are matched by
+    name with a stack: namespace prefixes and entities need no parsing.
+    """
+    stack: list[tuple[str, str]] = []  # (name, indentation of its opening line)
+    start, end = 0, len(xml)
+    for match in _XML_TAG.finditer(xml):
+        closing, name, self_closing = match.group(1), match.group(2), match.group(3)
+        if name is None or self_closing:
+            continue
+        if not closing:
+            line_start = xml.rfind("\n", 0, match.start()) + 1
+            stack.append((name, xml[line_start : match.start()] if not xml[line_start : match.start()].strip() else ""))
+            continue
+        if stack and stack[-1][0] == name:
+            stack.pop()
+        elif not stack:
+            start = match.end()  # closes an element opened before the excerpt
+        else:
+            end = match.start()  # mismatched: stop here and close what is open
+            break
+    body = xml[start:end].strip("\n")
+    if not re.search(r"<[A-Za-z_]", body):
+        return ""
+    if stack:
+        indent = stack[-1][1] + "  "
+        closers = "\n".join(f"{ind}</{name}>" for name, ind in reversed(stack))
+        body = f"{body.rstrip()}\n{indent}{OMISSION_MARKER}\n{closers}"
+    return body
+
+
+def _complete_xml_snippets(answer: str) -> str:
+    """Every ```xml block of an answer cut to whole elements; a block with none is removed."""
+
+    def repair(match: re.Match) -> str:
+        body = match.group(1)
+        if "<" not in body:
+            return match.group(0)
+        whole = complete_xml_elements(body)
+        return f"```xml\n{whole}\n```" if whole.strip() else ""
+
+    return re.sub(r"\n{3,}", "\n\n", _XML_FENCE.sub(repair, answer)).strip()
+
+
 def _strip_non_evidence_markup(answer: str) -> str:
     """Remove bracketed markers that are not evidence citations, repeated citations, and
     inline code spans left empty, outside code blocks, then tidy the punctuation they leave behind."""
@@ -1342,21 +1397,33 @@ COMPOSITION_RULE = (
 # (services/netex_example_generator.py), the fragment and its schema notes are shown first and are the
 # answer; the text adds only what the evidence says about the fragment's elements, and may be empty.
 # (Prod req-mw7j8wr6-t4l19q, 2026-11-08: the text said "I cannot provide one" above a valid example.)
-def generated_example_rule(elements: list[str], fragment: str = "") -> str:
-    """The text's brief next to a valid generated example: it sees the fragment, and adds how the
-    standard's own examples fill the same elements (they come first among the evidence blocks)."""
+def generated_example_rule(elements: list[str], fragment: str = "", also_asks: str = "", origin: str = "generated") -> str:
+    """The text's brief next to an example shown first: it sees the fragment, answers any other part of the
+    question first (also_asks: "How do you describe a stop place in NeTEx?" next to "show me an example"),
+    then adds how the standard's own examples fill the same elements."""
     shown = f"\n```xml\n{fragment.strip()}\n```\n" if fragment.strip() else " "
+    where = (
+        "taken from one of the standard's own example files"
+        if origin == "standard"
+        else "generated for the question and validated against the NeTEx schema"
+    )
+    first = (
+        f"The question also asks: \u201c{also_asks.strip()}\u201d. Start by answering that, in two or three "
+        "sentences from the evidence (definition blocks may be quoted); then "
+        if also_asks.strip()
+        else "Do not define these elements, and do not say what the evidence lacks. "
+    )
     return (
-        "EXAMPLE ALREADY SHOWN: above your text the user sees this NeTEx fragment, generated for the "
-        f"question and validated against the NeTEx schema:{shown}It uses these elements: {', '.join(elements)}. "
-        "Above it the user is told which element holds each value of the question, and below it each "
-        "element's definition from the schema. Do not repeat or describe the fragment, do not define these "
-        "elements, and do not say what the evidence lacks. Write only what the evidence adds about the "
-        "elements that hold the question's values, as the standard's own examples use them: where they sit, "
-        "which elements usually come with them, allowed values and types. Prefer evidence blocks that use "
-        "those elements; leave out blocks that do not. At most four sentences, each cited [E#], then at most "
-        "one verbatim snippet (at most 10 lines, in a ```xml block) from one evidence block that uses the same "
-        'elements. If the evidence adds nothing about these elements, return exactly: '
+        f"EXAMPLE ALREADY SHOWN: above your text the user sees this NeTEx fragment, {where}:{shown}"
+        f"It uses these elements: {', '.join(elements)}. Above it the user is told which element holds each "
+        "value or count of the question, and below it each element's definition from the schema. Do not repeat "
+        f"or describe the fragment. {first}"
+        "write what the evidence adds about the elements that hold the question's values, as the standard's own "
+        "examples use them: where they sit, which elements usually come with them, allowed values and types. "
+        "Prefer evidence blocks that use those elements; leave out blocks that do not. At most four sentences "
+        "for this part, each cited [E#], then at most one verbatim snippet in a ```xml block: one whole element "
+        "from its opening to its closing tag, at most 12 lines, from one evidence block that uses the same "
+        "elements. If the evidence adds nothing and there is no other part to answer, return exactly: "
         '{"answer": "", "citations_used": [], "evidence_answers_question": true}'
     )
 
@@ -1370,7 +1437,7 @@ def schema_structure_rule(element: str) -> str:
         "do not list, repeat or define those elements, and do not say what the evidence lacks. Write only what "
         f"the evidence adds about {element}: how the standard's own "
         "examples use it and which of its children they fill, constraints or usual values, and what refers to "
-        "it. At most four sentences, each cited [E#], then at most one verbatim snippet (at most 10 lines, in "
+        "it. At most four sentences, each cited [E#], then at most one verbatim snippet (one whole element, at most 12 lines, in "
         "a ```xml block) from one evidence block. If the evidence adds nothing, return exactly: "
         '{"answer": "", "citations_used": [], "evidence_answers_question": true}'
     )
@@ -1405,6 +1472,8 @@ def _build_messages(
     example_elements: list[str] | None = None,
     structure_element: str | None = None,
     example_fragment: str = "",
+    also_asks: str = "",
+    example_origin: str = "generated",
 ) -> list[dict]:
     context_lines = []
     # With a generated example, trimming keeps its elements (those holding the question's values first) in view.
@@ -1532,7 +1601,7 @@ def _build_messages(
         system_prompt = (
             f"{system_prompt} "
             "For questions asking for examples or code: First, directly answer 'yes' or 'no' about availability. Then list the examples found in evidence with citations [E#]. "
-            "When showing XML/JSON/YAML, include one fenced code block (```xml) of 6-20 lines from a single evidence block. "
+            "When showing XML/JSON/YAML, include one fenced code block (```xml) of 6-20 lines from a single evidence block, made of whole elements (each opening tag closed). "
             "Quote only verbatim excerpts from evidence blocks. Never synthesize or combine structures across sources. "
             "If asking for availability ('Is there any...?'), list all matching examples found in the evidence with their source paths and brief descriptions."
         )
@@ -1549,7 +1618,7 @@ def _build_messages(
         system_prompt = (
             f"{system_prompt} "
             "For technical questions about XML, standards structures, or implementations: Include a relevant code example from the evidence if available. "
-            "When showing XML/JSON structures, use one fenced code block (```xml) with 6-15 lines from the evidence. "
+            "When showing XML/JSON structures, use one fenced code block (```xml) with 6-15 lines from the evidence, made of whole elements (each opening tag closed). "
             "Never synthesize or invent examples — only quote verbatim from the evidence blocks."
         )
 
@@ -1611,7 +1680,7 @@ def _build_messages(
         "- If a requested detail is not in the evidence, explicitly state that — in the response language, not English "
         "(unless English is the response language)\n\n"
         f"{COMPOSITION_RULE + chr(10) if composition else ''}"
-        f"{generated_example_rule(example_elements, example_fragment) + chr(10) + chr(10) if example_elements else ''}"
+        f"{generated_example_rule(example_elements, example_fragment, also_asks, example_origin) + chr(10) + chr(10) if example_elements else ''}"
         f"{schema_structure_rule(structure_element) + chr(10) + chr(10) if structure_element else ''}"
         "Write your answer:"
     )
@@ -1781,6 +1850,7 @@ def _generate_answer_text(
     # Strip stray list markers before code blocks (e.g., "1\n```" → "```")
     answer = _strip_stray_list_markers(answer)
     answer = _strip_non_evidence_markup(answer)
+    answer = _complete_xml_snippets(answer)
 
     # Fix out-of-range citations before validation (LLM may hallucinate [E10] when only [E1-E6] exist)
     max_chunk_idx = len(chunks)
@@ -1899,6 +1969,8 @@ def generate_answer_llm(
     example_elements: list[str] | None = None,
     structure_element: str | None = None,
     example_fragment: str = "",
+    also_asks: str = "",
+    example_origin: str = "generated",
 ) -> dict:
     """Generate a grounded answer through a configurable OpenAI-compatible API.
 
@@ -1935,6 +2007,8 @@ def generate_answer_llm(
         example_elements=example_elements,
         structure_element=structure_element,
         example_fragment=example_fragment,
+        also_asks=also_asks,
+        example_origin=example_origin,
     )
 
     primary_base_url = (settings.LLM_API_BASE_URL or "").strip()
@@ -2192,6 +2266,8 @@ def stream_answer_llm(
     example_elements: list[str] | None = None,
     structure_element: str | None = None,
     example_fragment: str = "",
+    also_asks: str = "",
+    example_origin: str = "generated",
 ) -> Generator[tuple[str, object], None, None]:
     """
     Generator yielding (event_type, payload) tuples for streaming narration.
@@ -2235,6 +2311,8 @@ def stream_answer_llm(
         example_elements=example_elements,
         structure_element=structure_element,
         example_fragment=example_fragment,
+        also_asks=also_asks,
+        example_origin=example_origin,
     )
 
     # Buffer all tokens before yielding any — validation must pass the full
@@ -2306,6 +2384,7 @@ def stream_answer_llm(
         full_answer = _strip_raw_filenames(full_answer, chunks)
         full_answer = _strip_stray_list_markers(full_answer)
         full_answer = _strip_non_evidence_markup(full_answer)
+        full_answer = _complete_xml_snippets(full_answer)
         _validate_answer_language(answer=full_answer, question=question, target_language=effective_language)
         _validate_generated_answer(answer=full_answer, chunks=chunks)
         _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
@@ -2340,6 +2419,7 @@ def stream_answer_llm(
         full_answer = _strip_raw_filenames(full_answer, chunks)
         full_answer = _strip_stray_list_markers(full_answer)
         full_answer = _strip_non_evidence_markup(full_answer)
+        full_answer = _complete_xml_snippets(full_answer)
         try:
             _validate_answer_language(answer=full_answer, question=question, target_language=effective_language)
             _validate_generated_answer(answer=full_answer, chunks=chunks)

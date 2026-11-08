@@ -108,7 +108,14 @@ export interface GeneratedExample {
   schemaVersion?: string;
   schemaCommit?: string;
   elementNotes?: { name: string; documentation: string }[];
-  valuePlaces?: { value: string; element: string; path: string[] }[];
+  valuePlaces?: { value: string; element: string; path: string[]; count?: number }[];
+  /** "generated" for the model's fragment, "standard" for an excerpt of one of the standard's own example files. */
+  origin?: "generated" | "standard";
+  /** Whether the fragment passed the XSD on its own (an excerpt can fail on references outside it). */
+  validated?: boolean;
+  sourcePath?: string;
+  sourceUrl?: string;
+  repositoryUrl?: string;
   evidenceChunkIds?: string[];
   errors?: string[];
   generationMs?: number;
