@@ -109,86 +109,90 @@ export default function ReadOnlyQuestionDisplay({
               {turn.answer && (
                 <>
                   <div className="chat-answer-actions" role="group" aria-label="Answer actions">
-                    <button
-                      type="button"
-                      className="chat-icon-button"
-                      onClick={() => {
-                        void copyDeepLinkToClipboard(turn);
-                      }}
-                      title="Copy deep link to share this Q&A"
-                      aria-label="Copy deep link to share this Q&A"
-                    >
-                      🔗
-                    </button>
-                    <button
-                      type="button"
-                      className="chat-icon-button"
-                      onClick={() => {
-                        void copyAnswerToClipboard(turn);
-                      }}
-                      title="Copy answer to clipboard"
-                      aria-label="Copy answer to clipboard"
-                    >
-                      📋
-                    </button>
-                    {turn.answer.generatedExample?.valid && (
-                      <>
-                        <button
-                          type="button"
-                          className="chat-icon-button"
-                          onClick={() => {
-                            void copyFragment(turn.answer!.generatedExample!);
-                          }}
-                          title="Copy generated XML fragment"
-                          aria-label="Copy generated XML fragment"
-                        >
-                          📄
-                        </button>
-                        <button
-                          type="button"
-                          className="chat-icon-button"
-                          onClick={() => downloadPublicationDelivery(turn.answer!.generatedExample!)}
-                          title="Download generated example as PublicationDelivery"
-                          aria-label="Download generated example as PublicationDelivery"
-                        >
-                          ⬇️
-                        </button>
-                      </>
-                    )}
-                    <button
-                      type="button"
-                      className={`chat-icon-button ${(turn.answer.trace.userLikes ?? false) ? "chat-icon-button-active" : ""}`}
-                      onClick={() => {
-                        const requestId = turn.requestId ?? turn.answer?.trace.requestId;
-                        if (!requestId) {
-                          return;
-                        }
-                        const currentLike = turn.answer?.trace.userLikes ?? false;
-                        void setFeedback(requestId, { userLikes: !currentLike, userDislikes: false, answerSuccess: currentLike ? null : true });
-                      }}
-                      disabled={feedbackPendingByRequestId[turn.requestId ?? turn.answer.trace.requestId] === true}
-                      title="Good answer"
-                      aria-label="Good answer"
-                    >
-                      👍
-                    </button>
-                    <button
-                      type="button"
-                      className={`chat-icon-button ${(turn.answer.trace.userDislikes ?? false) ? "chat-icon-button-active" : ""}`}
-                      onClick={() => {
-                        const requestId = turn.requestId ?? turn.answer?.trace.requestId;
-                        if (!requestId) {
-                          return;
-                        }
-                        const currentDislike = turn.answer?.trace.userDislikes ?? false;
-                        void setFeedback(requestId, { userLikes: false, userDislikes: !currentDislike, answerSuccess: currentDislike ? null : false });
-                      }}
-                      disabled={feedbackPendingByRequestId[turn.requestId ?? turn.answer.trace.requestId] === true}
-                      title="Answer could be better"
-                      aria-label="Answer could be better"
-                    >
-                      👎
-                    </button>
+                    <div className="chat-answer-actions-feedback">
+                      <button
+                        type="button"
+                        className={`chat-icon-button ${(turn.answer.trace.userLikes ?? false) ? "chat-icon-button-active" : ""}`}
+                        onClick={() => {
+                          const requestId = turn.requestId ?? turn.answer?.trace.requestId;
+                          if (!requestId) {
+                            return;
+                          }
+                          const currentLike = turn.answer?.trace.userLikes ?? false;
+                          void setFeedback(requestId, { userLikes: !currentLike, userDislikes: false, answerSuccess: currentLike ? null : true });
+                        }}
+                        disabled={feedbackPendingByRequestId[turn.requestId ?? turn.answer.trace.requestId] === true}
+                        title="Good answer"
+                        aria-label="Good answer"
+                      >
+                        👍
+                      </button>
+                      <button
+                        type="button"
+                        className={`chat-icon-button ${(turn.answer.trace.userDislikes ?? false) ? "chat-icon-button-active" : ""}`}
+                        onClick={() => {
+                          const requestId = turn.requestId ?? turn.answer?.trace.requestId;
+                          if (!requestId) {
+                            return;
+                          }
+                          const currentDislike = turn.answer?.trace.userDislikes ?? false;
+                          void setFeedback(requestId, { userLikes: false, userDislikes: !currentDislike, answerSuccess: currentDislike ? null : false });
+                        }}
+                        disabled={feedbackPendingByRequestId[turn.requestId ?? turn.answer.trace.requestId] === true}
+                        title="Answer could be better"
+                        aria-label="Answer could be better"
+                      >
+                        👎
+                      </button>
+                    </div>
+                    <div className="chat-answer-actions-tools">
+                      <button
+                        type="button"
+                        className="chat-icon-button"
+                        onClick={() => {
+                          void copyDeepLinkToClipboard(turn);
+                        }}
+                        title="Copy deep link to share this Q&A"
+                        aria-label="Copy deep link to share this Q&A"
+                      >
+                        🔗
+                      </button>
+                      <button
+                        type="button"
+                        className="chat-icon-button"
+                        onClick={() => {
+                          void copyAnswerToClipboard(turn);
+                        }}
+                        title="Copy answer to clipboard"
+                        aria-label="Copy answer to clipboard"
+                      >
+                        📋
+                      </button>
+                      {turn.answer.generatedExample?.valid && (
+                        <>
+                          <button
+                            type="button"
+                            className="chat-icon-button"
+                            onClick={() => {
+                              void copyFragment(turn.answer!.generatedExample!);
+                            }}
+                            title="Copy generated XML fragment"
+                            aria-label="Copy generated XML fragment"
+                          >
+                            📄
+                          </button>
+                          <button
+                            type="button"
+                            className="chat-icon-button"
+                            onClick={() => downloadPublicationDelivery(turn.answer!.generatedExample!)}
+                            title="Download generated example as PublicationDelivery"
+                            aria-label="Download generated example as PublicationDelivery"
+                          >
+                            ⬇️
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                   {turn.answer.citations.length > 0 && (
                     <>
