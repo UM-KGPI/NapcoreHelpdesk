@@ -1,0 +1,31 @@
+# Questions with the ontology classes they are about, for measuring concept recognition
+# (run_concept_benchmark). A question passes when one of `expected` (Transmodel classes; a standard's
+# class counts for the Transmodel class it is aligned to) is among the first 3 concepts found.
+# Paraphrases and other languages are on purpose: word matching misses them.
+questions:
+  - {id: c01, question: "How can fare distribution be defined in NeTEx?", expected: [DISTRIBUTION_CHANNEL, DISTRIBUTION_ASSIGNMENT]}
+  - {id: c02, question: "Where can a passenger buy tickets in NeTEx?", expected: [DISTRIBUTION_CHANNEL, TICKETING_EQUIPMENT, SALES_OFFER_PACKAGE]}
+  - {id: c03, question: "Does a bus have drivers name described in NeTEx?", expected: [DRIVER]}
+  - {id: c04, question: "Kje lahko potnik kupi vozovnico v NeTEx?", expected: [DISTRIBUTION_CHANNEL, TICKETING_EQUIPMENT, SALES_OFFER_PACKAGE]}
+  - {id: c05, question: "How do I describe an elevator in a station?", expected: [LIFT_EQUIPMENT]}
+  - {id: c06, question: "Is there an element for a stop place entrance in NeTEx?", expected: [STOP_PLACE_ENTRANCE]}
+  - {id: c07, question: "Does NeTEx support parking spaces?", expected: [PARKING, PARKING_BAY]}
+  - {id: c08, question: "How is a fare product defined in NeTEx?", expected: [FARE_PRODUCT]}
+  - {id: c09, question: "How do you describe a journey that runs only on weekdays?", expected: [DAY_TYPE, SERVICE_JOURNEY]}
+  - {id: c10, question: "How are the stopping points along a route modelled in NeTEx?", expected: [SCHEDULED_STOP_POINT, STOP_POINT_IN_JOURNEY_PATTERN]}
+  - {id: c11, question: "Does NeTEx describe wheelchair accessibility of a stop?", expected: [ACCESSIBILITY_ASSESSMENT]}
+  - {id: c12, question: "How is a bus company represented in NeTEx?", expected: [OPERATOR, AUTHORITY]}
+  - {id: c13, question: "How can discounts for students be modelled in NeTEx?", expected: [USER_PROFILE, USAGE_DISCOUNT_RIGHT]}
+  - {id: c14, question: "How are fare zones defined in NeTEx?", expected: [FARE_ZONE, TARIFF_ZONE]}
+  - {id: c15, question: "Is there an element for a ticket machine in NeTEx?", expected: [TICKETING_EQUIPMENT]}
+  - {id: c16, question: "How can the platform of a station be described in NeTEx?", expected: [QUAY]}
+  - {id: c17, question: "How do you describe how a ticket is delivered to the customer?", expected: [FULFILMENT_METHOD]}
+  - {id: c18, question: "Wie wird ein Fahrplan in NeTEx beschrieben?", expected: [TIMETABLE_FRAME, SERVICE_JOURNEY, JOURNEY_PATTERN]}
+  - {id: c19, question: "Does NeTEx have a concept for the seating plan of a vehicle?", expected: [DECK_PLAN, SEAT_EQUIPMENT]}
+  - {id: c20, question: "How is the work shift of a driver modelled in NeTEx?", expected: [DUTY]}
+  - {id: c21, question: "How can a package of tickets sold together be defined in NeTEx?", expected: [SALES_OFFER_PACKAGE]}
+  - {id: c22, question: "Does NeTEx support bike sharing?", expected: [VEHICLE_SHARING, VEHICLE_SHARING_SERVICE]}
+  - {id: c23, question: "How do you describe a type of bus in NeTEx?", expected: [VEHICLE_TYPE]}
+  - {id: c24, question: "How are passenger notices shown on a line?", expected: [NOTICE]}
+  - {id: c25, question: "Kako se v NeTEx opiše vstop na postajališče?", expected: [STOP_PLACE_ENTRANCE, ENTRANCE]}
+  - {id: c26, question: "Does NeTEx have bike racks at stations?", expected: [CYCLE_STORAGE_EQUIPMENT]}

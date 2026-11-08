@@ -116,24 +116,50 @@ def head_word_concepts(question: str, standard: str = "netex", limit: int = 2) -
     return (best or [])[:limit]
 
 
-def presence_concepts(question: str) -> list[str]:
-    """Transmodel classes the question is about, recognised with plurals; a standard's class stands for
-    the Transmodel class it is aligned to. When no class is named by a full label, the classes headed by
-    the question's most specific word (head_word_concepts)."""
+def _labelled_concepts(question: str) -> list[str]:
+    """Classes whose full label the question names (plurals too), most specific first, as Transmodel classes."""
     from helpdesk.services.semantic_graph import CONCEPT_TO_TRANSMODEL, extract_graph_concepts
 
     found = extract_graph_concepts(singular_question(question)) | extract_graph_concepts(question)
-    transmodel = []
-    for concept in sorted(found):
+    transmodel = set()
+    for concept in found:
         if not _is_class(concept):
             continue
         tm = concept if concept.startswith("transmodel:") else CONCEPT_TO_TRANSMODEL.get(concept)
-        if tm and tm not in transmodel:
-            transmodel.append(tm)
-    if not transmodel:
-        return head_word_concepts(question)
-    # The most specific first: DRIVER before EMPLOYEE when both are named.
-    return sorted(transmodel, key=lambda c: -len(c))
+        if tm:
+            transmodel.add(tm)
+    # The most specific first, judged on the Transmodel names: DRIVER TRIP before DRIVER.
+    return sorted(transmodel, key=lambda c: (-c.count("_"), -len(c), c))
+
+
+SEMANTIC_AGREEMENT_DEPTH = 20
+
+
+def presence_concepts(question: str, kind: str | None = None) -> list[str]:
+    """The classes the question is about, best first.
+
+    Measured on benchmarks/concept-questions.yaml (26 questions, paraphrases and other languages; hit@3):
+    label words 0.35, semantic on the whole question 0.46, semantic on the question's subject 0.81, the
+    order below 0.88. Concepts named by label words (or by the head-word rule) count only when the meaning
+    agrees: they are among the classes nearest to the subject by meaning. An existence question names the
+    thing itself ("does a bus have a driver's name?"), so there the most specific label named literally
+    goes first. The nearest classes by meaning fill the rest. Without the embedder or the concept index,
+    label words and the head-word rule, as before.
+    """
+    from helpdesk.services.concept_vectors import question_subject, semantic_concepts
+    from helpdesk.services.semantic_graph import CONCEPT_TO_TRANSMODEL
+
+    labelled = _labelled_concepts(question)
+    nearest = [
+        c["concept_id"] if c["concept_id"].startswith("transmodel:") else CONCEPT_TO_TRANSMODEL.get(c["concept_id"], c["concept_id"])
+        for c in semantic_concepts(question_subject(question), limit=SEMANTIC_AGREEMENT_DEPTH)
+    ]
+    if not nearest:
+        return labelled or head_word_concepts(question)
+    kind = kind if kind is not None else question_kind(question)
+    agreeing = [c for c in (labelled or head_word_concepts(question)) if c in nearest]
+    ordered = (labelled[:1] if kind == "whether" else []) + agreeing + nearest
+    return list(dict.fromkeys(ordered))
 
 
 def _element_names(word: str) -> list[str]:
@@ -186,7 +212,9 @@ def presence_evidence(question: str, scope: list[str] | None, english_question: 
             password=getattr(settings, "GRAPHDB_PASSWORD", ""),
         )
         formatted = format_definitions_as_chunks(definitions or [], commit_shas=indexed_commit_shas())
-        chunks += [c for c in formatted if "transmodel" in str(c.get("sourcePath", "")).lower()][: len(concepts)]
+        # The Transmodel definition (it names the implementing class); a standard's own class has none.
+        transmodel_defs = [c for c in formatted if "transmodel" in str(c.get("sourcePath", "")).lower()]
+        chunks += (transmodel_defs or formatted)[: len(concepts)]
     except Exception as exc:  # the graph unavailable: the schema part still helps
         logger.info("concept definition not available: %s", exc)
     from helpdesk.services.schema_structure import definition_chunk

@@ -31,7 +31,7 @@ class ConceptTests(SimpleTestCase):
         aliases = {"transmodel:DRIVER": {"DRIVER"}, "netex:DriverTrip": {"driver trip"}, "netex:NeTEx": {"netex"}}
         with patch("helpdesk.services.semantic_graph.GRAPH_CONCEPT_ALIASES", aliases), patch(
             "helpdesk.services.semantic_graph.CONCEPT_TO_TRANSMODEL", {"netex:DriverTrip": "transmodel:DRIVER_TRIP"}
-        ):
+        ), patch("helpdesk.services.concept_vectors.semantic_concepts", return_value=[]):
             self.assertEqual(presence.presence_concepts("Does a bus have drivers name described in NeTEx?"), ["transmodel:DRIVER"])
             self.assertEqual(presence.presence_concepts("Does NeTEx have driver trips?")[0], "transmodel:DRIVER_TRIP")
 

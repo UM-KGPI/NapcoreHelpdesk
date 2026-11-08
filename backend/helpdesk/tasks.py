@@ -18,6 +18,30 @@ from helpdesk.services.source_refresh import SourceRefreshError, refresh_all_sou
 from helpdesk.services.semantic_clustering import build_semantic_clusters
 
 
+@shared_task(name="helpdesk.build_concept_vectors")
+def build_concept_vectors_task() -> dict:
+    """Embed new and changed ontology classes for finding concepts by meaning (services/concept_vectors.py).
+    Queued at worker start (so after every deploy) and after the nightly source refresh."""
+    from helpdesk.services.concept_vectors import build_concept_vectors
+
+    return build_concept_vectors()
+
+
+def _refresh_concept_vectors() -> None:
+    """After the nightly refresh the ontology may have changed: bring the concept vectors in line. Inline (this
+    already runs in a worker), only with GraphDB, and never at the cost of the refresh's own result."""
+    import logging
+
+    if not getattr(settings, "GRAPHDB_ENABLED", False):
+        return
+    try:
+        from helpdesk.services.concept_vectors import build_concept_vectors
+
+        logging.getLogger(__name__).info("concept vectors after refresh: %s", build_concept_vectors())
+    except Exception:
+        logging.getLogger(__name__).warning("concept vectors not rebuilt after the refresh", exc_info=True)
+
+
 @shared_task(name="helpdesk.refresh_source_indexes")
 def refresh_source_indexes() -> dict:
     """Scheduled refresh of every indexed standards repository (see services/source_refresh.py).
@@ -27,6 +51,7 @@ def refresh_source_indexes() -> dict:
     """
 
     result = refresh_all_sources()
+    _refresh_concept_vectors()
     if result["status"] in {"partial", "failed"}:
         failures = {name: row.get("error", "unknown error") for name, row in result["results"].items() if row["status"] != "ok"}
         raise SourceRefreshError(f"Source refresh {result['status']}: {failures or result.get('reason')}")
