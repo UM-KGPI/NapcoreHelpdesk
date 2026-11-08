@@ -1480,8 +1480,66 @@ components:
           oneOf:
             - $ref: '#/components/schemas/GeneratedExample'
             - type: "null"
+        schemaStructure:
+          oneOf:
+            - $ref: '#/components/schemas/SchemaStructure'
+            - type: "null"
         trace:
           $ref: '#/components/schemas/AnswerTrace'
+      additionalProperties: false
+    SchemaStructure:
+      type: object
+      description: >-
+        What an element contains according to the NeTEx schema, for "what does X contain" questions: its own
+        child elements first, then those inherited from each base type, and its attributes, each with the
+        schema's definition. Taken from the XSD index with no model involved.
+      required: [element, groups, attributes]
+      properties:
+        element:
+          type: string
+          example: StopPlace
+        documentation:
+          type: string
+        source:
+          type: string
+          description: The schema file that declares the element.
+          example: xsd/netex_part_1/part1_ifopt/netex_ifopt_stopPlace_version.xsd
+        groups:
+          type: array
+          items:
+            type: object
+            required: [owner, inherited, children]
+            properties:
+              owner:
+                type: string
+                description: The element whose type declares these children (the element itself, or a base type's element).
+              inherited:
+                type: boolean
+              children:
+                type: array
+                items:
+                  type: object
+                  required: [name, documentation]
+                  properties:
+                    name:
+                      type: string
+                    documentation:
+                      type: string
+                  additionalProperties: false
+            additionalProperties: false
+        attributes:
+          type: array
+          items:
+            type: object
+            required: [name, documentation, owner]
+            properties:
+              name:
+                type: string
+              documentation:
+                type: string
+              owner:
+                type: string
+            additionalProperties: false
       additionalProperties: false
     GeneratedExample:
       type: object
@@ -1697,6 +1755,10 @@ components:
           oneOf:
             - $ref: '#/components/schemas/GeneratedExample'
             - type: "null"
+        schemaStructure:
+          oneOf:
+            - $ref: '#/components/schemas/SchemaStructure'
+            - type: "null"
       additionalProperties: false
     AnswerFeedbackRequest:
       type: object
@@ -1840,6 +1902,10 @@ components:
         generatedExample:
           oneOf:
             - $ref: '#/components/schemas/GeneratedExample'
+            - type: "null"
+        schemaStructure:
+          oneOf:
+            - $ref: '#/components/schemas/SchemaStructure'
             - type: "null"
         trace:
           type: object

@@ -78,7 +78,7 @@ export default function ReadOnlyQuestionDisplay({
   };
 
   const copyAnswerToClipboard = async (turn: ChatTurn) => {
-    const text = answerBodyText(turn.text, turn.answer?.generatedExample);
+    const text = answerBodyText(turn.text, turn.answer?.generatedExample, turn.answer?.schemaStructure);
     if (!text) return;
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(text);
@@ -104,7 +104,7 @@ export default function ReadOnlyQuestionDisplay({
             <article key={turn.id} className={`chat-bubble ${turn.role === "user" ? "chat-user" : "chat-assistant"}`}>
               <p className="chat-role">{turn.role}</p>
               {turn.role === "assistant" ? (
-                <AnswerBody text={turn.text} example={turn.answer?.generatedExample} />
+                <AnswerBody text={turn.text} example={turn.answer?.generatedExample} structure={turn.answer?.schemaStructure} />
               ) : (
                 <p>{turn.text}</p>
               )}

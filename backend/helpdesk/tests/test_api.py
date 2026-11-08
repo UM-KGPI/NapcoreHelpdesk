@@ -1429,6 +1429,40 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(response.data["mode"], "abstain")
         self.assertFalse(response.data["generatedExample"]["valid"])
 
+    _STRUCTURE = {
+        "element": "StopPlace",
+        "documentation": "Version of a named place where public transport may be accessed.",
+        "source": "xsd/netex_part_1/part1_ifopt/netex_ifopt_stopPlace_version.xsd",
+        "groups": [{"owner": "StopPlace", "inherited": False, "children": [{"name": "quays", "documentation": "QUAYs within the STOP PLACE."}]}],
+        "attributes": [{"name": "id", "documentation": "Identifier of STOP PLACE.", "owner": "StopPlace"}],
+    }
+
+    @override_settings(LLM_ENABLED=True)
+    @patch("helpdesk.api.views.schema_structure_for")
+    @patch("helpdesk.api.views.generate_answer_llm")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_what_an_element_contains_comes_from_the_schema(self, retrieve_mock, llm_mock, structure_mock):
+        retrieve_mock.return_value = copy.deepcopy(self._NON_ANSWER_CHUNKS)
+        structure_mock.return_value = dict(self._STRUCTURE)
+        llm_mock.return_value = {"answer": "", "confidence": 0.9, "review_required": False, "answer_validated": True,
+                                 "evidence_answers_question": True}
+
+        response = self.client.post(
+            reverse("answer-question"),
+            {"question": "What does a StopPlace contain in NeTEx?", "generationProfile": "llm-ready", "options": {"allowAbstain": True}},
+            format="json",
+            HTTP_X_REQUEST_ID="req-structure-001",
+            **self.auth_headers(),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_matches_schema("AnswerResponse", response.data)
+        self.assertEqual(llm_mock.call_args.kwargs["structure_element"], "StopPlace")
+        self.assertEqual(response.data["mode"], "rag")
+        self.assertEqual(response.data["answer"], "")
+        self.assertEqual(response.data["schemaStructure"]["element"], "StopPlace")
+        self.assertEqual(response.data["trace"]["schemaStructure"]["groups"][0]["children"][0]["name"], "quays")
+
     @override_settings(LLM_ENABLED=True)
     @patch("helpdesk.api.views.generate_netex_example")
     @patch("helpdesk.api.views.stream_answer_llm")

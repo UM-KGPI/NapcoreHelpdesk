@@ -330,6 +330,22 @@ class ValidatorServiceTests(SimpleTestCase):
         self.assertEqual(docs.search(["seat"])[0]["name"], "SeatEquipment")  # both in name and text; shorter text wins
         self.assertEqual(docs.search(["seat"], counted=["seat"])[0]["name"], "SeatingCapacity")
 
+    def test_structure_of_an_element(self):
+        result = self.holder.element_docs.structure("ResourceFrame")
+        self.assertTrue(result["found"])
+        self.assertEqual(result["documentation"], "A coherent set of reference values.")
+        self.assertEqual(result["source"], "xsd/NeTEx_publication.xsd")
+        self.assertEqual(
+            [(g["owner"], g["inherited"], [c["name"] for c in g["children"]]) for g in result["groups"]],
+            # Its own declarations (ResourceFrameStructure), then those of its base type FrameStructure (via NameGroup).
+            [("ResourceFrame", False, ["Capacity"]), ("Frame", True, ["Name"])],
+        )
+        self.assertEqual(result["groups"][0]["children"][0]["documentation"], "Capacity of the frame's vehicles.")
+        self.assertEqual(result["attributes"], [{"name": "id", "documentation": "", "owner": "Frame"}])
+
+    def test_structure_of_an_unknown_element(self):
+        self.assertEqual(self.holder.element_docs.structure("Nothing")["found"], False)
+
     def test_element_documentation_fallbacks(self):
         docs = self.holder.element_docs
         # Not reachable from the parent, declarations disagree: no note rather than a wrong one.

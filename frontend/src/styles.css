@@ -1244,6 +1244,39 @@ a {
 .generated-example-notes p {
   margin: 0.5rem 0 0.25rem;
 }
+.schema-structure {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid #1f5f8b;
+  background: rgba(31, 95, 139, 0.06);
+}
+.schema-structure h4 {
+  margin: 0 0 0.25rem;
+}
+.schema-structure-badge {
+  color: #164a6d;
+  margin: 0 0 0.5rem;
+}
+.schema-structure dl {
+  margin: 0 0 0.5rem;
+  font-size: 0.9em;
+}
+.schema-structure dl > div {
+  display: grid;
+  grid-template-columns: minmax(8rem, max-content) 1fr;
+  gap: 0 0.75rem;
+  padding: 0.1rem 0;
+}
+.schema-structure dt,
+.schema-structure dd {
+  margin: 0;
+}
+.schema-structure details {
+  margin: 0.25rem 0;
+}
+.schema-structure summary {
+  cursor: pointer;
+}
 .answer-in-standard {
   margin-top: 0.75rem;
 }

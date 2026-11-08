@@ -81,6 +81,7 @@ export default function QuestionDetailPage({
             })),
             legalContext: detail.legalContext ?? [],
             generatedExample: detail.generatedExample ?? null,
+            schemaStructure: detail.schemaStructure ?? null,
             abstained: false,
             abstentionReason: null,
             reviewRequired: false,

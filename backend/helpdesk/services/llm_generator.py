@@ -1340,6 +1340,21 @@ def generated_example_rule(elements: list[str]) -> str:
     )
 
 
+def schema_structure_rule(element: str) -> str:
+    """When the schema's content model of the element is shown first (services/schema_structure.py)."""
+    return (
+        f"SCHEMA STRUCTURE ALREADY SHOWN: above your text the user sees what {element} contains according "
+        "to the NeTEx schema: every child element, its own and the inherited ones, and its attributes, each "
+        f"with its definition from the schema, and the definition of {element} itself. Do not define {element}, "
+        "do not list, repeat or define those elements, and do not say what the evidence lacks. Write only what "
+        f"the evidence adds about {element}: how the standard's own "
+        "examples use it and which of its children they fill, constraints or usual values, and what refers to "
+        "it. At most four sentences, each cited [E#], then at most one verbatim snippet (at most 10 lines, in "
+        "a ```xml block) from one evidence block. If the evidence adds nothing, return exactly: "
+        '{"answer": "", "citations_used": [], "evidence_answers_question": true}'
+    )
+
+
 def _nothing_to_add(chunks: list[dict]) -> dict:
     """The text's result when the example and its schema notes already say what the evidence has."""
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
@@ -1367,6 +1382,7 @@ def _build_messages(
     all_candidates: list[dict] | None = None,
     detected_language: str | None = None,
     example_elements: list[str] | None = None,
+    structure_element: str | None = None,
 ) -> list[dict]:
     context_lines = []
     focus_terms = _question_focus_terms(question)
@@ -1487,8 +1503,8 @@ def _build_messages(
         "- Use **bold** for emphasis only, not for technical terms.\n"
         "- Standard markdown for lists, headers, and paragraphs.\n"
     )
-    if example_elements:
-        pass  # generated_example_rule goes last in the user prompt, where the model follows it; no quote-only rule.
+    if example_elements or structure_element:
+        pass  # the block's rule goes last in the user prompt, where the model follows it; no type rule here.
     elif _question_requests_verbatim_example(question):
         system_prompt = (
             f"{system_prompt} "
@@ -1573,10 +1589,11 @@ def _build_messages(
         "(unless English is the response language)\n\n"
         f"{COMPOSITION_RULE + chr(10) if composition else ''}"
         f"{generated_example_rule(example_elements) + chr(10) + chr(10) if example_elements else ''}"
+        f"{schema_structure_rule(structure_element) + chr(10) + chr(10) if structure_element else ''}"
         "Write your answer:"
     )
 
-    if not example_elements and _question_requests_verbatim_example(question) and "?" in question and any(w in question.lower() for w in ["is there", "do you have", "any", "list"]):
+    if not example_elements and not structure_element and _question_requests_verbatim_example(question) and "?" in question and any(w in question.lower() for w in ["is there", "do you have", "any", "list"]):
         user_prompt += "(This question asks for examples: list ALL matching examples found in evidence with their source paths, then provide sample code if available.)"
 
     return [
@@ -1857,6 +1874,7 @@ def generate_answer_llm(
     language: str | None = None,
     all_candidates: list[dict] | None = None,
     example_elements: list[str] | None = None,
+    structure_element: str | None = None,
 ) -> dict:
     """Generate a grounded answer through a configurable OpenAI-compatible API.
 
@@ -1891,6 +1909,7 @@ def generate_answer_llm(
         all_candidates=all_candidates,
         detected_language=target_language,
         example_elements=example_elements,
+        structure_element=structure_element,
     )
 
     primary_base_url = (settings.LLM_API_BASE_URL or "").strip()
@@ -1930,7 +1949,7 @@ def generate_answer_llm(
     signals: dict = {}
     try:
         answer = _generate_answer_text(chunks=chunks, messages=messages, request_targets=request_targets, signals=signals)
-        if example_elements and not answer.strip():
+        if (example_elements or structure_element) and not answer.strip():
             return _nothing_to_add(chunks)
         _validate_answer_language(answer=answer, question=question, target_language=target_language)
         _validate_generated_answer(answer=answer, chunks=chunks)
@@ -1983,7 +2002,7 @@ def generate_answer_llm(
                 "rejected_answer": rejected_answer,
                 "rejection_reason": rejection_reason,
             }
-        if example_elements and not answer.strip():
+        if (example_elements or structure_element) and not answer.strip():
             return _nothing_to_add(chunks)
         try:
             _validate_answer_language(answer=answer, question=question, target_language=target_language)
@@ -2146,6 +2165,7 @@ def stream_answer_llm(
     language: str | None = None,
     all_candidates: list[dict] | None = None,
     example_elements: list[str] | None = None,
+    structure_element: str | None = None,
 ) -> Generator[tuple[str, object], None, None]:
     """
     Generator yielding (event_type, payload) tuples for streaming narration.
@@ -2187,6 +2207,7 @@ def stream_answer_llm(
         all_candidates=all_candidates,
         detected_language=detected_language,
         example_elements=example_elements,
+        structure_element=structure_element,
     )
 
     # Buffer all tokens before yielding any — validation must pass the full
@@ -2249,7 +2270,7 @@ def stream_answer_llm(
         logger.info(f"[STREAM_LLM_RAW] Raw response (first 250 chars): {full_answer[:250]}")
         evidence_answers_question = _evidence_answers_question(full_answer)
         full_answer = _unwrap_json_answer(full_answer)
-        if example_elements and not full_answer.strip():
+        if (example_elements or structure_element) and not full_answer.strip():
             yield ("done", _nothing_to_add(chunks))
             return
 
@@ -2283,7 +2304,7 @@ def stream_answer_llm(
         logger.info(f"[STREAM_RETRY_RAW] Retry response (first 250 chars): {full_answer[:250]}")
         evidence_answers_question = _evidence_answers_question(full_answer)
         full_answer = _unwrap_json_answer(full_answer)
-        if example_elements and not full_answer.strip():
+        if (example_elements or structure_element) and not full_answer.strip():
             yield ("done", _nothing_to_add(chunks))
             return
 

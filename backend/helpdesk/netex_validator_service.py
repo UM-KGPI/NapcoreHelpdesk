@@ -12,6 +12,13 @@ model-written XML is parsed outside the backend process.
                                           "documentation": "The seating capacity of vehicles of the type. ..."}]}
                     element declarations whose name or documentation contains the words, best first: the
                     generator's evidence for the elements a question needs, independent of text retrieval.
+    GET  /structure?element=StopPlace
+                    -> {"found": true, "element": "StopPlace", "documentation": "...", "source": "xsd/...xsd",
+                        "groups": [{"owner": "StopPlace", "inherited": false, "children": [{"name", "documentation"}]},
+                                   {"owner": "Site", "inherited": true, "children": [...]}, ...],
+                        "attributes": [{"name": "id", "documentation": "Identifier of STOP PLACE.", "owner": "StopPlace"}]}
+                    what the element contains according to the schema: its own child elements first, then
+                    those inherited from each base type, and its attributes. Grounded by construction.
     POST /validate  {"fragment": "<ResourceFrame ...>...</ResourceFrame>"}
                     -> {"valid": bool, "errors": ["line 3: ...", ...], "schemaVersion": "2.0", "commit": "...",
                         "elements": [{"name": "SeatingCapacity", "parent": "PassengerCapacity",
@@ -138,6 +145,10 @@ class ElementDocs:
         self.links: dict[str, set[str]] = {}  # container -> base types and groups it uses
         self.refs: dict[str, set[str]] = {}  # global element name -> containers that reference it
         self.parents: dict[str, set[str]] = {}  # container -> elements whose content comes from it
+        self.attrs: dict[str, list[tuple[str, str]]] = {}  # container -> [(attribute name, documentation)]
+        self.base: dict[str, str] = {}  # container -> the type it extends or restricts
+        self.children: dict[str, list[str]] = {}  # container -> element names declared in it, in order
+        self.sources: dict[str, str] = {}  # element name -> schema file of its first declaration
         self.files = 0
 
     @staticmethod
@@ -150,20 +161,28 @@ class ElementDocs:
             parent = parent.getparent()
         return ""
 
-    def add_schema(self, root) -> None:
+    @staticmethod
+    def _documentation(node) -> str:
+        return " ".join(
+            " ".join((doc.text or "").split()) for doc in node.findall(f"{{{XSD_NS}}}annotation/{{{XSD_NS}}}documentation")
+        ).strip()
+
+    def add_schema(self, root, source: str = "") -> None:
         self.files += 1
         for node in root.iter(f"{{{XSD_NS}}}element"):
             name = node.get("name")
             if not name:
                 if node.get("ref"):
-                    self.refs.setdefault(_local(node.get("ref")), set()).add(self._container(node))
+                    container = self._container(node)
+                    self.refs.setdefault(_local(node.get("ref")), set()).add(container)
+                    self.children.setdefault(container, []).append(_local(node.get("ref")))
                 continue
-            documentation = " ".join(
-                " ".join((doc.text or "").split())
-                for doc in node.findall(f"{{{XSD_NS}}}annotation/{{{XSD_NS}}}documentation")
-            ).strip()
+            container = self._container(node)
+            self.children.setdefault(container, []).append(name)
+            self.sources.setdefault(name, source)
+            documentation = self._documentation(node)
             if documentation:
-                self.docs.setdefault(name, []).append((self._container(node), documentation))
+                self.docs.setdefault(name, []).append((container, documentation))
             is_global = _local(node.getparent().tag) == "schema"
             type_name = _local(node.get("type")) or name  # anonymous content: the element is its own container
             if is_global or name not in self.element_type:
@@ -171,20 +190,96 @@ class ElementDocs:
         for tag in ("extension", "restriction"):
             for node in root.iter(f"{{{XSD_NS}}}{tag}"):
                 if node.get("base"):
-                    self.links.setdefault(self._container(node), set()).add(_local(node.get("base")))
-        for node in root.iter(f"{{{XSD_NS}}}group"):
-            if node.get("ref"):
-                self.links.setdefault(self._container(node), set()).add(_local(node.get("ref")))
+                    container = self._container(node)
+                    self.links.setdefault(container, set()).add(_local(node.get("base")))
+                    self.base.setdefault(container, _local(node.get("base")))
+        for tag in ("group", "attributeGroup"):
+            for node in root.iter(f"{{{XSD_NS}}}{tag}"):
+                if node.get("ref"):
+                    self.links.setdefault(self._container(node), set()).add(_local(node.get("ref")))
+        for node in root.iter(f"{{{XSD_NS}}}attribute"):
+            if node.get("name"):
+                parent = node.getparent()
+                # An attribute of a named attributeGroup belongs to that group; _container skips it otherwise.
+                container = parent.get("name") if _local(parent.tag) == "attributeGroup" and parent.get("name") else self._container(node)
+                self.attrs.setdefault(container, []).append((node.get("name"), self._documentation(node)))
 
     def load_directory(self, directory: Path) -> None:
         from lxml import etree
 
         for path in sorted(directory.rglob("*.xsd")):
             try:
-                self.add_schema(etree.parse(str(path), parser=_parser()).getroot())
+                root = etree.parse(str(path), parser=_parser()).getroot()
             except (etree.XMLSyntaxError, OSError) as exc:
                 logger.warning("element documentation: %s skipped: %s", path.name, exc)
+                continue
+            self.add_schema(root, source=str(path.relative_to(directory.parent)))
         self.index_parents()
+
+    _OWNER_SUFFIXES = ("_VersionedChildStructure", "_VersionStructure", "Structure")
+
+    def _owner_of(self, container: str, current: str) -> str:
+        """The element a container's declarations belong to: a type name gives it (Site_VersionStructure ->
+        Site); a group keeps the owner of the type that referenced it."""
+        for suffix in self._OWNER_SUFFIXES:
+            if container.endswith(suffix) and len(container) > len(suffix):
+                return container[: -len(suffix)].rstrip("_")
+        return current
+
+    def structure(self, element: str) -> dict:
+        """What the element contains according to the schema: child elements by owner (its own first, then
+        each base type's), and attributes. {"found": False} for an unknown element."""
+        if element not in self.element_type and element not in self.docs:
+            return {"found": False, "element": element}
+        groups: dict[str, list[dict]] = {}
+        attributes: list[dict] = []
+        seen_children: set[str] = set()
+        reached: set[str] = set()
+
+        def walk(start: str) -> None:
+            pending = [(start, element)]
+            while pending:
+                container, owner = pending.pop(0)
+                if not container or container in reached:
+                    continue
+                reached.add(container)
+                owner = self._owner_of(container, owner)
+                for child in self.children.get(container, ()):
+                    if child not in seen_children:
+                        seen_children.add(child)
+                        groups.setdefault(owner, []).append(
+                            {"name": child, "documentation": self.documentation(child, element)}
+                        )
+                for name, text in self.attrs.get(container, ()):
+                    if not any(a["name"] == name for a in attributes):
+                        attributes.append({"name": name, "documentation": text, "owner": owner})
+                pending.extend((linked, owner) for linked in self.links.get(container, ()))
+
+        # The type chain first: each group is owned by the type that references it (Site_VersionStructure
+        # -> SiteGroup -> Site). A NeTEx global element has no type attribute: it restricts its
+        # StopPlace_VersionStructure inline, repeating every inherited group; walked second, those are
+        # already seen, so only genuinely own content is added.
+        type_name = self.element_type.get(element, "")
+        if not type_name or type_name == element:
+            type_name = self.base.get(element, "")
+        if type_name and type_name != element:
+            walk(type_name)
+        walk(element)
+        global_text = next((t for c, t in self.docs.get(element, []) if c == ""), None)
+        documentation = global_text or (self.docs.get(element) or [("", "")])[0][1]
+        ordered = sorted(groups.items(), key=lambda item: item[0] != element)  # own first, then as met
+        return {
+            "found": True,
+            "element": element,
+            "documentation": documentation,
+            "source": self.sources.get(element, ""),
+            "groups": [
+                {"owner": owner, "inherited": owner != element, "children": children}
+                for owner, children in ordered
+                if children
+            ],
+            "attributes": attributes,
+        }
 
     def index_parents(self) -> None:
         """For each container, the elements whose content comes from it: the possible parents of the
@@ -390,6 +485,13 @@ def make_handler(holder: SchemaHolder):
             self.wfile.write(body)
 
         def do_GET(self):  # noqa: N802
+            if self.path.startswith("/structure"):
+                element = parse_qs(urlparse(self.path).query).get("element", [""])[0].strip()
+                if not re.fullmatch(r"[A-Za-z][\w.-]{0,80}", element):
+                    self._reply(400, {"error": "expected ?element=<ElementName>"})
+                    return
+                self._reply(200, holder.element_docs.structure(element))
+                return
             if self.path.startswith("/declarations"):
                 parameters = parse_qs(urlparse(self.path).query)
                 words = re.findall(r"[^\W\d_]{4,}", parameters.get("q", [""])[0])[:12]
