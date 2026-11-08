@@ -26,6 +26,30 @@ describe("GeneratedExampleBlock", () => {
     expect(screen.getByRole("button", { name: "Download as PublicationDelivery" })).toBeTruthy();
   });
 
+  it("explains each element in the schema's words", () => {
+    render(
+      <GeneratedExampleBlock
+        example={{
+          valid: true,
+          attempts: 1,
+          xml: "<ResourceFrame/>",
+          elementNotes: [
+            { name: "SeatingCapacity", documentation: "The seating capacity of vehicles of the type." },
+            { name: "StandingCapacity", documentation: "The standing capacity of vehicles of the type." },
+          ],
+        }}
+      />,
+    );
+    expect(screen.getByText(/in the words of the NeTEx schema/)).toBeTruthy();
+    expect(screen.getByText("SeatingCapacity")).toBeTruthy();
+    expect(screen.getByText("The standing capacity of vehicles of the type.")).toBeTruthy();
+  });
+
+  it("shows no notes block without notes", () => {
+    render(<GeneratedExampleBlock example={{ valid: true, attempts: 1, xml: "<ResourceFrame/>", elementNotes: [] }} />);
+    expect(screen.queryByText(/in the words of the NeTEx schema/)).toBeNull();
+  });
+
   it("never shows XML that did not validate", () => {
     render(<GeneratedExampleBlock example={{ valid: false, attempts: 3, errors: ["line 1: ..."] }} />);
     expect(screen.getByText(/No NeTEx example valid against the schema/)).toBeTruthy();

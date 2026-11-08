@@ -1,6 +1,7 @@
 /**
  * A NeTEx fragment generated for an "example with values" question, shown under the answer. Labelled as
  * generated (not an example from the standard) and with the NeTEx version it was validated against.
+ * Under the fragment, what each of its elements is in the schema's own words (no model involved).
  * Renders a short note when no valid fragment could be produced, and nothing when none was asked for.
  */
 import { useState } from "react";
@@ -52,6 +53,21 @@ export default function GeneratedExampleBlock({ example }: { example?: Generated
       <pre>
         <code>{example.xml}</code>
       </pre>
+      {example.elementNotes && example.elementNotes.length > 0 ? (
+        <div className="generated-example-notes">
+          <p className="tiny muted">What each element is, in the words of the NeTEx schema:</p>
+          <dl>
+            {example.elementNotes.map((note) => (
+              <div key={note.name}>
+                <dt>
+                  <code>{note.name}</code>
+                </dt>
+                <dd>{note.documentation}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      ) : null}
       <p className="tiny generated-example-actions">
         <button type="button" onClick={() => void copy()}>
           {copied ? "Copied" : "Copy fragment"}
