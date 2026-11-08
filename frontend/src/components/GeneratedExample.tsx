@@ -1,10 +1,11 @@
 /**
  * A NeTEx fragment generated for an "example with values" question, shown first in the answer. Labelled as
  * generated and with the NeTEx version it was validated against. Under the fragment, what each of its
- * elements is in the schema's own words (no model involved). Copy and download live in the answer's
- * action group (generatedExampleActions.ts). Renders a short note when no valid fragment could be
+ * elements is in the schema's own words (no model involved). The download button sits on the fragment
+ * (it belongs to this block); copying is covered by the answer's "Copy answer". Renders a short note when no valid fragment could be
  * produced, and nothing when none was asked for.
  */
+import { downloadExampleDocument } from "./generatedExampleActions";
 import type { GeneratedExample } from "../types";
 
 export default function GeneratedExampleBlock({ example }: { example?: GeneratedExample | null }) {
@@ -28,9 +29,20 @@ export default function GeneratedExampleBlock({ example }: { example?: Generated
         Generated for this question · valid against {version}
         {commit} · built from the cited evidence
       </p>
-      <pre>
-        <code>{example.xml}</code>
-      </pre>
+      <div className="generated-example-code">
+        <pre>
+          <code>{example.xml}</code>
+        </pre>
+        <button
+          type="button"
+          className="chat-icon-button generated-example-download"
+          onClick={() => downloadExampleDocument(example)}
+          title="Download generated example as XML file"
+          aria-label="Download generated example as XML file"
+        >
+          ⬇️
+        </button>
+      </div>
       {example.elementNotes && example.elementNotes.length > 0 ? (
         <div className="generated-example-notes">
           <p className="tiny muted">What each element is, in the words of the NeTEx schema:</p>

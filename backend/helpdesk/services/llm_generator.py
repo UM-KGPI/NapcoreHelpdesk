@@ -1143,6 +1143,17 @@ def _question_focus_terms(question: str) -> list[str]:
     return list(dict.fromkeys(_FOCUS_TERM.findall(question or "")))
 
 
+TRIM_ALLOWANCE = 1.25
+# Where a block was cut for the prompt. The model read the old "[truncated for latency]" and told users
+# "the list is truncated"; CUT_RULE tells it the cut is a display limit, never to be mentioned.
+CUT_MARKER = "[…]"
+CUT_RULE = (
+    f"A block may start or end with {CUT_MARKER}: it was shortened for this prompt only. Never mention that a "
+    "block is cut, shortened or truncated, and do not conclude from it that the standard lacks something; "
+    "answer from what the blocks show."
+)
+
+
 def _trim_chunk_text(text: str, max_chars: int, focus_terms: list[str] | tuple[str, ...] = ()) -> str:
     """Cut a chunk to max_chars, keeping an asked-for XML element inside the cut.
 
@@ -1154,15 +1165,18 @@ def _trim_chunk_text(text: str, max_chars: int, focus_terms: list[str] | tuple[s
     """
     if max_chars <= 0:
         return text
-    if len(text) <= max_chars:
+    # A block only a little over the limit is kept whole: cutting the last few lines saves almost no
+    # latency and drops the end of a list ("What is SIRI used for?", 2026-11-08: a 1,445-character
+    # chunk cut at 1,200 lost SIRI-FM and SIRI-SX, and the answer said "the list is truncated").
+    if len(text) <= max_chars * TRIM_ALLOWANCE:
         return text
     for term in focus_terms:
         match = re.search(rf"<{re.escape(term)}[\s>/]", text)
         if match and match.start() + 300 > max_chars:
             start = text.rfind("\n", 0, max(0, match.start() - max_chars // 5)) + 1
             excerpt = text[start : start + max_chars].rstrip()
-            return f"...[excerpt]\n{excerpt}\n...[truncated for latency]"
-    return f"{text[:max_chars].rstrip()}\n...[truncated for latency]"
+            return f"{CUT_MARKER}\n{excerpt}\n{CUT_MARKER}"
+    return f"{text[:max_chars].rstrip()}\n{CUT_MARKER}"
 
 
 LANGUAGE_CLASSIFIER_TIMEOUT_SECONDS = 10
@@ -1312,6 +1326,8 @@ COMPOSITION_RULE = (
     "ANSWER COMPOSITION:\n"
     "- Start with one or two sentences that answer the question directly. If the evidence answers only part of "
     "it, start with that part; say what is missing only at the end, in one sentence.\n"
+    "- When the evidence answers the question, end with the answer: add no sentence about what the evidence "
+    "does not describe, and do not mention evidence blocks that are unrelated to the question.\n"
     "- The question's subject is what it asks about; the rest is context. In 'How are delays reported at a "
     "stop?' the subject is delays and 'stop' is context. Do not define, quote or describe a context concept.\n"
     "- Organise the answer by topic, not by evidence block: put together what several blocks say about the same "
@@ -1480,7 +1496,7 @@ def _build_messages(
         "response language from the LANGUAGE REQUIREMENT above, not English (unless English is the response language)\n"
         f"{rule_6}\n"
         "7. Stay within requested standards scope\n"
-        "8. NEVER write file names in answer text. Reference sources ONLY via [E#] citations.\n"
+        "8. NEVER write file names in answer text. Reference sources ONLY via [E#] citations.\n"        f"8a. {CUT_RULE}\n"
         "9. REQUIRED CONTENT — Your answer MUST include:\n"
         f"{rule_9_names}\n"
         "   - Citations [E#] pointing to the evidence block with that element\n"
