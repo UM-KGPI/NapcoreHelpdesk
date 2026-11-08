@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 
 import environ
@@ -104,6 +105,7 @@ env = environ.Env(
     NETEX_EXAMPLE_GENERATOR_ENABLED=(bool, True),
     SCHEMA_STRUCTURE_ENABLED=(bool, True),
     CONCEPT_PRESENCE_ENABLED=(bool, True),
+    STREAM_KEEPALIVE_SECONDS=(float, 5.0),
     NETEX_VALIDATOR_URL=(str, "http://netex-validator:8091"),
     CONTROLLER_LLM_CTX_SIZE=(int, 2048),
     CONTROLLER_LLM_MAX_TOKENS=(int, 96),
@@ -374,6 +376,10 @@ NETEX_EXAMPLE_GENERATOR_ENABLED = env("NETEX_EXAMPLE_GENERATOR_ENABLED")
 SCHEMA_STRUCTURE_ENABLED = env("SCHEMA_STRUCTURE_ENABLED")
 # "Does NeTEx have X?" gets the model's definition of X and the schema elements named after it (concept_presence).
 CONCEPT_PRESENCE_ENABLED = env("CONCEPT_PRESENCE_ENABLED")
+# A streamed answer sends an SSE comment after this many silent seconds, so mobile networks, browsers and proxies
+# never see a silent connection (prod 2026-11-08: retrieval can take 30-40 s; iPhone Safari reported "Load failed").
+# 0 runs the stream inline (tests: database access stays in the test's transaction).
+STREAM_KEEPALIVE_SECONDS = 0.0 if "test" in sys.argv[1:2] else env("STREAM_KEEPALIVE_SECONDS")
 NETEX_VALIDATOR_URL = env("NETEX_VALIDATOR_URL").strip()
 CONTROLLER_LLM_CTX_SIZE = env("CONTROLLER_LLM_CTX_SIZE")
 CONTROLLER_LLM_MAX_TOKENS = env("CONTROLLER_LLM_MAX_TOKENS")
