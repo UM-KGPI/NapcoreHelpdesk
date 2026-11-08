@@ -27,6 +27,7 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 MAX_ELEMENTS = 2
+MAX_CONCEPTS = 2
 TIMEOUT_SECONDS = 10
 
 # "Does NeTEx have …", "Is there a … in NeTEx", "Can NeTEx describe …", "Does a bus have drivers name described"
@@ -37,9 +38,24 @@ _ASKS_WHETHER = re.compile(
 )
 
 
+# "How can fare distribution be defined in NeTEx?", "How do you describe a parking in NeTEx?"
+_ASKS_HOW = re.compile(
+    r"^\s*how\s+(?:can|could|do|does|did|should|would|is|are|to)\b.*\b(?:define[sd]?|describe[sd]?|model(?:led|s)?"
+    r"|represent(?:ed|s)?|encode[sd]?|express(?:ed)?|specif(?:y|ied)|modell?ing)\b",
+    re.I,
+)
+
+
 def asks_whether_modelled(question: str) -> bool:
     """A yes/no question about whether something is in the standard."""
     return bool(_ASKS_WHETHER.search(question or ""))
+
+
+def question_kind(question: str) -> str:
+    """"whether" for "does the standard have X?", "how" for "how is X defined in the standard?", else ""."""
+    if _ASKS_HOW.search(question or ""):
+        return "how"
+    return "whether" if asks_whether_modelled(question) else ""
 
 
 _NOT_PLURAL = frozenset({"does", "goes", "this", "yes", "has", "was", "its", "always", "towards", "whereas", "news", "series", "species"})
@@ -68,9 +84,42 @@ def _is_class(concept_id: str) -> bool:
     return bool(local) and local[0].isupper() and concept_id not in {"netex:NeTEx", "siri:SIRI", "opra:OpRa"}
 
 
+_QUESTION_WORDS = frozenset(
+    "how can could does did should would define defined describe described model modelled models represent "
+    "represented encode encoded express expressed specify specified there have has support netex siri opra "
+    "transmodel standard element elements class classes data example examples which what where when your".split()
+)
+
+
+def head_word_concepts(question: str, standard: str = "netex", limit: int = 2) -> list[str]:
+    """Transmodel classes named by a word that is no full label: those whose label begins with the word and
+    that the standard implements ("fare distribution": DISTRIBUTION CHANNEL, DISTRIBUTION ASSIGNMENT). Of
+    the question's words, the most specific one is used (the fewest such classes: "distribution", not
+    "fare", which begins dozens), and of its classes the shortest labels."""
+    from helpdesk.services.semantic_graph import GRAPH_CONCEPT_ALIASES, TRANSMODEL_TO_CONCEPTS
+
+    words = [w.lower() for w in re.findall(r"[A-Za-z]+", singular_question(question)) if len(w) >= 3 and w.lower() not in _QUESTION_WORDS]
+    best: list[str] | None = None
+    for word in dict.fromkeys(words):
+        heads = sorted(
+            (
+                concept
+                for concept, labels in GRAPH_CONCEPT_ALIASES.items()
+                if concept.startswith("transmodel:") and _is_class(concept)
+                and any(label.lower().split()[:1] == [word] for label in labels)
+                and any(c.startswith(f"{standard}:") for c in TRANSMODEL_TO_CONCEPTS.get(concept, ()))
+            ),
+            key=lambda c: (c.count("_"), c),
+        )
+        if heads and (best is None or len(heads) < len(best)):
+            best = heads
+    return (best or [])[:limit]
+
+
 def presence_concepts(question: str) -> list[str]:
     """Transmodel classes the question is about, recognised with plurals; a standard's class stands for
-    the Transmodel class it is aligned to."""
+    the Transmodel class it is aligned to. When no class is named by a full label, the classes headed by
+    the question's most specific word (head_word_concepts)."""
     from helpdesk.services.semantic_graph import CONCEPT_TO_TRANSMODEL, extract_graph_concepts
 
     found = extract_graph_concepts(singular_question(question)) | extract_graph_concepts(question)
@@ -81,6 +130,8 @@ def presence_concepts(question: str) -> list[str]:
         tm = concept if concept.startswith("transmodel:") else CONCEPT_TO_TRANSMODEL.get(concept)
         if tm and tm not in transmodel:
             transmodel.append(tm)
+    if not transmodel:
+        return head_word_concepts(question)
     # The most specific first: DRIVER before EMPLOYEE when both are named.
     return sorted(transmodel, key=lambda c: -len(c))
 
@@ -101,24 +152,25 @@ def _element_names(word: str) -> list[str]:
             declarations = json.loads(response.read()).get("declarations") or []
     except (error.URLError, OSError, ValueError):
         declarations = []
-    named = [d for d in declarations if word.lower() in d["name"].lower() and d["name"] not in own]
+    # "_Dummy" elements are the schema's abstract substitution-group heads (FareProduct_Dummy), not elements to use.
+    named = [d for d in declarations if word.lower() in d["name"].lower() and d["name"] not in own and not d["name"].endswith("_Dummy")]
     named.sort(key=lambda d: (not d.get("object"), d["name"].endswith("Ref"), len(d["name"])))
     return list(dict.fromkeys(own + [d["name"] for d in named]))
 
 
 def presence_evidence(question: str, scope: list[str] | None, english_question: str | None = None) -> list[dict]:
-    """Evidence chunks for "does the standard have X?": the Transmodel definition of X (with which
-    standards implement it) and the definitions of the schema elements named after X. [] for other
-    questions."""
+    """Evidence chunks for "does the standard have X?" and "how is X defined in the standard?": the
+    Transmodel definition of X (with which standards implement it) and the definitions of the schema elements
+    named after X; for up to two concepts. [] for other questions."""
     if not getattr(settings, "CONCEPT_PRESENCE_ENABLED", True):
         return []
     text = english_question or question
-    if not asks_whether_modelled(text):
+    if not question_kind(text):
         return []
     names = {(name or "").strip().lower() for name in scope or []}
     if names and "netex" not in names:
         return []
-    concepts = presence_concepts(text)[:1]
+    concepts = presence_concepts(text)[:MAX_CONCEPTS]
     if not concepts:
         return []
     chunks: list[dict] = []
@@ -134,18 +186,23 @@ def presence_evidence(question: str, scope: list[str] | None, english_question: 
             password=getattr(settings, "GRAPHDB_PASSWORD", ""),
         )
         formatted = format_definitions_as_chunks(definitions or [], commit_shas=indexed_commit_shas())
-        chunks += [c for c in formatted if "transmodel" in str(c.get("sourcePath", "")).lower()][:1]
+        chunks += [c for c in formatted if "transmodel" in str(c.get("sourcePath", "")).lower()][: len(concepts)]
     except Exception as exc:  # the graph unavailable: the schema part still helps
         logger.info("concept definition not available: %s", exc)
     from helpdesk.services.schema_structure import definition_chunk
 
-    word = "".join(part.capitalize() for part in concepts[0].split(":", 1)[1].split("_"))  # STOP_PLACE -> StopPlace
-    for name in _element_names(word)[: MAX_ELEMENTS * 2]:
-        chunk = definition_chunk(name)
-        if chunk and chunk["chunkId"] not in {c.get("chunkId") for c in chunks}:
-            chunks.append(chunk)
-        if len(chunks) >= 1 + MAX_ELEMENTS:
-            break
+    # With one concept, its two main elements; with two, one element each.
+    per_concept = MAX_ELEMENTS if len(concepts) == 1 else 1
+    for concept in concepts:
+        word = "".join(part.capitalize() for part in concept.split(":", 1)[1].split("_"))  # STOP_PLACE -> StopPlace
+        added = 0
+        for name in _element_names(word)[: per_concept * 2]:
+            chunk = definition_chunk(name)
+            if chunk and chunk["chunkId"] not in {c.get("chunkId") for c in chunks}:
+                chunks.append(chunk)
+                added += 1
+            if added >= per_concept:
+                break
     for chunk in chunks:
         chunk.setdefault("retrievalEventId", f"re-presence-{abs(hash(chunk.get('chunkId'))) % 10**8}")
         # Put first on purpose, like the schema's own blocks: the answer's confidence is read from the first
