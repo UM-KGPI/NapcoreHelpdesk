@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from django.test import TestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 
 
 class RetrievalGatewayTests(TestCase):
@@ -657,3 +657,35 @@ class NamedExampleTests(TestCase):
         )
         self.assertEqual(chunks[1]["chunkId"], "c-record")
         self.assertEqual(len(chunks), 4)
+
+
+class ScopeCoverageTests(SimpleTestCase):
+    @staticmethod
+    def _chunk(cid, standard):
+        return {"chunkId": cid, "sourcePath": cid, "standardsScope": [standard], "score": 1.0}
+
+    def test_a_scope_crowded_out_gets_its_two_best_chunks_after_the_top_one(self):
+        from unittest.mock import patch
+
+        from helpdesk.services import retrieval_gateway as gateway
+
+        crowded = [self._chunk(f"inspire-{i}", "INSPIRE") for i in range(6)]
+        alone = [self._chunk("art_2", "EU legislation"), self._chunk("art_1", "EU legislation")]
+        arguments = dict(top_k=6, min_score=0.45, scope=["INSPIRE", "EU legislation"], graph_rag_enabled=True, min_results=1)
+        with patch.object(gateway, "_retrieve_chunks_once", return_value=(alone, {})) as once:
+            chunks, trace = gateway._with_scope_coverage("What is INSPIRE?", crowded, {}, arguments)
+        once.assert_called_once()
+        self.assertEqual(once.call_args.kwargs["scope"], ["EU legislation"])
+        self.assertEqual([c["chunkId"] for c in chunks], ["inspire-0", "art_2", "art_1", "inspire-1", "inspire-2", "inspire-3"])
+        self.assertEqual([a["standard"] for a in trace["scopeCoverageAdded"]], ["EU legislation", "EU legislation"])
+
+    def test_nothing_happens_when_every_scope_is_present_or_only_one_is_searched(self):
+        from unittest.mock import patch
+
+        from helpdesk.services import retrieval_gateway as gateway
+
+        mixed = [self._chunk("a", "SIRI"), self._chunk("b", "NeTEx")]
+        with patch.object(gateway, "_retrieve_chunks_once") as once:
+            self.assertEqual(gateway._with_scope_coverage("q", mixed, {}, dict(top_k=6, scope=["SIRI", "NeTEx"]))[0], mixed)
+            self.assertEqual(gateway._with_scope_coverage("q", mixed, {}, dict(top_k=6, scope=["SIRI"]))[0], mixed)
+        once.assert_not_called()

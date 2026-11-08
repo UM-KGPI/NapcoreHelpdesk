@@ -1623,17 +1623,78 @@ def retrieve_chunks_with_trace(
     arguments = dict(top_k=top_k, min_score=min_score, scope=scope, graph_rag_enabled=graph_rag_enabled, min_results=min_results)
     english = english_search_query(question) if english_question is _TRANSLATE else english_question
     chunks, trace = _retrieve_chunks_once(question=question, **arguments)
-    if not english:
+    if english:
+        english_chunks, english_trace = _retrieve_chunks_once(question=english, **arguments)
+        chunks = _merge_by_rank(english_chunks, chunks)[:top_k]
+        trace = {
+            **trace,
+            "searchTranslation": english,
+            "allCandidates": _merge_by_rank(english_trace.get("allCandidates", []), trace.get("allCandidates", [])),
+            "legalStatusStandards": english_trace.get("legalStatusStandards") or trace.get("legalStatusStandards"),
+        }
+    return _with_scope_coverage(english or question, chunks, trace, arguments)
+
+
+# Chunks a scope missing from the result gets: its two best, since the best match by similarity is not
+# always the one that answers ("What is INSPIRE?": Directive Art. 2 first, the defining Art. 1 second).
+SCOPE_COVERAGE_CHUNKS = 2
+
+
+def _standards_of(chunk: dict, scope: list[str]) -> set[str]:
+    return {standard for standard in chunk.get("standardsScope") or [] if standard in scope}
+
+
+def _with_scope_coverage(question: str, chunks: list[dict], trace: dict, arguments: dict) -> tuple[list[dict], dict]:
+    """Every standard a question is searched in gets a place in the evidence when it has a match.
+
+    Searched together, one scope can crowd out another entirely: for "What is INSPIRE?" in INSPIRE and EU
+    legislation, the INSPIRE repository's chunks (with "INSPIRE" everywhere) scored 1.0 and the Directive
+    that defines INSPIRE was not among 25 candidates, though searched alone it is found at once (Art. 2 at
+    0.77, Art. 1 at 0.58). A scope missing from the result is searched alone and its best chunk replaces the
+    last chunk of the most represented scope, and goes right after the top chunk (the model reads the first
+    few). Only when a scope is missing, so most questions pay nothing.
+    """
+    scope = list(arguments.get("scope") or [])
+    top_k = int(arguments.get("top_k") or 0)
+    if len(scope) < 2 or not chunks or top_k < len(scope):
         return chunks, trace
-    english_chunks, english_trace = _retrieve_chunks_once(question=english, **arguments)
-    merged = _merge_by_rank(english_chunks, chunks)[:top_k]
+    present = set().union(*(_standards_of(chunk, scope) for chunk in chunks))
+    missing = [standard for standard in scope if standard not in present]
+    if not missing:
+        return chunks, trace
+    started = time.perf_counter()
+    result = list(chunks)
+    added = []
+    for standard in missing:
+        alone, _ = _retrieve_chunks_once(
+            question=question,
+            top_k=SCOPE_COVERAGE_CHUNKS,
+            min_score=arguments.get("min_score", 0.0),
+            scope=[standard],
+            graph_rag_enabled=arguments.get("graph_rag_enabled", False),
+            min_results=0,
+        )
+        for best in [c for c in alone if c.get("chunkId") not in {r.get("chunkId") for r in result}][:SCOPE_COVERAGE_CHUNKS]:
+            counts: dict[str, int] = {}
+            for chunk in result:
+                for name in _standards_of(chunk, scope):
+                    counts[name] = counts.get(name, 0) + 1
+            crowded = max(counts, key=counts.get) if counts else None
+            if len(result) >= top_k:
+                drop = next(
+                    (i for i in range(len(result) - 1, 0, -1) if crowded in _standards_of(result[i], scope)),
+                    len(result) - 1,
+                )
+                result.pop(drop)
+            # Right after the top chunk: the model reads only the first few (LLM_MAX_EVIDENCE_CHUNKS, 4).
+            result.insert(min(1 + len(added), len(result)), best)
+            added.append({"standard": standard, "sourcePath": best.get("sourcePath")})
     trace = {
         **trace,
-        "searchTranslation": english,
-        "allCandidates": _merge_by_rank(english_trace.get("allCandidates", []), trace.get("allCandidates", [])),
-        "legalStatusStandards": english_trace.get("legalStatusStandards") or trace.get("legalStatusStandards"),
+        "scopeCoverageAdded": added,
+        "scopeCoverageMs": round((time.perf_counter() - started) * 1000),
     }
-    return merged, trace
+    return result, trace
 
 
 def _merge_by_rank(first: list[dict], second: list[dict]) -> list[dict]:
