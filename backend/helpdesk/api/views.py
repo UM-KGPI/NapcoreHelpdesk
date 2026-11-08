@@ -198,8 +198,10 @@ def _asks_about_law(question: str) -> bool:
 # shown above it: with a block from the schema the text is told not to say what the evidence lacks; a sentence
 # that does so anyway contradicts the block and is removed.
 _LACK_SENTENCE = re.compile(
-    r"(?:(?<=^)|(?<=[.!?]\s)|(?<=\n))[^.!?\n]*\b(?:evidence|blocks?|sources?|examples?)\b[^.!?\n]*"
-    r"\b(?:does|do|did)\s+not\s+(?:contain|include|provide|give|show|state|list|describe|have)\b[^.!?\n]*[.!?][ \t]*",
+    # A sentence about the evidence itself (the evidence, the blocks, the sources) that says it lacks or only
+    # partly has something: "does not contain …", "gives only these fragments, not a complete …", "has no …".
+    r"(?:(?<=^)|(?<=[.!?]\s)|(?<=\n))[^.!?\n]*\b(?:the\s+)?(?:evidence|blocks?|sources?|provided\s+(?:examples?|material))\b[^.!?\n]*"
+    r"\b(?:(?:does|do|did|can)\s*not|cannot|no\s+(?:complete|full|single|example|definition)|only\b[^.!?\n]*\bnot)\b[^.!?\n]*[.!?][ \t]*",
     re.IGNORECASE,
 )
 

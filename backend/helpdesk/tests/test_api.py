@@ -2242,3 +2242,14 @@ class LackSentenceTests(SimpleTestCase):
             "A `Quay` sits in `quays` [E1].\n\n```xml\n<Quay/>\n```",
         )
         self.assertEqual(_without_lack_sentences("Examples fill `LineRef` [E3]."), "Examples fill `LineRef` [E3].")
+        self.assertEqual(
+            _without_lack_sentences(
+                "A lift is a `LiftEquipment` [E2]. The blocks give only these fragments, not a complete stop place example."
+            ),
+            "A lift is a `LiftEquipment` [E2].",
+        )
+        # A negative fact about the standard, not about the evidence, stays.
+        self.assertEqual(
+            _without_lack_sentences("`WheelchairPlaceCapacity` is not required in a `PassengerCapacity` [E1]."),
+            "`WheelchairPlaceCapacity` is not required in a `PassengerCapacity` [E1].",
+        )

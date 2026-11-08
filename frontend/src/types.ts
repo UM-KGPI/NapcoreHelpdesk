@@ -113,6 +113,8 @@ export interface GeneratedExample {
   origin?: "generated" | "standard";
   /** Whether the fragment passed the XSD on its own (an excerpt can fail on references outside it). */
   validated?: boolean;
+  /** An excerpt of a larger object of the standard's example: what the question asks for, the rest marked "…". */
+  excerpt?: boolean;
   sourcePath?: string;
   sourceUrl?: string;
   repositoryUrl?: string;

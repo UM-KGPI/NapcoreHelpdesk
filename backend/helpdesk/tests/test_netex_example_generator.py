@@ -480,3 +480,39 @@ class SnippetTests(SimpleTestCase):
         self.assertEqual(complete_xml_elements("</a></b>"), "")
         self.assertEqual(complete_xml_elements("<siri:Foo>1</siri:Foo>"), "<siri:Foo>1</siri:Foo>")
         self.assertEqual(_complete_xml_snippets("Text.\n\n```xml\n</b>\n```\n\nMore."), "Text.\n\nMore.")
+
+
+class PartTests(SimpleTestCase):
+    def test_parts_and_subject(self):
+        question = "Show me a NeTEx example for a stop place with an elevator."
+        self.assertEqual(generator.wanted_parts(question), ["elevator"])
+        self.assertEqual(generator.example_subject(question), "stop place")
+        self.assertEqual(generator.wanted_parts("an example of a vehicle type with a deck plan"), ["deck plan"])
+        self.assertEqual(generator.wanted_parts("a stop place with two quays"), [])
+        self.assertTrue(generator.wants_generated_example(question, ["NeTEx"]))
+
+    def test_pruned_keeps_simple_children_the_path_and_the_target(self):
+        from lxml import etree
+
+        obj = etree.fromstring(
+            "<StopPlace id='s'><Name>W</Name><levels><Level/></levels><pathLinks><SitePathLink id='p'><Name>L</Name>"
+            "<placeEquipments><LiftEquipment id='l'><Width>1.5</Width></LiftEquipment><Ramp/></placeEquipments>"
+            "</SitePathLink><SitePathLink id='q'/></pathLinks></StopPlace>"
+        )
+        lift = obj.find(".//LiftEquipment")
+        pruned = etree.tostring(generator._pruned(obj, {lift}, lambda t: t), encoding="unicode")
+        self.assertIn("<Name>W</Name>", pruned)
+        self.assertIn("<LiftEquipment id=\"l\"><Width>1.5</Width></LiftEquipment>", pruned)
+        self.assertNotIn("<levels>", pruned)
+        self.assertNotIn("id=\"q\"", pruned)
+        self.assertIn("<!-- … -->", pruned)
+
+    def test_part_places(self):
+        fragment = (
+            '<SiteFrame version="1" id="f"><stopPlaces><StopPlace version="1" id="s"><placeEquipments>'
+            '<LiftEquipment version="1" id="l"/></placeEquipments></StopPlace></stopPlaces></SiteFrame>'
+        )
+        with patch.object(generator, "resolve_element", return_value="LiftEquipment"):
+            places = generator.part_places(fragment, "a stop place with an elevator")
+        self.assertEqual([(p["value"], p["element"]) for p in places], [("an elevator", "LiftEquipment")])
+        self.assertEqual(places[0]["path"], ["SiteFrame", "stopPlaces", "StopPlace", "placeEquipments"])

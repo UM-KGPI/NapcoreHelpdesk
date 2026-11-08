@@ -68,6 +68,28 @@ describe("GeneratedExampleBlock", () => {
     expect(screen.getByRole("list", { name: "Where the question's values go" }).textContent).toContain("two → 2 × Quay in stopPlaces › StopPlace › quays");
   });
 
+  it("labels an excerpt of a standard example and leads with the asked-for part", () => {
+    render(
+      <GeneratedExampleBlock
+        example={{
+          valid: true,
+          attempts: 0,
+          origin: "standard",
+          validated: false,
+          excerpt: true,
+          schemaCommit: "98365bd4341d",
+          sourcePath: "examples/functions/stopPlace/Wimbledon.xml",
+          xml: "<SiteFrame/>",
+          valuePlaces: [{ value: "an elevator", element: "LiftEquipment", path: ["StopPlace", "pathLinks", "SitePathLink", "placeEquipments"] }],
+        }}
+      />,
+    );
+    expect(screen.getByRole("heading").textContent).toBe("Example from the standard: Wimbledon.xml (excerpt as published, commit 98365bd)");
+    expect(screen.getByRole("list", { name: "Where the question's values go" }).textContent).toContain(
+      "an elevator → LiftEquipment in pathLinks › SitePathLink › placeEquipments",
+    );
+  });
+
   it("explains each element in the schema's words", () => {
     render(
       <GeneratedExampleBlock
