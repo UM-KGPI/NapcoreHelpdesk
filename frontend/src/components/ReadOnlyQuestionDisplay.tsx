@@ -12,7 +12,8 @@ import React from "react";
 import { citationDisplayName, groupCitationsBySource } from "../citationLabels";
 import GeneratedExampleBlock from "./GeneratedExample";
 import AnswerBody from "./AnswerBody";
-import { copyFragment, downloadPublicationDelivery } from "./generatedExampleActions";
+import { downloadPublicationDelivery } from "./generatedExampleActions";
+import { answerBodyText } from "./answerText";
 import LegalContext from "./LegalContext";
 import type { ChatTurn } from "./UserChatWorkspace";
 
@@ -77,14 +78,15 @@ export default function ReadOnlyQuestionDisplay({
   };
 
   const copyAnswerToClipboard = async (turn: ChatTurn) => {
-    if (!turn.text) return;
+    const text = answerBodyText(turn.text, turn.answer?.generatedExample);
+    if (!text) return;
     if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(turn.text);
+      await navigator.clipboard.writeText(text);
       return;
     }
 
     const temp = document.createElement("textarea");
-    temp.value = turn.text;
+    temp.value = text;
     temp.setAttribute("readonly", "true");
     temp.style.position = "absolute";
     temp.style.left = "-9999px";
@@ -170,17 +172,6 @@ export default function ReadOnlyQuestionDisplay({
                       </button>
                       {turn.answer.generatedExample?.valid && (
                         <>
-                          <button
-                            type="button"
-                            className="chat-icon-button"
-                            onClick={() => {
-                              void copyFragment(turn.answer!.generatedExample!);
-                            }}
-                            title="Copy generated XML fragment"
-                            aria-label="Copy generated XML fragment"
-                          >
-                            📄
-                          </button>
                           <button
                             type="button"
                             className="chat-icon-button"

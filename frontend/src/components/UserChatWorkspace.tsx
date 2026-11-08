@@ -18,7 +18,8 @@ import type { AnswerResponse } from "../types";
 import { citationDisplayName, citationMarker, groupCitationsBySource } from "../citationLabels";
 import GeneratedExampleBlock from "./GeneratedExample";
 import AnswerBody from "./AnswerBody";
-import { copyFragment, downloadPublicationDelivery } from "./generatedExampleActions";
+import { downloadPublicationDelivery } from "./generatedExampleActions";
+import { answerBodyText, generatedExampleText } from "./answerText";
 import LegalContext from "./LegalContext";
 import InspiredByOthersPanel from "./InspiredByOthersPanel";
 
@@ -81,7 +82,8 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
   }, [busy]);
 
   const buildAnswerWithEvidenceText = (turn: ChatTurn): string => {
-    const answerText = turn.text.trim();
+    // The generated example (when valid) first, then the text, then the evidence list: what the page shows.
+    const answerText = answerBodyText(turn.text, turn.answer?.generatedExample);
     if (!answerText) {
       return "";
     }
@@ -158,6 +160,13 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
       lines.push(`## ${turn.role === "assistant" ? "Assistant" : "User"}`);
       lines.push(`Timestamp: ${turn.createdAt}`);
       lines.push("");
+      const exampleText = turn.role === "assistant" ? generatedExampleText(turn.answer?.generatedExample) : "";
+      if (exampleText) {
+        lines.push(exampleText);
+        if (turn.text.trim()) {
+          lines.push("", "### In the standard");
+        }
+      }
       lines.push(turn.text || "");
       if (turn.answer && turn.answer.citations.length > 0) {
         lines.push("");
@@ -345,17 +354,6 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                       </button>
                       {turn.answer.generatedExample?.valid && (
                         <>
-                          <button
-                            type="button"
-                            className="chat-icon-button"
-                            onClick={() => {
-                              void copyFragment(turn.answer!.generatedExample!);
-                            }}
-                            title="Copy generated XML fragment"
-                            aria-label="Copy generated XML fragment"
-                          >
-                            📄
-                          </button>
                           <button
                             type="button"
                             className="chat-icon-button"
