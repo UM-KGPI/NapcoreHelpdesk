@@ -143,8 +143,12 @@ def definition_chunk(element: str) -> dict | None:
     from helpdesk.services.retrieval_gateway import _added_candidate
 
     probe = " ".join(documentation.split()[:6])
+    in_file = SourceChunk.objects.filter(source_path=structure["source"])
     chunk = (
-        SourceChunk.objects.filter(source_path=structure["source"], text__contains=probe).order_by("chunk_id").first()
-        or SourceChunk.objects.filter(source_path=structure["source"], text__contains=element).order_by("chunk_id").first()
+        # The element's own declaration first: two elements can share their documentation (VehicleType and
+        # VehicleModel), and the probe alone gave VehicleModel's block for VehicleType.
+        in_file.filter(text__contains=f"element {element}\n").order_by("chunk_id").first()
+        or in_file.filter(text__contains=probe).order_by("chunk_id").first()
+        or in_file.filter(text__contains=element).order_by("chunk_id").first()
     )
     return _added_candidate(chunk, 1.0) if chunk else None

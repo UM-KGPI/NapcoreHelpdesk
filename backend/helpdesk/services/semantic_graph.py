@@ -12,6 +12,7 @@ Created: 2026-04-15  |  Modified: 2026-06-28
 
 from __future__ import annotations
 
+import collections
 import hashlib
 import logging
 import os
@@ -550,6 +551,8 @@ def reload_ontology_if_updated() -> bool:
         relations = _build_graph_relations_from_ontology(ontology)
         GRAPH_CONCEPT_ALIASES.clear()
         GRAPH_CONCEPT_ALIASES.update(aliases)
+        global _ALIAS_GENERATION
+        _ALIAS_GENERATION += 1
         GRAPH_RELATIONS.clear()
         GRAPH_RELATIONS.update(relations)
         _ONTOLOGY_READ_AT = read_at
@@ -582,6 +585,36 @@ def extract_graph_concepts(text: str, *, word_variants: bool = False, scope: lis
         matches = _alias_matches_question if loose else _alias_matches_text
         if any(matches(alias, normalized_text) for alias in aliases):
             concepts.add(concept_id)
+    return concepts
+
+
+# Chunk texts' concepts, for ranking: a question's retrieval passes score largely the same chunks, and
+# matching every label against a chunk took ~40 ms (4.5 s per example question, local 2026-11-08). An entry
+# holds the alias table it was made from, the reload count and the extractor, and is used only while all three
+# are current (a reload rebuilds the table in place; tests replace the table or the extractor).
+_ALIAS_GENERATION = 0
+_TEXT_CONCEPT_CACHE: "collections.OrderedDict[tuple, tuple]" = collections.OrderedDict()
+TEXT_CONCEPT_CACHE_SIZE = 4096
+_text_concept_cache_lock = threading.Lock()
+
+
+def extract_text_concepts_cached(text: str, scope: list[str] | None = None, extractor=None) -> set[str]:
+    """extractor(text, scope=scope) for indexed chunk text (strict matching), cached; extractor defaults to
+    extract_graph_concepts (a caller passes the one it has imported, so a test's patch of it holds)."""
+    extractor = extractor or extract_graph_concepts
+    reload_ontology_if_updated()
+    aliases = GRAPH_CONCEPT_ALIASES or _FALLBACK_GRAPH_CONCEPT_ALIASES
+    key = (text, tuple(scope) if scope else None)
+    with _text_concept_cache_lock:
+        entry = _TEXT_CONCEPT_CACHE.get(key)
+        if entry is not None and entry[0] is aliases and entry[1] == _ALIAS_GENERATION and entry[2] is extractor:
+            _TEXT_CONCEPT_CACHE.move_to_end(key)
+            return set(entry[3])
+    concepts = set(extractor(text, scope=scope))
+    with _text_concept_cache_lock:
+        _TEXT_CONCEPT_CACHE[key] = (aliases, _ALIAS_GENERATION, extractor, frozenset(concepts))
+        while len(_TEXT_CONCEPT_CACHE) > TEXT_CONCEPT_CACHE_SIZE:
+            _TEXT_CONCEPT_CACHE.popitem(last=False)
     return concepts
 
 
