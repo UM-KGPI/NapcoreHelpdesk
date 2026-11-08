@@ -1241,6 +1241,15 @@ a {
   max-height: 24rem;
   overflow: auto;
 }
+/* The download button sits in the fragment's top-right corner, part of the code it downloads. */
+.generated-example-code {
+  position: relative;
+}
+.generated-example-download {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+}
 .generated-example-notes p {
   margin: 0.5rem 0 0.25rem;
 }

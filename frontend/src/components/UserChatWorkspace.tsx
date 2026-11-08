@@ -18,7 +18,6 @@ import type { AnswerResponse } from "../types";
 import { citationDisplayName, citationMarker, groupCitationsBySource } from "../citationLabels";
 import GeneratedExampleBlock from "./GeneratedExample";
 import AnswerBody from "./AnswerBody";
-import { downloadExampleDocument } from "./generatedExampleActions";
 import { answerBodyText, blockText } from "./answerText";
 import LegalContext from "./LegalContext";
 import InspiredByOthersPanel from "./InspiredByOthersPanel";
@@ -54,6 +53,10 @@ interface UserChatWorkspaceProps {
   ) => Promise<void>;
   onLoadHistoricalQuestion: (requestId: string) => void;
 }
+
+// Export chat to a Markdown text file: hidden for now (copy answer covers the single answer); the
+// code stays for later use. Set to true to show the 💾 button again.
+const SHOW_EXPORT_CHAT = false;
 
 export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
   const {
@@ -341,28 +344,16 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                       >
                         📋
                       </button>
-                      {turn.answer.generatedExample?.valid && (
-                        <>
-                          <button
-                            type="button"
-                            className="chat-icon-button"
-                            onClick={() => downloadExampleDocument(turn.answer!.generatedExample!)}
-                            title="Download generated example as XML file"
-                            aria-label="Download generated example as XML file"
-                          >
-                            ⬇️
-                          </button>
-                        </>
+                      {SHOW_EXPORT_CHAT && (<button
+                          type="button"
+                          className="chat-icon-button"
+                          onClick={exportChatAsTextMarkdown}
+                          title="Export chat to Markdown text file"
+                          aria-label="Export chat to Markdown text file"
+                        >
+                          💾
+                        </button>
                       )}
-                      <button
-                        type="button"
-                        className="chat-icon-button"
-                        onClick={exportChatAsTextMarkdown}
-                        title="Export chat to Markdown text file"
-                        aria-label="Export chat to Markdown text file"
-                      >
-                        💾
-                      </button>
                       <button
                         type="button"
                         className="chat-icon-button"

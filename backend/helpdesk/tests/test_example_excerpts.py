@@ -75,3 +75,22 @@ class ElementRankingTests(SimpleTestCase):
     def test_single_element_questions_are_left_alone(self):
         selected = [{"docType": "example", "text": "<Line/>"}, {"docType": "example", "text": TSJ}]
         self.assertEqual(_ensure_element_coverage(selected, selected, ["TemplateServiceJourney"], 6), selected)
+
+
+class TrimAllowanceTests(SimpleTestCase):
+    def test_a_block_slightly_over_the_limit_is_kept_whole(self):
+        from helpdesk.services.llm_generator import TRIM_ALLOWANCE
+
+        services = "\n".join(f"- SIRI-{code} service" for code in ["PT", "ET", "ST", "SM", "VM", "CT", "CM", "GM", "FM", "SX"])
+        text = ("SIRI is a European CEN technical standard. " * 25) + "\n" + services
+        self.assertGreater(len(text), 1200)
+        self.assertLessEqual(len(text), 1200 * TRIM_ALLOWANCE)
+        self.assertEqual(_trim_chunk_text(text, max_chars=1200), text)
+
+    def test_a_long_block_is_cut_with_a_neutral_marker(self):
+        from helpdesk.services.llm_generator import CUT_MARKER, CUT_RULE
+
+        trimmed = _trim_chunk_text("x " * 2000, max_chars=1200)
+        self.assertTrue(trimmed.endswith(CUT_MARKER))
+        self.assertNotIn("truncated", trimmed)
+        self.assertIn(CUT_MARKER, CUT_RULE)

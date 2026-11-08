@@ -12,7 +12,6 @@ import React from "react";
 import { citationDisplayName, groupCitationsBySource } from "../citationLabels";
 import GeneratedExampleBlock from "./GeneratedExample";
 import AnswerBody from "./AnswerBody";
-import { downloadExampleDocument } from "./generatedExampleActions";
 import { answerBodyText } from "./answerText";
 import LegalContext from "./LegalContext";
 import type { ChatTurn } from "./UserChatWorkspace";
@@ -159,19 +158,6 @@ export default function ReadOnlyQuestionDisplay({
                       >
                         📋
                       </button>
-                      {turn.answer.generatedExample?.valid && (
-                        <>
-                          <button
-                            type="button"
-                            className="chat-icon-button"
-                            onClick={() => downloadExampleDocument(turn.answer!.generatedExample!)}
-                            title="Download generated example as XML file"
-                            aria-label="Download generated example as XML file"
-                          >
-                            ⬇️
-                          </button>
-                        </>
-                      )}
                       <button
                         type="button"
                         className="chat-icon-button"

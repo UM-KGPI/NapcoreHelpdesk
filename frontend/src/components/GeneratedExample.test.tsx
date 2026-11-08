@@ -23,8 +23,10 @@ describe("GeneratedExampleBlock", () => {
     expect(screen.getByText(/Generated for this question · valid against NeTEx 2\.0/)).toBeTruthy();
     expect(screen.getByText(/commit 37ff1e4/)).toBeTruthy();
     expect(screen.getByText(/<ResourceFrame>/)).toBeTruthy();
-    // Copy and download are icon buttons in the answer's action group, not in the block.
-    expect(screen.queryByRole("button")).toBeNull();
+    // The block's one button is the download, next to the fragment; copying is the answer's Copy answer.
+    expect(screen.getAllByRole("button").map((b) => b.getAttribute("aria-label"))).toEqual([
+      "Download generated example as XML file",
+    ]);
   });
 
   it("explains each element in the schema's words", () => {
