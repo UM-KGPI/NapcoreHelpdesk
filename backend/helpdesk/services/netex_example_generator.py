@@ -385,8 +385,13 @@ def generate_netex_example(question: str, chunks: list[dict], scope: list[str] |
         try:
             content = timed("generationMs", lambda: _ask_model(messages))
         except Exception as exc:
-            logger.warning("NeTEx example generation failed: %s", exc)
-            return {"valid": False, "attempts": attempt, "errors": [f"generation failed: {exc}"[:200]], **timing}
+            # A timeout or a gateway error on one call (local question req-mw7r1cj5, 2026-11-08: the
+            # gateway timed out once at 60 s) ends the example only when no attempt is left.
+            logger.warning("NeTEx example generation failed (attempt %d): %s", attempt, exc)
+            errors = [f"generation failed: {exc}"[:200]]
+            if attempt == MAX_ATTEMPTS:
+                return {"valid": False, "attempts": attempt, "errors": errors, **timing}
+            continue
         fragment = _extract_fragment(content)
         checked: dict = {}
         if not fragment:
