@@ -1,0 +1,151 @@
+"""Evidence for "does the standard have X?" questions, from the model and the schema.
+
+"Does a bus have drivers name described in NeTEx?" (prod req-mw804y0v, 2026-11-08) is answered by the
+model itself: Transmodel defines DRIVER as "An EMPLOYEE whose usual work is to drive a public transport
+vehicle", no NeTEx class is aligned to it, and NeTEx has only a DriverRef on dated journeys (plus the
+driver-scheduling classes DriverTrip, DriverScheduleFrame). Text retrieval found bus timetable examples
+instead, and the question's "drivers" did not match the label DRIVER (one-word plurals are left out of
+retrieval on purpose: they crowded out the right chunks, benchmark 2026-10-25).
+
+For a question of that shape only, the concept is recognised with plurals and its definition (which states
+which standards implement it) and the definitions of the schema elements named after it go first among the
+evidence. Retrieval ranking is not touched.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Crafted by: AI coding agents
+Created: 2026-11-08  |  Modified: 2026-11-08
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import re
+
+from django.conf import settings
+
+logger = logging.getLogger(__name__)
+
+MAX_ELEMENTS = 2
+TIMEOUT_SECONDS = 10
+
+# "Does NeTEx have …", "Is there a … in NeTEx", "Can NeTEx describe …", "Does a bus have drivers name described"
+_ASKS_WHETHER = re.compile(
+    r"^\s*(?:does|do|did|is|are|can|could|may)\b.*\b(?:have|has|describe[sd]?|support[s]?|model(?:led|s)?|contain[s]?"
+    r"|include[sd]?|cover[s]?|represent(?:ed|s)?|express(?:ed)?|exist[s]?|there|define[sd]?|allow[s]?)\b",
+    re.I,
+)
+
+
+def asks_whether_modelled(question: str) -> bool:
+    """A yes/no question about whether something is in the standard."""
+    return bool(_ASKS_WHETHER.search(question or ""))
+
+
+_NOT_PLURAL = frozenset({"does", "goes", "this", "yes", "has", "was", "its", "always", "towards", "whereas", "news", "series", "species"})
+
+
+def _singular(word: str) -> str:
+    lowered = word.lower()
+    if len(lowered) <= 3 or lowered in _NOT_PLURAL or lowered.endswith(("ss", "us", "is")):
+        return word
+    if lowered.endswith("ies"):
+        return word[:-3] + "y"
+    if lowered.endswith(("ches", "shes", "xes", "sses")):
+        return word[:-2]
+    if lowered.endswith("s"):
+        return word[:-1]
+    return word
+
+
+def singular_question(question: str) -> str:
+    """The question with its words in the singular ("drivers name" -> "driver name"), for concept lookup."""
+    return re.sub(r"[A-Za-z]+", lambda m: _singular(m.group(0)), question or "")
+
+
+def _is_class(concept_id: str) -> bool:
+    local = concept_id.split(":", 1)[-1]
+    return bool(local) and local[0].isupper() and concept_id not in {"netex:NeTEx", "siri:SIRI", "opra:OpRa"}
+
+
+def presence_concepts(question: str) -> list[str]:
+    """Transmodel classes the question is about, recognised with plurals; a standard's class stands for
+    the Transmodel class it is aligned to."""
+    from helpdesk.services.semantic_graph import CONCEPT_TO_TRANSMODEL, extract_graph_concepts
+
+    found = extract_graph_concepts(singular_question(question)) | extract_graph_concepts(question)
+    transmodel = []
+    for concept in sorted(found):
+        if not _is_class(concept):
+            continue
+        tm = concept if concept.startswith("transmodel:") else CONCEPT_TO_TRANSMODEL.get(concept)
+        if tm and tm not in transmodel:
+            transmodel.append(tm)
+    # The most specific first: DRIVER before EMPLOYEE when both are named.
+    return sorted(transmodel, key=lambda c: -len(c))
+
+
+def _element_names(word: str) -> list[str]:
+    """Schema elements named after the concept (StopPlaceEntrance -> StopPlaceEntrance, StopPlaceEntranceRef;
+    Driver -> DriverRef, DriverTrip, DriverScheduleFrame): its own name and reference first when they
+    exist, then other objects named after it, then other references."""
+    from urllib import error, parse, request
+
+    from helpdesk.services.schema_structure import fetch_structure
+
+    own = [name for name in (word, f"{word}Ref") if fetch_structure(name)]
+    words = re.findall(r"[A-Z][a-z]+", word) or [word]
+    url = settings.NETEX_VALIDATOR_URL.rstrip("/") + "/declarations?" + parse.urlencode({"q": " ".join(words)})
+    try:
+        with request.urlopen(url, timeout=TIMEOUT_SECONDS) as response:
+            declarations = json.loads(response.read()).get("declarations") or []
+    except (error.URLError, OSError, ValueError):
+        declarations = []
+    named = [d for d in declarations if word.lower() in d["name"].lower() and d["name"] not in own]
+    named.sort(key=lambda d: (not d.get("object"), d["name"].endswith("Ref"), len(d["name"])))
+    return list(dict.fromkeys(own + [d["name"] for d in named]))
+
+
+def presence_evidence(question: str, scope: list[str] | None, english_question: str | None = None) -> list[dict]:
+    """Evidence chunks for "does the standard have X?": the Transmodel definition of X (with which
+    standards implement it) and the definitions of the schema elements named after X. [] for other
+    questions."""
+    if not getattr(settings, "CONCEPT_PRESENCE_ENABLED", True):
+        return []
+    text = english_question or question
+    if not asks_whether_modelled(text):
+        return []
+    names = {(name or "").strip().lower() for name in scope or []}
+    if names and "netex" not in names:
+        return []
+    concepts = presence_concepts(text)[:1]
+    if not concepts:
+        return []
+    chunks: list[dict] = []
+    try:
+        from helpdesk.services.retrieval_gateway import format_definitions_as_chunks, indexed_commit_shas, retrieve_concept_definitions
+
+        definitions = retrieve_concept_definitions(
+            concept_ids=set(concepts),
+            endpoint=settings.GRAPHDB_SPARQL_ENDPOINT,
+            repository=settings.GRAPHDB_REPOSITORY,
+            timeout_seconds=max(1, settings.GRAPHDB_TIMEOUT_SECONDS - 1),
+            username=getattr(settings, "GRAPHDB_USER", ""),
+            password=getattr(settings, "GRAPHDB_PASSWORD", ""),
+        )
+        formatted = format_definitions_as_chunks(definitions or [], commit_shas=indexed_commit_shas())
+        chunks += [c for c in formatted if "transmodel" in str(c.get("sourcePath", "")).lower()][:1]
+    except Exception as exc:  # the graph unavailable: the schema part still helps
+        logger.info("concept definition not available: %s", exc)
+    from helpdesk.services.schema_structure import definition_chunk
+
+    word = "".join(part.capitalize() for part in concepts[0].split(":", 1)[1].split("_"))  # STOP_PLACE -> StopPlace
+    for name in _element_names(word)[: MAX_ELEMENTS * 2]:
+        chunk = definition_chunk(name)
+        if chunk and chunk["chunkId"] not in {c.get("chunkId") for c in chunks}:
+            chunks.append(chunk)
+        if len(chunks) >= 1 + MAX_ELEMENTS:
+            break
+    for chunk in chunks:
+        chunk.setdefault("retrievalEventId", f"re-presence-{abs(hash(chunk.get('chunkId'))) % 10**8}")
+    return chunks
