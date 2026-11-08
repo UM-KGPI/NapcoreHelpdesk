@@ -792,3 +792,20 @@ class PlainSentenceGroundingTests(SimpleTestCase):
     def test_a_loose_paraphrase_is_not(self):
         sentence = "It offers boats so people can get over a lake or a river [E1]."
         self.assertFalse(_plain_sentence_grounded(sentence, [self.DEFINITION]))
+
+
+class GeneratedExamplePromptTests(SimpleTestCase):
+    QUESTION = "Show me a NeTEx example for Ljubljana Bus Station with two quays"
+    CHUNK = {"repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx", "commitSha": "abc",
+             "sourcePath": "examples/stop.xml", "chunkId": "c1", "text": "<StopPlace><quays><Quay/></quays></StopPlace>"}
+
+    def test_rule_replaces_the_quote_only_example_rule(self):
+        from helpdesk.services.llm_generator import GENERATED_EXAMPLE_RULE, _build_messages
+
+        system, user = (m["content"] for m in _build_messages(self.QUESTION, [self.CHUNK], generated_example=True))
+        self.assertTrue(user.endswith(GENERATED_EXAMPLE_RULE + "\n\nWrite your answer:"))
+        self.assertNotIn("Never synthesize or invent examples", system)
+
+        system, user = (m["content"] for m in _build_messages(self.QUESTION, [self.CHUNK]))
+        self.assertNotIn(GENERATED_EXAMPLE_RULE, user)
+        self.assertIn("Never synthesize or invent examples", system)
