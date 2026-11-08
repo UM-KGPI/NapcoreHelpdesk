@@ -29,6 +29,25 @@ describe("GeneratedExampleBlock", () => {
     ]);
   });
 
+  it("says where each value of the question goes, before the fragment", () => {
+    render(
+      <GeneratedExampleBlock
+        example={{
+          valid: true,
+          attempts: 1,
+          xml: "<ResourceFrame/>",
+          valuePlaces: [
+            { value: "49", element: "SeatingCapacity", path: ["ResourceFrame", "vehicleTypes", "VehicleType", "capacities", "PassengerCapacity"] },
+            { value: "1", element: "WheelchairPlaceCapacity", path: ["ResourceFrame", "vehicleTypes", "VehicleType", "capacities", "PassengerCapacity"] },
+          ],
+        }}
+      />,
+    );
+    const lead = screen.getByRole("list", { name: "Where the question's values go" });
+    expect(lead.textContent).toContain("49 → SeatingCapacity in VehicleType › capacities › PassengerCapacity");
+    expect(lead.textContent).toContain("1 → WheelchairPlaceCapacity");
+  });
+
   it("explains each element in the schema's words", () => {
     render(
       <GeneratedExampleBlock

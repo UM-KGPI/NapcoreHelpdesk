@@ -268,13 +268,60 @@ def _field_values(fragment: str) -> set[str] | None:
 _GENERIC_ELEMENTS = frozenset({"Name", "ShortName", "Description", "PrivateCode", "dataObjects"})
 
 
-def example_element_names(example: dict | None, limit: int = 10) -> list[str]:
-    """The elements the answer text should be about: the example's elements, outermost first, without
-    the generic ones every object has. Empty when there is no valid example."""
+def value_element_names(example: dict | None) -> list[str]:
+    """The elements that hold the question's values (SeatingCapacity, WheelchairPlaceCapacity), without
+    generic ones (a Name holding "Ljubljana Bus Station" says nothing about the structure)."""
     if not example or not example.get("valid"):
         return []
-    names = [str(note.get("name") or "") for note in example.get("elementNotes") or []]
-    return [name for name in names if name and name not in _GENERIC_ELEMENTS][:limit]
+    names = [str(p.get("element") or "").split("/@", 1)[0] for p in example.get("valuePlaces") or []]
+    return list(dict.fromkeys(n for n in names if n and n not in _GENERIC_ELEMENTS))
+
+
+def example_element_names(example: dict | None, limit: int = 10) -> list[str]:
+    """The elements the answer text should be about: those holding the question's values first, then the
+    example's other elements, outermost first, without the generic ones every object has. Empty when
+    there is no valid example."""
+    if not example or not example.get("valid"):
+        return []
+    names = value_element_names(example) + [str(note.get("name") or "") for note in example.get("elementNotes") or []]
+    return list(dict.fromkeys(name for name in names if name and name not in _GENERIC_ELEMENTS))[:limit]
+
+
+def value_places(fragment: str, values: list[str]) -> list[dict]:
+    """Where each of the question's values sits in the validated fragment: {"value", "element", "path"},
+    path being the element's ancestors from the frame down ("49" -> SeatingCapacity in ResourceFrame ›
+    vehicleTypes › VehicleType › capacities › PassengerCapacity). An element's text wins over an
+    attribute ("@id"); values found nowhere are left out. The lead of the answer is written from this,
+    so it says exactly what the validated fragment does."""
+    from xml.etree import ElementTree
+
+    try:
+        root = ElementTree.fromstring(f'<root xmlns="{NETEX_NAMESPACE}">{fragment}</root>')
+    except ElementTree.ParseError:
+        return []
+    local = lambda tag: tag.rsplit("}", 1)[-1]  # noqa: E731
+    parents = {child: parent for parent in root.iter() for child in parent}
+
+    def path_of(node) -> list[str]:
+        names = []
+        node = parents.get(node)
+        while node is not None and node is not root:
+            names.append(local(node.tag))
+            node = parents.get(node)
+        return list(reversed(names))
+
+    places = []
+    for value in values:
+        found = next((n for n in root.iter() if n is not root and (n.text or "").strip() == value), None)
+        if found is not None:
+            places.append({"value": value, "element": local(found.tag), "path": path_of(found)})
+            continue
+        for node in root.iter():
+            name = next((a for a, v in node.attrib.items() if v.strip() == value), None)
+            if node is not root and name:
+                places.append({"value": value, "element": f"{local(node.tag)}/@{name}", "path": path_of(node)})
+                break
+    return places
 
 
 def missing_values(fragment: str, values: list[str]) -> list[str]:
@@ -419,6 +466,7 @@ def generate_netex_example(question: str, chunks: list[dict], scope: list[str] |
                 "schemaVersion": checked.get("schemaVersion", ""),
                 "schemaCommit": checked.get("commit", ""),
                 "elementNotes": element_notes(checked.get("elements") or []),
+                "valuePlaces": value_places(fragment, values),
                 "evidenceChunkIds": [chunk.get("chunkId") for chunk in used],
                 **timing,
             }

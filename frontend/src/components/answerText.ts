@@ -13,6 +13,9 @@ export function generatedExampleText(example?: GeneratedExample | null): string 
   const commit = example.schemaCommit ? ` (commit ${example.schemaCommit.slice(0, 7)})` : "";
   const lines = [
     `Generated example (generated for this question · valid against ${version}${commit} · built from the cited evidence):`,
+    ...(example.valuePlaces ?? []).map(
+      (place) => `- ${place.value} → ${place.element}${place.path.length ? ` in ${place.path.slice(-3).join(" › ")}` : ""}`,
+    ),
     "```xml",
     example.xml,
     "```",

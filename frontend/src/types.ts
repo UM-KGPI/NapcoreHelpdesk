@@ -108,6 +108,7 @@ export interface GeneratedExample {
   schemaVersion?: string;
   schemaCommit?: string;
   elementNotes?: { name: string; documentation: string }[];
+  valuePlaces?: { value: string; element: string; path: string[] }[];
   evidenceChunkIds?: string[];
   errors?: string[];
   generationMs?: number;

@@ -589,10 +589,33 @@ class LegalContextTests(SimpleTestCase):
     def test_the_line_is_shown_only_for_answers_about_a_named_standard(self):
         from helpdesk.api.views import _legal_context
 
-        self.assertEqual(len(_legal_context("rag", ["NeTEx"])), 2)
-        self.assertEqual(_legal_context("abstain", ["NeTEx"]), [])
-        self.assertEqual(_legal_context("rag", []), [])
-        self.assertEqual(_legal_context("rag", ["NeTEx", SCOPE]), [])  # already about legislation
+        law = "Is NeTEx mandatory for timetable data?"
+        self.assertEqual(len(_legal_context("rag", ["NeTEx"], law)), 2)
+        self.assertEqual(_legal_context("abstain", ["NeTEx"], law), [])
+        self.assertEqual(_legal_context("rag", [], law), [])
+        self.assertEqual(_legal_context("rag", ["NeTEx", SCOPE], law), [])  # already about legislation
+
+    def test_the_line_is_shown_only_for_questions_about_law(self):
+        from helpdesk.api.views import _legal_context
+
+        for question in [
+            "What does a StopPlace contain in NeTEx?",
+            "Show a NeTEx example of a coach with 49 seats and 1 wheelchair area",
+            "How are delays reported at a stop?",
+            "What is a VehicleType?",
+        ]:
+            with self.subTest(question=question):
+                self.assertEqual(_legal_context("rag", ["NeTEx"], question), [])
+        for question in [
+            "Is NeTEx mandatory in the EU?",
+            "Which regulation requires NeTEx?",
+            "Do I have to publish NeTEx data to the national access point?",
+            "What does MMTIS say about NeTEx?",
+            "Is NeTEx required by the TEL TSI?",
+            "Must a transport authority comply with NeTEx?",
+        ]:
+            with self.subTest(question=question):
+                self.assertEqual(len(_legal_context("rag", ["NeTEx"], question)), 2)
 
 
 class CitationTitleTests(SimpleTestCase):

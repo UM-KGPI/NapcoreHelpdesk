@@ -77,6 +77,27 @@ class TriggerTests(SimpleTestCase):
             self.assertEqual(generator.named_values("A NeTEx example of a Stop"), [])
         generator._concept_label_words._cache = None
 
+    def test_value_places_say_which_element_holds_each_value(self):
+        fragment = (
+            '<ResourceFrame version="1" id="hd:RF"><vehicleTypes><VehicleType version="1" id="hd:VT"><Name>Coach</Name>'
+            '<capacities><PassengerCapacity version="1" id="hd:PC"><SeatingCapacity>49</SeatingCapacity>'
+            "<WheelchairPlaceCapacity>1</WheelchairPlaceCapacity></PassengerCapacity></capacities></VehicleType>"
+            "</vehicleTypes></ResourceFrame>"
+        )
+        places = generator.value_places(fragment, ["49", "1", "absent"])
+        self.assertEqual([(p["value"], p["element"]) for p in places], [("49", "SeatingCapacity"), ("1", "WheelchairPlaceCapacity")])
+        self.assertEqual(places[0]["path"], ["ResourceFrame", "vehicleTypes", "VehicleType", "capacities", "PassengerCapacity"])
+        self.assertEqual(generator.value_places('<SiteFrame version="1" id="hd:A3"/>', ["hd:A3"])[0]["element"], "SiteFrame/@id")
+
+    def test_value_elements_come_first_and_names_are_left_out(self):
+        example = {
+            "valid": True,
+            "valuePlaces": [{"value": "Coach", "element": "Name", "path": []}, {"value": "49", "element": "SeatingCapacity", "path": []}],
+            "elementNotes": [{"name": n, "documentation": "."} for n in ["ResourceFrame", "VehicleType", "SeatingCapacity"]],
+        }
+        self.assertEqual(generator.value_element_names(example), ["SeatingCapacity"])
+        self.assertEqual(generator.example_element_names(example), ["SeatingCapacity", "ResourceFrame", "VehicleType"])
+
     def test_example_element_names_skip_generic_elements(self):
         example = {
             "valid": True,

@@ -29,6 +29,18 @@ export default function GeneratedExampleBlock({ example }: { example?: Generated
         Generated for this question · valid against {version}
         {commit} · built from the cited evidence
       </p>
+      {example.valuePlaces && example.valuePlaces.length > 0 ? (
+        <ul className="generated-example-lead" aria-label="Where the question's values go">
+          {example.valuePlaces.map((place) => (
+            <li key={`${place.value}-${place.element}`}>
+              <strong>{place.value}</strong> → <code>{place.element}</code>
+              {place.path.length > 0 ? (
+                <span className="muted"> in {place.path.slice(-3).join(" › ")}</span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      ) : null}
       <div className="generated-example-code">
         <pre>
           <code>{example.xml}</code>

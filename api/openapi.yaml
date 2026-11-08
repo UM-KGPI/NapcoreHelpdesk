@@ -1566,6 +1566,27 @@ components:
           example: "2.0"
         schemaCommit:
           type: string
+        valuePlaces:
+          type: array
+          description: >-
+            Where each value of the question sits in the validated fragment: the element holding it (or
+            Element/@attribute) and that element's ancestors from the frame down. Present only when valid.
+          items:
+            type: object
+            required: [value, element, path]
+            properties:
+              value:
+                type: string
+                example: "49"
+              element:
+                type: string
+                example: SeatingCapacity
+              path:
+                type: array
+                items:
+                  type: string
+                example: [ResourceFrame, vehicleTypes, VehicleType, capacities, PassengerCapacity]
+            additionalProperties: false
         elementNotes:
           type: array
           description: >-
