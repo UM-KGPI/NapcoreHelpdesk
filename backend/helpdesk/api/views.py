@@ -1702,6 +1702,56 @@ class QuestionAnswerView(APIView):
         )
 
 
+KEEPALIVE_EVENT = ": keep-alive\n\n"  # an SSE comment: clients ignore it, networks see traffic
+
+
+class _StreamFailure:
+    def __init__(self, error: BaseException):
+        self.error = error
+
+
+def with_keepalive(events, interval: float):
+    """The events of a stream, with an SSE comment whenever none comes for `interval` seconds.
+
+    The stream is produced in a worker thread, so every step that blocks (question parsing, retrieval, schema
+    lookups, example generation, the model call) is covered without a status call before each. An error in
+    the stream is raised here. interval 0 yields the events inline (tests).
+    """
+    if not interval or interval <= 0:
+        yield from events
+        return
+    import queue
+    import threading
+
+    from django.db import connection
+
+    pending: "queue.Queue" = queue.Queue()
+    finished = object()
+
+    def produce():
+        try:
+            for event in events:
+                pending.put(event)
+        except BaseException as error:  # handed to the response's generator
+            pending.put(_StreamFailure(error))
+        finally:
+            pending.put(finished)
+            connection.close()  # this thread's own database connection
+
+    threading.Thread(target=produce, name="answer-stream", daemon=True).start()
+    while True:
+        try:
+            event = pending.get(timeout=interval)
+        except queue.Empty:
+            yield KEEPALIVE_EVENT
+            continue
+        if event is finished:
+            return
+        if isinstance(event, _StreamFailure):
+            raise event.error
+        yield event
+
+
 class QuestionAnswerStreamView(APIView):
     """
     Streaming variant of QuestionAnswerView. Returns an SSE stream so the
@@ -1744,7 +1794,7 @@ class QuestionAnswerStreamView(APIView):
         data = serializer.validated_data
 
         streaming_response = StreamingHttpResponse(
-            self._event_stream(request, data, request_id),
+            with_keepalive(self._event_stream(request, data, request_id), getattr(settings, "STREAM_KEEPALIVE_SECONDS", 0)),
             content_type="text/event-stream",
         )
         streaming_response["Cache-Control"] = "no-cache"
@@ -1758,9 +1808,9 @@ class QuestionAnswerStreamView(APIView):
         return self._sse({"type": "status", "stage": stage})
 
     def _event_stream(self, request, data, request_id):  # noqa: C901
-        # Status events go out before every step that can take seconds (retrieval
-        # passes, LLM calls), so the connection is never silent for a whole answer:
-        # proxies in front of the app close upstreams that send nothing for 60 s.
+        # Status events go out before the main steps; with_keepalive (STREAM_KEEPALIVE_SECONDS) adds a
+        # comment whenever the stream is silent, so no step leaves the connection idle: proxies close
+        # upstreams that send nothing for 60 s, and mobile Safari drops silent requests ("Load failed").
         yield self._status("received")
         options = data.get("options", {})
         question = data["question"].strip()

@@ -27,6 +27,7 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useSearchParams } from "react-router-dom";
 
+import { isNetworkFailure, recoverAnswer } from "./answerRecovery";
 import { HelpdeskApiClient, StreamUnavailableError } from "./api";
 import { AuthProvider } from "./auth-context";
 import AboutPage from "./components/AboutPage";
@@ -564,15 +565,22 @@ export default function App() {
 
     const requestId = createRequestId();
     const assistantTurnId = `a-${requestId}`;
-    setChatTurns((prev) => [
-      ...prev,
-      {
-        id: `u-${requestId}`,
-        role: "user",
-        text: prompt,
-        createdAt: new Date().toISOString(),
-      },
-    ]);
+    setChatTurns((prev) => {
+      // Sending the same question again after it failed does not add it a second time.
+      const last = prev[prev.length - 1];
+      if (last && last.role === "user" && last.text === prompt) {
+        return prev;
+      }
+      return [
+        ...prev,
+        {
+          id: `u-${requestId}`,
+          role: "user",
+          text: prompt,
+          createdAt: new Date().toISOString(),
+        },
+      ];
+    });
 
     setBusy(true);
     setError(null);
@@ -625,7 +633,37 @@ export default function App() {
           // failure (a proxy timeout, a stream cut off) means the server already ran the
           // whole pipeline once; repeating it would double the wait and likely fail again.
           if (!(streamErr instanceof StreamUnavailableError)) {
-            throw streamErr;
+            if (!isNetworkFailure(streamErr)) {
+              throw streamErr;
+            }
+            // The network dropped the connection (mobile Safari: "Load failed"), but the server finishes the
+            // answer anyway and saves it under this request id: fetch it instead of asking again.
+            setChatTurns((prev) =>
+              prev.map((t) =>
+                t.id === assistantTurnId
+                  ? { ...t, text: "The connection was interrupted. Fetching your answer…" }
+                  : t
+              )
+            );
+            const recovered = await recoverAnswer(client, requestId);
+            if (!recovered) {
+              setChatTurns((prev) => prev.filter((t) => t.id !== assistantTurnId));
+              throw new Error(
+                "The connection was interrupted before the answer arrived. Please send the question again."
+              );
+            }
+            result = recovered;
+            setChatTurns((prev) =>
+              prev.map((t) =>
+                t.id === assistantTurnId
+                  ? { ...t, text: result.answer, answer: result, requestId: result.trace.requestId }
+                  : t
+              )
+            );
+            setAnswerResult(result);
+            setQuestion(prompt);
+            setChatPrompt("");
+            return;
           }
           // Remove the placeholder turn first, then fall through to the non-streaming path.
           setChatTurns((prev) => prev.filter((t) => t.id !== assistantTurnId));
