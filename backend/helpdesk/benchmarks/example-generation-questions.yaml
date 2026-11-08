@@ -39,3 +39,7 @@ questions:
   question: Show a NeTEx example of a vehicle with registration number "LJ 123-AB"
 - id: gen18
   question: Give a NeTEx example of a stop place with a parking of 40 spaces
+- id: gen19
+  question: Show me a NeTEx example for Ljubljana Bus Station with two quays
+- id: gen20
+  question: Show a NeTEx example of a line operated by LPP in Ljubljana

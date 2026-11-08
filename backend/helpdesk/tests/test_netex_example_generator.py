@@ -57,6 +57,26 @@ class TriggerTests(SimpleTestCase):
         )
         self.assertEqual(generator.requested_values("Don't show a stop named “Kongresni trg”"), ["Kongresni trg"])
 
+    def test_names_without_quotes_and_number_words(self):
+        question = "Show me a NeTEx example for Ljubljana Bus Station with two quays"
+        self.assertTrue(generator.wants_generated_example(question, ["NeTEx"]))
+        self.assertEqual(generator.requested_values(question), ["Ljubljana Bus Station"])
+        self.assertEqual(generator.counted_words(question), ["two"])
+
+    def test_names_keep_joining_words_and_capitals(self):
+        self.assertEqual(generator.named_values("NeTEx example for the Gare de Lyon station"), ["Gare de Lyon"])
+        self.assertEqual(generator.named_values("Show a NeTEx line operated by LPP in Ljubljana"), ["LPP", "Ljubljana"])
+
+    def test_not_names(self):
+        # The first word of a sentence, standard names, identifiers, short abbreviations and concept labels.
+        with patch("helpdesk.services.semantic_graph.GRAPH_CONCEPT_ALIASES", {"netex:StopPlace": {"stop place"}}):
+            generator._concept_label_words._cache = None
+            self.assertEqual(generator.named_values("Show me a NeTEx example of a VehicleType"), [])
+            self.assertEqual(generator.named_values("Show a SIRI SX example"), [])
+            self.assertEqual(generator.named_values("A NeTEx example of a Stop Place"), [])
+            self.assertEqual(generator.named_values("A NeTEx example of a Stop"), [])
+        generator._concept_label_words._cache = None
+
     def test_values_match_whole_tokens(self):
         self.assertEqual(generator.missing_values("<SeatingCapacity>500</SeatingCapacity>", ["50"]), ["50"])
         self.assertEqual(generator.missing_values("<SeatingCapacity>50</SeatingCapacity>", ["50"]), [])
