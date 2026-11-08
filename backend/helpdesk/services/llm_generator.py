@@ -1322,6 +1322,23 @@ COMPOSITION_RULE = (
 )
 
 
+# When the answer comes with a fragment generated for the question and validated against the NeTEx XSD
+# (services/netex_example_generator.py), the text explains it (prod req-mw7j8wr6-t4l19q, 2026-11-08: the
+# text said "I cannot provide one" above a valid two-quay StopPlace).
+GENERATED_EXAMPLE_RULE = (
+    "GENERATED EXAMPLE: right after your answer, the user sees an XML fragment that was written for this "
+    "question, with the question's values, and validated against the NeTEx schema; it is labelled as generated, "
+    "not taken from the standard. Do not write that fragment yourself and do not say that you cannot provide an "
+    "example. Your FIRST sentence must say that the generated example below shows what the question asks for "
+    "(in the response language); if no evidence block has an example with the question's values, add that in the "
+    "same sentence. Do not start with what the evidence lacks. Then explain from "
+    "the evidence how such an example is built: which elements hold the question's values and which element "
+    "contains them, citing [E#]. You may quote one short snippet (at most 10 lines) from one evidence block that "
+    "shows the same structure in the standard's own examples. Keep the answer short: leave out evidence that does "
+    "not show how such an example is built; if no block shows it, say so in one sentence and stop."
+)
+
+
 def _build_messages(
     question: str,
     chunks: list[dict],
@@ -1332,6 +1349,7 @@ def _build_messages(
     language: str | None = None,
     all_candidates: list[dict] | None = None,
     detected_language: str | None = None,
+    generated_example: bool = False,
 ) -> list[dict]:
     context_lines = []
     focus_terms = _question_focus_terms(question)
@@ -1452,7 +1470,9 @@ def _build_messages(
         "- Use **bold** for emphasis only, not for technical terms.\n"
         "- Standard markdown for lists, headers, and paragraphs.\n"
     )
-    if _question_requests_verbatim_example(question):
+    if generated_example:
+        pass  # GENERATED_EXAMPLE_RULE goes last in the user prompt, where the model follows it; no quote-only rule.
+    elif _question_requests_verbatim_example(question):
         system_prompt = (
             f"{system_prompt} "
             "For questions asking for examples or code: First, directly answer 'yes' or 'no' about availability. Then list the examples found in evidence with citations [E#]. "
@@ -1535,10 +1555,11 @@ def _build_messages(
         "- If a requested detail is not in the evidence, explicitly state that — in the response language, not English "
         "(unless English is the response language)\n\n"
         f"{COMPOSITION_RULE + chr(10) if composition else ''}"
+        f"{GENERATED_EXAMPLE_RULE + chr(10) + chr(10) if generated_example else ''}"
         "Write your answer:"
     )
 
-    if _question_requests_verbatim_example(question) and "?" in question and any(w in question.lower() for w in ["is there", "do you have", "any", "list"]):
+    if not generated_example and _question_requests_verbatim_example(question) and "?" in question and any(w in question.lower() for w in ["is there", "do you have", "any", "list"]):
         user_prompt += "(This question asks for examples: list ALL matching examples found in evidence with their source paths, then provide sample code if available.)"
 
     return [
@@ -1818,6 +1839,7 @@ def generate_answer_llm(
     faq_hint: str | None = None,
     language: str | None = None,
     all_candidates: list[dict] | None = None,
+    generated_example: bool = False,
 ) -> dict:
     """Generate a grounded answer through a configurable OpenAI-compatible API.
 
@@ -1848,6 +1870,7 @@ def generate_answer_llm(
         language=language,
         all_candidates=all_candidates,
         detected_language=target_language,
+        generated_example=generated_example,
     )
 
     primary_base_url = (settings.LLM_API_BASE_URL or "").strip()
@@ -2098,6 +2121,7 @@ def stream_answer_llm(
     faq_hint: str | None = None,
     language: str | None = None,
     all_candidates: list[dict] | None = None,
+    generated_example: bool = False,
 ) -> Generator[tuple[str, object], None, None]:
     """
     Generator yielding (event_type, payload) tuples for streaming narration.
@@ -2138,6 +2162,7 @@ def stream_answer_llm(
         language=language,
         all_candidates=all_candidates,
         detected_language=detected_language,
+        generated_example=generated_example,
     )
 
     # Buffer all tokens before yielding any — validation must pass the full

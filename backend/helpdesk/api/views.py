@@ -1168,6 +1168,7 @@ class QuestionAnswerView(APIView):
         confidence = 0.0
         abstained = False
         abstention_reason = None
+        generated_example = None
         review_required = True
         matched_faq_entry_id = None
         retrieval_event_ids = []
@@ -1355,11 +1356,21 @@ class QuestionAnswerView(APIView):
                     semantic_fallback = "PARTIAL_EVIDENCE"
                 answer_text = "I do not have sufficient approved-source evidence to answer this safely."
             else:
+                # The example first, so the text can explain it instead of saying none exists.
+                generated_example = generate_netex_example(question, chunks, effective_scope)
+                example_ready = bool(generated_example and generated_example.get("valid"))
                 use_llm = generation_profile == "llm-ready" and settings.LLM_ENABLED
                 llm_generated = False
                 if use_llm:
                     try:
-                        generated = generate_answer_llm(question=question, chunks=chunks, scope=effective_scope, language=language, all_candidates=all_candidates)
+                        generated = generate_answer_llm(
+                            question=question,
+                            chunks=chunks,
+                            scope=effective_scope,
+                            language=language,
+                            all_candidates=all_candidates,
+                            generated_example=example_ready,
+                        )
                         llm_generated = True
                     except LLMGenerationError:
                         logger.warning(
@@ -1407,7 +1418,8 @@ class QuestionAnswerView(APIView):
                     # Policy-approved RAG response.
                     mode = QuestionEvent.MODE_RAG
                     review_required = policy["review_required"] or review_required
-                    if llm_generated and generated.get("evidence_answers_question") is False:
+                    # A valid generated example answers an example request the evidence alone cannot.
+                    if llm_generated and generated.get("evidence_answers_question") is False and not example_ready:
                         mode, confidence, review_required, abstained, abstention_reason = _non_answer_outcome(
                             allow_abstain=allow_abstain
                         )
@@ -1431,12 +1443,13 @@ class QuestionAnswerView(APIView):
         # A NeTEx fragment for "example with values" questions, validated against the XSD (None otherwise).
         # Also when the answer abstained for lack of a direct answer: no example in the standard has the
         # question's values, which is exactly when a generated one helps. Never after a policy block.
-        generated_example = (
-            generate_netex_example(question, retrieved_chunks, effective_scope)
-            if retrieved_chunks
-            and (mode == QuestionEvent.MODE_RAG or abstention_reason == QuestionEvent.REASON_INSUFFICIENT_EVIDENCE)
-            else None
-        )
+        # Usually generated before the answer text (above); here only for evidence-gate abstentions.
+        if not retrieved_chunks or not (
+            mode == QuestionEvent.MODE_RAG or abstention_reason == QuestionEvent.REASON_INSUFFICIENT_EVIDENCE
+        ):
+            generated_example = None
+        elif generated_example is None:
+            generated_example = generate_netex_example(question, retrieved_chunks, effective_scope)
         answer_id = f"ans-{uuid4().hex[:12]}"
         # Persist the orchestration outcome as a question event before child trace records.
         event = log_question_event(
@@ -1645,6 +1658,7 @@ class QuestionAnswerStreamView(APIView):
         confidence = 0.0
         abstained = False
         abstention_reason = None
+        generated_example = None
         review_required = True
         matched_faq_entry_id = None
         retrieval_event_ids = []
@@ -1838,18 +1852,23 @@ class QuestionAnswerStreamView(APIView):
                 answer_text = "I do not have sufficient approved-source evidence to answer this safely."
             else:
                 use_llm = generation_profile == "llm-ready" and settings.LLM_ENABLED
+                if use_llm:
+                    yield self._status("generating")
+                # The example first, so the text can explain it instead of saying none exists.
+                generated_example = generate_netex_example(question, chunks, effective_scope)
+                example_ready = bool(generated_example and generated_example.get("valid"))
                 llm_generated = False
                 if use_llm:
                     # Stream tokens to the client; accumulate for post-stream processing.
                     generated = None
                     try:
-                        yield self._status("generating")
                         for event_type, payload in stream_answer_llm(
                             question=question,
                             chunks=chunks,
                             scope=effective_scope,
                             language=language,
                             all_candidates=all_candidates,
+                            generated_example=example_ready,
                         ):
                             if event_type == "token":
                                 yield self._sse({"type": "token", "delta": payload})
@@ -1904,7 +1923,8 @@ class QuestionAnswerStreamView(APIView):
                 else:
                     mode = QuestionEvent.MODE_RAG
                     review_required = policy["review_required"] or review_required
-                    if llm_generated and generated.get("evidence_answers_question") is False:
+                    # A valid generated example answers an example request the evidence alone cannot.
+                    if llm_generated and generated.get("evidence_answers_question") is False and not example_ready:
                         mode, confidence, review_required, abstained, abstention_reason = _non_answer_outcome(
                             allow_abstain=allow_abstain
                         )
@@ -1925,12 +1945,13 @@ class QuestionAnswerStreamView(APIView):
         # A NeTEx fragment for "example with values" questions, validated against the XSD (None otherwise).
         # Also when the answer abstained for lack of a direct answer: no example in the standard has the
         # question's values, which is exactly when a generated one helps. Never after a policy block.
-        generated_example = (
-            generate_netex_example(question, retrieved_chunks, effective_scope)
-            if retrieved_chunks
-            and (mode == QuestionEvent.MODE_RAG or abstention_reason == QuestionEvent.REASON_INSUFFICIENT_EVIDENCE)
-            else None
-        )
+        # Usually generated before the answer text (above); here only for evidence-gate abstentions.
+        if not retrieved_chunks or not (
+            mode == QuestionEvent.MODE_RAG or abstention_reason == QuestionEvent.REASON_INSUFFICIENT_EVIDENCE
+        ):
+            generated_example = None
+        elif generated_example is None:
+            generated_example = generate_netex_example(question, retrieved_chunks, effective_scope)
         answer_id = f"ans-{uuid4().hex[:12]}"
 
         event = log_question_event(

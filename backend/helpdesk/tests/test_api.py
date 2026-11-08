@@ -1330,6 +1330,78 @@ class HelpdeskApiTests(APITestCase):
         self.assertTrue(answer["abstained"])
         self.assertEqual(answer["confidence"], 0.0)
 
+    _VALID_EXAMPLE = {"valid": True, "attempts": 1, "xml": "<SiteFrame/>", "document": "<PublicationDelivery/>"}
+
+    @override_settings(LLM_ENABLED=True)
+    @patch("helpdesk.api.views.generate_netex_example")
+    @patch("helpdesk.api.views.generate_answer_llm")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_a_valid_generated_example_is_made_first_and_answers_the_question(self, retrieve_mock, llm_mock, example_mock):
+        """Prod req-mw7j8wr6-t4l19q: the text said it could not give an example above a valid generated one."""
+        retrieve_mock.return_value = copy.deepcopy(self._NON_ANSWER_CHUNKS)
+        example_mock.return_value = dict(self._VALID_EXAMPLE)
+        llm_mock.return_value = {
+            "answer": "The generated example below shows it; parkingSite is a road feature type [E1].",
+            "confidence": 0.8,
+            "review_required": False,
+            "evidence_answers_question": False,
+        }
+
+        response = self._post_non_answer_question("answer-question", "req-generated-example-001")
+
+        self.assertEqual(llm_mock.call_args.kwargs["generated_example"], True)
+        example_mock.assert_called_once()
+        self.assertEqual(response.data["mode"], "rag")
+        self.assertFalse(response.data["abstained"])
+        self.assertEqual(response.data["confidence"], 0.8)
+        self.assertTrue(response.data["generatedExample"]["valid"])
+
+    @override_settings(LLM_ENABLED=True)
+    @patch("helpdesk.api.views.generate_netex_example")
+    @patch("helpdesk.api.views.generate_answer_llm")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_an_invalid_generated_example_leaves_the_answer_as_it_was(self, retrieve_mock, llm_mock, example_mock):
+        retrieve_mock.return_value = copy.deepcopy(self._NON_ANSWER_CHUNKS)
+        example_mock.return_value = {"valid": False, "attempts": 3, "errors": ["line 1: ..."]}
+        llm_mock.return_value = {
+            "answer": self._NON_ANSWER_TEXT,
+            "confidence": 0.94,
+            "review_required": False,
+            "evidence_answers_question": False,
+        }
+
+        response = self._post_non_answer_question("answer-question", "req-generated-example-002")
+
+        self.assertEqual(llm_mock.call_args.kwargs["generated_example"], False)
+        example_mock.assert_called_once()
+        self.assertEqual(response.data["mode"], "abstain")
+        self.assertFalse(response.data["generatedExample"]["valid"])
+
+    @override_settings(LLM_ENABLED=True)
+    @patch("helpdesk.api.views.generate_netex_example")
+    @patch("helpdesk.api.views.stream_answer_llm")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_answer_stream_with_a_valid_generated_example(self, retrieve_mock, stream_mock, example_mock):
+        retrieve_mock.return_value = copy.deepcopy(self._NON_ANSWER_CHUNKS)
+        example_mock.return_value = dict(self._VALID_EXAMPLE)
+        text = "The generated example below shows it; parkingSite is a road feature type [E1]."
+
+        def fake_stream(**kwargs):
+            self.assertTrue(kwargs["generated_example"])
+            yield ("token", text)
+            yield ("done", {"answer": text, "confidence": 0.8, "review_required": False,
+                            "evidence_answers_question": False, "rejected_answer": None, "rejection_reason": None})
+
+        stream_mock.side_effect = fake_stream
+        response = self._post_non_answer_question("answer-question-stream", "req-generated-example-003")
+
+        body = b"".join(response.streaming_content).decode("utf-8")
+        events = [json.loads(part[len("data:"):]) for part in body.split("\n\n") if part.startswith("data:")]
+        answer = events[-1]["answer"]
+        self.assertEqual(answer["mode"], "rag")
+        self.assertTrue(answer["generatedExample"]["valid"])
+        example_mock.assert_called_once()
+
     @override_settings(LLM_ENABLED=True)
     @patch("helpdesk.api.views.generate_answer")
     @patch("helpdesk.api.views.generate_answer_llm")
