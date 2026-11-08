@@ -36,11 +36,85 @@ _QUOTED = re.compile(r'"([^"]{1,60})"|“([^”]{1,60})”')
 _XML_BLOCK = re.compile(r"<(?P<tag>[A-Za-z][\w.-]*)[\s>].*</(?P=tag)>", re.S)
 
 
+_NUMBER_WORDS = frozenset(
+    "one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen "
+    "eighteen nineteen twenty".split()
+)
+_WORD = re.compile(r"[^\W\d_][\w'-]*|\S")
+# Names of standards and formats: capitalised, but never a value of the example.
+_NOT_NAMES = frozenset(
+    "netex siri opra transmodel gtfs datex xml xsd json yaml epip nordic napcore mobilitydcat dcat inspire tn-its tnits".split()
+)
+_JOINING_WORDS = frozenset({"de", "la", "le", "van", "von", "der", "di", "del", "na", "pri", "ob", "&"})
+
+
+def _is_name_word(word: str) -> bool:
+    """A capitalised word ("Ljubljana", "LPP"), not an identifier with inner capitals ("VehicleType")."""
+    if not word[:1].isupper() or word.lower() in _NOT_NAMES:
+        return False
+    if word.isupper() and len(word) <= 2:
+        return False  # "SX", "ET": service abbreviations, not names
+    return word.isupper() or not any(char.isupper() for char in word[1:])
+
+
+def _is_concept_label(phrase: str) -> bool:
+    """Whether the phrase is a model concept's label ("Stop Place"): a type, not a value."""
+    from helpdesk.services.semantic_graph import GRAPH_CONCEPT_ALIASES, _normalize_for_matching
+
+    normalized = _normalize_for_matching(phrase)
+    return any(normalized == _normalize_for_matching(label) for labels in GRAPH_CONCEPT_ALIASES.values() for label in labels)
+
+
+def named_values(question: str) -> list[str]:
+    """Proper names written without quotes: runs of capitalised words that do not start a sentence
+    ("Show me ... for Ljubljana Bus Station with two quays" -> "Ljubljana Bus Station")."""
+    words = _WORD.findall(_QUOTED.sub(" . ", question or ""))
+    names, current, sentence_start = [], [], True
+    for word in words:
+        if not sentence_start and (_is_name_word(word) or (current and word.lower() in _JOINING_WORDS)):
+            current.append(word)
+        else:
+            while current and current[-1].lower() in _JOINING_WORDS:
+                current.pop()
+            if current:
+                names.append(" ".join(current))
+            current = []
+        sentence_start = word in {".", "!", "?", ":"}
+    if current:
+        names.append(" ".join(current))
+    label_words = _concept_label_words()
+    return [
+        name
+        for name in names
+        if not _is_concept_label(name) and not (" " not in name and not name.isupper() and name.lower() in label_words)
+    ]
+
+
+def _concept_label_words() -> frozenset[str]:
+    """Words of the model concepts' labels: a single capitalised one ("Ferry") is vocabulary, not a name."""
+    from helpdesk.services.semantic_graph import GRAPH_CONCEPT_ALIASES, _normalize_for_matching
+
+    aliases = GRAPH_CONCEPT_ALIASES
+    cached = getattr(_concept_label_words, "_cache", None)
+    if cached is not None and cached[0] == len(aliases):
+        return cached[1]
+    words = frozenset(word for labels in aliases.values() for label in labels for word in _normalize_for_matching(label).split())
+    _concept_label_words._cache = (len(aliases), words)
+    return words
+
+
 def requested_values(question: str) -> list[str]:
-    """The concrete values a question asks to see: numbers and quoted names."""
+    """The concrete values a question gives, each of which the fragment must contain: quoted names,
+    numbers, and proper names written without quotes."""
     values = [(straight or curly).strip() for straight, curly in _QUOTED.findall(question or "")]
     values += _NUMBER.findall(_QUOTED.sub(" ", question or ""))
+    values += named_values(question)
     return list(dict.fromkeys(value for value in values if value))
+
+
+def counted_words(question: str) -> list[str]:
+    """Number words ("two quays"): concrete for the trigger, but not text the fragment must contain."""
+    return [word for word in re.findall(r"[a-z]+", (question or "").lower()) if word in _NUMBER_WORDS]
 
 
 def wants_generated_example(question: str, scope: list[str] | None) -> bool:
@@ -50,7 +124,9 @@ def wants_generated_example(question: str, scope: list[str] | None) -> bool:
     names = {(name or "").strip().lower() for name in scope or []}
     if "netex" not in names and "netex" not in (question or "").lower():
         return False
-    return bool(_EXAMPLE_WORDS.search(question or "")) and bool(requested_values(question))
+    if not _EXAMPLE_WORDS.search(question or ""):
+        return False
+    return bool(requested_values(question) or counted_words(question))
 
 
 # --- validation (netex-validator service, helpdesk/netex_validator_service.py) -------------------
@@ -121,7 +197,9 @@ _PROMPT = (
     "types, for example, in a ResourceFrame). Use only element and attribute names that appear in the evidence blocks "
     "(schema definitions and example files), in the order the schema definitions give. Give every element that "
     "needs one a version and an id; use the prefix 'hd:' for ids. Do not add elements the question does not "
-    "need. The frame goes inside <dataObjects> of a PublicationDelivery; do not write the PublicationDelivery, "
+    "need. Use only the values the question gives; where the schema needs another value, use a plain placeholder "
+    "('Quay 1', 'Line 1'). Add no real-world facts the question does not give, such as coordinates, addresses, "
+    "full names of organisations or opening times. The frame goes inside <dataObjects> of a PublicationDelivery; do not write the PublicationDelivery, "
     "an XML declaration or namespace declarations.\n"
     'Return ONLY JSON: {"xml": "<...Frame ...>...</...Frame>"}'
 )
