@@ -321,7 +321,10 @@ STANDARD_NAME_LEXEMES = frozenset({"netex", "siri", "opra", "transmodel", "datex
 
 
 def _rare_lexemes(lexemes: list[str], scope: list[str] | None) -> list[str]:
-    filtered = SourceChunk.objects.filter(_scope_query_filter(scope))
+    # Unordered: with the model's default order (quality_score), PostgreSQL walked the quality index and
+    # built every chunk's tsvector for a common term ("place" in NeTEx: 3.6 s instead of 9 ms, local
+    # 2026-11-08); counting needs no order, and the GIN index answers it.
+    filtered = SourceChunk.objects.filter(_scope_query_filter(scope)).order_by()
     rare = []
     for lexeme in lexemes:
         if lexeme in STANDARD_NAME_LEXEMES:
