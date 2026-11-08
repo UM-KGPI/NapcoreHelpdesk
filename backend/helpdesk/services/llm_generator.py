@@ -1438,6 +1438,15 @@ EXISTENCE_RULE = (
 )
 
 
+MODELLING_RULE = (
+    "HOW THE STANDARD MODELS IT: the question asks how the standard defines or describes something. The first "
+    "evidence blocks are the model's definitions of the concepts involved (with the standard's class that implements "
+    "each) and the schema elements for them. Start by naming the classes or elements the standard uses for it and "
+    "what each is, citing [E#]; then say how they relate and where they sit (frame, container, what refers to them) "
+    "as far as the blocks say. Do not build the answer on example blocks about something else."
+)
+
+
 def schema_structure_rule(element: str) -> str:
     """When the schema's content model of the element is shown first (services/schema_structure.py)."""
     return (
@@ -1484,7 +1493,7 @@ def _build_messages(
     example_fragment: str = "",
     also_asks: str = "",
     example_origin: str = "generated",
-    existence: bool = False,
+    existence: bool | str = False,
 ) -> list[dict]:
     context_lines = []
     # With a generated example, trimming keeps its elements (those holding the question's values first) in view.
@@ -1693,7 +1702,7 @@ def _build_messages(
         f"{COMPOSITION_RULE + chr(10) if composition else ''}"
         f"{generated_example_rule(example_elements, example_fragment, also_asks, example_origin) + chr(10) + chr(10) if example_elements else ''}"
         f"{schema_structure_rule(structure_element) + chr(10) + chr(10) if structure_element else ''}"
-        f"{EXISTENCE_RULE + chr(10) + chr(10) if existence and not example_elements and not structure_element else ''}"
+        f"{(MODELLING_RULE if existence == 'how' else EXISTENCE_RULE) + chr(10) + chr(10) if existence and not example_elements and not structure_element else ''}"
         "Write your answer:"
     )
 
@@ -1983,7 +1992,7 @@ def generate_answer_llm(
     example_fragment: str = "",
     also_asks: str = "",
     example_origin: str = "generated",
-    existence: bool = False,
+    existence: bool | str = False,
 ) -> dict:
     """Generate a grounded answer through a configurable OpenAI-compatible API.
 
@@ -2282,7 +2291,7 @@ def stream_answer_llm(
     example_fragment: str = "",
     also_asks: str = "",
     example_origin: str = "generated",
-    existence: bool = False,
+    existence: bool | str = False,
 ) -> Generator[tuple[str, object], None, None]:
     """
     Generator yielding (event_type, payload) tuples for streaming narration.

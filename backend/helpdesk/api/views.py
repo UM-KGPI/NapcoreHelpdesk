@@ -75,7 +75,7 @@ from helpdesk.services.netex_example_generator import (
     other_question,
     value_element_names,
 )
-from helpdesk.services.concept_presence import presence_evidence
+from helpdesk.services.concept_presence import presence_evidence, question_kind
 from helpdesk.services.schema_structure import definition_chunk, schema_structure_for
 from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 from helpdesk.services.retrieval_event_logger import log_retrieval_events
@@ -1481,7 +1481,7 @@ class QuestionAnswerView(APIView):
                             example_fragment=(generated_example or {}).get("xml", "") if example_ready else "",
                             also_asks=other_question(english_question or question) if example_ready else "",
                             example_origin=(generated_example or {}).get("origin", "generated"),
-                            existence=bool(presence),
+                            existence=(question_kind(english_question or question) or True) if presence else False,
                         )
                         llm_generated = True
                     except LLMGenerationError:
@@ -2099,7 +2099,7 @@ class QuestionAnswerStreamView(APIView):
                             example_fragment=(generated_example or {}).get("xml", "") if example_ready else "",
                             also_asks=other_question(english_question or question) if example_ready else "",
                             example_origin=(generated_example or {}).get("origin", "generated"),
-                            existence=bool(presence),
+                            existence=(question_kind(english_question or question) or True) if presence else False,
                         ):
                             if event_type == "token":
                                 yield self._sse({"type": "token", "delta": payload})

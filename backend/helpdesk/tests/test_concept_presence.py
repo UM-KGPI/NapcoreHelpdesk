@@ -94,3 +94,46 @@ class ScoreTests(SimpleTestCase):
         ):
             chunks = presence.presence_evidence("Does NeTEx have a driver?", ["NeTEx"])
         self.assertEqual([c["score"] for c in chunks], [1.0, 1.0])
+
+
+class ModellingTests(SimpleTestCase):
+    def test_question_kinds(self):
+        self.assertEqual(presence.question_kind("How can fare distribution be defined in NeTEx?"), "how")
+        self.assertEqual(presence.question_kind("How do you describe a parking in NeTEx?"), "how")
+        self.assertEqual(presence.question_kind("Does NeTEx support parking spaces?"), "whether")
+        self.assertEqual(presence.question_kind("What is a StopPlace in NeTEx?"), "")
+        self.assertEqual(presence.question_kind("How are delays reported at a stop?"), "")
+
+    def test_head_word_concepts_use_the_most_specific_word(self):
+        aliases = {
+            "transmodel:DISTRIBUTION_CHANNEL": {"DISTRIBUTION CHANNEL"},
+            "transmodel:DISTRIBUTION_ASSIGNMENT": {"DISTRIBUTION ASSIGNMENT"},
+            "transmodel:FARE_PRODUCT": {"FARE PRODUCT"},
+            "transmodel:FARE_ZONE": {"FARE ZONE"},
+            "transmodel:FARE_TABLE": {"FARE TABLE"},
+            "transmodel:DISTRIBUTION_RIGHT": {"DISTRIBUTION RIGHT"},
+        }
+        implemented = {
+            "transmodel:DISTRIBUTION_CHANNEL": {"netex:DistributionChannel"},
+            "transmodel:DISTRIBUTION_ASSIGNMENT": {"netex:DistributionAssignment"},
+            "transmodel:FARE_PRODUCT": {"netex:FareProduct"},
+            "transmodel:FARE_ZONE": {"netex:FareZone"},
+            "transmodel:FARE_TABLE": {"netex:FareTable"},
+        }
+        with patch("helpdesk.services.semantic_graph.GRAPH_CONCEPT_ALIASES", aliases), patch(
+            "helpdesk.services.semantic_graph.TRANSMODEL_TO_CONCEPTS", implemented
+        ):
+            # "fare" heads three implemented classes, "distribution" two: the more specific word wins;
+            # DISTRIBUTION RIGHT is not implemented in NeTEx and is left out.
+            self.assertEqual(
+                presence.head_word_concepts("How can fare distribution be defined in NeTEx?"),
+                ["transmodel:DISTRIBUTION_ASSIGNMENT", "transmodel:DISTRIBUTION_CHANNEL"],
+            )
+
+    def test_modelling_brief(self):
+        from helpdesk.services.llm_generator import EXISTENCE_RULE, MODELLING_RULE, _build_messages
+
+        chunk = {"repositoryUrl": "https://github.com/x/NeTEx", "commitSha": "a", "sourcePath": "xsd/a.xsd", "chunkId": "c", "text": "DistributionChannel"}
+        user = _build_messages("How can fare distribution be defined in NeTEx?", [chunk], existence="how")[1]["content"]
+        self.assertIn(MODELLING_RULE, user)
+        self.assertNotIn(EXISTENCE_RULE, user)
