@@ -8,10 +8,14 @@ model-written XML is parsed outside the backend process.
 
     GET  /health    -> {"status": "ok" | "loading" | "error", "schemaVersion": "2.0", "commit": "...", ...}
     POST /validate  {"fragment": "<ResourceFrame ...>...</ResourceFrame>"}
-                    -> {"valid": bool, "errors": ["line 3: ...", ...], "schemaVersion": "2.0", "commit": "..."}
+                    -> {"valid": bool, "errors": ["line 3: ...", ...], "schemaVersion": "2.0", "commit": "...",
+                        "elements": [{"name": "SeatingCapacity", "parent": "PassengerCapacity",
+                                      "documentation": "The seating capacity of vehicles of the type. ..."}]}
 
 A fragment is one NeTEx frame; it is wrapped in a minimal PublicationDelivery before validation, and
-error line numbers count from the fragment's first line. Every CHECK_SECONDS the service compares the
+error line numbers count from the fragment's first line. For a valid fragment, "elements" gives each
+element's xsd:documentation from the schema (ElementDocs), so the generated example can be explained
+from the standard's own words without a model. Every CHECK_SECONDS the service compares the
 checkout's commit with the loaded one; after a source refresh it compiles the new schema in the
 background and keeps answering with the old one until then.
 
@@ -40,6 +44,9 @@ SCHEMA_ENTRY = "xsd/NeTEx_publication.xsd"
 CHECK_SECONDS = int(os.environ.get("NETEX_VALIDATOR_CHECK_SECONDS", "300"))
 MAX_FRAGMENT_BYTES = 200_000
 MAX_ERRORS = 5
+MAX_ELEMENT_NOTES = 40
+XSD_NS = "http://www.w3.org/2001/XMLSchema"
+_WRAPPER_ELEMENTS = frozenset({"PublicationDelivery", "PublicationTimestamp", "ParticipantRef", "dataObjects"})
 
 logger = logging.getLogger("netex_validator_service")
 
@@ -93,12 +100,130 @@ def _parser():
     return etree.XMLParser(resolve_entities=False, load_dtd=False, no_network=True, huge_tree=False)
 
 
+def _local(name: str | None) -> str:
+    """'netex:VehicleTypeGroup' or '{ns}Quay' -> 'VehicleTypeGroup' / 'Quay'."""
+    name = name or ""
+    return name.rsplit("}", 1)[-1].rsplit(":", 1)[-1]
+
+
+def _first_sentence(text: str) -> str:
+    match = re.match(r"(.+?[.!?])(?:\s|$)", text)
+    return match.group(1) if match else text
+
+
+class ElementDocs:
+    """The xsd:documentation of each element, chosen through the parent element's type.
+
+    NeTEx documents an element where it is declared, inside a named complexType, group or global
+    element (the "container"); the same name is declared in several containers with different text
+    (SeatingCapacity under CapacityGroup and under VehicleManoeuvringRequirementCapacityGroup). A
+    fragment element's parent names its type; the type's base types and group references, followed
+    transitively, are the containers the element can be declared in. The note for an element is the
+    text from a container reached that way, else the global element's own text, else the text all
+    declarations agree on (first sentence), else none.
+    """
+
+    def __init__(self) -> None:
+        self.docs: dict[str, list[tuple[str, str]]] = {}  # element name -> [(container, documentation)]
+        self.element_type: dict[str, str] = {}  # element name -> type name; a global declaration wins
+        self.links: dict[str, set[str]] = {}  # container -> base types and groups it uses
+        self.files = 0
+
+    @staticmethod
+    def _container(node) -> str:
+        """The nearest named complexType, group or element above the node ("" at schema level)."""
+        parent = node.getparent()
+        while parent is not None:
+            if _local(parent.tag) in {"complexType", "group", "element"} and parent.get("name"):
+                return parent.get("name")
+            parent = parent.getparent()
+        return ""
+
+    def add_schema(self, root) -> None:
+        self.files += 1
+        for node in root.iter(f"{{{XSD_NS}}}element"):
+            name = node.get("name")
+            if not name:
+                continue
+            documentation = " ".join(
+                " ".join((doc.text or "").split())
+                for doc in node.findall(f"{{{XSD_NS}}}annotation/{{{XSD_NS}}}documentation")
+            ).strip()
+            if documentation:
+                self.docs.setdefault(name, []).append((self._container(node), documentation))
+            is_global = _local(node.getparent().tag) == "schema"
+            type_name = _local(node.get("type")) or name  # anonymous content: the element is its own container
+            if is_global or name not in self.element_type:
+                self.element_type[name] = type_name
+        for tag in ("extension", "restriction"):
+            for node in root.iter(f"{{{XSD_NS}}}{tag}"):
+                if node.get("base"):
+                    self.links.setdefault(self._container(node), set()).add(_local(node.get("base")))
+        for node in root.iter(f"{{{XSD_NS}}}group"):
+            if node.get("ref"):
+                self.links.setdefault(self._container(node), set()).add(_local(node.get("ref")))
+
+    def load_directory(self, directory: Path) -> None:
+        from lxml import etree
+
+        for path in sorted(directory.rglob("*.xsd")):
+            try:
+                self.add_schema(etree.parse(str(path), parser=_parser()).getroot())
+            except (etree.XMLSyntaxError, OSError) as exc:
+                logger.warning("element documentation: %s skipped: %s", path.name, exc)
+
+    def _containers_of(self, parent: str) -> dict[str, int]:
+        """Containers the parent's content can come from, with their distance along the type chain."""
+        reached: dict[str, int] = {}
+        pending = [(parent, 0), (self.element_type.get(parent, ""), 0)]
+        while pending:
+            container, distance = pending.pop(0)
+            if container and container not in reached:
+                reached[container] = distance
+                pending.extend((linked, distance + 1) for linked in self.links.get(container, ()))
+        return reached
+
+    def documentation(self, name: str, parent: str) -> str:
+        candidates = self.docs.get(name) or []
+        if not candidates:
+            return ""
+        reachable = self._containers_of(parent)
+        nearest = min((reachable[c], text) for c, text in candidates if c in reachable) if any(c in reachable for c, _ in candidates) else None
+        if nearest:
+            return nearest[1]
+        for container, text in candidates:
+            if container == "":
+                return text
+        sentences = {_first_sentence(text) for _, text in candidates}
+        return sentences.pop() if len(sentences) == 1 else ""
+
+    def notes(self, document) -> list[dict]:
+        """One note per distinct element and parent of the document, in document order."""
+        notes, seen = [], set()
+        for node in document.iter():
+            if not isinstance(node.tag, str):
+                continue
+            name = _local(node.tag)
+            parent_node = node.getparent()
+            parent = _local(parent_node.tag) if parent_node is not None else ""
+            if name in _WRAPPER_ELEMENTS or (name, parent) in seen:
+                continue
+            seen.add((name, parent))
+            text = self.documentation(name, parent)
+            if text:
+                notes.append({"name": name, "parent": parent, "documentation": text})
+            if len(notes) >= MAX_ELEMENT_NOTES:
+                break
+        return notes
+
+
 class SchemaHolder:
     """The compiled schema of the checkout's current commit; recompiled in the background when it moves."""
 
     def __init__(self, checkout: Path = CHECKOUT):
         self.checkout = checkout
         self.schema = None
+        self.element_docs = ElementDocs()
         self.commit = ""
         self.version = ""
         self.error = ""
@@ -116,13 +241,19 @@ class SchemaHolder:
         started = time.time()
         try:
             schema = etree.XMLSchema(etree.parse(str(self.checkout / SCHEMA_ENTRY)))
+            element_docs = ElementDocs()
+            element_docs.load_directory((self.checkout / SCHEMA_ENTRY).parent)
         except Exception as exc:  # missing checkout or a broken schema: keep the previous one
             self.error = str(exc)[:300]
             logger.warning("NeTEx schema not compiled: %s", exc)
         else:
-            self.schema, self.commit, self.version, self.error = schema, commit, schema_version(self.checkout), ""
+            self.schema, self.element_docs = schema, element_docs
+            self.commit, self.version, self.error = commit, schema_version(self.checkout), ""
             self.loaded_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-            logger.info("NeTEx schema %s at %s compiled in %.1f s", self.version, commit[:12], time.time() - started)
+            logger.info(
+                "NeTEx schema %s at %s compiled in %.1f s; documentation of %d elements from %d files",
+                self.version, commit[:12], time.time() - started, len(element_docs.docs), element_docs.files,
+            )
         finally:
             self._loading = False
 
@@ -156,7 +287,7 @@ class SchemaHolder:
             return {**result, "valid": False, "errors": [f"Not well-formed XML: {exc}"]}
         with self._validate_lock:
             if schema.validate(document):
-                return {**result, "valid": True, "errors": []}
+                return {**result, "valid": True, "errors": [], "elements": self.element_docs.notes(document)}
             errors = [
                 f"line {max(1, error.line - offset)}: {error.message.replace('{' + NETEX_NAMESPACE + '}', '')}"
                 for error in schema.error_log

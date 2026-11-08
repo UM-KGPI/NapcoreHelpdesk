@@ -873,10 +873,16 @@ service, `netex-validator` (`backend/helpdesk/netex_validator_service.py`):
   previous schema in the meantime.
 - A validation takes about 20 ms (100 ms for a 15 kB frame); the model's writing takes 1–4 s per attempt,
   at most three attempts. Each answer's trace has `generatedExample.generationMs` and `validationMs`.
+- With a valid fragment it returns each element's `xsd:documentation` (indexed from the 458 schema files at
+  start, under a second), chosen through the parent element's type when a name is declared in several
+  places. The answer shows them under the fragment as `generatedExample.elementNotes`: what each element
+  is, in the schema's words, with no model involved.
+- A question value counts as modelled only when it is the whole content of an element or attribute
+  (`<SeatingCapacity>50</SeatingCapacity>`), never when mentioned inside a `Name` or `Description` text.
 
 Settings: `NETEX_EXAMPLE_GENERATOR_ENABLED` (default `True`), `NETEX_VALIDATOR_URL` (default
 `http://netex-validator:8091`), `NETEX_VALIDATOR_MEM_LIMIT` (default `512m`), `NETEX_VALIDATOR_CPUS`
 (default `1.0`). Check it with `$C exec -T netex-validator curl -s localhost:8091/health`.
 
-Measure the generator with `$C exec -T backend python manage.py run_example_benchmark` (18 questions,
+Measure the generator with `$C exec -T backend python manage.py run_example_benchmark` (20 questions,
 `backend/helpdesk/benchmarks/example-generation-questions.yaml`).

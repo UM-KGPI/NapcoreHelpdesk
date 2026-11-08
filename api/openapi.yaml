@@ -1508,6 +1508,23 @@ components:
           example: "2.0"
         schemaCommit:
           type: string
+        elementNotes:
+          type: array
+          description: >-
+            What each element of the fragment is, in the words of the NeTEx schema (xsd:documentation,
+            chosen through the parent element's type); one note per element name, in document order.
+            Present only when valid.
+          items:
+            type: object
+            required: [name, documentation]
+            properties:
+              name:
+                type: string
+                example: SeatingCapacity
+              documentation:
+                type: string
+                example: The seating capacity of vehicles of the type. For a requirement this is the minimum needed.
+            additionalProperties: false
         evidenceChunkIds:
           type: array
           items:

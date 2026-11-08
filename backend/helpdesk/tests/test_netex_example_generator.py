@@ -77,16 +77,30 @@ class TriggerTests(SimpleTestCase):
             self.assertEqual(generator.named_values("A NeTEx example of a Stop"), [])
         generator._concept_label_words._cache = None
 
-    def test_values_match_whole_tokens(self):
+    def test_values_must_be_whole_element_or_attribute_contents(self):
         self.assertEqual(generator.missing_values("<SeatingCapacity>500</SeatingCapacity>", ["50"]), ["50"])
-        self.assertEqual(generator.missing_values("<SeatingCapacity>50</SeatingCapacity>", ["50"]), [])
+        self.assertEqual(generator.missing_values("<SeatingCapacity> 50 </SeatingCapacity>", ["50"]), [])
+        self.assertEqual(generator.missing_values('<Quay id="50"/>', ["50"]), [])
+        self.assertEqual(generator.missing_values("<Name>Ljubljana Bus Station</Name>", ["Ljubljana Bus Station"]), [])
+        # Mentioned in a sentence: the value is not modelled.
+        self.assertEqual(generator.missing_values("<Description>Bus with 50 seats</Description>", ["50"]), ["50"])
+        self.assertEqual(generator.missing_values("<Name>Ljubljana Bus Station (main)</Name>", ["Ljubljana Bus Station"]), ["Ljubljana Bus Station"])
+        # Not XML: whole words.
+        self.assertEqual(generator.missing_values("<Seats>50", ["50", "20"]), ["20"])
 
 
 @override_settings(LLM_ENABLED=True)
 class GenerationTests(SimpleTestCase):
     def test_valid_first_attempt(self):
+        elements = [
+            {"name": "SeatingCapacity", "parent": "PassengerCapacity", "documentation": "The seating capacity of vehicles of the type."},
+            {"name": "SeatingCapacity", "parent": "Other", "documentation": "Another declaration."},
+            {"name": "Name", "parent": "VehicleType", "documentation": ""},
+        ]
         with patch.object(generator, "_ask_model", return_value=_reply(FRAME)), patch.object(
-            generator, "validate_fragment", return_value={"valid": True, "errors": [], "schemaVersion": "2.0", "commit": "abc"}
+            generator,
+            "validate_fragment",
+            return_value={"valid": True, "errors": [], "schemaVersion": "2.0", "commit": "abc", "elements": elements},
         ):
             result = generator.generate_netex_example(BUS, [NETEX_CHUNK], ["NeTEx"])
         self.assertTrue(result["valid"])
@@ -94,6 +108,11 @@ class GenerationTests(SimpleTestCase):
         self.assertEqual(result["xml"], generator.indented_fragment(FRAME))
         self.assertIn("<dataObjects>", result["document"])
         self.assertEqual((result["schemaVersion"], result["schemaCommit"]), ("2.0", "abc"))
+        # One note per element name, the first occurrence; nothing for an element without documentation.
+        self.assertEqual(
+            result["elementNotes"],
+            [{"name": "SeatingCapacity", "documentation": "The seating capacity of vehicles of the type."}],
+        )
         self.assertIn("generationMs", result)
         self.assertIn("validationMs", result)
 
@@ -119,7 +138,7 @@ class GenerationTests(SimpleTestCase):
             result = generator.generate_netex_example(BUS, [NETEX_CHUNK], ["NeTEx"])
         self.assertFalse(result["valid"])
         self.assertEqual(result["attempts"], generator.MAX_ATTEMPTS)
-        self.assertIn("the value 20 from the question is missing", result["errors"])
+        self.assertTrue(result["errors"][0].startswith("the value 20 from the question is missing"), result["errors"])
         self.assertNotIn("xml", result)
 
     def test_validator_down_gives_no_example(self):
@@ -152,12 +171,32 @@ TINY_XSD = """<?xml version="1.0" encoding="UTF-8"?>
       <xsd:element name="PublicationTimestamp" type="xsd:dateTime"/>
       <xsd:element name="ParticipantRef" type="xsd:string"/>
       <xsd:element name="dataObjects"><xsd:complexType><xsd:sequence>
-        <xsd:element name="ResourceFrame"><xsd:complexType><xsd:sequence>
-          <xsd:element name="Name" type="xsd:string"/>
-        </xsd:sequence><xsd:attribute name="id" type="xsd:string"/></xsd:complexType></xsd:element>
+        <xsd:element name="ResourceFrame" type="ResourceFrameStructure">
+          <xsd:annotation><xsd:documentation>A coherent set of reference values.</xsd:documentation></xsd:annotation>
+        </xsd:element>
       </xsd:sequence></xsd:complexType></xsd:element>
     </xsd:sequence><xsd:attribute name="version" type="xsd:string"/></xsd:complexType>
   </xsd:element>
+  <xsd:complexType name="ResourceFrameStructure"><xsd:complexContent>
+    <xsd:extension base="FrameStructure"><xsd:sequence>
+      <xsd:element name="Capacity" type="xsd:string" minOccurs="0">
+        <xsd:annotation><xsd:documentation>Capacity of the frame's vehicles.</xsd:documentation></xsd:annotation>
+      </xsd:element>
+    </xsd:sequence></xsd:extension>
+  </xsd:complexContent></xsd:complexType>
+  <xsd:complexType name="FrameStructure"><xsd:sequence>
+    <xsd:group ref="NameGroup"/>
+  </xsd:sequence><xsd:attribute name="id" type="xsd:string"/></xsd:complexType>
+  <xsd:group name="NameGroup"><xsd:sequence>
+    <xsd:element name="Name" type="xsd:string">
+      <xsd:annotation><xsd:documentation>Name of the frame.</xsd:documentation></xsd:annotation>
+    </xsd:element>
+  </xsd:sequence></xsd:group>
+  <xsd:group name="OtherGroup"><xsd:sequence>
+    <xsd:element name="Capacity" type="xsd:string">
+      <xsd:annotation><xsd:documentation>Capacity of something else.</xsd:documentation></xsd:annotation>
+    </xsd:element>
+  </xsd:sequence></xsd:group>
 </xsd:schema>
 """
 
@@ -183,6 +222,30 @@ class ValidatorServiceTests(SimpleTestCase):
     def test_valid_fragment(self):
         result = self.holder.validate('<ResourceFrame id="hd:RF:1"><Name>Bus</Name></ResourceFrame>')
         self.assertEqual(result["valid"], True)
+
+    def test_a_valid_fragment_comes_with_each_element_in_the_schema_words(self):
+        result = self.holder.validate('<ResourceFrame id="hd:RF:1"><Name>Bus</Name><Capacity>50</Capacity></ResourceFrame>')
+        self.assertEqual(
+            result["elements"],
+            [
+                {"name": "ResourceFrame", "parent": "dataObjects", "documentation": "A coherent set of reference values."},
+                # Declared in a group reached through the frame's base type.
+                {"name": "Name", "parent": "ResourceFrame", "documentation": "Name of the frame."},
+                # Declared twice; the declaration reachable from the parent's type wins over OtherGroup's.
+                {"name": "Capacity", "parent": "ResourceFrame", "documentation": "Capacity of the frame's vehicles."},
+            ],
+        )
+
+    def test_element_documentation_fallbacks(self):
+        docs = self.holder.element_docs
+        # Not reachable from the parent, declarations disagree: no note rather than a wrong one.
+        self.assertEqual(docs.documentation("Capacity", "Unknown"), "")
+        # Not reachable, but every declaration says the same (first sentence).
+        docs.docs["Code"] = [("A", "Code of the thing. Extra."), ("B", "Code of the thing.")]
+        self.assertEqual(docs.documentation("Code", "Unknown"), "Code of the thing.")
+        # Nearer declaration wins over a farther one.
+        docs.docs["Name"].append(("ResourceFrameStructure", "Name of the resource frame."))
+        self.assertEqual(docs.documentation("Name", "ResourceFrame"), "Name of the resource frame.")
 
     def test_errors_name_the_element_and_count_lines_from_the_fragment(self):
         result = self.holder.validate('<ResourceFrame id="hd:RF:1">\n<Seats>50</Seats>\n</ResourceFrame>')

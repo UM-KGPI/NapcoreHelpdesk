@@ -137,7 +137,7 @@ class ValidatorUnavailable(RuntimeError):
 
 
 def validate_fragment(fragment: str) -> dict:
-    """{"valid", "errors", "schemaVersion", "commit"} from the validation service."""
+    """{"valid", "errors", "schemaVersion", "commit", "elements"} from the validation service."""
     from urllib import error, request
 
     url = settings.NETEX_VALIDATOR_URL.rstrip("/") + "/validate"
@@ -183,9 +183,43 @@ def publication_document(fragment: str) -> str:
     return '<?xml version="1.0" encoding="UTF-8"?>\n' + _indented(wrap_fragment(fragment)) + "\n"
 
 
+def element_notes(elements: list[dict]) -> list[dict]:
+    """What each element of the fragment is, in the schema's words: one note per element name, the
+    first (outermost) occurrence's text. Grounded in the XSD, no model involved."""
+    notes: dict[str, str] = {}
+    for element in elements or []:
+        name, text = str(element.get("name") or ""), str(element.get("documentation") or "").strip()
+        if name and text and name not in notes:
+            notes[name] = text
+    return [{"name": name, "documentation": text} for name, text in notes.items()]
+
+
+def _field_values(fragment: str) -> set[str] | None:
+    """The whole text of every element and attribute of the fragment (None when it does not parse)."""
+    from xml.etree import ElementTree
+
+    try:
+        root = ElementTree.fromstring(f'<root xmlns="{NETEX_NAMESPACE}">{fragment}</root>')
+    except ElementTree.ParseError:
+        return None
+    fields: set[str] = set()
+    for node in root.iter():
+        fields.add((node.text or "").strip())
+        fields.update(value.strip() for value in node.attrib.values())
+    return fields
+
+
 def missing_values(fragment: str, values: list[str]) -> list[str]:
-    """Requested values that appear nowhere in the fragment's text or attributes."""
-    return [value for value in values if not re.search(rf"(?<![\w.]){re.escape(value)}(?![\w.])", fragment)]
+    """Requested values that are not the whole content of some element or attribute.
+
+    A value mentioned inside a sentence does not count: "Bus with 50 seats" in a Description leaves
+    the seats unmodelled, and the feedback sends the model back to put 50 in an element of its own.
+    Only for fragments that validated (no DTD, no entities); an unparsable one falls back to words.
+    """
+    fields = _field_values(fragment)
+    if fields is None:
+        return [value for value in values if not re.search(rf"(?<![\w.]){re.escape(value)}(?![\w.])", fragment)]
+    return [value for value in values if value not in fields]
 
 
 # --- generation ----------------------------------------------------------------------------------
@@ -245,7 +279,8 @@ def generate_netex_example(question: str, chunks: list[dict], scope: list[str] |
     """A validated NeTEx fragment for the question, or a record of why there is none.
 
     Returns None when the question does not ask for one. Otherwise a dict with valid (bool), attempts,
-    and, when valid, xml, schema, schemaVersion and evidenceChunkIds; when not valid, errors.
+    and, when valid, xml, schema, schemaVersion, elementNotes (each element in the schema's words) and
+    evidenceChunkIds; when not valid, errors.
     """
     if not wants_generated_example(question, scope):
         return None
@@ -289,7 +324,11 @@ def generate_netex_example(question: str, chunks: list[dict], scope: list[str] |
                 return {"valid": False, "attempts": attempt, "errors": [str(exc)[:200]], **timing}
             errors = list(checked.get("errors") or [])
             if checked.get("valid") and not errors:
-                errors = [f"the value {value} from the question is missing" for value in missing_values(fragment, values)]
+                errors = [
+                    f"the value {value} from the question is missing: it must be the whole content of an element "
+                    "or attribute that holds it, not part of a Name or Description text"
+                    for value in missing_values(fragment, values)
+                ]
         if not errors:
             return {
                 "valid": True,
@@ -299,6 +338,7 @@ def generate_netex_example(question: str, chunks: list[dict], scope: list[str] |
                 "schema": SCHEMA_ENTRY,
                 "schemaVersion": checked.get("schemaVersion", ""),
                 "schemaCommit": checked.get("commit", ""),
+                "elementNotes": element_notes(checked.get("elements") or []),
                 "evidenceChunkIds": [chunk.get("chunkId") for chunk in used],
                 **timing,
             }
