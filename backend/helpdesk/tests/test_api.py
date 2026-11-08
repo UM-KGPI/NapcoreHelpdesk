@@ -1330,7 +1330,17 @@ class HelpdeskApiTests(APITestCase):
         self.assertTrue(answer["abstained"])
         self.assertEqual(answer["confidence"], 0.0)
 
-    _VALID_EXAMPLE = {"valid": True, "attempts": 1, "xml": "<SiteFrame/>", "document": "<PublicationDelivery/>"}
+    _VALID_EXAMPLE = {
+        "valid": True,
+        "attempts": 1,
+        "xml": "<ResourceFrame/>",
+        "document": "<PublicationDelivery/>",
+        "elementNotes": [
+            {"name": "ResourceFrame", "documentation": "A coherent set of reference values."},
+            {"name": "Name", "documentation": "Name of TRANSPORT TYPE."},
+            {"name": "SeatingCapacity", "documentation": "The seating capacity of vehicles of the type."},
+        ],
+    }
 
     @override_settings(LLM_ENABLED=True)
     @patch("helpdesk.api.views.generate_netex_example")
@@ -1349,11 +1359,52 @@ class HelpdeskApiTests(APITestCase):
 
         response = self._post_non_answer_question("answer-question", "req-generated-example-001")
 
-        self.assertEqual(llm_mock.call_args.kwargs["generated_example"], True)
+        self.assertEqual(llm_mock.call_args.kwargs["example_elements"], ["ResourceFrame", "SeatingCapacity"])
         example_mock.assert_called_once()
+        # A second search, for the example's elements rather than the question's words.
+        self.assertEqual(retrieve_mock.call_count, 2)
+        self.assertIn("SeatingCapacity", retrieve_mock.call_args_list[1].kwargs["english_question"])
         self.assertEqual(response.data["mode"], "rag")
         self.assertFalse(response.data["abstained"])
         self.assertEqual(response.data["confidence"], 0.8)
+        self.assertTrue(response.data["generatedExample"]["valid"])
+
+    @override_settings(LLM_ENABLED=True)
+    @patch("helpdesk.api.views.generate_netex_example")
+    @patch("helpdesk.api.views.generate_answer_llm")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_text_with_nothing_to_add_leaves_the_example_as_the_answer(self, retrieve_mock, llm_mock, example_mock):
+        retrieve_mock.return_value = copy.deepcopy(self._NON_ANSWER_CHUNKS)
+        example_mock.return_value = dict(self._VALID_EXAMPLE)
+        llm_mock.return_value = {"answer": "", "confidence": 0.9, "review_required": False, "answer_validated": True,
+                                 "evidence_answers_question": True}
+
+        response = self._post_non_answer_question("answer-question", "req-generated-example-004")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assert_matches_schema("AnswerResponse", response.data)
+        self.assertEqual(response.data["mode"], "rag")
+        self.assertEqual(response.data["answer"], "")
+        self.assertEqual(response.data["citations"], [])
+        self.assertFalse(response.data["abstained"])
+        self.assertTrue(response.data["generatedExample"]["valid"])
+
+    @override_settings(LLM_ENABLED=True)
+    @patch("helpdesk.api.views.generate_netex_example")
+    @patch("helpdesk.api.views.generate_answer_llm")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_text_that_failed_validation_is_dropped_next_to_a_valid_example(self, retrieve_mock, llm_mock, example_mock):
+        retrieve_mock.return_value = copy.deepcopy(self._NON_ANSWER_CHUNKS)
+        example_mock.return_value = dict(self._VALID_EXAMPLE)
+        llm_mock.return_value = {"answer": "The blocks show seats [E1].", "confidence": 0.8, "review_required": True,
+                                 "answer_validated": False, "rejected_answer": "first try", "rejection_reason": "ungrounded"}
+
+        response = self._post_non_answer_question("answer-question", "req-generated-example-005")
+
+        self.assertEqual(response.data["mode"], "rag")
+        self.assertEqual(response.data["answer"], "")
+        self.assertEqual(response.data["citations"], [])
+        self.assertEqual(response.data["trace"]["llmDroppedAnswer"], "The blocks show seats [E1].")
         self.assertTrue(response.data["generatedExample"]["valid"])
 
     @override_settings(LLM_ENABLED=True)
@@ -1372,7 +1423,8 @@ class HelpdeskApiTests(APITestCase):
 
         response = self._post_non_answer_question("answer-question", "req-generated-example-002")
 
-        self.assertEqual(llm_mock.call_args.kwargs["generated_example"], False)
+        self.assertIsNone(llm_mock.call_args.kwargs["example_elements"])
+        self.assertEqual(retrieve_mock.call_count, 1)
         example_mock.assert_called_once()
         self.assertEqual(response.data["mode"], "abstain")
         self.assertFalse(response.data["generatedExample"]["valid"])
@@ -1387,7 +1439,7 @@ class HelpdeskApiTests(APITestCase):
         text = "The generated example below shows it; parkingSite is a road feature type [E1]."
 
         def fake_stream(**kwargs):
-            self.assertTrue(kwargs["generated_example"])
+            self.assertEqual(kwargs["example_elements"], ["ResourceFrame", "SeatingCapacity"])
             yield ("token", text)
             yield ("done", {"answer": text, "confidence": 0.8, "review_required": False,
                             "evidence_answers_question": False, "rejected_answer": None, "rejection_reason": None})

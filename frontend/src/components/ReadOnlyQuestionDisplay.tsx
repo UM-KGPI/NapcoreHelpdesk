@@ -10,8 +10,8 @@
 
 import React from "react";
 import { citationDisplayName, groupCitationsBySource } from "../citationLabels";
-import AnswerMarkdown from "./AnswerMarkdown";
 import GeneratedExampleBlock from "./GeneratedExample";
+import AnswerBody from "./AnswerBody";
 import LegalContext from "./LegalContext";
 import type { ChatTurn } from "./UserChatWorkspace";
 
@@ -100,7 +100,11 @@ export default function ReadOnlyQuestionDisplay({
           {chatTurns.map((turn) => (
             <article key={turn.id} className={`chat-bubble ${turn.role === "user" ? "chat-user" : "chat-assistant"}`}>
               <p className="chat-role">{turn.role}</p>
-              {turn.role === "assistant" ? <AnswerMarkdown text={turn.text} /> : <p>{turn.text}</p>}
+              {turn.role === "assistant" ? (
+                <AnswerBody text={turn.text} example={turn.answer?.generatedExample} />
+              ) : (
+                <p>{turn.text}</p>
+              )}
               {turn.answer && (
                 <>
                   <div className="chat-answer-actions" role="group" aria-label="Answer actions">
@@ -190,7 +194,7 @@ export default function ReadOnlyQuestionDisplay({
                       </ul>
                     </>
                   )}
-                  <GeneratedExampleBlock example={turn.answer.generatedExample} />
+                  {!turn.answer.generatedExample?.valid && <GeneratedExampleBlock example={turn.answer.generatedExample} />}
                   <LegalContext items={turn.answer.legalContext} />
                 </>
               )}

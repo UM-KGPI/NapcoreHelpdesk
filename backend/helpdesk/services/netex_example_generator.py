@@ -209,6 +209,18 @@ def _field_values(fragment: str) -> set[str] | None:
     return fields
 
 
+_GENERIC_ELEMENTS = frozenset({"Name", "ShortName", "Description", "PrivateCode", "dataObjects"})
+
+
+def example_element_names(example: dict | None, limit: int = 10) -> list[str]:
+    """The elements the answer text should be about: the example's elements, outermost first, without
+    the generic ones every object has. Empty when there is no valid example."""
+    if not example or not example.get("valid"):
+        return []
+    names = [str(note.get("name") or "") for note in example.get("elementNotes") or []]
+    return [name for name in names if name and name not in _GENERIC_ELEMENTS][:limit]
+
+
 def missing_values(fragment: str, values: list[str]) -> list[str]:
     """Requested values that are not the whole content of some element or attribute.
 
