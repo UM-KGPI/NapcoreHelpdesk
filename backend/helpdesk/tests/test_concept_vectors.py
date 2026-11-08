@@ -75,3 +75,28 @@ class OrderTests(SimpleTestCase):
             "helpdesk.services.concept_vectors.semantic_concepts", return_value=[]
         ):
             self.assertEqual(presence.presence_concepts("q"), ["transmodel:PARKING"])
+
+
+class BatchTests(TestCase):
+    def test_batches_are_saved_as_they_are_embedded(self):
+        from helpdesk.models import ConceptVector
+
+        classes = [
+            {"concept_id": f"transmodel:C{i}", "standard": "transmodel", "label": f"C{i}", "alt_labels": [], "definition": "d", "implemented_by": []}
+            for i in range(vectors.EMBED_BATCH + 3)
+        ]
+        calls = {"n": 0}
+
+        def embed(texts, kind):
+            calls["n"] += 1
+            if calls["n"] == 2:
+                raise OSError("embedder out of memory")
+            return [[0.1] * vectors.DIMENSION for _ in texts]
+
+        with patch.object(vectors, "ontology_classes", return_value=[dict(c) for c in classes]), patch.object(vectors, "_embed", side_effect=embed):
+            with self.assertRaises(OSError):
+                vectors.build_concept_vectors()
+            # The first batch was kept; the next run embeds only the rest.
+            self.assertEqual(ConceptVector.objects.count(), vectors.EMBED_BATCH)
+            self.assertEqual(vectors.build_concept_vectors()["embedded"], 3)
+        self.assertEqual(vectors.index_status(), {"conceptVectors": vectors.EMBED_BATCH + 3})

@@ -18,10 +18,17 @@ from helpdesk.services.source_refresh import SourceRefreshError, refresh_all_sou
 from helpdesk.services.semantic_clustering import build_semantic_clusters
 
 
-@shared_task(name="helpdesk.build_concept_vectors")
+@shared_task(
+    name="helpdesk.build_concept_vectors",
+    autoretry_for=(Exception,),
+    retry_backoff=120,
+    retry_backoff_max=1800,
+    max_retries=6,
+)
 def build_concept_vectors_task() -> dict:
     """Embed new and changed ontology classes for finding concepts by meaning (services/concept_vectors.py).
-    Queued at worker start (so after every deploy) and after the nightly source refresh."""
+    Queued at worker start (so after every deploy) and after the nightly source refresh. Retried with growing
+    delays when GraphDB or the embedder is not ready yet; each run continues where the last one stopped."""
     from helpdesk.services.concept_vectors import build_concept_vectors
 
     return build_concept_vectors()

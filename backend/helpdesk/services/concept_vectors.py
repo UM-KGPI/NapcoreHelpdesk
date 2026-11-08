@@ -29,7 +29,9 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 DIMENSION = 384
-EMBED_BATCH = 64
+# As the retrieval embedding client (embeddings.SERVICE_BATCH_SIZE): larger batches of long texts multiply
+# the embedder's memory, and prod caps it (EMBEDDER_MEM_LIMIT, 1.5 GiB); 64 per request built locally only.
+EMBED_BATCH = 16
 _CLASSES_QUERY = """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
@@ -125,19 +127,22 @@ def build_concept_vectors() -> dict:
         row = existing.get(item["concept_id"])
         if row is None or row.text_hash != item["text_hash"] or row.vector is None:
             changed.append(item)
-    vectors = _embed([item["text"] for item in changed], "passage") if changed else []
-    for item, vector in zip(changed, vectors):
-        ConceptVector.objects.update_or_create(
-            concept_id=item["concept_id"],
-            defaults={
-                "standard": item["standard"],
-                "label": item["label"],
-                "definition": item["definition"],
-                "implemented_by": item["implemented_by"],
-                "text_hash": item["text_hash"],
-                "vector": vector,
-            },
-        )
+    # Embedded and saved batch by batch: a failure keeps what was done, and the next run continues from there.
+    for start in range(0, len(changed), EMBED_BATCH):
+        batch = changed[start : start + EMBED_BATCH]
+        vectors = _embed([item["text"] for item in batch], "passage")
+        for item, vector in zip(batch, vectors):
+            ConceptVector.objects.update_or_create(
+                concept_id=item["concept_id"],
+                defaults={
+                    "standard": item["standard"],
+                    "label": item["label"],
+                    "definition": item["definition"],
+                    "implemented_by": item["implemented_by"],
+                    "text_hash": item["text_hash"],
+                    "vector": vector,
+                },
+            )
     # Alignment changes do not change the text: keep implemented_by current for every class.
     for item in classes:
         row = existing.get(item["concept_id"])
@@ -163,6 +168,16 @@ def question_subject(question: str) -> str:
     words = re.findall(r"[^\W\d_][\w'-]*", question or "")
     kept = [w for w in words if w.lower() not in _FRAME_WORDS]
     return " ".join(kept) or (question or "")
+
+
+def index_status() -> dict:
+    """How many classes the concept index holds (for /health/ready)."""
+    from helpdesk.models import ConceptVector
+
+    try:
+        return {"conceptVectors": ConceptVector.objects.exclude(vector=None).count()}
+    except Exception:
+        return {"conceptVectors": None}
 
 
 def semantic_concepts(question: str, standard: str = "netex", limit: int = 5, min_similarity: float = 0.0) -> list[dict]:
