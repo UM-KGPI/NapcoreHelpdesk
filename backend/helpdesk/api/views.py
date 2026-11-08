@@ -75,6 +75,7 @@ from helpdesk.services.netex_example_generator import (
     other_question,
     value_element_names,
 )
+from helpdesk.services.concept_presence import presence_evidence
 from helpdesk.services.schema_structure import definition_chunk, schema_structure_for
 from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 from helpdesk.services.retrieval_event_logger import log_retrieval_events
@@ -1226,6 +1227,7 @@ class QuestionAnswerView(APIView):
         abstention_reason = None
         generated_example = None
         dropped_answer = None
+        presence = []
         schema_structure = None
         review_required = True
         matched_faq_entry_id = None
@@ -1390,6 +1392,12 @@ class QuestionAnswerView(APIView):
                     english_question=english_question,
                 )
 
+            # "Does NeTEx have X?": the model's definition of X (with which standards implement it) and the
+            # schema elements named after X go first; text retrieval alone found unrelated examples.
+            presence = presence_evidence(question, effective_scope, english_question)
+            if presence:
+                presence_ids = {c["chunkId"] for c in presence}
+                chunks = (presence + [c for c in chunks if c.get("chunkId") not in presence_ids])[: max(retrieval_top_k, len(presence))]
             retrieved_chunks = chunks
             retrieval_event_ids = [chunk["retrievalEventId"] for chunk in chunks]
             all_candidates = graph_trace.get("allCandidates", [])
@@ -1473,6 +1481,7 @@ class QuestionAnswerView(APIView):
                             example_fragment=(generated_example or {}).get("xml", "") if example_ready else "",
                             also_asks=other_question(english_question or question) if example_ready else "",
                             example_origin=(generated_example or {}).get("origin", "generated"),
+                            existence=bool(presence),
                         )
                         llm_generated = True
                     except LLMGenerationError:
@@ -1662,6 +1671,7 @@ class QuestionAnswerView(APIView):
             "llmRejectedAnswer": (generated.get("rejected_answer") if isinstance(locals().get("generated"), dict) else None),
             "llmRejectionReason": (generated.get("rejection_reason") if isinstance(locals().get("generated"), dict) else None),
             "llmDroppedAnswer": dropped_answer,
+            "presenceEvidence": [c.get("sourcePath") for c in presence],
             # False when the answer was served although its retry failed validation too (it is then marked
             # for review); None when no LLM answer was generated.
             "llmAnswerValidated": (generated.get("answer_validated") if isinstance(locals().get("generated"), dict) else None),
@@ -1776,6 +1786,7 @@ class QuestionAnswerStreamView(APIView):
         abstention_reason = None
         generated_example = None
         dropped_answer = None
+        presence = []
         schema_structure = None
         review_required = True
         matched_faq_entry_id = None
@@ -1946,6 +1957,12 @@ class QuestionAnswerStreamView(APIView):
                     english_question=english_question,
                 )
 
+            # "Does NeTEx have X?": the model's definition of X (with which standards implement it) and the
+            # schema elements named after X go first; text retrieval alone found unrelated examples.
+            presence = presence_evidence(question, effective_scope, english_question)
+            if presence:
+                presence_ids = {c["chunkId"] for c in presence}
+                chunks = (presence + [c for c in chunks if c.get("chunkId") not in presence_ids])[: max(retrieval_top_k, len(presence))]
             retrieved_chunks = chunks
             retrieval_event_ids = [chunk["retrievalEventId"] for chunk in chunks]
             all_candidates = graph_trace.get("allCandidates", [])
@@ -2032,6 +2049,7 @@ class QuestionAnswerStreamView(APIView):
                             example_fragment=(generated_example or {}).get("xml", "") if example_ready else "",
                             also_asks=other_question(english_question or question) if example_ready else "",
                             example_origin=(generated_example or {}).get("origin", "generated"),
+                            existence=bool(presence),
                         ):
                             if event_type == "token":
                                 yield self._sse({"type": "token", "delta": payload})
@@ -2221,6 +2239,7 @@ class QuestionAnswerStreamView(APIView):
             "llmRejectedAnswer": (generated.get("rejected_answer") if isinstance(locals().get("generated"), dict) else None),
             "llmRejectionReason": (generated.get("rejection_reason") if isinstance(locals().get("generated"), dict) else None),
             "llmDroppedAnswer": dropped_answer,
+            "presenceEvidence": [c.get("sourcePath") for c in presence],
             # False when the answer was served although its retry failed validation too (it is then marked
             # for review); None when no LLM answer was generated.
             "llmAnswerValidated": (generated.get("answer_validated") if isinstance(locals().get("generated"), dict) else None),

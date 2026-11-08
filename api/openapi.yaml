@@ -1790,6 +1790,14 @@ components:
           type: [string, "null"]
         llmRejectionReason:
           type: [string, "null"]
+        presenceEvidence:
+          type: array
+          items:
+            type: string
+          description: >-
+            For a "does the standard have X?" question: the source paths of the evidence put first (the
+            Transmodel definition of X, stating which standards implement it, and the schema elements named
+            after X). Empty for other questions.
         llmDroppedAnswer:
           type: [string, "null"]
           description: >-

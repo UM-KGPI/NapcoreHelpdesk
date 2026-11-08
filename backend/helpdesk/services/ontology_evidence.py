@@ -262,7 +262,7 @@ def format_definitions_as_chunks(definitions: list[dict], commit_shas: dict[str,
                         tm_concept=concept,
                         tm_label=pref_label,
                         tm_definition=definition_text,
-                        implemented_as="",
+                        implemented_as=_implementations(concept),
                         notes=comparison_notes.get(concept, []),
                     )
                 )
@@ -431,6 +431,22 @@ def transmodel_class_url(local_name: str) -> str:
     base_url = getattr(settings, "TRANSMODEL_HTML_BASE_URL", "")
     guid = _transmodel_guids().get(local_name)
     return f"{base_url}/index.htm?guid={guid}" if base_url and guid else ""
+
+
+_STANDARD_NAMES = {"netex": "NeTEx", "siri": "SIRI", "opra": "OpRa"}
+
+
+def _implementations(transmodel_iri: str) -> str:
+    """Which standards implement a Transmodel concept, from the alignment files (skos:exactMatch):
+    "NeTEx DriverTrip", or, when none does, a sentence saying so. Absence is information: "Does NeTEx
+    describe a driver's name?" is answered by DRIVER having no NeTEx class (only a DriverRef)."""
+    from helpdesk.services.semantic_graph import TRANSMODEL_TO_CONCEPTS, iri_to_concept_id
+
+    concept_id = iri_to_concept_id(transmodel_iri) or ""
+    implemented = sorted(TRANSMODEL_TO_CONCEPTS.get(concept_id) or [])
+    if implemented:
+        return ", ".join(f"{_STANDARD_NAMES.get(c.split(':', 1)[0], c.split(':', 1)[0])} {c.split(':', 1)[1]}" for c in implemented)
+    return "no NeTEx, SIRI or OpRa class is aligned to this concept (skos:exactMatch)"
 
 
 def _transmodel_definition_chunk(

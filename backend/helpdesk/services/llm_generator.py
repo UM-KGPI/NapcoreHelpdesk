@@ -1428,6 +1428,16 @@ def generated_example_rule(elements: list[str], fragment: str = "", also_asks: s
     )
 
 
+EXISTENCE_RULE = (
+    "WHETHER THE STANDARD HAS IT: the question asks whether the standard has or describes something. The first "
+    "evidence blocks are the model's definition of that concept (with the standards that implement it, or the note "
+    "that none does) and the schema elements named after it. Your first sentence answers Yes or No about the "
+    "standard, not about the evidence: name the element or class that exists, or say that the standard has no "
+    "element or class for it, and what it has instead (for example only a reference), citing [E#]. Then explain in "
+    "at most three sentences. Do not describe example blocks that do not show the asked-for thing."
+)
+
+
 def schema_structure_rule(element: str) -> str:
     """When the schema's content model of the element is shown first (services/schema_structure.py)."""
     return (
@@ -1474,6 +1484,7 @@ def _build_messages(
     example_fragment: str = "",
     also_asks: str = "",
     example_origin: str = "generated",
+    existence: bool = False,
 ) -> list[dict]:
     context_lines = []
     # With a generated example, trimming keeps its elements (those holding the question's values first) in view.
@@ -1682,6 +1693,7 @@ def _build_messages(
         f"{COMPOSITION_RULE + chr(10) if composition else ''}"
         f"{generated_example_rule(example_elements, example_fragment, also_asks, example_origin) + chr(10) + chr(10) if example_elements else ''}"
         f"{schema_structure_rule(structure_element) + chr(10) + chr(10) if structure_element else ''}"
+        f"{EXISTENCE_RULE + chr(10) + chr(10) if existence and not example_elements and not structure_element else ''}"
         "Write your answer:"
     )
 
@@ -1971,6 +1983,7 @@ def generate_answer_llm(
     example_fragment: str = "",
     also_asks: str = "",
     example_origin: str = "generated",
+    existence: bool = False,
 ) -> dict:
     """Generate a grounded answer through a configurable OpenAI-compatible API.
 
@@ -2009,6 +2022,7 @@ def generate_answer_llm(
         example_fragment=example_fragment,
         also_asks=also_asks,
         example_origin=example_origin,
+        existence=existence,
     )
 
     primary_base_url = (settings.LLM_API_BASE_URL or "").strip()
@@ -2268,6 +2282,7 @@ def stream_answer_llm(
     example_fragment: str = "",
     also_asks: str = "",
     example_origin: str = "generated",
+    existence: bool = False,
 ) -> Generator[tuple[str, object], None, None]:
     """
     Generator yielding (event_type, payload) tuples for streaming narration.
@@ -2313,6 +2328,7 @@ def stream_answer_llm(
         example_fragment=example_fragment,
         also_asks=also_asks,
         example_origin=example_origin,
+        existence=existence,
     )
 
     # Buffer all tokens before yielding any — validation must pass the full
