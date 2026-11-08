@@ -27,6 +27,12 @@ class SubjectTests(SimpleTestCase):
             "structure of ServiceJourney in NeTEx?": "ServiceJourney",
             "What is inside a stop place?": "stop place",
             "What does a stop place contain?": "stop place",
+            "What is contained in NeTEx service journey?": "service journey",
+            "What's in a Quay?": "Quay",
+            "What goes into a VehicleType in NeTEx?": "VehicleType",
+            "Which elements are part of a ServiceJourney?": "ServiceJourney",
+            "What attributes belong to a Line?": "Line",
+            "Explain what a StopPlace contains": "StopPlace",
         }
         for question, expected in cases.items():
             with self.subTest(question=question):

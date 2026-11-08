@@ -471,7 +471,9 @@ class SchemaHolder:
                 f"line {max(1, error.line - offset)}: {error.message.replace('{' + NETEX_NAMESPACE + '}', '')}"
                 for error in schema.error_log
             ]
-        return {**result, "valid": False, "errors": errors[:MAX_ERRORS]}
+        # Definitions for any well-formed fragment: an excerpt of a standard example can fail only on
+        # references to objects outside it, and is still described.
+        return {**result, "valid": False, "errors": errors[:MAX_ERRORS], "elements": self.element_docs.notes(document)}
 
 
 def make_handler(holder: SchemaHolder):

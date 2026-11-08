@@ -42,8 +42,20 @@ _STRUCTURE_QUESTIONS = [
         + _ARTICLE + _SUBJECT + _TAIL + r"\s*\??\s*$",
         re.I,
     ),
-    # "what is inside a StopPlace"
-    re.compile(r"\bwhat\s+is\s+(?:inside|in)\s+" + _ARTICLE + _SUBJECT + _TAIL + r"\s*\??\s*$", re.I),
+    # "what is inside a StopPlace", "what is contained in a ServiceJourney", "what goes into a Quay"
+    re.compile(
+        r"\bwhat(?:\s+is|'s|\s+are)?\s+(?:inside|in|contained\s+in|included\s+in|part\s+of|goes\s+(?:into|in))\s+"
+        + _ARTICLE + _SUBJECT + _TAIL + r"\s*\??\s*$",
+        re.I,
+    ),
+    # "what a StopPlace contains", "what an Operator consists of"
+    re.compile(r"\bwhat\s+" + _ARTICLE + _SUBJECT + r"\s+(?:contains|includes|holds|consists\s+of|is\s+made\s+of)\b", re.I),
+    # "which elements are in a StopPlace", "what attributes are part of a Line"
+    re.compile(
+        r"\b(?:what|which)\s+(?:child\s+)?(?:elements?|attributes?|children|fields|properties|parts)\s+(?:are|exist|belong)\s+"
+        r"(?:in|inside|part\s+of|under|to)\s+" + _ARTICLE + _SUBJECT + _TAIL + r"\s*\??\s*$",
+        re.I,
+    ),
 ]
 _STRIP_WORDS = frozenset({"element", "elements", "in", "netex", "the", "a", "an"})
 
@@ -98,7 +110,7 @@ def fetch_structure(element: str) -> dict | None:
     return payload
 
 
-def schema_structure_for(question: str, scope: list[str] | None) -> dict | None:
+def schema_structure_for(question: str, scope: list[str] | None, english_question: str | None = None) -> dict | None:
     """The schema structure block for a "what does X contain" question in NeTEx scope, else None."""
     if not getattr(settings, "SCHEMA_STRUCTURE_ENABLED", True):
         return None
@@ -107,7 +119,8 @@ def schema_structure_for(question: str, scope: list[str] | None) -> dict | None:
     names = {(name or "").strip().lower() for name in scope or []}
     if names and "netex" not in names:
         return None
-    subject = structure_subject(question)
+    # Another language ("Kaj vsebuje StopPlace?") is recognised on the English rendering made for retrieval.
+    subject = structure_subject(question) or structure_subject(english_question or "")
     if not subject:
         return None
     for element in candidate_element_names(subject):
@@ -116,3 +129,22 @@ def schema_structure_for(question: str, scope: list[str] | None) -> dict | None:
             structure.pop("found", None)
             return structure
     return None
+
+
+def definition_chunk(element: str) -> dict | None:
+    """The indexed chunk of the schema file that defines the element (its xsd:documentation is in it), as an
+    evidence block: for "How do you describe a stop place?" next to an example, the definition can then be
+    quoted and cited. None when the element or its chunk is not found."""
+    structure = fetch_structure(element)
+    documentation = ((structure or {}).get("documentation") or "").strip()
+    if not structure or not structure.get("source") or len(documentation) < 12:
+        return None
+    from helpdesk.models import SourceChunk
+    from helpdesk.services.retrieval_gateway import _added_candidate
+
+    probe = " ".join(documentation.split()[:6])
+    chunk = (
+        SourceChunk.objects.filter(source_path=structure["source"], text__contains=probe).order_by("chunk_id").first()
+        or SourceChunk.objects.filter(source_path=structure["source"], text__contains=element).order_by("chunk_id").first()
+    )
+    return _added_candidate(chunk, 1.0) if chunk else None

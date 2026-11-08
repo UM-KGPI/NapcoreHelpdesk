@@ -68,8 +68,14 @@ from helpdesk.services.question_parsing import (
 )
 from helpdesk.services.semantic_abstention import semantic_abstention_message
 from helpdesk.services.index_builder import index_repository
-from helpdesk.services.netex_example_generator import example_element_names, generate_netex_example, value_element_names
-from helpdesk.services.schema_structure import schema_structure_for
+from helpdesk.services.netex_example_generator import (
+    example_element_names,
+    generate_netex_example,
+    main_object,
+    other_question,
+    value_element_names,
+)
+from helpdesk.services.schema_structure import definition_chunk, schema_structure_for
 from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 from helpdesk.services.retrieval_event_logger import log_retrieval_events
 from helpdesk.services.rule_engine import evaluate_semantic_rules
@@ -186,6 +192,26 @@ _LEGAL_INTENT = re.compile(
 
 def _asks_about_law(question: str) -> bool:
     return bool(_LEGAL_INTENT.search(question or ""))
+
+
+# "The evidence does not contain a Ljubljana Bus Station example, so I cannot show one." next to the example
+# shown above it: with a block from the schema the text is told not to say what the evidence lacks; a sentence
+# that does so anyway contradicts the block and is removed.
+_LACK_SENTENCE = re.compile(
+    r"(?:(?<=^)|(?<=[.!?]\s)|(?<=\n))[^.!?\n]*\b(?:evidence|blocks?|sources?|examples?)\b[^.!?\n]*"
+    r"\b(?:does|do|did)\s+not\s+(?:contain|include|provide|give|show|state|list|describe|have)\b[^.!?\n]*[.!?][ \t]*",
+    re.IGNORECASE,
+)
+
+
+def _without_lack_sentences(answer_text: str) -> str:
+    code = re.findall(r"```.*?```", answer_text, re.S)
+    text = re.sub(r"```.*?```", "\x00", answer_text, flags=re.S)
+    text = _LACK_SENTENCE.sub("", text)
+    for block in code:
+        text = text.replace("\x00", block, 1)
+    text = re.sub(r"[ \t]+\n", "\n", text)
+    return re.sub(r"\n{3,}", "\n\n", text).strip()
 
 
 def _legal_context(mode: str, scope: list[str] | None, question: str = "") -> list[dict]:
@@ -1387,10 +1413,10 @@ class QuestionAnswerView(APIView):
                 answer_text = "I do not have sufficient approved-source evidence to answer this safely."
             else:
                 # What the element contains, from the schema, for "what does X contain" questions (no model).
-                schema_structure = schema_structure_for(question, effective_scope)
+                schema_structure = schema_structure_for(question, effective_scope, english_question)
                 structure_shown = bool(schema_structure)
                 # The example first, so the text can explain it instead of saying none exists.
-                generated_example = generate_netex_example(question, chunks, effective_scope)
+                generated_example = generate_netex_example(question, chunks, effective_scope, english_question)
                 example_ready = bool(generated_example and generated_example.get("valid"))
                 example_elements = example_element_names(generated_example)
                 if example_elements:
@@ -1411,7 +1437,20 @@ class QuestionAnswerView(APIView):
 
                     using = examples_using_elements(value_element_names(generated_example))
                     using_ids = {chunk["chunkId"] for chunk in using}
-                    element_chunks = (using + [c for c in element_chunks if c["chunkId"] not in using_ids])[:retrieval_top_k]
+                    # A question that also asks something else ("How do you describe a stop place?") keeps the
+                    # best blocks of its own search first, so that part can be answered from them.
+                    asked_too = other_question(english_question or question)
+                    first = chunks[:3] if asked_too else []
+                    if asked_too and (definition := definition_chunk(main_object(generated_example))):
+                        # The schema's definition of what the example is an example of, so "how do you describe
+                        # a stop place" is answered from the standard's own words.
+                        first = [definition] + [c for c in first if c["chunkId"] != definition["chunkId"]][:2]
+                    seen_ids = {c["chunkId"] for c in first} | using_ids
+                    element_chunks = (
+                        first
+                        + [c for c in using if c["chunkId"] not in {f["chunkId"] for f in first}]
+                        + [c for c in element_chunks if c["chunkId"] not in seen_ids]
+                    )[:retrieval_top_k]
                     if element_chunks:
                         chunks, graph_trace = element_chunks, element_trace
                         retrieved_chunks = chunks
@@ -1430,6 +1469,8 @@ class QuestionAnswerView(APIView):
                             example_elements=example_elements or None,
                             structure_element=schema_structure["element"] if structure_shown else None,
                             example_fragment=(generated_example or {}).get("xml", "") if example_ready else "",
+                            also_asks=other_question(english_question or question) if example_ready else "",
+                            example_origin=(generated_example or {}).get("origin", "generated"),
                         )
                         llm_generated = True
                     except LLMGenerationError:
@@ -1456,6 +1497,8 @@ class QuestionAnswerView(APIView):
                     citations = _citations_from_prompt_order(chunks=chunks, answer_text=answer_text)
                 else:
                     citations = _select_citations(chunks=chunks, max_citations=max_citations)
+                if example_ready or structure_shown:
+                    answer_text = _without_lack_sentences(answer_text)
                 if (example_ready or structure_shown) and generated.get("answer_validated") is False:
                     # With a block from the schema (example or structure), text that failed validation is noise.
                     dropped_answer, answer_text = answer_text, ""
@@ -1928,10 +1971,10 @@ class QuestionAnswerStreamView(APIView):
                 if use_llm:
                     yield self._status("generating")
                 # What the element contains, from the schema, for "what does X contain" questions (no model).
-                schema_structure = schema_structure_for(question, effective_scope)
+                schema_structure = schema_structure_for(question, effective_scope, english_question)
                 structure_shown = bool(schema_structure)
                 # The example first, so the text can explain it instead of saying none exists.
-                generated_example = generate_netex_example(question, chunks, effective_scope)
+                generated_example = generate_netex_example(question, chunks, effective_scope, english_question)
                 example_ready = bool(generated_example and generated_example.get("valid"))
                 example_elements = example_element_names(generated_example)
                 if example_elements:
@@ -1952,7 +1995,20 @@ class QuestionAnswerStreamView(APIView):
 
                     using = examples_using_elements(value_element_names(generated_example))
                     using_ids = {chunk["chunkId"] for chunk in using}
-                    element_chunks = (using + [c for c in element_chunks if c["chunkId"] not in using_ids])[:retrieval_top_k]
+                    # A question that also asks something else ("How do you describe a stop place?") keeps the
+                    # best blocks of its own search first, so that part can be answered from them.
+                    asked_too = other_question(english_question or question)
+                    first = chunks[:3] if asked_too else []
+                    if asked_too and (definition := definition_chunk(main_object(generated_example))):
+                        # The schema's definition of what the example is an example of, so "how do you describe
+                        # a stop place" is answered from the standard's own words.
+                        first = [definition] + [c for c in first if c["chunkId"] != definition["chunkId"]][:2]
+                    seen_ids = {c["chunkId"] for c in first} | using_ids
+                    element_chunks = (
+                        first
+                        + [c for c in using if c["chunkId"] not in {f["chunkId"] for f in first}]
+                        + [c for c in element_chunks if c["chunkId"] not in seen_ids]
+                    )[:retrieval_top_k]
                     if element_chunks:
                         chunks, graph_trace = element_chunks, element_trace
                         retrieved_chunks = chunks
@@ -1972,6 +2028,8 @@ class QuestionAnswerStreamView(APIView):
                             example_elements=example_elements or None,
                             structure_element=schema_structure["element"] if structure_shown else None,
                             example_fragment=(generated_example or {}).get("xml", "") if example_ready else "",
+                            also_asks=other_question(english_question or question) if example_ready else "",
+                            example_origin=(generated_example or {}).get("origin", "generated"),
                         ):
                             if event_type == "token":
                                 yield self._sse({"type": "token", "delta": payload})
@@ -2006,6 +2064,8 @@ class QuestionAnswerStreamView(APIView):
                     citations = _citations_from_prompt_order(chunks=chunks, answer_text=answer_text)
                 else:
                     citations = _select_citations(chunks=chunks, max_citations=max_citations)
+                if example_ready or structure_shown:
+                    answer_text = _without_lack_sentences(answer_text)
                 if (example_ready or structure_shown) and generated.get("answer_validated") is False:
                     # With a block from the schema (example or structure), text that failed validation is noise.
                     dropped_answer, answer_text = answer_text, ""

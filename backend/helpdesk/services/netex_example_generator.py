@@ -117,6 +117,48 @@ def counted_words(question: str) -> list[str]:
     return [word for word in re.findall(r"[a-z]+", (question or "").lower()) if word in _NUMBER_WORDS]
 
 
+_NUMBER_WORD_VALUES = {word: index for index, word in enumerate(
+    "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen "
+    "seventeen eighteen nineteen twenty".split()
+)}
+_COUNTED = re.compile(r"\b(\d{1,3}|" + "|".join(sorted(_NUMBER_WORD_VALUES, key=len, reverse=True)) + r")\s+([A-Za-z][A-Za-z-]+)\b", re.I)
+_INTERROGATIVE = re.compile(r"^\s*(?:how|what|which|why|when|where|who|is|are|does|do|can|could|should|explain|describe)\b", re.I)
+
+
+def counted_shapes(question: str) -> list[tuple[int, str, str]]:
+    """Counts the question gives for things ("two quays", "3 entrances"): (count, number as written, noun)."""
+    shapes = []
+    for number, noun in _COUNTED.findall(question or ""):
+        count = int(number) if number.isdigit() else _NUMBER_WORD_VALUES[number.lower()]
+        if count > 0:
+            shapes.append((count, number, noun))
+    return shapes
+
+
+def element_for_noun(noun: str) -> list[str]:
+    """Element names a (plural) noun may denote, most likely first: "quays" -> Quay, "stop places" -> StopPlace."""
+    from helpdesk.services.schema_structure import candidate_element_names
+
+    lowered = noun.lower()
+    if lowered.endswith("ies") and len(lowered) > 4:
+        singular = noun[:-3] + "y"
+    elif lowered.endswith(("ses", "xes", "ches", "shes")):
+        singular = noun[:-2]
+    elif lowered.endswith("s") and not lowered.endswith("ss"):
+        singular = noun[:-1]
+    else:
+        singular = noun
+    return candidate_element_names(singular[:1].upper() + singular[1:])
+
+
+def other_question(question: str) -> str:
+    """The part of a question that asks something besides the example ("How do you describe a stop place in
+    NeTEx?" in "How do you describe a stop place in NeTEx? Show me an example with two quays."), or ""."""
+    parts = re.split(r"(?<=[?.!])\s+|\s*;\s*|,?\s+and\s+(?=(?:show|give|write|provide)\b)", (question or "").strip(), flags=re.I)
+    asked = [p.strip() for p in parts if p.strip() and _INTERROGATIVE.match(p) and not _EXAMPLE_WORDS.search(p)]
+    return " ".join(asked)
+
+
 def wants_generated_example(question: str, scope: list[str] | None) -> bool:
     """A request for a NeTEx example with concrete values ("a bus with 50 seats and 20 standing places")."""
     if not getattr(settings, "NETEX_EXAMPLE_GENERATOR_ENABLED", True):
@@ -268,6 +310,17 @@ def _field_values(fragment: str) -> set[str] | None:
 _GENERIC_ELEMENTS = frozenset({"Name", "ShortName", "Description", "PrivateCode", "dataObjects"})
 
 
+def main_object(example: dict | None) -> str:
+    """The first element below the frame and its list wrapper (SiteFrame > stopPlaces > StopPlace): what the
+    example is an example of."""
+    xml = (example or {}).get("xml") or ""
+    names = re.findall(r"<([A-Za-z][\w.-]*)[\s>/]", xml)
+    for name in names[1:]:
+        if name[:1].isupper():
+            return name
+    return ""
+
+
 def value_element_names(example: dict | None) -> list[str]:
     """The elements that hold the question's values (SeatingCapacity, WheelchairPlaceCapacity), without
     generic ones (a Name holding "Ljubljana Bus Station" says nothing about the structure)."""
@@ -285,6 +338,38 @@ def example_element_names(example: dict | None, limit: int = 10) -> list[str]:
         return []
     names = value_element_names(example) + [str(note.get("name") or "") for note in example.get("elementNotes") or []]
     return list(dict.fromkeys(name for name in names if name and name not in _GENERIC_ELEMENTS))[:limit]
+
+
+def count_places(fragment: str, question: str, placed: set[str] = frozenset()) -> list[dict]:
+    """The question's counts the fragment satisfies: "two quays" -> {"value": "two", "element": "Quay",
+    "count": 2, "path": [...]} when the fragment has exactly two Quay elements in one parent."""
+    from xml.etree import ElementTree
+
+    try:
+        root = ElementTree.fromstring(f'<root xmlns="{NETEX_NAMESPACE}">{fragment}</root>')
+    except ElementTree.ParseError:
+        return []
+    local = lambda tag: tag.rsplit("}", 1)[-1]  # noqa: E731
+    parents = {child: parent for parent in root.iter() for child in parent}
+    places = []
+    for count, written, noun in counted_shapes(question):
+        if written in placed:
+            continue
+        for element in element_for_noun(noun):
+            for parent in root.iter():
+                children = [c for c in parent if local(c.tag) == element]
+                if len(children) != count:
+                    continue
+                path, node = [], parent
+                while node is not None and node is not root:
+                    path.append(local(node.tag))
+                    node = parents.get(node)
+                places.append({"value": written, "element": element, "count": count, "path": list(reversed(path))})
+                break
+            else:
+                continue
+            break
+    return places
 
 
 def value_places(fragment: str, values: list[str]) -> list[dict]:
@@ -322,6 +407,143 @@ def value_places(fragment: str, values: list[str]) -> list[dict]:
                 places.append({"value": value, "element": f"{local(node.tag)}/@{name}", "path": path_of(node)})
                 break
     return places
+
+
+MAX_STANDARD_EXAMPLE_LINES = 60
+MAX_STANDARD_FILE_BYTES = 3_000_000
+MAX_STANDARD_FILES = 40
+
+
+def _shape_count(obj, element: str, local) -> int:
+    """How many `element`s the object has as children or inside one of its lowercase list wrappers
+    (StopPlace > quays > Quay): NeTEx puts an object's related objects in such wrappers."""
+    direct = sum(1 for child in obj if local(child.tag) == element)
+    wrapped = sum(
+        1 for wrapper in obj if isinstance(wrapper.tag, str) and local(wrapper.tag)[:1].islower()
+        for child in wrapper if isinstance(child.tag, str) and local(child.tag) == element
+    )
+    return direct + wrapped
+
+
+def has_tag(name: str):
+    """A query condition: the chunk text has an element of exactly this name (<Quay> or <Quay ...>, not <QuayType>)."""
+    from django.db.models import Q
+
+    return Q(text__contains=f"<{name}>") | Q(text__contains=f"<{name} ") | Q(text__contains=f"<{name}\n") | Q(text__contains=f"<{name}/>")
+
+
+def standard_example(question: str, scope: list[str] | None = None) -> dict | None:
+    """An object from the standard's own example files with exactly the shape the question asks for, when
+    the question gives counts but no other values ("a stop place with two quays": a StopPlace with exactly
+    two Quay). Verbatim, so grounded by construction; generation is for questions with values the standard's
+    examples do not have. The object comes with its frame and list wrappers so it is a frame fragment."""
+    import copy
+    from pathlib import Path
+
+    from helpdesk.models import SourceChunk
+
+    shapes = counted_shapes(question)
+    if not shapes:
+        return None
+    numbers = {written for _, written, _ in shapes}
+    if [value for value in requested_values(question) if value not in numbers]:
+        return None  # names or other values: the standard's examples will not have them
+    targets = []  # (count, element)
+    for count, _, noun in shapes:
+        element = next(
+            (name for name in element_for_noun(noun)
+             if SourceChunk.objects.filter(has_tag(name), repository_url__icontains="netex", source_path__startswith="examples/").exists()),
+            None,
+        )
+        if element is None:
+            return None
+        targets.append((count, element))
+    query = SourceChunk.objects.filter(repository_url__icontains="netex", source_path__startswith="examples/")
+    for _, element in targets:
+        query = query.filter(has_tag(element))
+    files = {}
+    for row in query.values("source_path", "repository_url", "commit_sha").order_by("source_path")[:2000]:
+        files.setdefault(row["source_path"], row)
+    # The standard's example files have descriptive names ("BasicStopPlace-two-quays_example.xml"): files
+    # whose name has more of the question's words come first, and the search stops once a better-named
+    # file can no longer follow.
+    words = set(_question_words(question)) | {written.lower() for written in numbers} | {e.lower() for _, e in targets}
+
+    def name_score(source_path: str) -> int:
+        name = re.sub(r"[^a-z0-9]", "", source_path.rsplit("/", 1)[-1].lower())
+        return sum(1 for word in words if re.sub(r"[^a-z0-9]", "", word) in name)
+
+    ranked = sorted(files.items(), key=lambda item: (-name_score(item[0]), item[0]))
+    from lxml import etree
+
+    parser = etree.XMLParser(resolve_entities=False, load_dtd=False, no_network=True, huge_tree=False, remove_blank_text=False)
+    local = lambda tag: etree.QName(tag).localname if isinstance(tag, str) else ""  # noqa: E731
+    checkout_root = Path(getattr(settings, "SOURCE_CHECKOUT_DIR", "/app/repos"))
+    best = None  # (score, -lines, fragment, row, object name)
+    for source_path, row in ranked[:MAX_STANDARD_FILES]:
+        score = name_score(source_path)
+        if best is not None and score < best[0]:
+            break
+        path = checkout_root / row["repository_url"].rstrip("/").rsplit("/", 1)[-1] / source_path
+        try:
+            if path.stat().st_size > MAX_STANDARD_FILE_BYTES:
+                continue
+            tree = etree.parse(str(path), parser)
+        except (OSError, etree.XMLSyntaxError):
+            continue
+        for obj in tree.getroot().iter():
+            name = local(obj.tag)
+            if not name[:1].isupper() or any(_shape_count(obj, element, local) != count for count, element in targets):
+                continue
+            ancestors = [a for a in obj.iterancestors()]
+            frame_index = next((i for i, a in enumerate(ancestors) if local(a.tag).endswith("Frame")), None)
+            if frame_index is None:
+                continue
+            chain = list(reversed(ancestors[: frame_index + 1]))  # frame ... direct parent
+            top = copy.copy(chain[0])
+            for child in list(top):
+                top.remove(child)
+            top.text, current = None, top
+            for node in chain[1:]:
+                shell = etree.SubElement(current, node.tag, attrib=dict(node.attrib))
+                current = shell
+            current.append(copy.deepcopy(obj))
+            for element in top.iter():
+                if isinstance(element.tag, str):
+                    element.tag = local(element.tag)
+            etree.cleanup_namespaces(top)
+            fragment = etree.tostring(top, encoding="unicode")
+            fragment = re.sub(r'\sxmlns(?::\w+)?="[^"]*"', "", fragment)
+            lines = indented_fragment(fragment).count("\n") + 1
+            if lines <= MAX_STANDARD_EXAMPLE_LINES and (best is None or (score, -lines) > best[:2]):
+                best = (score, -lines, fragment, row, name)
+    if best is None:
+        return None
+    _, _, fragment, row, name = best
+    return {
+        "fragment": fragment,
+        "object": name,
+        "sourcePath": row["source_path"],
+        "repositoryUrl": row["repository_url"],
+        "commitSha": row["commit_sha"],
+        "sourceUrl": f"{row['repository_url'].rstrip('/')}/blob/{row['commit_sha']}/{row['source_path']}" if row["commit_sha"] else "",
+    }
+
+
+def _unmet_values(fragment: str, values: list[str], question: str) -> list[str]:
+    """Values the fragment does not hold: as the whole content of an element or attribute, or, for a number
+    followed by a noun ("2 quays"), as that many elements of the noun's kind."""
+    missing = missing_values(fragment, values)
+    if not missing:
+        return []
+    counted = {p["value"] for p in count_places(fragment, question)}
+    return [value for value in missing if value not in counted]
+
+
+def _places(fragment: str, values: list[str], question: str) -> list[dict]:
+    """Where the question's values go, then its counts (a number already placed as a value is not a count)."""
+    places = value_places(fragment, values)
+    return places + count_places(fragment, question, placed={p["value"] for p in places})
 
 
 def missing_values(fragment: str, values: list[str]) -> list[str]:
@@ -393,15 +615,64 @@ def _ask_model(messages: list[dict]) -> str:
     return str(response["choices"][0]["message"]["content"] or "")
 
 
-def generate_netex_example(question: str, chunks: list[dict], scope: list[str] | None = None) -> dict | None:
+def _from_standard(question: str, scope: list[str] | None) -> dict | None:
+    """The answer's example taken from the standard (standard_example), checked against the XSD and
+    described like a generated one. None when the standard has no example with the question's shape."""
+    started = time.perf_counter()
+    try:
+        found = standard_example(question, scope)
+    except Exception as exc:  # a broken file or the index unavailable: generate instead
+        logger.warning("standard example lookup failed: %s", exc)
+        return None
+    if found is None:
+        return None
+    fragment = found["fragment"]
+    checked: dict = {}
+    try:
+        checked = validate_fragment(fragment)
+    except ValidatorUnavailable as exc:
+        logger.info("standard example not validated: %s", exc)
+    return {
+        "valid": True,
+        "origin": "standard",
+        "validated": bool(checked.get("valid")),
+        "attempts": 0,
+        "xml": indented_fragment(fragment),
+        "document": publication_document(fragment),
+        "schema": SCHEMA_ENTRY,
+        "schemaVersion": checked.get("schemaVersion", ""),
+        "schemaCommit": checked.get("commit", "") or found["commitSha"],
+        "elementNotes": element_notes(checked.get("elements") or []),
+        "valuePlaces": count_places(fragment, question),
+        "sourcePath": found["sourcePath"],
+        "sourceUrl": found["sourceUrl"],
+        "repositoryUrl": found["repositoryUrl"],
+        "evidenceChunkIds": [],
+        "generationMs": round((time.perf_counter() - started) * 1000),
+        "validationMs": 0,
+        "schemaDeclarations": 0,
+    }
+
+
+def generate_netex_example(
+    question: str, chunks: list[dict], scope: list[str] | None = None, english_question: str | None = None
+) -> dict | None:
     """A validated NeTEx fragment for the question, or a record of why there is none.
 
     Returns None when the question does not ask for one. Otherwise a dict with valid (bool), attempts,
     and, when valid, xml, schema, schemaVersion, elementNotes (each element in the schema's words) and
     evidenceChunkIds; when not valid, errors.
     """
+    # A question in another language ("Pokaži mi NeTEx primer za avtobus s 50 sedeži") is recognised on the
+    # English rendering the app already makes for retrieval; its values are read from the question itself.
+    english = (english_question or "").strip()
     if not wants_generated_example(question, scope):
-        return None
+        if not english or not wants_generated_example(english, scope):
+            return None
+    shape_question = question if counted_shapes(question) else (english or question)
+    found = _from_standard(shape_question, scope)
+    if found is not None:
+        return found
     if not getattr(settings, "LLM_ENABLED", False):
         return None
     evidence, used = _evidence_text(chunks)
@@ -454,11 +725,13 @@ def generate_netex_example(question: str, chunks: list[dict], scope: list[str] |
                 errors = [
                     f"the value {value} from the question is missing: it must be the whole content of an element "
                     "or attribute that holds it, not part of a Name or Description text"
-                    for value in missing_values(fragment, values)
+                    for value in _unmet_values(fragment, values, shape_question)
                 ]
         if not errors:
             return {
                 "valid": True,
+                "origin": "generated",
+                "validated": True,
                 "attempts": attempt,
                 "xml": indented_fragment(fragment),
                 "document": publication_document(fragment),
@@ -466,7 +739,7 @@ def generate_netex_example(question: str, chunks: list[dict], scope: list[str] |
                 "schemaVersion": checked.get("schemaVersion", ""),
                 "schemaCommit": checked.get("commit", ""),
                 "elementNotes": element_notes(checked.get("elements") or []),
-                "valuePlaces": value_places(fragment, values),
+                "valuePlaces": _places(fragment, values, shape_question),
                 "evidenceChunkIds": [chunk.get("chunkId") for chunk in used],
                 **timing,
             }

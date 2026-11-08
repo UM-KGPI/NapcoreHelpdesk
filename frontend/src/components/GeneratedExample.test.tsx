@@ -47,6 +47,27 @@ describe("GeneratedExampleBlock", () => {
     expect(lead.textContent).toContain("1 → WheelchairPlaceCapacity");
   });
 
+  it("names the standard's file for an example taken from the standard, with counts in the lead", () => {
+    render(
+      <GeneratedExampleBlock
+        example={{
+          valid: true,
+          attempts: 0,
+          origin: "standard",
+          validated: false,
+          schemaCommit: "98365bd4341d",
+          sourcePath: "examples/standards/nta/AllStations.xml",
+          sourceUrl: "https://github.com/x/NeTEx/blob/98365bd/examples/standards/nta/AllStations.xml",
+          xml: "<SiteFrame/>",
+          valuePlaces: [{ value: "two", element: "Quay", count: 2, path: ["SiteFrame", "stopPlaces", "StopPlace", "quays"] }],
+        }}
+      />,
+    );
+    expect(screen.getByRole("heading").textContent).toBe("Example from the standard: AllStations.xml (as published, commit 98365bd)");
+    expect(screen.getByRole("link", { name: "AllStations.xml" }).getAttribute("href")).toContain("/blob/");
+    expect(screen.getByRole("list", { name: "Where the question's values go" }).textContent).toContain("two → 2 × Quay in stopPlaces › StopPlace › quays");
+  });
+
   it("explains each element in the schema's words", () => {
     render(
       <GeneratedExampleBlock

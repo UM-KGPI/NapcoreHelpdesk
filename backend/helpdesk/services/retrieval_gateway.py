@@ -511,7 +511,9 @@ def examples_using_elements(elements: list[str], limit: int = 3, repository: str
     coach with 49 seats and 1 wheelchair area" while nine example files use it. A text lookup on the
     element tags (about 80 ms) finds them directly.
     """
-    tags = [f"<{name}>" for name in elements if re.fullmatch(r"[A-Za-z][\w.-]*", name)][:4]
+    from helpdesk.services.netex_example_generator import has_tag
+
+    tags = [name for name in elements if re.fullmatch(r"[A-Za-z][\w.-]*", name)][:4]
     if not tags:
         return []
     base = SourceChunk.objects.filter(repository_url__icontains=repository, source_path__startswith="examples/")
@@ -521,7 +523,7 @@ def examples_using_elements(elements: list[str], limit: int = 3, repository: str
     for size in range(len(tags), 0, -1):
         query = base
         for tag in tags[:size]:
-            query = query.filter(text__contains=tag)
+            query = query.filter(has_tag(tag))
         for chunk in query.order_by("source_path", "chunk_id")[:40]:
             if chunk.source_path in files or chunk.source_path.startswith(".mylocal"):
                 continue
