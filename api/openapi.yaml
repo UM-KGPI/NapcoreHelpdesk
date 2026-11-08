@@ -1339,6 +1339,11 @@ components:
           description: >-
             Ready check: how many ontology classes the concept index holds (finding concepts by meaning);
             0 while it is being built, null when it cannot be read. Answers fall back to label words without it.
+        conceptIndexComplete:
+          type: boolean
+          description: >-
+            Ready check: whether a build of the concept index has gone through every class. Until then answers
+            find concepts by label words only.
       additionalProperties: false
     LlmProviderStatus:
       type: object

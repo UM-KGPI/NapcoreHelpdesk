@@ -29,6 +29,9 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 DIMENSION = 384
+# A row without a vector, written when a build has gone through every class: until then the index covers only
+# part of the ontology, and finding concepts by meaning in a part is worse than label words.
+COMPLETE_MARKER = "__index_complete__"
 # The embedder also serves every question's search, one request at a time. A build batch makes questions wait
 # behind it (prod 2026-11-08: 16 per batch kept the embedder at 2 CPUs and a question took 54 s instead of
 # 14 s), so batches are small and each is followed by a pause as long as it took: the build uses at most
@@ -156,9 +159,12 @@ def build_concept_vectors() -> dict:
         row = existing.get(item["concept_id"])
         if row is not None and row.implemented_by != item["implemented_by"] and item not in changed:
             ConceptVector.objects.filter(pk=row.pk).update(implemented_by=item["implemented_by"])
-    gone = set(existing) - {item["concept_id"] for item in classes}
+    gone = set(existing) - {item["concept_id"] for item in classes} - {COMPLETE_MARKER}
     if gone:
         ConceptVector.objects.filter(concept_id__in=gone).delete()
+    ConceptVector.objects.update_or_create(
+        concept_id=COMPLETE_MARKER, defaults={"standard": "", "label": "", "text_hash": str(len(classes)), "vector": None}
+    )
     return {"status": "ok", "classes": len(classes), "embedded": len(changed), "removed": len(gone)}
 
 
@@ -183,9 +189,15 @@ def index_status() -> dict:
     from helpdesk.models import ConceptVector
 
     try:
-        return {"conceptVectors": ConceptVector.objects.exclude(vector=None).count()}
+        return {"conceptVectors": ConceptVector.objects.exclude(vector=None).count(), "conceptIndexComplete": index_complete()}
     except Exception:
-        return {"conceptVectors": None}
+        return {"conceptVectors": None, "conceptIndexComplete": False}
+
+
+def index_complete() -> bool:
+    from helpdesk.models import ConceptVector
+
+    return ConceptVector.objects.filter(concept_id=COMPLETE_MARKER).exists()
 
 
 def semantic_concepts(question: str, standard: str = "netex", limit: int = 5, min_similarity: float = 0.0) -> list[dict]:
@@ -201,8 +213,8 @@ def semantic_concepts(question: str, standard: str = "netex", limit: int = 5, mi
     if not (question or "").strip():
         return []
     try:
-        if not ConceptVector.objects.exclude(vector=None).exists():
-            return []
+        if not index_complete():
+            return []  # a first build still running: label words until it has gone through every class
     except Exception as exc:  # no index yet (a migration still to run) or no database: word matching
         logger.info("concept index unavailable: %s", exc)
         return []

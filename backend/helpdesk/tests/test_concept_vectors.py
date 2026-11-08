@@ -47,7 +47,10 @@ class BuildTests(TestCase):
             vectors.build_concept_vectors()
             with patch.object(vectors, "ontology_classes", return_value=[dict(self.CLASSES[0])]):
                 self.assertEqual(vectors.build_concept_vectors()["removed"], 1)
-        self.assertEqual(list(ConceptVector.objects.values_list("concept_id", flat=True)), ["transmodel:DRIVER"])
+        self.assertEqual(
+            list(ConceptVector.objects.exclude(concept_id=vectors.COMPLETE_MARKER).values_list("concept_id", flat=True)),
+            ["transmodel:DRIVER"],
+        )
 
 
 class OrderTests(SimpleTestCase):
@@ -104,7 +107,7 @@ class BatchTests(TestCase):
             # The first batch was kept; the next run embeds only the rest.
             self.assertEqual(ConceptVector.objects.count(), vectors.EMBED_BATCH)
             self.assertEqual(vectors.build_concept_vectors()["embedded"], 3)
-        self.assertEqual(vectors.index_status(), {"conceptVectors": vectors.EMBED_BATCH + 3})
+        self.assertEqual(vectors.index_status(), {"conceptVectors": vectors.EMBED_BATCH + 3, "conceptIndexComplete": True})
 
 
 class PauseTests(TestCase):
@@ -119,3 +122,24 @@ class PauseTests(TestCase):
             vectors.build_concept_vectors()
         # Two batches: one pause between them, none after the last.
         self.assertEqual(sleep.call_count, 1)
+
+
+class CompletenessTests(TestCase):
+    def test_a_partial_index_is_not_used(self):
+        from helpdesk.models import ConceptVector
+
+        ConceptVector.objects.create(concept_id="transmodel:A", standard="transmodel", label="A", text_hash="x", vector=[0.1] * vectors.DIMENSION)
+        with patch.object(vectors, "_embed") as embed:
+            self.assertEqual(vectors.semantic_concepts("a question"), [])
+        embed.assert_not_called()
+        self.assertFalse(vectors.index_complete())
+
+    def test_a_finished_build_marks_the_index_complete_and_keeps_the_marker(self):
+        classes = [{"concept_id": "transmodel:A", "standard": "transmodel", "label": "A", "alt_labels": [], "definition": "d", "implemented_by": []}]
+        with patch.object(vectors, "ontology_classes", return_value=classes), patch.object(
+            vectors, "_embed", side_effect=lambda texts, kind: [[0.1] * vectors.DIMENSION for _ in texts]
+        ):
+            vectors.build_concept_vectors()
+            self.assertTrue(vectors.index_complete())
+            self.assertEqual(vectors.build_concept_vectors()["removed"], 0)  # the marker is not a gone class
+        self.assertTrue(vectors.index_complete())
