@@ -1602,6 +1602,12 @@ components:
         validated:
           type: boolean
           description: Whether the fragment passed the XSD on its own; an excerpt can fail on references outside it.
+        excerpt:
+          type: boolean
+          description: >-
+            For origin standard, true when the object was larger than a screen and was cut to what the question
+            asks for (its simple elements, the path to the asked-for parts, those parts whole), with
+            "<!-- … -->" where elements were left out.
         sourcePath:
           type: string
           description: For origin standard, the example file the excerpt comes from.

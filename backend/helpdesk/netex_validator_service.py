@@ -294,6 +294,14 @@ class ElementDocs:
         found = {parent for c in containers for parent in self.parents.get(c, ())} - {name}
         return sorted(found)[:MAX_PARENTS]
 
+    def is_object(self, name: str) -> bool:
+        """Whether the element is an object of its own (a versioned entity with an id: LiftEquipment, Quay)
+        rather than a property (ReachedFloorAnnouncement, Name)."""
+        type_name = self.element_type.get(name, "")
+        if not type_name or type_name == name:
+            type_name = self.base.get(name, "")
+        return type_name.endswith(("_VersionStructure", "_VersionedChildStructure"))
+
     def _is_count(self, name: str) -> bool:
         """Whether the element holds a number (its type: NumberOfPassengers, xsd:integer, ...)."""
         type_name = self.element_type.get(name, "").lower()
@@ -330,7 +338,10 @@ class ElementDocs:
                 if current is None or key < current[0]:
                     ranked[(name, container)] = (key, [name, container, text, parents])
         ordered = sorted(ranked.values(), key=lambda item: item[0])[:limit]
-        results = [{"name": name, "parents": parents, "documentation": text} for _, (name, _, text, parents) in ordered]
+        results = [
+            {"name": name, "parents": parents, "documentation": text, "object": self.is_object(name)}
+            for _, (name, _, text, parents) in ordered
+        ]
         return self._with_parent_declarations(results, limit + MAX_PARENT_DECLARATIONS)
 
     def _with_parent_declarations(self, results: list[dict], limit: int) -> list[dict]:
@@ -348,7 +359,7 @@ class ElementDocs:
                 # declaration (PassengerCapacity is declared globally and, by name, in the vehicle type group).
                 _, text = next(((c, t) for c, t in self.docs[parent] if c == ""), self.docs[parent][0])
                 parents = sorted({p for c, _ in self.docs[parent] for p in self._parents_of(parent, c)})[:MAX_PARENTS]
-                extra.append({"name": parent, "parents": parents, "documentation": text})
+                extra.append({"name": parent, "parents": parents, "documentation": text, "object": self.is_object(parent)})
         return (results + extra)[:limit]
 
     def _containers_of(self, parent: str) -> dict[str, int]:

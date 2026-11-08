@@ -12,6 +12,9 @@ import type { GeneratedExample } from "../types";
 export function validityNote(example: GeneratedExample): string {
   const version = example.schemaVersion ? `NeTEx ${example.schemaVersion}` : "NeTEx";
   const commit = example.schemaCommit ? `, commit ${example.schemaCommit.slice(0, 7)}` : "";
+  if (example.origin === "standard" && example.excerpt) {
+    return `excerpt as published${commit}`;
+  }
   if (example.origin === "standard" && example.validated === false) {
     return `as published${commit}`;
   }
