@@ -18,7 +18,7 @@ import type { AnswerResponse } from "../types";
 import { citationDisplayName, citationMarker, groupCitationsBySource } from "../citationLabels";
 import GeneratedExampleBlock from "./GeneratedExample";
 import AnswerBody from "./AnswerBody";
-import { answerBodyText, blockText } from "./answerText";
+import { blockText, copiedAnswerText } from "./answerText";
 import LegalContext from "./LegalContext";
 import InspiredByOthersPanel from "./InspiredByOthersPanel";
 
@@ -84,26 +84,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
     return () => clearTimeout(timer);
   }, [busy]);
 
-  const buildAnswerWithEvidenceText = (turn: ChatTurn): string => {
-    // The generated example (when valid) first, then the text, then the evidence list: what the page shows.
-    const answerText = answerBodyText(turn.text, turn.answer?.generatedExample, turn.answer?.schemaStructure);
-    if (!answerText) {
-      return "";
-    }
-
-    const lines: string[] = [answerText];
-    if (turn.answer && turn.answer.citations.length > 0) {
-      lines.push("");
-      lines.push("Evidence list:");
-      turn.answer.citations.forEach((citation, index) => {
-        lines.push(
-          `- ${citationMarker(citation, index)} ${citationDisplayName(citation)} | ${citation.sourcePath} | ${citation.repositoryUrl}`
-        );
-      });
-    }
-
-    return lines.join("\n");
-  };
+  const buildAnswerWithEvidenceText = (turn: ChatTurn): string => copiedAnswerText(turn.text, turn.answer);
 
   const copyAnswerToClipboard = async (turn: ChatTurn) => {
     const text = buildAnswerWithEvidenceText(turn);
@@ -179,6 +160,11 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
             `- ${citationMarker(citation, index)} ${citationDisplayName(citation)} | ${citation.sourcePath} | ${citation.repositoryUrl}`
           );
         });
+      }
+      if (turn.answer && (turn.answer.legalContext ?? []).length > 0) {
+        lines.push("");
+        lines.push("### Legal context");
+        (turn.answer.legalContext ?? []).forEach((item) => lines.push(`- ${item.label} | ${item.url}`));
       }
       if (turn.answer) {
         const feedbackLike = turn.answer.trace.userLikes ?? false;

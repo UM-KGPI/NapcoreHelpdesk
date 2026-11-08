@@ -12,7 +12,7 @@ import React from "react";
 import { citationDisplayName, groupCitationsBySource } from "../citationLabels";
 import GeneratedExampleBlock from "./GeneratedExample";
 import AnswerBody from "./AnswerBody";
-import { answerBodyText } from "./answerText";
+import { copiedAnswerText } from "./answerText";
 import LegalContext from "./LegalContext";
 import type { ChatTurn } from "./UserChatWorkspace";
 
@@ -77,7 +77,7 @@ export default function ReadOnlyQuestionDisplay({
   };
 
   const copyAnswerToClipboard = async (turn: ChatTurn) => {
-    const text = answerBodyText(turn.text, turn.answer?.generatedExample, turn.answer?.schemaStructure);
+    const text = copiedAnswerText(turn.text, turn.answer);
     if (!text) return;
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(text);

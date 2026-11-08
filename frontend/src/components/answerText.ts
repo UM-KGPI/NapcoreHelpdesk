@@ -3,8 +3,9 @@
  * contains), for "Copy answer" and "Export chat": the same content the page shows, so those two actions
  * cover the blocks too.
  */
+import { citationDisplayName, citationMarker } from "../citationLabels";
 import { validityNote } from "./GeneratedExample";
-import type { GeneratedExample, SchemaStructure } from "../types";
+import type { AnswerResponse, GeneratedExample, SchemaStructure } from "../types";
 
 export function generatedExampleText(example?: GeneratedExample | null): string {
   if (!example?.valid || !example.xml) {
@@ -68,4 +69,31 @@ export function answerBodyText(
     return `${block}\n\n${answerText}`;
   }
   return block || answerText;
+}
+
+/**
+ * What "Copy answer" puts on the clipboard: everything the answer shows, in page order. The block from
+ * the schema and the text (answerBodyText), the evidence list, and the "Legal context" line.
+ */
+export function copiedAnswerText(text: string, answer?: AnswerResponse | null): string {
+  const lines: string[] = [];
+  const body = answerBodyText(text, answer?.generatedExample, answer?.schemaStructure);
+  if (body) {
+    lines.push(body);
+  }
+  const citations = answer?.citations ?? [];
+  if (citations.length > 0) {
+    lines.push("", "Evidence list:");
+    citations.forEach((citation, index) => {
+      lines.push(`- ${citationMarker(citation, index)} ${citationDisplayName(citation)} | ${citation.sourcePath} | ${citation.repositoryUrl}`);
+    });
+  }
+  const legal = answer?.legalContext ?? [];
+  if (legal.length > 0) {
+    lines.push("", "Legal context:");
+    for (const item of legal) {
+      lines.push(`- ${item.label} | ${item.url}`);
+    }
+  }
+  return lines.join("\n").trim();
 }
