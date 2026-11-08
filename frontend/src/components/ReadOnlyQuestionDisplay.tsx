@@ -12,6 +12,7 @@ import React from "react";
 import { citationDisplayName, groupCitationsBySource } from "../citationLabels";
 import GeneratedExampleBlock from "./GeneratedExample";
 import AnswerBody from "./AnswerBody";
+import { copyFragment, downloadPublicationDelivery } from "./generatedExampleActions";
 import LegalContext from "./LegalContext";
 import type { ChatTurn } from "./UserChatWorkspace";
 
@@ -130,6 +131,30 @@ export default function ReadOnlyQuestionDisplay({
                     >
                       📋
                     </button>
+                    {turn.answer.generatedExample?.valid && (
+                      <>
+                        <button
+                          type="button"
+                          className="chat-icon-button"
+                          onClick={() => {
+                            void copyFragment(turn.answer!.generatedExample!);
+                          }}
+                          title="Copy generated XML fragment"
+                          aria-label="Copy generated XML fragment"
+                        >
+                          📄
+                        </button>
+                        <button
+                          type="button"
+                          className="chat-icon-button"
+                          onClick={() => downloadPublicationDelivery(turn.answer!.generatedExample!)}
+                          title="Download generated example as PublicationDelivery"
+                          aria-label="Download generated example as PublicationDelivery"
+                        >
+                          ⬇️
+                        </button>
+                      </>
+                    )}
                     <button
                       type="button"
                       className={`chat-icon-button ${(turn.answer.trace.userLikes ?? false) ? "chat-icon-button-active" : ""}`}

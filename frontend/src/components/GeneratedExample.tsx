@@ -1,15 +1,13 @@
 /**
- * A NeTEx fragment generated for an "example with values" question, shown under the answer. Labelled as
- * generated (not an example from the standard) and with the NeTEx version it was validated against.
- * Under the fragment, what each of its elements is in the schema's own words (no model involved).
- * Renders a short note when no valid fragment could be produced, and nothing when none was asked for.
+ * A NeTEx fragment generated for an "example with values" question, shown first in the answer. Labelled as
+ * generated and with the NeTEx version it was validated against. Under the fragment, what each of its
+ * elements is in the schema's own words (no model involved). Copy and download live in the answer's
+ * action group (generatedExampleActions.ts). Renders a short note when no valid fragment could be
+ * produced, and nothing when none was asked for.
  */
-import { useState } from "react";
-
 import type { GeneratedExample } from "../types";
 
 export default function GeneratedExampleBlock({ example }: { example?: GeneratedExample | null }) {
-  const [copied, setCopied] = useState(false);
   if (!example) {
     return null;
   }
@@ -22,26 +20,6 @@ export default function GeneratedExampleBlock({ example }: { example?: Generated
   }
   const version = example.schemaVersion ? `NeTEx ${example.schemaVersion}` : "NeTEx";
   const commit = example.schemaCommit ? ` (commit ${example.schemaCommit.slice(0, 7)})` : "";
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(example.xml ?? "");
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setCopied(false);
-    }
-  };
-
-  const download = () => {
-    const blob = new Blob([example.document ?? example.xml ?? ""], { type: "application/xml" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "netex-generated-example.xml";
-    link.click();
-    URL.revokeObjectURL(url);
-  };
 
   return (
     <section className="generated-example" aria-label="Generated NeTEx example">
@@ -68,14 +46,6 @@ export default function GeneratedExampleBlock({ example }: { example?: Generated
           </dl>
         </div>
       ) : null}
-      <p className="tiny generated-example-actions">
-        <button type="button" onClick={() => void copy()}>
-          {copied ? "Copied" : "Copy fragment"}
-        </button>{" "}
-        <button type="button" onClick={download}>
-          Download as PublicationDelivery
-        </button>
-      </p>
     </section>
   );
 }

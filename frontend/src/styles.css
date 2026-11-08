@@ -1232,9 +1232,6 @@ a {
   max-height: 24rem;
   overflow: auto;
 }
-.generated-example-actions button {
-  font-size: inherit;
-}
 .generated-example-notes p {
   margin: 0.5rem 0 0.25rem;
 }
