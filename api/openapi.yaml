@@ -1334,6 +1334,11 @@ components:
           type: string
         database:
           type: string
+        conceptVectors:
+          type: [integer, "null"]
+          description: >-
+            Ready check: how many ontology classes the concept index holds (finding concepts by meaning);
+            0 while it is being built, null when it cannot be read. Answers fall back to label words without it.
       additionalProperties: false
     LlmProviderStatus:
       type: object

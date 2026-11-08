@@ -1000,9 +1000,13 @@ class HealthReadyView(APIView):
         # without it. So a broker failure marks the service degraded but keeps it ready (200): deploy.sh
         # waits on this endpoint with the maintenance page up, and checks the broker field separately.
         broker = _broker_status()
+        from helpdesk.services.concept_vectors import index_status
+
+        # The concept index (classes found by meaning) is informational: without it answers use label words.
         return Response(
             _service_health_payload(
-                check="ready", status_value="ok" if broker == "ok" else "degraded", database="ok", broker=broker
+                check="ready", status_value="ok" if broker == "ok" else "degraded", database="ok", broker=broker,
+                **index_status(),
             ),
             status=status.HTTP_200_OK,
         )
