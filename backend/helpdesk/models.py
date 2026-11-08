@@ -492,3 +492,27 @@ class EditorAccount(TimestampedModel):
 
     def __str__(self):
         return f"EditorAccount({self.github_login}, roles={self.roles}, active={self.is_active})"
+
+
+class ConceptVector(TimestampedModel):
+    """A class of the ontology (Transmodel, NeTEx, SIRI, OpRa …) with its meaning as a vector, for finding the
+    concepts a question is about by meaning rather than by label words (services/concept_vectors.py).
+
+    Built from GraphDB (label, alternative labels, definition) and the alignment files (which standards
+    implement a Transmodel class); embedded with the semantic embedder as a passage. text_hash lets a rebuild
+    re-embed only concepts whose text changed.
+    """
+
+    concept_id = models.CharField(max_length=255, unique=True)  # "transmodel:DISTRIBUTION_CHANNEL"
+    standard = models.CharField(max_length=32, db_index=True)  # "transmodel", "netex", …
+    label = models.CharField(max_length=255)
+    definition = models.TextField(blank=True)
+    implemented_by = models.JSONField(default=list, blank=True)  # ["netex:DistributionChannel"]
+    text_hash = models.CharField(max_length=64)
+    vector = PortableVectorField(dimensions=384, null=True, blank=True, default=None)
+
+    class Meta:
+        ordering = ["concept_id"]
+
+    def __str__(self):
+        return f"ConceptVector({self.concept_id})"

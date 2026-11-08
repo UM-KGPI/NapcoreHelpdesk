@@ -898,3 +898,18 @@ Settings: `NETEX_EXAMPLE_GENERATOR_ENABLED` (default `True`), `NETEX_VALIDATOR_U
 
 Measure the generator with `$C exec -T backend python manage.py run_example_benchmark` (20 questions,
 `backend/helpdesk/benchmarks/example-generation-questions.yaml`).
+
+## 15. Concept vectors (finding ontology classes by meaning)
+
+Answers to "does NeTEx have X?" and "how is X defined in NeTEx?" start from the ontology classes the question
+is about (`services/concept_presence.py`). Those are found by meaning as well as by label words: every class of
+the ontology (about 3,100: Transmodel, NeTEx, SIRI, OpRa, TN-ITS) is embedded from its label, other labels and
+definition into the `ConceptVector` table (`services/concept_vectors.py`), with the semantic embedder retrieval
+uses.
+
+- Built by `python manage.py build_concept_vectors`; only new and changed classes are embedded (about 30 s
+  for all, seconds when nothing changed). The Celery worker queues it a minute after it starts (so after
+  every deploy) and after the nightly source refresh. Needs GraphDB and the embedder; without the index or the
+  embedder, answers fall back to label words.
+- Measured with `python manage.py run_concept_benchmark` (`benchmarks/concept-questions.yaml`, 26 questions
+  with paraphrases and other languages): hit@3 for label words 0.35, the combination used 0.88.
