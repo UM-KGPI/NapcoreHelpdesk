@@ -689,3 +689,21 @@ class ScopeCoverageTests(SimpleTestCase):
             self.assertEqual(gateway._with_scope_coverage("q", mixed, {}, dict(top_k=6, scope=["SIRI", "NeTEx"]))[0], mixed)
             self.assertEqual(gateway._with_scope_coverage("q", mixed, {}, dict(top_k=6, scope=["SIRI"]))[0], mixed)
         once.assert_not_called()
+
+
+class RareTermCountQueryTests(TestCase):
+    def test_counting_is_unordered_so_the_gin_index_answers_it(self):
+        # With the default order (quality_score) PostgreSQL walked that index and built every chunk's
+        # tsvector for a common term: 3.6 s instead of 9 ms for "place" in NeTEx (local 2026-11-08).
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        from helpdesk.services import retrieval_gateway
+
+        if connection.vendor != "postgresql":
+            self.skipTest("text search needs PostgreSQL")
+        with CaptureQueriesContext(connection) as queries:
+            retrieval_gateway._rare_lexemes(["place", "quay"], ["NeTEx"])
+        counts = [q["sql"] for q in queries.captured_queries if "to_tsquery" in q["sql"]]
+        self.assertEqual(len(counts), 2)
+        self.assertTrue(all("ORDER BY" not in sql for sql in counts))
