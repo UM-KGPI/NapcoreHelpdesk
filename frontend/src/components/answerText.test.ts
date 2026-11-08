@@ -14,7 +14,7 @@ const example = {
 describe("answerText", () => {
   it("renders a valid example as badge, xml block and element notes", () => {
     const text = generatedExampleText(example);
-    expect(text).toContain("generated for this question · valid against NeTEx 2.0 (commit 37ff1e4)");
+    expect(text).toContain("Generated example for this question (valid against NeTEx 2.0, commit 37ff1e4):");
     expect(text).toContain("```xml\n<ResourceFrame/>\n```");
     expect(text).toContain("- ResourceFrame: A coherent set of reference values.");
   });

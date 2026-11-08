@@ -8,6 +8,12 @@
 import { downloadExampleDocument } from "./generatedExampleActions";
 import type { GeneratedExample } from "../types";
 
+/** "valid against NeTEx 2.0, commit 37ff1e4": the version and commit the fragment was validated against. */
+export function validityNote(example: GeneratedExample): string {
+  const version = example.schemaVersion ? `NeTEx ${example.schemaVersion}` : "NeTEx";
+  return `valid against ${version}${example.schemaCommit ? `, commit ${example.schemaCommit.slice(0, 7)}` : ""}`;
+}
+
 export default function GeneratedExampleBlock({ example }: { example?: GeneratedExample | null }) {
   if (!example) {
     return null;
@@ -19,16 +25,12 @@ export default function GeneratedExampleBlock({ example }: { example?: Generated
       </p>
     );
   }
-  const version = example.schemaVersion ? `NeTEx ${example.schemaVersion}` : "NeTEx";
-  const commit = example.schemaCommit ? ` (commit ${example.schemaCommit.slice(0, 7)})` : "";
-
   return (
     <section className="generated-example" aria-label="Generated NeTEx example">
-      <h4>Generated example</h4>
-      <p className="tiny generated-example-badge">
-        Generated for this question · valid against {version}
-        {commit} · built from the cited evidence
-      </p>
+      <h4>
+        Generated example for this question{" "}
+        <span className="generated-example-badge">({validityNote(example)})</span>
+      </h4>
       {example.valuePlaces && example.valuePlaces.length > 0 ? (
         <ul className="generated-example-lead" aria-label="Where the question's values go">
           {example.valuePlaces.map((place) => (

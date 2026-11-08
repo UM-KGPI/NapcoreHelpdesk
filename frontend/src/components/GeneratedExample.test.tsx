@@ -19,8 +19,7 @@ describe("GeneratedExampleBlock", () => {
         }}
       />,
     );
-    expect(screen.getByText("Generated example")).toBeTruthy();
-    expect(screen.getByText(/Generated for this question · valid against NeTEx 2\.0/)).toBeTruthy();
+    expect(screen.getByRole("heading").textContent).toBe("Generated example for this question (valid against NeTEx 2.0, commit 37ff1e4)");
     expect(screen.getByText(/commit 37ff1e4/)).toBeTruthy();
     expect(screen.getByText(/<ResourceFrame>/)).toBeTruthy();
     // The block's one button is the download, next to the fragment; copying is the answer's Copy answer.
@@ -75,7 +74,7 @@ describe("GeneratedExampleBlock", () => {
   it("never shows XML that did not validate", () => {
     render(<GeneratedExampleBlock example={{ valid: false, attempts: 3, errors: ["line 1: ..."] }} />);
     expect(screen.getByText(/No NeTEx example valid against the schema/)).toBeTruthy();
-    expect(screen.queryByText("Generated example")).toBeNull();
+    expect(screen.queryByText(/^Generated example/)).toBeNull();
   });
 
   it("renders nothing when no example was asked for", () => {

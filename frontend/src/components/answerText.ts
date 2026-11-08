@@ -3,16 +3,15 @@
  * contains), for "Copy answer" and "Export chat": the same content the page shows, so those two actions
  * cover the blocks too.
  */
+import { validityNote } from "./GeneratedExample";
 import type { GeneratedExample, SchemaStructure } from "../types";
 
 export function generatedExampleText(example?: GeneratedExample | null): string {
   if (!example?.valid || !example.xml) {
     return "";
   }
-  const version = example.schemaVersion ? `NeTEx ${example.schemaVersion}` : "NeTEx";
-  const commit = example.schemaCommit ? ` (commit ${example.schemaCommit.slice(0, 7)})` : "";
   const lines = [
-    `Generated example (generated for this question · valid against ${version}${commit} · built from the cited evidence):`,
+    `Generated example for this question (${validityNote(example)}):`,
     ...(example.valuePlaces ?? []).map(
       (place) => `- ${place.value} → ${place.element}${place.path.length ? ` in ${place.path.slice(-3).join(" › ")}` : ""}`,
     ),
