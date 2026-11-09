@@ -9,11 +9,7 @@ on:
 
 permissions:
   contents: write
-
-# One bump at a time, in merge order: each reads VERSION from main and writes the next one.
-concurrency:
-  group: version-bump
-  cancel-in-progress: false
+  pull-requests: write
 
 jobs:
   bump-version:
@@ -91,34 +87,44 @@ jobs:
           echo "$new_version" > VERSION
           echo "new_version=$new_version" >> "$GITHUB_OUTPUT"
 
-      - name: Commit VERSION to main
+      - name: Create VERSION bump pull request
+        id: create_pr
         env:
           NEW_VERSION: ${{ steps.bump_version.outputs.new_version }}
           BUMP: ${{ steps.bump_level.outputs.bump }}
           LABELS: ${{ steps.bump_level.outputs.labels }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore(version): bump to ${{ steps.bump_version.outputs.new_version }} (${{ steps.bump_level.outputs.bump }})"
+          title: "chore(version): bump to ${{ steps.bump_version.outputs.new_version }} (${{ steps.bump_level.outputs.bump }})"
+          body: |
+            ## Automated version bump
+            - Triggered by merged PR #${{ github.event.pull_request.number }}
+            - Source PR labels: ${{ steps.bump_level.outputs.labels }}
+            - Applied bump: ${{ steps.bump_level.outputs.bump }}
+            - New VERSION: ${{ steps.bump_version.outputs.new_version }}
+          base: main
+          branch: chore/version-bump-${{ steps.bump_version.outputs.new_version }}
+          delete-branch: true
+          add-paths: |
+            VERSION
+
+      - name: Workflow summary
+        env:
+          NEW_VERSION: ${{ steps.bump_version.outputs.new_version }}
+          BUMP: ${{ steps.bump_level.outputs.bump }}
+          LABELS: ${{ steps.bump_level.outputs.labels }}
+          PR_URL: ${{ steps.create_pr.outputs.pull-request-url }}
         run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add VERSION
-          git commit -m "chore(version): bump to ${NEW_VERSION} (${BUMP})" -m "Triggered by merged PR #${PR_NUMBER}; labels: ${LABELS}."
-          # main may have moved since checkout (another merge); VERSION is only written here, one run at a time.
-          pushed=""
-          for attempt in 1 2 3; do
-            if git push origin HEAD:main; then
-              pushed="yes"
-              break
-            fi
-            git pull --rebase origin main
-          done
-          if [[ -z "$pushed" ]]; then
-            echo "Could not push the VERSION bump to main after 3 attempts" >&2
-            exit 1
-          fi
           {
             echo "## Version Bump"
             echo "- PR labels: $LABELS"
             echo "- Applied bump: $BUMP"
-            echo "- New VERSION: $NEW_VERSION (committed to main)"
+            echo "- New VERSION: $NEW_VERSION"
+            if [[ -n "${PR_URL:-}" ]]; then
+              echo "- Opened bump PR: $PR_URL"
+            else
+              echo "- No bump PR opened (likely no VERSION diff)."
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
