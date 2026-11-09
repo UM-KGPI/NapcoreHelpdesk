@@ -281,6 +281,69 @@ Reproduction scripts from this review (scratchpad): `graphprof.py` (SQL vs Pytho
 question), `graphfix.py` / `graphfix2.py` (alias variants, two-pass), `benchvariant.py` (benchmark with the stage
 off or aliases pruned).
 
+### P7 — The text next to a standard example must be about that example (Fable, 2026-11-09 night)
+
+**Finding.** For 6 of the 8 example questions in §5, the evidence the model narrates from does not contain the
+file the shown example comes from (dev API, 2026-11-09 night; prod reproduces it for "two quays"). For "Show me
+a NeTEx example of a stop place with two quays" the shown XML is from `BasicStopPlace-two-quays_example.xml`,
+while the text says "in the example `Quay` elements of the DeckPlans example … `alphaville_gare@platform_1`" and
+cites `DeckPlans-Example_train.xml`, `NewModes-CarPoolingExample.xml`, `NewModes-ChauffeuredServiceExample.xml`.
+The user reads a description of a different example than the one in front of them.
+
+**Mechanism** (`views.py`, the standard-origin branch after `generate_netex_example`):
+1. Retrieval itself is fine: the one `retrieve_chunks_with_trace` call returns the two-quays example in
+   position 2 (NaPTAN, two-quays, RATP, Wimbledon, NOPTIS, SimpleNetwork).
+2. `_example_element_evidence` (origin "standard") puts `definition_chunk(...)` for the wanted elements and
+   `examples_using_elements([main_object])` *in front of* the retrieved chunks; the view then puts
+   `examples_using_elements(value_element_names(...))` in front of that and cuts to `retrieval_top_k` (6). The
+   retrieved chunks fall off the end unless `other_question(...)` is true.
+3. `examples_using_elements` (`retrieval_gateway.py`) orders its candidates by `source_path, chunk_id`:
+   **alphabetical**, one file each, limit 2–3. `DeckPlans-Example_train.xml` sorts first among `examples/…`,
+   so it appears in 6 of the 8 questions' evidence (and `organisationref.xml` as the second "StopPlace example").
+   The docstring's intent, "the standard's examples that fill the value elements", is right; the order is not.
+
+**Items.**
+1. `examples_using_elements(elements, *, prefer_path=None, question=None)`: candidates from `prefer_path` (the
+   shown example's `sourcePath`) first, then the rest ranked by question-token overlap on path/heading/text (as
+   `_graph_candidate_rank_score` does) with `quality_score` as the tie-break; never alphabetical. Still one per
+   file, still the all-tags-first tiers.
+2. In the view, for origin "standard": the evidence always contains at least one chunk of the shown example's
+   file, the one holding `main_object(generated_example)` (fetch it by `source_path` + `has_tag` when the
+   retrieval pool lacks it, as for "Give me an example of a quay"), placed first. Then the definitions (keep:
+   the 2026-11-08/09 notes show the text needs them), then `examples_using_elements` for the value elements,
+   then the question's own retrieved chunks. Cut to `retrieval_top_k` as now.
+3. Tests: with a standard example whose file is not in the retrieval pool, the evidence's first chunk is from
+   that file; `examples_using_elements` prefers `prefer_path`, then overlap, and never returns a file only
+   because its name sorts first.
+4. Measure (dev API, the 8 example questions of §5): "example's file in evidence" 2/8 → 8/8; read the eight
+   texts: each must describe the shown example, not another file. The retrieval benchmark is unaffected (view
+   level); run `run_example_benchmark` to show the shown examples themselves are unchanged.
+
+Expected time effect: none (same number of chunks); this is the quality item flagged in P6.
+
+### P6 item 6 — one file must not fill the graph candidates (small)
+
+P6's cut takes the top `GRAPH_CANDIDATE_SCAN_LIMIT` rows by `quality_score` before the relevance ranking, so a
+large high-quality file fills all 400 slots: "two quays" and "stop place" now return 8 chunks of one accessibility
+example (before P6: 3 files, including the two-quays example); "vehicle type" 2 files instead of 5. The benchmark
+did not move because the stage reaches the final evidence rarely (1 of 8 §5 questions). Fix: cap rows per
+`source_path` in the cut (e.g. 8), keeping the 400 total; test: two files with many high-quality chunks both
+appear in the candidates. Measure with the §5 set and the benchmark as for P6.
+
+### Decisions from the review of Opus's results (Fable, 2026-11-09 night)
+
+- **P6 item 3 (owl properties out of the concept list): defer.** 1,471 of 4,616 concepts are property labels
+  (1,360 Transmodel role names, 111 TN-ITS attribute names). Concept benchmark unchanged (23/26); retrieval
+  mixed (hit@5 +q072, hit@10 −q146, MRR@10 0.6546 → 0.6505, top-5 order changed on 24 questions); TN-ITS has no
+  benchmark question. After P6 the time cost of these labels is gone, so the item is housekeeping without a
+  measurement that can see it. Do it only together with TN-ITS benchmark questions, and as a Transmodel-only
+  variant first. Branch `fix/concepts-exclude-properties` (local, not pushed) holds the attempt; q146 flipped
+  in three unrelated experiments and should not decide anything alone.
+- **Order of work:** P7 (visible to every example-question user) → P6 item 6 → P4 (overlap; it now hides
+  ~0.4–0.8 s of parse and small stages, which is worth having at a 5.2 s total) → stop. Prod 0.97.150 warm
+  composition: model 2.43 s (47 %), retrieval 1.31 s (25 %; its stages sum to 0.9 s), parse 0.83 s (16 %),
+  example + checks + saving 0.62 s (12 %). The floor without touching the model is about 4–4.5 s.
+
 ### Not planned
 
 Changing the embedding model (trial 2026-11-08: none beat e5-small), raising Anthropic effort (slower, no gain),

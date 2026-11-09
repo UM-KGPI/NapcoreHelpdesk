@@ -945,3 +945,77 @@ class ElementCandidateCacheTests(TestCase):
         gone.delete()
 
         self.assertEqual([c.chunk_id for c in retrieval_gateway._element_candidates(["Quay"])], ["quay-kept"])
+
+
+class ExampleNarrationEvidenceTests(TestCase):
+    """The text next to a standard example is written from that example's own file (P7, 2026-11-09)."""
+
+    def setUp(self):
+        from helpdesk.services import retrieval_gateway
+
+        retrieval_gateway._EXAMPLE_USE_CACHE.clear()
+
+    def _chunk(self, path: str, chunk_id: str, text: str, quality: float = 0.8):
+        from helpdesk.models import SourceChunk
+        from helpdesk.services.embeddings import build_text_embedding
+
+        return SourceChunk.objects.create(
+            repository_url="https://github.com/TransmodelEcosystem/NeTEx",
+            commit_sha="abc",
+            source_path=path,
+            chunk_id=chunk_id,
+            label=path.rsplit("/", 1)[-1],
+            text=text,
+            standards_scope=["NeTEx"],
+            quality_score=quality,
+            doc_type="example",
+            embedding_vector=build_text_embedding(text),
+        )
+
+    def test_examples_are_not_ordered_by_file_name(self):
+        from helpdesk.services.retrieval_gateway import examples_using_elements
+
+        self._chunk("examples/functions/DeckPlans-Example_train.xml", "deck", "<Quay id='d'/>", quality=0.9)
+        self._chunk("examples/stops/BasicStopPlace-two-quays_example.xml", "two", "<Quay id='a'/>", quality=0.5)
+        self._chunk("examples/stops/SimpleStation_quays.xml", "station", "<Quay id='s'/>", quality=0.5)
+
+        preferred = examples_using_elements(["Quay"], prefer_path="examples/stops/BasicStopPlace-two-quays_example.xml")
+        by_question = examples_using_elements(["Quay"], question="a station with two quays", limit=2)
+
+        self.assertEqual(preferred[0]["chunkId"], "two")
+        self.assertEqual([c["chunkId"] for c in by_question], ["two", "station"])
+
+    def test_the_shown_example_chunk_is_the_one_holding_the_shown_object(self):
+        from helpdesk.services.retrieval_gateway import shown_example_chunk
+
+        path = "examples/stops/BasicStopPlace-two-quays_example.xml"
+        self._chunk(path, "frame", "<SiteFrame id='f'><stopPlaces>", quality=0.9)
+        self._chunk(path, "other", "<StopPlace id=\"xx:other\" version=\"1\">", quality=0.9)
+        self._chunk(path, "shown", "<StopPlace id=\"xx:station_765\" version=\"1\"><quays>", quality=0.5)
+        example = {
+            "origin": "standard",
+            "sourcePath": path,
+            "repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx",
+            "xml": '<SiteFrame id="f"><stopPlaces><StopPlace id="xx:station_765" version="1"/></stopPlaces></SiteFrame>',
+        }
+
+        self.assertEqual(shown_example_chunk(example)["chunkId"], "shown")
+        self.assertIsNone(shown_example_chunk({**example, "origin": "generated"}))
+
+
+class ComposeExampleEvidenceTests(SimpleTestCase):
+    def test_the_shown_examples_chunk_comes_first_even_when_retrieval_missed_it(self):
+        from helpdesk.api import views
+
+        own = {"chunkId": "own", "sourcePath": "examples/stops/BasicStopPlace-two-quays_example.xml"}
+        deck = {"chunkId": "deck", "sourcePath": "examples/functions/DeckPlans-Example_train.xml"}
+        retrieved = [{"chunkId": f"r{i}", "sourcePath": f"examples/r{i}.xml"} for i in range(6)]
+        example = {"origin": "standard", "valid": True, "sourcePath": own["sourcePath"], "xml": "<SiteFrame><stopPlaces><StopPlace/>"}
+
+        with patch("helpdesk.services.retrieval_gateway.examples_using_elements", return_value=[deck]), patch(
+            "helpdesk.services.retrieval_gateway.shown_example_chunk", return_value=own
+        ), patch.object(views, "other_question", return_value=False):
+            composed = views._compose_example_evidence("Show a stop place with two quays", None, example, retrieved, retrieved, 6)
+
+        self.assertEqual([c["chunkId"] for c in composed][:2], ["own", "deck"])
+        self.assertEqual(len(composed), 6)
