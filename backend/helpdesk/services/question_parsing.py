@@ -35,6 +35,48 @@ _WHITESPACE_PATTERN = re.compile(r"\s+")
 _TOKEN_PATTERN = re.compile(r"[^\W_]+")
 _MAX_CORE_CONCEPT_CANDIDATES = 6
 
+# (endpoint, repository, term lowered) -> (core concept IRIs, expiry). One GraphDB query per term took ~0.17 s, about
+# four per question one after another: 0.64 s of the question's parsing (dev, 2026-11-09). An empty result is kept
+# for a shorter time: a failed query also returns nothing.
+_ANCHOR_CACHE: dict[tuple[str, str, str], tuple[list[str], float]] = {}
+_ANCHOR_TTL_SECONDS = 3600.0
+_ANCHOR_EMPTY_TTL_SECONDS = 600.0
+_ANCHOR_WORKERS = 4
+
+
+def _anchor_terms(connector, terms: list[str]) -> dict[str, list[str]]:
+    """Each term's core concepts: cached ones from the cache, the rest queried in parallel (HTTP only, no
+    database connection), each worker under a copy of the request's context so its timings still count."""
+    import contextvars
+    import time
+    from concurrent.futures import ThreadPoolExecutor
+
+    now = time.monotonic()
+    found: dict[str, list[str]] = {}
+    missing: list[str] = []
+    for term in dict.fromkeys(terms):
+        key = (connector.endpoint_url, connector.repository, term.strip().lower())
+        cached = _ANCHOR_CACHE.get(key)
+        if cached is not None and cached[1] > now:
+            found[term] = cached[0]
+        else:
+            missing.append(term)
+    if len(missing) == 1:
+        results = [connector.anchor_term_to_core_concepts(missing[0])]
+    elif missing:
+        with ThreadPoolExecutor(max_workers=min(_ANCHOR_WORKERS, len(missing))) as pool:
+            futures = [
+                pool.submit(contextvars.copy_context().run, connector.anchor_term_to_core_concepts, term) for term in missing
+            ]
+            results = [future.result() for future in futures]
+    else:
+        results = []
+    for term, iris in zip(missing, results):
+        found[term] = iris
+        ttl = _ANCHOR_TTL_SECONDS if iris else _ANCHOR_EMPTY_TTL_SECONDS
+        _ANCHOR_CACHE[(connector.endpoint_url, connector.repository, term.strip().lower())] = (iris, now + ttl)
+    return found
+
 _LOW_VALUE_TOKENS = {
     "show",
     "give",
@@ -351,9 +393,10 @@ class QuestionParsingService:
         if connector is None:
             return []
 
+        anchors = _anchor_terms(connector, original_terms)
         discovered: list[str] = []
         for term in original_terms:
-            for iri in connector.anchor_term_to_core_concepts(term):
+            for iri in anchors.get(term, []):
                 if not iri or not iri.startswith(TRANSMODEL_NAMESPACE):
                     continue
                 # Present GraphDB anchors in the app core namespace expected by runtime trace.

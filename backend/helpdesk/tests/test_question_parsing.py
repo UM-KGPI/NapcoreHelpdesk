@@ -274,3 +274,60 @@ class HasScopeHintTests(SimpleTestCase):
 
         self.assertFalse(has_scope_hint(Legacy(), []))
         self.assertTrue(has_scope_hint(Legacy(), ["OpRa"]))
+
+
+class AnchorTermsTests(SimpleTestCase):
+    """GraphDB anchors per term: queried in parallel, cached per term (0.64 s of parsing, 2026-11-09)."""
+
+    def setUp(self):
+        from helpdesk.services import question_parsing
+
+        question_parsing._ANCHOR_CACHE.clear()
+
+    class _Connector:
+        endpoint_url = "http://graphdb.test/repositories/r"
+        repository = "r"
+
+        def __init__(self, anchors):
+            self.anchors = anchors
+            self.calls: list[str] = []
+
+        def anchor_term_to_core_concepts(self, term):
+            import time
+
+            self.calls.append(term)
+            time.sleep(0.05)
+            return self.anchors.get(term, [])
+
+    def test_each_term_gets_its_own_anchors_and_is_queried_once(self):
+        from helpdesk.services.question_parsing import _anchor_terms
+
+        connector = self._Connector({"stop place": ["tm#STOP_PLACE"], "quay": ["tm#QUAY"]})
+        terms = ["stop place", "quay", "two"]
+
+        first = _anchor_terms(connector, terms)
+        second = _anchor_terms(connector, terms)
+
+        self.assertEqual(first, {"stop place": ["tm#STOP_PLACE"], "quay": ["tm#QUAY"], "two": []})
+        self.assertEqual(second, first)
+        self.assertEqual(sorted(connector.calls), sorted(terms))  # the second call was served from the cache
+
+    def test_terms_are_queried_in_parallel(self):
+        import time
+
+        from helpdesk.services.question_parsing import _anchor_terms
+
+        connector = self._Connector({})
+        started = time.perf_counter()
+        _anchor_terms(connector, ["a", "b", "c", "d"])
+
+        self.assertLess(time.perf_counter() - started, 0.15)  # four 0.05 s queries, not 0.2 s in a row
+
+    def test_the_anchor_order_follows_the_terms(self):
+        from helpdesk.services.question_parsing import QuestionParsingService
+
+        connector = self._Connector({"quay": ["https://transmodel-cen.eu/6.2/QUAY"], "stop place": ["https://transmodel-cen.eu/6.2/STOP_PLACE"]})
+        service = QuestionParsingService.__new__(QuestionParsingService)
+        service._graphdb_connector = lambda: connector
+
+        self.assertEqual(service._anchor_with_graphdb(["stop place", "quay"]), ["transmodel:STOP_PLACE", "transmodel:QUAY"])
