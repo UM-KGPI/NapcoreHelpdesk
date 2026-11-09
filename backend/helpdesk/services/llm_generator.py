@@ -1770,6 +1770,7 @@ def _request_chat_completion_untimed(
     temperature: float,
     max_tokens: int,
     messages: list[dict],
+    thinking: str = "adaptive",
 ) -> dict:
     if settings.LLM_PROVIDER == anthropic_chat.PROVIDER:
         # Claude through the official SDK; same response shape. Every caller here expects a JSON answer.
@@ -1781,6 +1782,7 @@ def _request_chat_completion_untimed(
             timeout_seconds=timeout_seconds,
             effort=settings.LLM_ANTHROPIC_EFFORT,
             json_answer=True,
+            thinking=thinking,
         )
 
     def _send(model_to_use: str) -> dict:
@@ -1851,8 +1853,12 @@ def _generate_answer_text(
     messages: list[dict],
     request_targets: list[dict],
     signals: dict | None = None,
+    thinking: str = "adaptive",
 ) -> str:
     """Execute one LLM call and return the post-processed (unvalidated) answer text.
+
+    `thinking` applies to Claude only: the first attempt passes LLM_ANTHROPIC_FIRST_ANSWER_THINKING,
+    a retry keeps the default (adaptive).
 
     When `signals` is given, it receives "evidence_answers_question" (see _evidence_answers_question).
 
@@ -1873,6 +1879,7 @@ def _generate_answer_text(
                     temperature=settings.LLM_TEMPERATURE,
                     max_tokens=answer_max_tokens(settings.LLM_MAX_TOKENS),
                     messages=messages,
+                    thinking=thinking,
                 )
                 break
             except error.HTTPError as exc:
@@ -2114,7 +2121,13 @@ def generate_answer_llm(
     answer: str | None = None
     signals: dict = {}
     try:
-        answer = _generate_answer_text(chunks=chunks, messages=messages, request_targets=request_targets, signals=signals)
+        answer = _generate_answer_text(
+            chunks=chunks,
+            messages=messages,
+            request_targets=request_targets,
+            signals=signals,
+            thinking=settings.LLM_ANTHROPIC_FIRST_ANSWER_THINKING,
+        )
         if (example_elements or structure_element) and not answer.strip():
             return _nothing_to_add(chunks)
         _validate_answer_language(answer=answer, question=question, target_language=target_language)
@@ -2387,7 +2400,7 @@ def stream_answer_llm(
     # Buffer all tokens before yielding any — validation must pass the full
     # answer before the client receives a single character, so a failed check
     # never produces a visible-then-vanishing answer.
-    def _collect_stream(active_messages: list[dict]) -> str:
+    def _collect_stream(active_messages: list[dict], thinking: str = "adaptive") -> str:
         collected: list[str] = []
         try:
             if settings.LLM_STREAMING and settings.LLM_PROVIDER != anthropic_chat.PROVIDER:
@@ -2412,6 +2425,7 @@ def stream_answer_llm(
                     temperature=settings.LLM_TEMPERATURE,
                     max_tokens=answer_max_tokens(settings.LLM_MAX_TOKENS),
                     messages=active_messages,
+                    thinking=thinking,
                 )
                 choices = payload.get("choices") or []
                 collected.append(((choices[0].get("message") or {}).get("content") or "") if choices else "")
@@ -2439,7 +2453,7 @@ def stream_answer_llm(
     answer_validated = True
     evidence_answers_question: bool | None = None
     try:
-        full_answer = _collect_stream(messages)
+        full_answer = _collect_stream(messages, thinking=settings.LLM_ANTHROPIC_FIRST_ANSWER_THINKING)
 
         logger.info(f"[STREAM_LLM_RAW] Raw response (first 250 chars): {full_answer[:250]}")
         evidence_answers_question = _evidence_answers_question(full_answer)

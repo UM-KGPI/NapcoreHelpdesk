@@ -11,7 +11,7 @@ from django.test import SimpleTestCase, override_settings
 from helpdesk.services import anthropic_chat
 from helpdesk.services.anthropic_chat import AnthropicRequestError, chat_completion, to_messages_api, unwrap_json_fence
 from helpdesk.services.controller_llm import decide_route_with_controller_llm
-from helpdesk.services.llm_generator import _request_chat_completion, stream_answer_llm
+from helpdesk.services.llm_generator import LLMGenerationError, _request_chat_completion, generate_answer_llm, stream_answer_llm
 
 
 def _response(text: str, stop_reason: str = "end_turn", stop_details=None) -> SimpleNamespace:
@@ -92,6 +92,15 @@ class ChatCompletionTests(SimpleTestCase):
         self.assertEqual(client.with_options.call_args.kwargs, {"timeout": 30, "max_retries": 1})
         self.assertEqual(payload["choices"][0]["message"]["content"], '{"answer": "A [E1]"}')
         self.assertEqual(payload["usage"], {"prompt_tokens": 100, "completion_tokens": 20})
+
+    def test_thinking_is_left_to_the_model_unless_disabled(self):
+        for thinking, expected in (("adaptive", None), ("disabled", {"type": "disabled"})):
+            client = _fake_client(_response("A"))
+            with patch("helpdesk.services.anthropic_chat._client", return_value=client):
+                chat_completion(
+                    api_key="k", model="m", messages=[{"role": "user", "content": "Q"}], max_tokens=10, timeout_seconds=5, thinking=thinking
+                )
+            self.assertEqual(client.with_options.return_value.messages.create.call_args.kwargs.get("thinking"), expected)
 
     def test_refusal_is_raised_so_callers_fall_back(self):
         client = _fake_client(_response("", stop_reason="refusal", stop_details=SimpleNamespace(category="cyber")))
@@ -184,6 +193,50 @@ class RoutingTests(SimpleTestCase):
         with patch("helpdesk.services.llm_generator._validate_generated_answer"):
             with self.assertRaises(LLMGenerationError):
                 list(stream_answer_llm(question="How are timetables exchanged in NeTEx?", chunks=CHUNKS, scope=["NeTEx"]))
+
+
+_ANSWER = {"choices": [{"message": {"content": '{"answer": "Timetables use a TimetableFrame [E1]."}'}}]}
+_QUESTION = "How are timetables exchanged in NeTEx?"
+
+
+@override_settings(**ANTHROPIC)
+@patch("helpdesk.services.llm_generator._validate_grounded_example_output")
+@patch("helpdesk.services.llm_generator._validate_answer_language")
+@patch("helpdesk.services.anthropic_chat.chat_completion", return_value=_ANSWER)
+class FirstAnswerThinkingTests(SimpleTestCase):
+    """The first attempt answers without thinking (fast); a rejected answer is retried with thinking."""
+
+    def _thinking_per_call(self, chat_mock):
+        return [call.kwargs["thinking"] for call in chat_mock.call_args_list]
+
+    def test_an_accepted_first_answer_is_one_call_without_thinking(self, chat_mock, _l, _e):
+        for answer in (
+            lambda: generate_answer_llm(question=_QUESTION, chunks=CHUNKS, scope=["NeTEx"]),
+            lambda: list(stream_answer_llm(question=_QUESTION, chunks=CHUNKS, scope=["NeTEx"])),
+        ):
+            chat_mock.reset_mock()
+            with patch("helpdesk.services.llm_generator._validate_generated_answer"):
+                answer()
+            self.assertEqual(self._thinking_per_call(chat_mock), ["disabled"])
+
+    def test_a_rejected_first_answer_is_retried_with_thinking(self, chat_mock, _l, _e):
+        for answer in (
+            lambda: generate_answer_llm(question=_QUESTION, chunks=CHUNKS, scope=["NeTEx"]),
+            lambda: list(stream_answer_llm(question=_QUESTION, chunks=CHUNKS, scope=["NeTEx"])),
+        ):
+            chat_mock.reset_mock()
+            with patch(
+                "helpdesk.services.llm_generator._validate_generated_answer",
+                side_effect=[LLMGenerationError("unsupported claim"), None, None],
+            ):
+                answer()
+            self.assertEqual(self._thinking_per_call(chat_mock), ["disabled", "adaptive"])
+
+    @override_settings(LLM_ANTHROPIC_FIRST_ANSWER_THINKING="adaptive")
+    def test_the_setting_can_keep_thinking_on_the_first_attempt(self, chat_mock, _l, _e):
+        with patch("helpdesk.services.llm_generator._validate_generated_answer"):
+            generate_answer_llm(question=_QUESTION, chunks=CHUNKS, scope=["NeTEx"])
+        self.assertEqual(self._thinking_per_call(chat_mock), ["adaptive"])
 
 
 @override_settings(

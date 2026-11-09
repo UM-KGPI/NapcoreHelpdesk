@@ -74,6 +74,7 @@ env = environ.Env(
     LLM_REASONING_TOKEN_ALLOWANCE=(int, 0),
     ANTHROPIC_API_KEY=(str, ""),
     LLM_ANTHROPIC_EFFORT=(str, "low"),
+    LLM_ANTHROPIC_FIRST_ANSWER_THINKING=(str, "disabled"),
     EMBEDDING_BACKEND=(str, "hash"),
     EMBEDDING_SERVICE_URL=(str, "http://embedder:8090"),
     EMBEDDING_SERVICE_TIMEOUT_SECONDS=(int, 120),
@@ -352,6 +353,16 @@ _ANTHROPIC_EFFORTS = {"low", "medium", "high", "xhigh", "max"}
 LLM_ANTHROPIC_EFFORT = env("LLM_ANTHROPIC_EFFORT").strip().lower() or "low"
 if LLM_ANTHROPIC_EFFORT not in _ANTHROPIC_EFFORTS:
     raise ImproperlyConfigured(f"LLM_ANTHROPIC_EFFORT must be one of {sorted(_ANTHROPIC_EFFORTS)}.")
+# Thinking for the first attempt at an answer: "disabled" (default) answers straight away, "adaptive" lets
+# the model think first. A rejected answer is always retried with adaptive thinking, so the slow path is
+# paid only when the fast one fails validation. 2026-11-09, Haiku 5.5, 9 example questions x 3: model time
+# 5.95 s with thinking, 2.73 s without; 2 vs 3 first answers rejected; 1 empty answer without thinking on
+# the retry either. Thinking can be switched off only at effort low/medium/high.
+LLM_ANTHROPIC_FIRST_ANSWER_THINKING = env("LLM_ANTHROPIC_FIRST_ANSWER_THINKING").strip().lower() or "disabled"
+if LLM_ANTHROPIC_FIRST_ANSWER_THINKING not in {"adaptive", "disabled"}:
+    raise ImproperlyConfigured("LLM_ANTHROPIC_FIRST_ANSWER_THINKING must be 'adaptive' or 'disabled'.")
+if LLM_ANTHROPIC_FIRST_ANSWER_THINKING == "disabled" and LLM_ANTHROPIC_EFFORT in {"xhigh", "max"}:
+    raise ImproperlyConfigured("LLM_ANTHROPIC_FIRST_ANSWER_THINKING=disabled needs LLM_ANTHROPIC_EFFORT low, medium or high.")
 # "hash" (default) or "semantic". Semantic needs the embedding service (compose profile
 # "semantic") and every chunk re-embedded with it: hash and semantic vectors cannot be mixed.
 EMBEDDING_BACKEND = env("EMBEDDING_BACKEND").strip().lower()
