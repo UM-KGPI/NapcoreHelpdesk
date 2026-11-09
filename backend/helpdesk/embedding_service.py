@@ -15,7 +15,7 @@ provider and is ignored.
 
 Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
 Crafted by: AI coding agents
-Created: 2026-10-26  |  Modified: 2026-10-26
+Created: 2026-10-26  |  Modified: 2026-11-09
 """
 
 from __future__ import annotations
@@ -39,6 +39,28 @@ PREFIXES = {"query": "query: ", "passage": "passage: "}
 logger = logging.getLogger("embedding_service")
 
 
+def cpu_threads() -> int | None:
+    """Threads for the model: EMBEDDER_THREADS, else the container's CPU limit (cgroup cpu.max), else None
+    (the runtime's default, one per host core).
+
+    The runtime's default counts the host's cores, not the container's limit: on prod (cpus 2 on a larger
+    host) every request was throttled, 1.1-1.3 s for a short question (12 ms on the dev stack). Under a
+    1-CPU limit on a 4-core machine, a definition passage took 576 ms with the default and 200 ms with one
+    thread (2026-11-09)."""
+    configured = os.environ.get("EMBEDDER_THREADS", "").strip()
+    if configured:
+        return max(1, int(configured))
+    try:
+        quota, period = open("/sys/fs/cgroup/cpu.max").read().split()[:2]
+    except (OSError, ValueError):
+        return None
+    if quota == "max":
+        return None
+    import math
+
+    return max(1, math.ceil(int(quota) / int(period)))
+
+
 def load_model():
     """Load the model from the cache directory, downloading it once if absent."""
     from fastembed import TextEmbedding
@@ -55,7 +77,9 @@ def load_model():
         )
     except ValueError:
         pass  # already registered in this process
-    model = TextEmbedding(MODEL_NAME, cache_dir=os.environ.get("EMBEDDER_MODEL_DIR", "/models"))
+    threads = cpu_threads()
+    logger.info("embedding model threads: %s", threads or "runtime default")
+    model = TextEmbedding(MODEL_NAME, cache_dir=os.environ.get("EMBEDDER_MODEL_DIR", "/models"), threads=threads)
     model.model.tokenizer.enable_truncation(max_length=MAX_TOKENS)
     return model
 

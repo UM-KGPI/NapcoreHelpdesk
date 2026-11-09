@@ -47,6 +47,7 @@ from helpdesk.models import SourceChunk
 from helpdesk.db_fields import HAS_NATIVE_PGVECTOR
 from helpdesk.services.embeddings import (
     build_text_embedding,
+    cached_passage_embedding,
     cosine_similarity,
     normalize_text_tokens,
     passage_text,
@@ -2248,7 +2249,8 @@ def _retrieve_chunks_once(
         else:
             chunk_embedding = chunk.embedding_vector
             if chunk_embedding is None or len(chunk_embedding) == 0:
-                chunk_embedding = build_text_embedding(_build_chunk_embedding_input(chunk))
+                # Unstored chunks (ontology definitions) recur across questions: embedded once each.
+                chunk_embedding = cached_passage_embedding(_build_chunk_embedding_input(chunk))
             vector_score = max(0.0, cosine_similarity(query_embedding, chunk_embedding))
         quality_score = max(0.0, min(1.0, chunk.quality_score))
         doc_type = (getattr(chunk, "doc_type", "guide") or "guide").lower()
