@@ -1035,23 +1035,43 @@ def concept_element_names(concept_ids: set[str]) -> list[str]:
     )
 
 
+# (element name, per_element) -> (chunk ids, highest quality first; expiry). The lookup depends only on the name,
+# not the question: 0.41 s mean per answer on prod (2026-11-09), now once per name and process per hour.
+_ELEMENT_CANDIDATE_CACHE: dict[tuple[str, int], tuple[tuple[int, ...], float]] = {}
+_ELEMENT_CANDIDATE_TTL_SECONDS = 3600.0
+
+
+def _element_candidate_ids(name: str, per_element: int) -> tuple[int, ...]:
+    from django.db.models import Q
+
+    key = (name, per_element)
+    now = time.monotonic()
+    cached = _ELEMENT_CANDIDATE_CACHE.get(key)
+    if cached is not None and cached[1] > now:
+        return cached[0]
+    tag_match = Q(text__contains=f"<{name} ") | Q(text__contains=f"<{name}>") | Q(text__contains=f"<{name}/")
+    ids = tuple(
+        SourceChunk.objects.filter(tag_match, doc_type__in=("example", "schema"))
+        .order_by("-quality_score", "id")
+        .values_list("id", flat=True)[:per_element]
+    )
+    _ELEMENT_CANDIDATE_CACHE[key] = (ids, now + _ELEMENT_CANDIDATE_TTL_SECONDS)
+    return ids
+
+
 def _element_candidates(element_names: list[str], per_element: int = 6) -> list:
     """Indexed example and schema chunks whose text contains <Element followed by
     a space, > or />, a few per element, highest quality first."""
-    from django.db.models import Q
-
-    found: list = []
-    seen: set[int] = set()
+    ordered_ids: list[int] = []
     for name in element_names[:4]:
-        tag_match = Q(text__contains=f"<{name} ") | Q(text__contains=f"<{name}>") | Q(text__contains=f"<{name}/")
-        for chunk in (
-            SourceChunk.objects.filter(tag_match, doc_type__in=("example", "schema"))
-            .order_by("-quality_score", "id")[:per_element]
-        ):
-            if chunk.id not in seen:
-                seen.add(chunk.id)
-                found.append(chunk)
-    return found
+        for chunk_id in _element_candidate_ids(name, per_element):
+            if chunk_id not in ordered_ids:
+                ordered_ids.append(chunk_id)
+    if not ordered_ids:
+        return []
+    # Fresh rows by primary key, in the cached order; ids gone since (a source refresh) are skipped.
+    chunks = SourceChunk.objects.in_bulk(ordered_ids)
+    return [chunks[chunk_id] for chunk_id in ordered_ids if chunk_id in chunks]
 
 
 def _ensure_element_coverage(

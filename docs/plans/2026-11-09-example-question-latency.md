@@ -256,6 +256,24 @@ alias, as in the prototype; when every alias is over the bound, the two longest 
 did not fall (1,690 → 1,763 ms): 149 different questions mostly pay first counts. Item 3 (concept loader) and the
 element-candidate cache are next, separately.
 
+**After deploy (0.97.147–0.97.149): prod's planner differs from dev's.** Two regressions, both confirmed with a
+read-only EXPLAIN ANALYZE on prod:
+- #365's `ORDER BY quality_score DESC, id LIMIT 400` made prod walk the `quality_score` index backwards and filter
+  50,569 rows (3.3 s for "vehicle type", 1.5 s before). Fix #367: ids and quality only, top rows picked in Python.
+- Without ORDER BY, the one query OR-ing all selected aliases (two `ILIKE`s each) became a parallel scan of the
+  whole 3 GB table (1.3 s). Fix #369: one query per alias (~20 ms on prod), the same query that decides the
+  frequency bound; its (id, quality) rows are cached per process for an hour, so a warm process runs no path query.
+- Rule for this table: never `ORDER BY … LIMIT` on a trigram `ILIKE` filter, and no long OR of `ILIKE`s; dev's
+  planner keeps the trigram indexes in both cases, prod's does not.
+- Correction: #365's hit@5 gain was run-to-run variation (q094, q136, q144 vary between full runs); hit@10 0.9262
+  and hit@20 0.9530 reproduce.
+- **Prod after #369 (0.97.149), §5 questions:** answer 8.1 → 5.2–5.7 s mean; retrieval 3.4 → 1.4–1.6 s;
+  `graphCandidateQueryMs` 2.03 → 0.16–0.33 s (0.08 s cached; ~0.65 s the first time a worker sees an alias).
+
+**Element-candidate cache (follow-up, item 5):** `_element_candidates` caches its chunk ids per element name for an
+hour and loads the rows by primary key. Dev §5: `elementCandidateMs` 149 ms first time, 7 ms cached; benchmark
+hits identical per question.
+
 **Verification.** §5 as usual, plus: semantic benchmark gated against the morning baseline
 (`--gate-against /tmp/bench-index-True.json` in the dev backend container, or re-run the baseline first), report
 per-question hit@10 changes, not only aggregates; prod stage timings before/after from `retrievalStageTimingsMs`.
