@@ -185,6 +185,84 @@ The system prompt and rules are the same for every answer; the Anthropic API can
 Gain is cost and a little time to first token, not thinking time; the stable prefix may be below the model's
 minimum cacheable length, so check `usage.cache_read_input_tokens` on a second call before keeping it.
 
+### P6 — Bound the graph candidate query (Fable, 2026-11-09 evening; prod's largest retrieval stage)
+
+**What it is.** After P1–P3 and the embedder fix, prod's retrieval (3.4 s mean over the §5 questions) is 59 %
+one stage: `graphCandidateQueryMs`, 2.03 s mean, 0–3.92 s per question. It is not the GraphDB call
+(`graphExpandMs` is 18 ms). It is `_graph_concept_candidates` (`retrieval_gateway.py` ~1483): a PostgreSQL
+search for schema/example chunks whose `source_path` or `label` contains an alias of the expanded concepts,
+then every matching chunk is loaded *with its text* and ranked in Python (`_graph_candidate_rank_score`, ~1422)
+to keep `graph_expansion_max_candidates` = 8.
+
+**Why it is slow (measured on dev, confirmed by prod stage timings).**
+- Alias selection ranks aliases by token overlap with the question, so single generic words win: for "fare zone"
+  the aliases `fare` (10,078 schema/example chunks in the NeTEx scope) and `zone` (1,064); for "two quays"
+  `stop` (3,747), `PLACE` (2,729), `with` (1,077), `stopplace` (2,567). The fast path has no LIMIT: 4,957–10,830
+  rows are fetched with text and ranked to keep 8. Of the stage's time 75–80 % is Python (profile of the
+  fare-zone ranking, 10,830 rows, 3.8 s under cProfile: `_token_overlap_score` over chunk text 66 %), 20–25 %
+  SQL; the trigram indexes on `upper(source_path)`, `upper(label)` and `text` are already used.
+- `transmodel:with` is an `owl:ObjectProperty` (FACILITY_SET → PASSENGER_SPOT_ALLOCATION) whose `rdfs:label`
+  the loader turns into a concept (`semantic_graph.py` `_load_ontology_from_graphdb`, labels query takes every
+  subject). `_GENERIC_GRAPH_CONCEPTS` (~1219) hand-excludes two of the same kind (`when`, `usedIn`).
+- Prod's backend has 2 CPUs for 3 gunicorn workers, so the Python part weighs about 2–3× more there than on dev.
+
+**What the stage is worth** (semantic index, `run_retrieval_benchmark --app-scope --graph-only`, 149 questions,
+baseline this morning: hit@5 0.8322, hit@10 0.9195, hit@20 0.9396, MRR@10 0.6543):
+- Stage switched off: hit@10 0.9128, MRR@10 0.6562. Three questions lose their top-10 hit (q077, q084: OpRa ↔
+  NeTEx mapping; q146: which standard for real-time vs timetables), two gain one (q088, q147). Its value is
+  cross-standard concept candidates, not single-standard example questions.
+- For the §5 example questions its 8 candidates did not reach the evidence (checked three answers: 0 of 8 among
+  the 6 evidence chunks). For "two quays" it had found `BasicStopPlace-two-quays_example.xml` and the evidence
+  shown to the model was DeckPlans, CarPooling and ChauffeuredService examples instead: a quality item, below.
+- **Prototype, aliases matching more than 1,000 chunks of the scope left out:** hit@5 0.8389, hit@10 **0.9262**
+  (q070 gained, none lost), hit@20 0.9396, MRR@10 0.6549. Stage time on dev for the slow questions 866–2,119 ms
+  → 111–150 ms; unchanged where it was already fast.
+- Not viable: ranking without chunk text (two-pass: 2/8–8/8 of today's candidates agree; cheaper but a
+  different stage, no benchmark case for it); removing the stage (the three cross-standard hits).
+
+**Items.**
+1. **Alias frequency bound (the fix).** Before the fast query, leave out every alias whose match count on
+   `source_path`/`label` within the scope's schema/example chunks exceeds `GRAPH_ALIAS_MAX_CHUNKS` (setting,
+   default 1000: the prototype's value; tune only with the benchmark). Count with a LIMIT-bounded query
+   (`base.filter(alias_filter)[:cap + 1].count()`-style, or `exists`-then-count), cached per process keyed by
+   (alias lowered, scope) with a TTL of about an hour (chunks change at the 03:30 UTC source refresh). If
+   pruning leaves no alias, keep the two most specific ones (longest) rather than returning nothing, and
+   benchmark that branch too.
+2. **Row bound as a safety net.** Order the fast path by `quality_score` desc and cap it (`GRAPH_CANDIDATE_SCAN_LIMIT`,
+   e.g. 400 rows) so no alias set can ever rank thousands of rows again. Expected to change nothing after item 1;
+   the benchmark says.
+3. **Concept loader (separate PR).** Exclude `owl:ObjectProperty` and `owl:DatatypeProperty` subjects from the
+   labels query in `_load_ontology_from_graphdb`, then cut `_GENERIC_GRAPH_CONCEPTS` back to the standard-identity
+   entries. This also changes question concept extraction, so `run_concept_benchmark --method app` (23/26) and
+   the retrieval benchmark both gate it.
+4. **Tests.** None exist for `_graph_concept_candidates`. Add: an over-frequent alias is skipped and a specific
+   one of the same concept is kept; a concept set whose aliases are all over the cap still yields candidates;
+   the row cap is honoured; the count cache is keyed by scope.
+5. **Follow-ups, not in this item.** `elementCandidateMs` (0.42 s prod, max 0.80): `_element_candidates` depends
+   only on the element names, not the question, so a per-name cache with the same TTL removes it after warm-up
+   (its queries already use the trigram index; the cost is 4,400 heap rechecks per name). The two-quays evidence
+   quality (the exact example found by this stage is dropped by preselection/scoring) is a retrieval-quality item
+   of its own. P4 (overlap in threads) only after P6, so it overlaps small stages, not a 2-second one.
+
+**Expected.** Prod stage 2.0 → ~0.2–0.3 s; retrieval 3.4 → ~1.7 s; example answer 8.1 → ~6.4 s mean. With the
+element-candidate cache, ~6 s.
+
+**Status (Opus, 2026-11-09):** items 1, 2 and 4 implemented (`_alias_too_frequent`, `GRAPH_ALIAS_MAX_CHUNKS` 1000,
+`GRAPH_CANDIDATE_SCAN_LIMIT` 400, `GraphCandidateAliasBoundTests`). Pruned aliases give their slot to the next
+alias, as in the prototype; when every alias is over the bound, the two longest are kept. Semantic benchmark,
+149 questions, against the morning baseline: hit@5 0.8322 → 0.8389, hit@10 0.9195 → 0.9262, hit@20 0.9396 →
+0.9530, MRR@10 0.6543 → 0.6549; better: q144 (hit@5), q070 (hit@10), q078 and q088 (hit@20); worse: none. The
+§5 questions on dev: stage 712 → 226 ms (counts not yet cached) and 130 ms (cached). The benchmark's mean latency
+did not fall (1,690 → 1,763 ms): 149 different questions mostly pay first counts. Item 3 (concept loader) and the
+element-candidate cache are next, separately.
+
+**Verification.** §5 as usual, plus: semantic benchmark gated against the morning baseline
+(`--gate-against /tmp/bench-index-True.json` in the dev backend container, or re-run the baseline first), report
+per-question hit@10 changes, not only aggregates; prod stage timings before/after from `retrievalStageTimingsMs`.
+Reproduction scripts from this review (scratchpad): `graphprof.py` (SQL vs Python split, rows ranked per
+question), `graphfix.py` / `graphfix2.py` (alias variants, two-pass), `benchvariant.py` (benchmark with the stage
+off or aliases pruned).
+
 ### Not planned
 
 Changing the embedding model (trial 2026-11-08: none beat e5-small), raising Anthropic effort (slower, no gain),
@@ -199,6 +277,12 @@ plain ~15 s → ~9 s. Treat as estimates until P0 numbers from prod are in.
 
 **P0 status (2026-11-09):** implemented. Every stored trace now has `timingsMs` (parseMs, retrievalMs/retrievalCalls,
 llmMs/llmCalls/llmOutputTokens, exampleMs, totalMs) plus `retrievalLatencyMs` and `retrievalStageTimingsMs`.
+
+**Status 2026-11-09 evening (prod 0.97.146):** live are P0 (#350), P1 Tier 1 (#353), the embedder thread fix and
+passage cache (#355), warm-up after deploy (#357), P3 (#358), and the first answer without thinking with a thinking
+retry (#361, `LLM_ANTHROPIC_FIRST_ANSWER_THINKING`, the user's decision after the 3-run protocol: model 5.95 →
+2.51 s, 0 rejected, 0 empty). `EMBEDDER_CPUS` 2 → 4 on prod gained ~0.2 s. Prod §5 set: 20.5 → 8.1 s mean
+(retrieval 13.0 → 3.4 s, model ~6.7 → 2.5 s). P2 is worth ~0.2 s on prod and P4 waits for P6. Next: P6.
 
 ## 5. Verification protocol (every PR)
 

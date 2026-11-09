@@ -149,6 +149,8 @@ env = environ.Env(
     RETRIEVAL_LEXICAL_POOL_SIZE=(int, 8),
     VECTOR_INDEX_SEARCH=(bool, True),
     VECTOR_INDEX_PROBES=(int, 20),
+    GRAPH_ALIAS_MAX_CHUNKS=(int, 1000),
+    GRAPH_CANDIDATE_SCAN_LIMIT=(int, 400),
     RETRIEVAL_MMR_LAMBDA=(float, 0.92),
     RETRIEVAL_KEYWORD_TRAP_PENALTY=(float, 0.60),
     POLICY_STRICT_CLAIM_GUARD=(bool, False),
@@ -472,6 +474,12 @@ RETRIEVAL_LEXICAL_POOL_SIZE = env("RETRIEVAL_LEXICAL_POOL_SIZE")
 # Vector search through the ivfflat index (retrieval_gateway._nearest_ids_by_index); False: the exact scan.
 VECTOR_INDEX_SEARCH = env("VECTOR_INDEX_SEARCH")
 VECTOR_INDEX_PROBES = env("VECTOR_INDEX_PROBES")
+# Graph candidates (retrieval_gateway._graph_concept_candidates): a concept alias whose path/label matches more
+# schema/example chunks of the scope than GRAPH_ALIAS_MAX_CHUNKS is too generic to find candidates ("fare" matched
+# 10,078 NeTEx chunks, all ranked in Python to keep 8); 0 turns the bound off. GRAPH_CANDIDATE_SCAN_LIMIT caps the
+# rows ranked per question (highest quality first).
+GRAPH_ALIAS_MAX_CHUNKS = env("GRAPH_ALIAS_MAX_CHUNKS")
+GRAPH_CANDIDATE_SCAN_LIMIT = env("GRAPH_CANDIDATE_SCAN_LIMIT")
 RETRIEVAL_MMR_LAMBDA = env("RETRIEVAL_MMR_LAMBDA")
 RETRIEVAL_KEYWORD_TRAP_PENALTY = env("RETRIEVAL_KEYWORD_TRAP_PENALTY")
 POLICY_STRICT_CLAIM_GUARD = env("POLICY_STRICT_CLAIM_GUARD")
