@@ -1718,7 +1718,34 @@ def _build_messages(
 SUPPORTED_LLM_PROVIDERS = {"openai-compatible", anthropic_chat.PROVIDER}
 
 
-def _request_chat_completion(
+def _request_chat_completion(*args, **kwargs) -> dict:
+    """_request_chat_completion_untimed, with its time added to the request's timings (llmMs, llmCalls)."""
+    from helpdesk.services import request_timing
+
+    with request_timing.timed("llmMs", "llmCalls"):
+        response = _request_chat_completion_untimed(*args, **kwargs)
+    # Output tokens include thinking: a call's time follows them, not the prompt (2026-11-09: 530 tokens
+    # took 2.3 s, 2,000 took 8 s).
+    usage = response.get("usage") if isinstance(response, dict) else None
+    if isinstance(usage, dict) and isinstance(usage.get("completion_tokens"), int):
+        request_timing.add("llmOutputTokens", usage["completion_tokens"])
+    return response
+
+
+def _stream_request_chat_completion(*args, **kwargs) -> Generator[str, None, None]:
+    """_stream_request_chat_completion_untimed, timed from the request to the last token (llmMs, llmCalls)."""
+    import time
+
+    from helpdesk.services import request_timing
+
+    started = time.perf_counter()
+    try:
+        yield from _stream_request_chat_completion_untimed(*args, **kwargs)
+    finally:
+        request_timing.add("llmMs", (time.perf_counter() - started) * 1000, "llmCalls")
+
+
+def _request_chat_completion_untimed(
     api_base_url: str,
     api_key: str,
     model: str,
@@ -2193,7 +2220,7 @@ def generate_answer_llm(
     }
 
 
-def _stream_request_chat_completion(
+def _stream_request_chat_completion_untimed(
     api_base_url: str,
     api_key: str,
     model: str,

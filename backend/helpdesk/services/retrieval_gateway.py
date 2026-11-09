@@ -1625,7 +1625,16 @@ def retrieve_chunks(
 _TRANSLATE = object()
 
 
-def retrieve_chunks_with_trace(
+def retrieve_chunks_with_trace(*args, **kwargs) -> tuple[list[dict], dict]:
+    """_retrieve_chunks_with_trace_untimed (below), with its time added to the request's timings
+    (retrievalMs, retrievalCalls)."""
+    from helpdesk.services import request_timing
+
+    with request_timing.timed("retrievalMs", "retrievalCalls"):
+        return _retrieve_chunks_with_trace_untimed(*args, **kwargs)
+
+
+def _retrieve_chunks_with_trace_untimed(
     question: str,
     top_k: int,
     min_score: float,

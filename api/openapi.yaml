@@ -1808,6 +1808,22 @@ components:
             For a "does the standard have X?" question: the source paths of the evidence put first (the
             Transmodel definition of X, stating which standards implement it, and the schema elements named
             after X). Empty for other questions.
+        timingsMs:
+          type: object
+          description: >-
+            Where the answer's time went, in milliseconds: parseMs, retrievalMs and retrievalCalls (all retrieval
+            calls), llmMs, llmCalls and llmOutputTokens (all model calls; output tokens include thinking),
+            exampleMs (the example's lookup or generation) and totalMs. A key is missing when its step did not run.
+          additionalProperties:
+            type: [number, "null"]
+        retrievalLatencyMs:
+          type: number
+          description: The last retrieval call's own duration in milliseconds.
+        retrievalStageTimingsMs:
+          type: object
+          description: The last retrieval call's duration per stage, in milliseconds.
+          additionalProperties:
+            type: number
         llmDroppedAnswer:
           type: [string, "null"]
           description: >-
