@@ -555,35 +555,108 @@ def _added_candidate(chunk: SourceChunk, score: float) -> dict:
     }
 
 
-def examples_using_elements(elements: list[str], limit: int = 3, repository: str = "netex") -> list[dict]:
+# (repository, tags) -> ((id, source_path, label, heading, quality_score) rows of the example chunks using all the
+# tags; expiry). The rows depend only on the tags; the order is chosen per question.
+_EXAMPLE_USE_CACHE: dict[tuple[str, tuple[str, ...]], tuple[tuple[tuple, ...], float]] = {}
+_EXAMPLE_USE_TTL_SECONDS = 3600.0
+
+
+def _example_rows_using(repository: str, tags: tuple[str, ...]) -> tuple[tuple, ...]:
+    """Example chunks whose text uses every tag: no ORDER BY/LIMIT (see _alias_rows), cached for an hour."""
+    from helpdesk.services.netex_example_generator import has_tag
+
+    key = (repository, tags)
+    now = time.monotonic()
+    cached = _EXAMPLE_USE_CACHE.get(key)
+    if cached is not None and cached[1] > now:
+        return cached[0]
+    query = SourceChunk.objects.filter(repository_url__icontains=repository, source_path__startswith="examples/")
+    for tag in tags:
+        query = query.filter(has_tag(tag))
+    rows = tuple(query.order_by().values_list("id", "source_path", "label", "heading", "quality_score"))
+    _EXAMPLE_USE_CACHE[key] = (rows, now + _EXAMPLE_USE_TTL_SECONDS)
+    return rows
+
+
+def examples_using_elements(
+    elements: list[str],
+    limit: int = 3,
+    repository: str = "netex",
+    *,
+    prefer_path: str | None = None,
+    question: str = "",
+) -> list[dict]:
     """The standard's own example chunks that use the given elements, most of them first, one per file.
 
     For a generated example, the text is about how the standard fills the elements that hold the
     question's values; similarity search found a rail example without WheelchairPlaceCapacity for "a
     coach with 49 seats and 1 wheelchair area" while nine example files use it. A text lookup on the
-    element tags (about 80 ms) finds them directly.
-    """
-    from helpdesk.services.netex_example_generator import has_tag
+    element tags finds them directly.
 
+    Within each tier: the file of the example shown to the user (prefer_path) first, then files whose path,
+    label or heading share the most words with the question, then quality. Not by file name: in path order,
+    DeckPlans-Example_train.xml came first for StopPlace, Quay and LiftEquipment, and the text next to a
+    two-quays example described the deck plan's quays (2026-11-09).
+    """
     tags = [name for name in elements if re.fullmatch(r"[A-Za-z][\w.-]*", name)][:4]
     if not tags:
         return []
-    base = SourceChunk.objects.filter(repository_url__icontains=repository, source_path__startswith="examples/")
-    found: list[dict] = []
+
+    def rank(row: tuple) -> tuple:
+        _chunk_id, path, label, heading, quality = row
+        overlap = _token_overlap_score(question=question, chunk_text=f"{path} {label or ''} {heading or ''}") if question else 0.0
+        return (bool(prefer_path) and path == prefer_path, overlap, float(quality or 0.0), -int(_chunk_id))
+
+    chosen: list[int] = []
     files: set[str] = set()
     # All tags first, then fewer: a chunk using every value element shows them together.
     for size in range(len(tags), 0, -1):
-        query = base
-        for tag in tags[:size]:
-            query = query.filter(has_tag(tag))
-        for chunk in query.order_by("source_path", "chunk_id")[:40]:
-            if chunk.source_path in files or chunk.source_path.startswith(".mylocal"):
+        for row in sorted(_example_rows_using(repository, tuple(tags[:size])), key=rank, reverse=True):
+            chunk_id, path = row[0], row[1]
+            if path in files or path.startswith(".mylocal"):
                 continue
-            files.add(chunk.source_path)
-            found.append(_added_candidate(chunk, 1.0))
-            if len(found) >= limit:
-                return found
-    return found
+            files.add(path)
+            chosen.append(int(chunk_id))
+            if len(chosen) >= limit:
+                break
+        if len(chosen) >= limit:
+            break
+    chunks = SourceChunk.objects.in_bulk(chosen)
+    return [_added_candidate(chunks[chunk_id], 1.0) for chunk_id in chosen if chunk_id in chunks]
+
+
+def shown_example_chunk(generated_example: dict | None) -> dict | None:
+    """The indexed chunk of the file a standard example was taken from, the one holding what is shown.
+
+    The text next to the example has to be able to describe it; without this chunk in the evidence it described
+    other files' examples instead (6 of 8 example questions, 2026-11-09). The chunk with the shown main
+    object's id is preferred, then one that uses the main object's tag, then any chunk of the file.
+    """
+    from helpdesk.services.netex_example_generator import has_tag, main_object
+
+    example = generated_example or {}
+    path = example.get("sourcePath") or ""
+    if example.get("origin") != "standard" or not path:
+        return None
+    file_chunks = SourceChunk.objects.filter(source_path=path)
+    if example.get("repositoryUrl"):
+        file_chunks = file_chunks.filter(repository_url=example["repositoryUrl"])
+    main = main_object(example)
+    xml = example.get("xml") or ""
+    main_id = ""
+    if main:
+        match = re.search(rf"<{re.escape(main)}\b[^>]*\bid=\"([^\"]+)\"", xml)
+        main_id = match.group(1) if match else ""
+    candidates = list(file_chunks.filter(has_tag(main)).order_by()) if main else []
+    if main_id:
+        holding = [c for c in candidates if f'id="{main_id}"' in (c.text or "")]
+        candidates = holding or candidates
+    if not candidates:
+        candidates = list(file_chunks.order_by()[:50])
+    if not candidates:
+        return None
+    best = max(candidates, key=lambda c: (float(c.quality_score or 0.0), -int(c.id)))
+    return _added_candidate(best, 1.0)
 
 
 MAX_NAMED_EXAMPLES = 2

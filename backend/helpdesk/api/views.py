@@ -1453,27 +1453,11 @@ class QuestionAnswerView(APIView):
                             min_results=_min_evidence_results(),
                             english_question=f"{english_question or question} {' '.join(example_elements)}",
                         ),
+                        search_question=english_question or question,
                     )
-                    # The standard's own examples that use the elements holding the question's values come
-                    # first: the text says how the standard fills them (SeatingCapacity, WheelchairPlaceCapacity).
-                    from helpdesk.services.retrieval_gateway import examples_using_elements
-
-                    using = examples_using_elements(value_element_names(generated_example))
-                    using_ids = {chunk["chunkId"] for chunk in using}
-                    # A question that also asks something else ("How do you describe a stop place?") keeps the
-                    # best blocks of its own search first, so that part can be answered from them.
-                    asked_too = other_question(english_question or question)
-                    first = chunks[:3] if asked_too else []
-                    if asked_too and (definition := definition_chunk(main_object(generated_example))):
-                        # The schema's definition of what the example is an example of, so "how do you describe
-                        # a stop place" is answered from the standard's own words.
-                        first = [definition] + [c for c in first if c["chunkId"] != definition["chunkId"]][:2]
-                    seen_ids = {c["chunkId"] for c in first} | using_ids
-                    element_chunks = (
-                        first
-                        + [c for c in using if c["chunkId"] not in {f["chunkId"] for f in first}]
-                        + [c for c in element_chunks if c["chunkId"] not in seen_ids]
-                    )[:retrieval_top_k]
+                    element_chunks = _compose_example_evidence(
+                        question, english_question, generated_example, element_chunks, chunks, retrieval_top_k
+                    )
                     if element_chunks:
                         chunks, graph_trace = element_chunks, element_trace
                         retrieved_chunks = chunks
@@ -1735,7 +1719,7 @@ MAX_EXAMPLE_DEFINITIONS = 3
 MAX_EXAMPLE_BLOCKS = 2
 
 
-def _example_element_evidence(generated_example, example_elements, chunks, graph_trace, search):
+def _example_element_evidence(generated_example, example_elements, chunks, graph_trace, search, search_question=""):
     """Evidence about the example's elements, for the text next to it. A generated example needs a search
     for its elements ("bus with 50 seats": PassengerCapacity, SeatingCapacity). One taken verbatim from the
     standard's examples gets the schema's definitions of its elements and the question's own search
@@ -1757,10 +1741,54 @@ def _example_element_evidence(generated_example, example_elements, chunks, graph
     from helpdesk.services.retrieval_gateway import examples_using_elements
 
     main = main_object(generated_example)
-    using = examples_using_elements([main], limit=MAX_EXAMPLE_BLOCKS) if main else []
+    using = (
+        examples_using_elements(
+            [main], limit=MAX_EXAMPLE_BLOCKS, prefer_path=generated_example.get("sourcePath"), question=search_question
+        )
+        if main
+        else []
+    )
     added = definitions + [c for c in using if c["chunkId"] not in {d["chunkId"] for d in definitions}]
     ids = {c["chunkId"] for c in added}
     return added + [c for c in chunks if c.get("chunkId") not in ids], graph_trace
+
+
+def _compose_example_evidence(question, english_question, generated_example, element_chunks, chunks, top_k):
+    """The evidence for the text next to an example, cut to top_k.
+
+    The chunk of the shown standard example's own file first, so the text can describe the example the user
+    sees (without it, the text next to a two-quays example described a deck plan's quays: 6 of 8 example
+    questions, 2026-11-09). Then, when the question also asks something else, the definition of what the
+    example is an example of and the question's best blocks; then the standard's examples that use the
+    elements holding the question's values (SeatingCapacity, WheelchairPlaceCapacity); then the rest.
+    """
+    from helpdesk.services.retrieval_gateway import examples_using_elements, shown_example_chunk
+
+    search_question = english_question or question
+    using = examples_using_elements(
+        value_element_names(generated_example),
+        prefer_path=(generated_example or {}).get("sourcePath"),
+        question=search_question,
+    )
+    using_ids = {chunk["chunkId"] for chunk in using}
+    # A question that also asks something else ("How do you describe a stop place?") keeps the
+    # best blocks of its own search first, so that part can be answered from them.
+    asked_too = other_question(search_question)
+    first = chunks[:3] if asked_too else []
+    if asked_too and (definition := definition_chunk(main_object(generated_example))):
+        # The schema's definition of what the example is an example of, so "how do you describe
+        # a stop place" is answered from the standard's own words.
+        first = [definition] + [c for c in first if c["chunkId"] != definition["chunkId"]][:2]
+    seen_ids = {c["chunkId"] for c in first} | using_ids
+    composed = (
+        first
+        + [c for c in using if c["chunkId"] not in {f["chunkId"] for f in first}]
+        + [c for c in element_chunks if c["chunkId"] not in seen_ids]
+    )
+    own = shown_example_chunk(generated_example)
+    if own is not None:
+        composed = [own] + [c for c in composed if c["chunkId"] != own["chunkId"]]
+    return composed[:top_k]
 
 
 def with_keepalive(events, interval: float):
@@ -2118,27 +2146,11 @@ class QuestionAnswerStreamView(APIView):
                             min_results=_min_evidence_results(),
                             english_question=f"{english_question or question} {' '.join(example_elements)}",
                         ),
+                        search_question=english_question or question,
                     )
-                    # The standard's own examples that use the elements holding the question's values come
-                    # first: the text says how the standard fills them (SeatingCapacity, WheelchairPlaceCapacity).
-                    from helpdesk.services.retrieval_gateway import examples_using_elements
-
-                    using = examples_using_elements(value_element_names(generated_example))
-                    using_ids = {chunk["chunkId"] for chunk in using}
-                    # A question that also asks something else ("How do you describe a stop place?") keeps the
-                    # best blocks of its own search first, so that part can be answered from them.
-                    asked_too = other_question(english_question or question)
-                    first = chunks[:3] if asked_too else []
-                    if asked_too and (definition := definition_chunk(main_object(generated_example))):
-                        # The schema's definition of what the example is an example of, so "how do you describe
-                        # a stop place" is answered from the standard's own words.
-                        first = [definition] + [c for c in first if c["chunkId"] != definition["chunkId"]][:2]
-                    seen_ids = {c["chunkId"] for c in first} | using_ids
-                    element_chunks = (
-                        first
-                        + [c for c in using if c["chunkId"] not in {f["chunkId"] for f in first}]
-                        + [c for c in element_chunks if c["chunkId"] not in seen_ids]
-                    )[:retrieval_top_k]
+                    element_chunks = _compose_example_evidence(
+                        question, english_question, generated_example, element_chunks, chunks, retrieval_top_k
+                    )
                     if element_chunks:
                         chunks, graph_trace = element_chunks, element_trace
                         retrieved_chunks = chunks
