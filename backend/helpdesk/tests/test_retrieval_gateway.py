@@ -889,3 +889,59 @@ class GraphCandidateAliasBoundTests(TestCase):
 
         self.assertTrue(too_frequent(["NeTEx"]))
         self.assertFalse(too_frequent(["OpRa"]))
+
+
+class ElementCandidateCacheTests(TestCase):
+    """Chunks showing an element the question names, looked up once per name (0.41 s per answer on prod)."""
+
+    def setUp(self):
+        from helpdesk.services import retrieval_gateway
+
+        retrieval_gateway._ELEMENT_CANDIDATE_CACHE.clear()
+
+    def _chunk(self, chunk_id: str, text: str, quality: float, doc_type: str = "example"):
+        from helpdesk.models import SourceChunk
+        from helpdesk.services.embeddings import build_text_embedding
+
+        return SourceChunk.objects.create(
+            repository_url="https://github.com/TransmodelEcosystem/NeTEx",
+            commit_sha="abc",
+            source_path=f"examples/{chunk_id}.xml",
+            chunk_id=chunk_id,
+            label=chunk_id,
+            text=text,
+            standards_scope=["NeTEx"],
+            quality_score=quality,
+            doc_type=doc_type,
+            embedding_vector=build_text_embedding(text),
+        )
+
+    def test_highest_quality_chunks_showing_the_element_once_cached_without_a_tag_search(self):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        from helpdesk.services import retrieval_gateway
+
+        self._chunk("quay-low", '<Quay id="q1"/>', 0.5)
+        self._chunk("quay-high", "<Quay>\n  <Name>A</Name>\n</Quay>", 0.9)
+        self._chunk("quayref", '<QuayRef ref="q1"/>', 0.95)
+        self._chunk("readme", "<Quay> in prose", 0.99, doc_type="readme")
+
+        first = [c.chunk_id for c in retrieval_gateway._element_candidates(["Quay"])]
+        with CaptureQueriesContext(connection) as queries:
+            second = [c.chunk_id for c in retrieval_gateway._element_candidates(["Quay"])]
+
+        self.assertEqual(first, ["quay-high", "quay-low"])
+        self.assertEqual(second, first)
+        self.assertEqual(len(queries.captured_queries), 1)  # rows by primary key only
+        self.assertNotIn("LIKE", queries.captured_queries[0]["sql"])
+
+    def test_a_chunk_removed_since_caching_is_skipped(self):
+        from helpdesk.services import retrieval_gateway
+
+        gone = self._chunk("quay-gone", "<Quay>gone</Quay>", 0.9)
+        self._chunk("quay-kept", "<Quay>kept</Quay>", 0.8)
+        retrieval_gateway._element_candidates(["Quay"])
+        gone.delete()
+
+        self.assertEqual([c.chunk_id for c in retrieval_gateway._element_candidates(["Quay"])], ["quay-kept"])
