@@ -772,7 +772,7 @@ class GraphCandidateAliasBoundTests(TestCase):
     def setUp(self):
         from helpdesk.services import retrieval_gateway
 
-        retrieval_gateway._ALIAS_FREQUENCY_CACHE.clear()
+        retrieval_gateway._ALIAS_MATCH_CACHE.clear()
 
     def _chunk(self, path: str, chunk_id: str, scope=("NeTEx",), quality: float = 0.9):
         from helpdesk.models import SourceChunk
@@ -853,6 +853,28 @@ class GraphCandidateAliasBoundTests(TestCase):
         self.assertTrue(path_searches)
         self.assertFalse([sql for sql in path_searches if "ORDER BY" in sql and "LIMIT" in sql])
 
+    def test_one_query_per_alias_and_none_once_cached(self):
+        # All aliases OR-ed into one query made prod's planner scan the whole table (1.3 s).
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        self._chunk("examples/fares/zonal_farezone.xml", "farezone")
+        self._chunk("examples/fares/tariff_zone.xml", "tariffzone")
+        aliases = {"netex:FareZone": {"farezone"}, "netex:TariffZone": {"tariff_zone"}}
+
+        with CaptureQueriesContext(connection) as first:
+            self._candidates(aliases)
+        with CaptureQueriesContext(connection) as second:
+            found = self._candidates(aliases)
+
+        def alias_queries(captured):
+            return [q["sql"] for q in captured if 'UPPER("helpdesk_sourcechunk"."label"' in q["sql"]]
+
+        self.assertEqual(len(alias_queries(first.captured_queries)), 2)
+        self.assertTrue(all(sql.count("LIKE") == 2 for sql in alias_queries(first.captured_queries)))
+        self.assertFalse(alias_queries(second.captured_queries))
+        self.assertEqual(sorted(c.chunk_id for c in found), ["farezone", "tariffzone"])
+
     def test_the_frequency_is_counted_per_scope(self):
         from helpdesk.models import SourceChunk
         from helpdesk.services import retrieval_gateway
@@ -863,7 +885,7 @@ class GraphCandidateAliasBoundTests(TestCase):
 
         def too_frequent(scope):
             base = SourceChunk.objects.filter(retrieval_gateway._scope_query_filter(scope))
-            return retrieval_gateway._alias_too_frequent("fare", scope, base)
+            return retrieval_gateway._alias_matches("fare", scope, base) is None
 
         self.assertTrue(too_frequent(["NeTEx"]))
         self.assertFalse(too_frequent(["OpRa"]))

@@ -1480,29 +1480,47 @@ def _graph_candidate_rank_score(
     return score
 
 
-# (alias lowered, scope) -> (too frequent?, expiry). Chunks change at the nightly source refresh; an hour is fresh
-# enough for a bound that only decides whether an alias is generic.
-_ALIAS_FREQUENCY_CACHE: dict[tuple[str, tuple[str, ...]], tuple[bool, float]] = {}
-_ALIAS_FREQUENCY_TTL_SECONDS = 3600.0
+# (alias lowered, scope) -> (the alias's (id, quality_score) rows, or None when it is too frequent; expiry). Chunks
+# change at the nightly source refresh; an hour is fresh enough.
+_ALIAS_MATCH_CACHE: dict[tuple[str, tuple[str, ...]], tuple[tuple[tuple[int, float], ...] | None, float]] = {}
+_ALIAS_MATCH_TTL_SECONDS = 3600.0
 
 
-def _alias_too_frequent(alias: str, scope: list[str] | None, base_queryset) -> bool:
-    """Whether more than GRAPH_ALIAS_MAX_CHUNKS of the scope's schema/example chunks have the alias in their
-    path or label. The count stops at the bound + 1; results are cached per process for an hour."""
+def _alias_rows(alias: str, base_queryset, limit: int | None) -> list[tuple[int, float]]:
+    """(id, quality_score) of the chunks with the alias in their path or label: one alias per query.
+
+    One alias at a time on purpose: OR-ing all aliases into one query made prod's planner give up the trigram
+    indexes, first for a quality_score index walk (with ORDER BY ... LIMIT, 3.3 s), then for a parallel scan of
+    the whole table (1.3 s); a single alias's query takes ~20 ms there (2026-11-09). No ORDER BY, for the same
+    reason: the caller orders in Python.
+    """
+    rows = (
+        base_queryset.filter(models.Q(source_path__icontains=alias) | models.Q(label__icontains=alias))
+        .order_by()
+        .values_list("id", "quality_score")
+    )
+    if limit is not None:
+        rows = rows[:limit]
+    return [(int(chunk_id), float(quality or 0.0)) for chunk_id, quality in rows]
+
+
+def _alias_matches(alias: str, scope: list[str] | None, base_queryset) -> tuple[tuple[int, float], ...] | None:
+    """The alias's path/label matches among the scope's schema/example chunks, or None when there are more than
+    GRAPH_ALIAS_MAX_CHUNKS (too generic to find candidates). Fetching stops at the bound + 1; results are cached
+    per process for an hour, so a warm process runs no query here."""
     max_chunks = int(getattr(settings, "GRAPH_ALIAS_MAX_CHUNKS", 1000))
-    if max_chunks <= 0:
-        return False
     key = (alias.strip().lower(), tuple(sorted(scope or [])))
     now = time.monotonic()
-    cached = _ALIAS_FREQUENCY_CACHE.get(key)
+    cached = _ALIAS_MATCH_CACHE.get(key)
     if cached is not None and cached[1] > now:
         return cached[0]
-    matches = base_queryset.filter(
-        models.Q(source_path__icontains=alias) | models.Q(label__icontains=alias)
-    ).values("id")[: max_chunks + 1]
-    too_frequent = matches.count() > max_chunks
-    _ALIAS_FREQUENCY_CACHE[key] = (too_frequent, now + _ALIAS_FREQUENCY_TTL_SECONDS)
-    return too_frequent
+    if max_chunks > 0:
+        rows = _alias_rows(alias, base_queryset, max_chunks + 1)
+        matches = None if len(rows) > max_chunks else tuple(rows)
+    else:
+        matches = tuple(_alias_rows(alias, base_queryset, None))
+    _ALIAS_MATCH_CACHE[key] = (matches, now + _ALIAS_MATCH_TTL_SECONDS)
+    return matches
 
 
 def _graph_concept_candidates(
@@ -1525,7 +1543,6 @@ def _graph_concept_candidates(
     if not expanded_concepts:
         return []
 
-    fast_alias_filter = models.Q()
     text_alias_filter = models.Q()
     candidate_aliases: set[str] = set()
     ranked_aliases: list[tuple[int, int, str]] = []
@@ -1556,6 +1573,7 @@ def _graph_concept_candidates(
 
     selected_aliases: list[str] = []
     too_frequent: list[str] = []
+    path_matches: dict[int, float] = {}
     seen_aliases: set[str] = set()
     for overlap_score, _specificity_score, alias in ranked_aliases:
         dedupe_key = alias.lower()
@@ -1564,9 +1582,11 @@ def _graph_concept_candidates(
         seen_aliases.add(dedupe_key)
         # An alias in thousands of paths/labels ("fare", "stop", "with") finds nothing specific and made this
         # stage rank 5,000-11,000 chunks to keep 8; its slot goes to the next alias.
-        if _alias_too_frequent(alias, scope, base_queryset):
+        matches = _alias_matches(alias, scope, base_queryset)
+        if matches is None:
             too_frequent.append(alias)
             continue
+        path_matches.update(matches)
 
         # Keep high-overlap aliases first; once the cap is reached, stop.
         selected_aliases.append(alias)
@@ -1575,14 +1595,14 @@ def _graph_concept_candidates(
     if not selected_aliases and too_frequent:
         # Every alias is generic: the longest two are the most specific left.
         selected_aliases = sorted(too_frequent, key=len, reverse=True)[:2]
+        for alias in selected_aliases:
+            path_matches.update(_alias_rows(alias, base_queryset, None))
 
     for alias in selected_aliases:
         candidate_aliases.add(alias)
-        fast_alias_filter |= models.Q(source_path__icontains=alias)
-        fast_alias_filter |= models.Q(label__icontains=alias)
         text_alias_filter |= models.Q(text__icontains=alias)
 
-    if not fast_alias_filter and not text_alias_filter:
+    if not selected_aliases:
         return []
 
     resolved_max_candidates = max_candidates if max_candidates is not None else max(10, top_k * 2)
@@ -1591,16 +1611,13 @@ def _graph_concept_candidates(
         return []
 
     # Fast path: rely on source path / label matches first (usually enough for concrete example queries).
-    # Bounded, highest quality first, so no alias set ranks thousands of rows. The top rows are picked here,
-    # not with ORDER BY quality_score LIMIT: given that, PostgreSQL walked the quality_score index backwards
-    # and filtered 50,569 rows to find 400 (3.3 s on prod, 2026-11-09) instead of using the trigram indexes.
-    # Ids and quality only, so the text is loaded just for the rows kept.
-    fast_queryset = base_queryset.filter(fast_alias_filter)
+    # Bounded, highest quality first, so no alias set ranks thousands of rows; ordered here, not in SQL (see
+    # _alias_rows), and only the rows kept are loaded with their text, by primary key.
+    ordered_ids = [chunk_id for chunk_id, _quality in sorted(path_matches.items(), key=lambda row: (-row[1], row[0]))]
     scan_limit = int(getattr(settings, "GRAPH_CANDIDATE_SCAN_LIMIT", 400))
     if scan_limit > 0:
-        matches = sorted(fast_queryset.values_list("id", "quality_score"), key=lambda row: (-row[1], row[0]))
-        # By primary key: the path/label search is not run a second time.
-        fast_queryset = base_queryset.filter(id__in=[row[0] for row in matches[:scan_limit]])
+        ordered_ids = ordered_ids[:scan_limit]
+    fast_queryset = base_queryset.filter(id__in=ordered_ids) if ordered_ids else []
     ranked_candidates = []
     seen_chunk_ids: set[int] = set()
     for chunk in fast_queryset:
