@@ -94,6 +94,12 @@ services:
       - embedding-models:/models
     mem_limit: ${EMBEDDER_MEM_LIMIT:-1536m}
     cpus: ${EMBEDDER_CPUS:-2.0}
+    environment:
+      <<: *backend-env
+      # One model thread per CPU the container may use. More threads than CPUs are throttled: 80 threads
+      # (one per host core) under a 2-CPU limit made every embedding slow on prod (2026-11-09).
+      # EMBEDDER_THREADS overrides it; the embedder logs the thread count it uses at startup.
+      EMBEDDER_THREADS: ${EMBEDDER_THREADS:-${EMBEDDER_CPUS:-2}}
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8090/health"]
       interval: 30s

@@ -39,26 +39,28 @@ PREFIXES = {"query": "query: ", "passage": "passage: "}
 logger = logging.getLogger("embedding_service")
 
 
-def cpu_threads() -> int | None:
-    """Threads for the model: EMBEDDER_THREADS, else the container's CPU limit (cgroup cpu.max), else None
-    (the runtime's default, one per host core).
+def cpu_threads() -> tuple[int | None, str]:
+    """Threads for the model and where the number came from: EMBEDDER_THREADS (set from EMBEDDER_CPUS in the
+    compose files), else the container's CPU limit (cgroup cpu.max), else None (the runtime's default, one
+    per host core).
 
     The runtime's default counts the host's cores, not the container's limit: on prod (cpus 2 on a larger
     host) every request was throttled, 1.1-1.3 s for a short question (12 ms on the dev stack). Under a
     1-CPU limit on a 4-core machine, a definition passage took 576 ms with the default and 200 ms with one
     thread (2026-11-09)."""
+    import math
+
     configured = os.environ.get("EMBEDDER_THREADS", "").strip()
     if configured:
-        return max(1, int(configured))
+        # A CPU limit may be fractional ("2.0", "1.5"): round up, as for cpu.max.
+        return max(1, math.ceil(float(configured))), "EMBEDDER_THREADS"
     try:
         quota, period = open("/sys/fs/cgroup/cpu.max").read().split()[:2]
     except (OSError, ValueError):
-        return None
+        return None, "runtime default"
     if quota == "max":
-        return None
-    import math
-
-    return max(1, math.ceil(int(quota) / int(period)))
+        return None, "runtime default, no CPU limit"
+    return max(1, math.ceil(int(quota) / int(period))), f"CPU limit {int(quota) / int(period):g}"
 
 
 def load_model():
@@ -77,8 +79,8 @@ def load_model():
         )
     except ValueError:
         pass  # already registered in this process
-    threads = cpu_threads()
-    logger.info("embedding model threads: %s", threads or "runtime default")
+    threads, source = cpu_threads()
+    logger.info("embedding model threads: %s (from %s)", threads or "one per host core", source)
     model = TextEmbedding(MODEL_NAME, cache_dir=os.environ.get("EMBEDDER_MODEL_DIR", "/models"), threads=threads)
     model.model.tokenizer.enable_truncation(max_length=MAX_TOKENS)
     return model

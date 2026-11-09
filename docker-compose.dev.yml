@@ -120,6 +120,10 @@ services:
       - "8090:8090"
     mem_limit: ${EMBEDDER_MEM_LIMIT:-1536m}
     cpus: ${EMBEDDER_CPUS:-2.0}
+    environment:
+      <<: *backend-env
+      # One model thread per CPU the container may use (see docker-compose.prod.yml).
+      EMBEDDER_THREADS: ${EMBEDDER_THREADS:-${EMBEDDER_CPUS:-2}}
 
   # Validates the NeTEx example generator's fragments against NeTEx_publication.xsd (one compiled schema for
   # every backend worker; see helpdesk/netex_validator_service.py).
