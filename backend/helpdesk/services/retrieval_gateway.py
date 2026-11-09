@@ -1575,12 +1575,14 @@ def _graph_candidate_rank_score(
 
 # (alias lowered, scope) -> (the alias's (id, quality_score) rows, or None when it is too frequent; expiry). Chunks
 # change at the nightly source refresh; an hour is fresh enough.
-_ALIAS_MATCH_CACHE: dict[tuple[str, tuple[str, ...]], tuple[tuple[tuple[int, float], ...] | None, float]] = {}
+_ALIAS_MATCH_CACHE: dict[tuple[str, tuple[str, ...]], tuple[tuple[tuple[int, float, str], ...] | None, float]] = {}
 _ALIAS_MATCH_TTL_SECONDS = 3600.0
+# Rows of one file that may enter the ranked cut (GRAPH_CANDIDATE_SCAN_LIMIT).
+_SCAN_ROWS_PER_FILE = 8
 
 
-def _alias_rows(alias: str, base_queryset, limit: int | None) -> list[tuple[int, float]]:
-    """(id, quality_score) of the chunks with the alias in their path or label: one alias per query.
+def _alias_rows(alias: str, base_queryset, limit: int | None) -> list[tuple[int, float, str]]:
+    """(id, quality_score, source_path) of the chunks with the alias in their path or label: one alias per query.
 
     One alias at a time on purpose: OR-ing all aliases into one query made prod's planner give up the trigram
     indexes, first for a quality_score index walk (with ORDER BY ... LIMIT, 3.3 s), then for a parallel scan of
@@ -1590,14 +1592,14 @@ def _alias_rows(alias: str, base_queryset, limit: int | None) -> list[tuple[int,
     rows = (
         base_queryset.filter(models.Q(source_path__icontains=alias) | models.Q(label__icontains=alias))
         .order_by()
-        .values_list("id", "quality_score")
+        .values_list("id", "quality_score", "source_path")
     )
     if limit is not None:
         rows = rows[:limit]
-    return [(int(chunk_id), float(quality or 0.0)) for chunk_id, quality in rows]
+    return [(int(chunk_id), float(quality or 0.0), path or "") for chunk_id, quality, path in rows]
 
 
-def _alias_matches(alias: str, scope: list[str] | None, base_queryset) -> tuple[tuple[int, float], ...] | None:
+def _alias_matches(alias: str, scope: list[str] | None, base_queryset) -> tuple[tuple[int, float, str], ...] | None:
     """The alias's path/label matches among the scope's schema/example chunks, or None when there are more than
     GRAPH_ALIAS_MAX_CHUNKS (too generic to find candidates). Fetching stops at the bound + 1; results are cached
     per process for an hour, so a warm process runs no query here."""
@@ -1666,7 +1668,7 @@ def _graph_concept_candidates(
 
     selected_aliases: list[str] = []
     too_frequent: list[str] = []
-    path_matches: dict[int, float] = {}
+    path_matches: dict[int, tuple[float, str]] = {}
     seen_aliases: set[str] = set()
     for overlap_score, _specificity_score, alias in ranked_aliases:
         dedupe_key = alias.lower()
@@ -1679,7 +1681,7 @@ def _graph_concept_candidates(
         if matches is None:
             too_frequent.append(alias)
             continue
-        path_matches.update(matches)
+        path_matches.update((chunk_id, (quality, path)) for chunk_id, quality, path in matches)
 
         # Keep high-overlap aliases first; once the cap is reached, stop.
         selected_aliases.append(alias)
@@ -1689,7 +1691,9 @@ def _graph_concept_candidates(
         # Every alias is generic: the longest two are the most specific left.
         selected_aliases = sorted(too_frequent, key=len, reverse=True)[:2]
         for alias in selected_aliases:
-            path_matches.update(_alias_rows(alias, base_queryset, None))
+            path_matches.update(
+                (chunk_id, (quality, path)) for chunk_id, quality, path in _alias_rows(alias, base_queryset, None)
+            )
 
     for alias in selected_aliases:
         candidate_aliases.add(alias)
@@ -1706,10 +1710,19 @@ def _graph_concept_candidates(
     # Fast path: rely on source path / label matches first (usually enough for concrete example queries).
     # Bounded, highest quality first, so no alias set ranks thousands of rows; ordered here, not in SQL (see
     # _alias_rows), and only the rows kept are loaded with their text, by primary key.
-    ordered_ids = [chunk_id for chunk_id, _quality in sorted(path_matches.items(), key=lambda row: (-row[1], row[0]))]
+    # At most _SCAN_ROWS_PER_FILE rows of one file: a large high-quality file filled all 400 slots, and the
+    # candidates for "two quays" became 8 chunks of one accessibility example (2026-11-09).
     scan_limit = int(getattr(settings, "GRAPH_CANDIDATE_SCAN_LIMIT", 400))
-    if scan_limit > 0:
-        ordered_ids = ordered_ids[:scan_limit]
+    ordered_ids = []
+    rows_per_file: dict[str, int] = {}
+    for chunk_id, (_quality, path) in sorted(path_matches.items(), key=lambda row: (-row[1][0], row[0])):
+        if scan_limit > 0:
+            if rows_per_file.get(path, 0) >= _SCAN_ROWS_PER_FILE:
+                continue
+            if len(ordered_ids) >= scan_limit:
+                break
+        rows_per_file[path] = rows_per_file.get(path, 0) + 1
+        ordered_ids.append(chunk_id)
     fast_queryset = base_queryset.filter(id__in=ordered_ids) if ordered_ids else []
     ranked_candidates = []
     seen_chunk_ids: set[int] = set()
@@ -1741,7 +1754,18 @@ def _graph_concept_candidates(
             ranked_candidates.append((rank_score, float(chunk.quality_score), int(chunk.id), chunk))
 
     ranked_candidates.sort(key=lambda value: (value[0], value[1], value[2]), reverse=True)
-    return [chunk for _rank_score, _quality_score, _chunk_id, chunk in ranked_candidates[:candidate_limit]]
+    per_file = int(getattr(settings, "GRAPH_CANDIDATES_PER_FILE", 2))
+    selected: list = []
+    taken_per_file: dict[str, int] = {}
+    for _rank_score, _quality_score, _chunk_id, chunk in ranked_candidates:
+        path = chunk.source_path or ""
+        if per_file > 0 and taken_per_file.get(path, 0) >= per_file:
+            continue
+        taken_per_file[path] = taken_per_file.get(path, 0) + 1
+        selected.append(chunk)
+        if len(selected) >= candidate_limit:
+            break
+    return selected
 
 
 def _preselect_base_ids(vector_ranked: list, base_limit: int, lexical_reserve: int) -> set[int]:

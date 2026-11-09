@@ -875,6 +875,23 @@ class GraphCandidateAliasBoundTests(TestCase):
         self.assertFalse(alias_queries(second.captured_queries))
         self.assertEqual(sorted(c.chunk_id for c in found), ["farezone", "tariffzone"])
 
+    @override_settings(GRAPH_ALIAS_MAX_CHUNKS=0, GRAPH_CANDIDATE_SCAN_LIMIT=10, GRAPH_CANDIDATES_PER_FILE=2)
+    def test_one_large_high_quality_file_does_not_fill_the_candidates(self):
+        from helpdesk.services import retrieval_gateway
+
+        for idx in range(12):
+            self._chunk("examples/stops/accessibility_station.xml", f"big-{idx}", quality=0.99)
+        for name in ("two_quays", "simple_station"):
+            self._chunk(f"examples/stops/{name}.xml", name, quality=0.5)
+
+        with patch.object(retrieval_gateway, "_SCAN_ROWS_PER_FILE", 3):
+            found = self._candidates({"netex:StopPlace": {"stops"}}, question="a stop place with two quays")
+
+        files = [c.source_path for c in found]
+        self.assertIn("examples/stops/two_quays.xml", files)
+        self.assertIn("examples/stops/simple_station.xml", files)
+        self.assertLessEqual(files.count("examples/stops/accessibility_station.xml"), 2)
+
     def test_the_frequency_is_counted_per_scope(self):
         from helpdesk.models import SourceChunk
         from helpdesk.services import retrieval_gateway
