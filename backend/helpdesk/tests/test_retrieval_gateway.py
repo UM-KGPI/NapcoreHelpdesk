@@ -834,6 +834,25 @@ class GraphCandidateAliasBoundTests(TestCase):
 
         self.assertEqual(ids, ["fare-3", "fare-4"])
 
+    @override_settings(GRAPH_ALIAS_MAX_CHUNKS=0, GRAPH_CANDIDATE_SCAN_LIMIT=2)
+    def test_the_path_search_never_asks_the_database_for_sorted_top_rows(self):
+        # ORDER BY quality_score LIMIT made prod's planner walk the quality index over the whole table (3.3 s)
+        # instead of the trigram indexes; the top rows are picked in Python.
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        for idx in range(5):
+            self._chunk(f"examples/fares/fare_product_{idx}.xml", f"fare-{idx}", quality=0.5 + idx / 10)
+
+        with CaptureQueriesContext(connection) as queries:
+            self._candidates({"transmodel:fare": {"fare"}})
+
+        path_searches = [
+            q["sql"] for q in queries.captured_queries if 'UPPER("helpdesk_sourcechunk"."source_path"' in q["sql"]
+        ]
+        self.assertTrue(path_searches)
+        self.assertFalse([sql for sql in path_searches if "ORDER BY" in sql and "LIMIT" in sql])
+
     def test_the_frequency_is_counted_per_scope(self):
         from helpdesk.models import SourceChunk
         from helpdesk.services import retrieval_gateway
