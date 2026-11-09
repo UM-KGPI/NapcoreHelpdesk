@@ -146,6 +146,8 @@ env = environ.Env(
     RETRIEVAL_GRAPH_PRESELECT_MULTIPLIER=(float, 2.0),
     RETRIEVAL_LEXICAL_PRESELECT_RESERVE=(int, 8),
     RETRIEVAL_LEXICAL_POOL_SIZE=(int, 8),
+    VECTOR_INDEX_SEARCH=(bool, True),
+    VECTOR_INDEX_PROBES=(int, 20),
     RETRIEVAL_MMR_LAMBDA=(float, 0.92),
     RETRIEVAL_KEYWORD_TRAP_PENALTY=(float, 0.60),
     POLICY_STRICT_CLAIM_GUARD=(bool, False),
@@ -456,6 +458,9 @@ RETRIEVAL_LEXICAL_PRESELECT_RESERVE = env("RETRIEVAL_LEXICAL_PRESELECT_RESERVE")
 # Text-search matches added to the vector-ranked candidate pool when vectors are semantic
 # (retrieval_gateway._lexical_recall_candidates); 0 turns it off.
 RETRIEVAL_LEXICAL_POOL_SIZE = env("RETRIEVAL_LEXICAL_POOL_SIZE")
+# Vector search through the ivfflat index (retrieval_gateway._nearest_ids_by_index); False: the exact scan.
+VECTOR_INDEX_SEARCH = env("VECTOR_INDEX_SEARCH")
+VECTOR_INDEX_PROBES = env("VECTOR_INDEX_PROBES")
 RETRIEVAL_MMR_LAMBDA = env("RETRIEVAL_MMR_LAMBDA")
 RETRIEVAL_KEYWORD_TRAP_PENALTY = env("RETRIEVAL_KEYWORD_TRAP_PENALTY")
 POLICY_STRICT_CLAIM_GUARD = env("POLICY_STRICT_CLAIM_GUARD")

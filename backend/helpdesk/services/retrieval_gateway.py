@@ -378,6 +378,44 @@ def _lexical_recall_candidates(question: str, limit: int, scope: list[str] | Non
     )
 
 
+# The nearest rows by the vector index, with this margin over the limit so that rows tied with the limit-th row
+# are still there for the lexical tie-break.
+VECTOR_INDEX_MARGIN = 2
+
+
+def _nearest_ids_by_index(filtered, query_embedding: list[float], limit: int) -> list[int] | None:
+    """The ids of the rows nearest to the query by the vector index (ivfflat); None when the index search is switched off (VECTOR_INDEX_SEARCH) or fails, and the exact scan is used.
+
+    The exact form ordered by 1 - distance, which no vector index can serve: two full scans of the vector
+    column per pass, ~1.1 s each locally (sourcechunk_embedding_ivfflat_idx had idx_scan = 0). The index
+    serves only ORDER BY vector <=> query. A scope filter leaves too few rows in the probed lists (0 of 30 for
+    SIRI with a plain index scan), hence the iterative scan, which probes further lists until enough rows
+    pass the filter (pgvector >= 0.8). 12 sample queries (single and multi-standard scopes, local
+    2026-11-09): with 20 probes all 300 rows of the exact top 25 were among the rows fetched, at ~0.6 s
+    instead of 2 x 1.1 s; with 10 probes 4 were missed, all in multi-standard scopes.
+    """
+    if not getattr(settings, "VECTOR_INDEX_SEARCH", True):
+        return None
+    from django.db import DatabaseError, transaction
+
+    probes = int(getattr(settings, "VECTOR_INDEX_PROBES", 20))
+    try:
+        with transaction.atomic():
+            with connection.cursor() as cursor:
+                cursor.execute("SET LOCAL ivfflat.probes = %s", [probes])
+                cursor.execute("SET LOCAL ivfflat.iterative_scan = 'relaxed_order'")
+            # embedding_vector is NOT NULL: every row has a vector, so none is left out here.
+            ids = list(
+                filtered.order_by(CosineDistance("embedding_vector", query_embedding)).values_list("id", flat=True)[
+                    : limit * VECTOR_INDEX_MARGIN
+                ]
+            )
+    except DatabaseError as exc:  # an older pgvector without iterative scans, or no index: exact scan
+        logger.info("vector index search unavailable, exact scan: %s", exc)
+        return None
+    return ids
+
+
 def _postgres_hybrid_candidates(
     question: str,
     query_embedding: list[float],
@@ -398,12 +436,15 @@ def _postgres_hybrid_candidates(
     limit = max(25, top_k * 5)
     filtered = SourceChunk.objects.filter(_scope_query_filter(scope))
 
-    # Rows are ordered by vector similarity first; the lexical rank only breaks ties.
-    # Building the text search vector for every chunk took seconds per pass, so first
-    # find the similarity of the limit-th row (cheap: no text processing), then rank
-    # only rows at or above it. Every row of the full ordering's top `limit` passes
-    # that filter, ties included, so the result is the same. Rows without an
-    # embedding sort first (NULLs lead a descending order) and are always kept.
+    # Rows are ordered by vector similarity first; the lexical rank only breaks ties at the limit: of the rows
+    # tied with the limit-th row, those with the best lexical rank are kept. Building the text search vector
+    # for every chunk took seconds, so the rows at or above the limit-th row's similarity are found first
+    # (no text processing) and only they are ranked.
+    nearest_ids = _nearest_ids_by_index(filtered, query_embedding, limit)
+    if nearest_ids is not None:
+        # Through the vector index (docs/plans/2026-11-09-example-question-latency.md, P1): the nearest rows
+        # with a margin for ties; the same cutoff and tie rule then run on them only.
+        filtered = SourceChunk.objects.filter(id__in=nearest_ids)
     cutoff = list(
         filtered.annotate(vector_distance=CosineDistance("embedding_vector", query_embedding))
         .annotate(vector_similarity=1.0 - models.F("vector_distance"))

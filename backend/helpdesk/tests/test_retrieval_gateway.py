@@ -707,3 +707,59 @@ class RareTermCountQueryTests(TestCase):
         counts = [q["sql"] for q in queries.captured_queries if "to_tsquery" in q["sql"]]
         self.assertEqual(len(counts), 2)
         self.assertTrue(all("ORDER BY" not in sql for sql in counts))
+
+
+class VectorIndexSearchTests(TestCase):
+    """The nearest rows come through the ivfflat index (ORDER BY vector <=> query), and the result is the same
+    as the exact scan's (docs/plans/2026-11-09-example-question-latency.md, P1)."""
+
+    @staticmethod
+    def _vector(first: float) -> list[float]:
+        vector = [0.0] * 1536
+        vector[0], vector[1] = first, (1.0 - first * first) ** 0.5
+        return vector
+
+    def setUp(self):
+        from django.db import connection
+
+        from helpdesk.models import SourceChunk
+        from helpdesk.services import retrieval_gateway
+
+        if connection.vendor != "postgresql" or not retrieval_gateway.HAS_NATIVE_PGVECTOR:
+            self.skipTest("needs PostgreSQL with pgvector")
+        for index in range(40):
+            SourceChunk.objects.create(
+                repository_url="https://github.com/TransmodelEcosystem/NeTEx", commit_sha="abc", source_path=f"x/{index}.xsd",
+                chunk_id=f"v-{index}", text=f"stop place {index}", standards_scope=["NeTEx"], embedding_vector=self._vector(index / 40),
+            )
+
+    def _result(self, **flags):
+        from helpdesk.services import retrieval_gateway
+
+        with override_settings(**flags):
+            return [c.chunk_id for c in retrieval_gateway._postgres_hybrid_candidates(question="stop place", query_embedding=self._vector(1.0), top_k=5)]
+
+    def test_same_result_as_the_exact_scan(self):
+        exact = self._result(VECTOR_INDEX_SEARCH=False)
+        self.assertEqual(len(exact), 25)
+        self.assertEqual(self._result(VECTOR_INDEX_SEARCH=True), exact)
+
+    def test_nearest_rows_are_ordered_by_the_raw_distance_operator(self):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        with CaptureQueriesContext(connection) as queries:
+            self._result(VECTOR_INDEX_SEARCH=True)
+        sql = [q["sql"] for q in queries.captured_queries]
+        self.assertTrue(any("ivfflat.iterative_scan" in s for s in sql))
+        nearest = next(s for s in sql if "ORDER BY" in s and "<=>" in s and "LIMIT 50" in s)
+        self.assertNotIn("1.0 -", nearest.split("ORDER BY", 1)[1])
+
+    def test_a_database_error_falls_back_to_the_exact_scan(self):
+        from django.db import DatabaseError
+
+        from helpdesk.models import SourceChunk
+        from helpdesk.services import retrieval_gateway
+
+        with patch.object(retrieval_gateway.connection, "cursor", side_effect=DatabaseError("no iterative scans")):
+            self.assertIsNone(retrieval_gateway._nearest_ids_by_index(SourceChunk.objects.all(), self._vector(1.0), 25))
