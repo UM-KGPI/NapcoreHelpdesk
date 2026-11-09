@@ -63,6 +63,9 @@ timeout 90 bash -c "until ${COMPOSE} exec -T backend curl -sf http://localhost:8
 echo "==> Running migrations"
 ${COMPOSE} exec -T backend python manage.py migrate --noinput
 
+echo "==> Warming retrieval (vector index, caches)"
+# The first question after a start read the ~1 GB vector index from disk (77 s on prod, 2026-11-09).
+${COMPOSE} exec -T backend python manage.py warm_retrieval || echo "WARNING: retrieval warm-up failed; continuing"
 echo "==> Maintenance page off"
 rm -f "${MAINTENANCE_FLAG}"
 
