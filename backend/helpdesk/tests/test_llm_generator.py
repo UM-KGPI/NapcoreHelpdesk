@@ -883,3 +883,41 @@ class ValidatorFalsePositiveTests(SimpleTestCase):
         invented = "```xml\n<LiftEquipment id=\"y\">\n  <Name>Invented lift</Name>\n  <Width>9.9</Width>\n  <Depth>9.9</Depth>\n</LiftEquipment>\n```"
         with self.assertRaises(LLMGenerationError):
             _validate_grounded_example_output(question=question, answer=invented, chunks=[], shown_fragment=fragment)
+
+
+@override_settings(LLM_ENABLED=True, SEARCH_TRANSLATION_ENABLED=True, LLM_API_BASE_URL="https://llm.example.test/v1")
+class TranslatorConfirmsEnglishTests(SimpleTestCase):
+    """An English question langdetect misreads is answered in English (prod 2026-11-09: Romanian answer)."""
+
+    QUESTION = "Create a NeTEx XML example for a fare product for adult for 5 EUR."
+
+    def setUp(self):
+        from helpdesk.services import llm_generator
+
+        llm_generator._CONFIRMED_ENGLISH.clear()
+
+    def _reply(self, payload: dict):
+        import json
+
+        return {"choices": [{"message": {"content": json.dumps(payload)}}]}
+
+    def test_the_translator_saying_english_makes_the_question_english(self):
+        from helpdesk.services import llm_generator
+
+        with patch.object(llm_generator, "detect_question_language", return_value="Romanian"), patch.object(
+            llm_generator, "_request_chat_completion",
+            return_value=self._reply({"language": "English", "text": "Create a NeTEx XML example for an adult fare product for 5 EUR."}),
+        ):
+            self.assertIsNone(llm_generator.english_search_query(self.QUESTION))
+            self.assertEqual(llm_generator.question_language(self.QUESTION), "English")
+
+    def test_a_real_translation_keeps_the_question_language(self):
+        from helpdesk.services import llm_generator
+
+        question = "Kako se v NeTEx opiše vstop na postajališče?"
+        with patch.object(llm_generator, "detect_question_language", return_value="Slovenian"), patch.object(
+            llm_generator, "_request_chat_completion",
+            return_value=self._reply({"language": "Slovenian", "text": "How is a stop place entrance described in NeTEx?"}),
+        ):
+            self.assertEqual(llm_generator.english_search_query(question), "How is a stop place entrance described in NeTEx?")
+            self.assertEqual(llm_generator.question_language(question), "Slovenian")

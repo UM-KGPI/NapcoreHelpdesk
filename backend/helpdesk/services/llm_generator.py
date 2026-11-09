@@ -13,6 +13,7 @@ Created: 2026-03-29  |  Modified: 2026-06-28
 from __future__ import annotations
 
 import json
+from collections import OrderedDict
 import logging
 import re
 import ssl
@@ -1305,8 +1306,22 @@ def _classify_question_language_with_llm(question: str) -> str | None:
 MIN_TRUSTED_DETECTION_WORDS = 8
 
 
+# Questions the search translation found to be English already (see english_search_query), most recent last.
+# langdetect read "Create a NeTEx XML example for a fare product for adult for 5 EUR." as Romanian at 0.99999,
+# with 10 words and no English function word, and the answer came in Romanian (prod 2026-11-09).
+_CONFIRMED_ENGLISH: "OrderedDict[str, None]" = OrderedDict()
+_CONFIRMED_ENGLISH_SIZE = 512
+
+
+def _language_key(question: str) -> str:
+    return " ".join(question.split()).lower()
+
+
 def question_language(question: str) -> str | None:
-    """The question's language: the word-based detector, confirmed or replaced by the LLM where it is unreliable."""
+    """The question's language: the word-based detector, confirmed or replaced by the LLM where it is unreliable,
+    and English when the search translation found the question English already."""
+    if _language_key(question) in _CONFIRMED_ENGLISH:
+        return LANGDETECT_LANGUAGE_NAMES["en"]
     detected = detect_question_language(question)
     if detected is None:
         return _classify_question_language_with_llm(question)
@@ -1341,8 +1356,8 @@ def english_search_query(question: str) -> str | None:
                 "(NeTEx, SIRI, OpRa, Transmodel, StopPlace, MMTIS ...) unchanged. Any other abbreviation is "
                 "translated like a word: write the English abbreviation of the term it stands for, as in "
                 "PAN, PAP or NZP -> NAP (national access point) and STI or ITS -> ITS (intelligent transport "
-                "systems). "
-                'Reply with JSON only: {"text": "<English question>"}.'
+                "systems). Also name the language the question is written in, ignoring those names. "
+                'Reply with JSON only: {"language": "<English name of the question\'s language>", "text": "<English question>"}.'
             ),
         },
         {"role": "user", "content": question},
@@ -1358,15 +1373,27 @@ def english_search_query(question: str) -> str | None:
             messages=messages,
         )
         content = response["choices"][0]["message"]["content"]
+        source_language = ""
         try:
             payload = json.loads(content)
+            source_language = str(payload.get("language") or "").strip().title()
             # The model sometimes names the key differently; take the first text it returns.
-            text = payload.get("text") or next((v for v in payload.values() if isinstance(v, str) and v.strip()), "")
+            text = payload.get("text") or next(
+                (v for k, v in payload.items() if k != "language" and isinstance(v, str) and v.strip()), ""
+            )
         except (ValueError, AttributeError):
             text = content
         text = str(text).strip()
     except Exception:
         logger.warning("English search query failed for %r", question, exc_info=True)
+        return None
+    if source_language == LANGDETECT_LANGUAGE_NAMES["en"]:
+        # The word detector misread an English question: answer, check and search it as English.
+        logger.info("Question detected as %s is English according to the translator: %r", language, question)
+        _CONFIRMED_ENGLISH[_language_key(question)] = None
+        _CONFIRMED_ENGLISH.move_to_end(_language_key(question))
+        while len(_CONFIRMED_ENGLISH) > _CONFIRMED_ENGLISH_SIZE:
+            _CONFIRMED_ENGLISH.popitem(last=False)
         return None
     return text if text and text.lower() != question.strip().lower() else None
 
