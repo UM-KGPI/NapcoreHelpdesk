@@ -380,6 +380,9 @@ def _definition_chunk(
         "label": f"Definition: {concept_name}",
         "text": chunk_text.strip(),
         "doc_type": "ontology-definition",
+        # camelCase too: the answer validator reads docType to know a block defines an element (without it a
+        # Transmodel definition did not count, and a sentence it supported was rejected, 2026-11-09).
+        "docType": "ontology-definition",
         "quality_score": 0.98,  # Highest quality - authoritative ontology source
         "standards_scope": [standard] if standard else [],
         "match_type": "semantic_definition",
@@ -494,6 +497,9 @@ Definition:
         "label": f"Definition: {label} (Transmodel)",
         "text": chunk_text.strip(),
         "doc_type": "ontology-definition",
+        # camelCase too: the answer validator reads docType to know a block defines an element (without it a
+        # Transmodel definition did not count, and a sentence it supported was rejected, 2026-11-09).
+        "docType": "ontology-definition",
         "quality_score": 0.99,  # Transmodel is the reference above XSD-derived definitions
         "standards_scope": ["Transmodel"],
         "match_type": "semantic_definition",

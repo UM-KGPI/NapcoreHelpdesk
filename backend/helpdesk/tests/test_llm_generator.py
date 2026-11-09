@@ -830,3 +830,56 @@ class GeneratedExamplePromptTests(SimpleTestCase):
         self.assertTrue(result["answer_validated"])
         self.assertFalse(result["review_required"])
         self.assertEqual(result["confidence"], 0.9)
+
+
+class ValidatorFalsePositiveTests(SimpleTestCase):
+    """Sentences rejected on 2026-11-09 that state facts (prod/dev lift and two-quay answers), next to the
+    claims that must stay rejected."""
+
+    EXAMPLE = {"sourcePath": "examples/x.xml", "docType": "example", "text": "<Quay><Covered>indoors</Covered></Quay>"}
+
+    def test_values_and_noun_uses_are_not_purpose_claims(self):
+        from helpdesk.services.llm_generator import _validate_no_unsupported_element_purpose_claims
+
+        for sentence in (
+            "Each `Quay` has a `Name`, a `Covered` value (both are `indoors`), and `BoardingUse` and `AlightingUse` flags [E1].",
+            "The means of calling a lift, such as button height, is a separate concept, `LiftCallEquipment` [E1].",
+            "The quay sets `Covered` to `indoors` [E1].",
+        ):
+            _validate_no_unsupported_element_purpose_claims(answer=sentence, chunks=[self.EXAMPLE])
+
+    def test_verb_uses_stay_purpose_claims(self):
+        from helpdesk.services.llm_generator import LLMGenerationError, _validate_no_unsupported_element_purpose_claims
+
+        for sentence in (
+            "`AlightingUse` flags whether passengers may leave the vehicle [E1].",
+            "`TimeDemandTypeRef` marks the service as on demand [E1].",
+            "`Covered` indicates whether the quay has a roof [E1].",
+            "`Covered` is used to show the roof [E1].",
+        ):
+            with self.assertRaises(LLMGenerationError, msg=sentence):
+                _validate_no_unsupported_element_purpose_claims(answer=sentence, chunks=[self.EXAMPLE])
+
+    def test_a_transmodel_definition_counts_as_a_definition(self):
+        from helpdesk.services.llm_generator import _element_has_definition_in_evidence
+        from helpdesk.services.ontology_evidence import format_definitions_as_chunks
+
+        chunks = format_definitions_as_chunks(
+            [{"concept": "https://w3id.org/transmodel/LIFT_CALL_EQUIPMENT", "pref_label": "LIFT CALL EQUIPMENT",
+              "definition": "Specialisation of PLACE ACCESS EQUIPMENT for LiftCallEquipment, button height."}]
+        )
+        self.assertTrue(chunks)
+        self.assertTrue(_element_has_definition_in_evidence("LiftCallEquipment", chunks))
+
+    def test_quoting_the_shown_example_is_grounded(self):
+        from helpdesk.services.llm_generator import LLMGenerationError, _validate_grounded_example_output
+
+        fragment = '<LiftEquipment version="any" id="x:L1">\n  <Name>Station lift</Name>\n  <Width>2.3</Width>\n  <Depth>2.6</Depth>\n</LiftEquipment>'
+        answer = "The lift:\n```xml\n" + fragment + "\n```"
+        question = "Show me an example of a lift in NeTEx XML."
+        with self.assertRaises(LLMGenerationError):
+            _validate_grounded_example_output(question=question, answer=answer, chunks=[])
+        _validate_grounded_example_output(question=question, answer=answer, chunks=[], shown_fragment=fragment)
+        invented = "```xml\n<LiftEquipment id=\"y\">\n  <Name>Invented lift</Name>\n  <Width>9.9</Width>\n  <Depth>9.9</Depth>\n</LiftEquipment>\n```"
+        with self.assertRaises(LLMGenerationError):
+            _validate_grounded_example_output(question=question, answer=invented, chunks=[], shown_fragment=fragment)

@@ -101,7 +101,7 @@ def _extract_grounded_lines(text: str) -> set[str]:
     return grounded_lines
 
 
-def _validate_grounded_example_output(question: str, answer: str, chunks: list[dict]) -> None:
+def _validate_grounded_example_output(question: str, answer: str, chunks: list[dict], shown_fragment: str = "") -> None:
     if not _question_requests_verbatim_example(question):
         return
 
@@ -112,6 +112,10 @@ def _validate_grounded_example_output(question: str, answer: str, chunks: list[d
     evidence_lines: set[str] = set()
     for chunk in chunks:
         evidence_lines.update(_extract_grounded_lines(str(chunk.get("text", ""))))
+    # The example shown above the answer is verbatim from the standard's files (or validated against the
+    # schema): quoting it is not fabrication. It is no evidence chunk, so quoting it was rejected and the
+    # whole answer dropped (lift question, 2026-11-09).
+    evidence_lines.update(_extract_grounded_lines(shown_fragment or ""))
 
     for language, block in code_blocks:
         normalized_language = (language or "").strip().lower()
@@ -658,7 +662,9 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
                 )
 
 
-_XML_ELEMENT_MENTION_PATTERN = re.compile(r"[<`]([A-Za-z][A-Za-z0-9]*)[>`]")
+# Element names start with a capital (StopPlace, LiftEquipment); a backticked value such as `indoors` or `true`
+# is not an element (2026-11-09: "a `Covered` value (both are `indoors`)" was rejected as a claim about `indoors`).
+_XML_ELEMENT_MENTION_PATTERN = re.compile(r"[<`]([A-Z][A-Za-z0-9]*)[>`]")
 
 # Phrases that attribute a semantic purpose/meaning to an XML element. An
 # element's own name is not its definition (e.g. "TimeDemandTypeRef" sounds
@@ -668,12 +674,23 @@ _XML_ELEMENT_MENTION_PATTERN = re.compile(r"[<`]([A-Za-z][A-Za-z0-9]*)[>`]")
 # actually *defines* the element, not merely one that contains it in an
 # example.
 _ELEMENT_PURPOSE_CLAIM_PATTERN = re.compile(
-    r"\b(is used to|is how|is the way to|indicates?|marks?|means?|represents?|"
-    r"denotes?|signifies?|is used for|flags?|specifies? that|shows? that|"
-    r"tells? you|defines? whether|to mark|to indicate|to show|to specify|"
-    r"used to (?:mark|indicate|show|flag|specify))\b",
+    r"\b(is used to|is how|is the way to|is used for|specifies? that|shows? that|indicates? (?:that|whether)|"
+    r"tells? you|defines? whether|to mark|to indicate|to show|to specify|to represent|"
+    r"used to (?:mark|indicate|show|flag|specify|represent))\b",
     re.IGNORECASE,
 )
+# Words that are a purpose claim only as a verb: "`X` marks the service as ...", not "the means of calling a
+# lift" or "`BoardingUse` and `AlightingUse` flags." (both rejected 2026-11-09, emptying the lift answer).
+# A verb here is not after an article or possessive and is followed by a word, not by punctuation.
+_AMBIGUOUS_PURPOSE_VERB_PATTERN = re.compile(
+    r"(?<![A-Za-z])(?<!\bthe )(?<!\ba )(?<!\ban )(?<!\bits )(?<!\btheir )(?<!\bthese )(?<!\bthose )"
+    r"(indicates?|marks?|means?|represents?|denotes?|signifies?|flags?)(?=\s+[A-Za-z`<])",
+    re.IGNORECASE,
+)
+
+
+def _has_purpose_claim(sentence: str) -> bool:
+    return bool(_ELEMENT_PURPOSE_CLAIM_PATTERN.search(sentence) or _AMBIGUOUS_PURPOSE_VERB_PATTERN.search(sentence))
 
 # Chunk doc types that can plausibly carry a definition/explanation of an
 # element's purpose. "example" chunks are raw XML/JSON instances — the
@@ -724,7 +741,7 @@ def _validate_no_unsupported_element_purpose_claims(answer: str, chunks: list[di
     sentences = re.split(r"(?<=[.!?])\s+", prose_only.replace("\n", " "))
 
     for sentence in sentences:
-        if not _ELEMENT_PURPOSE_CLAIM_PATTERN.search(sentence):
+        if not _has_purpose_claim(sentence):
             continue
 
         element_names = _XML_ELEMENT_MENTION_PATTERN.findall(sentence)
@@ -2168,7 +2185,7 @@ def generate_answer_llm(
             rejection_reason = f"{rejection_reason} | retry also failed: {retry_error}"[:500]
             answer_validated = False
 
-    _validate_grounded_example_output(question=question, answer=answer, chunks=chunks)
+    _validate_grounded_example_output(question=question, answer=answer, chunks=chunks, shown_fragment=example_fragment)
 
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
     confidence = min(0.94, max(0.60, float(top_score)))
@@ -2439,7 +2456,7 @@ def stream_answer_llm(
         full_answer = _complete_xml_snippets(full_answer)
         _validate_answer_language(answer=full_answer, question=question, target_language=effective_language)
         _validate_generated_answer(answer=full_answer, chunks=chunks)
-        _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
+        _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks, shown_fragment=example_fragment)
     except LLMGenerationError as first_error:
         rejected_answer = full_answer if "full_answer" in dir() else ""
         rejection_reason = str(first_error)
@@ -2475,7 +2492,7 @@ def stream_answer_llm(
         try:
             _validate_answer_language(answer=full_answer, question=question, target_language=effective_language)
             _validate_generated_answer(answer=full_answer, chunks=chunks)
-            _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks)
+            _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks, shown_fragment=example_fragment)
         except LLMGenerationError as retry_error:
             # Retry failed validation too. A real, on-topic answer that fails a strict
             # grounding heuristic is still far more useful than the generic
