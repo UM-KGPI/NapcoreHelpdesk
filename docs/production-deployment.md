@@ -222,20 +222,25 @@ deployment secrets in GitHub.
 
 ### 5.1 Register the runner (once)
 
-1. In GitHub open **Repository → Settings → Actions → Runners → New self-hosted runner**
-   and choose Linux x64. That page shows the download commands for the current runner release,
-   with its checksum, and a registration token. Use those commands; do not copy version numbers
-   from this guide.
+The repository is public, so the runner is registered with the **organisation**, in the runner group
+`napcore-prod`, not with the repository. That group (Organisation → Settings → Actions → Runner groups)
+is available only to `UM-KGPI/NapcoreHelpdesk`, has **Allow public repositories** on (without it the
+deploy job never starts), and accepts jobs only from the workflow
+`UM-KGPI/NapcoreHelpdesk/.github/workflows/deploy.yml@refs/heads/main`. A job from any other workflow or
+branch, including a fork pull request that edits a workflow, is refused even if it asks for the label.
+
+1. Open **github.com/organizations/UM-KGPI/settings/actions/runners → New runner → New self-hosted
+   runner**, Linux x64. That page shows the download commands for the current runner release, with
+   its checksum, and a registration token. Use those commands; do not copy version numbers from this
+   guide. (The repository's own "New self-hosted runner" page registers outside the group: do not use it.)
 2. On the server, as the user that owns `/opt/napcore-helpdesk` and belongs to the `docker` group
-   (the runner uses that user's home, and so its deploy key for `git pull`):
+   (the runner uses that user's home, and so its deploy key for `git pull`), each command on one line:
 
 ```bash
 mkdir -p ~/actions-runner && cd ~/actions-runner
 # download, verify the checksum and extract, exactly as shown on the GitHub page
 
-./config.sh --url https://github.com/UM-KGPI/NapcoreHelpdesk \
-            --token <registration token from the GitHub page> \
-            --labels napcore-prod --unattended
+./config.sh --url https://github.com/UM-KGPI --token <registration token from the GitHub page> --runnergroup napcore-prod --labels napcore-prod --name localhost --unattended
 
 sudo ./svc.sh install "$USER"
 sudo ./svc.sh start
@@ -243,17 +248,25 @@ sudo ./svc.sh status
 ```
 
 The registration token is shown only on that page and expires after an hour. Never commit it
-or paste it into a chat. The runner then appears under **Settings → Actions → Runners** as
-**Idle** with the label `napcore-prod`.
+or paste it into a chat. The runner then appears under the organisation's **Settings → Actions →
+Runners** as **Idle**, in group `napcore-prod`, with the label `napcore-prod`.
+
+To move an existing runner (for example one registered with the repository): stop and uninstall the
+service (`sudo ./svc.sh stop; sudo ./svc.sh uninstall`), remove it on GitHub (or with
+`./config.sh remove --token <removal token>`), delete `.runner .credentials .credentials_rsaparams` in
+`~/actions-runner` if GitHub's side is already gone, then register as above.
 
 ### 5.2 Rules for the runner
 
-- Only the deploy job uses `runs-on: [self-hosted, napcore-prod]`. Never use that label in a
-  workflow that pull requests can start: the workflow code would run on the production host.
+- Only the deploy job uses `runs-on: [self-hosted, napcore-prod]`, and the runner group refuses every
+  other workflow. Never use that label in a workflow that pull requests can start, and never widen the
+  group's workflow list.
 - The deploy workflow starts only by hand (`workflow_dispatch`) and only with the word `deploy`.
-- The runner user has access to Docker, which is equivalent to root on the server. Keep the
-  repository private and the list of people who can run workflows short.
-- If the runner is offline, a started deployment waits in the queue. Check
+- Workflows from fork pull requests need approval for all outside contributors (Repository →
+  Settings → Actions → General). Do not approve a fork run that changes anything under `.github/`.
+- The runner user has access to Docker, which is equivalent to root on the server. Keep the list of
+  people who can run workflows short.
+- If the runner is offline, a started deployment waits in the queue. Check the organisation's
   **Settings → Actions → Runners**, or on the server `sudo ./svc.sh status` in `~/actions-runner`.
 - To remove the runner: `sudo ./svc.sh stop && sudo ./svc.sh uninstall`, then
   `./config.sh remove --token <removal token from the GitHub page>`.
