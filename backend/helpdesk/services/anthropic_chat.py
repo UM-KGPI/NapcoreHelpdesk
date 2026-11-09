@@ -18,7 +18,7 @@ Differences from the OpenAI-compatible gateways that this module absorbs:
 
 Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
 Crafted by: AI coding agents
-Created: 2026-11-04  |  Modified: 2026-11-04
+Created: 2026-11-04  |  Modified: 2026-11-09
 """
 
 from __future__ import annotations
@@ -80,8 +80,12 @@ def chat_completion(
     timeout_seconds: float,
     effort: str = "low",
     json_answer: bool = False,
+    thinking: str = "adaptive",
 ) -> dict:
-    """Call the Messages API and return an OpenAI-shaped payload: {"choices": [{"message": {"content"}}], ...}."""
+    """Call the Messages API and return an OpenAI-shaped payload: {"choices": [{"message": {"content"}}], ...}.
+
+    thinking="adaptive" leaves thinking to the model (its default); "disabled" answers without thinking.
+    """
 
     system, turns = to_messages_api(messages)
     params: dict = {
@@ -92,6 +96,8 @@ def chat_completion(
     }
     if system:
         params["system"] = system
+    if thinking == "disabled":
+        params["thinking"] = {"type": "disabled"}
     try:
         response = _client(api_key).with_options(timeout=timeout_seconds, max_retries=1).messages.create(**params)
     except anthropic.APIStatusError as exc:
