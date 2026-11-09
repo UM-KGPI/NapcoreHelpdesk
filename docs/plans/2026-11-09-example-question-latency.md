@@ -34,6 +34,30 @@ the fragment" rule; the lift question fell back to a bare list of evidence block
 a decision for the product owner, not part of this plan unless approved; if approved, add a setting
 (`LLM_ANTHROPIC_THINKING`, default `adaptive`) rather than changing the default silently.
 
+## 1a. Review after P0 (Fable, 2026-11-09)
+
+What P0 changed in the picture:
+
+- **The model's time is thinking, not retries.** My original P3 premise ("nearly every example answer pays a
+  retry") was generalised from two sampled answers that happened to retry, and my effort replay reused the retry
+  call's prompt. Opus's end-to-end timings over 9 questions are the measurement to trust: one call per answer,
+  2–8 s, following `llmOutputTokens` (adaptive thinking). P3 stays for quality, not for time.
+- **Priorities are unchanged.** The certain wins are P1 (two full vector scans per pass, ~2 s locally, more on
+  prod) and P2 (0.4–0.8 s per pass). Neither touches the model. Do them first; the prod stage timings from P0
+  will show how much of prod's 26–28 s they cover.
+- **Thinking off is a product decision, not an engineering one; measure it properly first.** Opus's comparison
+  (one run per question) shows mean model time 5.9 → 3.6 s with two answers following the rules less well. One
+  run each cannot separate that from the model's normal run-to-run variance. Protocol before deciding: the 9
+  questions of §5, 3 runs each, both ways, same evening; compare mean and median `llmMs`, `llmOutputTokens`,
+  rejections, review flags, empty answers, and read each pair of answers. Implement as a setting
+  (`LLM_ANTHROPIC_THINKING`, `adaptive` | `disabled`, default `adaptive`, answer path only) so prod can switch
+  by environment without a deploy. My recommendation until then: keep thinking on.
+- **The lift question's bad outcomes have a third cause** (added to P3 as item 4): quoting the shown standard
+  fragment is rejected as fabricated XML.
+- **P0 caveats to carry forward:** `retrievalStageTimingsMs` holds the last retrieval call only (a generated
+  example runs two); and the record lives in a context variable, so P4's worker threads must run under
+  `contextvars.copy_context()` or their steps vanish from the timings.
+
 ## 2. Constraints
 
 - Keep semantic retrieval (e5 embeddings, pgvector) and concept matching by meaning; nothing falls back to label words.
@@ -126,6 +150,14 @@ the lift question ends with an empty text beside its example (`_nothing_to_add`,
 3. Reporting the shown fragment's values ("sets `Covered` to `indoors`", "carries `Name`, `Width` …") is description,
    not a purpose claim; a sentence whose elements all occur in the shown example fragment and that states values should
    pass. The example path already tells the model the fragment is shown.
+4. `_validate_grounded_example_output` (~104, called unconditionally after the retry at ~2171 and in the stream path
+   at ~2442/~2478) compares each quoted XML line only with the evidence chunks' lines. When a standard example is
+   shown, its fragment is verbatim from the standard's example file but is **not** an evidence chunk, so a model
+   that quotes it is rejected as "fabricated XML" and the answer falls back to the deterministic evidence list
+   ("Yes, the following examples are available: [E1] …", seen 2026-11-09 on the lift question). Fix: add the
+   shown fragment's lines to `evidence_lines` (the generators already receive `example_fragment`; pass it to the
+   validator), or drop a block that duplicates the shown fragment instead of dropping the whole answer. Test:
+   an answer quoting three lines of the shown fragment passes; an answer quoting invented XML still fails.
 Plus, in evidence building: `format_definitions_as_chunks` (`retrieval_gateway.py`) emits Transmodel definition chunks
 without `docType` (the presence chunks for LIFT CALL EQUIPMENT have `docType None`), so `_element_has_definition_in_evidence`
 (~684, set `_DEFINITIONAL_DOC_TYPES` ~681) does not count them; set `"docType": "ontology-definition"`. And
@@ -140,10 +172,18 @@ the validator's true positives must stay (existing tests in `test_llm_generator.
 
 ### P4 — Overlap the independent work (smaller)
 
-Run concurrently with retrieval in a `ThreadPoolExecutor` (each thread closes its DB connection): the standard-example
+Run concurrently with retrieval in a `ThreadPoolExecutor` (each thread closes its DB connection, and runs under
+`contextvars.copy_context()` so `request_timing` still records its steps): the standard-example
 lookup (`generate_netex_example` for a standard example needs no chunks; 0.2–0.3 s), `presence_evidence`, and the
 GraphDB anchor in `_parse_question` (0.43 s). Cache `question_language` per question (called twice, 0.48 s).
 Expected: 0.5–1 s locally, more on prod. Do this last; it adds threading to the request path.
+
+### P5 — Optional, after P1–P4: cache the stable prompt prefix
+
+The system prompt and rules are the same for every answer; the Anthropic API can serve them from cache
+(`cache_control` on the stable system part, dynamic parts such as the example rule with its fragment after it).
+Gain is cost and a little time to first token, not thinking time; the stable prefix may be below the model's
+minimum cacheable length, so check `usage.cache_read_input_tokens` on a second call before keeping it.
 
 ### Not planned
 
