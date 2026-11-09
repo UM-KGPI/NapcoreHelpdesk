@@ -18,6 +18,9 @@ import hashlib
 import json
 import math
 import re
+import threading
+from array import array
+from collections import OrderedDict
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
@@ -119,6 +122,33 @@ def build_text_embedding(text: str, kind: str = "passage") -> list[float]:
     if semantic_enabled():
         return _service_embed([text], kind)[0]
     return _hash_embed(text)
+
+
+# Passages embedded at question time: definition chunks from the ontology are not stored, so retrieval embedded
+# the same ones for every question (prod 2026-11-09: several seconds per question with a throttled embedder).
+# Kept by text and backend, at most PASSAGE_CACHE_SIZE, as float32 arrays (6 KB each).
+PASSAGE_CACHE_SIZE = 1024
+_PASSAGE_CACHE: "OrderedDict[tuple[str, str], array]" = OrderedDict()
+_passage_cache_lock = threading.Lock()
+
+
+def cached_passage_embedding(text: str) -> list[float]:
+    """build_text_embedding(text) for a passage, remembered for the next question."""
+    from django.conf import settings
+
+    backend = str(getattr(settings, "EMBEDDING_BACKEND", "hash"))
+    key = (backend, hashlib.sha256(text.encode("utf-8")).hexdigest())
+    with _passage_cache_lock:
+        cached = _PASSAGE_CACHE.get(key)
+        if cached is not None:
+            _PASSAGE_CACHE.move_to_end(key)
+            return list(cached)
+    vector = build_text_embedding(text)
+    with _passage_cache_lock:
+        _PASSAGE_CACHE[key] = array("f", vector)
+        while len(_PASSAGE_CACHE) > PASSAGE_CACHE_SIZE:
+            _PASSAGE_CACHE.popitem(last=False)
+    return vector
 
 
 def build_text_embeddings_batch(texts: list[str], kind: str = "passage", backend: str | None = None) -> list[list[float]]:
