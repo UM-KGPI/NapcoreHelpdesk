@@ -763,3 +763,88 @@ class VectorIndexSearchTests(TestCase):
 
         with patch.object(retrieval_gateway.connection, "cursor", side_effect=DatabaseError("no iterative scans")):
             self.assertIsNone(retrieval_gateway._nearest_ids_by_index(SourceChunk.objects.all(), self._vector(1.0), 25))
+
+
+@override_settings(GRAPH_ALIAS_MAX_CHUNKS=3, GRAPH_CANDIDATE_SCAN_LIMIT=400)
+class GraphCandidateAliasBoundTests(TestCase):
+    """Graph candidates skip aliases found in too many paths/labels (2026-11-09: "fare" matched 10,078 chunks)."""
+
+    def setUp(self):
+        from helpdesk.services import retrieval_gateway
+
+        retrieval_gateway._ALIAS_FREQUENCY_CACHE.clear()
+
+    def _chunk(self, path: str, chunk_id: str, scope=("NeTEx",), quality: float = 0.9):
+        from helpdesk.models import SourceChunk
+        from helpdesk.services.embeddings import build_text_embedding
+
+        return SourceChunk.objects.create(
+            repository_url="https://github.com/TransmodelEcosystem/NeTEx",
+            commit_sha="abc",
+            source_path=path,
+            chunk_id=chunk_id,
+            label=path.rsplit("/", 1)[-1],
+            # Text without the aliases: only the path/label (fast) search finds these chunks.
+            text="An example passage.",
+            standards_scope=list(scope),
+            quality_score=quality,
+            doc_type="example",
+            embedding_vector=build_text_embedding("An example passage."),
+        )
+
+    def _candidates(self, aliases: dict, scope=("NeTEx",), question="Show me a fare zone example."):
+        from helpdesk.services import retrieval_gateway
+
+        with patch.object(retrieval_gateway, "GRAPH_CONCEPT_ALIASES", aliases):
+            return retrieval_gateway._graph_concept_candidates(
+                expanded_concepts=set(aliases), top_k=6, max_candidates=8, scope=list(scope), question=question
+            )
+
+    def test_an_over_frequent_alias_is_skipped_and_a_specific_one_kept(self):
+        for idx in range(5):
+            self._chunk(f"examples/fares/fare_product_{idx}.xml", f"fare-{idx}")
+        zone = self._chunk("examples/fares/zonal_farezone.xml", "farezone")
+
+        paths = [c.source_path for c in self._candidates({"netex:FareZone": {"farezone"}, "transmodel:fare": {"fare"}})]
+
+        self.assertEqual(paths, [zone.source_path])
+
+    def test_when_every_alias_is_over_frequent_the_longest_still_finds_candidates(self):
+        for idx in range(5):
+            self._chunk(f"examples/stops/stop_place_{idx}.xml", f"stop-{idx}")
+
+        found = self._candidates({"netex:StopPlace": {"stop_place"}, "transmodel:stop": {"stop"}}, question="stop place")
+
+        self.assertTrue(found)
+        self.assertTrue(all("stop_place" in c.source_path for c in found))
+
+    @override_settings(GRAPH_ALIAS_MAX_CHUNKS=0)
+    def test_zero_turns_the_bound_off(self):
+        for idx in range(5):
+            self._chunk(f"examples/fares/fare_product_{idx}.xml", f"fare-{idx}")
+
+        self.assertEqual(len(self._candidates({"transmodel:fare": {"fare"}})), 5)
+
+    @override_settings(GRAPH_ALIAS_MAX_CHUNKS=0, GRAPH_CANDIDATE_SCAN_LIMIT=2)
+    def test_the_scan_limit_ranks_only_the_highest_quality_rows(self):
+        for idx in range(5):
+            self._chunk(f"examples/fares/fare_product_{idx}.xml", f"fare-{idx}", quality=0.5 + idx / 10)
+
+        ids = sorted(c.chunk_id for c in self._candidates({"transmodel:fare": {"fare"}}))
+
+        self.assertEqual(ids, ["fare-3", "fare-4"])
+
+    def test_the_frequency_is_counted_per_scope(self):
+        from helpdesk.models import SourceChunk
+        from helpdesk.services import retrieval_gateway
+
+        for idx in range(5):
+            self._chunk(f"examples/fares/fare_product_{idx}.xml", f"fare-{idx}", scope=("NeTEx",))
+        self._chunk("examples/fares/fare_indicator.xml", "fare-opra", scope=("OpRa",))
+
+        def too_frequent(scope):
+            base = SourceChunk.objects.filter(retrieval_gateway._scope_query_filter(scope))
+            return retrieval_gateway._alias_too_frequent("fare", scope, base)
+
+        self.assertTrue(too_frequent(["NeTEx"]))
+        self.assertFalse(too_frequent(["OpRa"]))

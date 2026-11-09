@@ -1480,6 +1480,31 @@ def _graph_candidate_rank_score(
     return score
 
 
+# (alias lowered, scope) -> (too frequent?, expiry). Chunks change at the nightly source refresh; an hour is fresh
+# enough for a bound that only decides whether an alias is generic.
+_ALIAS_FREQUENCY_CACHE: dict[tuple[str, tuple[str, ...]], tuple[bool, float]] = {}
+_ALIAS_FREQUENCY_TTL_SECONDS = 3600.0
+
+
+def _alias_too_frequent(alias: str, scope: list[str] | None, base_queryset) -> bool:
+    """Whether more than GRAPH_ALIAS_MAX_CHUNKS of the scope's schema/example chunks have the alias in their
+    path or label. The count stops at the bound + 1; results are cached per process for an hour."""
+    max_chunks = int(getattr(settings, "GRAPH_ALIAS_MAX_CHUNKS", 1000))
+    if max_chunks <= 0:
+        return False
+    key = (alias.strip().lower(), tuple(sorted(scope or [])))
+    now = time.monotonic()
+    cached = _ALIAS_FREQUENCY_CACHE.get(key)
+    if cached is not None and cached[1] > now:
+        return cached[0]
+    matches = base_queryset.filter(
+        models.Q(source_path__icontains=alias) | models.Q(label__icontains=alias)
+    ).values("id")[: max_chunks + 1]
+    too_frequent = matches.count() > max_chunks
+    _ALIAS_FREQUENCY_CACHE[key] = (too_frequent, now + _ALIAS_FREQUENCY_TTL_SECONDS)
+    return too_frequent
+
+
 def _graph_concept_candidates(
     expanded_concepts: set[str],
     top_k: int,
@@ -1523,18 +1548,33 @@ def _graph_concept_candidates(
     ranked_aliases.sort(key=lambda value: (value[0], value[1]), reverse=True)
     alias_cap = max(8, min(40, top_k * 6))
 
+    base_queryset = (
+        SourceChunk.objects.filter(_scope_query_filter(scope))
+        .filter(doc_type__in=["schema", "example"])
+        .only("id", "text", "source_path", "label", "heading", "doc_type", "quality_score")
+    )
+
     selected_aliases: list[str] = []
+    too_frequent: list[str] = []
     seen_aliases: set[str] = set()
     for overlap_score, _specificity_score, alias in ranked_aliases:
         dedupe_key = alias.lower()
         if dedupe_key in seen_aliases:
             continue
+        seen_aliases.add(dedupe_key)
+        # An alias in thousands of paths/labels ("fare", "stop", "with") finds nothing specific and made this
+        # stage rank 5,000-11,000 chunks to keep 8; its slot goes to the next alias.
+        if _alias_too_frequent(alias, scope, base_queryset):
+            too_frequent.append(alias)
+            continue
 
         # Keep high-overlap aliases first; once the cap is reached, stop.
         selected_aliases.append(alias)
-        seen_aliases.add(dedupe_key)
         if len(selected_aliases) >= alias_cap:
             break
+    if not selected_aliases and too_frequent:
+        # Every alias is generic: the longest two are the most specific left.
+        selected_aliases = sorted(too_frequent, key=len, reverse=True)[:2]
 
     for alias in selected_aliases:
         candidate_aliases.add(alias)
@@ -1550,16 +1590,15 @@ def _graph_concept_candidates(
     if candidate_limit == 0:
         return []
 
-    base_queryset = (
-        SourceChunk.objects.filter(_scope_query_filter(scope))
-        .filter(doc_type__in=["schema", "example"])
-        .only("id", "text", "source_path", "label", "heading", "doc_type", "quality_score")
-    )
-
     # Fast path: rely on source path / label matches first (usually enough for concrete example queries).
+    # Bounded, highest quality first, so no alias set ranks thousands of rows.
+    fast_queryset = base_queryset.filter(fast_alias_filter)
+    scan_limit = int(getattr(settings, "GRAPH_CANDIDATE_SCAN_LIMIT", 400))
+    if scan_limit > 0:
+        fast_queryset = fast_queryset.order_by("-quality_score", "id")[:scan_limit]
     ranked_candidates = []
     seen_chunk_ids: set[int] = set()
-    for chunk in base_queryset.filter(fast_alias_filter):
+    for chunk in fast_queryset:
         rank_score = _graph_candidate_rank_score(
             chunk=chunk,
             aliases=candidate_aliases,
