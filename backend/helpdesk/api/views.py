@@ -76,6 +76,7 @@ from helpdesk.services.netex_example_generator import (
     value_element_names,
 )
 from helpdesk.services.concept_presence import presence_evidence, question_kind
+from helpdesk.services import request_timing
 from helpdesk.services.schema_structure import definition_chunk, schema_structure_for
 from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 from helpdesk.services.retrieval_event_logger import log_retrieval_events
@@ -1211,7 +1212,9 @@ class QuestionAnswerView(APIView):
         question = data["question"].strip()
         language = data.get("language", "en")
         scope = data.get("standardsScope", [])
-        semantic_query, english_question, parsed_question = _parse_question(question, scope)
+        request_timing.start()
+        with request_timing.timed("parseMs"):
+            semantic_query, english_question, parsed_question = _parse_question(question, scope)
         semantic_query_dict = semantic_query.as_dict() if hasattr(semantic_query, "as_dict") else {}
         effective_scope, needs_clarification = select_effective_scope(semantic_query, scope)
         semantic_disambiguation_required = False
@@ -1687,6 +1690,14 @@ class QuestionAnswerView(APIView):
             "llmAnswerValidated": (generated.get("answer_validated") if isinstance(locals().get("generated"), dict) else None),
             "generatedExample": generated_example,
             "schemaStructure": schema_structure,
+            # Where the time went (services/request_timing.py): parse, all retrieval calls and model calls,
+            # the last retrieval's stages, and the example's own lookup or generation time.
+            "timingsMs": {
+                **request_timing.snapshot(),
+                "exampleMs": (generated_example or {}).get("generationMs"),
+            },
+            "retrievalLatencyMs": graph_trace.get("retrievalLatencyMs", 0.0),
+            "retrievalStageTimingsMs": graph_trace.get("retrievalStageTimingsMs") or {},
         }
 
         # Persist trace to event for later retrieval
@@ -1858,7 +1869,9 @@ class QuestionAnswerStreamView(APIView):
         question = data["question"].strip()
         language = data.get("language", "en")
         scope = data.get("standardsScope", [])
-        semantic_query, english_question, parsed_question = _parse_question(question, scope)
+        request_timing.start()
+        with request_timing.timed("parseMs"):
+            semantic_query, english_question, parsed_question = _parse_question(question, scope)
         semantic_query_dict = semantic_query.as_dict() if hasattr(semantic_query, "as_dict") else {}
         effective_scope, needs_clarification = select_effective_scope(semantic_query, scope)
         semantic_disambiguation_required = False
@@ -2343,6 +2356,14 @@ class QuestionAnswerStreamView(APIView):
             "llmAnswerValidated": (generated.get("answer_validated") if isinstance(locals().get("generated"), dict) else None),
             "generatedExample": generated_example,
             "schemaStructure": schema_structure,
+            # Where the time went (services/request_timing.py): parse, all retrieval calls and model calls,
+            # the last retrieval's stages, and the example's own lookup or generation time.
+            "timingsMs": {
+                **request_timing.snapshot(),
+                "exampleMs": (generated_example or {}).get("generationMs"),
+            },
+            "retrievalLatencyMs": graph_trace.get("retrievalLatencyMs", 0.0),
+            "retrievalStageTimingsMs": graph_trace.get("retrievalStageTimingsMs") or {},
         }
 
         # Persist trace to event
