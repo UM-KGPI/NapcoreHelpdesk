@@ -1591,11 +1591,16 @@ def _graph_concept_candidates(
         return []
 
     # Fast path: rely on source path / label matches first (usually enough for concrete example queries).
-    # Bounded, highest quality first, so no alias set ranks thousands of rows.
+    # Bounded, highest quality first, so no alias set ranks thousands of rows. The top rows are picked here,
+    # not with ORDER BY quality_score LIMIT: given that, PostgreSQL walked the quality_score index backwards
+    # and filtered 50,569 rows to find 400 (3.3 s on prod, 2026-11-09) instead of using the trigram indexes.
+    # Ids and quality only, so the text is loaded just for the rows kept.
     fast_queryset = base_queryset.filter(fast_alias_filter)
     scan_limit = int(getattr(settings, "GRAPH_CANDIDATE_SCAN_LIMIT", 400))
     if scan_limit > 0:
-        fast_queryset = fast_queryset.order_by("-quality_score", "id")[:scan_limit]
+        matches = sorted(fast_queryset.values_list("id", "quality_score"), key=lambda row: (-row[1], row[0]))
+        # By primary key: the path/label search is not run a second time.
+        fast_queryset = base_queryset.filter(id__in=[row[0] for row in matches[:scan_limit]])
     ranked_candidates = []
     seen_chunk_ids: set[int] = set()
     for chunk in fast_queryset:
