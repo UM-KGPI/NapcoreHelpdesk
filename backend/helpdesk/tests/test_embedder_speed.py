@@ -14,19 +14,25 @@ from helpdesk.services import embeddings
 class CpuThreadsTests(SimpleTestCase):
     def test_threads_follow_the_cgroup_limit(self):
         with patch.dict("os.environ", {"EMBEDDER_THREADS": ""}), patch("builtins.open", mock_open(read_data="200000 100000\n")):
-            self.assertEqual(embedding_service.cpu_threads(), 2)
+            self.assertEqual(embedding_service.cpu_threads(), (2, "CPU limit 2"))
         with patch.dict("os.environ", {"EMBEDDER_THREADS": ""}), patch("builtins.open", mock_open(read_data="150000 100000\n")):
-            self.assertEqual(embedding_service.cpu_threads(), 2)  # 1.5 CPUs: rounded up
+            self.assertEqual(embedding_service.cpu_threads(), (2, "CPU limit 1.5"))  # rounded up
 
     def test_no_limit_or_no_cgroup_leaves_the_runtime_default(self):
         with patch.dict("os.environ", {"EMBEDDER_THREADS": ""}), patch("builtins.open", mock_open(read_data="max 100000\n")):
-            self.assertIsNone(embedding_service.cpu_threads())
+            self.assertEqual(embedding_service.cpu_threads(), (None, "runtime default, no CPU limit"))
         with patch.dict("os.environ", {"EMBEDDER_THREADS": ""}), patch("builtins.open", side_effect=OSError):
-            self.assertIsNone(embedding_service.cpu_threads())
+            self.assertEqual(embedding_service.cpu_threads(), (None, "runtime default"))
 
     def test_an_explicit_setting_wins(self):
         with patch.dict("os.environ", {"EMBEDDER_THREADS": "3"}):
-            self.assertEqual(embedding_service.cpu_threads(), 3)
+            self.assertEqual(embedding_service.cpu_threads(), (3, "EMBEDDER_THREADS"))
+
+    def test_a_cpu_count_passed_as_threads_may_be_fractional(self):
+        # The compose files pass EMBEDDER_CPUS ("2.0", "1.5") as EMBEDDER_THREADS.
+        for value, threads in (("2.0", 2), ("4", 4), ("1.5", 2)):
+            with patch.dict("os.environ", {"EMBEDDER_THREADS": value}):
+                self.assertEqual(embedding_service.cpu_threads(), (threads, "EMBEDDER_THREADS"))
 
 
 class PassageCacheTests(SimpleTestCase):
