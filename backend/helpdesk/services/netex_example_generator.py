@@ -31,6 +31,18 @@ MAX_REPORTED_ERRORS = 5
 VALIDATOR_TIMEOUT_SECONDS = 10
 
 _EXAMPLE_WORDS = re.compile(r"\b(?:examples?|samples?|snippets?|fragments?|show\s+(?:me\s+)?(?:how|the\s+xml))\b", re.I)
+# A request to produce XML without an example word (prod req-mwb6auo0-n3jh83, 2026-11-10: "Can you create an
+# XML file modelling such TemplateServiceJourney?"; July: "give an XML snipped"). A producing verb, then in the
+# same sentence XML (or NeTEx) and the kind of thing written, or "the/an XML" that is not about the schema
+# itself ("write the XML header" asks how, "which XML schema" asks what).
+_PRODUCING = r"(?:create|write|generate|produce|build|make|draft|give|provide|show|need|want|get)"
+_XML_REQUEST = re.compile(
+    rf"\b{_PRODUCING}\b[^.?!]{{0,60}}?\b(?:xml|netex)\s+(?:files?|documents?|code|snipp(?:et|ed)s?|fragments?|instances?|representations?)\b"
+    r"|\b(?:create|write|generate|produce|build|draft)\b[^.?!]{0,40}?\b(?:an?|the|some|this|that|netex)\s+xml\b"
+    r"(?!\s+(?:schemas?|elements?|attributes?|namespaces?|tags?|headers?|structure|declarations?|validation)\b)"
+    r"|\bsnipped\b",
+    re.I,
+)
 _NUMBER = re.compile(r"(?<![\w.])\d+(?:\.\d+)?(?![\w.])")
 # Straight or curly double quotes, in pairs; an apostrophe ("don't") is no quote.
 _QUOTED = re.compile(r'"([^"]{1,60})"|“([^”]{1,60})”')
@@ -116,14 +128,71 @@ def _time_value(match: re.Match) -> str:
     return f"{int(hours):02d}:{minutes}" + (f":{seconds}" if seconds else "")
 
 
+# A number with a time unit ("3 minutes", "30 sec", "a 3-minute crossing") is one duration, written in the
+# schema as an xs:duration (PT3M): not the bare number "3" (prod req-mwb6auo0-n3jh83, 2026-11-10: the value
+# check wanted "3" as an element's whole content and the model wrote <Name>3</Name> to pass it) and not a
+# count of parts ("3 minutes" found PassengersPerMinute and made the example a StopPlace).
+_DURATION_UNITS = {"second": ("S", 1), "sec": ("S", 1), "minute": ("M", 60), "min": ("M", 60),
+                   "hour": ("H", 3600), "hr": ("H", 3600), "day": ("D", 86400)}
+_DURATION = re.compile(
+    r"(?<![\w.])(\d+(?:\.\d+)?|" + "|".join(sorted(_NUMBER_WORDS, key=len, reverse=True)) + r")[\s-]+"
+    r"(seconds?|secs?|minutes?|mins?|hours?|hrs?|days?)\b",
+    re.I,
+)
+
+
+def _duration_unit(word: str) -> str:
+    word = word.lower()
+    return word[:-1] if word.endswith("s") and word[:-1] in _DURATION_UNITS else word
+
+
+def durations(question: str) -> list[tuple[str, int, str]]:
+    """The durations a question gives: (as written, seconds, xs:duration). "3 minutes" -> ("3 minutes", 180,
+    "PT3M"); "1.5 hours" -> PT5400S (the schema allows a fraction only in the seconds); "2 days" -> P2D."""
+    found = []
+    for match in _DURATION.finditer(question or ""):
+        number, unit = match.groups()
+        amount = float(number) if number[:1].isdigit() else float(_NUMBER_WORD_VALUES[number.lower()])
+        designator, factor = _DURATION_UNITS[_duration_unit(unit)]
+        seconds = amount * factor
+        if seconds <= 0 or seconds != int(seconds):
+            continue
+        if amount == int(amount):
+            iso = f"P{int(amount)}D" if designator == "D" else f"PT{int(amount)}{designator}"
+        else:
+            iso = f"PT{int(seconds)}S"
+        found.append((match.group(0), int(seconds), iso))
+    return found
+
+
+_ISO_DURATION = re.compile(r"(-)?P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?")
+
+
+def duration_seconds(text: str) -> float | None:
+    """Seconds of an xs:duration without years or months ("PT3M" -> 180, "PT1H30M" -> 5400), else None."""
+    match = _ISO_DURATION.fullmatch((text or "").strip())
+    if not match or (text or "").strip() in ("P", "PT") or (text or "").strip().endswith("T"):
+        return None
+    sign, days, hours, minutes, seconds = match.groups()
+    if not any((days, hours, minutes, seconds)):
+        return None
+    total = int(days or 0) * 86400 + int(hours or 0) * 3600 + int(minutes or 0) * 60 + float(seconds or 0)
+    return -total if sign else total
+
+
+def is_duration_value(value: str) -> bool:
+    return duration_seconds(value) is not None
+
+
 def requested_values(question: str) -> list[str]:
     """The concrete values a question gives, each of which the fragment must contain: quoted names,
-    dates and times, numbers, and proper names written without quotes."""
+    dates and times, durations (as xs:duration), numbers, and proper names written without quotes."""
     values = [(straight or curly).strip() for straight, curly in _QUOTED.findall(question or "")]
     unquoted = _QUOTED.sub(" ", question or "")
     values += _DATE.findall(unquoted)
     values += [_time_value(match) for match in _TIME.finditer(unquoted)]
-    values += _NUMBER.findall(_TIME.sub(" ", _DATE.sub(" ", unquoted)))
+    values += [iso for _, _, iso in durations(unquoted)]
+    values += _NUMBER.findall(_DURATION.sub(" ", _TIME.sub(" ", _DATE.sub(" ", unquoted))))
     values += named_values(question)
     return list(dict.fromkeys(value for value in values if value))
 
@@ -137,6 +206,8 @@ def holds_value(text: str, value: str) -> bool:
     text = (text or "").strip()
     if text == value:
         return True
+    if value[:1] == "P" and (wanted := duration_seconds(value)) is not None:
+        return duration_seconds(text) == wanted  # PT3M in PT180S or PT3M0S
     if re.fullmatch(r"\d{2}:\d{2}", value):
         return bool(re.fullmatch(re.escape(value) + r":00(?:\.0+)?" + _ZONE, text)
                     or re.fullmatch(r"\d{4}-\d{2}-\d{2}T" + re.escape(value) + r"(?::00(?:\.0+)?)?" + _ZONE, text))
@@ -165,6 +236,8 @@ def counted_shapes(question: str) -> list[tuple[int, str, str]]:
     """Counts the question gives for things ("two quays", "3 entrances"): (count, number as written, noun)."""
     shapes = []
     for number, noun in _COUNTED.findall(question or ""):
+        if _duration_unit(noun) in _DURATION_UNITS:
+            continue  # "3 minutes" is a duration (durations), not three things
         count = int(number) if number.isdigit() else _NUMBER_WORD_VALUES[number.lower()]
         if count > 0:
             shapes.append((count, number, noun))
@@ -191,8 +264,13 @@ def other_question(question: str) -> str:
     """The part of a question that asks something besides the example ("How do you describe a stop place in
     NeTEx?" in "How do you describe a stop place in NeTEx? Show me an example with two quays."), or ""."""
     parts = re.split(r"(?<=[?.!])\s+|\s*;\s*|,?\s+and\s+(?=(?:show|give|write|provide)\b)", (question or "").strip(), flags=re.I)
-    asked = [p.strip() for p in parts if p.strip() and _INTERROGATIVE.match(p) and not _EXAMPLE_WORDS.search(p)]
+    asked = [p.strip() for p in parts if p.strip() and _INTERROGATIVE.match(p) and not _asks_for_xml(p)]
     return " ".join(asked)
+
+
+def _asks_for_xml(text: str) -> bool:
+    """An example word, or a request to produce XML ("create an XML file", "write the XML for …")."""
+    return bool(_EXAMPLE_WORDS.search(text or "") or _XML_REQUEST.search(text or ""))
 
 
 def asks_for_netex_example(question: str, scope: list[str] | None) -> bool:
@@ -202,7 +280,7 @@ def asks_for_netex_example(question: str, scope: list[str] | None) -> bool:
     names = {(name or "").strip().lower() for name in scope or []}
     if "netex" not in names and "netex" not in (question or "").lower():
         return False
-    return bool(_EXAMPLE_WORDS.search(question or ""))
+    return _asks_for_xml(question)
 
 
 def wants_generated_example(question: str, scope: list[str] | None) -> bool:
@@ -444,6 +522,54 @@ def example_element_names(example: dict | None, limit: int = 10) -> list[str]:
     return list(dict.fromkeys(name for name in names if name and name not in _GENERIC_ELEMENTS))[:limit]
 
 
+_CLOCK = re.compile(r"(?:(\d{4}-\d{2}-\d{2})T)?(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?" + _ZONE)
+
+
+def _clock_seconds(text: str) -> float | None:
+    """Seconds of an xs:time or xs:dateTime ("10:03:00.0Z" -> 36180), else None."""
+    from datetime import date
+
+    match = _CLOCK.fullmatch((text or "").strip())
+    if not match:
+        return None
+    day, hours, minutes, seconds = match.groups()
+    offset = date.fromisoformat(day).toordinal() * 86400 if day else 0
+    return offset + int(hours) * 3600 + int(minutes) * 60 + int(seconds)
+
+
+def times_apart(node, seconds: float):
+    """Two time values in node's subtree that are the given duration apart: (earlier, later) elements, else
+    None. A crossing "3 minutes from side to side" is written as a departure and an arrival 3 minutes later,
+    not as a duration element (3 of 3 dev runs, 2026-11-10)."""
+    stamped = [(value, child) for child in node.iter() if (value := _clock_seconds(child.text or "")) is not None]
+    for index, (first, first_node) in enumerate(stamped):
+        for second, second_node in stamped[index + 1:]:
+            if abs(second - first) == seconds:
+                return (first_node, second_node) if first < second else (second_node, first_node)
+    return None
+
+
+def duration_by_times(root, value: str, local=lambda tag: tag.rsplit("}", 1)[-1] if isinstance(tag, str) else ""):
+    """For a duration value: the later of two time values the duration apart inside one object (an element
+    with an id that is not a frame) of the parsed fragment, else None."""
+    seconds = duration_seconds(value) if value[:1] == "P" else None
+    if not seconds:
+        return None
+    for node in root.iter():
+        if node.get("id") and not local(node.tag).endswith("Frame") and (pair := times_apart(node, seconds)):
+            return pair[1]
+    return None
+
+
+def _parsed(fragment: str):
+    from xml.etree import ElementTree
+
+    try:
+        return ElementTree.fromstring(f'<root xmlns="{NETEX_NAMESPACE}">{fragment}</root>')
+    except ElementTree.ParseError:
+        return None
+
+
 def count_places(fragment: str, question: str, placed: set[str] = frozenset()) -> list[dict]:
     """The question's counts the fragment satisfies: "two quays" -> {"value": "two", "element": "Quay",
     "count": 2, "path": [...]} when the fragment has exactly two Quay elements in one parent."""
@@ -510,6 +636,10 @@ def value_places(fragment: str, values: list[str]) -> list[dict]:
             if node is not root and name:
                 places.append({"value": value, "element": f"{local(node.tag)}/@{name}", "path": path_of(node)})
                 break
+        else:
+            later = duration_by_times(root, value)
+            if later is not None:
+                places.append({"value": value, "element": local(later.tag), "path": path_of(later)})
     return places
 
 
@@ -544,7 +674,7 @@ _PART = re.compile(
     re.I,
 )
 _SUBJECT = re.compile(
-    r"\b(?:examples?|samples?|fragments?)\s+(?:of|for)\s+(?:an?\s+|the\s+|one\s+)?(?P<subject>[A-Za-z][\w-]*(?:\s+[A-Za-z][\w-]*){0,2}?)"
+    r"\b(?:examples?|samples?|fragments?|xml(?:\s+(?:files?|documents?|code|snippets?))?)\s+(?:of|for)\s+(?:an?\s+|the\s+|one\s+)?(?P<subject>[A-Za-z][\w-]*(?:\s+[A-Za-z][\w-]*){0,2}?)"
     r"\s+(?:with|having|has|that|containing|including|for|in)\b",
     re.I,
 )
@@ -779,7 +909,7 @@ def standard_example(
 # What the example is an example of, with more endings than _SUBJECT ("a route named …", "a passing time
 # arriving at …", "a fare product for adult …", the end of the sentence).
 _SUBJECT_WIDE = re.compile(
-    r"\b(?:examples?|samples?|fragments?)\s+(?:of|for)\s+(?:an?\s+|the\s+|one\s+)?"
+    r"\b(?:examples?|samples?|fragments?|xml(?:\s+(?:files?|documents?|code|snippets?))?)\s+(?:of|for)\s+(?:an?\s+|the\s+|one\s+)?"
     r"(?P<subject>[A-Za-z][\w-]*(?:\s+[A-Za-z][\w-]*){0,2}?)"
     r"(?=\s+(?:with|having|has|that|containing|including|for|in|named|called|operated|departing|arriving|at|on|of)\b"
     r"|\s*$|\s*[,.?!;:])",
@@ -863,7 +993,43 @@ def asked_element(question: str) -> str:
                 break
         if found:
             break
+    if not found:
+        # No subject phrase: an object the question names by its element name ("map a ferry service into a
+        # NeTEx TemplateServiceJourney … create an XML file", prod req-mwb6auo0-n3jh83, 2026-11-10).
+        found = next(iter(named_elements(question)), "")
     _ASKED_CACHE[key] = (found, time.monotonic() + _LOOKUP_TTL_SECONDS)
+    return found
+
+
+# An element name as written in the schema: two or more capitalised parts ("TemplateServiceJourney",
+# "FlexibleLine"). One capitalised word ("Line", "Quay") is also an ordinary word at a sentence start.
+_ELEMENT_NAME = re.compile(r"(?<![\w:])[A-Z][a-z0-9]+(?:[A-Z][a-z0-9]+)+(?![\w:])")
+
+
+def named_elements(question: str) -> list[str]:
+    """The NeTEx objects the question names by element name, most often named first, then in order of
+    appearance: each an object (a versioned entity) the standard's example files use, an abstract one standing
+    for its most used concrete member. Names that are a counted or wanted part ("a StopPlace with two
+    AccessSpaces") are left out: the example is of the object that has them."""
+    from collections import Counter
+
+    tokens = _ELEMENT_NAME.findall(question or "")
+    if not tokens:
+        return []
+    parts = {_singular(noun.split()[0]) for noun in wanted_parts(question)}
+    parts |= {_singular(noun) for _, _, noun in counted_shapes(question)}
+    counts = Counter(tokens)
+    ordered = sorted(dict.fromkeys(tokens), key=lambda name: (-counts[name], tokens.index(name)))
+    found: list[str] = []
+    for name in ordered:
+        if _singular(name) in parts:
+            continue
+        entries = concrete_elements(name)
+        if not entries:
+            continue
+        member = next((e["name"] for e in entries if e.get("object") and _in_examples(e["name"])), "")
+        if member and member not in found:
+            found.append(member)
     return found
 
 
@@ -1423,10 +1589,27 @@ def asked_object_problem(fragment: str, element: str, values: list[str], questio
         for node in obj.iter():
             if any(holds_value(node.text or "", v) or any(holds_value(a, v) for a in node.attrib.values()) for v in wanted):
                 return ""
+        if any(is_duration_value(v) and times_apart(obj, duration_seconds(v)) for v in wanted):
+            return ""  # a duration as two times that far apart in the object
     return (
         f"the question asks for a {element}: the values {', '.join(wanted)} are neither in it nor in an object that "
         f"refers to it or that it refers to. Put them in the {element}, or in an object linked to it by a reference, "
         "in the elements the schema has for such values."
+    )
+
+
+def missing_value_error(value: str, question: str) -> str:
+    """The feedback for a value the valid fragment lacks."""
+    written = {iso: text for text, _, iso in durations(question)}
+    if value in written:
+        return (
+            f"the duration {written[value]} ({value}) from the question is missing: write it as the xs:duration "
+            f"{value} in an element that holds a duration, or as two times {written[value]} apart in the same "
+            "object (a departure and an arrival), not as a number in a Name or Description text"
+        )
+    return (
+        f"the value {value} from the question is missing: it must be the whole content of an element "
+        "or attribute that holds it, not part of a Name or Description text"
     )
 
 
@@ -1437,7 +1620,11 @@ def _unmet_values(fragment: str, values: list[str], question: str) -> list[str]:
     if not missing:
         return []
     counted = {p["value"] for p in count_places(fragment, question)}
-    return [value for value in missing if value not in counted]
+    missing = [value for value in missing if value not in counted]
+    if any(is_duration_value(value) for value in missing) and (root := _parsed(fragment)) is not None:
+        # A duration met as two times that far apart in one object (a departure and an arrival).
+        missing = [value for value in missing if not (is_duration_value(value) and duration_by_times(root, value) is not None)]
+    return missing
 
 
 def part_places(fragment: str, question: str) -> list[dict]:
@@ -1473,7 +1660,23 @@ def _places(fragment: str, values: list[str], question: str) -> list[dict]:
     then the parts it asks for."""
     places = value_places(fragment, values)
     places += count_places(fragment, question, placed={p["value"] for p in places})
-    return places + part_places(fragment, question)
+    return written_durations(places + part_places(fragment, question), question)
+
+
+def written_durations(places: list[dict], question: str) -> list[dict]:
+    """Places with each duration shown as the question wrote it ("3 minutes", not PT3M)."""
+    written = {iso: text for text, _, iso in durations(question)}
+    return [{**place, "value": written.get(place["value"], place["value"])} for place in places]
+
+
+def values_line(values: list[str], question: str) -> str:
+    """The values for the model's prompt, a duration with how the schema writes it."""
+    written = {iso: (text, seconds) for text, seconds, iso in durations(question)}
+    return ", ".join(
+        f"{written[v][0]} (an xs:duration {v} in an element the schema has for such a duration, or two times "
+        f"{written[v][0]} apart in the same object)" if v in written else v
+        for v in values
+    )
 
 
 def missing_values(fragment: str, values: list[str]) -> list[str]:
@@ -1705,6 +1908,8 @@ def generate_netex_example(
         fallback = None
     if fallback is None:
         return result
+    written = {iso: text for text, _, iso in durations(question)}
+    fallback["missingValues"] = [written.get(value, value) for value in fallback.get("missingValues") or []]
     for key in ("askedObject", "attemptLog", "generationMs", "validationMs", "schemaDeclarations", "askedObjectMs"):
         if key in result:
             fallback.setdefault(key, result[key])
@@ -1733,7 +1938,10 @@ def _generate(
             if not (asks_for_netex_example(question, scope) or asks_for_netex_example(text, scope)):
                 return None
             try:
-                elements = concept_elements(text)
+                # An object named by its element name ("write the XML for a NeTEx FlexibleLine") before the
+                # nearest concepts.
+                named = named_elements(question) or named_elements(text)
+                elements = list(dict.fromkeys(named + concept_elements(text)))
             except Exception as exc:  # concept matching or the index unavailable: no example, as before
                 logger.info("example concept not found: %s", exc)
                 return None
@@ -1777,7 +1985,7 @@ def _generate(
     skeleton_part = skeleton_block(skeleton) + "\n\n" if skeleton else ""
     messages = [
         {"role": "system", "content": _PROMPT},
-        {"role": "user", "content": f"Question:\n{question}\n\nValues to use: {', '.join(values)}\n\n{skeleton_part}EVIDENCE BLOCKS:\n{evidence}"},
+        {"role": "user", "content": f"Question:\n{question}\n\nValues to use: {values_line(values, question)}\n\n{skeleton_part}EVIDENCE BLOCKS:\n{evidence}"},
     ]
     errors: list[str] = []
     # Schema declarations go only into the feedback after a failed attempt: given up front they lowered
@@ -1843,8 +2051,7 @@ def _generate(
             errors = list(checked.get("errors") or [])
             if checked.get("valid") and not errors:
                 errors = [
-                    f"the value {value} from the question is missing: it must be the whole content of an element "
-                    "or attribute that holds it, not part of a Name or Description text"
+                    missing_value_error(value, question)
                     for value in _unmet_values(fragment, values, shape_question)
                 ]
                 if not errors and asked and (problem := asked_object_problem(fragment, asked, values, shape_question)):
