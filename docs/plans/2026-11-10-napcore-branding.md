@@ -130,7 +130,7 @@ The page background becomes plain `--bg` (a light neutral). The warm paper colou
 
 | Asset | Source | Notes |
 |---|---|---|
-| NAPCORE logo (SVG; positive and, if any, negative) | **ask Sara/NAPCORE** for the official files; napcore.eu shows the logo but a scraped copy may be outdated (**believed**) | goes to `frontend/src/assets/brand/` |
+| NAPCORE logo (SVG; positive and, if any, negative) | the official files from Sara/NAPCORE; **if they are not available, the logo as published on napcore.eu** (SVG if the site serves one, else the largest image) | goes to `frontend/src/assets/brand/` |
 | "Co-funded by the European Union", horizontal, positive and negative, English | Commission download centre (§2) | SVG preferred, PNG at 2× otherwise; do not edit the files |
 
 Only English for now; the UI is English. **Assumed:** no bilingual version (p. 8: needs a 2 cm flag, not
@@ -154,12 +154,13 @@ recommended small).
 8. **Full cycle:** PR → CI → merge → version bump → deploy → check the live site at both widths. Close #377 with the
    screenshots.
 
-Estimate (**assumed**): half a day once the NAPCORE logo files are in hand.
+Estimate (**assumed**): half a day once the NAPCORE logo files are in hand (from Sara, or from napcore.eu).
 
 ## 7. Open questions for Sara (put in the PR description)
 
 1. Yellow: official EU `#FFCC00` (proposed) or `#FFCD00` as written in the issue?
-2. The official NAPCORE logo files: SVG, and a version for dark backgrounds?
+2. The official NAPCORE logo files: SVG, and a version for dark backgrounds? If none are available, we take the logo
+   from napcore.eu.
 3. Is "Co-funded by the European Union" the right statement for the Helpdesk itself (NAPCORE is CEF co-funded), or
    should the footer also carry a disclaimer sentence? The guidelines do not require one. **Believed:** the grant
    agreement is the place to check.
@@ -170,5 +171,6 @@ Estimate (**assumed**): half a day once the NAPCORE logo files are in hand.
   (size, spacing, statement spelled out, official file unchanged, white border on blue).
 - **Colour regressions in less visited views** (editor console, harvest panel, legal context). Step 2's grep and the
   screenshots of the editor console cover them.
-- **Logo files late.** Steps 2, 4 (without logos), 5 and 6 can go ahead with placeholders. The PR is not merged with
-  placeholders.
+- **Logo files late or unavailable.** Steps 2, 4 (without logos), 5 and 6 can go ahead with placeholders. If the
+  official files do not come, the NAPCORE logo is taken from napcore.eu; the assets `README.md` names that source.
+  The PR is not merged with placeholders.
