@@ -26,6 +26,9 @@ colours (`#003399`, `#FFCC00`). Differences from the design below:
   NAPCORE logo (60 px) in the header only; the EU emblem only in the footer, in the Commission's negative version
   (her positive file is unreadable on dark glass) and 70 px tall so its flag matches the logo (her spec: 40 px,
   smaller than the logo, against guidelines p. 4). Answers, editor and About keep light surfaces.
+- **Adjustments (Sara, #377, 2026-11-10 evening):** EU emblem 45 px (she asked for 40 px; at 40 px the flag would
+  be 34 px, under the guidelines' 1 cm minimum of about 38 px), yellow light 18 % fading out at 25 % (was 35 %
+  and 40 %) so it no longer turns olive.
 - **Logo height:** both 48 px in the header and the footer; the EU flag fills the emblem image's height, so it is
   above the 1 cm minimum and as large as the NAPCORE logo.
 
