@@ -13,6 +13,7 @@ less usual element. The evidence it was built from is cited with it.
 
 from __future__ import annotations
 
+import contextvars
 import json
 import logging
 import re
@@ -776,7 +777,8 @@ _PROMPT = (
     "('Quay 1', 'Line 1'). Add no real-world facts the question does not give, such as coordinates, addresses, "
     "full names of organisations or opening times. The frame goes inside <dataObjects> of a PublicationDelivery; do not write the PublicationDelivery, "
     "an XML declaration or namespace declarations.\n"
-    'Return ONLY JSON: {"xml": "<...Frame ...>...</...Frame>"}'
+    'Return ONLY JSON: {"xml": "<...Frame ...>...</...Frame>"}. The reply is the JSON object only, with no text '
+    "before or after it."
 )
 
 
@@ -789,21 +791,67 @@ def _evidence_text(chunks: list[dict]) -> tuple[str, list[dict]]:
     return "\n\n".join(blocks), used
 
 
+def parse_reply(content: str) -> tuple[str, str]:
+    """The frame in the model's reply and how it was found: "json" (a JSON object with "xml", anywhere in
+    the reply: the model sometimes writes a sentence before it), "xml" (bare XML), or "" (nothing).
+
+    The JSON object is read with raw_decode from each "{" in turn, so text before or after it and a
+    fenced block do not matter. Only without one is the first XML element taken as written; JSON escapes
+    in it (\\" and \\n, from a reply that was JSON but did not decode) are undone, else the validator saw
+    `AttValue: " or ' expected` (2026-11-10: 1 of 33 attempts lost that way)."""
+    text = content or ""
+    decoder = json.JSONDecoder()
+    position = text.find("{")
+    while position != -1:
+        try:
+            payload, _ = decoder.raw_decode(text, position)
+        except ValueError:
+            payload = None
+        if isinstance(payload, dict) and isinstance(payload.get("xml"), str) and payload["xml"].strip():
+            return payload["xml"].strip(), "json"
+        position = text.find("{", position + 1)
+    match = _XML_BLOCK.search(text)
+    if not match:
+        return "", ""
+    fragment = match.group(0).strip()
+    if '\\"' in fragment:
+        fragment = fragment.replace('\\"', '"').replace("\\n", "\n").replace("\\t", "\t").replace("\\/", "/")
+    return fragment, "xml"
+
+
 def _extract_fragment(content: str) -> str:
-    try:
-        payload = json.loads(content)
-        if isinstance(payload, dict) and isinstance(payload.get("xml"), str):
-            return payload["xml"].strip()
-    except (ValueError, TypeError):
-        pass
-    match = _XML_BLOCK.search(content or "")
-    return match.group(0).strip() if match else ""
+    return parse_reply(content)[0]
+
+
+_ERROR_CLASSES = (
+    ("malformed", ("Not well-formed XML", "the reply contained no XML frame")),
+    ("keyref", ("No match found for key-sequence",)),
+    ("min-count", ("Missing child element(s)",)),
+    ("not-expected", ("This element is not expected",)),
+    ("value", ("from the question is missing",)),
+    ("asked-object", ("the question asks for",)),
+    ("model-error", ("generation failed",)),
+)
+
+
+def error_class(message: str) -> str:
+    """The kind of a failed attempt's first error, from the validator's or the generator's wording:
+    malformed, keyref, min-count, not-expected, value, asked-object, model-error, or other."""
+    for name, markers in _ERROR_CLASSES:
+        if any(marker in (message or "") for marker in markers):
+            return name
+    return "other" if message else ""
+
+
+# Output tokens of the last model call in this context, for the attempt log (0 when unknown).
+_LAST_COMPLETION_TOKENS: contextvars.ContextVar[int] = contextvars.ContextVar("netex_example_completion_tokens", default=0)
 
 
 def _ask_model(messages: list[dict]) -> str:
     from helpdesk.services.llm_generator import _request_chat_completion
     from helpdesk.services.llm_options import answer_max_tokens
 
+    _LAST_COMPLETION_TOKENS.set(0)
     response = _request_chat_completion(
         api_base_url=(settings.LLM_API_BASE_URL or "").strip(),
         api_key=(settings.LLM_API_KEY or "").strip(),
@@ -813,6 +861,9 @@ def _ask_model(messages: list[dict]) -> str:
         max_tokens=answer_max_tokens(1600),
         messages=messages,
     )
+    usage = response.get("usage") if isinstance(response, dict) else None
+    if isinstance(usage, dict) and isinstance(usage.get("completion_tokens"), int):
+        _LAST_COMPLETION_TOKENS.set(usage["completion_tokens"])
     return str(response["choices"][0]["message"]["content"] or "")
 
 
@@ -937,7 +988,24 @@ def generate_netex_example(
         finally:
             timing[key] += round((time.perf_counter() - started) * 1000)
 
+    # One row per attempt (time, output tokens, how the reply parsed, the first error's class): the
+    # example benchmark reports from it, and the trace shows why an example took three attempts.
+    attempt_log: list[dict] = []
+
+    def logged(attempt: int, started: float, parsed: str, attempt_errors: list[str]) -> None:
+        first = attempt_errors[0] if attempt_errors else ""
+        attempt_log.append({
+            "attempt": attempt,
+            "ms": round((time.perf_counter() - started) * 1000),
+            "completionTokens": _LAST_COMPLETION_TOKENS.get(),
+            "parsed": parsed,
+            "errorClass": error_class(first),
+            "error": first[:300],
+        })
+
     for attempt in range(1, MAX_ATTEMPTS + 1):
+        attempt_started = time.perf_counter()
+        _LAST_COMPLETION_TOKENS.set(0)
         try:
             content = timed("generationMs", lambda: _ask_model(messages))
         except Exception as exc:
@@ -945,10 +1013,11 @@ def generate_netex_example(
             # gateway timed out once at 60 s) ends the example only when no attempt is left.
             logger.warning("NeTEx example generation failed (attempt %d): %s", attempt, exc)
             errors = [f"generation failed: {exc}"[:200]]
+            logged(attempt, attempt_started, "", errors)
             if attempt == MAX_ATTEMPTS:
-                return {"valid": False, "attempts": attempt, "errors": errors, **timing}
+                return {"valid": False, "attempts": attempt, "errors": errors, "attemptLog": attempt_log, **timing}
             continue
-        fragment = _extract_fragment(content)
+        fragment, parsed = parse_reply(content)
         checked: dict = {}
         if not fragment:
             errors = ["the reply contained no XML frame"]
@@ -957,7 +1026,7 @@ def generate_netex_example(
                 checked = timed("validationMs", lambda: validate_fragment(fragment))
             except ValidatorUnavailable as exc:
                 logger.warning("NeTEx example not validated: %s", exc)
-                return {"valid": False, "attempts": attempt, "errors": [str(exc)[:200]], **timing}
+                return {"valid": False, "attempts": attempt, "errors": [str(exc)[:200]], "attemptLog": attempt_log, **timing}
             errors = list(checked.get("errors") or [])
             if checked.get("valid") and not errors:
                 errors = [
@@ -965,6 +1034,7 @@ def generate_netex_example(
                     "or attribute that holds it, not part of a Name or Description text"
                     for value in _unmet_values(fragment, values, shape_question)
                 ]
+        logged(attempt, attempt_started, parsed, errors)
         if not errors:
             return {
                 "valid": True,
@@ -979,6 +1049,7 @@ def generate_netex_example(
                 "elementNotes": element_notes(checked.get("elements") or []),
                 "valuePlaces": _places(fragment, values, shape_question),
                 "evidenceChunkIds": [chunk.get("chunkId") for chunk in used],
+                "attemptLog": attempt_log,
                 **timing,
             }
         if declarations is None:
@@ -998,4 +1069,4 @@ def generate_netex_example(
                 + "\nFix these errors and return the whole frame again as JSON {\"xml\": \"...\"}.",
             },
         ]
-    return {"valid": False, "attempts": MAX_ATTEMPTS, "errors": errors, **timing}
+    return {"valid": False, "attempts": MAX_ATTEMPTS, "errors": errors, "attemptLog": attempt_log, **timing}

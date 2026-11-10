@@ -43,3 +43,17 @@ questions:
   question: Show me a NeTEx example for Ljubljana Bus Station with two quays
 - id: gen20
   question: Show a NeTEx example of a line operated by LPP in Ljubljana
+# Added 2026-11-10: an object with a nested child holding the value, the shape that failed on prod
+# (req-mw9vh973-zgtk0t, gen21) and that the first twenty single-value questions hide. Compare with --runs 3.
+- id: gen21
+  question: Create a NeTEx XML example for a fare product for adult for 5 EUR.
+- id: gen22
+  question: Show me a NeTEx example of a sales offer package with a price of 10 EUR
+- id: gen23
+  question: Write a NeTEx example of a tariff with two fare zones
+- id: gen24
+  question: Show a NeTEx example of a dated service journey on 2026-12-01
+- id: gen25
+  question: Give a NeTEx example of a vehicle type with a deck plan of 2 decks
+- id: gen26
+  question: Show a NeTEx example of a stop place with a lift and two quays
