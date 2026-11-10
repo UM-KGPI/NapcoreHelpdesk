@@ -145,6 +145,9 @@ class GenerationTests(SimpleTestCase):
         values_patcher = patch.object(generator, "value_element_declarations", return_value=[])
         values_patcher.start()
         self.addCleanup(values_patcher.stop)
+        asked_patcher = patch.object(generator, "asked_element", return_value="")
+        asked_patcher.start()
+        self.addCleanup(asked_patcher.stop)
 
     def test_schema_declarations_go_to_the_model_only_after_a_failed_attempt(self):
         self.declarations.return_value = [
@@ -293,6 +296,9 @@ class AttemptLogTests(SimpleTestCase):
         values_patcher = patch.object(generator, "value_element_declarations", return_value=[])
         values_patcher.start()
         self.addCleanup(values_patcher.stop)
+        asked_patcher = patch.object(generator, "asked_element", return_value="")
+        asked_patcher.start()
+        self.addCleanup(asked_patcher.stop)
 
     def test_error_classes_of_the_verbatim_messages(self):
         cases = {
@@ -885,7 +891,9 @@ class FeedbackTests(SimpleTestCase):
         ]
         with patch.object(generator, "schema_declarations", return_value=[]), patch.object(
             generator, "value_element_declarations", return_value=[]
-        ), patch.object(generator, "_ask_model", side_effect=[_reply(FRAME), _reply(FRAME)]) as ask, patch.object(
+        ), patch.object(generator, "asked_element", return_value=""), patch.object(
+            generator, "_ask_model", side_effect=[_reply(FRAME), _reply(FRAME)]
+        ) as ask, patch.object(
             generator, "validate_fragment", side_effect=verdicts
         ):
             result = generator.generate_netex_example(BUS, [NETEX_CHUNK], ["NeTEx"])
@@ -942,3 +950,135 @@ class TemporalValueTests(SimpleTestCase):
         self.assertTrue(generator.holds_value("2026-12-01T07:15:00Z", "07:15"))
         self.assertFalse(generator.holds_value("2026-12-011", "2026-12-01"))
         self.assertFalse(generator.holds_value("08:30:15", "08:30"))
+FARE_PRODUCT = (
+    '<FareFrame version="1" id="hd:FF_1"><fareProducts><PreassignedFareProduct version="1" id="hd:PFP_1">'
+    '<Name>Adult single</Name><prices><FareProductPrice version="1" id="hd:FPP_1"><Amount>5</Amount>'
+    "<Currency>EUR</Currency></FareProductPrice></prices></PreassignedFareProduct></fareProducts></FareFrame>"
+)
+PRICE_GROUP = (
+    '<FareFrame version="1" id="hd:FF_1"><fareProducts><PreassignedFareProduct version="1" id="hd:PFP_1">'
+    "<Name>Adult single</Name></PreassignedFareProduct></fareProducts><priceGroups><PriceGroup version=\"1\" "
+    'id="hd:PG_1"><members><FareProductPrice version="1" id="hd:FPP_1"><Amount>5</Amount><Currency>EUR</Currency>'
+    "</FareProductPrice></members></PriceGroup></priceGroups></FareFrame>"
+)
+
+
+class AskedObjectTests(SimpleTestCase):
+    def test_subjects_of_the_benchmark_shapes(self):
+        cases = {
+            "Create a NeTEx XML example for a fare product for adult for 5 EUR.": "fare product",
+            "NeTEx example of a timetabled passing time arriving at 08:30": "timetabled passing time",
+            'NeTEx example of a route named "Route 1 outbound"': "route",
+            "Show a NeTEx example of a tram vehicle type with a length of 32 metres": "tram vehicle type",
+            "Show a NeTEx example of a dated service journey on 2026-12-01": "dated service journey",
+            'Show a NeTEx example of a line with public code "6" operated by the operator "LPP"': "line",
+            "Give me a NeTEx example of a service journey departing at 07:15": "service journey",
+            "Show me a NeTEx example for Ljubljana Bus Station with two quays": "",
+            "Show me a NeTEx example of a stop place.": "stop place",
+        }
+        for question, subject in cases.items():
+            self.assertEqual(generator.asked_subject(question), subject, question)
+
+    def test_resolution_takes_objects_used_in_the_examples_and_concrete_members(self):
+        generator._ASKED_CACHE.clear()
+        known = {
+            "FareProduct": [{"name": "PreassignedFareProduct", "object": True}, {"name": "SaleDiscountRight", "object": True}],
+            "VehicleType": [{"name": "VehicleType", "object": True}],
+            "Coach": None,
+            "Fare": None,
+            "Product": None,
+            "Name": [{"name": "Name", "object": False}],
+        }
+        with patch.object(generator, "concrete_elements", side_effect=lambda name: known.get(name)), patch.object(
+            generator, "_in_examples", side_effect=lambda name: name != "SaleDiscountRight"
+        ):
+            self.assertEqual(generator.asked_element("Create a NeTEx XML example for a fare product for adult for 5 EUR."), "PreassignedFareProduct")
+            self.assertEqual(generator.asked_element("Show a NeTEx example of a tram vehicle type with a length of 32 metres"), "VehicleType")
+            self.assertEqual(generator.asked_element("Show a NeTEx example of a coach with 49 seats and 1 wheelchair area"), "")
+            self.assertEqual(generator.asked_element("Show a NeTEx example of a name with 5 letters"), "")
+
+    def test_asked_object_check(self):
+        self.assertEqual(generator.asked_object_problem(FARE_PRODUCT, "PreassignedFareProduct", ["5", "EUR"]), "")
+        problem = generator.asked_object_problem(PRICE_GROUP, "PreassignedFareProduct", ["5", "EUR"])
+        self.assertTrue(problem.startswith("the question asks for a PreassignedFareProduct: the values 5, EUR are neither in it"), problem)
+        # A price that refers to the product is linked to it.
+        linked = PRICE_GROUP.replace('<Amount>5</Amount>', '<Amount>5</Amount>').replace(
+            "<Currency>EUR</Currency></FareProductPrice>", '<Currency>EUR</Currency><PreassignedFareProductRef ref="hd:PFP_1"/></FareProductPrice>'
+        )
+        self.assertEqual(generator.asked_object_problem(linked, "PreassignedFareProduct", ["5", "EUR"]), "")
+        self.assertEqual(generator.error_class(problem), "asked-object")
+        missing = generator.asked_object_problem(PRICE_GROUP.replace("PreassignedFareProduct", "SaleDiscountRight"), "PreassignedFareProduct", ["5"])
+        self.assertIn("the frame has none", missing)
+        # One of the values inside is enough: a line's operator may be an object of its own next to it.
+        self.assertEqual(generator.asked_object_problem(PRICE_GROUP, "PreassignedFareProduct", ["Adult single", "5"]), "")
+
+    def test_values_in_linked_objects_times_and_counts(self):
+        parking = (
+            '<SiteFrame version="1" id="hd:SF"><stopPlaces><StopPlace version="1" id="hd:SP"><Name>S</Name></StopPlace>'
+            '</stopPlaces><parkings><Parking version="1" id="hd:P"><ParentSiteRef ref="hd:SP"/><TotalCapacity>40</TotalCapacity>'
+            "</Parking></parkings></SiteFrame>"
+        )
+        self.assertEqual(generator.asked_object_problem(parking, "StopPlace", ["40"]), "")
+        vehicle = (
+            '<ResourceFrame version="1" id="hd:RF"><vehicleTypes><VehicleType version="1" id="hd:VT"><DeckPlanRef ref="hd:DP"/>'
+            '</VehicleType></vehicleTypes><deckPlans><DeckPlan version="1" id="hd:DP"><Name>Upper 7</Name></DeckPlan></deckPlans></ResourceFrame>'
+        )
+        self.assertEqual(generator.asked_object_problem(vehicle, "VehicleType", ["Upper 7"]), "")
+        # A count is not a value to find ("2 decks" is two Deck elements).
+        self.assertEqual(generator.asked_object_problem(vehicle, "VehicleType", ["2"], "a vehicle type with a deck plan of 2 decks"), "")
+        journey = (
+            '<TimetableFrame version="1" id="hd:TF"><vehicleJourneys><ServiceJourney version="1" id="hd:SJ">'
+            "<DepartureTime>07:15:00</DepartureTime></ServiceJourney></vehicleJourneys></TimetableFrame>"
+        )
+        self.assertEqual(generator.asked_object_problem(journey, "ServiceJourney", ["07:15"]), "")
+
+    def test_skeleton_keeps_two_of_repeated_children_and_no_foreign_attributes(self):
+        from lxml import etree
+
+        document = etree.fromstring(
+            '<JourneyPattern xmlns="http://www.netex.org.uk/netex" xmlns:x="urn:x" id="jp" x:extra="1"><pointsInSequence>'
+            + "".join(f'<StopPointInJourneyPattern id="p{i}" order="{i}"/>' for i in range(5))
+            + "</pointsInSequence><!-- note --></JourneyPattern>"
+        )
+        tree = generator._skeleton_tree(document, lambda tag: etree.QName(tag).localname if isinstance(tag, str) else "")
+        xml = etree.tostring(tree, encoding="unicode")
+        self.assertEqual(xml.count("<StopPointInJourneyPattern"), 2)
+        self.assertNotIn("extra", xml)
+        self.assertNotIn("note", xml)
+
+
+@override_settings(LLM_ENABLED=True)
+class SkeletonGenerationTests(SimpleTestCase):
+    def setUp(self):
+        for name, value in (("schema_declarations", []), ("value_element_declarations", [])):
+            patcher = patch.object(generator, name, return_value=value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def test_skeleton_goes_first_and_a_fragment_without_the_asked_object_is_retried(self):
+        skeleton = {"xml": FARE_PRODUCT, "element": "PreassignedFareProduct", "sourcePath": "examples/fares/a.xml",
+                    "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx", "valid": True}
+        question = "Create a NeTEx XML example for a fare product for adult for 5 EUR."
+        with patch.object(generator, "asked_element", return_value="PreassignedFareProduct"), patch.object(
+            generator, "skeleton_for", return_value=skeleton
+        ), patch("helpdesk.services.retrieval_gateway.shown_example_chunk", return_value=None), patch.object(
+            generator, "_ask_model", side_effect=[_reply(PRICE_GROUP), _reply(FARE_PRODUCT)]
+        ) as ask, patch.object(generator, "validate_fragment", return_value={"valid": True, "errors": []}):
+            result = generator.generate_netex_example(question, [NETEX_CHUNK], ["NeTEx"])
+        first = ask.call_args_list[0].args[0][1]["content"]
+        self.assertIn("SKELETON: a PreassignedFareProduct", first)
+        self.assertLess(first.index("SKELETON"), first.index("EVIDENCE BLOCKS"))
+        self.assertIn("are neither in it", ask.call_args_list[1].args[0][-1]["content"])
+        self.assertTrue(result["valid"])
+        self.assertEqual((result["attempts"], result["askedObject"], result["askedObjectPresent"]), (2, "PreassignedFareProduct", True))
+        self.assertEqual(result["skeletonSourcePath"], "examples/fares/a.xml")
+        self.assertEqual(result["attemptLog"][0]["errorClass"], "asked-object")
+
+    def test_unresolved_question_has_no_skeleton_and_no_check(self):
+        with patch.object(generator, "asked_element", return_value=""), patch.object(generator, "skeleton_for") as skeleton, patch.object(
+            generator, "_ask_model", return_value=_reply(FRAME)
+        ) as ask, patch.object(generator, "validate_fragment", return_value={"valid": True, "errors": []}):
+            result = generator.generate_netex_example(BUS, [NETEX_CHUNK], ["NeTEx"])
+        skeleton.assert_not_called()
+        self.assertNotIn("SKELETON", ask.call_args_list[0].args[0][1]["content"])
+        self.assertEqual((result["valid"], result["askedObject"], result["askedObjectPresent"]), (True, "", False))

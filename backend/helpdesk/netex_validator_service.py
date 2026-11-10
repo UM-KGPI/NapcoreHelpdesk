@@ -19,6 +19,11 @@ model-written XML is parsed outside the backend process.
                         "attributes": [{"name": "id", "documentation": "Identifier of STOP PLACE.", "owner": "StopPlace"}]}
                     what the element contains according to the schema: its own child elements first, then
                     those inherited from each base type, and its attributes. Grounded by construction.
+    GET  /concrete?element=FareProduct
+                    -> {"found": true, "element": "FareProduct", "abstract": true,
+                        "concrete": [{"name": "PreassignedFareProduct", "object": true}, ...]}
+                    the elements that may be written for this one: itself unless abstract, else its
+                    substitution group's concrete members, most used in the standard's examples first.
     POST /validate  {"fragment": "<ResourceFrame ...>...</ResourceFrame>"}
                     -> {"valid": bool, "errors": ["line 3: ...", ...], "schemaVersion": "2.0", "commit": "...",
                         "elements": [{"name": "SeatingCapacity", "parent": "PassengerCapacity",
@@ -533,6 +538,22 @@ def diagnostics(models, document, log: list[tuple[int, str]], offset: int) -> li
     return entries
 
 
+def concrete_elements(holder, element: str, limit: int = 8) -> dict:
+    """What may be written for `element`: itself unless abstract, else its substitution group's concrete
+    members (most used in the standard's examples first), each with whether it is an object."""
+    models = holder.content
+    if models is None or element not in models.declared:
+        return {"found": False, "element": element}
+    abstract = element in models.abstract
+    names = models.in_place_of(element)[:limit] if abstract else [element]
+    return {
+        "found": True,
+        "element": element,
+        "abstract": abstract,
+        "concrete": [{"name": name, "object": holder.element_docs.is_object(name)} for name in names],
+    }
+
+
 class SchemaHolder:
     """The compiled schema of the checkout's current commit; recompiled in the background when it moves."""
 
@@ -632,6 +653,13 @@ def make_handler(holder: SchemaHolder):
             self.wfile.write(body)
 
         def do_GET(self):  # noqa: N802
+            if self.path.startswith("/concrete"):
+                element = parse_qs(urlparse(self.path).query).get("element", [""])[0].strip()
+                if not re.fullmatch(r"[A-Za-z][\w.-]{0,80}", element):
+                    self._reply(400, {"error": "expected ?element=<ElementName>"})
+                    return
+                self._reply(200, concrete_elements(holder, element))
+                return
             if self.path.startswith("/structure"):
                 element = parse_qs(urlparse(self.path).query).get("element", [""])[0].strip()
                 if not re.fullmatch(r"[A-Za-z][\w.-]{0,80}", element):

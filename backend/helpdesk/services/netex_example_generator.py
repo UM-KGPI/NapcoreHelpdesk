@@ -774,6 +774,281 @@ def standard_example(
     }
 
 
+# --- the asked object: resolver, skeleton, check (plan P2 of 2026-11-10) ------------------------
+
+# What the example is an example of, with more endings than _SUBJECT ("a route named …", "a passing time
+# arriving at …", "a fare product for adult …", the end of the sentence).
+_SUBJECT_WIDE = re.compile(
+    r"\b(?:examples?|samples?|fragments?)\s+(?:of|for)\s+(?:an?\s+|the\s+|one\s+)?"
+    r"(?P<subject>[A-Za-z][\w-]*(?:\s+[A-Za-z][\w-]*){0,2}?)"
+    r"(?=\s+(?:with|having|has|that|containing|including|for|in|named|called|operated|departing|arriving|at|on|of)\b"
+    r"|\s*$|\s*[,.?!;:])",
+    re.I,
+)
+_LOOKUP_TTL_SECONDS = 3600.0
+_CONCRETE_CACHE: dict[str, tuple[list[dict] | None, float]] = {}
+_IN_EXAMPLES_CACHE: dict[str, tuple[bool, float]] = {}
+_ASKED_CACHE: dict[str, tuple[str, float]] = {}
+
+
+def concrete_elements(element: str) -> list[dict] | None:
+    """The validator's /concrete answer: [{"name", "object"}] that may be written for the element (itself,
+    or an abstract one's concrete members, most used first); None for an unknown element or no validator."""
+    from urllib import error, parse, request
+
+    cached = _CONCRETE_CACHE.get(element)
+    if cached is not None and cached[1] > time.monotonic():
+        return cached[0]
+    url = settings.NETEX_VALIDATOR_URL.rstrip("/") + "/concrete?" + parse.urlencode({"element": element})
+    try:
+        with request.urlopen(url, timeout=VALIDATOR_TIMEOUT_SECONDS) as response:
+            payload = json.loads(response.read())
+    except (error.URLError, OSError, ValueError) as exc:
+        logger.info("concrete elements not available: %s", exc)
+        return None  # not cached: the validator may be back for the next question
+    found = list(payload.get("concrete") or []) if payload.get("found") else None
+    _CONCRETE_CACHE[element] = (found, time.monotonic() + _LOOKUP_TTL_SECONDS)
+    return found
+
+
+def _in_examples(name: str) -> bool:
+    from helpdesk.models import SourceChunk
+
+    cached = _IN_EXAMPLES_CACHE.get(name)
+    if cached is not None and cached[1] > time.monotonic():
+        return cached[0]
+    found = SourceChunk.objects.filter(
+        repository_url__icontains="netex", source_path__startswith="examples/"
+    ).filter(has_tag(name)).exists()
+    _IN_EXAMPLES_CACHE[name] = (found, time.monotonic() + _LOOKUP_TTL_SECONDS)
+    return found
+
+
+def asked_subject(question: str) -> str:
+    """The noun phrase the example is of ("fare product", "timetabled passing time"); "" for a proper name
+    ("an example for Ljubljana Bus Station")."""
+    match = _SUBJECT_WIDE.search(question or "")
+    subject = match.group("subject").strip() if match else example_subject(question)
+    words = subject.split()
+    if len(words) > 1 and all(word[:1].isupper() for word in words):
+        return ""
+    return subject
+
+
+def asked_element(question: str) -> str:
+    """The NeTEx object element the question asks an example of, or "" when unsure.
+
+    The subject phrase, then its endings ("tram vehicle type" -> "vehicle type"), each as element names
+    (candidate_element_names); an abstract one ("FareProduct") stands for its concrete members, most used in
+    the standard's examples first (PreassignedFareProduct). Accepted only when the element is an object (a
+    versioned entity, not a property or a list wrapper) and the standard's example files use it. "coach",
+    "bus" and proper names stay unresolved: no concept matching here (it gave FareClasses for a fare
+    product and TaxiStand for a bus)."""
+    from helpdesk.services.schema_structure import candidate_element_names
+
+    key = (question or "").strip().lower()
+    cached = _ASKED_CACHE.get(key)
+    if cached is not None and cached[1] > time.monotonic():
+        return cached[0]
+    found = ""
+    words = asked_subject(question).split()
+    for start in range(len(words)):
+        phrase = " ".join(words[start:])
+        for name in candidate_element_names(phrase[:1].upper() + phrase[1:]):
+            entries = concrete_elements(name)
+            if entries is None:
+                continue
+            found = next((e["name"] for e in entries if e.get("object") and _in_examples(e["name"])), "")
+            if found:
+                break
+        if found:
+            break
+    _ASKED_CACHE[key] = (found, time.monotonic() + _LOOKUP_TTL_SECONDS)
+    return found
+
+
+MAX_SKELETON_ELEMENTS = 40
+MAX_SKELETON_FILES = 8
+MAX_SKELETON_TRIES = 3
+_SKELETON_CACHE: dict[str, tuple[dict | None, float]] = {}
+
+
+def _camel_words(name: str) -> list[str]:
+    return [word.lower() for word in re.findall(r"[A-Z][a-z0-9]*", name)]
+
+
+def _skeleton_tree(obj, local):
+    """A copy of the object with at most two of each repeated child (a choice of at least two points
+    keeps two), no comments, no attributes of other namespaces, and local names."""
+    from collections import Counter
+
+    from lxml import etree
+
+    def copy_of(node):
+        attributes = {
+            k: v for k, v in node.attrib.items()
+            if not k.startswith("{") or k.startswith("{http://www.w3.org/XML/1998/namespace}")
+        }
+        new = etree.Element(local(node.tag), attrib=attributes)
+        new.text = node.text if node.text and node.text.strip() else None
+        seen: Counter = Counter()
+        for child in node:
+            if not isinstance(child.tag, str):
+                continue
+            name = local(child.tag)
+            if seen[name] >= 2:
+                continue
+            seen[name] += 1
+            new.append(copy_of(child))
+        return new
+
+    tree = copy_of(obj)
+    # Cut the deepest subtrees first until the skeleton is small enough to read.
+    while sum(1 for _ in tree.iter()) > MAX_SKELETON_ELEMENTS:
+        deepest = max((e for e in tree.iter() if e is not tree), key=lambda e: sum(1 for _ in e.iterancestors()))
+        parent = deepest.getparent()
+        parent.remove(deepest)
+    return tree
+
+
+def skeleton_for(element: str) -> dict | None:
+    """An object of the element from the standard's example files, as a shape for the model: the first
+    object of the element with its frame and list wrapper, at most two of each repeated child, cut to
+    MAX_SKELETON_ELEMENTS, ancestor shells without their references. Files whose name has more of the
+    element's words come first; the first of MAX_SKELETON_TRIES skeletons that validates wins, else the
+    first (a shape, not the answer). {"xml", "element", "sourcePath", "repositoryUrl", "valid"}; cached per
+    element for an hour (the files change at the nightly source refresh)."""
+    from pathlib import Path
+
+    from lxml import etree
+
+    from helpdesk.models import SourceChunk
+
+    cached = _SKELETON_CACHE.get(element)
+    if cached is not None and cached[1] > time.monotonic():
+        return cached[0]
+    base = SourceChunk.objects.filter(repository_url__icontains="netex", source_path__startswith="examples/")
+    rows = {r["source_path"]: r for r in base.filter(has_tag(element)).values("source_path", "repository_url")[:5000]}
+    words = _camel_words(element)
+
+    def name_score(source_path: str) -> int:
+        name = re.sub(r"[^a-z0-9]", "", source_path.rsplit("/", 1)[-1].lower())
+        return sum(1 for word in words if word in name)
+
+    ranked = sorted(rows.items(), key=lambda item: (-name_score(item[0]), item[0]))[:MAX_SKELETON_FILES]
+    parser = etree.XMLParser(resolve_entities=False, load_dtd=False, no_network=True, huge_tree=False, remove_blank_text=True)
+    local = lambda tag: etree.QName(tag).localname if isinstance(tag, str) else ""  # noqa: E731
+    shell_attrib = lambda node: {  # noqa: E731
+        k: v for k, v in node.attrib.items() if not k.endswith("Ref") and not k.startswith("{")
+    }
+    checkout_root = Path(getattr(settings, "SOURCE_CHECKOUT_DIR", "/app/repos"))
+    candidates: list[dict] = []
+    for source_path, row in ranked:
+        path = checkout_root / row["repository_url"].rstrip("/").rsplit("/", 1)[-1] / source_path
+        try:
+            if path.stat().st_size > MAX_STANDARD_FILE_BYTES:
+                continue
+            tree = etree.parse(str(path), parser)
+        except (OSError, etree.XMLSyntaxError):
+            continue
+        obj = next(
+            (n for n in tree.getroot().iter() if local(n.tag) == element and any(local(a.tag).endswith("Frame") for a in n.iterancestors())),
+            None,
+        )
+        if obj is None:
+            continue
+        ancestors = list(obj.iterancestors())
+        frame_index = next(i for i, a in enumerate(ancestors) if local(a.tag).endswith("Frame"))
+        chain = list(reversed(ancestors[: frame_index + 1]))
+        top = etree.Element(local(chain[0].tag), attrib=shell_attrib(chain[0]))
+        current = top
+        for node in chain[1:]:
+            current = etree.SubElement(current, local(node.tag), attrib=shell_attrib(node))
+        current.append(_skeleton_tree(obj, local))
+        # A reference to an object the skeleton does not hold is shown version-less, as the prompt asks the
+        # model to write it (the file's versioned references made it write keyref-failing ones).
+        defined = {node.get("id") for node in top.iter() if node.get("id")}
+        for node in top.iter():
+            if node.tag.endswith("Ref") and node.get("ref") and node.get("ref") not in defined:
+                node.attrib.pop("version", None)
+        fragment = etree.tostring(top, encoding="unicode")
+        try:
+            valid = bool(validate_fragment(fragment).get("valid"))
+        except ValidatorUnavailable:
+            valid = False
+        candidates.append({
+            "xml": fragment, "element": element, "sourcePath": source_path,
+            "repositoryUrl": row["repository_url"], "valid": valid,
+        })
+        if valid or len(candidates) >= MAX_SKELETON_TRIES:
+            break
+    found = next((c for c in candidates if c["valid"]), candidates[0] if candidates else None)
+    _SKELETON_CACHE[element] = (found, time.monotonic() + _LOOKUP_TTL_SECONDS)
+    return found
+
+
+def skeleton_block(skeleton: dict) -> str:
+    return (
+        f"SKELETON: a {skeleton['element']}, the kind of object the question asks for, from the standard's example "
+        f"file {skeleton['sourcePath']}, with its frame and list wrapper:\n{indented_fragment(skeleton['xml'])}\n"
+        "Write the question's object in this shape: keep its nesting and element order; put the question's values in "
+        "the elements that hold such values; drop optional elements the question does not need; keep every element "
+        "the schema requires and the references (as version-less references when their target is not in the frame). "
+        "The skeleton keeps at most two of a repeated element: write as many as the question asks for."
+    )
+
+
+def asked_object_problem(fragment: str, element: str, values: list[str], question: str = "") -> str:
+    """Why a valid fragment does not answer the question's object, or "": it has no such element, or none of
+    the question's values sits in it or in an object linked to it by a reference (a Parking whose
+    ParentSiteRef is the stop place, a DeckPlan the vehicle type refers to); 5 EUR in a price group that
+    does not refer to the fare product fails (2026-11-10). Counts ("2 decks") are checked as counts, not here."""
+    from xml.etree import ElementTree
+
+    try:
+        root = ElementTree.fromstring(f'<root xmlns="{NETEX_NAMESPACE}">{fragment}</root>')
+    except ElementTree.ParseError:
+        return ""
+    local = lambda tag: tag.rsplit("}", 1)[-1] if isinstance(tag, str) else ""  # noqa: E731
+    objects = [node for node in root.iter() if local(node.tag) == element]
+    if not objects:
+        return (
+            f"the question asks for a {element}; the frame has none. Write the {element} itself (the SKELETON shows "
+            "one) with the question's values in it or in objects it is linked to by references."
+        )
+    counted = {written for _, written, _ in counted_shapes(question)}
+    wanted = [value for value in values if value not in counted]
+    if not wanted:
+        return ""
+    parents = {child: parent for parent in root.iter() for child in parent}
+
+    def owner(node):
+        """The nearest enclosing object (an element with an id) that is not a frame."""
+        while node is not None and node is not root:
+            if node.get("id") and not local(node.tag).endswith("Frame"):
+                return node
+            node = parents.get(node)
+        return None
+
+    ids = {obj.get("id") for obj in objects if obj.get("id")}
+    referred = {node.get("ref") for obj in objects for node in obj.iter() if node.get("ref")}
+    linked = list(objects)
+    for node in root.iter():
+        if node.get("ref") in ids and (holder := owner(node)) is not None:
+            linked.append(holder)  # refers to the asked object
+        if node.get("id") in referred and node not in linked:
+            linked.append(node)  # the asked object refers to it
+    for obj in linked:
+        for node in obj.iter():
+            if any(holds_value(node.text or "", v) or any(holds_value(a, v) for a in node.attrib.values()) for v in wanted):
+                return ""
+    return (
+        f"the question asks for a {element}: the values {', '.join(wanted)} are neither in it nor in an object that "
+        f"refers to it or that it refers to. Put them in the {element}, or in an object linked to it by a reference, "
+        "in the elements the schema has for such values."
+    )
+
+
 def _unmet_values(fragment: str, values: list[str], question: str) -> list[str]:
     """Values the fragment does not hold: as the whole content of an element or attribute, or, for a number
     followed by a noun ("2 quays"), as that many elements of the noun's kind."""
@@ -1037,13 +1312,31 @@ def generate_netex_example(
         return found
     if not getattr(settings, "LLM_ENABLED", False):
         return None
+    # The object the question asks for and a skeleton of one from the standard's examples, so the model
+    # starts from the right object and shape (2026-11-10: two of three valid fare examples held 5 EUR in a
+    # price group with no fare product; no evidence chunk showed a vehicle type's capacities).
+    asked_started = time.perf_counter()
+    asked, skeleton = "", None
+    try:
+        asked = asked_element(shape_question)
+        skeleton = skeleton_for(asked) if asked else None
+        if skeleton is not None:
+            from helpdesk.services.retrieval_gateway import shown_example_chunk
+
+            own = shown_example_chunk({"origin": "standard", **skeleton})
+            if own is not None:
+                chunks = [own] + [c for c in chunks if c.get("chunkId") != own.get("chunkId")]
+    except Exception as exc:  # the index or the validator unavailable: generate without them
+        logger.info("asked object not resolved: %s", exc)
+    asked_ms = round((time.perf_counter() - asked_started) * 1000)
     evidence, used = _evidence_text(chunks)
     if not used:
         return {"valid": False, "attempts": 0, "errors": ["no NeTEx evidence to build the example from"]}
     values = requested_values(question)
+    skeleton_part = skeleton_block(skeleton) + "\n\n" if skeleton else ""
     messages = [
         {"role": "system", "content": _PROMPT},
-        {"role": "user", "content": f"Question:\n{question}\n\nValues to use: {', '.join(values)}\n\nEVIDENCE BLOCKS:\n{evidence}"},
+        {"role": "user", "content": f"Question:\n{question}\n\nValues to use: {', '.join(values)}\n\n{skeleton_part}EVIDENCE BLOCKS:\n{evidence}"},
     ]
     errors: list[str] = []
     # Schema declarations go only into the feedback after a failed attempt: given up front they lowered
@@ -1052,7 +1345,8 @@ def generate_netex_example(
     declarations: list[dict] | None = None
     # Time spent waiting for the model and for the validator, so the validator's share of an answer's
     # latency shows in the trace; and how many schema declarations the model was given.
-    timing = {"generationMs": 0, "validationMs": 0, "schemaDeclarations": 0}
+    timing = {"generationMs": 0, "validationMs": 0, "schemaDeclarations": 0, "askedObjectMs": asked_ms}
+    asked_fields = {"askedObject": asked, "skeletonSourcePath": (skeleton or {}).get("sourcePath", "")}
 
     def timed(key: str, call):
         started = time.perf_counter()
@@ -1090,7 +1384,7 @@ def generate_netex_example(
             errors = [f"generation failed: {exc}"[:200]]
             logged(attempt, attempt_started, "", errors)
             if attempt == MAX_ATTEMPTS:
-                return {"valid": False, "attempts": attempt, "errors": errors, "attemptLog": attempt_log, **timing}
+                return {"valid": False, "attempts": attempt, "errors": errors, "attemptLog": attempt_log, **asked_fields, **timing}
             continue
         fragment, parsed = parse_reply(content)
         checked: dict = {}
@@ -1101,7 +1395,7 @@ def generate_netex_example(
                 checked = timed("validationMs", lambda: validate_fragment(fragment))
             except ValidatorUnavailable as exc:
                 logger.warning("NeTEx example not validated: %s", exc)
-                return {"valid": False, "attempts": attempt, "errors": [str(exc)[:200]], "attemptLog": attempt_log, **timing}
+                return {"valid": False, "attempts": attempt, "errors": [str(exc)[:200]], "attemptLog": attempt_log, **asked_fields, **timing}
             errors = list(checked.get("errors") or [])
             if checked.get("valid") and not errors:
                 errors = [
@@ -1109,6 +1403,8 @@ def generate_netex_example(
                     "or attribute that holds it, not part of a Name or Description text"
                     for value in _unmet_values(fragment, values, shape_question)
                 ]
+                if not errors and asked and (problem := asked_object_problem(fragment, asked, values, shape_question)):
+                    errors = [problem]
         logged(attempt, attempt_started, parsed, errors, checked.get("diagnostics"))
         if not errors:
             return {
@@ -1125,6 +1421,8 @@ def generate_netex_example(
                 "valuePlaces": _places(fragment, values, shape_question),
                 "evidenceChunkIds": [chunk.get("chunkId") for chunk in used],
                 "attemptLog": attempt_log,
+                **asked_fields,
+                "askedObjectPresent": bool(asked) and not asked_object_problem(fragment, asked, []),
                 **timing,
             }
         if declarations is None:
@@ -1150,4 +1448,4 @@ def generate_netex_example(
                 + "\nFix these errors and return the whole frame again as JSON {\"xml\": \"...\"}.",
             },
         ]
-    return {"valid": False, "attempts": MAX_ATTEMPTS, "errors": errors, "attemptLog": attempt_log, **timing}
+    return {"valid": False, "attempts": MAX_ATTEMPTS, "errors": errors, "attemptLog": attempt_log, **asked_fields, **timing}
