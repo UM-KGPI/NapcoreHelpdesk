@@ -276,6 +276,43 @@ def schema_declarations(question: str, limit: int = 40) -> list[dict]:
         return []
 
 
+def value_element_declarations(fragment: str, values: list[str], limit: int = 15) -> list[dict]:
+    """Declarations found by the names of the elements that hold the question's values in a failed
+    fragment ("5 EUR" in Amount and Currency -> their declared parents FareProductPrice, …): the question's
+    own words ("fare product … 5 EUR") found nothing about prices on 2026-11-10."""
+    from urllib import error, parse, request
+
+    names = list(dict.fromkeys(place["element"].split("/@", 1)[0] for place in value_places(fragment, values)))
+    names = [name for name in names if name and name not in _GENERIC_ELEMENTS and len(name) >= 4]
+    if not names:
+        return []
+    url = settings.NETEX_VALIDATOR_URL.rstrip("/") + "/declarations?" + parse.urlencode({"q": " ".join(names[:6])})
+    try:
+        with request.urlopen(url, timeout=VALIDATOR_TIMEOUT_SECONDS) as response:
+            found = list(json.loads(response.read()).get("declarations") or [])
+    except (error.URLError, OSError, ValueError) as exc:
+        logger.info("NeTEx value element declarations not available: %s", exc)
+        return []
+    return [d for d in found if d.get("name") in names][:limit]
+
+
+def feedback_lines(checked: dict, errors: list[str]) -> list[str]:
+    """The retry message's lines: the validator's diagnostics (what is wrong, in schema terms: the concrete
+    elements for an abstract one, the parent's children in schema order, the missing required element),
+    then any error no diagnostic covers; the plain errors alone from a validator without diagnostics."""
+    diagnostics = [d for d in checked.get("diagnostics") or [] if d.get("detail")]
+    if not diagnostics:
+        return list(errors)
+    covered = {(d.get("line"), d.get("element")) for d in diagnostics}
+    lines = [f"line {d.get('line')}: {d['detail']}" for d in diagnostics]
+    for error_text in errors:
+        match = re.match(r"line (\d+): Element '([^']+)'", error_text)
+        if match and (int(match.group(1)), match.group(2)) in covered:
+            continue
+        lines.append(error_text)
+    return lines
+
+
 def declarations_block(declarations: list[dict]) -> str:
     lines = []
     for declaration in declarations:
@@ -770,10 +807,11 @@ _PROMPT = (
     "types, for example, in a ResourceFrame). Use only element and attribute names that appear in the schema "
     "declarations and the evidence blocks (schema definitions and example files), in the order the schema "
     "definitions give; put a declared element under one of the parents its declaration names. Give every element that "
-    "needs one a version and an id; use the prefix 'hd:' for ids. Every reference element (...Ref) must point "
-    "to an object defined in the same frame: define that object too, even if the question does not mention it. "
-    "Otherwise do not add elements the question does not "
-    "need. Use only the values the question gives; where the schema needs another value, use a plain placeholder "
+    "needs one a version and an id; use the prefix 'hd:' for ids. Reference an object the question does not ask "
+    "for with a ...Ref element that has a ref attribute and NO version attribute: it lies outside the fragment. "
+    "Define an object in the frame only when the question asks for it or the schema requires it, and give a "
+    "reference to an object defined in the frame the same version as that object. Do not add elements the "
+    "question does not need. Use only the values the question gives; where the schema needs another value, use a plain placeholder "
     "('Quay 1', 'Line 1'). Add no real-world facts the question does not give, such as coordinates, addresses, "
     "full names of organisations or opening times. The frame goes inside <dataObjects> of a PublicationDelivery; do not write the PublicationDelivery, "
     "an XML declaration or namespace declarations.\n"
@@ -992,14 +1030,16 @@ def generate_netex_example(
     # example benchmark reports from it, and the trace shows why an example took three attempts.
     attempt_log: list[dict] = []
 
-    def logged(attempt: int, started: float, parsed: str, attempt_errors: list[str]) -> None:
+    def logged(attempt: int, started: float, parsed: str, attempt_errors: list[str], diagnostics: list | None = None) -> None:
         first = attempt_errors[0] if attempt_errors else ""
+        kinds = [d.get("kind") for d in diagnostics or [] if d.get("kind")]
         attempt_log.append({
             "attempt": attempt,
             "ms": round((time.perf_counter() - started) * 1000),
             "completionTokens": _LAST_COMPLETION_TOKENS.get(),
             "parsed": parsed,
-            "errorClass": error_class(first),
+            "errorClass": (kinds[0] if kinds and attempt_errors else error_class(first)),
+            "diagnostics": kinds,
             "error": first[:300],
         })
 
@@ -1034,7 +1074,7 @@ def generate_netex_example(
                     "or attribute that holds it, not part of a Name or Description text"
                     for value in _unmet_values(fragment, values, shape_question)
                 ]
-        logged(attempt, attempt_started, parsed, errors)
+        logged(attempt, attempt_started, parsed, errors, checked.get("diagnostics"))
         if not errors:
             return {
                 "valid": True,
@@ -1054,17 +1094,23 @@ def generate_netex_example(
             }
         if declarations is None:
             declarations = schema_declarations(question)
+            if fragment:
+                known = {d.get("name") for d in declarations}
+                declarations += [d for d in value_element_declarations(fragment, values) if d.get("name") not in known]
             timing["schemaDeclarations"] = len(declarations)
+        # Declarations after the diagnostics, without the elements the diagnostics already explain.
+        explained = {d.get("element") for d in checked.get("diagnostics") or []}
+        shown = [d for d in declarations if d.get("name") not in explained]
         schema_part = (
-            "\n\n" + declarations_block(declarations) + "\nPrefer these elements, under the parents given, for what the question asks."
-            if declarations
+            "\n\n" + declarations_block(shown) + "\nPrefer these elements, under the parents given, for what the question asks."
+            if shown
             else ""
         )
         messages = messages + [
             {"role": "assistant", "content": content},
             {
                 "role": "user",
-                "content": "The frame is not valid NeTEx:\n- " + "\n- ".join(errors)
+                "content": "The frame is not valid NeTEx:\n- " + "\n- ".join(feedback_lines(checked, errors))
                 + schema_part
                 + "\nFix these errors and return the whole frame again as JSON {\"xml\": \"...\"}.",
             },

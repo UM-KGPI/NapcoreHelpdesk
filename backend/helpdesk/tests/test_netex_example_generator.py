@@ -142,6 +142,9 @@ class GenerationTests(SimpleTestCase):
         patcher = patch.object(generator, "schema_declarations", return_value=[])
         self.declarations = patcher.start()
         self.addCleanup(patcher.stop)
+        values_patcher = patch.object(generator, "value_element_declarations", return_value=[])
+        values_patcher.start()
+        self.addCleanup(values_patcher.stop)
 
     def test_schema_declarations_go_to_the_model_only_after_a_failed_attempt(self):
         self.declarations.return_value = [
@@ -287,6 +290,9 @@ class AttemptLogTests(SimpleTestCase):
         patcher = patch.object(generator, "schema_declarations", return_value=[])
         patcher.start()
         self.addCleanup(patcher.stop)
+        values_patcher = patch.object(generator, "value_element_declarations", return_value=[])
+        values_patcher.start()
+        self.addCleanup(values_patcher.stop)
 
     def test_error_classes_of_the_verbatim_messages(self):
         cases = {
@@ -701,3 +707,216 @@ class PlainStandardExcerptTests(TestCase):
         self.assertIsNone(none_direct)
         self.assertEqual(deep["sourcePath"], "examples/a_deep.xml")
         self.assertIsNone(deep_limited)
+
+
+PRICES_XSD = """<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.netex.org.uk/netex"
+  targetNamespace="http://www.netex.org.uk/netex" elementFormDefault="qualified" version="2.0">
+  <xsd:element name="PublicationDelivery">
+    <xsd:complexType><xsd:sequence>
+      <xsd:element name="PublicationTimestamp" type="xsd:dateTime"/>
+      <xsd:element name="ParticipantRef" type="xsd:string"/>
+      <xsd:element name="dataObjects"><xsd:complexType><xsd:sequence>
+        <xsd:element ref="FareFrame"/>
+      </xsd:sequence></xsd:complexType></xsd:element>
+    </xsd:sequence><xsd:attribute name="version" type="xsd:string"/></xsd:complexType>
+  </xsd:element>
+  <xsd:element name="FareFrame">
+    <xsd:complexType><xsd:sequence>
+      <xsd:element name="prices" type="prices_RelStructure" minOccurs="0"/>
+      <xsd:element name="pointsInSequence" type="points_RelStructure" minOccurs="0"/>
+      <xsd:element name="passingTimes" type="passingTimes_RelStructure" minOccurs="0"/>
+    </xsd:sequence><xsd:attribute name="id" type="xsd:string"/><xsd:attribute name="version" type="xsd:string"/></xsd:complexType>
+  </xsd:element>
+  <xsd:complexType name="prices_RelStructure"><xsd:sequence>
+    <xsd:element ref="FarePrice_Dummy" maxOccurs="unbounded"/>
+  </xsd:sequence></xsd:complexType>
+  <xsd:element name="FarePrice_Dummy" type="PriceStructure" abstract="true"/>
+  <xsd:element name="FarePrice" type="PriceStructure" abstract="true" substitutionGroup="FarePrice_Dummy"/>
+  <xsd:element name="FareProductPrice" type="PriceStructure" substitutionGroup="FarePrice_Dummy"/>
+  <xsd:element name="UsageParameterPrice" type="PriceStructure" substitutionGroup="FarePrice_Dummy"/>
+  <xsd:complexType name="PriceStructure"><xsd:sequence>
+    <xsd:element name="Amount" type="xsd:decimal" minOccurs="0"/>
+    <xsd:element name="Currency" type="xsd:string" minOccurs="0"/>
+  </xsd:sequence><xsd:attribute name="id" type="xsd:string"/></xsd:complexType>
+  <xsd:complexType name="points_RelStructure"><xsd:choice minOccurs="2" maxOccurs="unbounded">
+    <xsd:element name="StopPoint" type="xsd:string"/>
+    <xsd:element name="TimingPoint" type="xsd:string"/>
+  </xsd:choice></xsd:complexType>
+  <xsd:complexType name="passingTimes_RelStructure"><xsd:sequence>
+    <xsd:element name="PassingTime" type="PassingTimeStructure" maxOccurs="unbounded"/>
+  </xsd:sequence></xsd:complexType>
+  <xsd:complexType name="BaseStructure"><xsd:sequence>
+    <xsd:element name="Name" type="xsd:string" minOccurs="0"/>
+  </xsd:sequence></xsd:complexType>
+  <xsd:complexType name="PassingTimeStructure"><xsd:complexContent><xsd:extension base="BaseStructure"><xsd:sequence>
+    <xsd:element ref="PointRef"/>
+    <xsd:element name="ArrivalTime" type="xsd:time" minOccurs="0"/>
+  </xsd:sequence></xsd:extension></xsd:complexContent></xsd:complexType>
+  <xsd:element name="PointRef" type="xsd:string" abstract="true"/>
+  <xsd:element name="StopPointRef" type="xsd:string" substitutionGroup="PointRef"/>
+</xsd:schema>
+"""
+
+
+class ValidatorDiagnosticsTests(SimpleTestCase):
+    """The validator's diagnostics on the failure kinds of 2026-11-10 (plan §2), on a small schema with the
+    same shapes: an abstract price, a required reference before ArrivalTime, a choice of at least two."""
+
+    def setUp(self):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        checkout = Path(directory.name)
+        (checkout / "xsd").mkdir()
+        (checkout / service.SCHEMA_ENTRY).write_text(PRICES_XSD)
+        (checkout / "examples").mkdir()
+        # UsageParameterPrice is used more often than FareProductPrice in the examples: named first.
+        (checkout / "examples" / "a.xml").write_text("<UsageParameterPrice/><UsageParameterPrice/><FareProductPrice/>")
+        self.holder = service.SchemaHolder(checkout)
+        self.holder.load()
+
+    def kinds(self, fragment: str) -> dict:
+        result = self.holder.validate(fragment)
+        self.assertFalse(result["valid"])
+        return {d["kind"]: d for d in result["diagnostics"]}
+
+    def test_abstract_element_names_its_concrete_replacements(self):
+        found = self.kinds('<FareFrame id="f"><prices><FarePrice id="p"><Amount>5</Amount></FarePrice></prices></FareFrame>')
+        detail = found["abstract"]["detail"]
+        self.assertIn("`FarePrice` is abstract", detail)
+        self.assertLess(detail.index("UsageParameterPrice"), detail.index("FareProductPrice"))
+        self.assertEqual((found["abstract"]["element"], found["abstract"]["parent"]), ("FarePrice", "prices"))
+
+    def test_required_sibling_missing_before_the_written_one(self):
+        found = self.kinds('<FareFrame id="f"><passingTimes><PassingTime><ArrivalTime>08:30:00</ArrivalTime></PassingTime></passingTimes></FareFrame>')
+        detail = found["missing-required"]["detail"]
+        self.assertIn("needs PointRef (one of: StopPointRef) before `ArrivalTime`", detail)
+        # The base type's content comes first (extension), the required one is marked.
+        self.assertIn("Name?, PointRef (one of: StopPointRef) (required), ArrivalTime?", detail)
+
+    def test_choice_with_a_minimum_count(self):
+        found = self.kinds('<FareFrame id="f"><pointsInSequence><StopPoint>a</StopPoint></pointsInSequence></FareFrame>')
+        self.assertIn("needs at least 2 of one of (StopPoint, TimingPoint); the fragment has 1", found["min-count"]["detail"])
+
+    def test_order_wrong_parent_and_undeclared(self):
+        found = self.kinds('<FareFrame id="f"><passingTimes><PassingTime><StopPointRef>s</StopPointRef></PassingTime></passingTimes><prices><FareProductPrice/></prices></FareFrame>')
+        self.assertIn("`prices` is out of order in `FareFrame`", found["order"]["detail"])
+        found = self.kinds('<FareFrame id="f"><prices><FareProductPrice><Amount>5</Amount></FareProductPrice><Amount>5</Amount></prices></FareFrame>')
+        self.assertIn("`Amount` is not a child of `prices`; it belongs under one of:", found["wrong-parent"]["detail"])
+        self.assertIn("FareProductPrice", found["wrong-parent"]["detail"])
+        found = self.kinds('<FareFrame id="f"><prices><PriceList/></prices></FareFrame>')
+        self.assertIn("`PriceList` is not an element of the NeTEx schema", found["undeclared"]["detail"])
+
+    def test_keyref_suggests_a_versionless_reference(self):
+        from lxml import etree
+
+        document = etree.fromstring(service.wrap_fragment(
+            '<FareFrame id="f"><passingTimes><PassingTime><StopPointRef ref="hd:sp_1" version="any">s</StopPointRef>'
+            "</PassingTime></passingTimes></FareFrame>"
+        ).encode())
+        line = next(n.sourceline for n in document.iter() if isinstance(n.tag, str) and n.tag.endswith("StopPointRef"))
+        message = "Element 'StopPointRef': No match found for key-sequence ['hd:sp_1', 'any'] of keyref 'StopPoint_KeyRef'."
+        found = service.diagnostics(self.holder.content, document, [(line, message)], 0)
+        self.assertEqual(found[0]["kind"], "keyref")
+        self.assertIn("Either define a `StopPoint` with that id and version", found[0]["detail"])
+        self.assertIn('leave out the version attribute: <StopPointRef ref="hd:sp_1"/>', found[0]["detail"])
+
+    def test_valid_fragment_has_no_diagnostics(self):
+        result = self.holder.validate('<FareFrame id="f"><prices><FareProductPrice><Amount>5</Amount></FareProductPrice></prices></FareFrame>')
+        self.assertTrue(result["valid"], result["errors"])
+        self.assertNotIn("diagnostics", result)
+
+    def test_content_model_audit_on_a_document(self):
+        from helpdesk.netex_content_model import audit
+
+        directory = Path(tempfile.mkdtemp())
+        self.addCleanup(lambda: __import__("shutil").rmtree(directory, ignore_errors=True))
+        good = directory / "good.xml"
+        good.write_text(service.wrap_fragment('<FareFrame id="f"><prices><FareProductPrice><Amount>5</Amount><Currency>EUR</Currency></FareProductPrice></prices></FareFrame>'))
+        bad = directory / "bad.xml"
+        bad.write_text(service.wrap_fragment('<FareFrame id="f"><prices><FareProductPrice><Currency>EUR</Currency><Amount>5</Amount></FareProductPrice></prices></FareFrame>'))
+        checked, fitting, kinds = audit(self.holder.content, [good])
+        self.assertEqual(checked, fitting)
+        checked, fitting, kinds = audit(self.holder.content, [bad])
+        self.assertEqual((checked - fitting, dict(kinds)), (1, {"order": 1}))
+
+
+class StandardExampleOrderTests(SimpleTestCase):
+    """The content models against the standard's own example files (plan P1: the children's order of every
+    object must fit the computed slots). Needs the NeTEx checkout; 2026-11-10 at 98365bd: 294,332 of
+    294,341 elements in 292 files fit (the nine others are SIRI request elements)."""
+
+    def test_example_files_fit_the_content_models(self):
+        import os
+
+        from helpdesk.netex_content_model import ContentModels, audit
+
+        checkout = Path(os.environ.get("NETEX_VALIDATOR_CHECKOUT", "/app/repos/NeTEx"))
+        files = sorted((checkout / "examples").rglob("*.xml"))[:40] if (checkout / "examples").is_dir() else []
+        if not files or not (checkout / "xsd").is_dir():
+            self.skipTest("no NeTEx checkout")
+        models = ContentModels()
+        models.load_directory(checkout / "xsd")
+        checked, fitting, kinds = audit(models, files)
+        self.assertGreater(checked, 1000)
+        self.assertGreaterEqual(fitting / checked, 0.99, kinds)
+
+
+@override_settings(LLM_ENABLED=True)
+class FeedbackTests(SimpleTestCase):
+    def test_diagnostics_replace_the_errors_they_explain(self):
+        checked = {"diagnostics": [{"line": 5, "element": "FarePrice", "kind": "abstract", "detail": "`FarePrice` is abstract; use FareProductPrice."}]}
+        errors = [
+            "line 5: Element 'FarePrice': This element is not expected. Expected is one of ( FarePriceRef ).",
+            "line 9: Element 'X': [facet 'pattern'] The value 'a' is not accepted.",
+        ]
+        self.assertEqual(
+            generator.feedback_lines(checked, errors),
+            ["line 5: `FarePrice` is abstract; use FareProductPrice.", errors[1]],
+        )
+        self.assertEqual(generator.feedback_lines({}, errors), errors)
+
+    def test_retry_message_carries_the_diagnostics_and_the_log_their_kind(self):
+        verdicts = [
+            {"valid": False, "errors": ["line 1: Element 'SeatingCapacity': This element is not expected."],
+             "diagnostics": [{"line": 1, "element": "SeatingCapacity", "parent": "VehicleType", "kind": "wrong-parent",
+                              "detail": "`SeatingCapacity` is not a child of `VehicleType`; it belongs under one of: PassengerCapacity."}]},
+            {"valid": True, "errors": []},
+        ]
+        with patch.object(generator, "schema_declarations", return_value=[]), patch.object(
+            generator, "value_element_declarations", return_value=[]
+        ), patch.object(generator, "_ask_model", side_effect=[_reply(FRAME), _reply(FRAME)]) as ask, patch.object(
+            generator, "validate_fragment", side_effect=verdicts
+        ):
+            result = generator.generate_netex_example(BUS, [NETEX_CHUNK], ["NeTEx"])
+        feedback = ask.call_args_list[1].args[0][-1]["content"]
+        self.assertIn("it belongs under one of: PassengerCapacity", feedback)
+        self.assertNotIn("This element is not expected", feedback)
+        self.assertEqual(result["attemptLog"][0]["errorClass"], "wrong-parent")
+
+    def test_declarations_also_by_the_elements_holding_the_values(self):
+        fragment = '<FareFrame version="1" id="hd:F"><priceGroups><PriceGroup version="1" id="hd:G"><Amount>5</Amount><Currency>EUR</Currency></PriceGroup></priceGroups></FareFrame>'
+        payload = json.dumps({"declarations": [
+            {"name": "Amount", "parents": ["FareProductPrice"], "documentation": "Amount."},
+            {"name": "AmountOfPriceUnitProduct", "parents": [], "documentation": "Other."},
+            {"name": "Currency", "parents": ["FareProductPrice"], "documentation": "Currency."},
+        ]}).encode()
+
+        class Response:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def read(self):
+                return payload
+
+        with patch("urllib.request.urlopen", return_value=Response()) as urlopen, self.settings(NETEX_VALIDATOR_URL="http://v"):
+            found = generator.value_element_declarations(fragment, ["5", "EUR"])
+        self.assertIn("q=Amount+Currency", urlopen.call_args.args[0])
+        self.assertEqual([d["name"] for d in found], ["Amount", "Currency"])
+
+    def test_prompt_asks_for_versionless_references_to_outside_objects(self):
+        self.assertIn("NO version attribute", generator._PROMPT)
+        self.assertNotIn("define that object too", generator._PROMPT)
