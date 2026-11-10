@@ -14,7 +14,7 @@ import { Outlet, NavLink, Link } from "react-router-dom";
 import { useAuth } from "../auth-context";
 import ServiceStatusBanner from "./ServiceStatusBanner";
 import coFundedByTheEuUrl from "../assets/brand/co-funded-by-the-eu.png";
-import napcoreLogoUrl from "../assets/brand/napcore-logo.png";
+import napcoreLogoUrl from "../assets/brand/napcore-logo.svg";
 
 interface SharedAppLayoutProps {
   appVersion: string;
@@ -36,8 +36,8 @@ function CoFundedByTheEu() {
       className="brand-eu-emblem"
       src={coFundedByTheEuUrl}
       alt="Co-funded by the European Union"
-      width={247}
-      height={50}
+      width={4119}
+      height={919}
     />
   );
 }
@@ -48,7 +48,7 @@ export default function SharedAppLayout({ appVersion, apiBaseUrl }: SharedAppLay
   return (
     <div className="page-shell">
       <header className="app-title-header">
-        <img className="brand-napcore-logo" src={napcoreLogoUrl} alt="NAPCORE" width={236} height={160} />
+        <img className="brand-napcore-logo" src={napcoreLogoUrl} alt="NAPCORE" width={3881} height={2665} />
         <div className="app-title-text">
           <h1><Link to="/" className="app-title-link">NAPCORE Helpdesk</Link></h1>
           <p className="app-subtitle">Knowledge-Grounded, Multilingual AI Helpdesk for Mobility Data Standards</p>
@@ -64,7 +64,7 @@ export default function SharedAppLayout({ appVersion, apiBaseUrl }: SharedAppLay
       <Outlet />
       <footer className="app-footer">
         <a href="https://napcore.eu/" target="_blank" rel="noreferrer" className="app-footer-napcore">
-          <img className="brand-napcore-logo" src={napcoreLogoUrl} alt="NAPCORE" width={236} height={160} />
+          <img className="brand-napcore-logo" src={napcoreLogoUrl} alt="NAPCORE" width={3881} height={2665} />
         </a>
         <nav className="app-footer-links" aria-label="Footer">
           <NavLink to="/about">About this project</NavLink>

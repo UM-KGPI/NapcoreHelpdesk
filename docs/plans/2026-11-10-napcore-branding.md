@@ -18,6 +18,9 @@ colours (`#003399`, `#FFCC00`). Differences from the design below:
   lettering would not read).
 - **Header without the EU emblem (0.97.165, Andrej's decision):** the header shows only the NAPCORE logo; the
   "Co-funded by the European Union" emblem is in the footer, on every page and on phones.
+- **Official files (Sara, #377, 2026-11-10):** the NAPCORE logo as SVG and the EU emblem as PNG, both in `#003399`
+  and `#FFCC00`, replace the napcore.eu copies. This settles the yellow (`#FFCC00`) and the emblem's flag colour.
+  The EU emblem is 56 px tall so that its flag (48 px) matches the NAPCORE logo.
 - **Logo height:** both 48 px in the header and the footer; the EU flag fills the emblem image's height, so it is
   above the 1 cm minimum and as large as the NAPCORE logo.
 
