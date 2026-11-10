@@ -1767,7 +1767,8 @@ def _compose_example_evidence(question, english_question, generated_example, ele
     search_question = english_question or question
     using = examples_using_elements(
         value_element_names(generated_example),
-        prefer_path=(generated_example or {}).get("sourcePath"),
+        # A generated example was shaped on a standard example file's object (its skeleton): that file first.
+        prefer_path=(generated_example or {}).get("sourcePath") or (generated_example or {}).get("skeletonSourcePath"),
         question=search_question,
     )
     using_ids = {chunk["chunkId"] for chunk in using}

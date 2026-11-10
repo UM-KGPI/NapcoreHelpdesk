@@ -31,9 +31,13 @@ def summarize(rows: list[dict]) -> dict:
     """Valid, first-attempt and malformed counts, mean attempts and seconds, failed attempts by class."""
     valid = [row for row in rows if row.get("valid")]
     attempts = [entry for row in rows for entry in row.get("attemptLog") or []]
+    resolved = [row for row in valid if row.get("askedObject")]
     return {
         "runs": len(rows),
         "valid": len(valid),
+        # Of the valid runs whose asked object was resolved: how many fragments contain that object.
+        "askedObjectResolved": len(resolved),
+        "askedObjectPresent": sum(1 for row in resolved if row.get("askedObjectPresent")),
         "firstAttempt": sum(1 for row in valid if row.get("attempts") == 1),
         "meanAttempts": round(statistics.mean(row.get("attempts") or 0 for row in rows), 2) if rows else 0,
         "meanSeconds": round(statistics.mean(row.get("seconds") or 0 for row in rows), 1) if rows else 0,
@@ -72,7 +76,8 @@ class Command(BaseCommand):
                 classes = [entry.get("errorClass") for entry in result.get("attemptLog") or [] if entry.get("errorClass")]
                 self.stdout.write(
                     f"{item['id']} run {run} valid={result.get('valid')} origin={result.get('origin', '')} "
-                    f"attempts={result.get('attempts')} {seconds} s model={result.get('generationMs', 0)} ms "
+                    f"attempts={result.get('attempts')} {seconds} s asked={result.get('askedObject', '')} "
+                    f"present={result.get('askedObjectPresent', '')} model={result.get('generationMs', 0)} ms "
                     f"validator={result.get('validationMs', 0)} ms failed={classes}"
                 )
         per_question = {
@@ -83,14 +88,16 @@ class Command(BaseCommand):
         for question_id, summary in per_question.items():
             self.stdout.write(
                 f"{question_id}: valid {summary['valid']}/{summary['runs']}, first attempt {summary['firstAttempt']}, "
-                f"attempts {summary['meanAttempts']}, {summary['meanSeconds']} s, failed {summary['failuresByClass']}"
+                f"attempts {summary['meanAttempts']}, {summary['meanSeconds']} s, asked object "
+                f"{summary['askedObjectPresent']}/{summary['askedObjectResolved']}, failed {summary['failuresByClass']}"
             )
         self.stdout.write(
             f"\nvalid {overall['valid']} of {overall['runs']} | first attempt {overall['firstAttempt']} | "
             f"mean attempts {overall['meanAttempts']} | mean {overall['meanSeconds']} s | "
             f"median model {statistics.median(row.get('generationMs', 0) for row in rows):.0f} ms | "
             f"median validator {statistics.median(row.get('validationMs', 0) for row in rows):.0f} ms | "
-            f"replies not JSON {overall['notJson']} | failed attempts {overall['failuresByClass']}"
+            f"replies not JSON {overall['notJson']} | asked object {overall['askedObjectPresent']}/{overall['askedObjectResolved']} | "
+            f"failed attempts {overall['failuresByClass']}"
         )
         if options["output"]:
             Path(options["output"]).write_text(
