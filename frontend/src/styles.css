@@ -646,7 +646,9 @@ h1 {
   content: "+";
   position: absolute;
   right: 1rem;
-  top: 1rem;
+  /* Centred on the summary row, whatever its padding. */
+  top: 50%;
+  transform: translateY(-50%);
   width: 1.8rem;
   height: 1.8rem;
   display: inline-flex;
@@ -679,7 +681,6 @@ h1 {
 
 .advanced-controls .collapsible-summary::after {
   right: 0;
-  top: 0;
 }
 
 .chat-panel {
@@ -1280,7 +1281,6 @@ a {
 
   .collapsible-summary::after {
     right: 0.8rem;
-    top: 0.8rem;
   }
 
   .route-switcher-panel {
