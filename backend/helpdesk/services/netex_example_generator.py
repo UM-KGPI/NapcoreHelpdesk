@@ -287,7 +287,7 @@ def wants_generated_example(question: str, scope: list[str] | None) -> bool:
     """A request for a NeTEx example with concrete values ("a bus with 50 seats and 20 standing places")."""
     if not asks_for_netex_example(question, scope):
         return False
-    return bool(requested_values(question) or counted_words(question) or wanted_parts(question))
+    return bool(requested_values(question) or counted_words(question) or wanted_parts(question) or service_conditions(question))
 
 
 MAX_EXAMPLE_CONCEPTS = 2
@@ -999,6 +999,199 @@ def asked_element(question: str) -> str:
         found = next(iter(named_elements(question)), "")
     _ASKED_CACHE[key] = (found, time.monotonic() + _LOOKUP_TTL_SECONDS)
     return found
+
+
+# How a service runs, when the schema describes that with an object of its own and not with a value: the
+# phrase and the element. A service that runs only when asked for ("the ferry operates … when there is
+# demand", prod req-mwb6auo0-n3jh83, 2026-11-10) is a FLEXIBLE SERVICE, described by FlexibleServiceProperties
+# ("Additional characteristics of a FLEXIBLE SERVICE"); the words alone resolve to TimeDemandTypeAssignment.
+_SERVICE_CONDITIONS = (
+    (
+        re.compile(
+            r"\b(?:on[\s-]demand|on\s+request|demand[\s-](?:responsive|driven|based)|dial[\s-]a[\s-]ride"
+            r"|when\s+(?:there\s+is\s+(?:a\s+)?demand|(?:it\s+is\s+|they\s+are\s+)?(?:requested|booked|called))"
+            r"|only\s+(?:if|when)\s+(?:requested|booked|passengers?\s+(?:ask|book|call)\w*)"
+            r"|flexible\s+(?:services?|journeys?|timetables?|transport))\b",
+            re.I,
+        ),
+        "FlexibleServiceProperties",
+    ),
+)
+_STRUCTURE_CACHE: dict[str, tuple[dict | None, float]] = {}
+MAX_CONDITION_CHILDREN = 16
+
+
+def service_conditions(question: str) -> list[tuple[str, str]]:
+    """How the question says the service runs, each with the element the schema describes it with:
+    [("when there is demand", "FlexibleServiceProperties")]."""
+    found = []
+    for pattern, element in _SERVICE_CONDITIONS:
+        match = pattern.search(question or "")
+        if match:
+            found.append((match.group(0), element))
+    return found
+
+
+def _structure(element: str) -> dict | None:
+    from helpdesk.services.schema_structure import fetch_structure
+
+    cached = _STRUCTURE_CACHE.get(element)
+    if cached is not None and cached[1] > time.monotonic():
+        return cached[0]
+    found = fetch_structure(element)
+    if found is not None:
+        _STRUCTURE_CACHE[element] = (found, time.monotonic() + _LOOKUP_TTL_SECONDS)
+    return found
+
+
+def _declared_parents(element: str) -> list[str]:
+    from urllib import error, parse, request
+
+    url = settings.NETEX_VALIDATOR_URL.rstrip("/") + "/declarations?" + parse.urlencode({"q": element})
+    try:
+        with request.urlopen(url, timeout=VALIDATOR_TIMEOUT_SECONDS) as response:
+            declarations = json.loads(response.read()).get("declarations") or []
+    except (error.URLError, OSError, ValueError) as exc:
+        logger.info("declarations not available: %s", exc)
+        return []
+    return next((list(d.get("parents") or []) for d in declarations if d.get("name") == element), [])
+
+
+_CONDITION_EXAMPLE_CACHE: dict[str, tuple[dict | None, float]] = {}
+MAX_CONDITION_FILES = 20
+MAX_CONDITION_EXAMPLE_LINES = 14
+
+
+def condition_example(element: str, asked: str = "") -> dict | None:
+    """Where the standard's example files write the element inside an object: {"parent", "after" (the sibling
+    before it), "xml", "sourcePath"}, an object of the asked kind first. The model put FlexibleServiceProperties
+    in the frame's list form inside the journey, given only the schema's parents (dev, 2026-11-10, 6 of 6 runs);
+    the example shows it inside the ServiceJourney, right after calls."""
+    from pathlib import Path
+
+    from lxml import etree
+
+    from helpdesk.models import SourceChunk
+
+    key = f"{element}|{asked}"
+    cached = _CONDITION_EXAMPLE_CACHE.get(key)
+    if cached is not None and cached[1] > time.monotonic():
+        return cached[0]
+    base = SourceChunk.objects.filter(repository_url__icontains="netex", source_path__startswith="examples/")
+    rows = list(base.filter(has_tag(element)).values("source_path", "repository_url").distinct()[:MAX_CONDITION_FILES])
+    parser = etree.XMLParser(resolve_entities=False, load_dtd=False, no_network=True, huge_tree=False, remove_blank_text=True, remove_comments=True)
+    local = lambda tag: etree.QName(tag).localname if isinstance(tag, str) else ""  # noqa: E731
+    checkout_root = Path(getattr(settings, "SOURCE_CHECKOUT_DIR", "/app/repos"))
+    found = None
+    for row in sorted(rows, key=lambda r: r["source_path"]):
+        path = checkout_root / row["repository_url"].rstrip("/").rsplit("/", 1)[-1] / row["source_path"]
+        try:
+            if path.stat().st_size > MAX_STANDARD_FILE_BYTES:
+                continue
+            root = etree.parse(str(path), parser).getroot()
+        except (OSError, etree.XMLSyntaxError):
+            continue
+        for node in root.iter():
+            parent = node.getparent()
+            if local(node.tag) != element or parent is None or not parent.get("id") or not len(node):
+                continue
+            before = node.getprevious()
+            while before is not None and not isinstance(before.tag, str):
+                before = before.getprevious()
+            text = etree.tostring(node, encoding="unicode")
+            text = re.sub(r'\s+xmlns(?::\w+)?="[^"]*"', "", text)
+            option = {
+                "parent": local(parent.tag), "after": local(before.tag) if before is not None else "",
+                "xml": "\n".join(indented_fragment(text).splitlines()[:MAX_CONDITION_EXAMPLE_LINES]),
+                "sourcePath": row["source_path"],
+            }
+            if option["parent"] == asked:
+                found = option
+                break
+            found = found or option
+        if found is not None and found["parent"] == asked:
+            break
+    _CONDITION_EXAMPLE_CACHE[key] = (found, time.monotonic() + _LOOKUP_TTL_SECONDS)
+    return found
+
+
+def conditions_block(conditions: list[tuple[str, str]], asked: str = "") -> str:
+    """The prompt's lines for how the service runs: the element, where to write it (inside the asked object
+    when the schema allows it there, at the place the standard's examples use), the shape the standard
+    gives it, and its own children in the schema's words."""
+    if not conditions:
+        return ""
+    lines = ["HOW THE SERVICE RUNS (model each in the element given, with the children that fit the question):"]
+    for phrase, element in conditions:
+        structure = _structure(element) or {}
+        parents = _declared_parents(element)
+        example = condition_example(element, asked)
+        holder = asked if asked and asked in parents else (example or {}).get("parent", "")
+        where = f"inside the {holder}" if holder else (f"in one of {', '.join(parents)}" if parents else "")
+        if example and example.get("after") and holder:
+            where += f", right after its {example['after']}"
+        lines.append(
+            f"- \u201c{phrase}\u201d: write one {element} element {where}; not a list wrapper, and no reference back to "
+            f"the object it is in"
+            + (f". {structure['documentation']}" if structure.get("documentation") else "")
+        )
+        if example:
+            lines.append(
+                f"  As the standard writes one ({example['sourcePath']}, inside a {example['parent']}; the shape and "
+                "order only, its values are that file's, not the question's):"
+            )
+            lines.append(example["xml"])
+        own = next((g for g in structure.get("groups") or [] if not g.get("inherited")), None)
+        children = [c for c in (own or {}).get("children", []) if not c["name"].endswith("Ref")]
+        if children:
+            lines.append(f"  Children a {element} may have:")
+        for child in children[:MAX_CONDITION_CHILDREN]:
+            allowed = f" Allowed values: {', '.join(child['values'])}." if child.get("values") else ""
+            lines.append(f"    {child['name']}: {(child.get('documentation') or '').strip()[:160]}{allowed}")
+    return "\n".join(lines)
+
+
+def condition_problems(fragment: str, conditions: list[tuple[str, str]]) -> list[str]:
+    """For each condition, why the valid fragment does not model it: no such element, or one without
+    content of its own (an empty FlexibleServiceProperties says nothing about how the service runs)."""
+    root = _parsed(fragment)
+    if root is None or not conditions:
+        return []
+    local = lambda tag: tag.rsplit("}", 1)[-1] if isinstance(tag, str) else ""  # noqa: E731
+    problems = []
+    for phrase, element in conditions:
+        nodes = [node for node in root.iter() if local(node.tag) == element]
+        if not nodes:
+            problems.append(
+                f"the question says the service runs “{phrase}”: describe that with a {element} (see HOW THE "
+                f"SERVICE RUNS for where it goes), not in a Name or Description"
+            )
+        elif not any(len(node) for node in nodes):
+            problems.append(
+                f"the {element} for “{phrase}” is empty: give it the children from HOW THE SERVICE RUNS that "
+                "say how the service runs"
+            )
+    return problems
+
+
+def condition_places(fragment: str, conditions: list[tuple[str, str]]) -> list[dict]:
+    """Where each condition is modelled: {"value": phrase, "element", "path"}."""
+    root = _parsed(fragment)
+    if root is None:
+        return []
+    local = lambda tag: tag.rsplit("}", 1)[-1] if isinstance(tag, str) else ""  # noqa: E731
+    parents = {child: parent for parent in root.iter() for child in parent}
+    places = []
+    for phrase, element in conditions:
+        node = next((n for n in root.iter() if local(n.tag) == element and len(n)), None)
+        if node is None:
+            continue
+        path, up = [], parents.get(node)
+        while up is not None and up is not root:
+            path.append(local(up.tag))
+            up = parents.get(up)
+        places.append({"value": phrase, "element": element, "path": list(reversed(path))})
+    return places
 
 
 # An element name as written in the schema: two or more capitalised parts ("TemplateServiceJourney",
@@ -1762,13 +1955,14 @@ _ERROR_CLASSES = (
     ("not-expected", ("This element is not expected",)),
     ("value", ("from the question is missing",)),
     ("asked-object", ("the question asks for",)),
+    ("condition", ("the question says the service runs", "is empty: give it the children")),
     ("model-error", ("generation failed",)),
 )
 
 
 def error_class(message: str) -> str:
     """The kind of a failed attempt's first error, from the validator's or the generator's wording:
-    malformed, keyref, min-count, not-expected, value, asked-object, model-error, or other."""
+    malformed, keyref, min-count, not-expected, value, asked-object, condition, model-error, or other."""
     for name, markers in _ERROR_CLASSES:
         if any(marker in (message or "") for marker in markers):
             return name
@@ -1947,7 +2141,10 @@ def _generate(
                 return None
             return _plain_standard_example(text, scope, elements)
     shape_question = question if counted_shapes(question) else (english or question)
-    found = _from_standard(shape_question, scope)
+    # How the service runs ("when there is demand"): generated, as the standard's own objects of the shape
+    # need not model it.
+    conditions = service_conditions(question) or service_conditions(english)
+    found = None if conditions else _from_standard(shape_question, scope)
     if found is not None:
         return found
     if not getattr(settings, "LLM_ENABLED", False):
@@ -1965,6 +2162,7 @@ def _generate(
             asked, parts = asked_from_parts(shape_question)
         counted = {written for _, written, _ in counted_shapes(question)}
         named = [name for noun in wanted_parts(shape_question) if (name := resolve_element(noun)) and name != asked]
+        named += [element for _, element in conditions if element != asked and element not in named]
         skeleton = (
             skeleton_for(asked, [v for v in requested_values(question) if v not in counted], parts, named)
             if asked else None
@@ -1983,9 +2181,15 @@ def _generate(
         return {"valid": False, "attempts": 0, "errors": ["no NeTEx evidence to build the example from"]}
     values = requested_values(question)
     skeleton_part = skeleton_block(skeleton) + "\n\n" if skeleton else ""
+    try:
+        condition_part = conditions_block(conditions, asked)
+    except Exception as exc:  # the validator unavailable: the condition is still checked
+        logger.info("service condition structure not available: %s", exc)
+        condition_part = "HOW THE SERVICE RUNS: " + "; ".join(f"\u201c{p}\u201d in a {e}" for p, e in conditions)
+    condition_part = condition_part + "\n\n" if conditions else ""
     messages = [
         {"role": "system", "content": _PROMPT},
-        {"role": "user", "content": f"Question:\n{question}\n\nValues to use: {values_line(values, question)}\n\n{skeleton_part}EVIDENCE BLOCKS:\n{evidence}"},
+        {"role": "user", "content": f"Question:\n{question}\n\nValues to use: {values_line(values, question)}\n\n{condition_part}{skeleton_part}EVIDENCE BLOCKS:\n{evidence}"},
     ]
     errors: list[str] = []
     # Schema declarations go only into the feedback after a failed attempt: given up front they lowered
@@ -1998,6 +2202,7 @@ def _generate(
     asked_fields = {
         "askedObject": asked, "skeletonSourcePath": (skeleton or {}).get("sourcePath", ""),
         "skeletonCompanion": (skeleton or {}).get("companion", ""),
+        "serviceConditions": [{"phrase": phrase, "element": element} for phrase, element in conditions],
     }
 
     def timed(key: str, call):
@@ -2056,6 +2261,8 @@ def _generate(
                 ]
                 if not errors and asked and (problem := asked_object_problem(fragment, asked, values, shape_question)):
                     errors = [problem]
+                if not errors:
+                    errors = condition_problems(fragment, conditions)
         logged(attempt, attempt_started, parsed, errors, checked.get("diagnostics"))
         if not errors:
             return {
@@ -2069,7 +2276,7 @@ def _generate(
                 "schemaVersion": checked.get("schemaVersion", ""),
                 "schemaCommit": checked.get("commit", ""),
                 "elementNotes": element_notes(checked.get("elements") or []),
-                "valuePlaces": _places(fragment, values, shape_question),
+                "valuePlaces": _places(fragment, values, shape_question) + condition_places(fragment, conditions),
                 "evidenceChunkIds": [chunk.get("chunkId") for chunk in used],
                 "attemptLog": attempt_log,
                 **asked_fields,
