@@ -1,6 +1,6 @@
 # Plan: NAPCORE branding for the Helpdesk UI (#377)
 
-Written 2026-11-10 (Opus) against 0.97.163, for the implementing agent/engineer. Issue #377 (Sara Guerra de
+Andrej Tibaut, 2026-11-10, against 0.97.163. Issue #377 (Sara Guerra de
 Oliveira, 2026-11-09) is NAPCORE's consent to use its identity (confirmed by Andrej, 2026-11-10), so the result is
 an ordinary PR that is merged and deployed. Claims are labelled **verified** (checked here, against the file or the
 source named), **believed** or **assumed**.
