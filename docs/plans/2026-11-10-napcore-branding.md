@@ -5,6 +5,20 @@ Oliveira, 2026-11-09) is NAPCORE's consent to use its identity (confirmed by And
 an ordinary PR that is merged and deployed. Claims are labelled **verified** (checked here, against the file or the
 source named), **believed** or **assumed**.
 
+## Status (2026-11-10)
+
+Implemented in this PR, with the logos from napcore.eu (the official files had not arrived) and the official EU
+colours (`#003399`, `#FFCC00`). Differences from the design below:
+
+- **Footer:** white with a 4 px blue top rule, not a blue band. napcore.eu offers only one emblem image, with its
+  yellow background built in, and the NAPCORE logo's blue lettering would disappear on blue.
+- **EU emblem image:** napcore.eu's version has a flag blue of `#0B509F` (not `#003399`) and no white border on the
+  yellow (guidelines p. 5). Replace it with the Commission's file when NAPCORE confirms which one to use.
+- **Maintenance page:** blue title and a yellow top rule, no logo (the page has a dark mode, where the logo's blue
+  lettering would not read).
+- **Logo height:** both 48 px in the header and the footer; the EU flag fills the emblem image's height, so it is
+  above the 1 cm minimum and as large as the NAPCORE logo.
+
 ## 1. What the issue asks
 
 1. The NAPCORE logo and the "Co-funded by the European Union" emblem in the **header and the footer**.

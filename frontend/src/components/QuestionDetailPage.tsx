@@ -135,20 +135,8 @@ export default function QuestionDetailPage({
 
   return (
     <>
-      <div style={{ padding: "1rem", textAlign: "center", borderBottom: "1px solid #e0e0e0" }}>
-        <button
-          type="button"
-          onClick={() => navigate("/user")}
-          style={{
-            padding: "0.5rem 1rem",
-            backgroundColor: "#5a9080",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-            fontSize: "0.95rem",
-          }}
-        >
+      <div className="ask-own-question-row">
+        <button type="button" onClick={() => navigate("/user")} className="ask-own-question-button">
           Have a question?
         </button>
       </div>
