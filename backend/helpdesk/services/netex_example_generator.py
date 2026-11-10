@@ -104,13 +104,48 @@ def _concept_label_words() -> frozenset[str]:
     return words
 
 
+# A time ("08:30", "7:15:30") and a date ("2026-12-01") are one value each, not two or three numbers:
+# "arriving at 08:30" asked for "08" and "30" as whole element contents, and ArrivalTime 08:30:00 failed
+# the value check in every run (benchmark 2026-11-10: gen06, gen16, gen24).
+_TIME = re.compile(r"(?<![\w:.])(\d{1,2}):(\d{2})(?::(\d{2}))?(?![\w:])")
+_DATE = re.compile(r"(?<![\w-])\d{4}-\d{2}-\d{2}(?![\w-])")
+
+
+def _time_value(match: re.Match) -> str:
+    hours, minutes, seconds = match.groups()
+    return f"{int(hours):02d}:{minutes}" + (f":{seconds}" if seconds else "")
+
+
 def requested_values(question: str) -> list[str]:
     """The concrete values a question gives, each of which the fragment must contain: quoted names,
-    numbers, and proper names written without quotes."""
+    dates and times, numbers, and proper names written without quotes."""
     values = [(straight or curly).strip() for straight, curly in _QUOTED.findall(question or "")]
-    values += _NUMBER.findall(_QUOTED.sub(" ", question or ""))
+    unquoted = _QUOTED.sub(" ", question or "")
+    values += _DATE.findall(unquoted)
+    values += [_time_value(match) for match in _TIME.finditer(unquoted)]
+    values += _NUMBER.findall(_TIME.sub(" ", _DATE.sub(" ", unquoted)))
     values += named_values(question)
     return list(dict.fromkeys(value for value in values if value))
+
+
+_ZONE = r"(?:Z|[+-]\d{2}:\d{2})?"
+
+
+def holds_value(text: str, value: str) -> bool:
+    """Whether an element's or attribute's whole content is the value: equal, or the same time or date
+    written as xsd:time / xsd:date / xsd:dateTime ("08:30" in 08:30:00, "2026-12-01" in 2026-12-01T00:00:00)."""
+    text = (text or "").strip()
+    if text == value:
+        return True
+    if re.fullmatch(r"\d{2}:\d{2}", value):
+        return bool(re.fullmatch(re.escape(value) + r":00(?:\.0+)?" + _ZONE, text)
+                    or re.fullmatch(r"\d{4}-\d{2}-\d{2}T" + re.escape(value) + r"(?::00(?:\.0+)?)?" + _ZONE, text))
+    if re.fullmatch(r"\d{2}:\d{2}:\d{2}", value):
+        return bool(re.fullmatch(re.escape(value) + r"(?:\.0+)?" + _ZONE, text)
+                    or re.fullmatch(r"\d{4}-\d{2}-\d{2}T" + re.escape(value) + r"(?:\.0+)?" + _ZONE, text))
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+        return bool(re.fullmatch(re.escape(value) + _ZONE, text) or re.fullmatch(re.escape(value) + r"T[\d:.]+" + _ZONE, text))
+    return False
 
 
 def counted_words(question: str) -> list[str]:
@@ -276,6 +311,43 @@ def schema_declarations(question: str, limit: int = 40) -> list[dict]:
         return []
 
 
+def value_element_declarations(fragment: str, values: list[str], limit: int = 15) -> list[dict]:
+    """Declarations found by the names of the elements that hold the question's values in a failed
+    fragment ("5 EUR" in Amount and Currency -> their declared parents FareProductPrice, …): the question's
+    own words ("fare product … 5 EUR") found nothing about prices on 2026-11-10."""
+    from urllib import error, parse, request
+
+    names = list(dict.fromkeys(place["element"].split("/@", 1)[0] for place in value_places(fragment, values)))
+    names = [name for name in names if name and name not in _GENERIC_ELEMENTS and len(name) >= 4]
+    if not names:
+        return []
+    url = settings.NETEX_VALIDATOR_URL.rstrip("/") + "/declarations?" + parse.urlencode({"q": " ".join(names[:6])})
+    try:
+        with request.urlopen(url, timeout=VALIDATOR_TIMEOUT_SECONDS) as response:
+            found = list(json.loads(response.read()).get("declarations") or [])
+    except (error.URLError, OSError, ValueError) as exc:
+        logger.info("NeTEx value element declarations not available: %s", exc)
+        return []
+    return [d for d in found if d.get("name") in names][:limit]
+
+
+def feedback_lines(checked: dict, errors: list[str]) -> list[str]:
+    """The retry message's lines: the validator's diagnostics (what is wrong, in schema terms: the concrete
+    elements for an abstract one, the parent's children in schema order, the missing required element),
+    then any error no diagnostic covers; the plain errors alone from a validator without diagnostics."""
+    diagnostics = [d for d in checked.get("diagnostics") or [] if d.get("detail")]
+    if not diagnostics:
+        return list(errors)
+    covered = {(d.get("line"), d.get("element")) for d in diagnostics}
+    lines = [f"line {d.get('line')}: {d['detail']}" for d in diagnostics]
+    for error_text in errors:
+        match = re.match(r"line (\d+): Element '([^']+)'", error_text)
+        if match and (int(match.group(1)), match.group(2)) in covered:
+            continue
+        lines.append(error_text)
+    return lines
+
+
 def declarations_block(declarations: list[dict]) -> str:
     lines = []
     for declaration in declarations:
@@ -429,12 +501,12 @@ def value_places(fragment: str, values: list[str]) -> list[dict]:
 
     places = []
     for value in values:
-        found = next((n for n in root.iter() if n is not root and (n.text or "").strip() == value), None)
+        found = next((n for n in root.iter() if n is not root and holds_value(n.text or "", value)), None)
         if found is not None:
             places.append({"value": value, "element": local(found.tag), "path": path_of(found)})
             continue
         for node in root.iter():
-            name = next((a for a, v in node.attrib.items() if v.strip() == value), None)
+            name = next((a for a, v in node.attrib.items() if holds_value(v, value)), None)
             if node is not root and name:
                 places.append({"value": value, "element": f"{local(node.tag)}/@{name}", "path": path_of(node)})
                 break
@@ -758,7 +830,7 @@ def missing_values(fragment: str, values: list[str]) -> list[str]:
     fields = _field_values(fragment)
     if fields is None:
         return [value for value in values if not re.search(rf"(?<![\w.]){re.escape(value)}(?![\w.])", fragment)]
-    return [value for value in values if value not in fields]
+    return [value for value in values if value not in fields and not any(holds_value(field, value) for field in fields)]
 
 
 # --- generation ----------------------------------------------------------------------------------
@@ -770,10 +842,11 @@ _PROMPT = (
     "types, for example, in a ResourceFrame). Use only element and attribute names that appear in the schema "
     "declarations and the evidence blocks (schema definitions and example files), in the order the schema "
     "definitions give; put a declared element under one of the parents its declaration names. Give every element that "
-    "needs one a version and an id; use the prefix 'hd:' for ids. Every reference element (...Ref) must point "
-    "to an object defined in the same frame: define that object too, even if the question does not mention it. "
-    "Otherwise do not add elements the question does not "
-    "need. Use only the values the question gives; where the schema needs another value, use a plain placeholder "
+    "needs one a version and an id; use the prefix 'hd:' for ids. Reference an object the question does not ask "
+    "for with a ...Ref element that has a ref attribute and NO version attribute: it lies outside the fragment. "
+    "Define an object in the frame only when the question asks for it or the schema requires it, and give a "
+    "reference to an object defined in the frame the same version as that object. Do not add elements the "
+    "question does not need. Use only the values the question gives; where the schema needs another value, use a plain placeholder "
     "('Quay 1', 'Line 1'). Add no real-world facts the question does not give, such as coordinates, addresses, "
     "full names of organisations or opening times. The frame goes inside <dataObjects> of a PublicationDelivery; do not write the PublicationDelivery, "
     "an XML declaration or namespace declarations.\n"
@@ -992,14 +1065,16 @@ def generate_netex_example(
     # example benchmark reports from it, and the trace shows why an example took three attempts.
     attempt_log: list[dict] = []
 
-    def logged(attempt: int, started: float, parsed: str, attempt_errors: list[str]) -> None:
+    def logged(attempt: int, started: float, parsed: str, attempt_errors: list[str], diagnostics: list | None = None) -> None:
         first = attempt_errors[0] if attempt_errors else ""
+        kinds = [d.get("kind") for d in diagnostics or [] if d.get("kind")]
         attempt_log.append({
             "attempt": attempt,
             "ms": round((time.perf_counter() - started) * 1000),
             "completionTokens": _LAST_COMPLETION_TOKENS.get(),
             "parsed": parsed,
-            "errorClass": error_class(first),
+            "errorClass": (kinds[0] if kinds and attempt_errors else error_class(first)),
+            "diagnostics": kinds,
             "error": first[:300],
         })
 
@@ -1034,7 +1109,7 @@ def generate_netex_example(
                     "or attribute that holds it, not part of a Name or Description text"
                     for value in _unmet_values(fragment, values, shape_question)
                 ]
-        logged(attempt, attempt_started, parsed, errors)
+        logged(attempt, attempt_started, parsed, errors, checked.get("diagnostics"))
         if not errors:
             return {
                 "valid": True,
@@ -1054,17 +1129,23 @@ def generate_netex_example(
             }
         if declarations is None:
             declarations = schema_declarations(question)
+            if fragment:
+                known = {d.get("name") for d in declarations}
+                declarations += [d for d in value_element_declarations(fragment, values) if d.get("name") not in known]
             timing["schemaDeclarations"] = len(declarations)
+        # Declarations after the diagnostics, without the elements the diagnostics already explain.
+        explained = {d.get("element") for d in checked.get("diagnostics") or []}
+        shown = [d for d in declarations if d.get("name") not in explained]
         schema_part = (
-            "\n\n" + declarations_block(declarations) + "\nPrefer these elements, under the parents given, for what the question asks."
-            if declarations
+            "\n\n" + declarations_block(shown) + "\nPrefer these elements, under the parents given, for what the question asks."
+            if shown
             else ""
         )
         messages = messages + [
             {"role": "assistant", "content": content},
             {
                 "role": "user",
-                "content": "The frame is not valid NeTEx:\n- " + "\n- ".join(errors)
+                "content": "The frame is not valid NeTEx:\n- " + "\n- ".join(feedback_lines(checked, errors))
                 + schema_part
                 + "\nFix these errors and return the whole frame again as JSON {\"xml\": \"...\"}.",
             },

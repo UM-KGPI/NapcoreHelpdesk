@@ -22,7 +22,12 @@ model-written XML is parsed outside the backend process.
     POST /validate  {"fragment": "<ResourceFrame ...>...</ResourceFrame>"}
                     -> {"valid": bool, "errors": ["line 3: ...", ...], "schemaVersion": "2.0", "commit": "...",
                         "elements": [{"name": "SeatingCapacity", "parent": "PassengerCapacity",
-                                      "documentation": "The seating capacity of vehicles of the type. ..."}]}
+                                      "documentation": "The seating capacity of vehicles of the type. ..."}],
+                        "diagnostics": [{"line": 3, "element": "FarePrice", "parent": "prices", "kind": "abstract",
+                                         "detail": "`FarePrice` is abstract ... concrete elements: ..."}]}
+                    diagnostics (invalid fragments only): what is wrong in terms a model can act on, from the
+                    schema's content models (helpdesk/netex_content_model.py): abstract, undeclared,
+                    wrong-parent, order, missing-required, min-count, keyref, not-expected.
 
 A fragment is one NeTEx frame; it is wrapped in a minimal PublicationDelivery before validation, and
 error line numbers count from the fragment's first line. For a valid fragment, "elements" gives each
@@ -35,7 +40,7 @@ Run with: python -m helpdesk.netex_validator_service  (no Django needed). Settin
 
 Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
 Crafted by: AI coding agents
-Created: 2026-11-08  |  Modified: 2026-11-08
+Created: 2026-11-08  |  Modified: 2026-11-10
 """
 
 from __future__ import annotations
@@ -57,6 +62,7 @@ SCHEMA_ENTRY = "xsd/NeTEx_publication.xsd"
 CHECK_SECONDS = int(os.environ.get("NETEX_VALIDATOR_CHECK_SECONDS", "300"))
 MAX_FRAGMENT_BYTES = 200_000
 MAX_ERRORS = 5
+MAX_DIAGNOSTICS = 6
 MAX_ELEMENT_NOTES = 40
 MAX_DECLARATIONS = 20
 MAX_PARENT_DECLARATIONS = 15
@@ -407,6 +413,126 @@ class ElementDocs:
         return notes
 
 
+def load_content_models(checkout: Path):
+    from helpdesk.netex_content_model import ContentModels
+
+    models = ContentModels()
+    models.load_directory((checkout / SCHEMA_ENTRY).parent, parser=_parser())
+    models.count_usage(checkout / "examples")
+    return models
+
+
+_ELEMENT_MESSAGE = re.compile(r"Element '([^']+)': (.*)", re.S)
+_KEYREF = re.compile(r"No match found for key-sequence \['([^']*)'(?:, '([^']*)')?\] of keyref '([^']+)'")
+
+
+def diagnostics(models, document, log: list[tuple[int, str]], offset: int) -> list[dict]:
+    """What is wrong with an invalid document, one entry per problem, in words a model can act on.
+
+    Abstract and undeclared elements are looked for in the whole fragment (libxml2 reports only the
+    first error under a parent); the other kinds start from libxml2's messages and are explained with
+    the parent's content model: its children in schema order, required ones marked, substitution heads
+    expanded to the concrete elements."""
+    entries: list[dict] = []
+    seen: set = set()
+    namespace = "{" + NETEX_NAMESPACE + "}"
+
+    def add(kind: str, node, detail: str) -> None:
+        name = _local(node.tag) if node is not None else ""
+        parent_node = node.getparent() if node is not None else None
+        parent = _local(parent_node.tag) if parent_node is not None else ""
+        key = (kind, name, parent) if kind != "keyref" else (kind, name, detail)
+        if key in seen:
+            return
+        seen.add(key)
+        line = max(1, (node.sourceline or offset + 1) - offset) if node is not None else 0
+        entries.append({"line": line, "element": name, "parent": parent, "kind": kind, "detail": detail})
+
+    def children(node) -> list[str]:
+        return [_local(child.tag) for child in node if isinstance(child.tag, str) and child.tag.startswith(namespace)]
+
+    def child_list(node, focus) -> str:
+        return f"`{_local(node.tag)}` children in schema order: {models.child_list(models.type_of(node), set(focus))}"
+
+    flagged = set()
+    for node in document.iter():
+        if not isinstance(node.tag, str) or not node.tag.startswith(namespace):
+            continue
+        name = _local(node.tag)
+        if name in _WRAPPER_ELEMENTS:
+            continue
+        if name in models.abstract:
+            members = models.in_place_of(name)[:8]
+            add("abstract", node, f"`{name}` is abstract and cannot appear in a document; write one of these concrete "
+                f"elements in its place (most used in the standard's examples first): {', '.join(members) or 'none'}.")
+            flagged.add(name)
+        elif name not in models.declared:
+            add("undeclared", node, f"`{name}` is not an element of the NeTEx schema; use only declared elements.")
+            flagged.add(name)
+
+    by_line: dict[int, list] = {}
+    for node in document.iter():
+        if isinstance(node.tag, str):
+            by_line.setdefault(node.sourceline, []).append(node)
+
+    for line, message in log:
+        match = _ELEMENT_MESSAGE.match(message)
+        if not match:
+            continue
+        name, text = _local(match.group(1)), match.group(2)
+        candidates = [n for n in by_line.get(line, []) if _local(n.tag) == name]
+        # A model's fragment is often one line: of the elements of that name on the line, the one whose
+        # place (or, for missing children, whose content) does not fit the schema.
+        if "Missing child element(s)" in text:
+            misfit = [n for n in candidates if models.match_children(models.type_of(n), children(n))]
+        else:
+            misfit = [
+                n for n in candidates
+                if n.getparent() is not None
+                and any(i.child == name for i in models.match_children(models.type_of(n.getparent()), children(n.getparent())))
+            ]
+        node = (misfit or candidates or [None])[0]
+        if node is None or name in flagged:
+            continue
+        parent = node.getparent()
+        if "No match found for key-sequence" in text:
+            keyref = _KEYREF.search(text)
+            ref, version = (keyref.group(1), keyref.group(2)) if keyref else (node.get("ref", ""), node.get("version", ""))
+            target = (keyref.group(3) if keyref else "").removesuffix("_KeyRef") or name.removesuffix("Ref")
+            add("keyref", node, f"`{name}` points to `{ref}`{' version ' + version if version else ''}, which is not "
+                f"defined in the fragment. Either define a `{target}` with that id and version in the frame, or, for an "
+                f"object outside the fragment, leave out the version attribute: <{name} ref=\"{ref}\"/>.")
+        elif "This element is not expected" in text and parent is not None:
+            issues = [i for i in models.match_children(models.type_of(parent), children(parent)) if i.child == name]
+            issue = issues[0] if issues else None
+            focus = children(parent) + [name]
+            if issue is not None and issue.kind == "wrong-parent":
+                where = models.parents_of(name)
+                add("wrong-parent", node, f"`{name}` is not a child of `{_local(parent.tag)}`"
+                    + (f"; it belongs under one of: {', '.join(where)}" if where else "") + f". {child_list(parent, focus)}.")
+            elif issue is not None and issue.kind == "order":
+                add("order", node, f"`{name}` is out of order in `{_local(parent.tag)}`: it comes before `{issue.detail.get('before')}` "
+                    f"in the schema. {child_list(parent, focus)}.")
+            elif issue is not None and issue.kind == "missing-required":
+                add("missing-required", node, f"`{_local(parent.tag)}` needs {', '.join(issue.detail['missing'])} before "
+                    f"`{name}` (required by the schema). {child_list(parent, focus)}.")
+            else:
+                add("not-expected", node, f"`{name}` is not expected at this place in `{_local(parent.tag)}`. {child_list(parent, focus)}.")
+        elif "Missing child element(s)" in text:
+            issues = models.match_children(models.type_of(node), children(node))
+            counted = next((i for i in issues if i.kind == "min-count"), None)
+            missing = next((i for i in issues if i.kind == "missing-required" and not i.child), None)
+            if counted is not None:
+                add("min-count", node, f"`{name}` needs at least {counted.detail['min']} of {counted.detail['slot']}; "
+                    f"the fragment has {counted.detail['count']}.")
+            elif missing is not None:
+                add("missing-required", node, f"`{name}` is missing the required {', '.join(missing.detail['missing'])}. "
+                    f"{child_list(node, children(node))}.")
+            else:
+                add("missing-required", node, f"`{name}` is missing required children. {child_list(node, children(node))}.")
+    return entries
+
+
 class SchemaHolder:
     """The compiled schema of the checkout's current commit; recompiled in the background when it moves."""
 
@@ -414,6 +540,7 @@ class SchemaHolder:
         self.checkout = checkout
         self.schema = None
         self.element_docs = ElementDocs()
+        self.content = None  # ContentModels of the loaded schema
         self.commit = ""
         self.version = ""
         self.error = ""
@@ -433,11 +560,12 @@ class SchemaHolder:
             schema = etree.XMLSchema(etree.parse(str(self.checkout / SCHEMA_ENTRY)))
             element_docs = ElementDocs()
             element_docs.load_directory((self.checkout / SCHEMA_ENTRY).parent)
+            content = load_content_models(self.checkout)
         except Exception as exc:  # missing checkout or a broken schema: keep the previous one
             self.error = str(exc)[:300]
             logger.warning("NeTEx schema not compiled: %s", exc)
         else:
-            self.schema, self.element_docs = schema, element_docs
+            self.schema, self.element_docs, self.content = schema, element_docs, content
             self.commit, self.version, self.error = commit, schema_version(self.checkout), ""
             self.loaded_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
             logger.info(
@@ -478,13 +606,19 @@ class SchemaHolder:
         with self._validate_lock:
             if schema.validate(document):
                 return {**result, "valid": True, "errors": [], "elements": self.element_docs.notes(document)}
-            errors = [
-                f"line {max(1, error.line - offset)}: {error.message.replace('{' + NETEX_NAMESPACE + '}', '')}"
-                for error in schema.error_log
-            ]
+            log = [(error.line, error.message.replace("{" + NETEX_NAMESPACE + "}", "")) for error in schema.error_log]
+        errors = [f"line {max(1, line - offset)}: {message}" for line, message in log]
+        try:
+            found = diagnostics(self.content, document, log, offset) if self.content is not None else []
+        except Exception as exc:  # feedback is an aid: never fail the validation over it
+            logger.warning("diagnostics failed: %s", exc)
+            found = []
         # Definitions for any well-formed fragment: an excerpt of a standard example can fail only on
         # references to objects outside it, and is still described.
-        return {**result, "valid": False, "errors": errors[:MAX_ERRORS], "elements": self.element_docs.notes(document)}
+        return {
+            **result, "valid": False, "errors": errors[:MAX_ERRORS], "elements": self.element_docs.notes(document),
+            "diagnostics": found[:MAX_DIAGNOSTICS],
+        }
 
 
 def make_handler(holder: SchemaHolder):
