@@ -554,6 +554,20 @@ def concrete_elements(holder, element: str, limit: int = 8) -> dict:
     }
 
 
+MAX_ACCEPTING_VALUES = 12
+
+
+def accepting(holder, values: list[str]) -> dict:
+    """For each value, the elements whose declared simple content accepts it and is specific (a number,
+    date or time type, or text narrowed by an enumeration, pattern or length): where such a value belongs."""
+    from helpdesk.netex_content_model import accepting_elements
+
+    models = holder.content
+    if models is None:
+        return {"found": False, "accepting": {}}
+    return {"found": True, "accepting": {value: sorted(accepting_elements(models, value)) for value in values}}
+
+
 class SchemaHolder:
     """The compiled schema of the checkout's current commit; recompiled in the background when it moves."""
 
@@ -659,6 +673,13 @@ def make_handler(holder: SchemaHolder):
                     self._reply(400, {"error": "expected ?element=<ElementName>"})
                     return
                 self._reply(200, concrete_elements(holder, element))
+                return
+            if self.path.startswith("/accepting"):
+                values = [v for v in parse_qs(urlparse(self.path).query).get("value", []) if 0 < len(v) <= 80]
+                if not values or len(values) > MAX_ACCEPTING_VALUES:
+                    self._reply(400, {"error": f"expected 1 to {MAX_ACCEPTING_VALUES} ?value= parameters"})
+                    return
+                self._reply(200, accepting(holder, values))
                 return
             if self.path.startswith("/structure"):
                 element = parse_qs(urlparse(self.path).query).get("element", [""])[0].strip()

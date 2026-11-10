@@ -1136,3 +1136,140 @@ class StandardFallbackTests(SimpleTestCase):
         self.assertNotIn("which element holds each value", rule)
         self.assertEqual(generator.example_origin({"origin": "standard"}), "standard")
         self.assertEqual(generator.example_origin({"valid": True}), "generated")
+
+
+VALUE_TYPES_XSD = """<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.netex.org.uk/netex"
+  targetNamespace="http://www.netex.org.uk/netex" elementFormDefault="qualified">
+  <xsd:simpleType name="CurrencyType"><xsd:restriction base="xsd:NMTOKEN">
+    <xsd:minLength value="3"/><xsd:maxLength value="3"/><xsd:pattern value="[A-Z][A-Z][A-Z]"/>
+  </xsd:restriction></xsd:simpleType>
+  <xsd:simpleType name="CurrencyAmountType"><xsd:restriction base="xsd:decimal"/></xsd:simpleType>
+  <xsd:simpleType name="GroupingTypeEnumeration"><xsd:restriction base="xsd:NMTOKEN">
+    <xsd:enumeration value="AND"/><xsd:enumeration value="XOR"/>
+  </xsd:restriction></xsd:simpleType>
+  <xsd:simpleType name="ColourValueType"><xsd:restriction base="xsd:hexBinary"><xsd:length value="3"/></xsd:restriction></xsd:simpleType>
+  <xsd:complexType name="MultilingualString"><xsd:simpleContent><xsd:extension base="xsd:string">
+    <xsd:attribute name="lang" type="xsd:language"/>
+  </xsd:extension></xsd:simpleContent></xsd:complexType>
+  <xsd:complexType name="PriceStructure"><xsd:sequence>
+    <xsd:element name="Name" type="MultilingualString" minOccurs="0"/>
+    <xsd:element name="Amount" type="CurrencyAmountType" minOccurs="0"/>
+    <xsd:element name="Currency" type="CurrencyType" minOccurs="0"/>
+    <xsd:element name="GroupingType" type="GroupingTypeEnumeration" minOccurs="0"/>
+    <xsd:element name="Colour" type="ColourValueType" minOccurs="0"/>
+    <xsd:element name="StartTime" type="xsd:time" minOccurs="0"/>
+    <xsd:element name="FromDate" type="xsd:dateTime" minOccurs="0"/>
+  </xsd:sequence></xsd:complexType>
+  <xsd:element name="FareProductPrice" type="PriceStructure"/>
+</xsd:schema>
+"""
+
+
+class ValueHolderTests(SimpleTestCase):
+    """Which elements the schema lets hold a question's value (validator /accepting): specific types only."""
+
+    def setUp(self):
+        from lxml import etree
+
+        from helpdesk.netex_content_model import ContentModels
+
+        self.models = ContentModels()
+        self.models.add_schema(etree.fromstring(VALUE_TYPES_XSD.encode()))
+
+    def accepting(self, value):
+        from helpdesk.netex_content_model import accepting_elements
+
+        return accepting_elements(self.models, value)
+
+    def test_a_currency_code_fits_the_currency_not_the_name_nor_an_enumeration(self):
+        self.assertEqual(self.accepting("EUR"), {"Currency"})
+        self.assertEqual(self.accepting("XOR"), {"Currency", "GroupingType"})
+
+    def test_numbers_dates_and_times_fit_their_types(self):
+        self.assertEqual(self.accepting("5"), {"Amount"})
+        self.assertEqual(self.accepting("08:30"), {"StartTime", "FromDate"})
+        self.assertEqual(self.accepting("2026-12-01"), {"FromDate"})
+
+    def test_free_text_fits_no_specific_element(self):
+        self.assertEqual(self.accepting("Ljubljana"), frozenset())
+        self.assertEqual(self.accepting("Adult"), frozenset())  # not hexBinary: Colour stays out
+
+    def test_value_holders_leave_out_broad_and_empty_sets(self):
+        generator._HOLDERS_CACHE.clear()
+        payload = {"found": True, "accepting": {
+            "EUR": ["Currency", "DefaultCurrency"], "5": [f"E{i}" for i in range(generator.MAX_VALUE_HOLDERS + 1)],
+            "Ljubljana": [], "GBP": ["Currency", "DefaultCurrency"],
+        }}
+
+        class Reply:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def read(self):
+                return json.dumps(payload).encode()
+
+        with patch("urllib.request.urlopen", return_value=Reply()):
+            holders = generator.value_holders(["5", "EUR", "Ljubljana", "GBP"])
+        self.assertEqual(holders, [frozenset({"Currency", "DefaultCurrency"})])
+
+
+# A fare product without a price, as in 72 of the 73 example files with one; the price is in a price group
+# that refers to it; a user profile also refers to it and holds a number.
+LINKED_PRICE_FILE = (
+    '<PublicationDelivery xmlns="http://www.netex.org.uk/netex"><dataObjects>'
+    '<FareFrame version="1" id="x:FF"><usageParameters><UserProfile version="1" id="x:UP"><MinimumAge>11</MinimumAge>'
+    '<PreassignedFareProductRef version="1" ref="x:P"/></UserProfile></usageParameters>'
+    '<fareProducts><PreassignedFareProduct version="1" id="x:P"><Name>Single</Name>'
+    '<OrganisationRef version="1" ref="x:Elsewhere"/></PreassignedFareProduct></fareProducts>'
+    '<priceGroups><PriceGroup version="1" id="x:PG"><members><FareProductPrice version="1" id="x:FPP">'
+    '<Amount>1.25</Amount><Currency>USD</Currency><PreassignedFareProductRef version="1" ref="x:P"/>'
+    "</FareProductPrice></members></PriceGroup></priceGroups></FareFrame></dataObjects></PublicationDelivery>"
+)
+
+
+class LinkedSkeletonTests(SimpleTestCase):
+    """The skeleton brings the object linked to the asked one that holds elements for the question's values."""
+
+    def parts(self, holders):
+        from lxml import etree
+
+        root = etree.fromstring(LINKED_PRICE_FILE.encode())
+        local = lambda tag: etree.QName(tag).localname if isinstance(tag, str) else ""  # noqa: E731
+        return generator.skeleton_parts(root, "PreassignedFareProduct", holders, local), local
+
+    def test_the_price_that_refers_to_the_product_comes_along(self):
+        (obj, frame, companion, protect, covered), local = self.parts([frozenset({"Currency", "DefaultCurrency"})])
+        self.assertEqual((local(obj.tag), local(companion.tag), covered), ("PreassignedFareProduct", "FareProductPrice", 1))
+        xml = generator.skeleton_xml(obj, frame, companion, protect, local)
+        # In the file's order, with the list wrappers; the user profile is left out.
+        self.assertLess(xml.index("<fareProducts>"), xml.index("<priceGroups>"))
+        self.assertIn("<members><FareProductPrice", xml)
+        self.assertNotIn("UserProfile", xml)
+        # A reference to the product in the skeleton keeps its version; one to an object outside loses it.
+        self.assertIn('<PreassignedFareProductRef version="1" ref="x:P"/>', xml)
+        self.assertIn('<OrganisationRef ref="x:Elsewhere"/>', xml)
+
+    def test_without_values_the_object_comes_alone(self):
+        (obj, frame, companion, protect, covered), local = self.parts([])
+        self.assertIsNone(companion)
+        self.assertNotIn("priceGroups", generator.skeleton_xml(obj, frame, companion, protect, local))
+
+    def test_the_value_path_survives_the_size_cut(self):
+        from lxml import etree
+
+        root = etree.fromstring(LINKED_PRICE_FILE.encode())
+        local = lambda tag: etree.QName(tag).localname if isinstance(tag, str) else ""  # noqa: E731
+        price = next(n for n in root.iter() if local(n.tag) == "FareProductPrice")
+        currency = next(n for n in price.iter() if local(n.tag) == "Currency")
+        tree = generator._skeleton_tree(price, local, frozenset({currency}), limit=2)
+        self.assertEqual([local(n.tag) for n in tree.iter()], ["FareProductPrice", "Currency"])
+
+    def test_the_prompt_names_the_linked_object(self):
+        block = generator.skeleton_block({"element": "PreassignedFareProduct", "sourcePath": "examples/a.xml",
+                                          "xml": "<FareFrame/>", "companion": "FareProductPrice"})
+        self.assertIn("also holds a FareProductPrice from the same file that refers to the PreassignedFareProduct", block)
+        self.assertNotIn("also holds", generator.skeleton_block({"element": "Line", "sourcePath": "a", "xml": "<X/>", "companion": ""}))

@@ -125,6 +125,7 @@ export interface GeneratedExample {
   /** The object the question asks for (resolved from the schema) and the standard file its skeleton came from. */
   askedObject?: string;
   skeletonSourcePath?: string;
+  skeletonCompanion?: string;
   evidenceChunkIds?: string[];
   errors?: string[];
   generationMs?: number;
