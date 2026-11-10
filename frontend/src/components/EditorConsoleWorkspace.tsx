@@ -26,7 +26,10 @@
 
 import React, { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { citationDisplayName, groupCitationsBySource } from "../citationLabels";
-import AnswerMarkdown from "./AnswerMarkdown";
+import AnswerBody from "./AnswerBody";
+import AnswerDetail from "./AnswerDetail";
+import LegalContext from "./LegalContext";
+import GeneratedExampleBlock from "./GeneratedExample";
 import HarvestSourcesPanel from "./HarvestSourcesPanel";
 import type { HelpdeskApiClient } from "../api";
 import { useEditorAccess } from "./EditorAccess";
@@ -353,7 +356,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                     <p>{question}</p>
                   </div>
                   <p className="mode-pill">mode: {answerResult.mode}</p>
-                  <AnswerMarkdown text={answerResult.answer} />
+                  <AnswerBody text={answerResult.answer} example={answerResult.generatedExample} structure={answerResult.schemaStructure} />
                   <p>
                     confidence: <strong>{answerResult.confidence.toFixed(2)}</strong>
                   </p>
@@ -374,6 +377,9 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                       ))}
                     </ul>
                   )}
+
+                  {!answerResult.generatedExample?.valid && <GeneratedExampleBlock example={answerResult.generatedExample} />}
+                  <LegalContext items={answerResult.legalContext} />
 
                   <h4>Trace</h4>
                   <pre>{JSON.stringify(answerResult.trace, null, 2)}</pre>
@@ -499,21 +505,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                                 {detail && (
                                   <>
                                     <div className="faq-card-body">
-                                      <AnswerMarkdown text={detail.answer} />
-                                      {detail.citations.length > 0 && (
-                                        <>
-                                          <p className="tiny"><strong>Evidence</strong></p>
-                                          <ul>
-                                            {detail.citations.map((c, i) => (
-                                              <li key={`${item.requestId}-c${i}`}>
-                                                <strong>[E{i + 1}]</strong>{" "}
-                                                <a href={c.repositoryUrl} target="_blank" rel="noreferrer">{c.label ?? c.sourcePath}</a>
-                                                <span className="muted"> · {c.sourcePath}</span>
-                                              </li>
-                                            ))}
-                                          </ul>
-                                        </>
-                                      )}
+                                      <AnswerDetail detail={detail} />
                                     </div>
                                     <p className="muted tiny">
                                       <button
@@ -653,21 +645,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                                   {detail && (
                                     <>
                                       <div className="faq-card-body">
-                                        <AnswerMarkdown text={detail.answer} />
-                                        {detail.citations.length > 0 && (
-                                          <>
-                                            <p className="tiny"><strong>Evidence</strong></p>
-                                            <ul>
-                                              {detail.citations.map((c, i) => (
-                                                <li key={`${item.queueItemId}-c${i}`}>
-                                                  <strong>[E{i + 1}]</strong>{" "}
-                                                  <a href={c.repositoryUrl} target="_blank" rel="noreferrer">{c.label ?? c.sourcePath}</a>
-                                                  <span className="muted"> · {c.sourcePath}</span>
-                                                </li>
-                                              ))}
-                                            </ul>
-                                          </>
-                                        )}
+                                        <AnswerDetail detail={detail} />
                                       </div>
                                       <p className="muted tiny">
                                         <button
@@ -769,21 +747,7 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                         {isOpen && detail && (
                           <>
                             <div className="faq-card-body">
-                              <AnswerMarkdown text={detail.answer} />
-                              {detail.citations.length > 0 && (
-                                <>
-                                  <p className="tiny"><strong>Evidence</strong></p>
-                                  <ul>
-                                    {detail.citations.map((c, i) => (
-                                      <li key={`${item.queueItemId}-c${i}`}>
-                                        <strong>[E{i + 1}]</strong>{" "}
-                                        <a href={c.repositoryUrl} target="_blank" rel="noreferrer">{c.label ?? c.sourcePath}</a>
-                                        <span className="muted"> · {c.sourcePath}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </>
-                              )}
+                              <AnswerDetail detail={detail} />
                             </div>
                             <p className="muted tiny">
                               <button
