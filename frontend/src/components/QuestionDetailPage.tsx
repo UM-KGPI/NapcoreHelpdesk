@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { ChatTurn } from "./UserChatWorkspace";
 import ReadOnlyQuestionDisplay from "./ReadOnlyQuestionDisplay";
+import { chatTurnsFromQuestionEvent } from "../questionEventTurns";
 
 interface QuestionDetailPageProps {
   token: string;
@@ -54,50 +55,7 @@ export default function QuestionDetailPage({
         return res.json();
       })
       .then((detail) => {
-        const questionTurn: ChatTurn = {
-          id: `${detail.requestId}-q`,
-          role: "user",
-          text: detail.question,
-          createdAt: detail.createdAt,
-        };
-
-        const answerTurn: ChatTurn = {
-          id: `${detail.requestId}-a`,
-          role: "assistant",
-          text: detail.answer,
-          createdAt: detail.createdAt,
-          answer: {
-            answerId: detail.questionEventId,
-            mode: detail.mode || "rag",
-            confidence: detail.confidence,
-            answer: detail.answer,
-            citations: (detail.citations || []).map((c: any) => ({
-              repositoryUrl: c.repositoryUrl,
-              commitSha: "",
-              sourcePath: c.sourcePath,
-              chunkId: c.chunkId,
-              label: c.label,
-              title: c.title,
-            })),
-            legalContext: detail.legalContext ?? [],
-            generatedExample: detail.generatedExample ?? null,
-            schemaStructure: detail.schemaStructure ?? null,
-            abstained: false,
-            abstentionReason: null,
-            reviewRequired: false,
-            trace: (detail.trace && Object.keys(detail.trace).length > 2) ? detail.trace : {
-              requestId: detail.requestId,
-              questionEventId: detail.questionEventId,
-              matchedFaqEntryId: null,
-              retrievalEventIds: [],
-              userLikes: false,
-              userDislikes: false,
-            },
-          },
-          requestId: detail.requestId,
-        };
-
-        setChatTurns([questionTurn, answerTurn]);
+        setChatTurns(chatTurnsFromQuestionEvent(detail));
         setError(null);
       })
       .catch((err) => {
