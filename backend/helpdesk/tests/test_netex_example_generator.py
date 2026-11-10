@@ -281,6 +281,7 @@ class GenerationTests(SimpleTestCase):
         self.assertIn("no text before or after it", generator._PROMPT)
 
 
+@override_settings(LLM_ENABLED=True)
 class AttemptLogTests(SimpleTestCase):
     def setUp(self):
         patcher = patch.object(generator, "schema_declarations", return_value=[])
