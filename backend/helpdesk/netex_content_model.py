@@ -87,7 +87,10 @@ class ContentModels:
         self.declared: set[str] = set()  # every element name declared anywhere
         self.local_elements: set[tuple[str, str]] = set()  # (name, type key) of local declarations
         self.usage: Counter = Counter()  # element name -> occurrences in the standard's example files
+        # simple type key (or a complex type with simple content) -> (base key, facets, member keys of a union)
+        self.simple: dict[str, tuple[str, dict, tuple[str, ...]]] = {}
         self._slots: dict[str, list[Slot]] = {}
+        self._accepting: dict[str, frozenset[str]] = {}
 
     # --- loading -------------------------------------------------------------------------------
 
@@ -104,6 +107,8 @@ class ContentModels:
                 self.groups[self._key(name)] = self._group_particle(node, self._key(name))
             elif tag == _X + "element" and name:
                 self._add_global(self._key(name), node)
+            elif tag == _X + "simpleType" and name:
+                self._add_simple(self._key(name), node)
 
     def _key(self, name: str) -> str:
         target = getattr(self, "_target", NETEX_NS) or NETEX_NS
@@ -133,11 +138,49 @@ class ContentModels:
         if node.get("type"):
             return self._ref(node, "type")
         anonymous = node.find(_X + "complexType")
-        if anonymous is None:
-            return ""
         key = f"{owner}/{name}"
+        if anonymous is None:
+            simple = node.find(_X + "simpleType")
+            if simple is None:
+                return ""
+            self._add_simple(key, simple)
+            return key
         self._add_type(key, anonymous)
         return key
+
+    def _add_simple(self, key: str, node) -> None:
+        """A simple type, or the simple content of a complex type: its base, facets and union members."""
+        restriction = node.find(_X + "restriction")
+        if restriction is not None:
+            facets: dict = {}
+            for facet in restriction:
+                name = _local(facet.tag) if isinstance(facet.tag, str) else ""
+                if name in ("enumeration", "pattern"):
+                    facets.setdefault(name, []).append(facet.get("value") or "")
+                elif name in ("length", "minLength", "maxLength"):
+                    facets[name] = _occurs(facet, "value", 0)
+            base = self._ref(restriction, "base")
+            if not base and restriction.find(_X + "simpleType") is not None:
+                base = key + "/base"
+                self._add_simple(base, restriction.find(_X + "simpleType"))
+            self.simple[key] = (base, facets, ())
+            return
+        union = node.find(_X + "union")
+        if union is not None:
+            members = [self._ref_value(union, value) for value in (union.get("memberTypes") or "").split()]
+            for index, inner in enumerate(union.findall(_X + "simpleType")):
+                self._add_simple(f"{key}/{index}", inner)
+                members.append(f"{key}/{index}")
+            self.simple[key] = ("", {}, tuple(members))
+            return
+        # xsd:list and anything else: free text for this purpose.
+        self.simple[key] = (XSD_NS + "|string", {}, ())
+
+    @staticmethod
+    def _ref_value(node, value: str) -> str:
+        prefix, _, local = value.rpartition(":")
+        uri = node.nsmap.get(prefix or None, NETEX_NS if not prefix else "")
+        return local if uri in (NETEX_NS, "") else f"{uri}|{local}"
 
     def _add_type(self, key: str, node) -> None:
         content = node.find(_X + "complexContent")
@@ -147,8 +190,16 @@ class ContentModels:
                 if derived is not None:
                     self.types[key] = (derivation, self._ref(derived, "base"), self._first_particle(derived, key))
                     return
-        if node.find(_X + "simpleContent") is not None:
+        simple_content = node.find(_X + "simpleContent")
+        if simple_content is not None:
             self.types[key] = ("", "", None)
+            derived = simple_content.find(_X + "restriction")
+            if derived is not None:
+                self._add_simple(key, simple_content)
+            else:
+                derived = simple_content.find(_X + "extension")
+                if derived is not None:
+                    self.simple[key] = (self._ref(derived, "base"), {}, ())
             return
         self.types[key] = ("", "", self._first_particle(node, key))
 
@@ -453,6 +504,101 @@ class ContentModels:
             if any(name in slot.names for slot in self.slots(type_key)):
                 found.append(element)
         return sorted(found, key=lambda n: (-self.usage.get(n, 0), n))[:limit]
+
+
+_NUMERIC = {
+    "decimal": r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)",
+    "float": r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?|INF|-INF|NaN",
+    "double": r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?|INF|-INF|NaN",
+    "integer": r"[+-]?\d+", "long": r"[+-]?\d+", "int": r"[+-]?\d+", "short": r"[+-]?\d+", "byte": r"[+-]?\d+",
+    "nonNegativeInteger": r"\+?\d+", "positiveInteger": r"\+?0*[1-9]\d*", "unsignedLong": r"\+?\d+",
+    "unsignedInt": r"\+?\d+", "unsignedShort": r"\+?\d+", "unsignedByte": r"\+?\d+",
+    "nonPositiveInteger": r"-\d+|\+?0+", "negativeInteger": r"-0*[1-9]\d*",
+}
+_ZONE = r"(?:Z|[+-]\d{2}:\d{2})?"
+_BUILTIN = {
+    **_NUMERIC,
+    "boolean": r"true|false|1|0",
+    "date": r"-?\d{4,}-\d{2}-\d{2}" + _ZONE,
+    "time": r"\d{2}:\d{2}:\d{2}(?:\.\d+)?" + _ZONE,
+    "dateTime": r"-?\d{4,}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?" + _ZONE,
+    "duration": r"-?P(?=\d|T\d)(?:\d+Y)?(?:\d+M)?(?:\d+D)?(?:T(?=\d)(?:\d+H)?(?:\d+M)?(?:\d+(?:\.\d+)?S)?)?",
+    "gYear": r"-?\d{4,}" + _ZONE, "gYearMonth": r"-?\d{4,}-\d{2}" + _ZONE, "gMonthDay": r"--\d{2}-\d{2}" + _ZONE,
+    "gDay": r"---\d{2}" + _ZONE, "gMonth": r"--\d{2}" + _ZONE,
+    "hexBinary": r"(?:[0-9A-Fa-f]{2})*",
+}
+_TEXT = {"string", "normalizedString", "token", "NMTOKEN", "NMTOKENS", "Name", "NCName", "ID", "IDREF", "IDREFS",
+         "anyURI", "language", "QName", "ENTITY", "ENTITIES", "anySimpleType", "base64Binary"}
+
+
+def _xsd_pattern(pattern: str) -> str:
+    """An XSD pattern as a Python one: the XML name classes \\i and \\c as approximations."""
+    return pattern.replace("\\i", "[A-Za-z_:]").replace("\\c", "[\\w.:-]")
+
+
+def accepts(models: ContentModels, type_key: str, value: str, _depth: int = 0) -> tuple[bool, bool]:
+    """(whether a type accepts the value as content, whether the type is *specific*): a number, date, time,
+    boolean or duration type, or text narrowed by an enumeration, a pattern or a length. A free-text type
+    (Name, Description) accepts every value and says nothing about where a value belongs."""
+    if _depth > 30 or not type_key:
+        return False, False
+    if type_key.startswith(XSD_NS + "|"):
+        builtin = type_key.split("|", 1)[1]
+        if builtin in _BUILTIN:
+            return bool(re.fullmatch(_BUILTIN[builtin], value)), True
+        return builtin in _TEXT, False
+    if type_key not in models.simple:
+        return False, False
+    base, facets, members = models.simple[type_key]
+    if members:
+        results = [accepts(models, member, value, _depth + 1) for member in members]
+        if any(ok and specific for ok, specific in results):
+            return True, True
+        return any(ok for ok, _ in results), all(specific for _, specific in results)
+    specific = bool(facets.get("enumeration") or facets.get("pattern") or "length" in facets or "maxLength" in facets)
+    if facets.get("enumeration") and value not in facets["enumeration"]:
+        return False, True
+    for pattern in facets.get("pattern") or ():
+        try:
+            if not re.fullmatch(_xsd_pattern(pattern), value):
+                return False, True
+        except re.error:
+            specific = False  # a pattern Python cannot read: no judgement from it
+    if "length" in facets and len(value) != facets["length"]:
+        return False, True
+    if len(value) < facets.get("minLength", 0) or len(value) > facets.get("maxLength", 1 << 30):
+        return False, True
+    ok, base_specific = accepts(models, base, value, _depth + 1) if base else (True, False)
+    return ok, specific or base_specific
+
+
+def accepting_elements(models: ContentModels, value: str) -> frozenset[str]:
+    """The names of the elements, global or local, whose declared simple content accepts the value and is
+    specific (see accepts): "EUR" -> Currency and the like, not Name nor the AND/OR/XOR grouping types;
+    "5" -> Amount, counts, …; the dateTime elements also take a date or a time of the question as one
+    ("2026-12-01" as 2026-12-01T00:00:00)."""
+    if value in models._accepting:
+        return models._accepting[value]
+    forms = [value]
+    if re.fullmatch(r"\d{2}:\d{2}", value):
+        forms += [value + ":00", "2000-01-01T" + value + ":00"]
+    elif re.fullmatch(r"\d{2}:\d{2}:\d{2}", value):
+        forms += ["2000-01-01T" + value]
+    elif re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+        forms += [value + "T00:00:00"]
+    declarations = [(_display(name), type_key) for name, type_key in models.globals.items()]
+    declarations += sorted(models.local_elements)
+    found = set()
+    verdicts: dict[str, bool] = {}
+    for name, type_key in declarations:
+        if name in found or not type_key:
+            continue
+        if type_key not in verdicts:
+            verdicts[type_key] = any(ok and specific for ok, specific in (accepts(models, type_key, form) for form in forms))
+        if verdicts[type_key]:
+            found.add(name)
+    models._accepting[value] = frozenset(found)
+    return models._accepting[value]
 
 
 def audit(models: ContentModels, files: list[Path]) -> tuple[int, int, Counter]:

@@ -868,21 +868,80 @@ def asked_element(question: str) -> str:
 
 
 MAX_SKELETON_ELEMENTS = 40
+# A linked object that holds the question's kind of value (a FareTable cell with the price of a fare
+# product) gets a smaller budget: it shows where such values go, the asked object stays the main shape.
+MAX_COMPANION_ELEMENTS = 24
 MAX_SKELETON_FILES = 8
 MAX_SKELETON_TRIES = 3
-_SKELETON_CACHE: dict[str, tuple[dict | None, float]] = {}
+MAX_OBJECTS_PER_FILE = 20
+MAX_SKELETON_SCAN_FILES = 120
+# Up to how many objects (elements with an id) above a reference to the asked object a holder of the
+# value may sit: a Cell (1), a FareTable around the cells (2-3) in the standard's fare files.
+MAX_COMPANION_LEVELS = 3
+_SKELETON_CACHE: dict[tuple, tuple[dict | None, float]] = {}
+
+_HOLDERS_CACHE: dict[str, tuple[frozenset[str], float]] = {}
+# A value that more elements accept says nothing about where it goes: a bare number fits some 280 (counts,
+# orders, amounts); a currency code 2, a date 35, a time 52 (benchmark questions, 2026-11-10).
+MAX_VALUE_HOLDERS = 60
+
+
+def value_holders(values: list[str]) -> list[frozenset[str]] | None:
+    """For each of the question's values the schema can place, the elements whose declared content is
+    specific and accepts it (validator /accepting): "EUR" -> Currency, DefaultCurrency; "08:30" -> the time
+    elements. Free text (a name) fits no specific element and a bare number too many (MAX_VALUE_HOLDERS):
+    both are left out; values with the same holders count once. None without the validator."""
+    from urllib import error, parse, request
+
+    missing = [v for v in dict.fromkeys(values) if not ((c := _HOLDERS_CACHE.get(v)) and c[1] > time.monotonic())]
+    if missing:
+        url = settings.NETEX_VALIDATOR_URL.rstrip("/") + "/accepting?" + parse.urlencode([("value", v) for v in missing[:12]])
+        try:
+            with request.urlopen(url, timeout=VALIDATOR_TIMEOUT_SECONDS) as response:
+                payload = json.loads(response.read())
+        except (error.URLError, OSError, ValueError) as exc:
+            logger.info("value holders not available: %s", exc)
+            return None
+        if not payload.get("found"):
+            return None
+        for value, names in (payload.get("accepting") or {}).items():
+            _HOLDERS_CACHE[value] = (frozenset(names), time.monotonic() + _LOOKUP_TTL_SECONDS)
+    holders = [_HOLDERS_CACHE[v][0] for v in dict.fromkeys(values) if v in _HOLDERS_CACHE]
+    return list(dict.fromkeys(h for h in holders if h and len(h) <= MAX_VALUE_HOLDERS))
+
+
+def _holder_leaves(node, holders: list[frozenset[str]], local) -> dict:
+    """The first leaf element under the node for each set of holders: {index: leaf}."""
+    found: dict = {}
+    for leaf in node.iter():
+        if not isinstance(leaf.tag, str) or len(leaf) or not (leaf.text or "").strip():
+            continue
+        name = local(leaf.tag)
+        for index, names in enumerate(holders):
+            if index not in found and name in names:
+                found[index] = leaf
+        if len(found) == len(holders):
+            break
+    return found
 
 
 def _camel_words(name: str) -> list[str]:
     return [word.lower() for word in re.findall(r"[A-Z][a-z0-9]*", name)]
 
 
-def _skeleton_tree(obj, local):
+def _skeleton_tree(obj, local, protect=frozenset(), limit=MAX_SKELETON_ELEMENTS):
     """A copy of the object with at most two of each repeated child (a choice of at least two points
-    keeps two), no comments, no attributes of other namespaces, and local names."""
+    keeps two), no comments, no attributes of other namespaces, and local names; the protected leaves (the
+    holders of the question's kind of value) and the path to them stay."""
     from collections import Counter
 
     from lxml import etree
+
+    on_path = set()
+    for leaf in protect:
+        on_path.add(leaf)
+        on_path.update(leaf.iterancestors())
+    pinned = set()
 
     def copy_of(node):
         attributes = {
@@ -891,12 +950,14 @@ def _skeleton_tree(obj, local):
         }
         new = etree.Element(local(node.tag), attrib=attributes)
         new.text = node.text if node.text and node.text.strip() else None
+        if node in on_path:
+            pinned.add(new)
         seen: Counter = Counter()
         for child in node:
             if not isinstance(child.tag, str):
                 continue
             name = local(child.tag)
-            if seen[name] >= 2:
+            if seen[name] >= 2 and child not in on_path:
                 continue
             seen[name] += 1
             new.append(copy_of(child))
@@ -904,27 +965,127 @@ def _skeleton_tree(obj, local):
 
     tree = copy_of(obj)
     # Cut the deepest subtrees first until the skeleton is small enough to read.
-    while sum(1 for _ in tree.iter()) > MAX_SKELETON_ELEMENTS:
-        deepest = max((e for e in tree.iter() if e is not tree), key=lambda e: sum(1 for _ in e.iterancestors()))
-        parent = deepest.getparent()
-        parent.remove(deepest)
+    while sum(1 for _ in tree.iter()) > limit:
+        removable = [e for e in tree.iter() if e is not tree and e not in pinned]
+        if not removable:
+            break
+        deepest = max(removable, key=lambda e: sum(1 for _ in e.iterancestors()))
+        deepest.getparent().remove(deepest)
     return tree
 
 
-def skeleton_for(element: str) -> dict | None:
-    """An object of the element from the standard's example files, as a shape for the model: the first
-    object of the element with its frame and list wrapper, at most two of each repeated child, cut to
-    MAX_SKELETON_ELEMENTS, ancestor shells without their references. Files whose name has more of the
-    element's words come first; the first of MAX_SKELETON_TRIES skeletons that validates wins, else the
-    first (a shape, not the answer). {"xml", "element", "sourcePath", "repositoryUrl", "valid"}; cached per
-    element for an hour (the files change at the nightly source refresh)."""
+def _companion(obj, frame, missing: list[frozenset[str]], local):
+    """The smallest object in the frame that refers to obj and holds leaves for the missing values, or
+    (None, {}): the nearest objects (elements with an id) above each reference to obj, up to
+    MAX_COMPANION_LEVELS, outside obj and not around it."""
+    obj_id = obj.get("id")
+    if not obj_id or not missing:
+        return None, {}
+    around = set(obj.iterancestors())
+    inside = set(obj.iter())
+    best, best_key, best_leaves = None, None, {}
+    for ref in frame.iter():
+        if not isinstance(ref.tag, str) or ref.get("ref") != obj_id or ref in inside:
+            continue
+        level = 0
+        for holder in ref.iterancestors():
+            if holder is frame or local(holder.tag).endswith("Frame"):
+                break
+            if holder.get("id") is None or holder in around:
+                continue
+            level += 1
+            leaves = _holder_leaves(holder, missing, local)
+            if leaves:
+                key = (-len(leaves), sum(1 for _ in holder.iter()))
+                if best_key is None or key < best_key:
+                    best, best_key, best_leaves = holder, key, leaves
+                if len(leaves) == len(missing):
+                    break
+            if level >= MAX_COMPANION_LEVELS:
+                break
+    return best, best_leaves
+
+
+def skeleton_parts(root, element: str, holders: list[frozenset[str]], local):
+    """The object of the element to show from one example file, its frame, and a linked object holding
+    elements for the question's values the object itself lacks: (obj, frame, companion, protected leaves,
+    how many of the values they place), or None. The object placing most values wins, the first on a tie."""
+    best = None
+    seen = 0
+    for obj in root.iter():
+        if not isinstance(obj.tag, str) or local(obj.tag) != element:
+            continue
+        frame = next((a for a in obj.iterancestors() if local(a.tag).endswith("Frame")), None)
+        if frame is None:
+            continue
+        own = _holder_leaves(obj, holders, local)
+        missing = [names for index, names in enumerate(holders) if index not in own]
+        companion, extra = _companion(obj, frame, missing, local) if missing else (None, {})
+        covered = len(own) + len(extra)
+        if best is None or covered > best[4]:
+            best = (obj, frame, companion, frozenset(own.values()), covered, frozenset(extra.values()))
+        seen += 1
+        if covered == len(holders) or seen >= MAX_OBJECTS_PER_FILE:
+            break
+    if best is None:
+        return None
+    obj, frame, companion, own_leaves, covered, extra_leaves = best
+    return obj, frame, companion, own_leaves | extra_leaves, covered
+
+
+def skeleton_xml(obj, frame, companion, protect, local) -> str:
+    """The frame shell around the object (and the linked object), in the file's order, with list wrappers
+    and ancestors without their references; a reference to an object the skeleton does not hold is shown
+    version-less, as the prompt asks the model to write it (the file's versioned references made it write
+    keyref-failing ones)."""
+    from lxml import etree
+
+    kept = [node for node in (obj, companion) if node is not None]
+    path = {a for node in kept for a in node.iterancestors()}
+    shell_attrib = lambda node: {  # noqa: E731
+        k: v for k, v in node.attrib.items() if not k.endswith("Ref") and not k.startswith("{")
+    }
+
+    def shell(node):
+        new = etree.Element(local(node.tag), attrib=shell_attrib(node))
+        for child in node:
+            if child is obj:
+                new.append(_skeleton_tree(child, local, protect & set(child.iter())))
+            elif child is companion:
+                new.append(_skeleton_tree(child, local, protect & set(child.iter()), MAX_COMPANION_ELEMENTS))
+            elif child in path:
+                new.append(shell(child))
+        return new
+
+    top = shell(frame)
+    defined = {node.get("id") for node in top.iter() if node.get("id")}
+    for node in top.iter():
+        if node.tag.endswith("Ref") and node.get("ref") and node.get("ref") not in defined:
+            node.attrib.pop("version", None)
+    return etree.tostring(top, encoding="unicode")
+
+
+def skeleton_for(element: str, values: list[str] | None = None) -> dict | None:
+    """An object of the element from the standard's example files, as a shape for the model, with its frame
+    and list wrapper, at most two of each repeated child, cut to MAX_SKELETON_ELEMENTS.
+
+    When the question gives values the schema places in specific elements (value_holders: 5 in Amount, EUR
+    in Currency) and the object has none of those elements, the object linked to it that has them comes along (2026-11-10: the fare product skeleton had no
+    price, as in 72 of the 73 example files with one, where the price is in a FareTable that refers to the
+    product; the model's first attempt then wrote an abstract FarePrice). Files whose objects hold more of
+    the kinds come first, then files whose name has more of the element's words; the first of
+    MAX_SKELETON_TRIES skeletons that validates wins, else the first (a shape, not the answer).
+    {"xml", "element", "sourcePath", "repositoryUrl", "valid", "companion"}; cached per element and holders
+    for an hour (the files change at the nightly source refresh)."""
     from pathlib import Path
 
     from lxml import etree
 
     from helpdesk.models import SourceChunk
 
-    cached = _SKELETON_CACHE.get(element)
+    holders = (value_holders(values) or []) if values else []
+    key = (element, tuple(holders))
+    cached = _SKELETON_CACHE.get(key)
     if cached is not None and cached[1] > time.monotonic():
         return cached[0]
     base = SourceChunk.objects.filter(repository_url__icontains="netex", source_path__startswith="examples/")
@@ -935,15 +1096,14 @@ def skeleton_for(element: str) -> dict | None:
         name = re.sub(r"[^a-z0-9]", "", source_path.rsplit("/", 1)[-1].lower())
         return sum(1 for word in words if word in name)
 
-    ranked = sorted(rows.items(), key=lambda item: (-name_score(item[0]), item[0]))[:MAX_SKELETON_FILES]
+    # With values every file is scored (72 fare product files parse and score in under a second; the
+    # result is cached): the few whose object is linked to an Amount and a Currency rank low by name.
+    ranked = sorted(rows.items(), key=lambda item: (-name_score(item[0]), item[0]))[: MAX_SKELETON_SCAN_FILES if holders else MAX_SKELETON_FILES]
     parser = etree.XMLParser(resolve_entities=False, load_dtd=False, no_network=True, huge_tree=False, remove_blank_text=True)
     local = lambda tag: etree.QName(tag).localname if isinstance(tag, str) else ""  # noqa: E731
-    shell_attrib = lambda node: {  # noqa: E731
-        k: v for k, v in node.attrib.items() if not k.endswith("Ref") and not k.startswith("{")
-    }
     checkout_root = Path(getattr(settings, "SOURCE_CHECKOUT_DIR", "/app/repos"))
-    candidates: list[dict] = []
-    for source_path, row in ranked:
+    options = []
+    for order, (source_path, row) in enumerate(ranked):
         path = checkout_root / row["repository_url"].rstrip("/").rsplit("/", 1)[-1] / source_path
         try:
             if path.stat().st_size > MAX_STANDARD_FILE_BYTES:
@@ -951,39 +1111,29 @@ def skeleton_for(element: str) -> dict | None:
             tree = etree.parse(str(path), parser)
         except (OSError, etree.XMLSyntaxError):
             continue
-        obj = next(
-            (n for n in tree.getroot().iter() if local(n.tag) == element and any(local(a.tag).endswith("Frame") for a in n.iterancestors())),
-            None,
-        )
-        if obj is None:
+        parts = skeleton_parts(tree.getroot(), element, holders, local)
+        if parts is None:
             continue
-        ancestors = list(obj.iterancestors())
-        frame_index = next(i for i, a in enumerate(ancestors) if local(a.tag).endswith("Frame"))
-        chain = list(reversed(ancestors[: frame_index + 1]))
-        top = etree.Element(local(chain[0].tag), attrib=shell_attrib(chain[0]))
-        current = top
-        for node in chain[1:]:
-            current = etree.SubElement(current, local(node.tag), attrib=shell_attrib(node))
-        current.append(_skeleton_tree(obj, local))
-        # A reference to an object the skeleton does not hold is shown version-less, as the prompt asks the
-        # model to write it (the file's versioned references made it write keyref-failing ones).
-        defined = {node.get("id") for node in top.iter() if node.get("id")}
-        for node in top.iter():
-            if node.tag.endswith("Ref") and node.get("ref") and node.get("ref") not in defined:
-                node.attrib.pop("version", None)
-        fragment = etree.tostring(top, encoding="unicode")
+        obj, frame, companion, protect, covered = parts
+        options.append((-covered, order, source_path, row, skeleton_xml(obj, frame, companion, protect, local),
+                        local(companion.tag) if companion is not None else ""))
+        if sum(1 for option in options if -option[0] == len(holders)) >= MAX_SKELETON_TRIES:
+            break  # enough files place every value (without values: any file does); parse no more
+    options.sort(key=lambda option: option[:2])
+    candidates: list[dict] = []
+    for _, _, source_path, row, fragment, companion in options[:MAX_SKELETON_TRIES]:
         try:
             valid = bool(validate_fragment(fragment).get("valid"))
         except ValidatorUnavailable:
             valid = False
         candidates.append({
             "xml": fragment, "element": element, "sourcePath": source_path,
-            "repositoryUrl": row["repository_url"], "valid": valid,
+            "repositoryUrl": row["repository_url"], "valid": valid, "companion": companion,
         })
-        if valid or len(candidates) >= MAX_SKELETON_TRIES:
+        if valid:
             break
     found = next((c for c in candidates if c["valid"]), candidates[0] if candidates else None)
-    _SKELETON_CACHE[element] = (found, time.monotonic() + _LOOKUP_TTL_SECONDS)
+    _SKELETON_CACHE[key] = (found, time.monotonic() + _LOOKUP_TTL_SECONDS)
     return found
 
 
@@ -995,6 +1145,12 @@ def skeleton_block(skeleton: dict) -> str:
         "the elements that hold such values; drop optional elements the question does not need; keep every element "
         "the schema requires and the references (as version-less references when their target is not in the frame). "
         "The skeleton keeps at most two of a repeated element: write as many as the question asks for."
+        + (
+            f" The skeleton also holds a {skeleton['companion']} from the same file that refers to the "
+            f"{skeleton['element']} and has elements for values like the question's: put such values where that "
+            "file puts them."
+            if skeleton.get("companion") else ""
+        )
     )
 
 
@@ -1370,7 +1526,8 @@ def _generate(
     asked, skeleton = "", None
     try:
         asked = asked_element(shape_question)
-        skeleton = skeleton_for(asked) if asked else None
+        counted = {written for _, written, _ in counted_shapes(question)}
+        skeleton = skeleton_for(asked, [v for v in requested_values(question) if v not in counted]) if asked else None
         if skeleton is not None:
             from helpdesk.services.retrieval_gateway import shown_example_chunk
 
@@ -1397,7 +1554,10 @@ def _generate(
     # Time spent waiting for the model and for the validator, so the validator's share of an answer's
     # latency shows in the trace; and how many schema declarations the model was given.
     timing = {"generationMs": 0, "validationMs": 0, "schemaDeclarations": 0, "askedObjectMs": asked_ms}
-    asked_fields = {"askedObject": asked, "skeletonSourcePath": (skeleton or {}).get("sourcePath", "")}
+    asked_fields = {
+        "askedObject": asked, "skeletonSourcePath": (skeleton or {}).get("sourcePath", ""),
+        "skeletonCompanion": (skeleton or {}).get("companion", ""),
+    }
 
     def timed(key: str, call):
         started = time.perf_counter()
