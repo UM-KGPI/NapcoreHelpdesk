@@ -867,6 +867,156 @@ def asked_element(question: str) -> str:
     return found
 
 
+MAX_PART_FILES = 30
+_PARTS_CACHE: dict[str, tuple[tuple[str, list[frozenset[str]]], float]] = {}
+
+
+def _singular(noun: str) -> str:
+    lowered = noun.lower()
+    if lowered.endswith("ies") and len(lowered) > 4:
+        return lowered[:-3] + "y"
+    if lowered.endswith(("ses", "xes", "ches", "shes")):
+        return lowered[:-2]
+    if lowered.endswith("s") and not lowered.endswith("ss"):
+        return lowered[:-1]
+    return lowered
+
+
+def part_holders(question: str) -> list[frozenset[str]]:
+    """For each count the question gives ("49 seats", "1 wheelchair area"), the elements that may hold it:
+    a name with a word starting with the noun (Seating, Wheelchair) and a declared type that accepts the
+    number (SeatingCapacity, NumberOfWheelchairAreas, …). Counts of elements ("two quays") have no such
+    holder and are left to the count check."""
+    from urllib import error, parse, request
+
+    counted = counted_shapes(question)
+    if not counted:
+        return []
+    # A count of 0 or 1 is also a boolean ("1 wheelchair area" fitted WheelchairPassable, and a stop place
+    # won): such counts are looked up as 2, which only number types accept.
+    as_count = lambda count: str(max(count, 2))  # noqa: E731
+    numbers = list(dict.fromkeys(as_count(count) for count, _, _ in counted))
+    url = settings.NETEX_VALIDATOR_URL.rstrip("/") + "/accepting?" + parse.urlencode([("value", n) for n in numbers[:12]])
+    try:
+        with request.urlopen(url, timeout=VALIDATOR_TIMEOUT_SECONDS) as response:
+            accepting = json.loads(response.read()).get("accepting") or {}
+    except (error.URLError, OSError, ValueError) as exc:
+        logger.info("part holders not available: %s", exc)
+        return []
+    sets = []
+    for count, _, noun in counted:
+        stem = _singular(noun)
+        if len(stem) < 3:
+            continue
+        names = frozenset(
+            name for name in accepting.get(as_count(count)) or []
+            if any(word.startswith(stem) for word in _camel_words(name))
+        )
+        if names and names not in sets:
+            sets.append(names)
+    return sets
+
+
+def _part_spread(groups: list[list]) -> int:
+    """How far apart the parts sit in one object: the least, over one leaf of the first part as anchor, of
+    the tree distances from it to the nearest leaf of each other part (0 for a single part)."""
+    def path(node):
+        return [node] + list(node.iterancestors())
+
+    def distance(a, b) -> int:
+        up = {node: depth for depth, node in enumerate(path(a))}
+        for depth, node in enumerate(path(b)):
+            if node in up:
+                return up[node] + depth
+        return 1 << 20
+
+    if len(groups) < 2:
+        return 0
+    return min(
+        sum(min(distance(anchor, other) for other in group[:20]) for group in groups[1:])
+        for anchor in groups[0][:20]
+    )
+
+
+def asked_from_parts(question: str) -> tuple[str, list[frozenset[str]]]:
+    """The object a question asks for when its noun names none ("a coach with 49 seats and 1 wheelchair
+    area", "a bus with 50 seats"): the object, directly in a frame's list, that holds elements for most of
+    the counted parts (part_holders) in the standard's example files: VehicleType for SeatingCapacity and
+    WheelchairPlaceCapacity. ("", []) when no file holds them. Returns the part holders too, for the skeleton."""
+    from collections import Counter
+    from pathlib import Path
+
+    from lxml import etree
+
+    from helpdesk.models import SourceChunk
+
+    key = (question or "").strip().lower()
+    cached = _PARTS_CACHE.get(key)
+    if cached is not None and cached[1] > time.monotonic():
+        return cached[0]
+    sets = part_holders(question)
+    found = ""
+    if sets:
+        base = SourceChunk.objects.filter(repository_url__icontains="netex", source_path__startswith="examples/")
+        paths: Counter = Counter()
+        repositories: dict[str, str] = {}
+        for names in sets:
+            condition = None
+            for name in sorted(names):
+                condition = has_tag(name) if condition is None else condition | has_tag(name)
+            for row in base.filter(condition).values("source_path", "repository_url").distinct()[:2000]:
+                paths[row["source_path"]] += 1
+                repositories[row["source_path"]] = row["repository_url"]
+        local = lambda tag: etree.QName(tag).localname if isinstance(tag, str) else ""  # noqa: E731
+        parser = etree.XMLParser(resolve_entities=False, load_dtd=False, no_network=True, huge_tree=False)
+        checkout_root = Path(getattr(settings, "SOURCE_CHECKOUT_DIR", "/app/repos"))
+        tally: Counter = Counter()
+        closeness: dict[str, tuple[int, int]] = {}  # object name -> (parts covered, least spread)
+        for source_path, _ in sorted(paths.items(), key=lambda item: (-item[1], item[0]))[:MAX_PART_FILES]:
+            path = checkout_root / repositories[source_path].rstrip("/").rsplit("/", 1)[-1] / source_path
+            try:
+                if path.stat().st_size > MAX_STANDARD_FILE_BYTES:
+                    continue
+                root = etree.parse(str(path), parser).getroot()
+            except (OSError, etree.XMLSyntaxError):
+                continue
+            leaves: dict = {}  # member -> set index -> its leaves
+            for leaf in root.iter():
+                name = local(leaf.tag)
+                hits = [index for index, names in enumerate(sets) if name in names]
+                if not hits:
+                    continue
+                member = next(
+                    (a for a in leaf.iterancestors()
+                     if a.getparent() is not None and a.getparent().getparent() is not None
+                     and local(a.getparent().getparent().tag).endswith("Frame") and a.get("id")),
+                    None,
+                )
+                if member is not None:
+                    for index in hits:
+                        leaves.setdefault(member, {}).setdefault(index, []).append(leaf)
+            for member, by_set in leaves.items():
+                spread = _part_spread(list(by_set.values()))
+                name = local(member.tag)
+                covered_now = len(by_set)
+                best = closeness.get(name)
+                if best is None or (covered_now, -spread) > (best[0], -best[1]):
+                    closeness[name] = (covered_now, spread)
+                tally[name] += 1
+        # The object whose parts are described together wins: in a VehicleType SeatingCapacity and
+        # WheelchairPlaceCapacity sit side by side in one PassengerCapacity; a StopPlace has seats and
+        # wheelchair turning circles on unrelated equipment, far apart (and more stop places in the examples).
+        ranked = sorted(closeness, key=lambda name: (-closeness[name][0], closeness[name][1], -tally[name], name))
+        for name in ranked:
+            entries = concrete_elements(name) or []
+            if any(e.get("name") == name and e.get("object") for e in entries):
+                found = name
+                break
+    result = (found, sets if found else [])
+    _PARTS_CACHE[key] = (result, time.monotonic() + _LOOKUP_TTL_SECONDS)
+    return result
+
+
 MAX_SKELETON_ELEMENTS = 40
 # A linked object that holds the question's kind of value (a FareTable cell with the price of a fare
 # product) gets a smaller budget: it shows where such values go, the asked object stays the main shape.
@@ -1065,7 +1215,7 @@ def skeleton_xml(obj, frame, companion, protect, local) -> str:
     return etree.tostring(top, encoding="unicode")
 
 
-def skeleton_for(element: str, values: list[str] | None = None) -> dict | None:
+def skeleton_for(element: str, values: list[str] | None = None, parts: list[frozenset[str]] | None = None) -> dict | None:
     """An object of the element from the standard's example files, as a shape for the model, with its frame
     and list wrapper, at most two of each repeated child, cut to MAX_SKELETON_ELEMENTS.
 
@@ -1084,6 +1234,8 @@ def skeleton_for(element: str, values: list[str] | None = None) -> dict | None:
     from helpdesk.models import SourceChunk
 
     holders = (value_holders(values) or []) if values else []
+    # The elements for the question's counted parts (asked_from_parts) count as values do.
+    holders = list(dict.fromkeys(holders + list(parts or [])))
     key = (element, tuple(holders))
     cached = _SKELETON_CACHE.get(key)
     if cached is not None and cached[1] > time.monotonic():
@@ -1526,8 +1678,12 @@ def _generate(
     asked, skeleton = "", None
     try:
         asked = asked_element(shape_question)
+        parts: list[frozenset[str]] = []
+        if not asked:
+            # No object named ("a coach with 49 seats"): the one that holds the counted parts.
+            asked, parts = asked_from_parts(shape_question)
         counted = {written for _, written, _ in counted_shapes(question)}
-        skeleton = skeleton_for(asked, [v for v in requested_values(question) if v not in counted]) if asked else None
+        skeleton = skeleton_for(asked, [v for v in requested_values(question) if v not in counted], parts) if asked else None
         if skeleton is not None:
             from helpdesk.services.retrieval_gateway import shown_example_chunk
 

@@ -1273,3 +1273,70 @@ class LinkedSkeletonTests(SimpleTestCase):
                                           "xml": "<FareFrame/>", "companion": "FareProductPrice"})
         self.assertIn("also holds a FareProductPrice from the same file that refers to the PreassignedFareProduct", block)
         self.assertNotIn("also holds", generator.skeleton_block({"element": "Line", "sourcePath": "a", "xml": "<X/>", "companion": ""}))
+
+
+class _JsonReply:
+    def __init__(self, payload):
+        self.payload = payload
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+    def read(self):
+        return json.dumps(self.payload).encode()
+
+
+class AskedFromPartsTests(SimpleTestCase):
+    """An object named by no noun ("a coach with 49 seats") resolved from the elements of its counted parts."""
+
+    def test_part_holders_match_the_noun_and_a_number_type(self):
+        accepting = {"49": ["SeatingCapacity", "Seats", "Altitude", "NumberOfWheelchairAreas"],
+                     "2": ["SeatingCapacity", "NumberOfWheelchairAreas", "WheelchairPlaceCapacity"]}
+        with patch("urllib.request.urlopen", return_value=_JsonReply({"found": True, "accepting": accepting})) as opened:
+            sets = generator.part_holders("Show a NeTEx example of a coach with 49 seats and 1 wheelchair area")
+        self.assertEqual(sets, [frozenset({"SeatingCapacity", "Seats"}), frozenset({"NumberOfWheelchairAreas", "WheelchairPlaceCapacity"})])
+        # 1 is also a boolean: looked up as 2.
+        self.assertIn("value=2", opened.call_args.args[0])
+        self.assertNotIn("value=1&", opened.call_args.args[0] + "&")
+
+    def test_no_counts_no_lookup(self):
+        with patch("urllib.request.urlopen") as opened:
+            self.assertEqual(generator.part_holders("Show a NeTEx example of a coach"), [])
+        opened.assert_not_called()
+
+    def test_parts_side_by_side_are_closer_than_parts_far_apart(self):
+        from lxml import etree
+
+        together = etree.fromstring(
+            "<VehicleType><PassengerCapacity><SeatingCapacity>5</SeatingCapacity>"
+            "<WheelchairPlaceCapacity>1</WheelchairPlaceCapacity></PassengerCapacity></VehicleType>"
+        )
+        apart = etree.fromstring(
+            "<StopPlace><a><b><SeatEquipment><Seats>5</Seats></SeatEquipment></b></a>"
+            "<c><d><Equip><WheelchairTurningCircle>1</WheelchairTurningCircle></Equip></d></c></StopPlace>"
+        )
+        group = lambda root, name: [n for n in root.iter() if n.tag == name]  # noqa: E731
+        near = generator._part_spread([group(together, "SeatingCapacity"), group(together, "WheelchairPlaceCapacity")])
+        far = generator._part_spread([group(apart, "Seats"), group(apart, "WheelchairTurningCircle")])
+        self.assertEqual(near, 2)
+        self.assertGreater(far, near)
+
+    @override_settings(LLM_ENABLED=True)
+    def test_an_unresolved_noun_takes_the_object_of_its_parts(self):
+        parts = [frozenset({"SeatingCapacity"})]
+        with patch.object(generator, "schema_declarations", return_value=[]), patch.object(
+            generator, "value_element_declarations", return_value=[]
+        ), patch.object(generator, "asked_element", return_value=""), patch.object(
+            generator, "asked_from_parts", return_value=("VehicleType", parts)
+        ), patch.object(generator, "skeleton_for", return_value=None) as skeleton, patch.object(
+            generator, "_ask_model", return_value=_reply(FRAME)
+        ), patch.object(generator, "validate_fragment", return_value={"valid": True, "errors": []}):
+            result = generator.generate_netex_example(
+                "Show a NeTEx example of a coach with 49 seats", [NETEX_CHUNK], ["NeTEx"]
+            )
+        self.assertEqual(skeleton.call_args.args[0], "VehicleType")
+        self.assertEqual(skeleton.call_args.args[2], parts)
+        self.assertEqual(result["askedObject"], "VehicleType")
