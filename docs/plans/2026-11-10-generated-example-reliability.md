@@ -5,6 +5,39 @@ stack (Docker, semantic index, Claude Haiku 5.5 through the Anthropic SDK, netex
 98365bd) unless marked **prod**. Each claim is labelled **measured** (re-derived here, scripts in §7), **believed**
 (strong basis, not independently checked) or **assumed**.
 
+## Status (2026-11-10, Opus)
+
+Implemented the same day, each item as a full cycle (PR, CI, merge, version bump, deploy, prod check):
+
+| Item | PR | Version | State |
+|---|---|---|---|
+| P0 + P3 | #387 | 0.97.157 | live |
+| P1 | #389 | 0.97.158 | live |
+| P2 | #391 | 0.97.159 | live |
+| P4 | — | — | decision kept (thinking stays adaptive), no code |
+| P5 | #393 | 0.97.160 | live |
+| P6, replaced by a value-aware skeleton | #395 | 0.97.161 | live: the skeleton brings the object linked to the asked one that holds the question's values (schema types via validator `/accepting`) |
+| Not planned → done without a model call: asked object from counted parts | #397 | 0.97.162 | live: "coach/bus with N seats" → VehicleType |
+
+Dev benchmark (26 questions × 3 runs, **measured**; run-to-run variance ±1 run per question):
+
+| Stage | Valid | First attempt | Mean attempts | Mean time |
+|---|---|---|---|---|
+| before (P0) | 74/78 | 48 | 1.55 | 6.4 s |
+| P1 | 76/78 | 45 | 1.54 | 5.3 s |
+| P2 | 75–77/78 | 53–55 | 1.38–1.40 | 4.7–4.8 s |
+| value-aware skeleton | 76/78 | 61 | 1.26 | 4.2 s |
+| object from parts | **78/78** | 63 | 1.21 | 4.0 s |
+
+**Prod** (0.97.161–162, 2 runs each): fare product 5 EUR valid in 1 attempt (`FareProductPrice` with Amount 5 and
+Currency EUR referring to the product), example step ~2 s (was 3 attempts, ~10 s, or the labelled fallback); coach
+49 seats / 1 wheelchair area and bus 50 seats / 20 standing places valid in 1 attempt (`PassengerCapacity`);
+passing time 08:30 valid in 1–2 attempts.
+
+§6's expected result is met except "first attempt ≥ 16/20" read as a rate: 63/78 = 81 %. Remaining first-attempt
+misses (dev): stop place with a parking (Parking written inside StopPlace, 0/3 first), lines operated by "LPP"
+(value check, 1–2/3), sales offer package (order, 0–1/3); proper names ("Ljubljana Bus Station") stay unresolved.
+
 ## 1. The problem, measured
 
 **Prod** (req-mw9vh973-zgtk0t, 0.97.155, "Create a NeTEx XML example for a fare product for adult for 5 EUR."):
@@ -135,6 +168,8 @@ it does not hold the asked values. No Claude/AI attribution in commits or PRs. S
 
 ### P0 — Make the benchmark see the failing class (small, first)
 
+**Status: done, #387 (0.97.157).**
+
 - Add structure-heavy questions to `backend/helpdesk/benchmarks/example-generation-questions.yaml` (gen21–gen26):
   the fare product for adult for 5 EUR; a sales offer package with a price of 10 EUR; a tariff with two fare zones;
   a dated service journey on 2026-12-01; a vehicle type with a deck plan of 2 decks; a stop place with a lift and
@@ -148,6 +183,8 @@ it does not hold the asked values. No Claude/AI attribution in commits or PRs. S
 - This is the measurement every later item reports against.
 
 ### P1 — Structured, actionable validator feedback (option b; addresses 12 of the 22 failed attempts)
+
+**Status: done, #389 (0.97.158).** The order test over the examples: 294,332 of 294,341 elements fit. Also fixed: times and dates are one value each ("08:30" was split into 08 and 30).
 
 `backend/helpdesk/netex_validator_service.py` returns, next to today's `errors` strings, `diagnostics`: one per
 error with `{"line", "element", "parent", "kind", "detail"}`, built from the XSD index (`ElementDocs`) and the
@@ -196,6 +233,8 @@ table: passing time 0/3 → ≥ 2/3, fare attempts 3 → ~2, coach unchanged unt
 
 ### P2 — Skeleton of the asked object up front and the asked-object check (option a)
 
+**Status: done, #391 (0.97.159).** Resolver 23/26 benchmark questions, 0 wrong. The check accepts values in an object linked by a reference (a first version without that dropped the benchmark to 62/78).
+
 1. **Resolver** (`netex_example_generator.py`): `asked_element(question) -> str`: subject from a widened `_SUBJECT`
    (terminators `named|called|operated|departing|arriving|at|on|of`, sentence end, punctuation; the `_SUBJ2` regex in
    `fg.py`), tried as the whole phrase then its suffixes ("tram vehicle type" → "vehicle type"); each candidate from
@@ -235,6 +274,8 @@ first-attempt rate on the benchmark 13/20 → ≥ 16/20 (**assumed**). Cost: ~0.
 
 ### P3 — Robust reply parsing (tiny; 1 of 33 attempts with thinking, 5 of 26 without; lost gen19)
 
+**Status: done, #387 (0.97.157).** Replies not JSON: 0 in every benchmark since.
+
 `_extract_fragment`: find the JSON object that holds `"xml"` anywhere in the reply (first `{` whose `json.loads`
 succeeds, scanning `{` positions; or a `json.JSONDecoder().raw_decode` from each `{`), then the fenced-JSON case,
 and only then the raw XML regex; when the regex path is taken, unescape `\"` and `\n` if the text has them.
@@ -244,10 +285,14 @@ reply still works. Expected: the "malformed" class disappears; one attempt saved
 
 ### P4 — Thinking for the generator calls: keep adaptive (decision, no code)
 
+**Status: kept, no code.**
+
 Measured in §2 ("Not a cause"): thinking off is 3.5× faster per run and 1/9 valid instead of 5/9. Do not add a
 setting for it. Revisit only after P1–P3 with the same 3-run protocol, since fewer attempts may change the trade.
 
 ### P5 — Clearly labelled fallback to the closest standard example (option c; residual failures)
+
+**Status: done, #393 (0.97.160).**
 
 When all attempts fail and P2's resolver found an element, return the (unpruned, up to `MAX_STANDARD_EXAMPLE_ELEMENTS`)
 object from `_plain_standard_example(question, scope, [element])`, with `origin: "standard"`, `valid` as today for
@@ -263,12 +308,16 @@ today; prod's fare case) becomes a labelled standard example; no change to valid
 
 ### P6 — Later, if P1–P2 leave first-attempt failures: structural evidence in retrieval
 
+**Status: replaced by #395 (0.97.161).** The cause was narrower than missing evidence: in 72 of the 73 example files with a fare product the price sits in another object that refers to it, so the skeleton had no price. The skeleton now brings that linked object when the question gives values the schema places in specific elements (EUR → Currency); fare first attempt 0/3 → 3/3.
+
 The evidence lacked the object's skeleton in all three hard cases (§2.1). With P2 the skeleton is in the prompt
 regardless of retrieval, so this is optional: when the resolver finds an element, replace the lowest-ranked
 evidence chunk with `examples_using_elements([element], limit=1, question=…)` so the model also sees a real,
 longer instance. Measure with P0 before and after; drop it if P2 already gives ≥ 90 % first-attempt validity.
 
 ### Not planned
+
+**Status: the unresolved vehicle kinds were solved without a model call, #397 (0.97.162):** when the noun names no object, the counted parts do (elements named like the noun whose type takes the number; the object holding them closest together).
 
 A second model call to choose the object (a cheap classifier call): the resolver is deterministic and 21/24; add
 the call only if P2's unresolved cases (vehicle kinds such as "coach") matter in prod logs. Raising `MAX_ATTEMPTS`
