@@ -1401,3 +1401,166 @@ class EmptiedSkeletonTests(SimpleTestCase):
     def test_other_errors_are_left_alone(self):
         with patch.object(generator, "validate_fragment", return_value={"valid": False, "errors": ["line 1: Element 'X': This element is not expected."]}):
             self.assertEqual(generator._without_emptied("<X/>"), ("<X/>", False))
+
+
+FERRY = (
+    "I want to map a ferry service into a NeTEx TemplateServiceJourney. The ferry operates between two sides of the "
+    "river when there is demand, it takes 3 minutes from side to side. Can you create an XML file modelling such "
+    "TemplateServiceJourney?"
+)
+CROSSING = (
+    '<TimetableFrame version="1" id="hd:TF"><vehicleJourneys><TemplateServiceJourney version="1" id="hd:TSJ">'
+    '<DepartureTime>10:00:00</DepartureTime><calls>'
+    '<Call version="1" id="hd:C1" order="1"><ScheduledStopPointRef ref="hd:A"/><Departure><Time>10:00:00.0Z</Time></Departure></Call>'
+    '<Call version="1" id="hd:C2" order="2"><ScheduledStopPointRef ref="hd:B"/><Arrival><Time>10:03:00.0Z</Time></Arrival></Call>'
+    "</calls></TemplateServiceJourney></vehicleJourneys></TimetableFrame>"
+)
+
+
+class XmlRequestTests(SimpleTestCase):
+    """Requests to produce XML without an example word (prod req-mwb6auo0-n3jh83, 2026-11-10)."""
+
+    def test_requests_to_produce_xml_trigger(self):
+        for question in (
+            FERRY,
+            "The ferry takes 3 minutes. Can you give an XML snipped modelling such TemplateServiceJourney in NeTEx?",
+            "Can you write the XML for a NeTEx FlexibleLine?",
+            "Create NeTEx XML for a TemplateServiceJourney that runs every 10 minutes between 06:00 and 22:00.",
+            "Please generate a NeTEx XML document for a stop place with two quays.",
+        ):
+            self.assertTrue(generator.asks_for_netex_example(question, ["NeTEx"]), question)
+
+    def test_questions_about_xml_do_not_trigger(self):
+        for question in (
+            "How do I validate a NeTEx XML file?",
+            "What does the header of a NeTEx XML file contain?",
+            "Which XML schema does NeTEx use?",
+            "How do I write the XML header in NeTEx?",
+            "Can you show me which XML elements hold the price in NeTEx?",
+        ):
+            self.assertFalse(generator.asks_for_netex_example(question, ["NeTEx"]), question)
+
+    def test_the_request_is_not_another_question(self):
+        self.assertEqual(generator.other_question(FERRY), "")
+        self.assertEqual(
+            generator.other_question("What is a FlexibleLine? Can you write the XML for one in NeTEx?"), "What is a FlexibleLine?"
+        )
+
+    def test_xml_for_names_the_subject(self):
+        self.assertEqual(generator.asked_subject("Show me the XML for a stop place with two quays in NeTEx"), "stop place")
+
+
+class NamedElementTests(SimpleTestCase):
+    def setUp(self):
+        generator._ASKED_CACHE.clear()
+        self.addCleanup(generator._ASKED_CACHE.clear)
+        known = {
+            "TemplateServiceJourney": [{"name": "TemplateServiceJourney", "object": True}],
+            "ServiceJourney": [{"name": "ServiceJourney", "object": True}],
+            "FareProduct": [{"name": "PreassignedFareProduct", "object": True}],
+            "StopPlace": [{"name": "StopPlace", "object": True}],
+            "AccessSpace": [{"name": "AccessSpace", "object": True}],
+            "PassengerCapacity": [{"name": "PassengerCapacity", "object": False}],
+        }
+        for target, kwargs in (
+            ("concrete_elements", {"side_effect": lambda name: known.get(name)}),
+            ("_in_examples", {"return_value": True}),
+        ):
+            patcher = patch.object(generator, target, **kwargs)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def test_the_named_object_is_asked_when_there_is_no_subject_phrase(self):
+        self.assertEqual(generator.asked_element(FERRY), "TemplateServiceJourney")
+
+    def test_most_often_named_first_abstract_names_their_member_and_properties_are_no_objects(self):
+        self.assertEqual(
+            generator.named_elements("A ServiceJourney or a TemplateServiceJourney? I need the TemplateServiceJourney XML"),
+            ["TemplateServiceJourney", "ServiceJourney"],
+        )
+        self.assertEqual(generator.named_elements("Write the XML of a FareProduct in NeTEx"), ["PreassignedFareProduct"])
+        self.assertEqual(generator.named_elements("Write NeTEx XML with a PassengerCapacity"), [])
+        self.assertEqual(generator.named_elements("Write the NeTEx XML file"), [])
+
+    def test_a_named_part_is_not_the_object(self):
+        question = "Create NeTEx XML for a StopPlace with two AccessSpaces"
+        self.assertEqual(generator.named_elements(question), ["StopPlace"])
+        self.assertEqual(generator.named_elements("Create the NeTEx XML file of a StopPlace with an AccessSpace"), ["StopPlace"])
+
+    def test_the_subject_phrase_still_comes_first(self):
+        question = "Show a NeTEx example of a service journey, not a TemplateServiceJourney"
+        self.assertEqual(generator.asked_element(question), "ServiceJourney")
+
+    def test_a_plain_request_shows_the_named_object_before_the_nearest_concept(self):
+        found = {"valid": True, "origin": "standard", "validated": True, "sourcePath": "examples/a.xml"}
+        with patch.object(generator, "concept_elements", return_value=["Line"]), patch.object(
+            generator, "_from_standard", return_value=found
+        ) as standard:
+            generator.generate_netex_example("Can you write the XML for a NeTEx TemplateServiceJourney?", [], ["NeTEx"])
+        self.assertEqual(standard.call_args.args[2], "TemplateServiceJourney")
+
+
+class DurationTests(SimpleTestCase):
+    def test_durations_as_xsd_durations(self):
+        self.assertEqual(
+            generator.durations("3 minutes, a 3-minute crossing, 30 sec, 1.5 hours, two hours, 2 days"),
+            [
+                ("3 minutes", 180, "PT3M"), ("3-minute", 180, "PT3M"), ("30 sec", 30, "PT30S"),
+                ("1.5 hours", 5400, "PT5400S"), ("two hours", 7200, "PT2H"), ("2 days", 172800, "P2D"),
+            ],
+        )
+        self.assertEqual(generator.durations("3 minibuses and 2 secretaries"), [])
+
+    def test_a_duration_is_one_value_and_not_a_count(self):
+        self.assertEqual(generator.requested_values(FERRY), ["PT3M"])
+        self.assertEqual(generator.counted_shapes(FERRY), [(2, "two", "sides")])
+        self.assertEqual(
+            generator.requested_values("A TemplateServiceJourney every 10 minutes between 06:00 and 22:00"),
+            ["06:00", "22:00", "PT10M"],
+        )
+        self.assertTrue(generator.wants_generated_example(FERRY, ["NeTEx"]))
+
+    def test_xsd_duration_values_compare_in_seconds(self):
+        for text in ("PT3M", "PT180S", "PT3M0S", "PT0H3M"):
+            self.assertTrue(generator.holds_value(text, "PT3M"), text)
+        for text in ("3", "PT3H", "PT", "P", "PT30M"):
+            self.assertFalse(generator.holds_value(text, "PT3M"), text)
+        self.assertIsNone(generator.duration_seconds("P1Y"))
+
+    def test_a_duration_is_met_by_two_times_that_far_apart_in_one_object(self):
+        self.assertEqual(generator._unmet_values(CROSSING, ["PT3M"], FERRY), [])
+        self.assertEqual(generator._unmet_values(CROSSING, ["PT5M"], "it takes 5 minutes"), ["PT5M"])
+        # Across midnight in dateTimes, and times in two unrelated objects do not count.
+        overnight = CROSSING.replace("10:00:00.0Z", "2026-12-01T23:59:00").replace("10:03:00.0Z", "2026-12-02T00:02:00")
+        self.assertEqual(generator._unmet_values(overnight, ["PT3M"], FERRY), [])
+        apart = (
+            '<TimetableFrame version="1" id="hd:TF"><vehicleJourneys>'
+            '<ServiceJourney version="1" id="hd:J1"><DepartureTime>10:00:00</DepartureTime></ServiceJourney>'
+            '<ServiceJourney version="1" id="hd:J2"><DepartureTime>10:03:00</DepartureTime></ServiceJourney>'
+            "</vehicleJourneys></TimetableFrame>"
+        )
+        self.assertEqual(generator._unmet_values(apart, ["PT3M"], FERRY), ["PT3M"])
+        self.assertEqual(generator.asked_object_problem(CROSSING, "TemplateServiceJourney", ["PT3M"], FERRY), "")
+
+    def test_places_and_prompt_say_the_duration_as_written(self):
+        places = generator._places(CROSSING, ["PT3M"], FERRY)
+        self.assertEqual(places, [{"value": "3 minutes", "element": "Time", "path": [
+            "TimetableFrame", "vehicleJourneys", "TemplateServiceJourney", "calls", "Call", "Arrival"]}])
+        held = CROSSING.replace("<calls>", "<JourneyDuration>PT180S</JourneyDuration><calls>")
+        self.assertEqual(generator._places(held, ["PT3M"], FERRY)[0]["element"], "JourneyDuration")
+        self.assertIn("3 minutes (an xs:duration PT3M", generator.values_line(["PT3M", "EUR"], FERRY))
+        self.assertTrue(generator.missing_value_error("PT3M", FERRY).startswith("the duration 3 minutes (PT3M) from the question is missing"))
+        self.assertTrue(generator.missing_value_error("5", "5 EUR").startswith("the value 5 from the question is missing"))
+
+    def test_the_ferry_question_is_generated_for_its_named_object_in_one_attempt(self):
+        with patch.object(generator, "asked_element", return_value="TemplateServiceJourney"), patch.object(
+            generator, "skeleton_for", return_value=None
+        ), patch.object(generator, "_from_standard", return_value=None), patch.object(
+            generator, "_ask_model", return_value=_reply(CROSSING)
+        ) as ask, patch.object(generator, "validate_fragment", return_value={"valid": True, "errors": []}):
+            result = generator.generate_netex_example(FERRY, [NETEX_CHUNK], ["NeTEx"])
+        self.assertTrue(result["valid"], result)
+        self.assertEqual(result["attempts"], 1)
+        self.assertEqual(result["askedObject"], "TemplateServiceJourney")
+        self.assertEqual(result["valuePlaces"][0]["value"], "3 minutes")
+        self.assertIn("Values to use: 3 minutes (an xs:duration PT3M", ask.call_args.args[0][1]["content"])

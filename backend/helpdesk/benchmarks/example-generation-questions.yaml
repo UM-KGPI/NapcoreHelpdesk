@@ -57,3 +57,15 @@ questions:
   question: Give a NeTEx example of a vehicle type with a deck plan of 2 decks
 - id: gen26
   question: Show a NeTEx example of a stop place with a lift and two quays
+# Added 2026-11-10: requests to produce XML without an example word, an object named by its element name, and
+# durations (prod req-mwb6auo0-n3jh83: no example was generated). Compare with --runs 3.
+- id: gen27
+  question: I want to map a ferry service into a NeTEx TemplateServiceJourney. The ferry operates between two sides of the river when there is demand, it takes 3 minutes from side to side. Can you create an XML file modelling such TemplateServiceJourney?
+- id: gen28
+  question: I want to map a ferry service into a NeTEx TemplateServiceJourney. The ferry operates between two sides of the river when there is demand, it takes 3 minutes from side to side. Can you give an XML snippet modelling such TemplateServiceJourney?
+- id: gen29
+  question: Can you write the XML for a NeTEx FlexibleLine?
+- id: gen30
+  question: Create NeTEx XML for a TemplateServiceJourney that runs every 10 minutes between 06:00 and 22:00.
+- id: gen31
+  question: Show me a NeTEx example of a ServiceJourney with a wait time of 30 seconds at the second stop.
