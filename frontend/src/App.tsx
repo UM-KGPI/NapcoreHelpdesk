@@ -37,6 +37,7 @@ import EditorPageLayout from "./components/EditorPageLayout";
 import QuestionDetailPage from "./components/QuestionDetailPage";
 import SharedAppLayout from "./components/SharedAppLayout";
 import UserChatWorkspace, { type ChatTurn } from "./components/UserChatWorkspace";
+import { chatTurnsFromQuestionEvent } from "./questionEventTurns";
 import type {
   AnswerResponse,
   AskedQuestionRow,
@@ -195,49 +196,7 @@ function UserChatWithQueryParams(
         return res.json();
       })
       .then((detail) => {
-        console.log("Deep-link loaded question:", { requestId: detail.requestId, hasAnswer: !!detail.answer, traceFields: Object.keys(detail.trace || {}).length });
-
-        const questionTurn: ChatTurn = {
-          id: `${detail.requestId}-q`,
-          role: "user",
-          text: detail.question,
-          createdAt: detail.createdAt,
-        };
-
-        const answerTurn: ChatTurn = {
-          id: `${detail.requestId}-a`,
-          role: "assistant",
-          text: detail.answer,
-          createdAt: detail.createdAt,
-          answer: {
-            answerId: detail.questionEventId,
-            mode: detail.mode || "rag",
-            confidence: detail.confidence,
-            answer: detail.answer,
-            citations: (detail.citations || []).map((c: any) => ({
-              repositoryUrl: c.repositoryUrl,
-              commitSha: "",
-              sourcePath: c.sourcePath,
-              chunkId: c.chunkId,
-              label: c.label,
-            })),
-            abstained: false,
-            abstentionReason: null,
-            reviewRequired: false,
-            trace: (detail.trace && Object.keys(detail.trace).length > 2) ? detail.trace : {
-              requestId: detail.requestId,
-              questionEventId: detail.questionEventId,
-              matchedFaqEntryId: null,
-              retrievalEventIds: [],
-              userLikes: false,
-              userDislikes: false,
-            },
-          },
-          requestId: detail.requestId,
-        };
-
-        console.log("Setting enhanced turns with answer:", { trace: Object.keys(answerTurn.answer?.trace || {}).length });
-        setEnhancedTurns([questionTurn, answerTurn]);
+        setEnhancedTurns(chatTurnsFromQuestionEvent(detail));
       })
       .catch((error) => {
         console.error(`Failed to load question ${requestId}:`, error);
