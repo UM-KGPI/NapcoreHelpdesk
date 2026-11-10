@@ -1082,3 +1082,57 @@ class SkeletonGenerationTests(SimpleTestCase):
         skeleton.assert_not_called()
         self.assertNotIn("SKELETON", ask.call_args_list[0].args[0][1]["content"])
         self.assertEqual((result["valid"], result["askedObject"], result["askedObjectPresent"]), (True, "", False))
+
+
+@override_settings(LLM_ENABLED=True)
+class StandardFallbackTests(SimpleTestCase):
+    def setUp(self):
+        for name, value in (("schema_declarations", []), ("value_element_declarations", []), ("skeleton_for", None)):
+            patcher = patch.object(generator, name, return_value=value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def standard(self):
+        return {
+            "valid": True, "origin": "standard", "validated": True, "attempts": 0,
+            "xml": generator.indented_fragment(FARE_PRODUCT.replace(">5<", ">2.40<").replace(">EUR<", ">GBP<")),
+            "sourcePath": "examples/fares/a.xml", "sourceUrl": "u", "repositoryUrl": "r", "valuePlaces": [],
+            "elementNotes": [{"name": "PreassignedFareProduct", "documentation": "A product."}],
+        }
+
+    def test_failed_generation_shows_the_standard_object_labelled_without_the_values(self):
+        question = "Create a NeTEx XML example for a fare product for adult for 5 EUR."
+        verdict = {"valid": False, "errors": ["line 1: Element 'FarePrice': This element is not expected."]}
+        with patch.object(generator, "asked_element", return_value="PreassignedFareProduct"), patch.object(
+            generator, "_ask_model", return_value=_reply(PRICE_GROUP)
+        ), patch.object(generator, "validate_fragment", return_value=verdict), patch.object(
+            generator, "_plain_standard_example", return_value=self.standard()
+        ) as plain:
+            result = generator.generate_netex_example(question, [NETEX_CHUNK], ["NeTEx"])
+        # Looked up by the element alone: the question's values would rule every file out.
+        self.assertEqual(plain.call_args.args[0], "example of preassigned fare product")
+        self.assertEqual(plain.call_args.args[2], ["PreassignedFareProduct"])
+        self.assertEqual((result["origin"], result["holdsValues"], result["missingValues"]), ("standard", False, ["5", "EUR"]))
+        self.assertEqual(result["valuePlaces"], [])
+        self.assertEqual(result["generationErrors"], verdict["errors"])
+        self.assertEqual(len(result["attemptLog"]), generator.MAX_ATTEMPTS)
+        self.assertEqual(generator.example_origin(result), "standard-without-values")
+
+    def test_no_fallback_without_a_resolved_object(self):
+        verdict = {"valid": False, "errors": ["line 1: Element 'X': This element is not expected."]}
+        with patch.object(generator, "asked_element", return_value=""), patch.object(
+            generator, "_ask_model", return_value=_reply(FRAME)
+        ), patch.object(generator, "validate_fragment", return_value=verdict), patch.object(generator, "_plain_standard_example") as plain:
+            result = generator.generate_netex_example(BUS, [NETEX_CHUNK], ["NeTEx"])
+        plain.assert_not_called()
+        self.assertFalse(result["valid"])
+
+    def test_answer_rule_for_an_example_without_the_values(self):
+        from helpdesk.services.llm_generator import generated_example_rule
+
+        rule = generated_example_rule(["PreassignedFareProduct"], "<FareFrame/>", "", "standard-without-values")
+        self.assertIn("it does NOT contain the question's values", rule)
+        self.assertIn("do not claim the example holds them", rule)
+        self.assertNotIn("which element holds each value", rule)
+        self.assertEqual(generator.example_origin({"origin": "standard"}), "standard")
+        self.assertEqual(generator.example_origin({"valid": True}), "generated")

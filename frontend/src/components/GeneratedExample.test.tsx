@@ -6,6 +6,31 @@ import GeneratedExampleBlock from "./GeneratedExample";
 afterEach(cleanup);
 
 describe("GeneratedExampleBlock", () => {
+  it("labels a standard example shown instead of a generated one as not holding the asked values", () => {
+    render(
+      <GeneratedExampleBlock
+        example={{
+          valid: true,
+          attempts: 0,
+          origin: "standard",
+          validated: true,
+          holdsValues: false,
+          missingValues: ["5", "EUR"],
+          schemaVersion: "2.0",
+          sourcePath: "examples/fares/Netex_61.2_AdultChildProduct.xml",
+          sourceUrl: "https://github.com/x/NeTEx/blob/98365bd/examples/fares/Netex_61.2_AdultChildProduct.xml",
+          xml: "<FareFrame/>",
+          valuePlaces: [],
+        }}
+      />,
+    );
+    expect(screen.getByRole("heading").textContent).toContain(
+      "Netex_61.2_AdultChildProduct.xml (does not contain the asked values 5, EUR)",
+    );
+    expect(screen.getByText(/No example with the asked values 5, EUR validated against the schema/)).toBeTruthy();
+    expect(screen.queryByRole("list", { name: "Where the question's values go" })).toBeNull();
+  });
+
   it("shows a valid fragment labelled as generated, with the schema version", () => {
     render(
       <GeneratedExampleBlock

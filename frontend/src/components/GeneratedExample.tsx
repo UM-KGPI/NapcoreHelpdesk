@@ -21,13 +21,26 @@ export function validityNote(example: GeneratedExample): string {
   return `valid against ${version}${commit}`;
 }
 
+/** " (does not contain the asked values 5, EUR)" */
+export function withoutValuesSuffix(example: GeneratedExample): string {
+  const values = example.missingValues ?? [];
+  return values.length ? ` (does not contain the asked values ${values.join(", ")})` : " (does not contain the asked values)";
+}
+
 /** The example's title line: generated for the question, or taken from a named file of the standard. */
 export function exampleTitle(example: GeneratedExample): string {
   if (example.origin === "standard") {
     const file = (example.sourcePath ?? "").split("/").pop() || "the standard's examples";
-    return `Example from the standard: ${file}`;
+    return `Example from the standard: ${file}${example.holdsValues === false ? withoutValuesSuffix(example) : ""}`;
   }
   return "Generated example for this question";
+}
+
+/** For a standard example shown because no generated one validated: it does not hold the asked values. */
+export function missingValuesText(example: GeneratedExample): string {
+  const values = example.missingValues ?? [];
+  const asked = values.length ? `the asked values ${values.join(", ")}` : "the asked values";
+  return `No example with ${asked} validated against the schema; this example from the standard shows the same kind of object and does not contain them.`;
 }
 
 /** "two → 2 × Quay in StopPlace › quays", "49 → SeatingCapacity in … › PassengerCapacity". */
@@ -56,12 +69,18 @@ export default function GeneratedExampleBlock({ example }: { example?: Generated
             <a href={example.sourceUrl} target="_blank" rel="noreferrer">
               {(example.sourcePath ?? "").split("/").pop()}
             </a>
+            {example.holdsValues === false ? withoutValuesSuffix(example) : ""}
           </>
         ) : (
           exampleTitle(example)
         )}{" "}
         <span className="generated-example-badge">({validityNote(example)})</span>
       </h4>
+      {example.holdsValues === false ? (
+        <p className="generated-example-lead">
+          {missingValuesText(example)}
+        </p>
+      ) : null}
       {example.valuePlaces && example.valuePlaces.length > 0 ? (
         <ul className="generated-example-lead" aria-label="Where the question's values go">
           {example.valuePlaces.map((place) => (

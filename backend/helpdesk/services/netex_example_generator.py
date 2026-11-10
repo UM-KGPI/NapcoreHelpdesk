@@ -1281,7 +1281,58 @@ def _plain_standard_example(question: str, scope: list[str] | None, elements: li
     return first
 
 
+def standard_fallback(asked: str, scope: list[str] | None, values: list[str], last: dict) -> dict | None:
+    """When no generated fragment validated: an object of the asked element from the standard's examples,
+    labelled as not holding the question's values (holdsValues false, missingValues), so the user sees the
+    shape instead of "no example". Found by the element alone (the question's values would rule every file
+    out); valuePlaces then claim nothing for the values."""
+    neutral = "example of " + " ".join(_camel_words(asked))
+    found = _plain_standard_example(neutral, scope, [asked])
+    if found is None:
+        return None
+    fragment_values = _field_values(re.sub(r"\s+(?=<)", "", found.get("xml") or "")) or set()
+    return {
+        **found,
+        "holdsValues": False,
+        "missingValues": [value for value in values if value not in fragment_values],
+        "valuePlaces": [],
+        "generationErrors": last.get("errors") or [],
+        "generationAttempts": last.get("attempts", MAX_ATTEMPTS),
+    }
+
+
+def example_origin(example: dict | None) -> str:
+    """How the answer text is told about the shown example: generated, standard, or standard-without-values."""
+    example = example or {}
+    if example.get("origin") == "standard" and example.get("holdsValues") is False:
+        return "standard-without-values"
+    return example.get("origin") or "generated"
+
+
 def generate_netex_example(
+    question: str, chunks: list[dict], scope: list[str] | None = None, english_question: str | None = None
+) -> dict | None:
+    """A validated NeTEx fragment for the question (see _generate); when generation fails for a question
+    whose object is known, the standard's example of that object, labelled as not holding the values."""
+    result = _generate(question, chunks, scope, english_question)
+    if not result or result.get("valid") or not result.get("askedObject") or not result.get("attempts"):
+        return result
+    try:
+        fallback = standard_fallback(result["askedObject"], scope, requested_values(question), result)
+    except Exception as exc:  # the index unavailable: report the failed generation as before
+        logger.info("standard fallback not available: %s", exc)
+        fallback = None
+    if fallback is None:
+        return result
+    for key in ("askedObject", "attemptLog", "generationMs", "validationMs", "schemaDeclarations", "askedObjectMs"):
+        if key in result:
+            fallback.setdefault(key, result[key])
+    fallback["generationMs"] = result.get("generationMs", 0)
+    fallback["validationMs"] = result.get("validationMs", 0)
+    return fallback
+
+
+def _generate(
     question: str, chunks: list[dict], scope: list[str] | None = None, english_question: str | None = None
 ) -> dict | None:
     """A validated NeTEx fragment for the question, or a record of why there is none.
