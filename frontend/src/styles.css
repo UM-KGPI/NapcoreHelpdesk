@@ -20,6 +20,11 @@
   --brand-tint: #eef2fb;
   --brand-tint-strong: #dbe4f6;
   --brand-tint-line: #b9c7e6;
+  /* Deep navy for the page behind the cards: darker shades of the brand blue, so the white cards (and the
+     logos on them) stand out and the blue and yellow carry the page. */
+  --brand-navy: #00266e;
+  --brand-navy-deep: #00112f;
+  --card-shadow: 0 12px 32px rgba(0, 10, 40, 0.35);
   --on-brand: #ffffff;
   --bg: #f4f6fa;
   --paper: #ffffff;
@@ -41,7 +46,15 @@ body {
   min-height: 100vh;
   font-family: "Space Grotesk", "Segoe UI", sans-serif;
   color: var(--ink);
-  background: var(--bg);
+  background-color: var(--brand-navy-deep);
+  /* A faint dot grid (NAPCORE's dotted ring) over a navy gradient, lit in brand blue from the top. */
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.08) 1px, transparent 1.5px),
+    radial-gradient(ellipse 75% 55% at 70% -10%, rgba(0, 72, 204, 0.6), transparent 65%),
+    radial-gradient(ellipse 60% 50% at 0% 100%, rgba(0, 51, 153, 0.55), transparent 70%),
+    linear-gradient(165deg, var(--brand-navy) 0%, #001a4d 50%, var(--brand-navy-deep) 100%);
+  background-size: 22px 22px, 100% 100%, 100% 100%, 100% 100%;
+  background-attachment: fixed;
 }
 
 .page-shell {
@@ -60,6 +73,7 @@ body {
   border: 1px solid var(--line);
   border-bottom: 4px solid var(--brand-yellow);
   border-radius: 14px;
+  box-shadow: var(--card-shadow);
 }
 
 .app-title-text {
@@ -96,6 +110,7 @@ body {
   border: 1px solid var(--line);
   border-top: 4px solid var(--brand-blue);
   border-radius: 14px;
+  box-shadow: var(--card-shadow);
 }
 
 .app-footer-napcore {
@@ -551,8 +566,13 @@ h1 {
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 1rem;
-  box-shadow: 0 7px 22px rgba(16, 24, 40, 0.06);
+  box-shadow: var(--card-shadow);
   min-width: 0;
+}
+
+/* Cards inside cards sit on white, not on the navy page: a light shadow is enough. */
+.panel .panel {
+  box-shadow: 0 4px 14px rgba(16, 24, 40, 0.08);
 }
 
 .step-1-index {
