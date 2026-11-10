@@ -251,7 +251,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
             </div>
             <div>
               <strong>3. Follow up</strong>
-              <p className="muted">Ask further questions in the same session. Each question is answered independently — the assistant does not retain prior turns as context.</p>
+              <p className="muted">Ask further questions in the same session; each question is answered independently, the assistant does not retain prior turns as context.</p>
             </div>
           </div>
         </details>
