@@ -67,8 +67,9 @@ body {
   min-width: 0;
 }
 
-/* Logos (#377). Both 48 px tall: the EU flag fills the emblem image's height, so it stays above the
-   guidelines' 1 cm minimum and at least as large as the NAPCORE logo; the emblem keeps clear space. */
+/* Logos (#377). The header shows the NAPCORE logo; the footer shows it and the EU emblem. Both 48 px tall:
+   the EU flag fills the emblem image's height, so it stays above the guidelines' 1 cm minimum and at least
+   as large as the NAPCORE logo; the emblem keeps clear space. */
 .brand-napcore-logo {
   display: block;
   height: 48px;
@@ -1241,7 +1242,7 @@ a {
     margin-top: 1rem;
   }
 
-  /* Logos on one row above the title; the EU emblem stays visible on phones (guidelines p. 11). */
+  /* The NAPCORE logo above the title on phones. */
   .app-title-header {
     flex-wrap: wrap;
   }

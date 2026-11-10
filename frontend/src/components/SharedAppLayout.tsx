@@ -59,7 +59,6 @@ export default function SharedAppLayout({ appVersion, apiBaseUrl }: SharedAppLay
             </NavLink>
           </p>
         </div>
-        <CoFundedByTheEu />
       </header>
       <ServiceStatusBanner apiBaseUrl={apiBaseUrl} />
       <Outlet />
