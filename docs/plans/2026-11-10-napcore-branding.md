@@ -16,6 +16,8 @@ colours (`#003399`, `#FFCC00`). Differences from the design below:
   yellow (guidelines p. 5). Replace it with the Commission's file when NAPCORE confirms which one to use.
 - **Maintenance page:** blue title and a yellow top rule, no logo (the page has a dark mode, where the logo's blue
   lettering would not read).
+- **Header without the EU emblem (0.97.165, Andrej's decision):** the header shows only the NAPCORE logo; the
+  "Co-funded by the European Union" emblem is in the footer, on every page and on phones.
 - **Logo height:** both 48 px in the header and the footer; the EU flag fills the emblem image's height, so it is
   above the 1 cm minimum and as large as the NAPCORE logo.
 

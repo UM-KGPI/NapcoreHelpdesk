@@ -32,12 +32,14 @@ function renderLayout() {
 }
 
 describe("SharedAppLayout branding (#377)", () => {
-  it("shows the NAPCORE logo and the EU funding emblem in the header and the footer", () => {
+  it("shows the NAPCORE logo in the header and both logos in the footer", () => {
     renderLayout();
-    for (const region of [screen.getByRole("banner"), screen.getByRole("contentinfo")]) {
-      expect(within(region).getByAltText("NAPCORE")).toBeTruthy();
-      expect(within(region).getByAltText("Co-funded by the European Union")).toBeTruthy();
-    }
+    const header = screen.getByRole("banner");
+    expect(within(header).getByAltText("NAPCORE")).toBeTruthy();
+    expect(within(header).queryByAltText("Co-funded by the European Union")).toBeNull();
+    const footer = screen.getByRole("contentinfo");
+    expect(within(footer).getByAltText("NAPCORE")).toBeTruthy();
+    expect(within(footer).getByAltText("Co-funded by the European Union")).toBeTruthy();
   });
 
   it("links the footer to the About page, the source code and the licence", () => {
