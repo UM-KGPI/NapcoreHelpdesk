@@ -1446,11 +1446,15 @@ def generated_example_rule(elements: list[str], fragment: str = "", also_asks: s
     question first (also_asks: "How do you describe a stop place in NeTEx?" next to "show me an example"),
     then adds how the standard's own examples fill the same elements."""
     shown = f"\n```xml\n{fragment.strip()}\n```\n" if fragment.strip() else " "
-    where = (
-        "taken from one of the standard's own example files"
-        if origin == "standard"
-        else "generated for the question and validated against the NeTEx schema"
-    )
+    where = {
+        "standard": "taken from one of the standard's own example files",
+        # Generation failed; the standard's object of the asked kind is shown instead (plan P5, 2026-11-10).
+        "standard-without-values": (
+            "taken from one of the standard's own example files because no example with the question's values "
+            "validated against the schema; it does NOT contain the question's values. Say in one sentence, from the "
+            "evidence, which element would hold each of the question's values, and do not claim the example holds them"
+        ),
+    }.get(origin, "generated for the question and validated against the NeTEx schema")
     first = (
         f"The question also asks: \u201c{also_asks.strip()}\u201d. Start by answering that, in two or three "
         "sentences from the evidence (definition blocks may be quoted); then "
@@ -1459,8 +1463,9 @@ def generated_example_rule(elements: list[str], fragment: str = "", also_asks: s
     )
     return (
         f"EXAMPLE ALREADY SHOWN: above your text the user sees this NeTEx fragment, {where}:{shown}"
-        f"It uses these elements: {', '.join(elements)}. Above it the user is told which element holds each "
-        "value or count of the question, and below it each element's definition from the schema. Do not repeat "
+        f"It uses these elements: {', '.join(elements)}. Above it the user is told "
+        + ("that the example does not hold the question's values" if origin == "standard-without-values" else "which element holds each value or count of the question")
+        + ", and below it each element's definition from the schema. Do not repeat "
         f"or describe the fragment. {first}"
         "write what the evidence adds about the elements that hold the question's values, as the standard's own "
         "examples use them: where they sit, which elements usually come with them, allowed values and types. "

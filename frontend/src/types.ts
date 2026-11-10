@@ -118,6 +118,13 @@ export interface GeneratedExample {
   sourcePath?: string;
   sourceUrl?: string;
   repositoryUrl?: string;
+  /** false: a standard example shown because no generated one validated; it does not hold the question's values. */
+  holdsValues?: boolean;
+  /** The question's values the shown standard example does not contain. */
+  missingValues?: string[];
+  /** The object the question asks for (resolved from the schema) and the standard file its skeleton came from. */
+  askedObject?: string;
+  skeletonSourcePath?: string;
   evidenceChunkIds?: string[];
   errors?: string[];
   generationMs?: number;

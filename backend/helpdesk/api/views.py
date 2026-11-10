@@ -70,6 +70,7 @@ from helpdesk.services.semantic_abstention import semantic_abstention_message
 from helpdesk.services.index_builder import index_repository
 from helpdesk.services.netex_example_generator import (
     example_element_names,
+    example_origin,
     generate_netex_example,
     main_object,
     other_question,
@@ -1477,7 +1478,7 @@ class QuestionAnswerView(APIView):
                             structure_element=schema_structure["element"] if structure_shown else None,
                             example_fragment=(generated_example or {}).get("xml", "") if example_ready else "",
                             also_asks=other_question(english_question or question) if example_ready else "",
-                            example_origin=(generated_example or {}).get("origin", "generated"),
+                            example_origin=example_origin(generated_example),
                             existence=(question_kind(english_question or question) or True) if presence else False,
                         )
                         llm_generated = True
@@ -2172,7 +2173,7 @@ class QuestionAnswerStreamView(APIView):
                             structure_element=schema_structure["element"] if structure_shown else None,
                             example_fragment=(generated_example or {}).get("xml", "") if example_ready else "",
                             also_asks=other_question(english_question or question) if example_ready else "",
-                            example_origin=(generated_example or {}).get("origin", "generated"),
+                            example_origin=example_origin(generated_example),
                             existence=(question_kind(english_question or question) or True) if presence else False,
                         ):
                             if event_type == "token":
