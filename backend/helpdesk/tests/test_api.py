@@ -2253,3 +2253,35 @@ class LackSentenceTests(SimpleTestCase):
             _without_lack_sentences("`WheelchairPlaceCapacity` is not required in a `PassengerCapacity` [E1]."),
             "`WheelchairPlaceCapacity` is not required in a `PassengerCapacity` [E1].",
         )
+
+    def test_negation_first_and_doubt_about_the_shown_example_are_removed(self):
+        from helpdesk.api.views import _without_lack_sentences
+
+        # Prod req-diag-ferry-0974 (2026-11-11), next to an example that validated.
+        self.assertEqual(
+            _without_lack_sentences(
+                "`FlexibleServiceProperties` appears for on-demand services [E1]. A fully valid XML file for this ferry "
+                "service cannot be produced from the evidence alone, so the example fragment shown above should be "
+                "checked against the schema before use."
+            ),
+            "`FlexibleServiceProperties` appears for on-demand services [E1].",
+        )
+        for sentence in (
+            "A complete two-quay StopPlace example cannot be given from the evidence provided.",
+            "I cannot name the elements that would hold the seat count from the evidence.",
+            "This example may not be fully valid.",
+            "The XML above should be checked against the schema before use.",
+        ):
+            self.assertEqual(_without_lack_sentences(f"A `Quay` sits in `quays` [E1]. {sentence}"), "A `Quay` sits in `quays` [E1].", sentence)
+
+    def test_cited_and_other_negative_sentences_stay(self):
+        from helpdesk.api.views import _without_lack_sentences
+
+        for sentence in (
+            "A `Call` cannot hold a `Frequency` [E2].",
+            "The file must be checked by the NAP [E3].",
+            "Each example in the standard must be validated by the publisher [E2].",
+            "Validate the XML file against the XSD before publishing it [E1].",
+            "A stop cannot be booked with the evidence given [E1].",
+        ):
+            self.assertEqual(_without_lack_sentences(sentence), sentence)
