@@ -204,7 +204,17 @@ _LACK_SENTENCE = re.compile(
     # A sentence about the evidence itself (the evidence, the blocks, the sources) that says it lacks or only
     # partly has something: "does not contain …", "gives only these fragments, not a complete …", "has no …".
     r"(?:(?<=^)|(?<=[.!?]\s)|(?<=\n))[^.!?\n]*\b(?:the\s+)?(?:evidence|blocks?|sources?|provided\s+(?:examples?|material))\b[^.!?\n]*"
-    r"\b(?:(?:does|do|did|can)\s*not|cannot|no\s+(?:complete|full|single|example|definition)|only\b[^.!?\n]*\bnot)\b[^.!?\n]*[.!?][ \t]*",
+    r"\b(?:(?:does|do|did|can)\s*not|cannot|no\s+(?:complete|full|single|example|definition)|only\b[^.!?\n]*\bnot)\b[^.!?\n]*[.!?][ \t]*"
+    # The same with the negation first: "A fully valid XML file … cannot be produced from the evidence alone"
+    # (prod req-diag-ferry-0974, 2026-11-11, next to an example that validated).
+    r"|(?:(?<=^)|(?<=[.!?]\s)|(?<=\n))[^.!?\n\[]*\b(?:cannot|can\s*not|could\s*not|not\s+possible|unable)\b[^.!?\n\[]*"
+    r"\b(?:from|in|with|by)\s+(?:the\s+)?(?:evidence|blocks?|sources?|provided\s+(?:examples?|material))\b[^.!?\n\[]*[.!?][ \t]*"
+    # Doubt about the example shown above, which the schema has already checked: "should be checked against
+    # the schema before use", "may not be fully valid". These two forms only for sentences without a citation:
+    # a cited one reports the evidence ("Each example … must be validated by the publisher [E2].").
+    r"|(?:(?<=^)|(?<=[.!?]\s)|(?<=\n))[^.!?\n\[]*\b(?:example|fragment|snippet|(?:shown\s+)?above)\b[^.!?\n\[]*"
+    r"\b(?:(?:should|must|needs?\s+to)\s+be\s+(?:checked|verified|validated|tested)|(?:may|might)\s+not\s+(?:be\s+(?:fully\s+)?valid|validate)"
+    r"|is\s+not\s+(?:fully\s+|necessarily\s+)?valid|cannot\s+be\s+(?:produced|generated|created|built|written))\b[^.!?\n\[]*[.!?][ \t]*",
     re.IGNORECASE,
 )
 
