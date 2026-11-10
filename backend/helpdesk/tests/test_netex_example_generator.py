@@ -1552,6 +1552,7 @@ class DurationTests(SimpleTestCase):
         self.assertTrue(generator.missing_value_error("PT3M", FERRY).startswith("the duration 3 minutes (PT3M) from the question is missing"))
         self.assertTrue(generator.missing_value_error("5", "5 EUR").startswith("the value 5 from the question is missing"))
 
+    @override_settings(LLM_ENABLED=True)
     def test_the_ferry_question_is_generated_for_its_named_object_in_one_attempt(self):
         with patch.object(generator, "asked_element", return_value="TemplateServiceJourney"), patch.object(
             generator, "skeleton_for", return_value=None
