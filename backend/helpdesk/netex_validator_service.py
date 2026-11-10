@@ -14,7 +14,7 @@ model-written XML is parsed outside the backend process.
                     generator's evidence for the elements a question needs, independent of text retrieval.
     GET  /structure?element=StopPlace
                     -> {"found": true, "element": "StopPlace", "documentation": "...", "source": "xsd/...xsd",
-                        "groups": [{"owner": "StopPlace", "inherited": false, "children": [{"name", "documentation"}]},
+                        "groups": [{"owner": "StopPlace", "inherited": false, "children": [{"name", "documentation", "values" (when enumerated)}]},
                                    {"owner": "Site", "inherited": true, "children": [...]}, ...],
                         "attributes": [{"name": "id", "documentation": "Identifier of STOP PLACE.", "owner": "StopPlace"}]}
                     what the element contains according to the schema: its own child elements first, then
@@ -557,6 +557,20 @@ def concrete_elements(holder, element: str, limit: int = 8) -> dict:
 MAX_ACCEPTING_VALUES = 12
 
 
+def structure_with_values(holder, element: str) -> dict:
+    """/structure: the element's children, each enumerated one with its allowed "values"."""
+    from helpdesk.netex_content_model import enumeration_values
+
+    found = holder.element_docs.structure(element)
+    if found.get("found") and holder.content is not None:
+        for group in found.get("groups") or []:
+            for child in group.get("children") or []:
+                values = enumeration_values(holder.content, child["name"])
+                if values:
+                    child["values"] = values
+    return found
+
+
 def accepting(holder, values: list[str]) -> dict:
     """For each value, the elements whose declared simple content accepts it and is specific (a number,
     date or time type, or text narrowed by an enumeration, pattern or length): where such a value belongs."""
@@ -686,7 +700,7 @@ def make_handler(holder: SchemaHolder):
                 if not re.fullmatch(r"[A-Za-z][\w.-]{0,80}", element):
                     self._reply(400, {"error": "expected ?element=<ElementName>"})
                     return
-                self._reply(200, holder.element_docs.structure(element))
+                self._reply(200, structure_with_values(holder, element))
                 return
             if self.path.startswith("/declarations"):
                 parameters = parse_qs(urlparse(self.path).query)

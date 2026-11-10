@@ -572,6 +572,25 @@ def accepts(models: ContentModels, type_key: str, value: str, _depth: int = 0) -
     return ok, specific or base_specific
 
 
+def enumeration_values(models: ContentModels, element: str, limit: int = 30) -> list[str]:
+    """The values an element's declared simple content is restricted to, when it is an enumeration
+    ("FlexibleServiceType" -> dynamicPassingTimes, fixedHeadwayFrequency, …), else []: the schema's
+    documentation of FlexibleServiceType writes them capitalised ("DynamicPassingTimes"), and the model
+    copied that in 6 of 6 first attempts (dev, 2026-11-10)."""
+    type_keys = [models.globals.get(element, "")] + sorted(t for name, t in models.local_elements if name == element)
+    for type_key in dict.fromkeys(t for t in type_keys if t):
+        seen: set[str] = set()
+        while type_key and type_key in models.simple and type_key not in seen:
+            seen.add(type_key)
+            base, facets, members = models.simple[type_key]
+            if facets.get("enumeration"):
+                return list(facets["enumeration"])[:limit]
+            if members:
+                break
+            type_key = base
+    return []
+
+
 def accepting_elements(models: ContentModels, value: str) -> frozenset[str]:
     """The names of the elements, global or local, whose declared simple content accepts the value and is
     specific (see accepts): "EUR" -> Currency and the like, not Name nor the AND/OR/XOR grouping types;

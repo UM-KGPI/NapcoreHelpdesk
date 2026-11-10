@@ -69,3 +69,6 @@ questions:
   question: Create NeTEx XML for a TemplateServiceJourney that runs every 10 minutes between 06:00 and 22:00.
 - id: gen31
   question: Show me a NeTEx example of a ServiceJourney with a wait time of 30 seconds at the second stop.
+# Added 2026-11-10: how the service runs, modelled by an object of its own (on demand -> FlexibleServiceProperties).
+- id: gen32
+  question: Show me a NeTEx example of an on-demand bus ServiceJourney departing at 07:15.

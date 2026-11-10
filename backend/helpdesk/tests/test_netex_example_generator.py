@@ -1557,7 +1557,9 @@ class DurationTests(SimpleTestCase):
         with patch.object(generator, "asked_element", return_value="TemplateServiceJourney"), patch.object(
             generator, "skeleton_for", return_value=None
         ), patch.object(generator, "_from_standard", return_value=None), patch.object(
-            generator, "_ask_model", return_value=_reply(CROSSING)
+            generator, "conditions_block", return_value=""
+        ), patch.object(generator, "schema_declarations", return_value=[]), patch.object(
+            generator, "_ask_model", return_value=_reply(ON_DEMAND_FERRY)
         ) as ask, patch.object(generator, "validate_fragment", return_value={"valid": True, "errors": []}):
             result = generator.generate_netex_example(FERRY, [NETEX_CHUNK], ["NeTEx"])
         self.assertTrue(result["valid"], result)
@@ -1565,3 +1567,120 @@ class DurationTests(SimpleTestCase):
         self.assertEqual(result["askedObject"], "TemplateServiceJourney")
         self.assertEqual(result["valuePlaces"][0]["value"], "3 minutes")
         self.assertIn("Values to use: 3 minutes (an xs:duration PT3M", ask.call_args.args[0][1]["content"])
+
+
+ON_DEMAND_FERRY = CROSSING.replace(
+    "</calls>",
+    '</calls><FlexibleServiceProperties version="1" id="hd:FSP"><FlexibleServiceType>dynamicPassingTimes</FlexibleServiceType>'
+    "</FlexibleServiceProperties>",
+)
+FLEXIBLE_STRUCTURE = {
+    "element": "FlexibleServiceProperties",
+    "documentation": "Additional characteristics of a FLEXIBLE SERVICE.",
+    "groups": [
+        {"owner": "FlexibleServiceProperties", "inherited": False, "children": [
+            {"name": "JourneyRef", "documentation": "Reference to a JOURNEY."},
+            {"name": "FlexibleServiceType", "documentation": "Flexible service type is DynamicPassingTimes/…",
+             "values": ["dynamicPassingTimes", "fixedHeadwayFrequency"]},
+            {"name": "CancellationPossible", "documentation": "Whether cancellation is always possible."},
+        ]},
+        {"owner": "DataManagedObject", "inherited": True, "children": [{"name": "keyList", "documentation": ""}]},
+    ],
+}
+STANDARD_FLEXIBLE = {
+    "parent": "ServiceJourney", "after": "calls", "sourcePath": "examples/functions/timetable/Netex_07.2.xml",
+    "xml": '<FlexibleServiceProperties version="1" id="x:1">\n  <BookingAccess>public</BookingAccess>\n</FlexibleServiceProperties>',
+}
+
+
+class ServiceConditionTests(SimpleTestCase):
+    """How a service runs, modelled by an object of its own (prod req-mwb6auo0-n3jh83: a ferry that runs
+    "when there is demand", modelled with FlexibleServiceProperties on Andrej's decision, 2026-11-10)."""
+
+    def test_on_demand_phrases(self):
+        for question in (FERRY, "an on-demand bus", "a demand-responsive service", "a dial-a-ride minibus",
+                         "the line runs on request", "it only runs when booked", "a flexible service"):
+            self.assertEqual([e for _, e in generator.service_conditions(question)], ["FlexibleServiceProperties"], question)
+        self.assertEqual(generator.service_conditions(FERRY)[0][0], "when there is demand")
+        for question in ("How much demand is there for the ferry?", "a flexible line", "a bus with flexible seats"):
+            self.assertEqual(generator.service_conditions(question), [], question)
+
+    def test_a_condition_alone_asks_for_a_generated_example(self):
+        self.assertTrue(generator.wants_generated_example("Show me a NeTEx example of an on-demand ServiceJourney", ["NeTEx"]))
+
+    def test_the_condition_must_be_modelled_with_content(self):
+        conditions = generator.service_conditions(FERRY)
+        self.assertEqual(generator.condition_problems(ON_DEMAND_FERRY, conditions), [])
+        missing = generator.condition_problems(CROSSING, conditions)
+        self.assertTrue(missing[0].startswith("the question says the service runs “when there is demand”"), missing)
+        self.assertEqual(generator.error_class(missing[0]), "condition")
+        empty = CROSSING.replace("</calls>", '</calls><FlexibleServiceProperties version="1" id="hd:FSP"/>')
+        self.assertIn("is empty", generator.condition_problems(empty, conditions)[0])
+        self.assertEqual(generator.error_class(generator.condition_problems(empty, conditions)[0]), "condition")
+
+    def test_the_place_of_the_condition(self):
+        places = generator.condition_places(ON_DEMAND_FERRY, generator.service_conditions(FERRY))
+        self.assertEqual(places, [{"value": "when there is demand", "element": "FlexibleServiceProperties",
+                                   "path": ["TimetableFrame", "vehicleJourneys", "TemplateServiceJourney"]}])
+
+    def test_the_prompt_places_it_inside_the_asked_object_after_the_standard_s_sibling(self):
+        with patch.object(generator, "_structure", return_value=FLEXIBLE_STRUCTURE), patch.object(
+            generator, "_declared_parents", return_value=["ServiceJourney", "TemplateServiceJourney", "flexibleServiceProperties"]
+        ), patch.object(generator, "condition_example", return_value=STANDARD_FLEXIBLE):
+            block = generator.conditions_block(generator.service_conditions(FERRY), "TemplateServiceJourney")
+        self.assertIn("write one FlexibleServiceProperties element inside the TemplateServiceJourney, right after its calls", block)
+        self.assertIn("its values are that file's, not the question's", block)
+        self.assertIn("FlexibleServiceType: Flexible service type is DynamicPassingTimes/… Allowed values: dynamicPassingTimes, fixedHeadwayFrequency.", block)
+        # References back and inherited children are left out.
+        self.assertNotIn("JourneyRef", block)
+        self.assertNotIn("keyList", block)
+
+    @override_settings(LLM_ENABLED=True)
+    def test_the_on_demand_ferry_is_generated_with_the_condition_and_retried_without_it(self):
+        replies = [_reply(CROSSING), _reply(ON_DEMAND_FERRY)]
+        with patch.object(generator, "asked_element", return_value="TemplateServiceJourney"), patch.object(
+            generator, "skeleton_for", return_value=None
+        ), patch.object(generator, "_from_standard") as standard, patch.object(
+            generator, "conditions_block", return_value="HOW THE SERVICE RUNS: …"
+        ), patch.object(generator, "_ask_model", side_effect=replies) as ask, patch.object(
+            generator, "validate_fragment", return_value={"valid": True, "errors": []}
+        ):
+            result = generator.generate_netex_example(FERRY, [NETEX_CHUNK], ["NeTEx"])
+        standard.assert_not_called()  # the standard's own journeys need not model the condition
+        self.assertTrue(result["valid"], result)
+        self.assertEqual(result["attempts"], 2)
+        self.assertIn("HOW THE SERVICE RUNS", ask.call_args_list[0].args[0][1]["content"])
+        self.assertIn("when there is demand", ask.call_args_list[1].args[0][-1]["content"])
+        self.assertEqual(result["serviceConditions"], [{"phrase": "when there is demand", "element": "FlexibleServiceProperties"}])
+        self.assertEqual([p["value"] for p in result["valuePlaces"]], ["3 minutes", "when there is demand"])
+
+
+ENUM_XSD = TINY_XSD.replace(
+    '<xsd:element name="Capacity" type="xsd:string" minOccurs="0">',
+    '<xsd:element name="Kind" type="KindEnumeration" minOccurs="0"/><xsd:element name="Capacity" type="xsd:string" minOccurs="0">',
+).replace(
+    "</xsd:schema>",
+    '<xsd:simpleType name="KindEnumeration"><xsd:restriction base="xsd:string"><xsd:enumeration value="dynamicPassingTimes"/>'
+    '<xsd:enumeration value="fixedPassingTimes"/></xsd:restriction></xsd:simpleType>\n</xsd:schema>',
+)
+
+
+class StructureValuesTests(SimpleTestCase):
+    def setUp(self):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        self.checkout = Path(directory.name)
+        (self.checkout / "xsd").mkdir()
+        (self.checkout / service.SCHEMA_ENTRY).write_text(ENUM_XSD)
+        git = self.checkout / ".git" / "refs" / "heads"
+        git.mkdir(parents=True)
+        (self.checkout / ".git" / "HEAD").write_text("ref: refs/heads/main\n")
+        (git / "main").write_text("1234abcd\n")
+        self.holder = service.SchemaHolder(self.checkout)
+        self.holder.load()
+
+    def test_enumerated_children_carry_their_values(self):
+        found = service.structure_with_values(self.holder, "ResourceFrame")
+        children = {c["name"]: c for g in found["groups"] for c in g["children"]}
+        self.assertEqual(children["Kind"]["values"], ["dynamicPassingTimes", "fixedPassingTimes"])
+        self.assertNotIn("values", children["Capacity"])
