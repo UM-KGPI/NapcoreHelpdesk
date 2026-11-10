@@ -255,6 +255,92 @@ class GenerationTests(SimpleTestCase):
     def test_fragment_read_from_a_reply_that_is_not_json(self):
         self.assertEqual(generator._extract_fragment("Here it is:\n" + FRAME + "\nDone."), FRAME)
 
+    def test_json_after_a_sentence_is_read_as_json(self):
+        # Verbatim start of the passing-time reply of 2026-11-10 (run 1, attempt 3): the regex fallback took
+        # the JSON-escaped XML and the validator said `AttValue: " or ' expected`.
+        frame = '<TimetableFrame version="any" id="hd:TF_1"><Name>T</Name></TimetableFrame>'
+        reply = (
+            "The frame drops the `TimingPointInJourneyPatternRef`, since it pointed to a pattern that is not defined "
+            "in this frame. The `ArrivalTime` of 08:30:00 remains as the only content of the timetabled passing time."
+            "\n\n" + json.dumps({"xml": frame}) + "\nDone."
+        )
+        self.assertEqual(generator.parse_reply(reply), (frame, "json"))
+
+    def test_fenced_json_and_braces_before_it(self):
+        reply = 'Use {curly} braces? No.\n```json\n' + json.dumps({"xml": FRAME}) + "\n```"
+        self.assertEqual(generator.parse_reply(reply), (FRAME, "json"))
+
+    def test_bare_xml_reply_and_escaped_xml_without_json(self):
+        self.assertEqual(generator.parse_reply(FRAME), (FRAME, "xml"))
+        # A JSON reply cut off before its end does not decode; the XML in it is unescaped.
+        broken = '{"xml": "' + FRAME.replace('"', '\\"') + '"'
+        self.assertEqual(generator.parse_reply(broken), (FRAME, "xml"))
+        self.assertEqual(generator.parse_reply("no frame here"), ("", ""))
+
+    def test_prompt_asks_for_the_json_object_only(self):
+        self.assertIn("no text before or after it", generator._PROMPT)
+
+
+class AttemptLogTests(SimpleTestCase):
+    def setUp(self):
+        patcher = patch.object(generator, "schema_declarations", return_value=[])
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_error_classes_of_the_verbatim_messages(self):
+        cases = {
+            "line 12: Element 'FarePrice': This element is not expected. Expected is one of ( FarePriceRef, FareProductPriceRef ).": "not-expected",
+            "line 5: Element 'ArrivalTime': This element is not expected. Expected is one of ( validityConditions, DatedVehicleJourneyRef ).": "not-expected",
+            "line 9: Element 'StopPointInJourneyPatternRef': No match found for key-sequence ['hd:spijp_1', 'any'] of keyref 'StopPointInJourneyPattern_KeyRef'.": "keyref",
+            "line 7: Element 'pointsInSequence': Missing child element(s). Expected is one of ( PointInJourneyPattern ).": "min-count",
+            "Not well-formed XML: AttValue: \" or ' expected, line 1, column 25": "malformed",
+            "the reply contained no XML frame": "malformed",
+            "the value 5 from the question is missing: it must be the whole content of an element": "value",
+            "generation failed: timed out": "model-error",
+            "line 1: Element 'X': [facet 'pattern'] The value 'a' is not accepted.": "other",
+            "": "",
+        }
+        for message, expected in cases.items():
+            self.assertEqual(generator.error_class(message), expected, message)
+
+    def test_each_attempt_is_logged(self):
+        replies = ["Here: " + _reply(FRAME.replace("SeatingCapacity", "NumberOfSeats")), _reply(FRAME)]
+        verdicts = [
+            {"valid": False, "errors": ["line 1: Element 'NumberOfSeats': This element is not expected."]},
+            {"valid": True, "errors": []},
+        ]
+        with patch.object(generator, "_ask_model", side_effect=replies), patch.object(
+            generator, "validate_fragment", side_effect=verdicts
+        ):
+            result = generator.generate_netex_example(BUS, [NETEX_CHUNK], ["NeTEx"])
+        log = result["attemptLog"]
+        self.assertEqual([(e["attempt"], e["parsed"], e["errorClass"]) for e in log], [(1, "json", "not-expected"), (2, "json", "")])
+        self.assertTrue(all("ms" in e and "completionTokens" in e for e in log))
+
+    def test_failed_runs_carry_the_log(self):
+        with patch.object(generator, "_ask_model", side_effect=TimeoutError("timed out")):
+            result = generator.generate_netex_example(BUS, [NETEX_CHUNK], ["NeTEx"])
+        self.assertEqual([e["errorClass"] for e in result["attemptLog"]], ["model-error"] * generator.MAX_ATTEMPTS)
+
+
+class ExampleBenchmarkSummaryTests(SimpleTestCase):
+    def test_summary_counts(self):
+        from helpdesk.management.commands.run_example_benchmark import summarize
+
+        rows = [
+            {"valid": True, "attempts": 1, "seconds": 4.0, "attemptLog": [{"parsed": "json", "errorClass": "", "completionTokens": 100}]},
+            {"valid": True, "attempts": 2, "seconds": 9.0, "attemptLog": [
+                {"parsed": "xml", "errorClass": "malformed", "completionTokens": 50},
+                {"parsed": "json", "errorClass": "", "completionTokens": 70},
+            ]},
+            {"valid": False, "attempts": 3, "seconds": 20.0, "attemptLog": [{"parsed": "json", "errorClass": "keyref"}] * 3},
+        ]
+        summary = summarize(rows)
+        self.assertEqual((summary["runs"], summary["valid"], summary["firstAttempt"]), (3, 2, 1))
+        self.assertEqual((summary["meanAttempts"], summary["meanSeconds"]), (2.0, 11.0))
+        self.assertEqual(summary["failuresByClass"], {"keyref": 3, "malformed": 1})
+        self.assertEqual((summary["notJson"], summary["completionTokens"]), (1, 220))
+
 
 TINY_XSD = """<?xml version="1.0" encoding="UTF-8"?>
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.netex.org.uk/netex"
