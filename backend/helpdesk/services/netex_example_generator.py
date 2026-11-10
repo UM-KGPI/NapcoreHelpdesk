@@ -104,13 +104,48 @@ def _concept_label_words() -> frozenset[str]:
     return words
 
 
+# A time ("08:30", "7:15:30") and a date ("2026-12-01") are one value each, not two or three numbers:
+# "arriving at 08:30" asked for "08" and "30" as whole element contents, and ArrivalTime 08:30:00 failed
+# the value check in every run (benchmark 2026-11-10: gen06, gen16, gen24).
+_TIME = re.compile(r"(?<![\w:.])(\d{1,2}):(\d{2})(?::(\d{2}))?(?![\w:])")
+_DATE = re.compile(r"(?<![\w-])\d{4}-\d{2}-\d{2}(?![\w-])")
+
+
+def _time_value(match: re.Match) -> str:
+    hours, minutes, seconds = match.groups()
+    return f"{int(hours):02d}:{minutes}" + (f":{seconds}" if seconds else "")
+
+
 def requested_values(question: str) -> list[str]:
     """The concrete values a question gives, each of which the fragment must contain: quoted names,
-    numbers, and proper names written without quotes."""
+    dates and times, numbers, and proper names written without quotes."""
     values = [(straight or curly).strip() for straight, curly in _QUOTED.findall(question or "")]
-    values += _NUMBER.findall(_QUOTED.sub(" ", question or ""))
+    unquoted = _QUOTED.sub(" ", question or "")
+    values += _DATE.findall(unquoted)
+    values += [_time_value(match) for match in _TIME.finditer(unquoted)]
+    values += _NUMBER.findall(_TIME.sub(" ", _DATE.sub(" ", unquoted)))
     values += named_values(question)
     return list(dict.fromkeys(value for value in values if value))
+
+
+_ZONE = r"(?:Z|[+-]\d{2}:\d{2})?"
+
+
+def holds_value(text: str, value: str) -> bool:
+    """Whether an element's or attribute's whole content is the value: equal, or the same time or date
+    written as xsd:time / xsd:date / xsd:dateTime ("08:30" in 08:30:00, "2026-12-01" in 2026-12-01T00:00:00)."""
+    text = (text or "").strip()
+    if text == value:
+        return True
+    if re.fullmatch(r"\d{2}:\d{2}", value):
+        return bool(re.fullmatch(re.escape(value) + r":00(?:\.0+)?" + _ZONE, text)
+                    or re.fullmatch(r"\d{4}-\d{2}-\d{2}T" + re.escape(value) + r"(?::00(?:\.0+)?)?" + _ZONE, text))
+    if re.fullmatch(r"\d{2}:\d{2}:\d{2}", value):
+        return bool(re.fullmatch(re.escape(value) + r"(?:\.0+)?" + _ZONE, text)
+                    or re.fullmatch(r"\d{4}-\d{2}-\d{2}T" + re.escape(value) + r"(?:\.0+)?" + _ZONE, text))
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+        return bool(re.fullmatch(re.escape(value) + _ZONE, text) or re.fullmatch(re.escape(value) + r"T[\d:.]+" + _ZONE, text))
+    return False
 
 
 def counted_words(question: str) -> list[str]:
@@ -466,12 +501,12 @@ def value_places(fragment: str, values: list[str]) -> list[dict]:
 
     places = []
     for value in values:
-        found = next((n for n in root.iter() if n is not root and (n.text or "").strip() == value), None)
+        found = next((n for n in root.iter() if n is not root and holds_value(n.text or "", value)), None)
         if found is not None:
             places.append({"value": value, "element": local(found.tag), "path": path_of(found)})
             continue
         for node in root.iter():
-            name = next((a for a, v in node.attrib.items() if v.strip() == value), None)
+            name = next((a for a, v in node.attrib.items() if holds_value(v, value)), None)
             if node is not root and name:
                 places.append({"value": value, "element": f"{local(node.tag)}/@{name}", "path": path_of(node)})
                 break
@@ -795,7 +830,7 @@ def missing_values(fragment: str, values: list[str]) -> list[str]:
     fields = _field_values(fragment)
     if fields is None:
         return [value for value in values if not re.search(rf"(?<![\w.]){re.escape(value)}(?![\w.])", fragment)]
-    return [value for value in values if value not in fields]
+    return [value for value in values if value not in fields and not any(holds_value(field, value) for field in fields)]
 
 
 # --- generation ----------------------------------------------------------------------------------

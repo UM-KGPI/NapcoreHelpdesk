@@ -920,3 +920,25 @@ class FeedbackTests(SimpleTestCase):
     def test_prompt_asks_for_versionless_references_to_outside_objects(self):
         self.assertIn("NO version attribute", generator._PROMPT)
         self.assertNotIn("define that object too", generator._PROMPT)
+
+
+class TemporalValueTests(SimpleTestCase):
+    def test_times_and_dates_are_one_value_each(self):
+        self.assertEqual(generator.requested_values("NeTEx example of a timetabled passing time arriving at 08:30"), ["08:30"])
+        self.assertEqual(generator.requested_values("a service journey departing at 7:15 with 3 stops"), ["07:15", "3"])
+        self.assertEqual(generator.requested_values("Show a NeTEx example of a dated service journey on 2026-12-01"), ["2026-12-01"])
+
+    def test_a_time_or_date_is_held_by_its_xsd_forms(self):
+        fragment = (
+            '<TimetableFrame version="1" id="hd:TF"><vehicleJourneys><ServiceJourney version="1" id="hd:SJ">'
+            "<passingTimes><TimetabledPassingTime version=\"1\" id=\"hd:T\"><ArrivalTime>08:30:00</ArrivalTime>"
+            "</TimetabledPassingTime></passingTimes></ServiceJourney></vehicleJourneys></TimetableFrame>"
+        )
+        self.assertEqual(generator.missing_values(fragment, ["08:30"]), [])
+        self.assertEqual(generator.value_places(fragment, ["08:30"])[0]["element"], "ArrivalTime")
+        self.assertEqual(generator.missing_values(fragment, ["08:45"]), ["08:45"])
+        self.assertTrue(generator.holds_value("2026-12-01T00:00:00", "2026-12-01"))
+        self.assertTrue(generator.holds_value("2026-12-01", "2026-12-01"))
+        self.assertTrue(generator.holds_value("2026-12-01T07:15:00Z", "07:15"))
+        self.assertFalse(generator.holds_value("2026-12-011", "2026-12-01"))
+        self.assertFalse(generator.holds_value("08:30:15", "08:30"))
