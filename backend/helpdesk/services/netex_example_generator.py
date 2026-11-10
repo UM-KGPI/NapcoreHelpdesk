@@ -1061,10 +1061,13 @@ def value_holders(values: list[str]) -> list[frozenset[str]] | None:
 
 
 def _holder_leaves(node, holders: list[frozenset[str]], local) -> dict:
-    """The first leaf element under the node for each set of holders: {index: leaf}."""
+    """The first leaf element under the node for each set of holders: {index: leaf}. An object (an element
+    with an id) the question names as a part ("a stop place with a parking") is held by itself."""
     found: dict = {}
     for leaf in node.iter():
-        if not isinstance(leaf.tag, str) or len(leaf) or not (leaf.text or "").strip():
+        if not isinstance(leaf.tag, str):
+            continue
+        if leaf.get("id") is None and (len(leaf) or not (leaf.text or "").strip()):
             continue
         name = local(leaf.tag)
         for index, names in enumerate(holders):
@@ -1156,6 +1159,27 @@ def _companion(obj, frame, missing: list[frozenset[str]], local):
     return best, best_leaves
 
 
+def _frame_object(obj, frame, missing: list[frozenset[str]], local):
+    """Without a linked holder, an object the question names as a part that sits in the same frame
+    (the Norwegian stop place file lists its parkings next to the stop place, with no reference to it), the
+    smallest first: (object, {index: object}) or (None, {})."""
+    inside = set(obj.iter())
+    named = {index: names for index, names in enumerate(missing) if len(names) == 1}
+    best, best_size, best_index = None, None, None
+    for node in frame.iter():
+        if not isinstance(node.tag, str) or node in inside or node.get("id") is None:
+            continue
+        index = next((i for i, names in named.items() if local(node.tag) in names), None)
+        if index is None:
+            continue
+        size = sum(1 for _ in node.iter())
+        if best_size is None or size < best_size:
+            best, best_size, best_index = node, size, index
+    if best is None:
+        return None, {}
+    return best, {best_index: best}
+
+
 def skeleton_parts(root, element: str, holders: list[frozenset[str]], local):
     """The object of the element to show from one example file, its frame, and a linked object holding
     elements for the question's values the object itself lacks: (obj, frame, companion, protected leaves,
@@ -1171,6 +1195,8 @@ def skeleton_parts(root, element: str, holders: list[frozenset[str]], local):
         own = _holder_leaves(obj, holders, local)
         missing = [names for index, names in enumerate(holders) if index not in own]
         companion, extra = _companion(obj, frame, missing, local) if missing else (None, {})
+        if companion is None and missing:
+            companion, extra = _frame_object(obj, frame, missing, local)
         covered = len(own) + len(extra)
         if best is None or covered > best[4]:
             best = (obj, frame, companion, frozenset(own.values()), covered, frozenset(extra.values()))
@@ -1215,7 +1241,10 @@ def skeleton_xml(obj, frame, companion, protect, local) -> str:
     return etree.tostring(top, encoding="unicode")
 
 
-def skeleton_for(element: str, values: list[str] | None = None, parts: list[frozenset[str]] | None = None) -> dict | None:
+def skeleton_for(
+    element: str, values: list[str] | None = None, parts: list[frozenset[str]] | None = None,
+    objects: list[str] | None = None,
+) -> dict | None:
     """An object of the element from the standard's example files, as a shape for the model, with its frame
     and list wrapper, at most two of each repeated child, cut to MAX_SKELETON_ELEMENTS.
 
@@ -1236,13 +1265,18 @@ def skeleton_for(element: str, values: list[str] | None = None, parts: list[froz
     holders = (value_holders(values) or []) if values else []
     # The elements for the question's counted parts (asked_from_parts) count as values do.
     holders = list(dict.fromkeys(holders + list(parts or [])))
+    # Objects the question names as parts ("with a parking") count as values do: one inside the asked
+    # object, or one linked to it (a Parking refers to its StopPlace by ParentSiteRef) comes along.
+    holders = list(dict.fromkeys(holders + [frozenset([name]) for name in objects or [] if name != element]))
     key = (element, tuple(holders))
     cached = _SKELETON_CACHE.get(key)
     if cached is not None and cached[1] > time.monotonic():
         return cached[0]
     base = SourceChunk.objects.filter(repository_url__icontains="netex", source_path__startswith="examples/")
     rows = {r["source_path"]: r for r in base.filter(has_tag(element)).values("source_path", "repository_url")[:5000]}
-    words = _camel_words(element)
+    # A file named after the asked object and the parts the question names ("StopPlace-with-...-parking")
+    # comes first.
+    words = _camel_words(element) + [w for name in objects or [] if name != element for w in _camel_words(name)]
 
     def name_score(source_path: str) -> int:
         name = re.sub(r"[^a-z0-9]", "", source_path.rsplit("/", 1)[-1].lower())
@@ -1267,26 +1301,59 @@ def skeleton_for(element: str, values: list[str] | None = None, parts: list[froz
         if parts is None:
             continue
         obj, frame, companion, protect, covered = parts
+        linked = companion is not None and any(node.get("ref") == obj.get("id") for node in companion.iter())
         options.append((-covered, order, source_path, row, skeleton_xml(obj, frame, companion, protect, local),
-                        local(companion.tag) if companion is not None else ""))
+                        local(companion.tag) if companion is not None else "", linked))
         if sum(1 for option in options if -option[0] == len(holders)) >= MAX_SKELETON_TRIES:
             break  # enough files place every value (without values: any file does); parse no more
     options.sort(key=lambda option: option[:2])
     candidates: list[dict] = []
-    for _, _, source_path, row, fragment, companion in options[:MAX_SKELETON_TRIES]:
+    for _, _, source_path, row, fragment, companion, linked in options[:MAX_SKELETON_TRIES]:
         try:
-            valid = bool(validate_fragment(fragment).get("valid"))
+            fragment, valid = _without_emptied(fragment)
         except ValidatorUnavailable:
             valid = False
         candidates.append({
             "xml": fragment, "element": element, "sourcePath": source_path,
             "repositoryUrl": row["repository_url"], "valid": valid, "companion": companion,
+            "companionLinked": linked,
         })
         if valid:
             break
     found = next((c for c in candidates if c["valid"]), candidates[0] if candidates else None)
     _SKELETON_CACHE[key] = (found, time.monotonic() + _LOOKUP_TTL_SECONDS)
     return found
+
+
+_MISSING_CHILD = re.compile(r"Element '(?:\{[^}]*\})?([\w.-]+)': Missing child element")
+MAX_SKELETON_REPAIRS = 3
+
+
+def _without_emptied(fragment: str) -> tuple[str, bool]:
+    """The skeleton validated, after dropping the elements the cut to MAX_SKELETON_ELEMENTS left without
+    a child they need (privateCodes, AccessibilityAssessment, parkingProperties: 2026-11-10, five of six
+    stop place skeletons with a parking failed only on these), up to MAX_SKELETON_REPAIRS rounds:
+    (fragment, valid). Elements with text or with children stay."""
+    from lxml import etree
+
+    for _ in range(MAX_SKELETON_REPAIRS + 1):
+        checked = validate_fragment(fragment)
+        if checked.get("valid"):
+            return fragment, True
+        names = {m.group(1) for error in checked.get("errors") or [] if (m := _MISSING_CHILD.search(error))}
+        if not names:
+            break
+        root = etree.fromstring(f"<root>{fragment}</root>")
+        emptied = [
+            node for node in root.iter()
+            if node is not root and node.tag in names and not len(node) and not (node.text or "").strip()
+        ]
+        if not emptied:
+            break
+        for node in emptied:
+            node.getparent().remove(node)
+        fragment = "".join(etree.tostring(child, encoding="unicode") for child in root)
+    return fragment, False
 
 
 def skeleton_block(skeleton: dict) -> str:
@@ -1298,9 +1365,15 @@ def skeleton_block(skeleton: dict) -> str:
         "the schema requires and the references (as version-less references when their target is not in the frame). "
         "The skeleton keeps at most two of a repeated element: write as many as the question asks for."
         + (
-            f" The skeleton also holds a {skeleton['companion']} from the same file that refers to the "
-            f"{skeleton['element']} and has elements for values like the question's: put such values where that "
-            "file puts them."
+            (
+                f" The skeleton also holds a {skeleton['companion']} from the same file that refers to the "
+                f"{skeleton['element']} and has elements for values like the question's: put such values where that "
+                "file puts them."
+                if skeleton.get("companionLinked", True) else
+                f" The skeleton also holds a {skeleton['companion']} from the same frame, a part the question names: "
+                f"write it where that file does, as its own object in the frame next to the {skeleton['element']}, "
+                "not inside it."
+            )
             if skeleton.get("companion") else ""
         )
     )
@@ -1683,7 +1756,11 @@ def _generate(
             # No object named ("a coach with 49 seats"): the one that holds the counted parts.
             asked, parts = asked_from_parts(shape_question)
         counted = {written for _, written, _ in counted_shapes(question)}
-        skeleton = skeleton_for(asked, [v for v in requested_values(question) if v not in counted], parts) if asked else None
+        named = [name for noun in wanted_parts(shape_question) if (name := resolve_element(noun)) and name != asked]
+        skeleton = (
+            skeleton_for(asked, [v for v in requested_values(question) if v not in counted], parts, named)
+            if asked else None
+        )
         if skeleton is not None:
             from helpdesk.services.retrieval_gateway import shown_example_chunk
 
