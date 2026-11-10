@@ -20,11 +20,11 @@
   --brand-tint: #eef2fb;
   --brand-tint-strong: #dbe4f6;
   --brand-tint-line: #b9c7e6;
-  /* Deep navy for the page behind the cards: darker shades of the brand blue, so the white cards (and the
-     logos on them) stand out and the blue and yellow carry the page. */
-  --brand-navy: #00266e;
-  --brand-navy-deep: #00112f;
-  --card-shadow: 0 12px 32px rgba(0, 10, 40, 0.35);
+  /* Sara's glass design (#377): a deep navy base with blue and yellow light, frosted panels over it. */
+  --brand-navy: #001a52;
+  --brand-blue-light: #6298e1;
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  --link: var(--brand-blue);
   --on-brand: #ffffff;
   --bg: #f4f6fa;
   --paper: #ffffff;
@@ -46,14 +46,13 @@ body {
   min-height: 100vh;
   font-family: "Space Grotesk", "Segoe UI", sans-serif;
   color: var(--ink);
-  background-color: var(--brand-navy-deep);
-  /* A faint dot grid (NAPCORE's dotted ring) over a navy gradient, lit in brand blue from the top. */
+  background-color: var(--brand-navy);
+  /* Four soft lights over the navy base; fixed, so the glass panels have something to blur. */
   background-image:
-    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.08) 1px, transparent 1.5px),
-    radial-gradient(ellipse 75% 55% at 70% -10%, rgba(0, 72, 204, 0.6), transparent 65%),
-    radial-gradient(ellipse 60% 50% at 0% 100%, rgba(0, 51, 153, 0.55), transparent 70%),
-    linear-gradient(165deg, var(--brand-navy) 0%, #001a4d 50%, var(--brand-navy-deep) 100%);
-  background-size: 22px 22px, 100% 100%, 100% 100%, 100% 100%;
+    radial-gradient(circle at 12% 18%, var(--brand-blue-light), transparent 50%),
+    radial-gradient(circle at 88% 12%, rgba(255, 204, 0, 0.35), transparent 40%),
+    radial-gradient(circle at 82% 92%, var(--brand-blue), transparent 60%),
+    radial-gradient(circle at 8% 88%, var(--brand-blue-light), transparent 45%);
   background-attachment: fixed;
 }
 
@@ -125,7 +124,7 @@ body {
 }
 
 .app-footer-links a {
-  color: var(--brand-blue);
+  color: var(--link);
 }
 
 .ask-own-question-row {
@@ -282,7 +281,6 @@ h1 {
 }
 
 .user-workspace {
-  background: linear-gradient(180deg, var(--brand-tint) 0%, #f7f9fd 100%) !important;
   margin-top: 1.1rem;
 }
 
@@ -1429,4 +1427,145 @@ a {
 .generated-example-notes dt,
 .generated-example-notes dd {
   margin: 0;
+}
+
+/* ---- Glass design (#377, Sara's proposal) ----------------------------------------------------------------
+   The header, the question panel and the footer are frosted glass over the page background, with white text.
+   Inside them the colour tokens switch to their light-on-dark values; the chat log (answers, generated XML,
+   evidence) switches back to a light reading surface. Editor and About panels stay white cards. */
+.glass,
+.chat-panel.user-workspace {
+  --ink: #ffffff;
+  --muted: rgba(255, 255, 255, 0.78);
+  --line: rgba(255, 255, 255, 0.25);
+  --surface: rgba(0, 0, 0, 0.25);
+  --link: #ffe17a;
+  color: var(--ink);
+  background: rgba(0, 26, 82, 0.55);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 20px;
+  box-shadow: var(--card-shadow);
+}
+
+/* Header: white NAPCORE logo at 60 px, white title, a yellow bar 24 px in from each side along the bottom. */
+.app-title-header.glass {
+  position: relative;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 1rem 1.5rem 1.25rem;
+}
+.app-title-header.glass::after {
+  content: "";
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 0;
+  height: 4px;
+  border-radius: 4px 4px 0 0;
+  background: var(--brand-yellow);
+}
+.app-title-header.glass .brand-napcore-logo {
+  height: 60px;
+}
+.app-title-header.glass h1,
+.app-title-header.glass .app-subtitle,
+.app-title-header.glass .app-version-line {
+  color: var(--ink);
+}
+.app-title-header.glass .app-subtitle,
+.app-title-header.glass .app-version-line {
+  color: var(--muted);
+}
+.app-title-header.glass .app-about-link,
+.app-footer.glass .app-footer-links a {
+  color: var(--link);
+}
+
+/* Footer: links left, the EU emblem (negative version) right. The image is 70 px tall so its flag, about
+   86 % of it, is as tall as the 60 px NAPCORE logo (guidelines pp. 4, 12). */
+.app-footer.glass {
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 1rem 1.5rem;
+}
+.app-footer.glass .brand-eu-emblem {
+  height: 70px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+/* The question panel and its nested boxes. */
+.chat-panel.user-workspace {
+  padding: 1.25rem;
+}
+.chat-panel.user-workspace .getting-started-inline,
+.chat-panel.user-workspace .inspired-by-others-panel {
+  background: rgba(0, 26, 82, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+}
+.chat-panel.user-workspace .collapsible-summary {
+  padding: 14px 18px;
+}
+.chat-panel.user-workspace .getting-started-summary,
+.chat-panel.user-workspace .inspired-by-others-summary {
+  color: var(--ink);
+}
+.chat-panel.user-workspace .collapsible-summary::after {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--ink);
+}
+.chat-panel.user-workspace .welcome-card,
+.chat-panel.user-workspace .inspired-card {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--ink);
+}
+.chat-panel.user-workspace .inspired-card:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+.chat-panel.user-workspace .inspired-card-title {
+  color: var(--ink);
+}
+.chat-panel.user-workspace .inspired-badge {
+  background: rgba(255, 204, 0, 0.18);
+  color: var(--brand-yellow);
+}
+.chat-panel.user-workspace textarea {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 14px;
+  color: #ffffff;
+}
+.chat-panel.user-workspace textarea::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+.chat-panel.user-workspace .chat-actions button {
+  background: var(--brand-yellow);
+  color: var(--brand-blue);
+  font-weight: 700;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(255, 204, 0, 0.35);
+}
+.chat-panel.user-workspace .chat-actions button:hover:enabled {
+  background: #ffd633;
+}
+.chat-panel.user-workspace .chat-actions button:disabled {
+  /* Until a question is typed: faint glass, not a murky half-transparent yellow. */
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.6);
+  box-shadow: none;
+}
+
+/* Answers are read on a light surface: the tokens switch back inside the chat log. */
+.chat-panel.user-workspace .chat-log:not(.chat-log-empty) {
+  --ink: #1a2233;
+  --muted: #55607a;
+  --line: #d5dcea;
+  --surface: #eef1f7;
+  --link: var(--brand-blue);
+  color: var(--ink);
+  background: #fbfcfe;
+  border-radius: 14px;
 }

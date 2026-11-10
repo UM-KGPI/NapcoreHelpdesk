@@ -21,6 +21,11 @@ colours (`#003399`, `#FFCC00`). Differences from the design below:
 - **Official files (Sara, #377, 2026-11-10):** the NAPCORE logo as SVG and the EU emblem as PNG, both in `#003399`
   and `#FFCC00`, replace the napcore.eu copies. This settles the yellow (`#FFCC00`) and the emblem's flag colour.
   The EU emblem is 56 px tall so that its flag (48 px) matches the NAPCORE logo.
+- **Glass design (Sara, #377, 2026-11-10):** navy base `#001A52` with four radial lights (`#6298E1`, yellow,
+  `#003399`), frosted header, question panel and footer, yellow Send button, yellow bar under the header. White
+  NAPCORE logo (60 px) in the header only; the EU emblem only in the footer, in the Commission's negative version
+  (her positive file is unreadable on dark glass) and 70 px tall so its flag matches the logo (her spec: 40 px,
+  smaller than the logo, against guidelines p. 4). Answers, editor and About keep light surfaces.
 - **Logo height:** both 48 px in the header and the footer; the EU flag fills the emblem image's height, so it is
   above the 1 cm minimum and as large as the NAPCORE logo.
 

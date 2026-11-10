@@ -32,13 +32,13 @@ function renderLayout() {
 }
 
 describe("SharedAppLayout branding (#377)", () => {
-  it("shows the NAPCORE logo in the header and both logos in the footer", () => {
+  it("shows the NAPCORE logo in the header and the EU emblem in the footer", () => {
     renderLayout();
     const header = screen.getByRole("banner");
     expect(within(header).getByAltText("NAPCORE")).toBeTruthy();
     expect(within(header).queryByAltText("Co-funded by the European Union")).toBeNull();
     const footer = screen.getByRole("contentinfo");
-    expect(within(footer).getByAltText("NAPCORE")).toBeTruthy();
+    expect(within(footer).queryByAltText("NAPCORE")).toBeNull();
     expect(within(footer).getByAltText("Co-funded by the European Union")).toBeTruthy();
   });
 
