@@ -1340,3 +1340,64 @@ class AskedFromPartsTests(SimpleTestCase):
         self.assertEqual(skeleton.call_args.args[0], "VehicleType")
         self.assertEqual(skeleton.call_args.args[2], parts)
         self.assertEqual(result["askedObject"], "VehicleType")
+
+
+STOP_PLACE_WITH_PARKING_FILE = """<PublicationDelivery xmlns="http://www.netex.org.uk/netex"><dataObjects>
+<SiteFrame version="1" id="x:SF"><stopPlaces>
+  <StopPlace version="1" id="x:SP"><Name>Stop</Name>
+    <privateCodes><PrivateCode>7</PrivateCode></privateCodes></StopPlace>
+</stopPlaces><parkings>
+  <Parking version="1" id="x:Big"><Name>Big</Name><TotalCapacity>400</TotalCapacity><Covered>covered</Covered></Parking>
+  <Parking version="1" id="x:Small"><TotalCapacity>20</TotalCapacity></Parking>
+</parkings></SiteFrame></dataObjects></PublicationDelivery>"""
+
+
+class NamedPartSkeletonTests(SimpleTestCase):
+    """A part the question names as an object ("a stop place with a parking") comes into the skeleton."""
+
+    def test_a_named_object_in_the_same_frame_comes_along_unlinked(self):
+        from lxml import etree
+
+        root = etree.fromstring(STOP_PLACE_WITH_PARKING_FILE.encode())
+        local = lambda tag: etree.QName(tag).localname if isinstance(tag, str) else ""  # noqa: E731
+        obj, frame, companion, protect, covered = generator.skeleton_parts(root, "StopPlace", [frozenset({"Parking"})], local)
+        # Not referring to the stop place: the smallest parking in the frame.
+        self.assertEqual((local(companion.tag), companion.get("id"), covered), ("Parking", "x:Small", 1))
+        xml = generator.skeleton_xml(obj, frame, companion, protect, local)
+        self.assertLess(xml.index("</stopPlaces>"), xml.index("<parkings><Parking"))
+
+    def test_an_object_counts_as_its_own_holder(self):
+        from lxml import etree
+
+        root = etree.fromstring(STOP_PLACE_WITH_PARKING_FILE.encode())
+        local = lambda tag: etree.QName(tag).localname if isinstance(tag, str) else ""  # noqa: E731
+        stop = next(n for n in root.iter() if local(n.tag) == "StopPlace")
+        self.assertEqual(generator._holder_leaves(stop, [frozenset({"Parking"})], local), {})
+        self.assertEqual(local(generator._holder_leaves(stop, [frozenset({"StopPlace"})], local)[0].tag), "StopPlace")
+
+    def test_the_prompt_says_where_an_unlinked_part_goes(self):
+        block = generator.skeleton_block({"element": "StopPlace", "sourcePath": "a", "xml": "<SiteFrame/>",
+                                          "companion": "Parking", "companionLinked": False})
+        self.assertIn("as its own object in the frame next to the StopPlace, not inside it", block)
+        self.assertNotIn("refers to", block)
+
+
+class EmptiedSkeletonTests(SimpleTestCase):
+    """Elements the size cut left without a needed child are dropped until the skeleton validates."""
+
+    def test_emptied_wrappers_are_dropped(self):
+        fragment = "<SiteFrame><stopPlaces><StopPlace id='a'><privateCodes/><Name>N</Name></StopPlace></stopPlaces></SiteFrame>"
+        replies = [
+            {"valid": False, "errors": ["line 1: Element '{http://www.netex.org.uk/netex}privateCodes': Missing child element(s). Expected is ( PrivateCode )."]},
+            {"valid": True, "errors": []},
+        ]
+        with patch.object(generator, "validate_fragment", side_effect=replies) as validate:
+            fixed, valid = generator._without_emptied(fragment)
+        self.assertTrue(valid)
+        self.assertNotIn("privateCodes", fixed)
+        self.assertIn("<Name>N</Name>", fixed)
+        self.assertEqual(validate.call_count, 2)
+
+    def test_other_errors_are_left_alone(self):
+        with patch.object(generator, "validate_fragment", return_value={"valid": False, "errors": ["line 1: Element 'X': This element is not expected."]}):
+            self.assertEqual(generator._without_emptied("<X/>"), ("<X/>", False))
