@@ -42,13 +42,11 @@ describe("SharedAppLayout branding (#377)", () => {
     expect(within(footer).getByAltText("Co-funded by the European Union")).toBeTruthy();
   });
 
-  it("links the footer to the About page, the source code and the licence", () => {
+  it("links the footer to the About page and the licence, not the source code", () => {
     renderLayout();
     const footer = screen.getByRole("contentinfo");
     expect(within(footer).getByRole("link", { name: "About this project" }).getAttribute("href")).toBe("/about");
-    expect(within(footer).getByRole("link", { name: "Source code" }).getAttribute("href")).toBe(
-      "https://github.com/UM-KGPI/NapcoreHelpdesk",
-    );
+    expect(within(footer).queryByRole("link", { name: "Source code" })).toBeNull();
     expect(within(footer).getByRole("link", { name: "Licence (AGPL-3.0)" })).toBeTruthy();
   });
 });
