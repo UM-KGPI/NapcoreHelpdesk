@@ -1572,6 +1572,10 @@ a {
   border-radius: 16px;
   padding: 16px;
 }
+/* One column that never grows past the panel: a long code line scrolls inside its block, not the whole panel. */
+.chat-panel.user-workspace .chat-log {
+  grid-template-columns: minmax(0, 1fr);
+}
 .chat-panel.user-workspace .chat-log .chat-user {
   background: rgba(255, 255, 255, 0.08);
   border: none;
@@ -1642,4 +1646,41 @@ a {
 }
 .chat-panel.user-workspace .chat-log .schema-structure-badge {
   color: #a9c6ef;
+}
+
+/* Scrollbars in the brand colours (#377): a faint white thumb on a clear track, thin, on the navy page and
+   inside the glass panels (answer panel, code blocks, generated XML). scrollbar-color is inherited, so it reaches
+   every scrolling box inside; scrollbar-width is not inherited, so it is set on the boxes inside as well. The
+   ::-webkit-scrollbar rules cover browsers without scrollbar-color (Safari). */
+html,
+.glass,
+.chat-panel.user-workspace {
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  scrollbar-width: thin;
+}
+.glass *,
+.chat-panel.user-workspace * {
+  scrollbar-width: thin;
+}
+.glass ::-webkit-scrollbar,
+.chat-panel.user-workspace ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.glass ::-webkit-scrollbar-track,
+.chat-panel.user-workspace ::-webkit-scrollbar-track {
+  background: transparent;
+}
+.glass ::-webkit-scrollbar-thumb,
+.chat-panel.user-workspace ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+}
+.glass ::-webkit-scrollbar-thumb:hover,
+.chat-panel.user-workspace ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+.glass ::-webkit-scrollbar-corner,
+.chat-panel.user-workspace ::-webkit-scrollbar-corner {
+  background: transparent;
 }
