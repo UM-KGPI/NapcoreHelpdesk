@@ -7,7 +7,7 @@
  *
  * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
  * Crafted by: AI coding agents
- * Created: 2026-03-28  |  Modified: 2026-06-28
+ * Created: 2026-03-28  |  Modified: 2026-11-11
  */
 
 :root {
@@ -1432,7 +1432,7 @@ a {
 /* ---- Glass design (#377, Sara's proposal) ----------------------------------------------------------------
    The header, the question panel and the footer are frosted glass over the page background, with white text.
    Inside them the colour tokens switch to their light-on-dark values; the chat log (answers, generated XML,
-   evidence) switches back to a light reading surface. Editor and About panels stay white cards. */
+   evidence) is a darker glass panel with white text. Editor and About panels stay white cards. */
 .glass,
 .chat-panel.user-workspace {
   --ink: #ffffff;
@@ -1559,14 +1559,87 @@ a {
   box-shadow: none;
 }
 
-/* Answers are read on a light surface: the tokens switch back inside the chat log. */
+/* Answer panel: dark glass (Sara's spec, #377, 2026-11-11). White text throughout, no black or dark grey. */
 .chat-panel.user-workspace .chat-log:not(.chat-log-empty) {
-  --ink: #1a2233;
-  --muted: #55607a;
-  --line: #d5dcea;
-  --surface: #eef1f7;
-  --link: var(--brand-blue);
+  --ink: #ffffff;
+  --muted: rgba(255, 255, 255, 0.7);
+  --line: rgba(255, 255, 255, 0.18);
+  --surface: rgba(0, 0, 0, 0.3);
+  --link: var(--brand-yellow);
   color: var(--ink);
-  background: #fbfcfe;
-  border-radius: 14px;
+  background: rgba(0, 26, 82, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 16px;
+  padding: 16px;
+}
+.chat-panel.user-workspace .chat-log .chat-user {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.chat-panel.user-workspace .chat-log .chat-assistant {
+  background: none;
+  border: none;
+  border-left: 3px solid var(--brand-yellow);
+  border-radius: 0;
+  padding: 4px 0 4px 14px;
+}
+.chat-panel.user-workspace .chat-log a {
+  color: var(--brand-yellow);
+  font-weight: 600;
+}
+.chat-panel.user-workspace .chat-log .muted {
+  color: rgba(255, 255, 255, 0.7);
+}
+/* The meta line under an answer (requestId, mode, confidence). */
+.chat-panel.user-workspace .chat-log .muted.tiny {
+  font-size: 13px;
+}
+.chat-panel.user-workspace .chat-log .chat-role {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.6);
+}
+.chat-panel.user-workspace .chat-log pre {
+  background: rgba(0, 0, 0, 0.3);
+  border: none;
+  border-radius: 10px;
+  padding: 14px;
+  overflow-x: auto;
+  white-space: pre;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #e6eeff;
+}
+.chat-panel.user-workspace .chat-log code {
+  color: #e6eeff;
+}
+/* Light-surface colours that would turn dark-on-dark inside the panel. */
+.chat-panel.user-workspace .chat-log .chat-icon-button {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: var(--ink);
+}
+.chat-panel.user-workspace .chat-log .chat-icon-button:hover:enabled {
+  background: rgba(255, 255, 255, 0.16);
+}
+.chat-panel.user-workspace .chat-log .chat-icon-button-active {
+  background: rgba(255, 204, 0, 0.22);
+  border-color: var(--brand-yellow);
+}
+.chat-panel.user-workspace .chat-log .generated-example {
+  border-left-color: var(--brand-yellow);
+  background: rgba(255, 204, 0, 0.06);
+}
+.chat-panel.user-workspace .chat-log .generated-example-badge {
+  color: var(--brand-yellow);
+}
+.chat-panel.user-workspace .chat-log .schema-structure {
+  border-left-color: var(--brand-blue-light);
+  background: rgba(98, 152, 225, 0.1);
+}
+.chat-panel.user-workspace .chat-log .schema-structure-badge {
+  color: #a9c6ef;
 }
