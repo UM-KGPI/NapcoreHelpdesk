@@ -16,7 +16,8 @@ Delegated Regulation (EU) 2017/1926, the ITS Directive 2010/40/EU and the
 TEL TSI (EU) 2026/253. Questions that name them are also answered from the
 road traffic standard DATEX II and TN-ITS (its Part 14 for road attribute
 updates), and from the INSPIRE Transport Networks specification that MMTIS
-requires for the spatial network. The full list is under
+requires for the spatial network, the mobilityDCAT-AP metadata profile for
+NAP catalogues, and NAPCORE's own pages on napcore.eu. The full list is under
 [Knowledge pool](#knowledge-pool) below.
 
 - **Grounded answers:** responses are based only on approved source
@@ -74,7 +75,9 @@ NeTEx, SIRI and OpRa are refreshed every night from their GitHub repositories.
 
 These are searched only when the question mentions them (for example "In DATEX
 II, what is a SituationRecord?"), so they do not crowd out the public transport
-standards in other answers.
+standards in other answers. TN-ITS and mobilityDCAT-AP are refreshed every
+night from their GitHub repositories; the others are stored copies, updated
+after review.
 
 **Tip:** name the standard in your question. "What is a SituationRecord?" is
 answered from the copy of the DATEX II schema inside SIRI; "In DATEX II, what
@@ -226,7 +229,21 @@ since. Broad phases, in order:
    context line under answers about NeTEx, SIRI and Transmodel; sources
    searched only when a question names them: the INSPIRE Directive and the
    Transport Networks rules with their data specification and code lists,
-   DATEX II v3.7 (its data model and documentation) and TN-ITS.
+   DATEX II v3.7 (its data model and documentation), TN-ITS with its own
+   ontology, mobilityDCAT-AP with its ontology, and NAPCORE's pages and
+   deliverables from napcore.eu.
+8. **Generated examples, speed & NAPCORE look** (Nov 2026, ongoing): NeTEx
+   examples generated for the question (for example "a bus with 50 seats")
+   and shown only when they validate against the NeTEx XSD in a separate
+   validator service, labelled as generated, with a labelled example from the
+   standard when none validates; questions such as "does NeTEx have X?", "how
+   is X defined?" and "what does element X contain?" answered from the model
+   and the schema; the concepts a question is about found by meaning; example
+   questions answered in less than half the earlier time, with a first answer
+   without the model's extended reasoning, nearest-chunk search through the
+   vector index and cached graph lookups, and a record of where each answer's
+   time went; a notice when answers are slower than usual; the NAPCORE look
+   (logos, EU colours and emblem); the source code repository made public.
 
 See [Recent updates](recent-updates.md) for a detailed log of the latest
 phase. Development is ongoing, and this timeline will grow as the project
@@ -238,9 +255,8 @@ NAPCORE Helpdesk is developed collaboratively, and feedback from the
 community is very welcome. Because the project is a work in progress, reports
 of incorrect, incomplete, or missing answers are especially valuable: use the
 thumbs up and thumbs down buttons under each answer. The
-[GitHub repository](https://github.com/UM-KGPI/NapcoreHelpdesk) is currently
-private; NAPCORE task members can ask Andrej Tibaut or Sara Guerra de Oliveira
-for access, and collaborators can there report issues, propose features,
+[GitHub repository](https://github.com/UM-KGPI/NapcoreHelpdesk) is public;
+there you can report issues, propose features,
 submit pull requests, or review the codebase and architecture. See [Contributing](../CONTRIBUTING.md) for development flow and
 commit conventions.
 
