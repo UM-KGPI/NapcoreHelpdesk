@@ -219,12 +219,12 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           <h2>System context</h2>
         </div>
         <p>
-          Who uses the helpdesk and which external systems it relies on (C4 model, level 1). Select the diagram to open it at full size.
+          Who uses the helpdesk and which external systems it relies on (C4 model, level 1). The helpdesk's own parts, such as its GraphDB knowledge graph and embedding service, are inside the helpdesk box. Select the diagram to open it at full size.
         </p>
         <a className="about-diagram" href={systemContextDiagramUrl} target="_blank" rel="noreferrer">
           <img
             src={systemContextDiagramUrl}
-            alt="C4 system context: NAP operators, transport authorities, transport operators, standards implementers and ITS system integrators ask questions, and editors review answers. The helpdesk indexes the NeTEx, SIRI, OpRa, mobilityDCAT-AP, TN-ITS and INSPIRE repositories on GitHub and publishes the Transmodel model from its own repository there, indexes the EU legislation from the EU Publications Office and links answers to EUR-Lex, indexes stored copies of the DATEX II documentation, napcore.eu and the INSPIRE code lists, queries the GraphDB ontology store, uses a large language model through an API to route questions, write answers and generate validated NeTEx examples, and downloads its multilingual embedding model once from Hugging Face."
+            alt="C4 system context: NAP operators, transport authorities, transport operators, standards implementers and ITS system integrators ask questions, and editors review answers. The helpdesk indexes the NeTEx, SIRI, OpRa, mobilityDCAT-AP, TN-ITS and INSPIRE repositories on GitHub and publishes the Transmodel model from its own repository there, indexes the EU legislation from the EU Publications Office and links answers to EUR-Lex, indexes stored copies of the DATEX II documentation, napcore.eu and the INSPIRE code lists, expands concepts in its own GraphDB knowledge graph, uses a large language model through an API to route questions, write answers and generate validated NeTEx examples, and downloads its multilingual embedding model once from Hugging Face."
           />
         </a>
       </section>
