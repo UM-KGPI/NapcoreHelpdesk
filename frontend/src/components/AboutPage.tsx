@@ -5,7 +5,7 @@
  *
  * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
  * Crafted by: AI coding agents
- * Created: 2026-07-02  |  Modified: 2026-11-06
+ * Created: 2026-07-02  |  Modified: 2026-11-11
  */
 
 import systemContextDiagramUrl from "../assets/c4-system-context.svg";
@@ -108,7 +108,8 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           legislation that governs their data: the MMTIS Delegated Regulation (EU) 2017/1926, the ITS
           Directive 2010/40/EU and the TEL TSI (EU) 2026/253. Questions that name them are also answered
           from the road traffic standard DATEX II and TN-ITS (its Part 14 for road attribute updates), and
-          from the INSPIRE Transport Networks specification that MMTIS requires for the spatial network.
+          from the INSPIRE Transport Networks specification that MMTIS requires for the spatial network,
+          the mobilityDCAT-AP metadata profile for NAP catalogues, and NAPCORE's own pages on napcore.eu.
           The full list is under <a href="#knowledge-pool">Knowledge pool</a> below.
         </p>
         <ul>
@@ -158,7 +159,8 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
         <h3>Further standards and sources: searched when a question names them</h3>
         <p>
           These are searched only when the question mentions them (for example "In DATEX II, what is a
-          SituationRecord?"), so they do not crowd out the public transport standards in other answers.
+          SituationRecord?"), so they do not crowd out the public transport standards in other answers. TN-ITS and mobilityDCAT-AP
+          are refreshed every night from their GitHub repositories; the others are stored copies, updated after review.
         </p>
         <p>
           <strong>Tip:</strong> name the standard in your question. "What is a SituationRecord?" is answered
@@ -222,7 +224,7 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
         <a className="about-diagram" href={systemContextDiagramUrl} target="_blank" rel="noreferrer">
           <img
             src={systemContextDiagramUrl}
-            alt="C4 system context: NAP operators, transport authorities, transport operators, standards implementers and ITS system integrators ask questions, and editors review answers. The helpdesk indexes the NeTEx, SIRI and OpRa repositories on GitHub and publishes the Transmodel model from its own repository there, indexes the EU legislation from the EU Publications Office and links answers to EUR-Lex, queries the GraphDB ontology store, uses a large language model through an API, and downloads its multilingual embedding model once from Hugging Face."
+            alt="C4 system context: NAP operators, transport authorities, transport operators, standards implementers and ITS system integrators ask questions, and editors review answers. The helpdesk indexes the NeTEx, SIRI, OpRa, mobilityDCAT-AP, TN-ITS and INSPIRE repositories on GitHub and publishes the Transmodel model from its own repository there, indexes the EU legislation from the EU Publications Office and links answers to EUR-Lex, indexes stored copies of the DATEX II documentation, napcore.eu and the INSPIRE code lists, queries the GraphDB ontology store, uses a large language model through an API to route questions, write answers and generate validated NeTEx examples, and downloads its multilingual embedding model once from Hugging Face."
           />
         </a>
       </section>
@@ -341,7 +343,18 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
              provisions that name it, and a Legal context line under answers about NeTEx, SIRI and
              Transmodel; sources searched only when a question names them: the INSPIRE Directive and the
              Transport Networks rules with their data specification and code lists, DATEX II v3.7 (its data
-             model and documentation) and TN-ITS.</li>
+             model and documentation), TN-ITS with its own ontology, mobilityDCAT-AP with its ontology, and
+             NAPCORE's pages and deliverables from napcore.eu.</li>
+          <li><strong>Generated examples, speed &amp; NAPCORE look</strong> (Nov 2026, ongoing): NeTEx examples
+             generated for the question (for example "a bus with 50 seats") and shown only when they validate
+             against the NeTEx XSD in a separate validator service, labelled as generated, with a labelled
+             example from the standard when none validates; questions such as "does NeTEx have X?", "how is X
+             defined?" and "what does element X contain?" answered from the model and the schema; the concepts a
+             question is about found by meaning; example questions answered in less than half the earlier
+             time, with a first answer without the model's extended reasoning, nearest-chunk search through
+             the vector index and cached graph lookups, and a record of where each answer's time went; a
+             notice when answers are slower than usual; the NAPCORE look (logos, EU colours and emblem); the
+             source code repository made public.</li>
         </ol>
         <p>
           Development is ongoing, and this timeline will grow as the project evolves.
@@ -356,7 +369,7 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           NAPCORE Helpdesk is developed collaboratively, and feedback from the community is very welcome. Because the project is a work in progress, reports of incorrect, incomplete, or missing answers are especially valuable: use the thumbs up and thumbs down buttons under each answer.
         </p>
         <p>
-          The <a href="https://github.com/UM-KGPI/NapcoreHelpdesk" target="_blank" rel="noreferrer">GitHub repository</a> is currently private. NAPCORE task members can ask Andrej Tibaut or Sara Guerra de Oliveira for access, and collaborators can there:
+          The <a href="https://github.com/UM-KGPI/NapcoreHelpdesk" target="_blank" rel="noreferrer">GitHub repository</a> is public. There you can:
         </p>
         <ul>
           <li>Report issues and bugs</li>
