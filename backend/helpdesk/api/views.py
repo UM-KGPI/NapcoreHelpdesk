@@ -219,10 +219,35 @@ _LACK_SENTENCE = re.compile(
 )
 
 
+# The contrast left once the lack sentence is gone: "What the blocks do show is that a ServiceJourney …" (prod
+# req-diag-ferry-0975, 2026-11-11), "What the evidence does show: …", "The evidence does show how …" read as if
+# something were missing next to a block that shows it. The lead-in goes; an emphatic "does show" becomes "shows".
+_CONTRAST_SUBJECT = r"(?:the\s+(?:evidence|blocks?|sources?|excerpts?)|it|they)"
+_CONTRAST_LEAD = re.compile(
+    r"(?:(?<=^)|(?<=[.!?]\s)|(?<=\n))(?:\*\*)?what\s+" + _CONTRAST_SUBJECT + r"\s+(?:does|do)\s+show"
+    r"(?:\s*:\s*(?:\*\*)?|(?:\*\*)?\s*:\s*|\s+is\s+that\s+)\s*(?P<next>\S)",
+    re.IGNORECASE,
+)
+_CONTRAST_HOW = re.compile(
+    r"(?:(?<=^)|(?<=[.!?]\s)|(?<=\n))what\s+(" + _CONTRAST_SUBJECT + r")\s+(does|do)\s+show\s+is\s+(?=how\b|which\b|where\b)",
+    re.IGNORECASE,
+)
+_EMPHATIC_SHOW = re.compile(r"\b(evidence|blocks?|sources?|excerpts?|it|they|that)\s+(does|do)\s+show\b", re.IGNORECASE)
+
+
+def _without_contrast(text: str) -> str:
+    # The lead-in goes and what followed it starts the sentence with a capital.
+    text = _CONTRAST_LEAD.sub(lambda m: m.group("next").upper(), text)
+    text = _CONTRAST_HOW.sub(
+        lambda m: f"{m.group(1)[:1].upper()}{m.group(1)[1:]} {'shows' if m.group(2).lower() == 'does' else 'show'} ", text
+    )
+    return _EMPHATIC_SHOW.sub(lambda m: f"{m.group(1)} {'shows' if m.group(2).lower() == 'does' else 'show'}", text)
+
+
 def _without_lack_sentences(answer_text: str) -> str:
     code = re.findall(r"```.*?```", answer_text, re.S)
     text = re.sub(r"```.*?```", "\x00", answer_text, flags=re.S)
-    text = _LACK_SENTENCE.sub("", text)
+    text = _without_contrast(_LACK_SENTENCE.sub("", text))
     for block in code:
         text = text.replace("\x00", block, 1)
     text = re.sub(r"[ \t]+\n", "\n", text)
