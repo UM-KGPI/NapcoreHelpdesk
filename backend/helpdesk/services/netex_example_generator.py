@@ -1722,6 +1722,10 @@ def skeleton_block(skeleton: dict) -> str:
         "Write the question's object in this shape: keep its nesting and element order; put the question's values in "
         "the elements that hold such values; drop optional elements the question does not need; keep every element "
         "the schema requires and the references (as version-less references when their target is not in the frame). "
+        "Its ids are that file's: do not reuse them; give the objects you write ids of your own, named after what the "
+        "question calls them ('hd:SSP_SideA' and 'hd:SSP_SideB' for the two sides of a river); references to the "
+        "standard's shared codes (TypeOf…) may stay. An id names an object and holds none of the question's values: "
+        "a name or code the question gives still goes in its own element. "
         "The skeleton keeps at most two of a repeated element: write as many as the question asks for."
         + (
             (

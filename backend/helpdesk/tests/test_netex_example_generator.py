@@ -1684,3 +1684,15 @@ class StructureValuesTests(SimpleTestCase):
         children = {c["name"]: c for g in found["groups"] for c in g["children"]}
         self.assertEqual(children["Kind"]["values"], ["dynamicPassingTimes", "fixedPassingTimes"])
         self.assertNotIn("values", children["Capacity"])
+
+
+class IdentifierTests(SimpleTestCase):
+    """Ids named after the question, not copied from the standard's file (prod req-diag-ferry-0974: the ferry's
+    stop points were mybus:SSP_001 and mybus:SSP_002 from a bus example; 6 of 93 benchmark runs copied ids)."""
+
+    def test_the_skeleton_s_ids_are_that_file_s(self):
+        block = generator.skeleton_block({"element": "ServiceJourney", "sourcePath": "examples/a.xml", "xml": "<ServiceJourney/>"})
+        self.assertIn("Its ids are that file's: do not reuse them", block)
+        self.assertIn("'hd:SSP_SideA' and 'hd:SSP_SideB' for the two sides of a river", block)
+        self.assertIn("references to the standard's shared codes (TypeOf…) may stay", block)
+        self.assertIn("An id names an object and holds none of the question's values", block)
