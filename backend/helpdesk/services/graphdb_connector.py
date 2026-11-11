@@ -88,7 +88,6 @@ SELECT DISTINCT ?stdConcept WHERE {{
     GRAPH ?g {{
         ?stdConcept {_ALIGNMENT_PATH} <{core_concept_iri}> .
     }}
-  FILTER(!CONTAINS(STR(?stdConcept), "napcore.eu/ontology/nits"))
   FILTER(!CONTAINS(STR(?stdConcept), "www.w3.org"))
   FILTER(!CONTAINS(STR(?stdConcept), "purl.org"))
 }}
