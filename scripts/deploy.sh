@@ -71,6 +71,11 @@ rm -f "${MAINTENANCE_FLAG}"
 
 # EU legislation (issue #91) is indexed from docs/regulations/, which the pull above updates. Acts whose
 # file and parser are unchanged are skipped, so this is quick on most deploys. Runs with the site up.
+# The NITS upper ontology was removed on 2026-10-20 (#83); prod must hold none of its data. This deletes the
+# retired graphs (a no-op once they are gone) and fails the deploy if any NITS statement is left in GraphDB.
+echo "==> Retiring removed GraphDB graphs (NITS)"
+${COMPOSE} exec -T backend python manage.py retire_graphdb_graphs
+
 echo "==> Indexing EU legislation"
 ${COMPOSE} exec -T backend python manage.py index_regulations
 
