@@ -113,6 +113,8 @@ also show a Legal context line with the provisions that name the standard.
 ## System context
 
 Who uses the helpdesk and which external systems it relies on (C4 model, level 1).
+The helpdesk's own parts, such as its GraphDB knowledge graph and embedding
+service, are inside the helpdesk box.
 
 ![C4 system context](diagrams/c4-system-context.svg)
 
