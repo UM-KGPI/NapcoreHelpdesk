@@ -39,8 +39,9 @@ requires for the spatial network. The full list is under
   from those provisions.
 - **AI as controller and narrator:** a controller model checks whether a
   matched FAQ fits or the sources should be searched, and a narration model
-  writes the answer from the retrieved evidence. Both are large language models
-  used through an API.
+  writes the answer from the retrieved evidence and, when an example is asked
+  for, generates a NeTEx example that is checked against the schema before it is
+  shown. Both are large language models used through an API.
 - **Honest about gaps:** when the evidence is insufficient, the assistant says
   so instead of guessing.
 - **Curated knowledge:** editorially reviewed FAQ answers are used
