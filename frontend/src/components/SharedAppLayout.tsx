@@ -6,7 +6,7 @@
  *
  * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
  * Crafted by: AI coding agents
- * Created: 2026-03-29  |  Modified: 2026-11-10
+ * Created: 2026-03-29  |  Modified: 2026-11-11
  */
 
 import { Outlet, NavLink, Link } from "react-router-dom";
@@ -66,7 +66,6 @@ export default function SharedAppLayout({ appVersion, apiBaseUrl }: SharedAppLay
       <footer className="app-footer glass">
         <nav className="app-footer-links" aria-label="Footer">
           <NavLink to="/about">About this project</NavLink>
-          <a href="https://github.com/UM-KGPI/NapcoreHelpdesk" target="_blank" rel="noreferrer">Source code</a>
           <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noreferrer">Licence (AGPL-3.0)</a>
         </nav>
         <CoFundedByTheEu />
