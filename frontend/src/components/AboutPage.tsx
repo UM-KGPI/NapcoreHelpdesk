@@ -237,8 +237,8 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
           The requirements and domain design are by:
         </p>
         <ul>
-          <li>Andrej Tibaut</li>
-          <li>Sara Guerra de Oliveira</li>
+          <li>Andrej Tibaut (<a href="mailto:andrej.tibaut@um.si">andrej.tibaut@um.si</a>)</li>
+          <li>Sara Guerra de Oliveira (<a href="mailto:sara.guerraoliveira@um.si">sara.guerraoliveira@um.si</a>)</li>
         </ul>
         <p>
           both affiliated with University of Maribor,

@@ -122,8 +122,8 @@ service, are inside the helpdesk box.
 
 The requirements and domain design are by:
 
-- Andrej Tibaut
-- Sara Guerra de Oliveira
+- Andrej Tibaut ([andrej.tibaut@um.si](mailto:andrej.tibaut@um.si))
+- Sara Guerra de Oliveira ([sara.guerraoliveira@um.si](mailto:sara.guerraoliveira@um.si))
 
 both affiliated with University of Maribor
 Faculty of Civil Engineering,
