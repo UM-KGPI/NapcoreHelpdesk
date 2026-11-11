@@ -2274,6 +2274,38 @@ class LackSentenceTests(SimpleTestCase):
         ):
             self.assertEqual(_without_lack_sentences(f"A `Quay` sits in `quays` [E1]. {sentence}"), "A `Quay` sits in `quays` [E1].", sentence)
 
+    def test_contrastive_openings_become_plain_statements(self):
+        from helpdesk.api.views import _without_lack_sentences
+
+        cases = {
+            # Prod req-diag-ferry-0975 (2026-11-11).
+            "What the blocks do show is that a `ServiceJourney` carries a `DepartureTime` [E1].":
+                "A `ServiceJourney` carries a `DepartureTime` [E1].",
+            "What the evidence does show: a service journey can hold a `calls` element [E1].":
+                "A service journey can hold a `calls` element [E1].",
+            "**What the evidence does show:** Several blocks contain `StopPlace` elements [E1].":
+                "Several blocks contain `StopPlace` elements [E1].",
+            "What it does show is how a `VehicleType` is classified [E2].": "It shows how a `VehicleType` is classified [E2].",
+            "The evidence does show how such a line is built.": "The evidence shows how such a line is built.",
+            "The blocks do show how a `Line` carries its public code [E1].": "The blocks show how a `Line` carries its public code [E1].",
+        }
+        for before, after in cases.items():
+            self.assertEqual(_without_lack_sentences(before), after, before)
+
+    def test_other_text_is_left_as_written(self):
+        from helpdesk.api.views import _without_lack_sentences
+
+        for sentence in (
+            "**What the evidence defines:** The `VehicleType` element is a classification [E1].",
+            "Use e.g. the `Line`. what follows stays lower case.",
+            "A `Call` does show times [E1].",
+        ):
+            self.assertEqual(_without_lack_sentences(sentence), sentence)
+        self.assertEqual(
+            _without_lack_sentences("A `Line` [E1].\n\n```xml\n<!-- what the evidence does show: -->\n```"),
+            "A `Line` [E1].\n\n```xml\n<!-- what the evidence does show: -->\n```",
+        )
+
     def test_cited_and_other_negative_sentences_stay(self):
         from helpdesk.api.views import _without_lack_sentences
 
