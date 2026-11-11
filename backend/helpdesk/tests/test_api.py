@@ -389,14 +389,14 @@ class HelpdeskApiTests(APITestCase):
         """When request scope is missing, semantic parsing provides candidate standards for retrieval."""
 
         parse_mock.return_value = SimpleNamespace(
-            core_concept="nits:journey-pattern",
+            core_concept="transmodel:JOURNEY_PATTERN",
             ambiguous_core_concept=False,
             candidate_standards=["NeTEx", "OpRa"],
             as_dict=lambda: {
                 "intent": "cross_standard_relation",
                 "normativity": "unspecified",
-                "coreConcept": "nits:journey-pattern",
-                "coreConcepts": ["nits:journey-pattern"],
+                "coreConcept": "transmodel:JOURNEY_PATTERN",
+                "coreConcepts": ["transmodel:JOURNEY_PATTERN"],
                 "ambiguousCoreConcept": False,
                 "candidateStandards": ["NeTEx", "OpRa"],
                 "originalTerms": ["ServiceJourneyPattern"],
@@ -444,7 +444,7 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assert_matches_schema("AnswerResponse", response.data)
         self.assertEqual(retrieve_mock.call_args.kwargs.get("scope"), ["NeTEx", "OpRa"])
-        self.assertEqual(response.data["trace"]["semanticQuery"]["coreConcept"], "nits:journey-pattern")
+        self.assertEqual(response.data["trace"]["semanticQuery"]["coreConcept"], "transmodel:JOURNEY_PATTERN")
         self.assertEqual(
             response.data["trace"]["semanticQuery"]["candidateStandards"],
             ["NeTEx", "OpRa"],
@@ -524,14 +524,14 @@ class HelpdeskApiTests(APITestCase):
         """An ambiguous core concept keeps every named standard and asks the user to clarify."""
 
         parse_mock.return_value = SimpleNamespace(
-            core_concept="nits:journey-pattern",
+            core_concept="transmodel:JOURNEY_PATTERN",
             ambiguous_core_concept=True,
             candidate_standards=["NeTEx", "OpRa"],
             as_dict=lambda: {
                 "intent": "cross_standard_relation",
                 "normativity": "unspecified",
-                "coreConcept": "nits:journey-pattern",
-                "coreConcepts": ["nits:journey-pattern", "nits:journey-ref"],
+                "coreConcept": "transmodel:JOURNEY_PATTERN",
+                "coreConcepts": ["transmodel:JOURNEY_PATTERN", "transmodel:VEHICLE_JOURNEY"],
                 "ambiguousCoreConcept": True,
                 "candidateStandards": ["NeTEx", "OpRa"],
                 "originalTerms": ["JourneyPattern"],
@@ -588,14 +588,14 @@ class HelpdeskApiTests(APITestCase):
         """Low-confidence sparse retrieval should be marked as provisional partial evidence."""
 
         parse_mock.return_value = SimpleNamespace(
-            core_concept="nits:journey-pattern",
+            core_concept="transmodel:JOURNEY_PATTERN",
             ambiguous_core_concept=False,
             candidate_standards=["NeTEx", "OpRa"],
             as_dict=lambda: {
                 "intent": "cross_standard_relation",
                 "normativity": "unspecified",
-                "coreConcept": "nits:journey-pattern",
-                "coreConcepts": ["nits:journey-pattern"],
+                "coreConcept": "transmodel:JOURNEY_PATTERN",
+                "coreConcepts": ["transmodel:JOURNEY_PATTERN"],
                 "ambiguousCoreConcept": False,
                 "candidateStandards": ["NeTEx", "OpRa"],
                 "originalTerms": ["JourneyPattern"],
@@ -659,14 +659,14 @@ class HelpdeskApiTests(APITestCase):
         """Cross-standard normative mismatch should be surfaced in trace partitions."""
 
         parse_mock.return_value = SimpleNamespace(
-            core_concept="nits:journey-pattern",
+            core_concept="transmodel:JOURNEY_PATTERN",
             ambiguous_core_concept=False,
             candidate_standards=["NeTEx", "OpRa"],
             as_dict=lambda: {
                 "intent": "cross_standard_relation",
                 "normativity": "unspecified",
-                "coreConcept": "nits:journey-pattern",
-                "coreConcepts": ["nits:journey-pattern"],
+                "coreConcept": "transmodel:JOURNEY_PATTERN",
+                "coreConcepts": ["transmodel:JOURNEY_PATTERN"],
                 "ambiguousCoreConcept": False,
                 "candidateStandards": ["NeTEx", "OpRa"],
                 "originalTerms": ["JourneyPattern"],
@@ -746,15 +746,15 @@ class HelpdeskApiTests(APITestCase):
         """Generic evidence gate should force abstention when alignment is too low."""
 
         parse_mock.return_value = SimpleNamespace(
-            core_concept="nits:journey-pattern",
+            core_concept="transmodel:JOURNEY_PATTERN",
             ambiguous_core_concept=False,
             candidate_standards=["NeTEx"],
             confidence={"intent": 0.9, "concept": 0.95},
             as_dict=lambda: {
                 "intent": "cross_standard_relation",
                 "normativity": "unspecified",
-                "coreConcept": "nits:journey-pattern",
-                "coreConcepts": ["nits:journey-pattern"],
+                "coreConcept": "transmodel:JOURNEY_PATTERN",
+                "coreConcepts": ["transmodel:JOURNEY_PATTERN"],
                 "ambiguousCoreConcept": False,
                 "candidateStandards": ["NeTEx"],
                 "originalTerms": ["JourneyPattern"],
