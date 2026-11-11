@@ -65,7 +65,6 @@ export default function SharedAppLayout({ appVersion, apiBaseUrl }: SharedAppLay
       <Outlet />
       <footer className="app-footer glass">
         <nav className="app-footer-links" aria-label="Footer">
-          <NavLink to="/about">About this project</NavLink>
           <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noreferrer">Licence (AGPL-3.0)</a>
         </nav>
         <CoFundedByTheEu />
