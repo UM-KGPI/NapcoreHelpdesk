@@ -45,7 +45,7 @@ class SemanticAbstentionTests(SimpleTestCase):
         self.assertIsNone(_decide(_query(), scope=["NeTEx"]))
 
     def test_a_standard_the_ontology_recognised_counts_as_a_hint(self):
-        query = _query(concept="nits:Stop", confidence=0.95, discovered=["NeTEx"])
+        query = _query(concept="transmodel:STOP_PLACE", confidence=0.95, discovered=["NeTEx"])
         self.assertIsNone(_decide(query))
 
     def test_a_capitalised_term_exempts_the_question(self):
@@ -55,20 +55,20 @@ class SemanticAbstentionTests(SimpleTestCase):
         self.assertIsNone(_decide(_query(), allow=False))
 
     def test_known_concept_with_low_confidence_and_no_hint_is_refused(self):
-        query = _query(concept="nits:Stop", confidence=0.5)
+        query = _query(concept="transmodel:STOP_PLACE", confidence=0.5)
         self.assertEqual(_decide(query), LOW_CONFIDENCE_MESSAGE)
 
     def test_low_confidence_is_not_refused_when_a_scope_was_requested(self):
-        query = _query(concept="nits:Stop", confidence=0.5)
+        query = _query(concept="transmodel:STOP_PLACE", confidence=0.5)
         self.assertIsNone(_decide(query, requested=["SIRI"], scope=["SIRI"]))
 
     def test_confidence_at_the_threshold_is_not_low(self):
-        query = _query(concept="nits:Stop", confidence=0.60)
+        query = _query(concept="transmodel:STOP_PLACE", confidence=0.60)
         self.assertIsNone(_decide(query))
 
     @override_settings(SEMANTIC_LOW_CONFIDENCE_THRESHOLD=0.9)
     def test_threshold_comes_from_settings(self):
-        query = _query(concept="nits:Stop", confidence=0.8)
+        query = _query(concept="transmodel:STOP_PLACE", confidence=0.8)
         self.assertEqual(_decide(query), LOW_CONFIDENCE_MESSAGE)
 
 
@@ -93,7 +93,7 @@ class RelevanceCheckHybridTests(SimpleTestCase):
     def test_a_model_failure_falls_back_to_the_keyword_rules(self, ask):
         ask.return_value = None
         self.assertEqual(_decide(_query(), question="What is the weather?"), NO_CONCEPT_MESSAGE)
-        self.assertIsNone(_decide(_query(concept="nits:Stop", confidence=0.95, discovered=["NeTEx"]), question="stop point"))
+        self.assertIsNone(_decide(_query(concept="transmodel:STOP_PLACE", confidence=0.95, discovered=["NeTEx"]), question="stop point"))
 
     def test_allow_abstain_false_makes_no_call(self, ask):
         self.assertIsNone(_decide(_query(), allow=False, question="What is the weather?"))

@@ -21,12 +21,10 @@ from urllib.request import Request, urlopen
 
 # Despite the name, this is the full set of relations the live concept-expansion
 # query (query_graphdb_concept_expansion, below) traverses -- not just SKOS ones.
-# Every nits-<standard>-align.ttl file uses owl:equivalentClass, rdfs:subClassOf,
-# and/or skos:closeMatch to link standard concepts to the nits: core ontology;
-# until 2026-09-21 this list only had the three plain SKOS relations below, so
-# none of the alignment files' content was ever reachable through this path
-# (confirmed empirically: the old list returned 0 related concepts for seeds
-# that have real alignment entries; this list returns the expected results).
+# The alignment files link standard concepts with owl:equivalentClass,
+# rdfs:subClassOf and/or skos:closeMatch, so all of them are listed; with only
+# the three plain SKOS relations, the alignments were unreachable (found
+# 2026-09-21, when the alignments still pointed at the since-removed NITS core).
 SKOS_RELATIONS = [
     "http://www.w3.org/2004/02/skos/core#related",
     "http://www.w3.org/2004/02/skos/core#relatedMatch",
