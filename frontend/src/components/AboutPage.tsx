@@ -5,7 +5,7 @@
  *
  * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
  * Crafted by: AI coding agents
- * Created: 2026-07-02  |  Modified: 2026-11-11
+ * Created: 2026-07-02  |  Modified: 2026-11-12
  */
 
 import systemContextDiagramUrl from "../assets/c4-system-context.svg";
@@ -368,16 +368,6 @@ export default function AboutPage({ appVersion }: AboutPageProps) {
         <p>
           NAPCORE Helpdesk is developed collaboratively, and feedback from the community is very welcome. Because the project is a work in progress, reports of incorrect, incomplete, or missing answers are especially valuable: use the thumbs up and thumbs down buttons under each answer.
         </p>
-        <p>
-          The <a href="https://github.com/UM-KGPI/NapcoreHelpdesk" target="_blank" rel="noreferrer">GitHub repository</a> is public. There you can:
-        </p>
-        <ul>
-          <li>Report issues and bugs</li>
-          <li>Propose new features and improvements</li>
-          <li>Submit pull requests</li>
-          <li>Review the codebase and architecture</li>
-          <li>Follow development progress</li>
-        </ul>
       </section>
 
       <section className="panel">
