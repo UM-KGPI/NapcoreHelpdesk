@@ -303,7 +303,7 @@ class GraphDbClientTests(TestCase):
                 replace=True,
             )
 
-        self.assertEqual(delete_mock.call_count, 5)
+        self.assertEqual(delete_mock.call_count, 10)
         deleted_graph_uris = {call.kwargs["graph_uri"] for call in delete_mock.call_args_list}
         self.assertEqual(
             deleted_graph_uris,
@@ -313,9 +313,14 @@ class GraphDbClientTests(TestCase):
                 "https://napcore.eu/graph/alignments/netex",
                 "https://napcore.eu/graph/alignments/opra",
                 "https://napcore.eu/graph/alignments/siri",
+                "urn:graph:napcore-its",
+                "urn:graph:nits-netex-align",
+                "urn:graph:nits-opra-align",
+                "urn:graph:nits-siri-align",
+                "urn:graph:nits-transmodel-align",
             },
         )
-        retired_results = results[-5:]
+        retired_results = results[-10:]
         self.assertTrue(all(item["retired"] for item in retired_results))
         self.assertEqual({item["graphUri"] for item in retired_results}, deleted_graph_uris)
 
