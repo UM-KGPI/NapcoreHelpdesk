@@ -135,8 +135,8 @@ Note:
   - `GRAPHDB_REPOSITORY`
   - `GRAPHDB_TIMEOUT_SECONDS`
 - When GraphDB is enabled and reachable, parsing can:
-  - anchor terms to core concepts via SPARQL;
-  - discover relevant standards from aligned concepts.
+  - anchor a term to the concepts it is aligned to (for example its Transmodel class) via SPARQL;
+  - discover the standards whose concepts align to that concept.
 - If GraphDB anchoring/discovery returns no anchors for a query, parsing uses already-loaded in-memory indexes derived from GraphDB ontology payloads.
 
 ## Staging rollout controls
