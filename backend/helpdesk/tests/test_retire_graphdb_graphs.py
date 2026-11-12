@@ -38,6 +38,29 @@ class RetireGraphdbGraphsTests(SimpleTestCase):
         with self.assertRaisesMessage(CommandError, "still holds statements"):
             self._run({"head": {}, "boolean": True})
 
+    def test_failure_lists_the_graphs_and_samples_that_hold_nits(self):
+        graphs = {"results": {"bindings": [{"g": {"value": "https://napcore.eu/graph/old"}, "n": {"value": "12"}}]}}
+        sample = {
+            "results": {
+                "bindings": [
+                    {
+                        "s": {"value": "https://napcore.eu/ontology/nits#Stop"},
+                        "p": {"value": "http://www.w3.org/2000/01/rdf-schema#label"},
+                        "o": {"value": "Stop"},
+                    }
+                ]
+            }
+        }
+        out = StringIO()
+        with patch.object(command, "delete_named_graph"), patch.object(
+            command, "execute_sparql_query", side_effect=[{"boolean": True}, graphs, sample]
+        ) as query:
+            with self.assertRaisesMessage(CommandError, "still holds statements"):
+                call_command("retire_graphdb_graphs", stdout=out)
+        self.assertIn("GRAPH ?g", query.call_args_list[1].kwargs["sparql_query"])
+        self.assertIn("12\thttps://napcore.eu/graph/old", out.getvalue())
+        self.assertIn("sample: https://napcore.eu/ontology/nits#Stop", out.getvalue())
+
     def test_fails_when_the_check_cannot_run(self):
         with self.assertRaisesMessage(CommandError, "Could not check"):
             self._run(None)
