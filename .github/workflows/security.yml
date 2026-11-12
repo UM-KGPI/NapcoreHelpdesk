@@ -4,7 +4,12 @@ on:
   schedule:
     - cron: "0 3 * * 1"
   workflow_dispatch:
+  # The version-bump PR changes only VERSION and is opened by github-actions[bot]. In this public repo its
+  # runs wait for approval (policy: all external contributors) and expire as failures, so skip them.
+  # The weekly scheduled run still covers main.
   pull_request:
+    paths-ignore:
+      - VERSION
 
 permissions:
   contents: read
