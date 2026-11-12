@@ -162,3 +162,39 @@ class ExtractCommandOptionTests(SimpleTestCase):
                 with self.assertRaises(CommandError) as ctx:
                     call_command("extract_xsd_ontology", "--netex-path", str(Path(tmp) / "nope"), stdout=StringIO())
         self.assertIn("--netex-path", str(ctx.exception))
+
+
+class GeneratedTurtleNamesSourcesTests(SimpleTestCase):
+    """The generated TTL files name their sources and claim no licence."""
+
+    NAMESPACES = {"netex": "https://netex.org.uk/netex/2.0#"}
+
+    def test_standard_ontology_header_names_the_repository_and_no_licence(self):
+        from helpdesk.management.commands.extract_xsd_ontology import Command
+
+        lines = Command()._build_ttl_content(
+            "netex", {"netex:StopPlace": {"name": "StopPlace", "description": "A place."}}, self.NAMESPACES
+        )
+        text = "\n".join(lines)
+        self.assertNotIn("dct:license", text)
+        self.assertIn('    owl:versionInfo "0.2-xsd-rebuild-with-relationships" ;\n'
+                      "    dct:source <https://github.com/TransmodelEcosystem/NeTEx> .", text)
+
+    def test_examples_catalog_names_the_repositories_and_no_licence(self):
+        from helpdesk.management.commands.extract_xsd_ontology import Command
+
+        ontology = {
+            "namespaces": self.NAMESPACES,
+            "concepts": {"netex:StopPlace": {"example_sources": ["examples/stops.xml"]}},
+        }
+        with TemporaryDirectory() as tmp_dir:
+            Command(stdout=StringIO())._generate_examples_graph(ontology, Path(tmp_dir))
+            text = (Path(tmp_dir) / "examples.ttl").read_text(encoding="utf-8")
+        self.assertNotIn("dct:license", text)
+        self.assertIn(
+            "    dct:source <https://github.com/TransmodelEcosystem/NeTEx>, "
+            "<https://github.com/TransmodelEcosystem/SIRI>, <https://github.com/TransmodelEcosystem/OpRa> ;",
+            text,
+        )
+        # The entry's last statement now closes it.
+        self.assertIn('    dct:source "examples/stops.xml"@en ;\n    skos:isRelatedTo netex:StopPlace .\n', text)

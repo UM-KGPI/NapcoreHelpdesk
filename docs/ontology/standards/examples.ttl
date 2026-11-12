@@ -13,6 +13,7 @@
     a owl:Ontology ;
     dct:title "NAPCORE Example Files Catalog"@en ;
     dct:description "Index linking XML example files to schema concepts"@en ;
+    dct:source <https://github.com/TransmodelEcosystem/NeTEx>, <https://github.com/TransmodelEcosystem/SIRI>, <https://github.com/TransmodelEcosystem/OpRa> ;
     owl:versionInfo "0.1-examples" .
 
 #################################################################
@@ -57,8 +58,7 @@
     skos:isRelatedTo siri:ResponseTimestamp ;
     skos:isRelatedTo siri:ServiceDelivery ;
     skos:isRelatedTo siri:StopPointsDelivery ;
-    skos:isRelatedTo siri:Train ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:Train .
 
 <https://napcore.eu/examples/examples%2FCancelledAndLateDatedVehicleJourneys.xml>
     a dct:Dataset ;
@@ -93,8 +93,7 @@
     skos:isRelatedTo opra:opraFunctionalDeliveries ;
     skos:isRelatedTo siri:DatedVehicleJourney ;
     skos:isRelatedTo siri:ResponseTimestamp ;
-    skos:isRelatedTo siri:ServiceDelivery ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ServiceDelivery .
 
 <https://napcore.eu/examples/examples%2FContextualIndicatorFrame.xml>
     a dct:Dataset ;
@@ -121,8 +120,7 @@
     skos:isRelatedTo siri:KeyList ;
     skos:isRelatedTo siri:ResponseTimestamp ;
     skos:isRelatedTo siri:ServiceDelivery ;
-    skos:isRelatedTo siri:VehicleMode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMode .
 
 <https://napcore.eu/examples/examples%2FDelayedAndCancelledJourneysWithEvents.xml>
     a dct:Dataset ;
@@ -162,8 +160,7 @@
     skos:isRelatedTo siri:ControlActionDelivery ;
     skos:isRelatedTo siri:DatedVehicleJourney ;
     skos:isRelatedTo siri:ResponseTimestamp ;
-    skos:isRelatedTo siri:ServiceDelivery ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ServiceDelivery .
 
 <https://napcore.eu/examples/examples%2FExpectedPassengerCount.xml>
     a dct:Dataset ;
@@ -188,8 +185,7 @@
     skos:isRelatedTo opra:ServiceDelivery ;
     skos:isRelatedTo opra:opraFunctionalDeliveries ;
     skos:isRelatedTo siri:ResponseTimestamp ;
-    skos:isRelatedTo siri:ServiceDelivery ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ServiceDelivery .
 
 <https://napcore.eu/examples/examples%2FExpectedServiceIntensity.xml>
     a dct:Dataset ;
@@ -251,8 +247,7 @@
     skos:isRelatedTo siri:FareClass ;
     skos:isRelatedTo siri:ResponseTimestamp ;
     skos:isRelatedTo siri:ServiceDelivery ;
-    skos:isRelatedTo siri:VehicleMode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMode .
 
 <https://napcore.eu/examples/examples%2FPlannedCapacity.xml>
     a dct:Dataset ;
@@ -282,8 +277,7 @@
     skos:isRelatedTo opra:VehicleTypeCapacity ;
     skos:isRelatedTo opra:opraFunctionalDeliveries ;
     skos:isRelatedTo siri:ResponseTimestamp ;
-    skos:isRelatedTo siri:ServiceDelivery ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ServiceDelivery .
 
 <https://napcore.eu/examples/examples%2FPlannedFleetDimensions.xml>
     a dct:Dataset ;
@@ -305,8 +299,7 @@
     skos:isRelatedTo opra:opraFunctionalDeliveries ;
     skos:isRelatedTo siri:ResponseTimestamp ;
     skos:isRelatedTo siri:ServiceDelivery ;
-    skos:isRelatedTo siri:VehicleMode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMode .
 
 <https://napcore.eu/examples/examples%2FPlannedServiceDimensions.xml>
     a dct:Dataset ;
@@ -331,8 +324,7 @@
     skos:isRelatedTo opra:opraFunctionalDeliveries ;
     skos:isRelatedTo siri:ResponseTimestamp ;
     skos:isRelatedTo siri:ServiceDelivery ;
-    skos:isRelatedTo siri:StopPointsDelivery ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:StopPointsDelivery .
 
 <https://napcore.eu/examples/examples%2FPlannedServiceIntensity.xml>
     a dct:Dataset ;
@@ -368,8 +360,7 @@
     skos:isRelatedTo siri:FareClass ;
     skos:isRelatedTo siri:ResponseTimestamp ;
     skos:isRelatedTo siri:ServiceDelivery ;
-    skos:isRelatedTo siri:VehicleMode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMode .
 
 <https://napcore.eu/examples/examples%2FRequestAllPassengerCounts.xml>
     a dct:Dataset ;
@@ -385,8 +376,7 @@
     skos:isRelatedTo opra:TicketingBasedPassengerCount ;
     skos:isRelatedTo opra:TicketingBasedPassengerCountRequest ;
     skos:isRelatedTo opra:opraFunctionalRequests ;
-    skos:isRelatedTo siri:ServiceRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ServiceRequest .
 
 <https://napcore.eu/examples/examples%2FRequestLateDatedVehicleJourneys.xml>
     a dct:Dataset ;
@@ -412,8 +402,7 @@
     skos:isRelatedTo opra:ServiceRequest ;
     skos:isRelatedTo opra:opraFunctionalRequests ;
     skos:isRelatedTo siri:DatedVehicleJourney ;
-    skos:isRelatedTo siri:ServiceRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ServiceRequest .
 
 <https://napcore.eu/examples/examples%2FResponseLateDatedVehicleJourneys.xml>
     a dct:Dataset ;
@@ -445,8 +434,7 @@
     skos:isRelatedTo opra:opraFunctionalDeliveries ;
     skos:isRelatedTo siri:DatedVehicleJourney ;
     skos:isRelatedTo siri:ResponseTimestamp ;
-    skos:isRelatedTo siri:ServiceDelivery ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ServiceDelivery .
 
 <https://napcore.eu/examples/examples%2FTicketingBasedPassengerCount.xml>
     a dct:Dataset ;
@@ -472,8 +460,7 @@
     skos:isRelatedTo opra:TicketingBasedPassengerCount ;
     skos:isRelatedTo opra:opraFunctionalDeliveries ;
     skos:isRelatedTo siri:ResponseTimestamp ;
-    skos:isRelatedTo siri:ServiceDelivery ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ServiceDelivery .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2FbookingArrangements%2Fgeneralframe.xml>
     a dct:Dataset ;
@@ -484,8 +471,7 @@
     skos:isRelatedTo netex:ResourceFrame ;
     skos:isRelatedTo netex:Version ;
     skos:isRelatedTo netex:VersionFrame ;
-    skos:isRelatedTo opra:PublicationDelivery ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo opra:PublicationDelivery .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fcalendar%2FNeTEx_Calendar_se_PA1.xml>
     a dct:Dataset ;
@@ -507,8 +493,7 @@
     skos:isRelatedTo opra:ServiceRequest ;
     skos:isRelatedTo siri:Order ;
     skos:isRelatedTo siri:ServiceDelivery ;
-    skos:isRelatedTo siri:ServiceRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ServiceRequest .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fcalendar%2FNetex_calendarCodeing_02.xml>
     a dct:Dataset ;
@@ -539,8 +524,7 @@
     skos:isRelatedTo siri:Condition ;
     skos:isRelatedTo siri:Order ;
     skos:isRelatedTo siri:ServiceDelivery ;
-    skos:isRelatedTo siri:ServiceRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ServiceRequest .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fcalendar%2FNetex_calendarExample_01_BHN01.xml>
     a dct:Dataset ;
@@ -564,8 +548,7 @@
     skos:isRelatedTo opra:ServiceRequest ;
     skos:isRelatedTo siri:Order ;
     skos:isRelatedTo siri:ServiceDelivery ;
-    skos:isRelatedTo siri:ServiceRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ServiceRequest .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example.xml>
     a dct:Dataset ;
@@ -781,8 +764,7 @@
     skos:isRelatedTo siri:TypeOfValue ;
     skos:isRelatedTo siri:TypesOfValue ;
     skos:isRelatedTo siri:ValueSet ;
-    skos:isRelatedTo siri:VehicleMode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMode .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_bus.xml>
     a dct:Dataset ;
@@ -1017,8 +999,7 @@
     skos:isRelatedTo siri:TypeOfValue ;
     skos:isRelatedTo siri:TypesOfValue ;
     skos:isRelatedTo siri:ValueSet ;
-    skos:isRelatedTo siri:VehicleMode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMode .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train.xml>
     a dct:Dataset ;
@@ -1408,8 +1389,7 @@
     skos:isRelatedTo siri:VehicleAtStop ;
     skos:isRelatedTo siri:VehicleFeature ;
     skos:isRelatedTo siri:VehicleMode ;
-    skos:isRelatedTo siri:ViaName ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ViaName .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2FdeckPlans%2FDeckPlans-Example_train_simple.xml>
     a dct:Dataset ;
@@ -1554,8 +1534,7 @@
     skos:isRelatedTo siri:TypeOfValue ;
     skos:isRelatedTo siri:TypesOfValue ;
     skos:isRelatedTo siri:ValueSet ;
-    skos:isRelatedTo siri:VehicleMode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMode .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fdeprecation%2Forganisationref.xml>
     a dct:Dataset ;
@@ -1570,8 +1549,7 @@
     skos:isRelatedTo netex:TransportOrganisation ;
     skos:isRelatedTo netex:Version ;
     skos:isRelatedTo netex:VersionFrame ;
-    skos:isRelatedTo opra:PublicationDelivery ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo opra:PublicationDelivery .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FENTUR-SchoolTwiceADayTripCarnet_2020120.xml>
     a dct:Dataset ;
@@ -1703,8 +1681,7 @@
     skos:isRelatedTo siri:Status ;
     skos:isRelatedTo siri:StopPointsDelivery ;
     skos:isRelatedTo siri:TypeOfValue ;
-    skos:isRelatedTo siri:TypesOfValue ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TypesOfValue .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_101.21_TfL_GeographicFares_UnitZone_MultipleProduct.xml>
     a dct:Dataset ;
@@ -2015,8 +1992,7 @@
     skos:isRelatedTo siri:ValueSet ;
     skos:isRelatedTo siri:VehicleAtStop ;
     skos:isRelatedTo siri:VehicleMode ;
-    skos:isRelatedTo siri:WaterSubmode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:WaterSubmode .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_51.1_Bus_SimpleFares_PointToPoint_SingleProduct.xml>
     a dct:Dataset ;
@@ -2123,8 +2099,7 @@
     skos:isRelatedTo siri:TypeOfValue ;
     skos:isRelatedTo siri:TypesOfValue ;
     skos:isRelatedTo siri:ValueSet ;
-    skos:isRelatedTo siri:VehicleMode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMode .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_51.2_Bus_SimpleFares_PointToPoint_MultipleOffers.xml>
     a dct:Dataset ;
@@ -2255,8 +2230,7 @@
     skos:isRelatedTo siri:TicketingFacility ;
     skos:isRelatedTo siri:TypeOfValue ;
     skos:isRelatedTo siri:TypesOfValue ;
-    skos:isRelatedTo siri:ValueSet ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ValueSet .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_51.3_Bus_SimpleFares_ZoneToZone_AdultChildProduct.xml>
     a dct:Dataset ;
@@ -2401,8 +2375,7 @@
     skos:isRelatedTo siri:TypeOfValue ;
     skos:isRelatedTo siri:TypesOfValue ;
     skos:isRelatedTo siri:ValueSet ;
-    skos:isRelatedTo siri:VehicleMode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMode .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_51.4_Bus_SimpleFares_ZoneToZone_OffPeakProduct.xml>
     a dct:Dataset ;
@@ -2561,8 +2534,7 @@
     skos:isRelatedTo siri:TypeOfValue ;
     skos:isRelatedTo siri:TypesOfValue ;
     skos:isRelatedTo siri:ValueSet ;
-    skos:isRelatedTo siri:VehicleMode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMode .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_61.1_Bus_GeographicFares_UnitDistance_SingleProduct.xml>
     a dct:Dataset ;
@@ -2663,8 +2635,7 @@
     skos:isRelatedTo siri:TypeOfValue ;
     skos:isRelatedTo siri:TypesOfValue ;
     skos:isRelatedTo siri:ValueSet ;
-    skos:isRelatedTo siri:VehicleMode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMode .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_61.2_Bus_GeographicFares_UnitZone_AdultChildProduct.xml>
     a dct:Dataset ;
@@ -2764,8 +2735,7 @@
     skos:isRelatedTo siri:ServiceRequest ;
     skos:isRelatedTo siri:TypeOfValue ;
     skos:isRelatedTo siri:TypesOfValue ;
-    skos:isRelatedTo siri:ValueSet ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ValueSet .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_61.3_Bus_GeographicFares_UnitFareStage_SingleProduct.xml>
     a dct:Dataset ;
@@ -2865,8 +2835,7 @@
     skos:isRelatedTo siri:TypeOfValue ;
     skos:isRelatedTo siri:TypesOfValue ;
     skos:isRelatedTo siri:ValueSet ;
-    skos:isRelatedTo siri:VehicleMode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMode .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_61.4_Bus_GeographicFares_HierarchicalZone_MultipleOffers.xml>
     a dct:Dataset ;
@@ -2959,8 +2928,7 @@
     skos:isRelatedTo siri:ServiceRequest ;
     skos:isRelatedTo siri:TypeOfValue ;
     skos:isRelatedTo siri:TypesOfValue ;
-    skos:isRelatedTo siri:ValueSet ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ValueSet .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_71.1_Bus_TimeIntervalFares_Zonal_MultipleProduct.xml>
     a dct:Dataset ;
@@ -3073,8 +3041,7 @@
     skos:isRelatedTo siri:TicketingFacility ;
     skos:isRelatedTo siri:TypeOfValue ;
     skos:isRelatedTo siri:TypesOfValue ;
-    skos:isRelatedTo siri:ValueSet ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ValueSet .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_71.2_Bus_ZonalFares_MultipleSalesPackages.xml>
     a dct:Dataset ;
@@ -3182,8 +3149,7 @@
     skos:isRelatedTo siri:ServiceRequest ;
     skos:isRelatedTo siri:TypeOfValue ;
     skos:isRelatedTo siri:TypesOfValue ;
-    skos:isRelatedTo siri:ValueSet ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ValueSet .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_81.1_Metro_FlatFare_GroupProduct.xml>
     a dct:Dataset ;
@@ -3265,8 +3231,7 @@
     skos:isRelatedTo siri:TypeOfValue ;
     skos:isRelatedTo siri:TypesOfValue ;
     skos:isRelatedTo siri:ValueSet ;
-    skos:isRelatedTo siri:VehicleMode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMode .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2FNetex_91.1_Rail_RailCard_MultipleProduct.xml>
     a dct:Dataset ;
@@ -3368,8 +3333,7 @@
     skos:isRelatedTo siri:TypeOfValue ;
     skos:isRelatedTo siri:TypesOfValue ;
     skos:isRelatedTo siri:ValueSet ;
-    skos:isRelatedTo siri:VehicleMode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMode .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2Frail%2FNetex_era_crossborder_de.xml>
     a dct:Dataset ;
@@ -3577,8 +3541,7 @@
     skos:isRelatedTo siri:TypeOfValue ;
     skos:isRelatedTo siri:TypesOfValue ;
     skos:isRelatedTo siri:ValueSet ;
-    skos:isRelatedTo siri:VehicleMode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMode .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2Frail%2FNetex_era_distance_ro.xml>
     a dct:Dataset ;
@@ -3955,8 +3918,7 @@
     skos:isRelatedTo siri:TypesOfValue ;
     skos:isRelatedTo siri:ValueSet ;
     skos:isRelatedTo siri:VehicleMode ;
-    skos:isRelatedTo siri:ViaName ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ViaName .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ffares%2Frail%2FNetex_era_toc_uk.xml>
     a dct:Dataset ;
@@ -4266,8 +4228,7 @@
     skos:isRelatedTo siri:TypesOfValue ;
     skos:isRelatedTo siri:ValueSet ;
     skos:isRelatedTo siri:VehicleAtStop ;
-    skos:isRelatedTo siri:VehicleMode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMode .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fgrouping%2FNetex_GroupingExample_General_01.xml>
     a dct:Dataset ;
@@ -4296,8 +4257,7 @@
     skos:isRelatedTo siri:ServiceRequest ;
     skos:isRelatedTo siri:StopPointName ;
     skos:isRelatedTo siri:TypesOfValue ;
-    skos:isRelatedTo siri:ValueSet ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ValueSet .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fline%2FLine_with_facilities.xml>
     a dct:Dataset ;
@@ -4355,8 +4315,7 @@
     skos:isRelatedTo siri:LinesRequest ;
     skos:isRelatedTo siri:MobilityFacility ;
     skos:isRelatedTo siri:Order ;
-    skos:isRelatedTo siri:ServiceRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ServiceRequest .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fline%2FNeTEx_01_simple_line.xml>
     a dct:Dataset ;
@@ -4387,8 +4346,7 @@
     skos:isRelatedTo siri:LinesRequest ;
     skos:isRelatedTo siri:ProductCategory ;
     skos:isRelatedTo siri:ServiceRequest ;
-    skos:isRelatedTo siri:TelecabinSubmode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TelecabinSubmode .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2FnewModes%2FIXSI%20Service%201%20-%20Static%20Data.xml>
     a dct:Dataset ;
@@ -4425,8 +4383,7 @@
     skos:isRelatedTo netex:VehicleSharingParkingArea ;
     skos:isRelatedTo netex:VehicleSharingService ;
     skos:isRelatedTo opra:VehicleTypeCapacity ;
-    skos:isRelatedTo siri:VehicleMode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMode .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2FnewModes%2FNewModes-CarClubExample.xml>
     a dct:Dataset ;
@@ -4713,8 +4670,7 @@
     skos:isRelatedTo siri:TypeOfValue ;
     skos:isRelatedTo siri:TypesOfValue ;
     skos:isRelatedTo siri:ValueSet ;
-    skos:isRelatedTo siri:VehicleMode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMode .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2FnewModes%2FNewModes-CarPoolingExample.xml>
     a dct:Dataset ;
@@ -5069,8 +5025,7 @@
     skos:isRelatedTo siri:TypeOfValue ;
     skos:isRelatedTo siri:TypesOfValue ;
     skos:isRelatedTo siri:ValueSet ;
-    skos:isRelatedTo siri:VehicleMode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMode .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2FnewModes%2FNewModes-ChauffeuredServiceExample.xml>
     a dct:Dataset ;
@@ -5338,8 +5293,7 @@
     skos:isRelatedTo siri:TypeOfValue ;
     skos:isRelatedTo siri:TypesOfValue ;
     skos:isRelatedTo siri:ValueSet ;
-    skos:isRelatedTo siri:VehicleMode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMode .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2FnewModes%2FNewModes-CycleSharingExample.xml>
     a dct:Dataset ;
@@ -5630,8 +5584,7 @@
     skos:isRelatedTo siri:Train ;
     skos:isRelatedTo siri:TypeOfValue ;
     skos:isRelatedTo siri:ValueSet ;
-    skos:isRelatedTo siri:VehicleMode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMode .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fpatterns%2FNetex_KBIC_ParisNetwork_1.xml>
     a dct:Dataset ;
@@ -5715,8 +5668,7 @@
     skos:isRelatedTo siri:StopPointName ;
     skos:isRelatedTo siri:StopPointsDelivery ;
     skos:isRelatedTo siri:StopPointsRequest ;
-    skos:isRelatedTo siri:TimingPoint ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TimingPoint .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fpatterns%2FNetex_KBIC_ParisNetwork_with_bookingArrangements.xml>
     a dct:Dataset ;
@@ -5801,8 +5753,7 @@
     skos:isRelatedTo siri:StopPointName ;
     skos:isRelatedTo siri:StopPointsDelivery ;
     skos:isRelatedTo siri:StopPointsRequest ;
-    skos:isRelatedTo siri:TimingPoint ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TimingPoint .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2FpointOfInterest%2FNetex_Sites_PoiClassification_1.xml>
     a dct:Dataset ;
@@ -5811,8 +5762,7 @@
     skos:isRelatedTo netex:PointOfInterest ;
     skos:isRelatedTo netex:PointOfInterestClassification ;
     skos:isRelatedTo netex:PointOfInterestClassificationHierarchy ;
-    skos:isRelatedTo netex:ResponsibilitySet ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:ResponsibilitySet .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Frelations%2Ftest-01-main.xml>
     a dct:Dataset ;
@@ -5835,8 +5785,7 @@
     skos:isRelatedTo netex:TypeOfOrganisation ;
     skos:isRelatedTo netex:Zone ;
     skos:isRelatedTo siri:LinesDelivery ;
-    skos:isRelatedTo siri:LinesRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:LinesRequest .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Frelations%2Ftest-01-timetable.xml>
     a dct:Dataset ;
@@ -5858,8 +5807,7 @@
     skos:isRelatedTo netex:TypeOfOrganisation ;
     skos:isRelatedTo netex:Zone ;
     skos:isRelatedTo siri:LinesDelivery ;
-    skos:isRelatedTo siri:LinesRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:LinesRequest .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2FsimpleNetwork%2FNetex_LineClassification_1.xml>
     a dct:Dataset ;
@@ -5882,8 +5830,7 @@
     skos:isRelatedTo siri:BusSubmode ;
     skos:isRelatedTo siri:LinesDelivery ;
     skos:isRelatedTo siri:LinesRequest ;
-    skos:isRelatedTo siri:RailSubmode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:RailSubmode .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2FsimpleNetwork%2FNetex_SimpleNetwork_1.xml>
     a dct:Dataset ;
@@ -5992,8 +5939,7 @@
     skos:isRelatedTo siri:StopPointsRequest ;
     skos:isRelatedTo siri:TimingPoint ;
     skos:isRelatedTo siri:VehicleAtStop ;
-    skos:isRelatedTo siri:VehicleMode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMode .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2FsimpleNetwork%2FNetex_uk_underground_1.xml>
     a dct:Dataset ;
@@ -6056,8 +6002,7 @@
     skos:isRelatedTo siri:StopPointsDelivery ;
     skos:isRelatedTo siri:StopPointsRequest ;
     skos:isRelatedTo siri:TramSubmode ;
-    skos:isRelatedTo siri:VehicleAtStop ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleAtStop .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fsite%2FNetex_01_Sites_SimpleStadium_1.xml>
     a dct:Dataset ;
@@ -6139,8 +6084,7 @@
     skos:isRelatedTo siri:Direction ;
     skos:isRelatedTo siri:Order ;
     skos:isRelatedTo siri:ServiceFeature ;
-    skos:isRelatedTo siri:Train ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:Train .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fsite%2FNetex_10_Sites_OlympicPark_2_basic.xml>
     a dct:Dataset ;
@@ -6201,8 +6145,7 @@
     skos:isRelatedTo siri:Order ;
     skos:isRelatedTo siri:ServiceFeature ;
     skos:isRelatedTo siri:SrsName ;
-    skos:isRelatedTo siri:Train ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:Train .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fsite%2FNetex_11_Sites_OlympicPark_1.xml>
     a dct:Dataset ;
@@ -6323,8 +6266,7 @@
     skos:isRelatedTo siri:StopPointName ;
     skos:isRelatedTo siri:StopPointsDelivery ;
     skos:isRelatedTo siri:StopPointsRequest ;
-    skos:isRelatedTo siri:Train ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:Train .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fsite%2FNetex_12_Sites_OlympicPark_3_nav.xml>
     a dct:Dataset ;
@@ -6372,8 +6314,7 @@
     skos:isRelatedTo siri:Direction ;
     skos:isRelatedTo siri:ServiceFeature ;
     skos:isRelatedTo siri:SrsName ;
-    skos:isRelatedTo siri:Train ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:Train .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fsite%2FNetex_13_Sites_OlympicPark_4_delayOnly.xml>
     a dct:Dataset ;
@@ -6382,8 +6323,7 @@
     skos:isRelatedTo netex:CheckConstraint ;
     skos:isRelatedTo netex:CheckConstraintDelay ;
     skos:isRelatedTo netex:Train ;
-    skos:isRelatedTo siri:Train ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:Train .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fsite%2FNetex_14_Olympic%20Venues%201.1.xml>
     a dct:Dataset ;
@@ -6411,8 +6351,7 @@
     skos:isRelatedTo siri:Direction ;
     skos:isRelatedTo siri:FacilityCondition ;
     skos:isRelatedTo siri:FacilityDelivery ;
-    skos:isRelatedTo siri:Train ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:Train .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fsite%2FNetex_21_Sites_Parking_1.xml>
     a dct:Dataset ;
@@ -6467,8 +6406,7 @@
     skos:isRelatedTo siri:MobilityFacility ;
     skos:isRelatedTo siri:Occupancy ;
     skos:isRelatedTo siri:ParkingFacility ;
-    skos:isRelatedTo siri:SrsName ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SrsName .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fsite%2FNetex_21_Sites_Parking_2.xml>
     a dct:Dataset ;
@@ -6610,8 +6548,7 @@
     skos:isRelatedTo siri:SrsName ;
     skos:isRelatedTo siri:TicketingFacility ;
     skos:isRelatedTo siri:Train ;
-    skos:isRelatedTo siri:VehicleFeature ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleFeature .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fsite%2FNetex_Address_Example_1.xml>
     a dct:Dataset ;
@@ -6666,8 +6603,7 @@
     skos:isRelatedTo siri:MobilityFacility ;
     skos:isRelatedTo siri:Occupancy ;
     skos:isRelatedTo siri:ParkingFacility ;
-    skos:isRelatedTo siri:SrsName ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SrsName .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2FstopPlace%2FFX-PI-01_UK_TBD_STOP-OFFER_910GWIMBLDN-accessibility_20140601.xml>
     a dct:Dataset ;
@@ -6900,8 +6836,7 @@
     skos:isRelatedTo siri:StopPointsRequest ;
     skos:isRelatedTo siri:TicketingFacility ;
     skos:isRelatedTo siri:Train ;
-    skos:isRelatedTo siri:VehicleFeature ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleFeature .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2FstopPlace%2FNetex_01_StopPoints_NoFrills_1.xml>
     a dct:Dataset ;
@@ -6910,8 +6845,7 @@
     skos:isRelatedTo netex:ScheduledStopPoint ;
     skos:isRelatedTo netex:StopPlace ;
     skos:isRelatedTo siri:StopPointName ;
-    skos:isRelatedTo siri:StopPointsDelivery ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:StopPointsDelivery .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2FstopPlace%2FNetex_01_Stops_SingleStopOnStreet_1.xml>
     a dct:Dataset ;
@@ -6980,8 +6914,7 @@
     skos:isRelatedTo siri:PassengerInformationFacility ;
     skos:isRelatedTo siri:StopPointName ;
     skos:isRelatedTo siri:StopPointsDelivery ;
-    skos:isRelatedTo siri:StopPointsRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:StopPointsRequest .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2FstopPlace%2FNetex_02_Stops_StopPairOnStreet_1.xml>
     a dct:Dataset ;
@@ -7032,8 +6965,7 @@
     skos:isRelatedTo siri:SrsName ;
     skos:isRelatedTo siri:StopPointName ;
     skos:isRelatedTo siri:StopPointsDelivery ;
-    skos:isRelatedTo siri:StopPointsRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:StopPointsRequest .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2FstopPlace%2FNetex_04_Stops_SimpleStation_1.xml>
     a dct:Dataset ;
@@ -7185,8 +7117,7 @@
     skos:isRelatedTo siri:StopPointsRequest ;
     skos:isRelatedTo siri:TicketingFacility ;
     skos:isRelatedTo siri:Train ;
-    skos:isRelatedTo siri:VehicleFeature ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleFeature .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2FstopPlace%2FNetex_10_StopPlace_uk_ComplexStation_Wimbledon_1.xml>
     a dct:Dataset ;
@@ -7405,8 +7336,7 @@
     skos:isRelatedTo siri:StopPointsRequest ;
     skos:isRelatedTo siri:TicketingFacility ;
     skos:isRelatedTo siri:Train ;
-    skos:isRelatedTo siri:VehicleFeature ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleFeature .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2FstopPlace%2FNetex_10_StopPlace_withParking_1.xml>
     a dct:Dataset ;
@@ -7611,8 +7541,7 @@
     skos:isRelatedTo siri:SrsName ;
     skos:isRelatedTo siri:StopPointsRequest ;
     skos:isRelatedTo siri:TicketingFacility ;
-    skos:isRelatedTo siri:VehicleFeature ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleFeature .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNeTEx_50_JourneyFrequencyGroup.xml>
     a dct:Dataset ;
@@ -7653,8 +7582,7 @@
     skos:isRelatedTo siri:StopTimetableCapabilitiesResponse ;
     skos:isRelatedTo siri:StopTimetableDelivery ;
     skos:isRelatedTo siri:StopTimetableRequest ;
-    skos:isRelatedTo siri:TimingPoint ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TimingPoint .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_01.1_Bus_SimpleTimetable_JourneysOnly.xml>
     a dct:Dataset ;
@@ -7753,8 +7681,7 @@
     skos:isRelatedTo siri:StopTimetableRequest ;
     skos:isRelatedTo siri:TicketingFacility ;
     skos:isRelatedTo siri:TimingPoint ;
-    skos:isRelatedTo siri:ViaName ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ViaName .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_01.2_Bus_SimpleTimetable_WithTimings.xml>
     a dct:Dataset ;
@@ -7879,8 +7806,7 @@
     skos:isRelatedTo siri:TargetedVehicleJourney ;
     skos:isRelatedTo siri:TicketingFacility ;
     skos:isRelatedTo siri:TimingPoint ;
-    skos:isRelatedTo siri:ViaName ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ViaName .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_01.3_Bus_SimpleTimetable_WithMultiplePatterns.xml>
     a dct:Dataset ;
@@ -7951,8 +7877,7 @@
     skos:isRelatedTo siri:StopTimetableRequest ;
     skos:isRelatedTo siri:TargetedVehicleJourney ;
     skos:isRelatedTo siri:TimingPoint ;
-    skos:isRelatedTo siri:ViaName ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ViaName .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_01.4_Bus_SimpleTimetable_WithConnection.xml>
     a dct:Dataset ;
@@ -8075,8 +8000,7 @@
     skos:isRelatedTo siri:TargetedVehicleJourney ;
     skos:isRelatedTo siri:TimingPoint ;
     skos:isRelatedTo siri:VehicleAtStop ;
-    skos:isRelatedTo siri:ViaName ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ViaName .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_01.5_Bus_SimpleTimetable_StopAssignment.xml>
     a dct:Dataset ;
@@ -8149,8 +8073,7 @@
     skos:isRelatedTo siri:StopTimetableCapabilitiesResponse ;
     skos:isRelatedTo siri:StopTimetableDelivery ;
     skos:isRelatedTo siri:StopTimetableRequest ;
-    skos:isRelatedTo siri:TimingPoint ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TimingPoint .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_01.6_Bus_SimpleTimetable_RouteProjection.xml>
     a dct:Dataset ;
@@ -8224,8 +8147,7 @@
     skos:isRelatedTo siri:StopTimetableCapabilitiesResponse ;
     skos:isRelatedTo siri:StopTimetableDelivery ;
     skos:isRelatedTo siri:StopTimetableRequest ;
-    skos:isRelatedTo siri:TimingPoint ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TimingPoint .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_01.7_Bus_SimpleTimetable_RoutingConstraints.xml>
     a dct:Dataset ;
@@ -8277,8 +8199,7 @@
     skos:isRelatedTo siri:StopTimetableCapabilitiesResponse ;
     skos:isRelatedTo siri:StopTimetableDelivery ;
     skos:isRelatedTo siri:StopTimetableRequest ;
-    skos:isRelatedTo siri:TimingPoint ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TimingPoint .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_02.1_Bus_CircularRoute_Timetable.xml>
     a dct:Dataset ;
@@ -8359,8 +8280,7 @@
     skos:isRelatedTo siri:StopTimetableRequest ;
     skos:isRelatedTo siri:TargetedVehicleJourney ;
     skos:isRelatedTo siri:TimingPoint ;
-    skos:isRelatedTo siri:VisitNumber ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VisitNumber .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_03.1_Bus_BranchedRouteTimetable_SimplePatterns.xml>
     a dct:Dataset ;
@@ -8436,8 +8356,7 @@
     skos:isRelatedTo siri:StopTimetableDelivery ;
     skos:isRelatedTo siri:StopTimetableRequest ;
     skos:isRelatedTo siri:TimingPoint ;
-    skos:isRelatedTo siri:ViaName ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ViaName .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_03.2_Bus_BranchedRouteTimetable_SharedPatterns.xml>
     a dct:Dataset ;
@@ -8512,8 +8431,7 @@
     skos:isRelatedTo siri:StopTimetableDelivery ;
     skos:isRelatedTo siri:StopTimetableRequest ;
     skos:isRelatedTo siri:TimingPoint ;
-    skos:isRelatedTo siri:ViaName ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ViaName .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_05.1_Bus_TemplateTimetable_HeadwayFrequency.xml>
     a dct:Dataset ;
@@ -8540,8 +8458,7 @@
     skos:isRelatedTo siri:StopTimetableCapabilitiesResponse ;
     skos:isRelatedTo siri:StopTimetableDelivery ;
     skos:isRelatedTo siri:StopTimetableRequest ;
-    skos:isRelatedTo siri:TimingPoint ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TimingPoint .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_05.2_Bus_TemplateTimetable_RhythmicalFrequency.xml>
     a dct:Dataset ;
@@ -8570,8 +8487,7 @@
     skos:isRelatedTo siri:StopTimetableCapabilitiesResponse ;
     skos:isRelatedTo siri:StopTimetableDelivery ;
     skos:isRelatedTo siri:StopTimetableRequest ;
-    skos:isRelatedTo siri:TimingPoint ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TimingPoint .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_06.1_Bus_FrequencyJourneyTimetable_HeadwayInterval.xml>
     a dct:Dataset ;
@@ -8600,8 +8516,7 @@
     skos:isRelatedTo siri:StopTimetableCapabilitiesResponse ;
     skos:isRelatedTo siri:StopTimetableDelivery ;
     skos:isRelatedTo siri:StopTimetableRequest ;
-    skos:isRelatedTo siri:TimingPoint ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TimingPoint .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_06.2_Bus_FrequencyJourneyTimetable_RhythmicalInterval.xml>
     a dct:Dataset ;
@@ -8628,8 +8543,7 @@
     skos:isRelatedTo siri:StopTimetableCapabilitiesResponse ;
     skos:isRelatedTo siri:StopTimetableDelivery ;
     skos:isRelatedTo siri:StopTimetableRequest ;
-    skos:isRelatedTo siri:TimingPoint ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TimingPoint .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_07.1_Bus_FlexibleTimetable_ZonesOnly.xml>
     a dct:Dataset ;
@@ -8647,8 +8561,7 @@
     skos:isRelatedTo siri:BusSubmode ;
     skos:isRelatedTo siri:SrsName ;
     skos:isRelatedTo siri:StopTimetableDelivery ;
-    skos:isRelatedTo siri:StopTimetableRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:StopTimetableRequest .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_07.2_Bus_FlexibleTimetable_WithPattern.xml>
     a dct:Dataset ;
@@ -8724,8 +8637,7 @@
     skos:isRelatedTo siri:StopTimetableRequest ;
     skos:isRelatedTo siri:TargetedVehicleJourney ;
     skos:isRelatedTo siri:TimingPoint ;
-    skos:isRelatedTo siri:ViaName ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ViaName .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_08.1_BusTram_Timetable_AmbiguousLinks.xml>
     a dct:Dataset ;
@@ -8779,8 +8691,7 @@
     skos:isRelatedTo siri:StopTimetableCapabilitiesResponse ;
     skos:isRelatedTo siri:StopTimetableDelivery ;
     skos:isRelatedTo siri:StopTimetableRequest ;
-    skos:isRelatedTo siri:TimingPoint ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TimingPoint .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_08.2_Bus_SimpleTimetable_Cancellation.xml>
     a dct:Dataset ;
@@ -8841,8 +8752,7 @@
     skos:isRelatedTo siri:StopTimetableCapabilitiesResponse ;
     skos:isRelatedTo siri:StopTimetableDelivery ;
     skos:isRelatedTo siri:StopTimetableRequest ;
-    skos:isRelatedTo siri:ViaName ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ViaName .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_09.1_Bus_InterchangeRule.xml>
     a dct:Dataset ;
@@ -8864,8 +8774,7 @@
     skos:isRelatedTo opra:PlannedFrameRequest ;
     skos:isRelatedTo siri:ConnectionTimetableDelivery ;
     skos:isRelatedTo siri:ConnectionTimetableRequest ;
-    skos:isRelatedTo siri:StopTimetableRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:StopTimetableRequest .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_09.2_Bus_SimpleTimetable_Slovenia.xml>
     a dct:Dataset ;
@@ -8941,8 +8850,7 @@
     skos:isRelatedTo siri:StopTimetableCapabilitiesResponse ;
     skos:isRelatedTo siri:StopTimetableRequest ;
     skos:isRelatedTo siri:TicketingFacility ;
-    skos:isRelatedTo siri:ViaName ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ViaName .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_10_Rail_SplittingJoiningTimetable.xml>
     a dct:Dataset ;
@@ -9068,8 +8976,7 @@
     skos:isRelatedTo siri:TrainComponent ;
     skos:isRelatedTo siri:TrainElement ;
     skos:isRelatedTo siri:TrainInCompoundTrain ;
-    skos:isRelatedTo siri:VehicleAtStop ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleAtStop .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_11_Rail_CompoundTrain.xml>
     a dct:Dataset ;
@@ -9192,8 +9099,7 @@
     skos:isRelatedTo siri:TrainComponent ;
     skos:isRelatedTo siri:TrainElement ;
     skos:isRelatedTo siri:TrainInCompoundTrain ;
-    skos:isRelatedTo siri:VehicleAtStop ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleAtStop .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_21_Rail_NetworkTimetable_eurostar.xml>
     a dct:Dataset ;
@@ -9398,8 +9304,7 @@
     skos:isRelatedTo siri:TicketingFacility ;
     skos:isRelatedTo siri:TrainComponent ;
     skos:isRelatedTo siri:TrainElement ;
-    skos:isRelatedTo siri:VehicleAtStop ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleAtStop .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_32_Multimodal_PassengerInformationEquipment.xml>
     a dct:Dataset ;
@@ -9438,8 +9343,7 @@
     skos:isRelatedTo siri:ConnectionTimetableDelivery ;
     skos:isRelatedTo siri:ConnectionTimetableRequest ;
     skos:isRelatedTo siri:RouteName ;
-    skos:isRelatedTo siri:SrsName ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SrsName .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_51.1_Occupancy.xml>
     a dct:Dataset ;
@@ -9508,8 +9412,7 @@
     skos:isRelatedTo siri:RouteName ;
     skos:isRelatedTo siri:TargetedVehicleJourney ;
     skos:isRelatedTo siri:TicketingFacility ;
-    skos:isRelatedTo siri:ViaName ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ViaName .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Ftimetable%2FNetex_52_planned_delay.xml>
     a dct:Dataset ;
@@ -9521,8 +9424,7 @@
     skos:isRelatedTo netex:NoticeAssignment ;
     skos:isRelatedTo opra:PlannedFrame ;
     skos:isRelatedTo siri:ArrivalStatus ;
-    skos:isRelatedTo siri:DepartureStatus ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:DepartureStatus .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2FvalidityCondition%2FNeTEx_trigger-01.xml>
     a dct:Dataset ;
@@ -9531,8 +9433,7 @@
     skos:isRelatedTo netex:DataObjectDelivery ;
     skos:isRelatedTo netex:DataObjectRequest ;
     skos:isRelatedTo netex:ValidityRuleParameter ;
-    skos:isRelatedTo netex:ValidityTrigger ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:ValidityTrigger .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fvariant%2FNetex_VariantExample_Step_05.xml>
     a dct:Dataset ;
@@ -9545,8 +9446,7 @@
     skos:isRelatedTo netex:GeneralFrameMember ;
     skos:isRelatedTo netex:LinkInJourneyPattern ;
     skos:isRelatedTo netex:ServiceLinkInJourneyPattern ;
-    skos:isRelatedTo netex:ValidityRuleParameter ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:ValidityRuleParameter .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fvehicle%2FNetex_simpleVehicle_01.xml>
     a dct:Dataset ;
@@ -9555,8 +9455,7 @@
     skos:isRelatedTo netex:InfrastructureFrame ;
     skos:isRelatedTo netex:PassengerCapacity ;
     skos:isRelatedTo netex:PassengerVehicleCapacity ;
-    skos:isRelatedTo opra:VehicleTypeCapacity ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo opra:VehicleTypeCapacity .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2FvehicleSchedule%2FNetex_simpleVehicleSchedule_01.xml>
     a dct:Dataset ;
@@ -9608,8 +9507,7 @@
     skos:isRelatedTo siri:DatedTimetableVersionFrame ;
     skos:isRelatedTo siri:OriginName ;
     skos:isRelatedTo siri:RouteName ;
-    skos:isRelatedTo siri:TargetedVehicleJourney ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TargetedVehicleJourney .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fversioning%2FNetex_Uniqueness_01.xml>
     a dct:Dataset ;
@@ -9775,8 +9673,7 @@
     skos:isRelatedTo siri:ParkingFacility ;
     skos:isRelatedTo siri:TrainComponent ;
     skos:isRelatedTo siri:TrainElement ;
-    skos:isRelatedTo siri:TrainInCompoundTrain ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TrainInCompoundTrain .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fversioning%2FNetex_VersioningExample_Step_04.xml>
     a dct:Dataset ;
@@ -9785,31 +9682,27 @@
     skos:isRelatedTo netex:GeneralFrame ;
     skos:isRelatedTo netex:GeneralFrameMember ;
     skos:isRelatedTo netex:LinkInJourneyPattern ;
-    skos:isRelatedTo netex:ServiceLinkInJourneyPattern ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:ServiceLinkInJourneyPattern .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fversioning%2FNetex_VersioningExample_Step_05_ByRef.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/versioning/Netex_VersioningExample_Step_05_ByRef.xml"@en ;
     dct:source "examples/functions/versioning/Netex_VersioningExample_Step_05_ByRef.xml"@en ;
     skos:isRelatedTo netex:GeneralFrame ;
-    skos:isRelatedTo netex:GeneralFrameMember ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:GeneralFrameMember .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fversioning%2FNetex_VersioningExample_Step_05_GeneralFrame.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/versioning/Netex_VersioningExample_Step_05_GeneralFrame.xml"@en ;
     dct:source "examples/functions/versioning/Netex_VersioningExample_Step_05_GeneralFrame.xml"@en ;
-    skos:isRelatedTo netex:GeneralFrame ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:GeneralFrame .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fversioning%2FNetex_VersioningExample_VersionHistories_01.xml>
     a dct:Dataset ;
     rdfs:label "examples/functions/versioning/Netex_VersioningExample_VersionHistories_01.xml"@en ;
     dct:source "examples/functions/versioning/Netex_VersioningExample_VersionHistories_01.xml"@en ;
     skos:isRelatedTo netex:DataObjectDelivery ;
-    skos:isRelatedTo netex:DataObjectRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:DataObjectRequest .
 
 <https://napcore.eu/examples/examples%2Ffunctions%2Fversioning%2FNetex_VersioningExample_VersionHistories_02.xml>
     a dct:Dataset ;
@@ -9821,8 +9714,7 @@
     skos:isRelatedTo netex:EntityInVersion ;
     skos:isRelatedTo netex:Entity_Entity ;
     skos:isRelatedTo netex:GeneralFrame ;
-    skos:isRelatedTo netex:TypeOfEntity ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:TypeOfEntity .
 
 <https://napcore.eu/examples/examples%2Foccupancy%2Fext_estimatedTimetable_response.xml>
     a dct:Dataset ;
@@ -9847,8 +9739,7 @@
     skos:isRelatedTo siri:ResponseTimestamp ;
     skos:isRelatedTo siri:Siri ;
     skos:isRelatedTo siri:VehicleAtStop ;
-    skos:isRelatedTo siri:VisitNumber ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VisitNumber .
 
 <https://napcore.eu/examples/examples%2Foccupancy%2Fexv_vehicleMonitoring_response.xml>
     a dct:Dataset ;
@@ -9873,8 +9764,7 @@
     skos:isRelatedTo siri:StopMonitoringDelivery ;
     skos:isRelatedTo siri:VehicleAtStop ;
     skos:isRelatedTo siri:VehicleMonitoringDelivery ;
-    skos:isRelatedTo siri:VisitNumber ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VisitNumber .
 
 <https://napcore.eu/examples/examples%2Fplaceholder.xml>
     a dct:Dataset ;
@@ -9885,16 +9775,14 @@
     skos:isRelatedTo opra:OpraFunctionalDelivery ;
     skos:isRelatedTo opra:PreparednessLevel ;
     skos:isRelatedTo opra:opraFunctionalDeliveries ;
-    skos:isRelatedTo siri:ResponseTimestamp ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ResponseTimestamp .
 
 <https://napcore.eu/examples/examples%2Fsiri_exa_framework%2Fexa_checkStatus_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exa_framework/exa_checkStatus_request.xml"@en ;
     dct:source "examples/siri_exa_framework/exa_checkStatus_request.xml"@en ;
     skos:isRelatedTo siri:CheckStatusRequest ;
-    skos:isRelatedTo siri:Siri ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:Siri .
 
 <https://napcore.eu/examples/examples%2Fsiri_exa_framework%2Fexa_checkStatus_response.xml>
     a dct:Dataset ;
@@ -9903,16 +9791,14 @@
     skos:isRelatedTo siri:CheckStatusResponse ;
     skos:isRelatedTo siri:ResponseStatus ;
     skos:isRelatedTo siri:ResponseTimestamp ;
-    skos:isRelatedTo siri:Siri ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:Siri .
 
 <https://napcore.eu/examples/examples%2Fsiri_exa_framework%2Fexa_dataReady_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exa_framework/exa_dataReady_request.xml"@en ;
     dct:source "examples/siri_exa_framework/exa_dataReady_request.xml"@en ;
     skos:isRelatedTo siri:DataReadyNotification ;
-    skos:isRelatedTo siri:Siri ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:Siri .
 
 <https://napcore.eu/examples/examples%2Fsiri_exa_framework%2Fexa_dataReady_response.xml>
     a dct:Dataset ;
@@ -9921,8 +9807,7 @@
     skos:isRelatedTo siri:DataReadyAcknowledgement ;
     skos:isRelatedTo siri:ResponseStatus ;
     skos:isRelatedTo siri:ResponseTimestamp ;
-    skos:isRelatedTo siri:Siri ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:Siri .
 
 <https://napcore.eu/examples/examples%2Fsiri_exa_framework%2Fexa_dataReceived_response.xml>
     a dct:Dataset ;
@@ -9931,24 +9816,21 @@
     skos:isRelatedTo siri:DataReceivedAcknowledgement ;
     skos:isRelatedTo siri:ResponseStatus ;
     skos:isRelatedTo siri:ResponseTimestamp ;
-    skos:isRelatedTo siri:Siri ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:Siri .
 
 <https://napcore.eu/examples/examples%2Fsiri_exa_framework%2Fexa_dataSupply_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exa_framework/exa_dataSupply_request.xml"@en ;
     dct:source "examples/siri_exa_framework/exa_dataSupply_request.xml"@en ;
     skos:isRelatedTo siri:DataSupplyRequest ;
-    skos:isRelatedTo siri:Siri ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:Siri .
 
 <https://napcore.eu/examples/examples%2Fsiri_exa_framework%2Fexa_heartbeat_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exa_framework/exa_heartbeat_request.xml"@en ;
     dct:source "examples/siri_exa_framework/exa_heartbeat_request.xml"@en ;
     skos:isRelatedTo siri:HeartbeatNotification ;
-    skos:isRelatedTo siri:Siri ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:Siri .
 
 <https://napcore.eu/examples/examples%2Fsiri_exa_framework%2Fexa_requestSubscription_response.xml>
     a dct:Dataset ;
@@ -9959,8 +9841,7 @@
     skos:isRelatedTo siri:ResponseStatus ;
     skos:isRelatedTo siri:ResponseTimestamp ;
     skos:isRelatedTo siri:Siri ;
-    skos:isRelatedTo siri:SubscriptionResponse ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SubscriptionResponse .
 
 <https://napcore.eu/examples/examples%2Fsiri_exa_framework%2Fexa_subscriptionTerminated_notification.xml>
     a dct:Dataset ;
@@ -9971,8 +9852,7 @@
     skos:isRelatedTo siri:ResponseTimestamp ;
     skos:isRelatedTo siri:Siri ;
     skos:isRelatedTo siri:SubscriptionResponse ;
-    skos:isRelatedTo siri:SubscriptionTerminatedNotification ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SubscriptionTerminatedNotification .
 
 <https://napcore.eu/examples/examples%2Fsiri_exa_framework%2Fexa_terminateSubscription_request.xml>
     a dct:Dataset ;
@@ -9981,8 +9861,7 @@
     skos:isRelatedTo opra:SubscriptionRequest ;
     skos:isRelatedTo siri:Siri ;
     skos:isRelatedTo siri:SubscriptionRequest ;
-    skos:isRelatedTo siri:TerminateSubscriptionRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TerminateSubscriptionRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exa_framework%2Fexa_terminateSubscription_response.xml>
     a dct:Dataset ;
@@ -9992,8 +9871,7 @@
     skos:isRelatedTo siri:ResponseTimestamp ;
     skos:isRelatedTo siri:Siri ;
     skos:isRelatedTo siri:SubscriptionResponse ;
-    skos:isRelatedTo siri:TerminateSubscriptionResponse ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TerminateSubscriptionResponse .
 
 <https://napcore.eu/examples/examples%2Fsiri_exa_framework%2Fexa_terminateSubscription_response_err.xml>
     a dct:Dataset ;
@@ -10006,8 +9884,7 @@
     skos:isRelatedTo siri:SubscriptionResponse ;
     skos:isRelatedTo siri:TerminateSubscriptionResponse ;
     skos:isRelatedTo siri:UnknownSubscriberError ;
-    skos:isRelatedTo siri:UnknownSubscriptionError ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:UnknownSubscriptionError .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_CM%2Fexc_connectionMonitoringDistributor_response.xml>
     a dct:Dataset ;
@@ -10049,8 +9926,7 @@
     skos:isRelatedTo siri:VehicleFeature ;
     skos:isRelatedTo siri:VehicleMonitoringDelivery ;
     skos:isRelatedTo siri:VehicleMonitoringRequest ;
-    skos:isRelatedTo siri:VisitNumber ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VisitNumber .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_CM%2Fexc_connectionMonitoringFeeder_response.xml>
     a dct:Dataset ;
@@ -10089,8 +9965,7 @@
     skos:isRelatedTo siri:VehicleAtStop ;
     skos:isRelatedTo siri:VehicleFeature ;
     skos:isRelatedTo siri:VehicleMonitoringDelivery ;
-    skos:isRelatedTo siri:VisitNumber ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VisitNumber .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_CM%2Fexc_connectionMonitoring_capabilitiesResponse.xml>
     a dct:Dataset ;
@@ -10131,8 +10006,7 @@
     skos:isRelatedTo siri:ResponseTimestamp ;
     skos:isRelatedTo siri:Siri ;
     skos:isRelatedTo siri:SubscriptionRequest ;
-    skos:isRelatedTo siri:SubscriptionResponse ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SubscriptionResponse .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_CM%2Fexc_connectionMonitoring_request.xml>
     a dct:Dataset ;
@@ -10146,8 +10020,7 @@
     skos:isRelatedTo siri:DatedVehicleJourney ;
     skos:isRelatedTo siri:Siri ;
     skos:isRelatedTo siri:TargetedVehicleJourney ;
-    skos:isRelatedTo siri:VehicleMonitoringRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMonitoringRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_CM%2Fexc_connectionMonitoring_subscriptionRequest.xml>
     a dct:Dataset ;
@@ -10163,8 +10036,7 @@
     skos:isRelatedTo siri:SubscriptionRequest ;
     skos:isRelatedTo siri:TargetedVehicleJourney ;
     skos:isRelatedTo siri:VehicleMonitoringRequest ;
-    skos:isRelatedTo siri:VehicleMonitoringSubscriptionRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMonitoringSubscriptionRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_CT%2Fexc_connectionTimetable_capabilitiesResponse.xml>
     a dct:Dataset ;
@@ -10202,8 +10074,7 @@
     skos:isRelatedTo siri:ResponseStatus ;
     skos:isRelatedTo siri:Siri ;
     skos:isRelatedTo siri:SubscriptionRequest ;
-    skos:isRelatedTo siri:SubscriptionResponse ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SubscriptionResponse .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_CT%2Fexc_connectionTimetable_request.xml>
     a dct:Dataset ;
@@ -10211,8 +10082,7 @@
     dct:source "examples/siri_exm_CT/exc_connectionTimetable_request.xml"@en ;
     skos:isRelatedTo netex:Connection ;
     skos:isRelatedTo siri:ConnectionTimetableRequest ;
-    skos:isRelatedTo siri:Siri ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:Siri .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_CT%2Fexc_connectionTimetable_response.xml>
     a dct:Dataset ;
@@ -10250,8 +10120,7 @@
     skos:isRelatedTo siri:TimetabledFeederArrivalCancellation ;
     skos:isRelatedTo siri:VehicleAtStop ;
     skos:isRelatedTo siri:VehicleFeature ;
-    skos:isRelatedTo siri:VisitNumber ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VisitNumber .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_CT%2Fexc_connectionTimetable_subscriptionRequest.xml>
     a dct:Dataset ;
@@ -10262,8 +10131,7 @@
     skos:isRelatedTo siri:ConnectionTimetableRequest ;
     skos:isRelatedTo siri:ConnectionTimetableSubscriptionRequest ;
     skos:isRelatedTo siri:Siri ;
-    skos:isRelatedTo siri:SubscriptionRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SubscriptionRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_ET%2Fext_estimatedTimetable_capabilitiesResponse.xml>
     a dct:Dataset ;
@@ -10308,8 +10176,7 @@
     skos:isRelatedTo siri:ResponseStatus ;
     skos:isRelatedTo siri:Siri ;
     skos:isRelatedTo siri:SubscriptionRequest ;
-    skos:isRelatedTo siri:SubscriptionResponse ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SubscriptionResponse .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_ET%2Fext_estimatedTimetable_request.xml>
     a dct:Dataset ;
@@ -10317,8 +10184,7 @@
     dct:source "examples/siri_exm_ET/ext_estimatedTimetable_request.xml"@en ;
     skos:isRelatedTo netex:Review ;
     skos:isRelatedTo siri:EstimatedTimetableRequest ;
-    skos:isRelatedTo siri:Siri ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:Siri .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_ET%2Fext_estimatedTimetable_response.xml>
     a dct:Dataset ;
@@ -10363,8 +10229,7 @@
     skos:isRelatedTo siri:SubscriptionRequest ;
     skos:isRelatedTo siri:SubscriptionResponse ;
     skos:isRelatedTo siri:VehicleAtStop ;
-    skos:isRelatedTo siri:VehicleFeature ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleFeature .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_ET%2Fext_estimatedTimetable_subscriptionRequest.xml>
     a dct:Dataset ;
@@ -10374,8 +10239,7 @@
     skos:isRelatedTo opra:SubscriptionRequest ;
     skos:isRelatedTo siri:EstimatedTimetableRequest ;
     skos:isRelatedTo siri:EstimatedTimetableSubscriptionRequest ;
-    skos:isRelatedTo siri:SubscriptionRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SubscriptionRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_FM%2Fexf_facilityMonitoring_capabilitiesResponse.xml>
     a dct:Dataset ;
@@ -10420,8 +10284,7 @@
     skos:isRelatedTo siri:StopMonitoringServiceCapabilities ;
     skos:isRelatedTo siri:StopMonitoringSubscriptionRequest ;
     skos:isRelatedTo siri:SubscriptionRequest ;
-    skos:isRelatedTo siri:SubscriptionResponse ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SubscriptionResponse .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_FM%2Fexf_facilityMonitoring_request.xml>
     a dct:Dataset ;
@@ -10431,8 +10294,7 @@
     skos:isRelatedTo siri:FacilityMonitoringDelivery ;
     skos:isRelatedTo siri:FacilityMonitoringRequest ;
     skos:isRelatedTo siri:StopMonitoringDelivery ;
-    skos:isRelatedTo siri:StopMonitoringRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:StopMonitoringRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_FM%2Fexf_facilityMonitoring_response.xml>
     a dct:Dataset ;
@@ -10455,8 +10317,7 @@
     skos:isRelatedTo siri:ServiceFeature ;
     skos:isRelatedTo siri:ServiceFeaturesDelivery ;
     skos:isRelatedTo siri:StopMonitoringDelivery ;
-    skos:isRelatedTo siri:SubscriptionResponse ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SubscriptionResponse .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_FM%2Fexf_facilityMonitoring_subscriptionRequest.xml>
     a dct:Dataset ;
@@ -10469,8 +10330,7 @@
     skos:isRelatedTo siri:FacilityMonitoringSubscriptionRequest ;
     skos:isRelatedTo siri:StopMonitoringRequest ;
     skos:isRelatedTo siri:StopMonitoringSubscriptionRequest ;
-    skos:isRelatedTo siri:SubscriptionRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SubscriptionRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_GM%2Fexm_generalMessage_capabilityResponse.xml>
     a dct:Dataset ;
@@ -10497,8 +10357,7 @@
     skos:isRelatedTo siri:InfoChannel ;
     skos:isRelatedTo siri:InfoChannelDelivery ;
     skos:isRelatedTo siri:InfoChannelRequest ;
-    skos:isRelatedTo siri:ResponseStatus ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ResponseStatus .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_GM%2Fexm_generalMessage_request.xml>
     a dct:Dataset ;
@@ -10508,8 +10367,7 @@
     skos:isRelatedTo siri:GeneralMessageRequest ;
     skos:isRelatedTo siri:InfoChannel ;
     skos:isRelatedTo siri:InfoChannelDelivery ;
-    skos:isRelatedTo siri:InfoChannelRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:InfoChannelRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_GM%2Fexm_generalMessage_response.xml>
     a dct:Dataset ;
@@ -10522,8 +10380,7 @@
     skos:isRelatedTo siri:InfoChannel ;
     skos:isRelatedTo siri:InfoChannelDelivery ;
     skos:isRelatedTo siri:InfoChannelRequest ;
-    skos:isRelatedTo siri:ResponseStatus ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ResponseStatus .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_GM%2Fexm_generalMessage_response_embed.xml>
     a dct:Dataset ;
@@ -10538,8 +10395,7 @@
     skos:isRelatedTo siri:InfoChannelRequest ;
     skos:isRelatedTo siri:ResponseStatus ;
     skos:isRelatedTo siri:Severity ;
-    skos:isRelatedTo siri:VerificationStatus ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VerificationStatus .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_GM%2Fexm_generalMessage_subscriptionRequest.xml>
     a dct:Dataset ;
@@ -10548,8 +10404,7 @@
     skos:isRelatedTo opra:SubscriptionRequest ;
     skos:isRelatedTo siri:GeneralMessageRequest ;
     skos:isRelatedTo siri:GeneralMessageSubscriptionRequest ;
-    skos:isRelatedTo siri:SubscriptionRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SubscriptionRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_PT%2Fext_productionTimetable_capabilitiesResponse.xml>
     a dct:Dataset ;
@@ -10593,15 +10448,13 @@
     skos:isRelatedTo siri:ProductionTimetableSubscriptionRequest ;
     skos:isRelatedTo siri:ResponseStatus ;
     skos:isRelatedTo siri:SubscriptionRequest ;
-    skos:isRelatedTo siri:SubscriptionResponse ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SubscriptionResponse .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_PT%2Fext_productionTimetable_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_PT/ext_productionTimetable_request.xml"@en ;
     dct:source "examples/siri_exm_PT/ext_productionTimetable_request.xml"@en ;
-    skos:isRelatedTo siri:ProductionTimetableRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ProductionTimetableRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_PT%2Fext_productionTimetable_response.xml>
     a dct:Dataset ;
@@ -10651,8 +10504,7 @@
     skos:isRelatedTo siri:TargetedVehicleJourney ;
     skos:isRelatedTo siri:VehicleAtStop ;
     skos:isRelatedTo siri:VehicleFeature ;
-    skos:isRelatedTo siri:VisitNumber ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VisitNumber .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_PT%2Fext_productionTimetable_subscriptionRequest.xml>
     a dct:Dataset ;
@@ -10661,8 +10513,7 @@
     skos:isRelatedTo opra:SubscriptionRequest ;
     skos:isRelatedTo siri:ProductionTimetableRequest ;
     skos:isRelatedTo siri:ProductionTimetableSubscriptionRequest ;
-    skos:isRelatedTo siri:SubscriptionRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SubscriptionRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_SM%2Fexp_stopMonitoring_permissions.xml>
     a dct:Dataset ;
@@ -10678,8 +10529,7 @@
     skos:isRelatedTo siri:StopMonitoringCapabilitiesRequest ;
     skos:isRelatedTo siri:StopMonitoringCapabilitiesResponse ;
     skos:isRelatedTo siri:StopMonitoringPermissions ;
-    skos:isRelatedTo siri:StopMonitoringRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:StopMonitoringRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_capabilitiesResponse.xml>
     a dct:Dataset ;
@@ -10719,8 +10569,7 @@
     skos:isRelatedTo siri:StopMonitoringSubscriptionRequest ;
     skos:isRelatedTo siri:SubscriptionRequest ;
     skos:isRelatedTo siri:SubscriptionResponse ;
-    skos:isRelatedTo siri:VisitNumber ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VisitNumber .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_request.xml>
     a dct:Dataset ;
@@ -10729,15 +10578,13 @@
     skos:isRelatedTo netex:Review ;
     skos:isRelatedTo siri:IncludeTranslations ;
     skos:isRelatedTo siri:StopMonitoringDelivery ;
-    skos:isRelatedTo siri:StopMonitoringRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:StopMonitoringRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_request_simple.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SM/exs_stopMonitoring_request_simple.xml"@en ;
     dct:source "examples/siri_exm_SM/exs_stopMonitoring_request_simple.xml"@en ;
-    skos:isRelatedTo siri:StopMonitoringRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:StopMonitoringRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_response.xml>
     a dct:Dataset ;
@@ -10792,8 +10639,7 @@
     skos:isRelatedTo siri:VehicleFeature ;
     skos:isRelatedTo siri:VehicleMonitoringDelivery ;
     skos:isRelatedTo siri:ViaName ;
-    skos:isRelatedTo siri:VisitNumber ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VisitNumber .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_response_complex.xml>
     a dct:Dataset ;
@@ -10877,8 +10723,7 @@
     skos:isRelatedTo siri:VehicleFeature ;
     skos:isRelatedTo siri:VehicleMonitoringDelivery ;
     skos:isRelatedTo siri:ViaName ;
-    skos:isRelatedTo siri:VisitNumber ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VisitNumber .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_response_simple.xml>
     a dct:Dataset ;
@@ -10897,8 +10742,7 @@
     skos:isRelatedTo siri:StopMonitoringDelivery ;
     skos:isRelatedTo siri:SubscriptionResponse ;
     skos:isRelatedTo siri:VehicleAtStop ;
-    skos:isRelatedTo siri:VehicleMonitoringDelivery ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMonitoringDelivery .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_subscriptionRequest.xml>
     a dct:Dataset ;
@@ -10908,8 +10752,7 @@
     skos:isRelatedTo opra:SubscriptionRequest ;
     skos:isRelatedTo siri:StopMonitoringRequest ;
     skos:isRelatedTo siri:StopMonitoringSubscriptionRequest ;
-    skos:isRelatedTo siri:SubscriptionRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SubscriptionRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_SM%2Fexs_stopMonitoring_subscriptionRequest_simple.xml>
     a dct:Dataset ;
@@ -10918,8 +10761,7 @@
     skos:isRelatedTo opra:SubscriptionRequest ;
     skos:isRelatedTo siri:StopMonitoringRequest ;
     skos:isRelatedTo siri:StopMonitoringSubscriptionRequest ;
-    skos:isRelatedTo siri:SubscriptionRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SubscriptionRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_ST%2Fexs_stopTimetable_capabilitiesResponse.xml>
     a dct:Dataset ;
@@ -10951,15 +10793,13 @@
     skos:isRelatedTo siri:StopMonitoringServiceCapabilities ;
     skos:isRelatedTo siri:StopTimetableCapabilitiesRequest ;
     skos:isRelatedTo siri:StopTimetablePermissions ;
-    skos:isRelatedTo siri:StopTimetableServiceCapabilities ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:StopTimetableServiceCapabilities .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_ST%2Fexs_stopTimetable_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_ST/exs_stopTimetable_request.xml"@en ;
     dct:source "examples/siri_exm_ST/exs_stopTimetable_request.xml"@en ;
-    skos:isRelatedTo siri:StopMonitoringRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:StopMonitoringRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_ST%2Fexs_stopTimetable_response.xml>
     a dct:Dataset ;
@@ -10982,8 +10822,7 @@
     skos:isRelatedTo siri:TargetedVehicleJourney ;
     skos:isRelatedTo siri:VehicleAtStop ;
     skos:isRelatedTo siri:VehicleMonitoringDelivery ;
-    skos:isRelatedTo siri:VisitNumber ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VisitNumber .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_ST%2Fexs_stopTimetable_subscriptionRequest.xml>
     a dct:Dataset ;
@@ -10993,8 +10832,7 @@
     skos:isRelatedTo siri:StopMonitoringRequest ;
     skos:isRelatedTo siri:StopMonitoringSubscriptionRequest ;
     skos:isRelatedTo siri:StopTimetableSubscriptionRequest ;
-    skos:isRelatedTo siri:SubscriptionRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SubscriptionRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_SX%2FVDV736_exm%2FSX_1010_first_message.xml>
     a dct:Dataset ;
@@ -11008,8 +10846,7 @@
     skos:isRelatedTo siri:PublishedLineName ;
     skos:isRelatedTo siri:SituationExchangeDelivery ;
     skos:isRelatedTo siri:SituationNumber ;
-    skos:isRelatedTo siri:SubscriptionResponse ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SubscriptionResponse .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_SX%2FVDV736_exm%2FSX_1022_main_message.xml>
     a dct:Dataset ;
@@ -11025,8 +10862,7 @@
     skos:isRelatedTo siri:PublishedLineName ;
     skos:isRelatedTo siri:SituationExchangeDelivery ;
     skos:isRelatedTo siri:SituationNumber ;
-    skos:isRelatedTo siri:SubscriptionResponse ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SubscriptionResponse .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_SX%2FVDV736_exm%2FSX_1135_main_message_update.xml>
     a dct:Dataset ;
@@ -11042,8 +10878,7 @@
     skos:isRelatedTo siri:PublishedLineName ;
     skos:isRelatedTo siri:SituationExchangeDelivery ;
     skos:isRelatedTo siri:SituationNumber ;
-    skos:isRelatedTo siri:SubscriptionResponse ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SubscriptionResponse .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_SX%2FVDV736_exm%2FSX_1247_end_message.xml>
     a dct:Dataset ;
@@ -11056,8 +10891,7 @@
     skos:isRelatedTo siri:PublishedLineName ;
     skos:isRelatedTo siri:SituationExchangeDelivery ;
     skos:isRelatedTo siri:SituationNumber ;
-    skos:isRelatedTo siri:SubscriptionResponse ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SubscriptionResponse .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_SX%2Fexx_situationExchangeResponse.xml>
     a dct:Dataset ;
@@ -11083,8 +10917,7 @@
     skos:isRelatedTo siri:Severity ;
     skos:isRelatedTo siri:SituationExchangeDelivery ;
     skos:isRelatedTo siri:SituationNumber ;
-    skos:isRelatedTo siri:VerificationStatus ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VerificationStatus .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_SX%2Fexx_situationExchange_ATOC.xml>
     a dct:Dataset ;
@@ -11104,8 +10937,7 @@
     skos:isRelatedTo siri:PublishToWebAction ;
     skos:isRelatedTo siri:RelatedJourney ;
     skos:isRelatedTo siri:Severity ;
-    skos:isRelatedTo siri:SituationNumber ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SituationNumber .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_SX%2Fexx_situationExchange_Pt.xml>
     a dct:Dataset ;
@@ -11125,8 +10957,7 @@
     skos:isRelatedTo siri:PublishToWebAction ;
     skos:isRelatedTo siri:RelatedJourney ;
     skos:isRelatedTo siri:Severity ;
-    skos:isRelatedTo siri:SituationNumber ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SituationNumber .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_SX%2Fexx_situationExchange_capabilityResponse.xml>
     a dct:Dataset ;
@@ -11155,23 +10986,20 @@
     skos:isRelatedTo siri:SituationExchangeDelivery ;
     skos:isRelatedTo siri:SituationExchangePermissions ;
     skos:isRelatedTo siri:SituationExchangeRequest ;
-    skos:isRelatedTo siri:SituationExchangeServiceCapabilities ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SituationExchangeServiceCapabilities .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_SX%2Fexx_situationExchange_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SX/exx_situationExchange_request.xml"@en ;
     dct:source "examples/siri_exm_SX/exx_situationExchange_request.xml"@en ;
     skos:isRelatedTo siri:SituationExchangeDelivery ;
-    skos:isRelatedTo siri:SituationExchangeRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SituationExchangeRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_SX%2Fexx_situationExchange_request_simple.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_SX/exx_situationExchange_request_simple.xml"@en ;
     dct:source "examples/siri_exm_SX/exx_situationExchange_request_simple.xml"@en ;
-    skos:isRelatedTo siri:SituationExchangeRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SituationExchangeRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_SX%2Fexx_situationExchange_response.xml>
     a dct:Dataset ;
@@ -11197,8 +11025,7 @@
     skos:isRelatedTo siri:Severity ;
     skos:isRelatedTo siri:SituationExchangeDelivery ;
     skos:isRelatedTo siri:SituationNumber ;
-    skos:isRelatedTo siri:VerificationStatus ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VerificationStatus .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_SX%2Fexx_situationExchange_road.xml>
     a dct:Dataset ;
@@ -11215,8 +11042,7 @@
     skos:isRelatedTo siri:PublishToWebAction ;
     skos:isRelatedTo siri:RoadSituationElement ;
     skos:isRelatedTo siri:Severity ;
-    skos:isRelatedTo siri:SituationNumber ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SituationNumber .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_SX%2Fexx_situationExchange_subscriptionRequest.xml>
     a dct:Dataset ;
@@ -11226,8 +11052,7 @@
     skos:isRelatedTo siri:Severity ;
     skos:isRelatedTo siri:SituationExchangeRequest ;
     skos:isRelatedTo siri:SituationExchangeSubscriptionRequest ;
-    skos:isRelatedTo siri:SubscriptionRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SubscriptionRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_VM%2Fexv_vehicleMonitoring_capabilitiesResponse.xml>
     a dct:Dataset ;
@@ -11269,23 +11094,20 @@
     skos:isRelatedTo siri:VehicleMonitoringPermissions ;
     skos:isRelatedTo siri:VehicleMonitoringRequest ;
     skos:isRelatedTo siri:VehicleMonitoringServiceCapabilities ;
-    skos:isRelatedTo siri:VehicleMonitoringSubscriptionRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMonitoringSubscriptionRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_VM%2Fexv_vehicleMonitoring_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_VM/exv_vehicleMonitoring_request.xml"@en ;
     dct:source "examples/siri_exm_VM/exv_vehicleMonitoring_request.xml"@en ;
     skos:isRelatedTo siri:VehicleMonitoringDelivery ;
-    skos:isRelatedTo siri:VehicleMonitoringRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMonitoringRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_VM%2Fexv_vehicleMonitoring_request_simple.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exm_VM/exv_vehicleMonitoring_request_simple.xml"@en ;
     dct:source "examples/siri_exm_VM/exv_vehicleMonitoring_request_simple.xml"@en ;
-    skos:isRelatedTo siri:VehicleMonitoringRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMonitoringRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_VM%2Fexv_vehicleMonitoring_response.xml>
     a dct:Dataset ;
@@ -11329,8 +11151,7 @@
     skos:isRelatedTo siri:VehicleFeature ;
     skos:isRelatedTo siri:VehicleMonitoringDelivery ;
     skos:isRelatedTo siri:ViaName ;
-    skos:isRelatedTo siri:VisitNumber ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VisitNumber .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_VM%2Fexv_vehicleMonitoring_response_simple.xml>
     a dct:Dataset ;
@@ -11341,8 +11162,7 @@
     skos:isRelatedTo siri:DatedVehicleJourney ;
     skos:isRelatedTo siri:PublishedLineName ;
     skos:isRelatedTo siri:SubscriptionResponse ;
-    skos:isRelatedTo siri:VehicleMonitoringDelivery ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMonitoringDelivery .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_VM%2Fexv_vehicleMonitoring_responsex_simple.xml>
     a dct:Dataset ;
@@ -11353,8 +11173,7 @@
     skos:isRelatedTo siri:DatedVehicleJourney ;
     skos:isRelatedTo siri:PublishedLineName ;
     skos:isRelatedTo siri:SubscriptionResponse ;
-    skos:isRelatedTo siri:VehicleMonitoringDelivery ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMonitoringDelivery .
 
 <https://napcore.eu/examples/examples%2Fsiri_exm_VM%2Fexv_vehicleMonitoring_subscriptionRequest.xml>
     a dct:Dataset ;
@@ -11363,8 +11182,7 @@
     skos:isRelatedTo opra:SubscriptionRequest ;
     skos:isRelatedTo siri:SubscriptionRequest ;
     skos:isRelatedTo siri:VehicleMonitoringRequest ;
-    skos:isRelatedTo siri:VehicleMonitoringSubscriptionRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMonitoringSubscriptionRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exu_capability%2Fexd_allServices_capabilitiesRequest.xml>
     a dct:Dataset ;
@@ -11390,8 +11208,7 @@
     skos:isRelatedTo siri:StopMonitoringRequest ;
     skos:isRelatedTo siri:StopTimetableCapabilitiesRequest ;
     skos:isRelatedTo siri:VehicleMonitoringCapabilitiesRequest ;
-    skos:isRelatedTo siri:VehicleMonitoringRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleMonitoringRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exu_capability%2Fexd_allServices_capabilitiesResponse.xml>
     a dct:Dataset ;
@@ -11484,63 +11301,55 @@
     skos:isRelatedTo siri:VehicleMonitoringRequest ;
     skos:isRelatedTo siri:VehicleMonitoringServiceCapabilities ;
     skos:isRelatedTo siri:VehicleMonitoringSubscriptionRequest ;
-    skos:isRelatedTo siri:VisitNumber ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VisitNumber .
 
 <https://napcore.eu/examples/examples%2Fsiri_exu_discovery%2Fexd_productCategories_discoveryRequest.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exu_discovery/exd_productCategories_discoveryRequest.xml"@en ;
     dct:source "examples/siri_exu_discovery/exd_productCategories_discoveryRequest.xml"@en ;
-    skos:isRelatedTo siri:ProductCategoriesRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ProductCategoriesRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exu_discovery%2Fexd_productCategories_discoveryResponse.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exu_discovery/exd_productCategories_discoveryResponse.xml"@en ;
     dct:source "examples/siri_exu_discovery/exd_productCategories_discoveryResponse.xml"@en ;
     skos:isRelatedTo siri:ProductCategoriesDelivery ;
-    skos:isRelatedTo siri:ProductCategory ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ProductCategory .
 
 <https://napcore.eu/examples/examples%2Fsiri_exu_discovery%2Fexd_serviceFeatures_discoveryRequest.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exu_discovery/exd_serviceFeatures_discoveryRequest.xml"@en ;
     dct:source "examples/siri_exu_discovery/exd_serviceFeatures_discoveryRequest.xml"@en ;
     skos:isRelatedTo siri:ServiceFeature ;
-    skos:isRelatedTo siri:ServiceFeaturesRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ServiceFeaturesRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exu_discovery%2Fexd_serviceFeatures_discoveryResponse.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exu_discovery/exd_serviceFeatures_discoveryResponse.xml"@en ;
     dct:source "examples/siri_exu_discovery/exd_serviceFeatures_discoveryResponse.xml"@en ;
     skos:isRelatedTo siri:ServiceFeature ;
-    skos:isRelatedTo siri:ServiceFeaturesDelivery ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ServiceFeaturesDelivery .
 
 <https://napcore.eu/examples/examples%2Fsiri_exu_discovery%2Fexd_stopPoints_discoveryResponse.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exu_discovery/exd_stopPoints_discoveryResponse.xml"@en ;
     dct:source "examples/siri_exu_discovery/exd_stopPoints_discoveryResponse.xml"@en ;
     skos:isRelatedTo siri:ServiceFeature ;
-    skos:isRelatedTo siri:ServiceFeaturesDelivery ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ServiceFeaturesDelivery .
 
 <https://napcore.eu/examples/examples%2Fsiri_exu_discovery%2Fexd_vehicleFeatures_discoveryRequest.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exu_discovery/exd_vehicleFeatures_discoveryRequest.xml"@en ;
     dct:source "examples/siri_exu_discovery/exd_vehicleFeatures_discoveryRequest.xml"@en ;
     skos:isRelatedTo siri:VehicleFeature ;
-    skos:isRelatedTo siri:VehicleFeaturesRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleFeaturesRequest .
 
 <https://napcore.eu/examples/examples%2Fsiri_exu_discovery%2Fexd_vehicleFeatures_discoveryResponse.xml>
     a dct:Dataset ;
     rdfs:label "examples/siri_exu_discovery/exd_vehicleFeatures_discoveryResponse.xml"@en ;
     dct:source "examples/siri_exu_discovery/exd_vehicleFeatures_discoveryResponse.xml"@en ;
     skos:isRelatedTo siri:VehicleFeature ;
-    skos:isRelatedTo siri:VehicleFeaturesDelivery ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleFeaturesDelivery .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fefp%2FFX-PI-01_ParisExample%20CD1-nk1.xml>
     a dct:Dataset ;
@@ -11659,8 +11468,7 @@
     skos:isRelatedTo siri:InfoChannelDelivery ;
     skos:isRelatedTo siri:InfoChannelRequest ;
     skos:isRelatedTo siri:RailSubmode ;
-    skos:isRelatedTo siri:TramSubmode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TramSubmode .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fefp%2FFX-PI-01_ParisExample%20CD1.xml>
     a dct:Dataset ;
@@ -11775,8 +11583,7 @@
     skos:isRelatedTo siri:InfoChannelDelivery ;
     skos:isRelatedTo siri:InfoChannelRequest ;
     skos:isRelatedTo siri:RailSubmode ;
-    skos:isRelatedTo siri:TramSubmode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TramSubmode .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fefp%2FFX-PI-01_ParisExample.xml>
     a dct:Dataset ;
@@ -11903,8 +11710,7 @@
     skos:isRelatedTo siri:InfoChannelDelivery ;
     skos:isRelatedTo siri:InfoChannelRequest ;
     skos:isRelatedTo siri:RailSubmode ;
-    skos:isRelatedTo siri:TramSubmode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TramSubmode .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fefp%2FNO_RailExample.xml>
     a dct:Dataset ;
@@ -11985,8 +11791,7 @@
     skos:isRelatedTo netex:ValidableElement ;
     skos:isRelatedTo netex:ValidableElementPrice ;
     skos:isRelatedTo netex:ValidityRuleParameter ;
-    skos:isRelatedTo netex:ValidityTrigger ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:ValidityTrigger .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fefp%2FVVS_Fares_V1-ZoneSeries-nk3.xml>
     a dct:Dataset ;
@@ -12078,8 +11883,7 @@
     skos:isRelatedTo siri:ProductCategory ;
     skos:isRelatedTo siri:RailSubmode ;
     skos:isRelatedTo siri:TicketingFacility ;
-    skos:isRelatedTo siri:TrainElement ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TrainElement .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fefp%2FVVS_Fares_V1-nk1.xml>
     a dct:Dataset ;
@@ -12149,8 +11953,7 @@
     skos:isRelatedTo siri:BusSubmode ;
     skos:isRelatedTo siri:FacilityConditionElement ;
     skos:isRelatedTo siri:FareClassFacility ;
-    skos:isRelatedTo siri:RailSubmode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:RailSubmode .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fefp%2FVVS_Fares_V1-nk2.xml>
     a dct:Dataset ;
@@ -12230,8 +12033,7 @@
     skos:isRelatedTo siri:InfoChannelDelivery ;
     skos:isRelatedTo siri:ProductCategory ;
     skos:isRelatedTo siri:RailSubmode ;
-    skos:isRelatedTo siri:TrainElement ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TrainElement .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fefp%2FVVS_Fares_V1.xml>
     a dct:Dataset ;
@@ -12263,8 +12065,7 @@
     skos:isRelatedTo netex:TypeOfEntity ;
     skos:isRelatedTo netex:TypeOfSalesOfferPackage ;
     skos:isRelatedTo siri:BusSubmode ;
-    skos:isRelatedTo siri:FareClassFacility ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:FareClassFacility .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fepiap%2FChur_Equipment_Pathlink_V1.0.xml>
     a dct:Dataset ;
@@ -12314,8 +12115,7 @@
     skos:isRelatedTo siri:KeyList ;
     skos:isRelatedTo siri:ProductCategory ;
     skos:isRelatedTo siri:ServiceFeature ;
-    skos:isRelatedTo siri:VehicleFeature ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleFeature .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fepiap%2FEPIAP_Accessibility_Chur_V08_vehicletypes.xml>
     a dct:Dataset ;
@@ -12411,8 +12211,7 @@
     skos:isRelatedTo siri:TargetedVehicleJourney ;
     skos:isRelatedTo siri:TrainComponent ;
     skos:isRelatedTo siri:TrainElement ;
-    skos:isRelatedTo siri:VehicleFeature ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleFeature .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fepiap%2Feiap_test1_ramp.xml>
     a dct:Dataset ;
@@ -12503,8 +12302,7 @@
     skos:isRelatedTo siri:ParkingFacility ;
     skos:isRelatedTo siri:ProductCategory ;
     skos:isRelatedTo siri:RailSubmode ;
-    skos:isRelatedTo siri:VehicleFeature ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleFeature .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fepiap%2Fepiap_test_Crossing_Equipment.xml>
     a dct:Dataset ;
@@ -12513,8 +12311,7 @@
     skos:isRelatedTo netex:CrossingEquipment ;
     skos:isRelatedTo netex:Equipment ;
     skos:isRelatedTo netex:Locale ;
-    skos:isRelatedTo netex:TypeOfEquipment ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:TypeOfEquipment .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fepip%2Fepip_common_profile.xml>
     a dct:Dataset ;
@@ -12528,15 +12325,13 @@
     skos:isRelatedTo netex:GeneralOrganisation ;
     skos:isRelatedTo netex:OrganisationPart ;
     skos:isRelatedTo netex:TypeOfEntity ;
-    skos:isRelatedTo netex:TypeOfOrganisationPart ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:TypeOfOrganisationPart .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fera_uic%2FNetex_Eurostar%20mapping_era_2.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/era_uic/Netex_Eurostar mapping_era_2.xml"@en ;
     dct:source "examples/standards/era_uic/Netex_Eurostar mapping_era_2.xml"@en ;
-    skos:isRelatedTo netex:Quay ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:Quay .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fera_uic%2FNetex_Eurostar_stations.xml>
     a dct:Dataset ;
@@ -12544,16 +12339,14 @@
     dct:source "examples/standards/era_uic/Netex_Eurostar_stations.xml"@en ;
     skos:isRelatedTo netex:DefaultConnection ;
     skos:isRelatedTo netex:Locale ;
-    skos:isRelatedTo netex:SiteConnection ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:SiteConnection .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fera_uic%2FNetex_era_uic_Stations_SSP_Se_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/era_uic/Netex_era_uic_Stations_SSP_Se_1.xml"@en ;
     dct:source "examples/standards/era_uic/Netex_era_uic_Stations_SSP_Se_1.xml"@en ;
     skos:isRelatedTo netex:GeneralFrame ;
-    skos:isRelatedTo netex:GeneralOrganisation ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:GeneralOrganisation .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fera_uic%2FNetex_era_uic_Stations_Se_1.xml>
     a dct:Dataset ;
@@ -12562,8 +12355,7 @@
     skos:isRelatedTo netex:GeneralFrame ;
     skos:isRelatedTo netex:GeneralOrganisation ;
     skos:isRelatedTo netex:GeneralZone ;
-    skos:isRelatedTo netex:Locale ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:Locale .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fera_uic%2FNetex_era_uic_complexsite.xml>
     a dct:Dataset ;
@@ -12571,8 +12363,7 @@
     dct:source "examples/standards/era_uic/Netex_era_uic_complexsite.xml"@en ;
     skos:isRelatedTo netex:DefaultConnection ;
     skos:isRelatedTo netex:Locale ;
-    skos:isRelatedTo netex:SiteConnection ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:SiteConnection .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fera_uic%2FNetex_era_uic_joiningsplitting.xml>
     a dct:Dataset ;
@@ -12602,15 +12393,13 @@
     skos:isRelatedTo siri:AccommodationFacility ;
     skos:isRelatedTo siri:FareClasses ;
     skos:isRelatedTo siri:LuggageFacility ;
-    skos:isRelatedTo siri:VehicleAtStop ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleAtStop .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fera_uic%2FNetex_era_uic_scheduledstoppointsforaregion.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/era_uic/Netex_era_uic_scheduledstoppointsforaregion.xml"@en ;
     dct:source "examples/standards/era_uic/Netex_era_uic_scheduledstoppointsforaregion.xml"@en ;
-    skos:isRelatedTo netex:Locale ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:Locale .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fera_uic%2FNetex_era_uic_simplepark%28Disneyland%29.xml>
     a dct:Dataset ;
@@ -12619,8 +12408,7 @@
     skos:isRelatedTo netex:Locale ;
     skos:isRelatedTo netex:PathLink ;
     skos:isRelatedTo netex:PointOfInterest ;
-    skos:isRelatedTo netex:SitePathLink ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:SitePathLink .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fera_uic%2FNetex_era_uic_simpletimetable.xml>
     a dct:Dataset ;
@@ -12629,8 +12417,7 @@
     skos:isRelatedTo netex:CateringFacility ;
     skos:isRelatedTo netex:CateringFacilityList ;
     skos:isRelatedTo netex:CateringService ;
-    skos:isRelatedTo siri:FareClasses ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:FareClasses .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fera_uic%2FNetex_era_uic_timetable_hack_01.xml>
     a dct:Dataset ;
@@ -12638,8 +12425,7 @@
     dct:source "examples/standards/era_uic/Netex_era_uic_timetable_hack_01.xml"@en ;
     skos:isRelatedTo netex:NoticeAssignment ;
     skos:isRelatedTo netex:TypeOfEquipment ;
-    skos:isRelatedTo netex:TypeOfNotice ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:TypeOfNotice .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_ParisExample.xml>
     a dct:Dataset ;
@@ -12739,8 +12525,7 @@
     skos:isRelatedTo siri:InfoChannelDelivery ;
     skos:isRelatedTo siri:InfoChannelRequest ;
     skos:isRelatedTo siri:RailSubmode ;
-    skos:isRelatedTo siri:TramSubmode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TramSubmode .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_AMSY_NETWORK_FARE_Arriva-pass_20200417.xml>
     a dct:Dataset ;
@@ -12841,8 +12626,7 @@
     skos:isRelatedTo siri:InfoChannelDelivery ;
     skos:isRelatedTo siri:InfoChannelRequest ;
     skos:isRelatedTo siri:ParkingFacility ;
-    skos:isRelatedTo siri:ProductCategory ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ProductCategory .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_AMSY_NETWORK_FARE_Arriva-trip_20200417.xml>
     a dct:Dataset ;
@@ -12928,8 +12712,7 @@
     skos:isRelatedTo siri:InfoChannel ;
     skos:isRelatedTo siri:InfoChannelDelivery ;
     skos:isRelatedTo siri:InfoChannelRequest ;
-    skos:isRelatedTo siri:ProductCategory ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ProductCategory .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_FBRI_LINE-FARE_WOE-Bristol-Line-48-trip-%28stage%29_2017-01-01.xml>
     a dct:Dataset ;
@@ -13038,8 +12821,7 @@
     skos:isRelatedTo siri:InfoChannel ;
     skos:isRelatedTo siri:InfoChannelDelivery ;
     skos:isRelatedTo siri:InfoChannelRequest ;
-    skos:isRelatedTo siri:ProductCategory ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ProductCategory .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-%28mixed%29_2017-01-01%20%285%29.xml>
     a dct:Dataset ;
@@ -13148,8 +12930,7 @@
     skos:isRelatedTo netex:ZoneProjection ;
     skos:isRelatedTo siri:InfoChannel ;
     skos:isRelatedTo siri:InfoChannelDelivery ;
-    skos:isRelatedTo siri:InfoChannelRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:InfoChannelRequest .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-pass-%28Z2Z%29_2017-01-01.xml>
     a dct:Dataset ;
@@ -13268,8 +13049,7 @@
     skos:isRelatedTo siri:FilterByVehicleMode ;
     skos:isRelatedTo siri:InfoChannel ;
     skos:isRelatedTo siri:InfoChannelDelivery ;
-    skos:isRelatedTo siri:InfoChannelRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:InfoChannelRequest .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_FSYO_NETWORK_FARE_FirstSheffield-pass-by-period_20200310.xml>
     a dct:Dataset ;
@@ -13345,8 +13125,7 @@
     skos:isRelatedTo siri:InfoChannelDelivery ;
     skos:isRelatedTo siri:InfoChannelRequest ;
     skos:isRelatedTo siri:ParkingFacility ;
-    skos:isRelatedTo siri:SubscriptionRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SubscriptionRequest .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_FSYO_NETWORK_FARE_FirstSheffield-pass-by-user_20200310.xml>
     a dct:Dataset ;
@@ -13418,8 +13197,7 @@
     skos:isRelatedTo siri:InfoChannelDelivery ;
     skos:isRelatedTo siri:InfoChannelRequest ;
     skos:isRelatedTo siri:ParkingFacility ;
-    skos:isRelatedTo siri:SubscriptionRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SubscriptionRequest .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_FSYO_NETWORK_FARE_FirstSheffield-pass-simple_20200310.xml>
     a dct:Dataset ;
@@ -13483,8 +13261,7 @@
     skos:isRelatedTo netex:ZoneProjection ;
     skos:isRelatedTo siri:FareClasses ;
     skos:isRelatedTo siri:InfoChannelRequest ;
-    skos:isRelatedTo siri:ParkingFacility ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ParkingFacility .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_FYOR_LINE-FARE_FYOR-Line-10-trip-%28gtfs%29_2018-11-01.xml>
     a dct:Dataset ;
@@ -13521,8 +13298,7 @@
     skos:isRelatedTo netex:TypeOfProjection ;
     skos:isRelatedTo netex:TypeOfProof ;
     skos:isRelatedTo netex:ZoneProjection ;
-    skos:isRelatedTo siri:FilterByVehicleMode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:FilterByVehicleMode .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_FYOR_LINE-FARE_FYOR-Line-26-trip-%28stages-Z2Z%29-20181101.xml>
     a dct:Dataset ;
@@ -13559,8 +13335,7 @@
     skos:isRelatedTo netex:TypeOfProof ;
     skos:isRelatedTo netex:ZoneProjection ;
     skos:isRelatedTo siri:FilterByVehicleMode ;
-    skos:isRelatedTo siri:InfoChannelRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:InfoChannelRequest .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_HCTY_LINE_FARE_Line-016-trip_2020-03-11T22_19_20.696Z.xml>
     a dct:Dataset ;
@@ -13608,8 +13383,7 @@
     skos:isRelatedTo siri:FilterByDestination ;
     skos:isRelatedTo siri:InfoChannelRequest ;
     skos:isRelatedTo siri:OriginName ;
-    skos:isRelatedTo siri:ParkingFacility ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ParkingFacility .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_MB_LINE_FARE_MB-Line-1-trip-%28Z2Z%29_20170101.xml>
     a dct:Dataset ;
@@ -13662,8 +13436,7 @@
     skos:isRelatedTo siri:FilterByDestination ;
     skos:isRelatedTo siri:InfoChannelRequest ;
     skos:isRelatedTo siri:OriginName ;
-    skos:isRelatedTo siri:ParkingFacility ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ParkingFacility .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_MB_LINE_FARE_MB-Line-1-trip-%28Z2Z-basic%29_20170101.xml>
     a dct:Dataset ;
@@ -13716,8 +13489,7 @@
     skos:isRelatedTo siri:FilterByDestination ;
     skos:isRelatedTo siri:InfoChannelRequest ;
     skos:isRelatedTo siri:OriginName ;
-    skos:isRelatedTo siri:ParkingFacility ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ParkingFacility .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_MB_NETWORK_FARE_Metrorider-pass%2Bothers_20170101.xml>
     a dct:Dataset ;
@@ -13801,8 +13573,7 @@
     skos:isRelatedTo siri:FareClasses ;
     skos:isRelatedTo siri:FilterByDestination ;
     skos:isRelatedTo siri:FilterByVehicleMode ;
-    skos:isRelatedTo siri:OriginName ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:OriginName .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_MB_NETWORK_FARE_Metrorider-pass_20170101.xml>
     a dct:Dataset ;
@@ -13865,8 +13636,7 @@
     skos:isRelatedTo netex:ZoneProjection ;
     skos:isRelatedTo siri:FareClasses ;
     skos:isRelatedTo siri:FilterByDestination ;
-    skos:isRelatedTo siri:OriginName ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:OriginName .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_MB_NETWORK_FARE_Metrorider-pass_basic_20170101.xml>
     a dct:Dataset ;
@@ -13899,16 +13669,14 @@
     skos:isRelatedTo netex:TypeOfFareContractEntry ;
     skos:isRelatedTo netex:TypeOfProjection ;
     skos:isRelatedTo netex:ZoneProjection ;
-    skos:isRelatedTo siri:FareClasses ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:FareClasses .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_MYBUS_LINE_FARE_Line-3-trip-%28p2p%29_20190101.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/fxc/FX-PI-01_UK_MYBUS_LINE_FARE_Line-3-trip-(p2p)_20190101.xml"@en ;
     dct:source "examples/standards/fxc/FX-PI-01_UK_MYBUS_LINE_FARE_Line-3-trip-(p2p)_20190101.xml"@en ;
     skos:isRelatedTo netex:Branding ;
-    skos:isRelatedTo netex:Layer ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:Layer .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2FFX-PI-01_UK_TMSTR_NETWORK_FARE_Travelmaster-pass_20200315.xml>
     a dct:Dataset ;
@@ -13952,8 +13720,7 @@
     skos:isRelatedTo netex:TypeOfProjection ;
     skos:isRelatedTo netex:ZoneProjection ;
     skos:isRelatedTo siri:FareClasses ;
-    skos:isRelatedTo siri:FilterByVehicleMode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:FilterByVehicleMode .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2Fuk_fxc_addon_HSP_plusbus.xml>
     a dct:Dataset ;
@@ -14003,8 +13770,7 @@
     skos:isRelatedTo siri:FareClasses ;
     skos:isRelatedTo siri:LuggageFacility ;
     skos:isRelatedTo siri:ParkingFacility ;
-    skos:isRelatedTo siri:RetailFacility ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:RetailFacility .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ffxc%2Fuk_fxc_common_profile.xml>
     a dct:Dataset ;
@@ -14021,8 +13787,7 @@
     skos:isRelatedTo netex:PurposeOfGrouping ;
     skos:isRelatedTo netex:TransportAdministrativeZone ;
     skos:isRelatedTo netex:TypeOfOrganisationPart ;
-    skos:isRelatedTo netex:ZoneProjection ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:ZoneProjection .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fgbfs%2FNetex_gbfs_exm1.xml>
     a dct:Dataset ;
@@ -14043,31 +13808,27 @@
     skos:isRelatedTo netex:VehicleSharingParkingArea ;
     skos:isRelatedTo netex:VehicleSharingService ;
     skos:isRelatedTo netex:VehicleTypeZoneRestriction ;
-    skos:isRelatedTo siri:ParkingFacility ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ParkingFacility .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_exm1_Agency_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_exm1_Agency_1.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_exm1_Agency_1.xml"@en ;
-    skos:isRelatedTo netex:Authority ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:Authority .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_exm1_FareAttributes_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_exm1_FareAttributes_1.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_exm1_FareAttributes_1.xml"@en ;
     skos:isRelatedTo netex:Authority ;
-    skos:isRelatedTo netex:PurchaseWindow ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:PurchaseWindow .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_exm1_FareRules_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_exm1_FareRules_1.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_exm1_FareRules_1.xml"@en ;
     skos:isRelatedTo netex:Authority ;
-    skos:isRelatedTo netex:PurchaseWindow ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:PurchaseWindow .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_exm1_Frequencies_1.xml>
     a dct:Dataset ;
@@ -14076,16 +13837,14 @@
     skos:isRelatedTo netex:JourneyHeadway ;
     skos:isRelatedTo netex:TemplateServiceJourney ;
     skos:isRelatedTo netex:TemplateVehicleJourney ;
-    skos:isRelatedTo netex:VehicleJourneyHeadway ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:VehicleJourneyHeadway .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_exm1_Shapes_1.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_exm1_Shapes_1.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_exm1_Shapes_1.xml"@en ;
     skos:isRelatedTo netex:LinkProjection ;
-    skos:isRelatedTo netex:LinkSequenceProjection ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:LinkSequenceProjection .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_exm1_Transfers_1.xml>
     a dct:Dataset ;
@@ -14094,8 +13853,7 @@
     skos:isRelatedTo netex:DefaultConnection ;
     skos:isRelatedTo netex:TransferRestriction ;
     skos:isRelatedTo siri:ConnectionTimetableDelivery ;
-    skos:isRelatedTo siri:ConnectionTimetableRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ConnectionTimetableRequest .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_exm1_Trips_1.xml>
     a dct:Dataset ;
@@ -14104,8 +13862,7 @@
     skos:isRelatedTo netex:Block ;
     skos:isRelatedTo netex:LinkProjection ;
     skos:isRelatedTo netex:LinkSequenceProjection ;
-    skos:isRelatedTo netex:RouteLink ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:RouteLink .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_exm1_zz_Composite.xml>
     a dct:Dataset ;
@@ -14127,71 +13884,61 @@
     skos:isRelatedTo netex:VehicleScheduleFrame ;
     skos:isRelatedTo netex:VehicleTypeZoneRestriction ;
     skos:isRelatedTo netex:ZoneProjection ;
-    skos:isRelatedTo siri:ConnectionTimetableDelivery ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ConnectionTimetableDelivery .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_fares_Example_1_flatFare_unlimitedTransfer.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_fares_Example_1_flatFare_unlimitedTransfer.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_fares_Example_1_flatFare_unlimitedTransfer.xml"@en ;
-    skos:isRelatedTo netex:PurchaseWindow ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:PurchaseWindow .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_fares_Example_2_flatFare_noTransfer.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_fares_Example_2_flatFare_noTransfer.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_fares_Example_2_flatFare_noTransfer.xml"@en ;
-    skos:isRelatedTo netex:PurchaseWindow ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:PurchaseWindow .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_fares_Example_3_flatFare_90mTransfer.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_fares_Example_3_flatFare_90mTransfer.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_fares_Example_3_flatFare_90mTransfer.xml"@en ;
-    skos:isRelatedTo netex:PurchaseWindow ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:PurchaseWindow .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_fares_Example_4_flatFare_byLineGroup.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_fares_Example_4_flatFare_byLineGroup.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_fares_Example_4_flatFare_byLineGroup.xml"@en ;
-    skos:isRelatedTo netex:PurchaseWindow ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:PurchaseWindow .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_fares_Example_5_flatFare_feeToTransfer.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_fares_Example_5_flatFare_feeToTransfer.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_fares_Example_5_flatFare_feeToTransfer.xml"@en ;
-    skos:isRelatedTo netex:PurchaseWindow ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:PurchaseWindow .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_fares_Example_6_pointToPointFare_anyRoute.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_fares_Example_6_pointToPointFare_anyRoute.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_fares_Example_6_pointToPointFare_anyRoute.xml"@en ;
-    skos:isRelatedTo netex:PurchaseWindow ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:PurchaseWindow .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fgtfs%2FNetex_gtfs_fares_Example_7_zoneSequenceFare.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/gtfs/Netex_gtfs_fares_Example_7_zoneSequenceFare.xml"@en ;
     dct:source "examples/standards/gtfs/Netex_gtfs_fares_Example_7_zoneSequenceFare.xml"@en ;
-    skos:isRelatedTo netex:PurchaseWindow ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:PurchaseWindow .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fneptune%2FLe%20Corbusier%20-%20SQYBUS-NeTEx-Profil%20Arret%20-%20External%20Quays.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/neptune/Le Corbusier - SQYBUS-NeTEx-Profil Arret - External Quays.xml"@en ;
     dct:source "examples/standards/neptune/Le Corbusier - SQYBUS-NeTEx-Profil Arret - External Quays.xml"@en ;
-    skos:isRelatedTo netex:RoadAddress ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:RoadAddress .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fneptune%2FLe%20Corbusier%20-%20SQYBUS-NeTEx-Profil%20Arret.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/neptune/Le Corbusier - SQYBUS-NeTEx-Profil Arret.xml"@en ;
     dct:source "examples/standards/neptune/Le Corbusier - SQYBUS-NeTEx-Profil Arret.xml"@en ;
-    skos:isRelatedTo netex:RoadAddress ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:RoadAddress .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fneptune%2FRATP_Line7bis-extract-2009-NeTEx.xml>
     a dct:Dataset ;
@@ -14203,8 +13950,7 @@
     skos:isRelatedTo netex:TimingLink ;
     skos:isRelatedTo netex:TimingLinkInJourneyPattern ;
     skos:isRelatedTo netex:TimingPointInJourneyPattern ;
-    skos:isRelatedTo netex:TopographicProjection ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:TopographicProjection .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnoptis%2FNeTEx_Calendar_TimetableAndVehicleSchedule_PB2.xml>
     a dct:Dataset ;
@@ -14246,8 +13992,7 @@
     skos:isRelatedTo siri:DatedTimetableVersionFrame ;
     skos:isRelatedTo siri:JourneyNote ;
     skos:isRelatedTo siri:KeyList ;
-    skos:isRelatedTo siri:OriginName ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:OriginName .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnoptis%2FNetex_StopPlace_se_NOPTIS_Example_TEH_PA1.xml>
     a dct:Dataset ;
@@ -14258,8 +14003,7 @@
     skos:isRelatedTo netex:PathLink ;
     skos:isRelatedTo netex:SitePathLink ;
     skos:isRelatedTo netex:StopPlaceEntrance ;
-    skos:isRelatedTo netex:TopographicProjection ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:TopographicProjection .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnoptis%2FNetex_StopPlace_se_NOPTIS_TEH_Style1_PB1.xml>
     a dct:Dataset ;
@@ -14269,15 +14013,13 @@
     skos:isRelatedTo netex:PassengerEntrance ;
     skos:isRelatedTo netex:PathLink ;
     skos:isRelatedTo netex:SitePathLink ;
-    skos:isRelatedTo netex:StopPlaceEntrance ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:StopPlaceEntrance .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fframes%2FpublicationDelivery.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/frames/publicationDelivery.xml"@en ;
     dct:source "examples/standards/norway/frames/publicationDelivery.xml"@en ;
-    skos:isRelatedTo netex:PointOnRoute ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:PointOnRoute .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fnetwork%2FFlexibleLine863-with-connection.xml>
     a dct:Dataset ;
@@ -14302,8 +14044,7 @@
     skos:isRelatedTo opra:PlannedFrame ;
     skos:isRelatedTo siri:ConnectionTimetableDelivery ;
     skos:isRelatedTo siri:JourneyNote ;
-    skos:isRelatedTo siri:TargetedVehicleJourney ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TargetedVehicleJourney .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fnetwork%2FLine61A.xml>
     a dct:Dataset ;
@@ -14317,22 +14058,19 @@
     skos:isRelatedTo netex:TemplateServiceJourney ;
     skos:isRelatedTo netex:TemplateVehicleJourney ;
     skos:isRelatedTo netex:TimetabledPassingTime ;
-    skos:isRelatedTo siri:TargetedVehicleJourney ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TargetedVehicleJourney .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fother_resources%2Fsubmodel-Branding.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/other_resources/submodel-Branding.xml"@en ;
     dct:source "examples/standards/norway/other_resources/submodel-Branding.xml"@en ;
-    skos:isRelatedTo netex:Submode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:Submode .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fother_resources%2Fsubmodel-DestinationDisplay.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/other_resources/submodel-DestinationDisplay.xml"@en ;
     dct:source "examples/standards/norway/other_resources/submodel-DestinationDisplay.xml"@en ;
-    skos:isRelatedTo netex:DestinationDisplayVariant ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:DestinationDisplayVariant .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fother_resources%2Fsubmodel-PathLinkWithProjection-DEPRECATED.xml>
     a dct:Dataset ;
@@ -14341,8 +14079,7 @@
     skos:isRelatedTo netex:OffSitePathLink ;
     skos:isRelatedTo netex:PathLink ;
     skos:isRelatedTo netex:PointOnLink ;
-    skos:isRelatedTo netex:SitePathLink ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:SitePathLink .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fother_resources%2Fsubmodel-ServiceFacilitySet.xml>
     a dct:Dataset ;
@@ -14376,57 +14113,49 @@
     skos:isRelatedTo siri:AccommodationFacility ;
     skos:isRelatedTo siri:LuggageFacility ;
     skos:isRelatedTo siri:NuisanceFacility ;
-    skos:isRelatedTo siri:PassengerCommsFacility ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:PassengerCommsFacility .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fschedule%2FServiceCalendar-DayType-AvailabilityCondition.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/schedule/ServiceCalendar-DayType-AvailabilityCondition.xml"@en ;
     dct:source "examples/standards/norway/schedule/ServiceCalendar-DayType-AvailabilityCondition.xml"@en ;
-    skos:isRelatedTo netex:VehicleScheduleFrame ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:VehicleScheduleFrame .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fschedule%2FServiceCalendar-DayTypeAssignments.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/schedule/ServiceCalendar-DayTypeAssignments.xml"@en ;
     dct:source "examples/standards/norway/schedule/ServiceCalendar-DayTypeAssignments.xml"@en ;
-    skos:isRelatedTo netex:VehicleScheduleFrame ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:VehicleScheduleFrame .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fschedule%2FServiceCalendar-OperatingPeriods-with-exceptions.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/schedule/ServiceCalendar-OperatingPeriods-with-exceptions.xml"@en ;
     dct:source "examples/standards/norway/schedule/ServiceCalendar-OperatingPeriods-with-exceptions.xml"@en ;
-    skos:isRelatedTo netex:VehicleScheduleFrame ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:VehicleScheduleFrame .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fschedule%2FServiceCalendar-OperatingPeriods.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/schedule/ServiceCalendar-OperatingPeriods.xml"@en ;
     dct:source "examples/standards/norway/schedule/ServiceCalendar-OperatingPeriods.xml"@en ;
-    skos:isRelatedTo netex:VehicleScheduleFrame ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:VehicleScheduleFrame .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fschedule%2FServiceCalendar-calendar-ref.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/schedule/ServiceCalendar-calendar-ref.xml"@en ;
     dct:source "examples/standards/norway/schedule/ServiceCalendar-calendar-ref.xml"@en ;
-    skos:isRelatedTo netex:VehicleScheduleFrame ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:VehicleScheduleFrame .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fschedule%2FServiceCalendar-example.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/schedule/ServiceCalendar-example.xml"@en ;
     dct:source "examples/standards/norway/schedule/ServiceCalendar-example.xml"@en ;
-    skos:isRelatedTo netex:VehicleScheduleFrame ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:VehicleScheduleFrame .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fschedule%2FServiceCalendar-test.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/schedule/ServiceCalendar-test.xml"@en ;
     dct:source "examples/standards/norway/schedule/ServiceCalendar-test.xml"@en ;
-    skos:isRelatedTo netex:VehicleScheduleFrame ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:VehicleScheduleFrame .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fstops%2FBasicIndoorStopPlace_example.xml>
     a dct:Dataset ;
@@ -14468,8 +14197,7 @@
     skos:isRelatedTo netex:WheelchairVehicleEquipment ;
     skos:isRelatedTo siri:LuggageFacility ;
     skos:isRelatedTo siri:PassengerInformationFacility ;
-    skos:isRelatedTo siri:SanitaryFacility ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SanitaryFacility .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fstops%2FBasicStopPlace-two-quays_example.xml>
     a dct:Dataset ;
@@ -14491,8 +14219,7 @@
     skos:isRelatedTo netex:SiteEquipment ;
     skos:isRelatedTo netex:StepFreeAccess ;
     skos:isRelatedTo netex:WheelchairAccess ;
-    skos:isRelatedTo siri:PassengerInformationFacility ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:PassengerInformationFacility .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fstops%2FBasicStopPlace_example.xml>
     a dct:Dataset ;
@@ -14513,8 +14240,7 @@
     skos:isRelatedTo netex:SignEquipment ;
     skos:isRelatedTo netex:SiteEquipment ;
     skos:isRelatedTo netex:StepFreeAccess ;
-    skos:isRelatedTo siri:PassengerInformationFacility ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:PassengerInformationFacility .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fstops%2FOsloS_station_example.xml>
     a dct:Dataset ;
@@ -14564,8 +14290,7 @@
     skos:isRelatedTo siri:MetroSubmode ;
     skos:isRelatedTo siri:PassengerInformationFacility ;
     skos:isRelatedTo siri:TramSubmode ;
-    skos:isRelatedTo siri:VehicleFeature ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleFeature .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fstops%2FPointOfInterest.xml>
     a dct:Dataset ;
@@ -14604,8 +14329,7 @@
     skos:isRelatedTo netex:TypeOfCongestion ;
     skos:isRelatedTo netex:TypeOfEquipment ;
     skos:isRelatedTo netex:TypeOfWheelchair ;
-    skos:isRelatedTo opra:TypeOfDelay ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo opra:TypeOfDelay .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fstops%2FStopPlace-with-equipment-and-parking_example.xml>
     a dct:Dataset ;
@@ -14656,8 +14380,7 @@
     skos:isRelatedTo siri:LuggageFacility ;
     skos:isRelatedTo siri:ParkingFacility ;
     skos:isRelatedTo siri:PassengerInformationFacility ;
-    skos:isRelatedTo siri:SanitaryFacility ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:SanitaryFacility .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fstops%2Fsubmodel-MonomodalStopPlace.xml>
     a dct:Dataset ;
@@ -14677,8 +14400,7 @@
     skos:isRelatedTo netex:TypeOfPassengerInformationEquipment ;
     skos:isRelatedTo netex:TypeOfWheelchair ;
     skos:isRelatedTo siri:BusSubmode ;
-    skos:isRelatedTo siri:PassengerInformationFacility ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:PassengerInformationFacility .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fstops%2Fsubmodel-StationWithEquipment.xml>
     a dct:Dataset ;
@@ -14715,8 +14437,7 @@
     skos:isRelatedTo netex:VehicleMeetingPoint ;
     skos:isRelatedTo netex:VisualSignsAvailable ;
     skos:isRelatedTo netex:WheelchairVehicleEquipment ;
-    skos:isRelatedTo siri:AirSubmode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:AirSubmode .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fvehicles%2Fsubmodel-CompoundTrain.xml>
     a dct:Dataset ;
@@ -14724,8 +14445,7 @@
     dct:source "examples/standards/norway/vehicles/submodel-CompoundTrain.xml"@en ;
     skos:isRelatedTo netex:CompoundTrain ;
     skos:isRelatedTo siri:CompoundTrain ;
-    skos:isRelatedTo siri:TrainInCompoundTrain ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TrainInCompoundTrain .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fvehicles%2Fsubmodel-Train.xml>
     a dct:Dataset ;
@@ -14737,8 +14457,7 @@
     skos:isRelatedTo netex:TrainNumber ;
     skos:isRelatedTo netex:TrainSize ;
     skos:isRelatedTo siri:TrainComponent ;
-    skos:isRelatedTo siri:TrainElement ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TrainElement .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fvehicles%2Fsubmodel-Vehicle.xml>
     a dct:Dataset ;
@@ -14747,16 +14466,14 @@
     skos:isRelatedTo netex:AccessVehicleEquipment ;
     skos:isRelatedTo netex:ActualVehicleEquipment ;
     skos:isRelatedTo opra:ActualFrame ;
-    skos:isRelatedTo opra:ActualFrameRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo opra:ActualFrameRequest .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnorway%2Fvehicles%2Fsubmodel-VehicleType.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/norway/vehicles/submodel-VehicleType.xml"@en ;
     dct:source "examples/standards/norway/vehicles/submodel-VehicleType.xml"@en ;
     skos:isRelatedTo netex:PassengerCapacity ;
-    skos:isRelatedTo netex:PassengerVehicleCapacity ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:PassengerVehicleCapacity .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnta%2FNTA-PI-01_EI_IR_LINE_OFFER__Journey00122_20200801.xml>
     a dct:Dataset ;
@@ -14775,8 +14492,7 @@
     skos:isRelatedTo siri:DatedTimetableVersionFrame ;
     skos:isRelatedTo siri:DatedVehicleJourney ;
     skos:isRelatedTo siri:FilterByVehicleMode ;
-    skos:isRelatedTo siri:TargetedVehicleJourney ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TargetedVehicleJourney .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnta%2FNTA-PI-01_EI_LUAS_LINE_OFFER_LUAS_Line93Calls_20200701.xml>
     a dct:Dataset ;
@@ -14788,8 +14504,7 @@
     skos:isRelatedTo netex:keyList ;
     skos:isRelatedTo siri:FilterByDestination ;
     skos:isRelatedTo siri:FilterByVehicleMode ;
-    skos:isRelatedTo siri:KeyList ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:KeyList .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnta%2FNTA-PI-01_EI_LUAS_LINE_OFFER_LUAS_Line93_20200701.xml>
     a dct:Dataset ;
@@ -14803,24 +14518,21 @@
     skos:isRelatedTo siri:FilterByDestination ;
     skos:isRelatedTo siri:FilterByVehicleMode ;
     skos:isRelatedTo siri:KeyList ;
-    skos:isRelatedTo siri:TargetedVehicleJourney ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TargetedVehicleJourney .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnta%2FNTA-PI-01_EI_NOC_Operator_20200601.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/nta/NTA-PI-01_EI_NOC_Operator_20200601.xml"@en ;
     dct:source "examples/standards/nta/NTA-PI-01_EI_NOC_Operator_20200601.xml"@en ;
     skos:isRelatedTo netex:Customer ;
-    skos:isRelatedTo netex:CustomerService ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:CustomerService .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnta%2FNTA-PI-01_EI_NOC_Operator_LUAS_20200601.xml>
     a dct:Dataset ;
     rdfs:label "examples/standards/nta/NTA-PI-01_EI_NOC_Operator_LUAS_20200601.xml"@en ;
     dct:source "examples/standards/nta/NTA-PI-01_EI_NOC_Operator_LUAS_20200601.xml"@en ;
     skos:isRelatedTo netex:Customer ;
-    skos:isRelatedTo netex:CustomerService ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:CustomerService .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnta%2FNTA-PI-01_EI_NTA_Luas_20200715.xml>
     a dct:Dataset ;
@@ -14829,8 +14541,7 @@
     skos:isRelatedTo netex:keyList ;
     skos:isRelatedTo siri:FilterByDestination ;
     skos:isRelatedTo siri:FilterByVehicleMode ;
-    skos:isRelatedTo siri:KeyList ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:KeyList .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnta%2FNTA-PI-01_EI_NTA_NptgLocalitiesMinimal_20200730.xml>
     a dct:Dataset ;
@@ -14840,8 +14551,7 @@
     skos:isRelatedTo netex:OrganisationPart ;
     skos:isRelatedTo netex:TopographicProjection ;
     skos:isRelatedTo netex:TransportAdministrativeZone ;
-    skos:isRelatedTo netex:TypeOfOrganisationPart ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:TypeOfOrganisationPart .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnta%2FNTA-PI-01_EI_NTA_NptgLocalities_20200730.xml>
     a dct:Dataset ;
@@ -14851,8 +14561,7 @@
     skos:isRelatedTo netex:OrganisationPart ;
     skos:isRelatedTo netex:TopographicProjection ;
     skos:isRelatedTo netex:TransportAdministrativeZone ;
-    skos:isRelatedTo netex:TypeOfOrganisationPart ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:TypeOfOrganisationPart .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnta%2FNTA-PI-01_EI_NTA_Operators_COMMON_20200601.xml>
     a dct:Dataset ;
@@ -14860,8 +14569,7 @@
     dct:source "examples/standards/nta/NTA-PI-01_EI_NTA_Operators_COMMON_20200601.xml"@en ;
     skos:isRelatedTo netex:CommonFrame ;
     skos:isRelatedTo netex:Entity ;
-    skos:isRelatedTo netex:Entity_Entity ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:Entity_Entity .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnta%2FNTA-PI-01_EI_NTA_STOP_NaPTAN-XXMinimal_2020801.xml>
     a dct:Dataset ;
@@ -14869,8 +14577,7 @@
     dct:source "examples/standards/nta/NTA-PI-01_EI_NTA_STOP_NaPTAN-XXMinimal_2020801.xml"@en ;
     skos:isRelatedTo netex:AdministrativeZone ;
     skos:isRelatedTo netex:StopPlaceEntrance ;
-    skos:isRelatedTo netex:TransportAdministrativeZone ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:TransportAdministrativeZone .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fnta%2FNTA-PI-01_EI_NTA_STOP_NaPTAN-XX_2020801.xml>
     a dct:Dataset ;
@@ -14880,8 +14587,7 @@
     skos:isRelatedTo netex:StopPlaceEntrance ;
     skos:isRelatedTo netex:TransportAdministrativeZone ;
     skos:isRelatedTo netex:keyList ;
-    skos:isRelatedTo siri:KeyList ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:KeyList .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB1_NRT%2FNetex_sncf_b1_1.xml>
     a dct:Dataset ;
@@ -14891,8 +14597,7 @@
     skos:isRelatedTo netex:SeriesConstraint ;
     skos:isRelatedTo netex:SeriesConstraintPrice ;
     skos:isRelatedTo netex:SingleJourney ;
-    skos:isRelatedTo netex:StandardFareTable ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:StandardFareTable .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB1_NRT%2FNetex_tap_tsi_B1-1080-full.xml>
     a dct:Dataset ;
@@ -14912,8 +14617,7 @@
     skos:isRelatedTo netex:SupplementProduct ;
     skos:isRelatedTo netex:TypeOfDeliveryVariant ;
     skos:isRelatedTo netex:keyList ;
-    skos:isRelatedTo siri:KeyList ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:KeyList .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB1_NRT%2FNetex_tap_tsi_B1-1080.xml>
     a dct:Dataset ;
@@ -14929,8 +14633,7 @@
     skos:isRelatedTo netex:SupplementProduct ;
     skos:isRelatedTo netex:TypeOfDeliveryVariant ;
     skos:isRelatedTo netex:keyList ;
-    skos:isRelatedTo siri:KeyList ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:KeyList .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB1_NRT%2FNetex_tap_tsi_B1.xml>
     a dct:Dataset ;
@@ -14966,8 +14669,7 @@
     skos:isRelatedTo netex:Transferability ;
     skos:isRelatedTo netex:TypeOfDeliveryVariant ;
     skos:isRelatedTo netex:ZoneInSeries ;
-    skos:isRelatedTo siri:TrainElement ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TrainElement .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB1_NRT%2FNetex_tap_tsi_tcvc_carrier_1.xml>
     a dct:Dataset ;
@@ -14977,8 +14679,7 @@
     skos:isRelatedTo netex:CustomerService ;
     skos:isRelatedTo netex:Delta ;
     skos:isRelatedTo netex:DeltaValue ;
-    skos:isRelatedTo netex:Trace ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:Trace .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB1_NRT%2FNetex_tap_tsi_tcvg_stations_1.xml>
     a dct:Dataset ;
@@ -14987,8 +14688,7 @@
     skos:isRelatedTo netex:GroupMember ;
     skos:isRelatedTo netex:Routing ;
     skos:isRelatedTo netex:keyList ;
-    skos:isRelatedTo siri:KeyList ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:KeyList .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB1_NRT%2FNetex_tap_tsi_tcvs_series_1.xml>
     a dct:Dataset ;
@@ -14997,8 +14697,7 @@
     skos:isRelatedTo netex:DeliveryVariant ;
     skos:isRelatedTo netex:Routing ;
     skos:isRelatedTo netex:SeriesConstraint ;
-    skos:isRelatedTo netex:TypeOfDeliveryVariant ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:TypeOfDeliveryVariant .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB2_IRT%2FNetex_tap_tsi_B2-1180.xml>
     a dct:Dataset ;
@@ -15021,8 +14720,7 @@
     skos:isRelatedTo netex:TrainStopAssignment ;
     skos:isRelatedTo netex:TypeOfDeliveryVariant ;
     skos:isRelatedTo netex:ValidDuring ;
-    skos:isRelatedTo siri:TrainElement ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TrainElement .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB2_IRT%2FNetex_tap_tsi_B2-1181.xml>
     a dct:Dataset ;
@@ -15042,8 +14740,7 @@
     skos:isRelatedTo netex:TrainNumber ;
     skos:isRelatedTo netex:TrainStopAssignment ;
     skos:isRelatedTo netex:ValidDuring ;
-    skos:isRelatedTo siri:TrainElement ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TrainElement .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB2_IRT%2FNetex_tap_tsi_B2-71.xml>
     a dct:Dataset ;
@@ -15066,8 +14763,7 @@
     skos:isRelatedTo netex:TrainStopAssignment ;
     skos:isRelatedTo netex:TypeOfDeliveryVariant ;
     skos:isRelatedTo netex:ValidDuring ;
-    skos:isRelatedTo siri:TrainElement ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TrainElement .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB2_IRT%2FNetex_tap_tsi_B2.xml>
     a dct:Dataset ;
@@ -15085,8 +14781,7 @@
     skos:isRelatedTo netex:TrainStopAssignment ;
     skos:isRelatedTo netex:Transferability ;
     skos:isRelatedTo netex:ValidDuring ;
-    skos:isRelatedTo siri:TrainElement ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TrainElement .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB2_IRT%2FNetex_tap_tsi_tcvs_irt_1.xml>
     a dct:Dataset ;
@@ -15114,8 +14809,7 @@
     skos:isRelatedTo netex:Transferability ;
     skos:isRelatedTo netex:TypeOfDeliveryVariant ;
     skos:isRelatedTo netex:ZoneInSeries ;
-    skos:isRelatedTo siri:TrainElement ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TrainElement .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB3_Special%2FNetex_tap_tsi_B3%2Bmore.xml>
     a dct:Dataset ;
@@ -15137,8 +14831,7 @@
     skos:isRelatedTo netex:TrainElement ;
     skos:isRelatedTo netex:TrainStopAssignment ;
     skos:isRelatedTo netex:Transferability ;
-    skos:isRelatedTo siri:TrainElement ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TrainElement .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FB3_Special%2FNetex_tap_tsi_B3.xml>
     a dct:Dataset ;
@@ -15159,8 +14852,7 @@
     skos:isRelatedTo netex:TrainElement ;
     skos:isRelatedTo netex:TrainStopAssignment ;
     skos:isRelatedTo netex:Transferability ;
-    skos:isRelatedTo siri:TrainElement ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TrainElement .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FOther%2FNetex_tap_trainhotel_SalesPackage_2.xml>
     a dct:Dataset ;
@@ -15198,8 +14890,7 @@
     skos:isRelatedTo netex:TrainStopAssignment ;
     skos:isRelatedTo siri:AccommodationFacility ;
     skos:isRelatedTo siri:FacilityChangeElement ;
-    skos:isRelatedTo siri:TrainElement ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TrainElement .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example1-basic.xml>
     a dct:Dataset ;
@@ -15239,8 +14930,7 @@
     skos:isRelatedTo siri:LuggageFacility ;
     skos:isRelatedTo siri:PassengerCommsFacility ;
     skos:isRelatedTo siri:ProductionTimetableDelivery ;
-    skos:isRelatedTo siri:ProductionTimetableRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ProductionTimetableRequest .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example1.xml>
     a dct:Dataset ;
@@ -15287,8 +14977,7 @@
     skos:isRelatedTo siri:LuggageFacility ;
     skos:isRelatedTo siri:PassengerCommsFacility ;
     skos:isRelatedTo siri:ProductionTimetableDelivery ;
-    skos:isRelatedTo siri:ProductionTimetableRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ProductionTimetableRequest .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example2.1-Classic_train.xml>
     a dct:Dataset ;
@@ -15318,8 +15007,7 @@
     skos:isRelatedTo siri:AssistanceFacility ;
     skos:isRelatedTo siri:ProductionTimetableDelivery ;
     skos:isRelatedTo siri:ProductionTimetableRequest ;
-    skos:isRelatedTo siri:RailSubmode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:RailSubmode .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example2.2-Coach_group.xml>
     a dct:Dataset ;
@@ -15352,8 +15040,7 @@
     skos:isRelatedTo siri:TrainComponent ;
     skos:isRelatedTo siri:TrainElement ;
     skos:isRelatedTo siri:TrainInCompoundTrain ;
-    skos:isRelatedTo siri:VisitNumber ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VisitNumber .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example2.3-Leo_Express.xml>
     a dct:Dataset ;
@@ -15373,8 +15060,7 @@
     skos:isRelatedTo siri:PassengerCommsFacility ;
     skos:isRelatedTo siri:ProductionTimetableDelivery ;
     skos:isRelatedTo siri:ProductionTimetableRequest ;
-    skos:isRelatedTo siri:RailSubmode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:RailSubmode .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example2.4-Load_and_Unload.xml>
     a dct:Dataset ;
@@ -15403,8 +15089,7 @@
     skos:isRelatedTo siri:NuisanceFacility ;
     skos:isRelatedTo siri:ProductionTimetableDelivery ;
     skos:isRelatedTo siri:ProductionTimetableRequest ;
-    skos:isRelatedTo siri:RailSubmode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:RailSubmode .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example2.5-Interchange.xml>
     a dct:Dataset ;
@@ -15436,8 +15121,7 @@
     skos:isRelatedTo siri:ProductionTimetableDelivery ;
     skos:isRelatedTo siri:ProductionTimetableRequest ;
     skos:isRelatedTo siri:RailSubmode ;
-    skos:isRelatedTo siri:VisitNumber ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VisitNumber .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example2.6-Check_In.xml>
     a dct:Dataset ;
@@ -15454,8 +15138,7 @@
     skos:isRelatedTo netex:ServiceReservationFacilityList ;
     skos:isRelatedTo opra:TypeOfDelay ;
     skos:isRelatedTo siri:AccommodationFacility ;
-    skos:isRelatedTo siri:BusSubmode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:BusSubmode .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example2.7-Tariff_and_Reservation.xml>
     a dct:Dataset ;
@@ -15476,8 +15159,7 @@
     skos:isRelatedTo siri:AccommodationFacility ;
     skos:isRelatedTo siri:ProductionTimetableDelivery ;
     skos:isRelatedTo siri:ProductionTimetableRequest ;
-    skos:isRelatedTo siri:RailSubmode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:RailSubmode .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example2.7-Tarrif_and_Reservation.xml>
     a dct:Dataset ;
@@ -15499,8 +15181,7 @@
     skos:isRelatedTo siri:DatedCall ;
     skos:isRelatedTo siri:ProductionTimetableDelivery ;
     skos:isRelatedTo siri:ProductionTimetableRequest ;
-    skos:isRelatedTo siri:RailSubmode ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:RailSubmode .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-SKDUPD-example2.xml>
     a dct:Dataset ;
@@ -15565,8 +15246,7 @@
     skos:isRelatedTo siri:RailSubmode ;
     skos:isRelatedTo siri:TrainComponent ;
     skos:isRelatedTo siri:TrainInCompoundTrain ;
-    skos:isRelatedTo siri:VisitNumber ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VisitNumber .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-TSDUPD-example1.xml>
     a dct:Dataset ;
@@ -15581,8 +15261,7 @@
     skos:isRelatedTo siri:ConnectionTimetableDelivery ;
     skos:isRelatedTo siri:ConnectionTimetableRequest ;
     skos:isRelatedTo siri:DistributorStopOrder ;
-    skos:isRelatedTo siri:FeederStopOrder ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:FeederStopOrder .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-TSDUPD-example2.1-Hilleroed.xml>
     a dct:Dataset ;
@@ -15600,8 +15279,7 @@
     skos:isRelatedTo netex:SiteConnection ;
     skos:isRelatedTo siri:AssistanceFacility ;
     skos:isRelatedTo siri:DistributorStopOrder ;
-    skos:isRelatedTo siri:FeederStopOrder ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:FeederStopOrder .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-TSDUPD-example2.2-Milano.xml>
     a dct:Dataset ;
@@ -15611,8 +15289,7 @@
     skos:isRelatedTo netex:PassengerAtStopTime ;
     skos:isRelatedTo netex:SiteConnection ;
     skos:isRelatedTo netex:VehicleTypeAtPoint ;
-    skos:isRelatedTo siri:VehicleAtStop ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleAtStop .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-TSDUPD-example2.3-Piedmont.xml>
     a dct:Dataset ;
@@ -15621,8 +15298,7 @@
     skos:isRelatedTo netex:InterchangeRuleFilter ;
     skos:isRelatedTo netex:SiteConnection ;
     skos:isRelatedTo opra:PlannedFrame ;
-    skos:isRelatedTo opra:PlannedFrameRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo opra:PlannedFrameRequest .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftap_tsi%2FTAP-TSDUPD-example2.xml>
     a dct:Dataset ;
@@ -15642,8 +15318,7 @@
     skos:isRelatedTo siri:AssistanceFacility ;
     skos:isRelatedTo siri:DistributorStopOrder ;
     skos:isRelatedTo siri:FeederStopOrder ;
-    skos:isRelatedTo siri:VehicleAtStop ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleAtStop .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftxc%2FFX-PI-01_UK_DFT_STOP_NPTG-extract_20170101.xml>
     a dct:Dataset ;
@@ -15652,8 +15327,7 @@
     skos:isRelatedTo netex:AdministrativeZone ;
     skos:isRelatedTo netex:OrganisationPart ;
     skos:isRelatedTo netex:TransportAdministrativeZone ;
-    skos:isRelatedTo netex:TypeOfOrganisationPart ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:TypeOfOrganisationPart .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftxc%2FFX-PI-01_UK_DFT_STOP_NaPTAN-060%2B086%2B110_20171217.xml>
     a dct:Dataset ;
@@ -15661,8 +15335,7 @@
     dct:source "examples/standards/txc/FX-PI-01_UK_DFT_STOP_NaPTAN-060+086+110_20171217.xml"@en ;
     skos:isRelatedTo netex:AdministrativeZone ;
     skos:isRelatedTo netex:StopPlaceEntrance ;
-    skos:isRelatedTo netex:TransportAdministrativeZone ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:TransportAdministrativeZone .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftxc%2FFX-PI-01_UK_SCWW_LINE_SCWW-86-simplified_20190101.xml>
     a dct:Dataset ;
@@ -15700,8 +15373,7 @@
     skos:isRelatedTo siri:FilterByDestination ;
     skos:isRelatedTo siri:FilterByVehicleMode ;
     skos:isRelatedTo siri:OriginName ;
-    skos:isRelatedTo siri:TargetedVehicleJourney ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TargetedVehicleJourney .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftxc%2Fuk_nap_extract1_minimal.xml>
     a dct:Dataset ;
@@ -15714,8 +15386,7 @@
     skos:isRelatedTo netex:StopPlaceVehicleEntrance ;
     skos:isRelatedTo netex:VehicleEntrance ;
     skos:isRelatedTo netex:VehicleTypeAtPoint ;
-    skos:isRelatedTo siri:VehicleAtStop ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleAtStop .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftxc%2Fuk_nap_naptan_stops_extract1.xml>
     a dct:Dataset ;
@@ -15731,8 +15402,7 @@
     skos:isRelatedTo netex:VehicleEntrance ;
     skos:isRelatedTo netex:VehicleTypeAtPoint ;
     skos:isRelatedTo siri:FilterByVehicleMode ;
-    skos:isRelatedTo siri:VehicleAtStop ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:VehicleAtStop .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftxc%2Fuk_nptg_localities_extract1.xml>
     a dct:Dataset ;
@@ -15741,8 +15411,7 @@
     skos:isRelatedTo netex:AdministrativeZone ;
     skos:isRelatedTo netex:OrganisationPart ;
     skos:isRelatedTo netex:TransportAdministrativeZone ;
-    skos:isRelatedTo netex:TypeOfOrganisationPart ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:TypeOfOrganisationPart .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftxc%2Fuk_txc_SCWW-86_extract1-with-sections.xml>
     a dct:Dataset ;
@@ -15792,8 +15461,7 @@
     skos:isRelatedTo netex:VehicleJourneyRunTime ;
     skos:isRelatedTo netex:VehicleScheduleFrame ;
     skos:isRelatedTo siri:OriginName ;
-    skos:isRelatedTo siri:ViaName ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:ViaName .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftxc%2Fuk_txc_SCWW-86_extract2-simplified.xml>
     a dct:Dataset ;
@@ -15823,8 +15491,7 @@
     skos:isRelatedTo netex:VehicleJourneyRunTime ;
     skos:isRelatedTo netex:VehicleScheduleFrame ;
     skos:isRelatedTo siri:FilterByDestination ;
-    skos:isRelatedTo siri:OriginName ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:OriginName .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftxc%2Fuk_txc_extract1.xml>
     a dct:Dataset ;
@@ -15860,8 +15527,7 @@
     skos:isRelatedTo netex:TypeOfOrganisationPart ;
     skos:isRelatedTo netex:TypeOfParking ;
     skos:isRelatedTo netex:VehicleJourneyRunTime ;
-    skos:isRelatedTo netex:VehicleScheduleFrame ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:VehicleScheduleFrame .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Ftxc%2Fuk_txc_extract1_simplified.xml>
     a dct:Dataset ;
@@ -15881,8 +15547,7 @@
     skos:isRelatedTo netex:OrganisationPart ;
     skos:isRelatedTo netex:TypeOfOrganisationPart ;
     skos:isRelatedTo netex:VehicleJourneyRunTime ;
-    skos:isRelatedTo netex:VehicleScheduleFrame ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:VehicleScheduleFrame .
 
 <https://napcore.eu/examples/examples%2Fstandards%2Fvdv452%2Ftimetable%2FNeTEx%20VDV%20Example.xml>
     a dct:Dataset ;
@@ -15940,81 +15605,70 @@
     skos:isRelatedTo siri:ActualDepartureTime ;
     skos:isRelatedTo siri:AimedDepartureTime ;
     skos:isRelatedTo siri:KeyList ;
-    skos:isRelatedTo siri:OriginName ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:OriginName .
 
 <https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_generic%2Fexa_checkStatus_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_generic/exa_checkStatus_request.xml"@en ;
     dct:source "examples/ws_siri_request/siri_generic/exa_checkStatus_request.xml"@en ;
-    skos:isRelatedTo siri:CheckStatusRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:CheckStatusRequest .
 
 <https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_generic%2Fexa_checkStatus_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_generic/exa_checkStatus_response.xml"@en ;
     dct:source "examples/ws_siri_request/siri_generic/exa_checkStatus_response.xml"@en ;
     skos:isRelatedTo siri:CheckStatusRequest ;
-    skos:isRelatedTo siri:CheckStatusResponse ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:CheckStatusResponse .
 
 <https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_generic%2Fexa_dataReady_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_generic/exa_dataReady_request.xml"@en ;
     dct:source "examples/ws_siri_request/siri_generic/exa_dataReady_request.xml"@en ;
-    skos:isRelatedTo siri:DataReadyNotification ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:DataReadyNotification .
 
 <https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_generic%2Fexa_dataReady_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_generic/exa_dataReady_response.xml"@en ;
     dct:source "examples/ws_siri_request/siri_generic/exa_dataReady_response.xml"@en ;
-    skos:isRelatedTo siri:DataReadyAcknowledgement ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:DataReadyAcknowledgement .
 
 <https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_generic%2Fexa_dataReceived_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_generic/exa_dataReceived_response.xml"@en ;
     dct:source "examples/ws_siri_request/siri_generic/exa_dataReceived_response.xml"@en ;
-    skos:isRelatedTo siri:DataReceivedAcknowledgement ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:DataReceivedAcknowledgement .
 
 <https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_generic%2Fexa_dataSupply_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_generic/exa_dataSupply_request.xml"@en ;
     dct:source "examples/ws_siri_request/siri_generic/exa_dataSupply_request.xml"@en ;
-    skos:isRelatedTo siri:DataSupplyRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:DataSupplyRequest .
 
 <https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_generic%2Fexa_heartbeat_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_generic/exa_heartbeat_request.xml"@en ;
     dct:source "examples/ws_siri_request/siri_generic/exa_heartbeat_request.xml"@en ;
-    skos:isRelatedTo siri:HeartbeatNotification ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:HeartbeatNotification .
 
 <https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_generic%2Fexa_requestSubscription_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_generic/exa_requestSubscription_response.xml"@en ;
     dct:source "examples/ws_siri_request/siri_generic/exa_requestSubscription_response.xml"@en ;
     skos:isRelatedTo siri:ErrorCondition ;
-    skos:isRelatedTo siri:NoInfoForTopicError ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:NoInfoForTopicError .
 
 <https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_generic%2Fexa_terminateSubscription_request.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_generic/exa_terminateSubscription_request.xml"@en ;
     dct:source "examples/ws_siri_request/siri_generic/exa_terminateSubscription_request.xml"@en ;
-    skos:isRelatedTo siri:TerminateSubscriptionRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TerminateSubscriptionRequest .
 
 <https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_generic%2Fexa_terminateSubscription_response.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_generic/exa_terminateSubscription_response.xml"@en ;
     dct:source "examples/ws_siri_request/siri_generic/exa_terminateSubscription_response.xml"@en ;
     skos:isRelatedTo siri:TerminateSubscriptionRequest ;
-    skos:isRelatedTo siri:TerminateSubscriptionResponse ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:TerminateSubscriptionResponse .
 
 <https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_generic%2Fexa_terminateSubscription_response_err.xml>
     a dct:Dataset ;
@@ -16024,8 +15678,7 @@
     skos:isRelatedTo siri:TerminateSubscriptionRequest ;
     skos:isRelatedTo siri:TerminateSubscriptionResponse ;
     skos:isRelatedTo siri:UnknownSubscriberError ;
-    skos:isRelatedTo siri:UnknownSubscriptionError ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:UnknownSubscriptionError .
 
 <https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_netex%2Fexu_dataObject_response.xml>
     a dct:Dataset ;
@@ -16038,19 +15691,16 @@
     skos:isRelatedTo netex:PassengerInformationFacilityList ;
     skos:isRelatedTo netex:PlaceLighting ;
     skos:isRelatedTo netex:RoadVehicleMode ;
-    skos:isRelatedTo siri:PassengerInformationFacility ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo siri:PassengerInformationFacility .
 
 <https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_netex%2Fexu_dataObject_subscriptionRequest-Nx.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_netex/exu_dataObject_subscriptionRequest-Nx.xml"@en ;
     dct:source "examples/ws_siri_request/siri_netex/exu_dataObject_subscriptionRequest-Nx.xml"@en ;
-    skos:isRelatedTo netex:DataObjectSubscriptionRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:DataObjectSubscriptionRequest .
 
 <https://napcore.eu/examples/examples%2Fws_siri_request%2Fsiri_netex%2Fexu_dataObject_subscriptionRequest.xml>
     a dct:Dataset ;
     rdfs:label "examples/ws_siri_request/siri_netex/exu_dataObject_subscriptionRequest.xml"@en ;
     dct:source "examples/ws_siri_request/siri_netex/exu_dataObject_subscriptionRequest.xml"@en ;
-    skos:isRelatedTo netex:DataObjectSubscriptionRequest ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    skos:isRelatedTo netex:DataObjectSubscriptionRequest .

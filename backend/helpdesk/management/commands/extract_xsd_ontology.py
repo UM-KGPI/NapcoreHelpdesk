@@ -17,6 +17,8 @@ from typing import Dict, List, Set
 import yaml
 from django.core.management.base import BaseCommand, CommandError
 
+from helpdesk.services.transmodel_alignment import STANDARD_SOURCE_REPOSITORIES
+
 logger = logging.getLogger(__name__)
 
 # Repository root: backend/helpdesk/management/commands/<this file> is four levels below it.
@@ -1021,6 +1023,9 @@ class Command(BaseCommand):
         lines.append("    a owl:Ontology ;")
         lines.append('    dct:title "NAPCORE Example Files Catalog"@en ;')
         lines.append('    dct:description "Index linking XML example files to schema concepts"@en ;')
+        # The example files come from the standards' repositories; no licence is claimed here.
+        sources = ", ".join(f"<{url}>" for url in STANDARD_SOURCE_REPOSITORIES.values())
+        lines.append(f"    dct:source {sources} ;")
         lines.append('    owl:versionInfo "0.1-examples" .')
         lines.append("")
         lines.append("#################################################################")
@@ -1039,8 +1044,7 @@ class Command(BaseCommand):
 
             for concept_id in sorted(concept_ids):
                 lines.append(f"    skos:isRelatedTo {concept_id} ;")
-
-            lines.append('    dct:license <https://creativecommons.org/licenses/by/4.0/> .')
+            lines[-1] = lines[-1][: -len(" ;")] + " ."
             lines.append("")
 
         output_file = output_dir / "examples.ttl"
@@ -1077,7 +1081,8 @@ class Command(BaseCommand):
             f'    dct:description "OWL ontology with extracted inheritance and composition relationships from XSD."@en ;'
         )
         lines.append('    owl:versionInfo "0.2-xsd-rebuild-with-relationships" ;')
-        lines.append('    dct:license <https://creativecommons.org/licenses/by/4.0/> .')
+        # Name the source, not a licence: the definitions keep the terms of the standard they come from.
+        lines.append(f"    dct:source <{STANDARD_SOURCE_REPOSITORIES.get(standard, std_ns[:-1])}> .")
         lines.append("")
         lines.append("#################################################################")
         lines.append("# Concepts with Semantic Relationships")

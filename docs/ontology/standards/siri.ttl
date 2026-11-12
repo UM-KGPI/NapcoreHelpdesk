@@ -15,7 +15,7 @@
     dct:title "SIRI Ontology with Schema Relationships"@en ;
     dct:description "OWL ontology with extracted inheritance and composition relationships from XSD."@en ;
     owl:versionInfo "0.2-xsd-rebuild-with-relationships" ;
-    dct:license <https://creativecommons.org/licenses/by/4.0/> .
+    dct:source <https://github.com/TransmodelEcosystem/SIRI> .
 
 #################################################################
 # Concepts with Semantic Relationships
