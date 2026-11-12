@@ -162,3 +162,47 @@ class ExtractCommandOptionTests(SimpleTestCase):
                 with self.assertRaises(CommandError) as ctx:
                     call_command("extract_xsd_ontology", "--netex-path", str(Path(tmp) / "nope"), stdout=StringIO())
         self.assertIn("--netex-path", str(ctx.exception))
+
+
+class GeneratedTurtleNamesSourcesTests(SimpleTestCase):
+    """The generated TTL files name their sources and claim no licence."""
+
+    NAMESPACES = {"netex": "https://netex.org.uk/netex/2.0#"}
+
+    def _graph(self, text: str):
+        import rdflib
+
+        graph = rdflib.Graph()
+        graph.parse(data=text, format="turtle")
+        return graph
+
+    def test_standard_ontology_header_names_the_repository_and_no_licence(self):
+        from helpdesk.management.commands.extract_xsd_ontology import Command
+        import rdflib
+
+        lines = Command()._build_ttl_content(
+            "netex", {"netex:StopPlace": {"name": "StopPlace", "description": "A place."}}, self.NAMESPACES
+        )
+        graph = self._graph("\n".join(lines))
+        self.assertEqual(list(graph.objects(None, rdflib.DCTERMS.license)), [])
+        self.assertIn(
+            rdflib.URIRef("https://github.com/TransmodelEcosystem/NeTEx"),
+            set(graph.objects(None, rdflib.DCTERMS.source)),
+        )
+
+    def test_examples_catalog_names_the_repositories_and_no_licence(self):
+        from helpdesk.management.commands.extract_xsd_ontology import Command
+        import rdflib
+
+        ontology = {
+            "namespaces": self.NAMESPACES,
+            "concepts": {"netex:StopPlace": {"example_sources": ["examples/stops.xml"]}},
+        }
+        with TemporaryDirectory() as tmp_dir:
+            Command(stdout=StringIO())._generate_examples_graph(ontology, Path(tmp_dir))
+            text = (Path(tmp_dir) / "examples.ttl").read_text(encoding="utf-8")
+        graph = self._graph(text)
+        self.assertEqual(list(graph.objects(None, rdflib.DCTERMS.license)), [])
+        sources = set(graph.objects(None, rdflib.DCTERMS.source))
+        self.assertIn(rdflib.URIRef("https://github.com/TransmodelEcosystem/SIRI"), sources)
+        self.assertIn(rdflib.Literal("examples/stops.xml", lang="en"), sources)
