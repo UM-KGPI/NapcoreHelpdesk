@@ -31,6 +31,7 @@ class RetireGraphdbGraphsTests(SimpleTestCase):
         delete, ask, out = self._run({"head": {}, "boolean": False})
         self.assertEqual([c.kwargs["graph_uri"] for c in delete.call_args_list], RETIRED_GRAPH_URIS)
         self.assertIn("https://napcore.eu/graph/core/napcore-its", RETIRED_GRAPH_URIS)
+        self.assertIn("urn:graph:napcore-its", RETIRED_GRAPH_URIS)
         self.assertIn("https://napcore.eu/ontology/nits#", ask.call_args.kwargs["sparql_query"])
         self.assertIn("No NITS statements", out)
 

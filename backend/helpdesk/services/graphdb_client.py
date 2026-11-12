@@ -131,6 +131,13 @@ RETIRED_GRAPH_URIS = [
     "https://napcore.eu/graph/alignments/netex",
     "https://napcore.eu/graph/alignments/opra",
     "https://napcore.eu/graph/alignments/siri",
+    # The same NITS files loaded under the older urn:graph:* names; the
+    # 0.97.189 deploy check found NITS statements only in these five graphs.
+    "urn:graph:napcore-its",
+    "urn:graph:nits-netex-align",
+    "urn:graph:nits-opra-align",
+    "urn:graph:nits-siri-align",
+    "urn:graph:nits-transmodel-align",
 ]
 
 # Transmodel is the conceptual reference for NeTEx, SIRI and OpRa, so its
