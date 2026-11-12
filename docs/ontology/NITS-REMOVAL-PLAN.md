@@ -11,10 +11,12 @@ sensitivity are both independent, older issues). Phase 0's design document (`NIT
 was produced by a cloud session that exceeded its brief (asked for options only, it implemented instead)
 but checked out correctly on independent re-verification.
 
-**What remains, deliberately out of this plan's scope:** `graphdb_client.py`'s `STANDARD_GRAPH_SCOPE`/
-`query_graphdb_concept_expansion` comments and `graphdb_connector.py`'s one protective NITS-exclusion
-filter in `discover_standards_for_core_concept` are harmless and were left as historical context /
-defense-in-depth. The documentation rewrite (`docs/ontology/README.md`, `GENERATION.md`,
+**Follow-up 2026-11-11:** prod GraphDB is now checked on every deploy: `manage.py retire_graphdb_graphs`
+(run by `scripts/deploy.sh`) deletes the retired graphs and fails the deploy if any statement in the NITS
+namespace remains. On prod (0.97.188–0.97.190, 2026-11-12) it found NITS data in five legacy graphs loaded under the
+older names (`urn:graph:napcore-its`, `urn:graph:nits-{netex,opra,siri,transmodel}-align`); they were added to
+`RETIRED_GRAPH_URIS` and deleted, and the 0.97.190 deploy reported no NITS statements. With that in place, the eight protective NITS-exclusion `FILTER`s in `semantic_graph.py`
+and `graphdb_connector.py` were removed. The documentation rewrite (`docs/ontology/README.md`, `GENERATION.md`,
 `backend/README.md`) describing the old NITS-centric architecture has **not** been done yet — that's the
 one real follow-up task, now unblocked since the architecture it needs to describe (Transmodel as the
 cross-standard pivot) is finally the actual, current state rather than a moving target.
