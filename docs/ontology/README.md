@@ -1,4 +1,4 @@
-# NAPCORE ITS Ontology Assets
+# NAPCORE Helpdesk Ontology Assets
 
 ## Purpose
 This directory contains ontology assets for the NAPCORE semantic layer.
