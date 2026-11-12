@@ -3,7 +3,12 @@ name: CI
 # Not on push to main: main only receives squash merges of pull requests that passed this workflow, and the
 # deploy runs it again (workflow_call) before deploying.
 on:
+  # The version-bump PR changes only VERSION and is opened by github-actions[bot]. In this public repo its
+  # runs wait for approval (policy: all external contributors) and expire as failures, so skip them.
+  # The deploy runs CI on main (workflow_call) anyway.
   pull_request:
+    paths-ignore:
+      - VERSION
   workflow_call:
 
 # A new push to a pull request cancels its older run. Other runs (the deploy's call) get a group of their own.
