@@ -256,11 +256,8 @@ evolves.
 NAPCORE Helpdesk is developed collaboratively, and feedback from the
 community is very welcome. Because the project is a work in progress, reports
 of incorrect, incomplete, or missing answers are especially valuable: use the
-thumbs up and thumbs down buttons under each answer. The
-[GitHub repository](https://github.com/UM-KGPI/NapcoreHelpdesk) is public;
-there you can report issues, propose features,
-submit pull requests, or review the codebase and architecture. See [Contributing](../CONTRIBUTING.md) for development flow and
-commit conventions.
+thumbs up and thumbs down buttons under each answer. See
+[Contributing](../CONTRIBUTING.md) for development flow and commit conventions.
 
 ## License
 
