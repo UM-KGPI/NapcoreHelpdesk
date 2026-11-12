@@ -16,10 +16,9 @@ but checked out correctly on independent re-verification.
 namespace remains. On prod (0.97.188–0.97.190, 2026-11-12) it found NITS data in five legacy graphs loaded under the
 older names (`urn:graph:napcore-its`, `urn:graph:nits-{netex,opra,siri,transmodel}-align`); they were added to
 `RETIRED_GRAPH_URIS` and deleted, and the 0.97.190 deploy reported no NITS statements. With that in place, the eight protective NITS-exclusion `FILTER`s in `semantic_graph.py`
-and `graphdb_connector.py` were removed. The documentation rewrite (`docs/ontology/README.md`, `GENERATION.md`,
-`backend/README.md`) describing the old NITS-centric architecture has **not** been done yet — that's the
-one real follow-up task, now unblocked since the architecture it needs to describe (Transmodel as the
-cross-standard pivot) is finally the actual, current state rather than a moving target.
+and `graphdb_connector.py` were removed. The documentation (`docs/ontology/README.md`, `GENERATION.md`, `backend/README.md`) already describes
+Transmodel as the cross-standard pivot; the last NITS-era wording (the README title and "core concepts") was
+fixed on 2026-11-12. The removal is complete.
 Scope: namespace `https://napcore.eu/ontology/nits#`, file `docs/ontology/napcore-its.ttl`, and every
 reference to it (`nits:` prefix, `NITS_*`/`_NITS_*`/`*_nits_*` symbols, the `nits-{netex,opra,siri}-align.ttl`
 alignment files, and the `nits:unknown-concept` sentinel string).
