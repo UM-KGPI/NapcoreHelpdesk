@@ -169,30 +169,19 @@ class GeneratedTurtleNamesSourcesTests(SimpleTestCase):
 
     NAMESPACES = {"netex": "https://netex.org.uk/netex/2.0#"}
 
-    def _graph(self, text: str):
-        import rdflib
-
-        graph = rdflib.Graph()
-        graph.parse(data=text, format="turtle")
-        return graph
-
     def test_standard_ontology_header_names_the_repository_and_no_licence(self):
         from helpdesk.management.commands.extract_xsd_ontology import Command
-        import rdflib
 
         lines = Command()._build_ttl_content(
             "netex", {"netex:StopPlace": {"name": "StopPlace", "description": "A place."}}, self.NAMESPACES
         )
-        graph = self._graph("\n".join(lines))
-        self.assertEqual(list(graph.objects(None, rdflib.DCTERMS.license)), [])
-        self.assertIn(
-            rdflib.URIRef("https://github.com/TransmodelEcosystem/NeTEx"),
-            set(graph.objects(None, rdflib.DCTERMS.source)),
-        )
+        text = "\n".join(lines)
+        self.assertNotIn("dct:license", text)
+        self.assertIn('    owl:versionInfo "0.2-xsd-rebuild-with-relationships" ;\n'
+                      "    dct:source <https://github.com/TransmodelEcosystem/NeTEx> .", text)
 
     def test_examples_catalog_names_the_repositories_and_no_licence(self):
         from helpdesk.management.commands.extract_xsd_ontology import Command
-        import rdflib
 
         ontology = {
             "namespaces": self.NAMESPACES,
@@ -201,8 +190,11 @@ class GeneratedTurtleNamesSourcesTests(SimpleTestCase):
         with TemporaryDirectory() as tmp_dir:
             Command(stdout=StringIO())._generate_examples_graph(ontology, Path(tmp_dir))
             text = (Path(tmp_dir) / "examples.ttl").read_text(encoding="utf-8")
-        graph = self._graph(text)
-        self.assertEqual(list(graph.objects(None, rdflib.DCTERMS.license)), [])
-        sources = set(graph.objects(None, rdflib.DCTERMS.source))
-        self.assertIn(rdflib.URIRef("https://github.com/TransmodelEcosystem/SIRI"), sources)
-        self.assertIn(rdflib.Literal("examples/stops.xml", lang="en"), sources)
+        self.assertNotIn("dct:license", text)
+        self.assertIn(
+            "    dct:source <https://github.com/TransmodelEcosystem/NeTEx>, "
+            "<https://github.com/TransmodelEcosystem/SIRI>, <https://github.com/TransmodelEcosystem/OpRa> ;",
+            text,
+        )
+        # The entry's last statement now closes it.
+        self.assertIn('    dct:source "examples/stops.xml"@en ;\n    skos:isRelatedTo netex:StopPlace .\n', text)
