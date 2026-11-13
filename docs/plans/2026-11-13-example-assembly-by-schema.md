@@ -317,3 +317,28 @@ attempts). **Measured.**
   the same change.
 
 Next per §5: C (benchmark through the app's path, then gen33 five times on prod after deploy), B2 only if needed.
+
+### Prod check after A1–A3 (0.97.210, 2026-11-13)
+
+Maribor–Ptuj (gen33) five times on prod (`req-diag-a3-*`): 4 generated, all 4 linked; 1 fell back to the
+standard's example (undeclared, order, wrong-parent). Before (0.97.202–204): 3 generated, 0 linked. **Measured.**
+
+### C (2026-11-13, Opus): the benchmark through the app's path agrees with the direct call
+
+`run_example_benchmark --via-api` posts each question to the app's `/questions/answer` (the English rendering,
+scope, retrieval settings and evidence order a user's question gets) and reads `generatedExample`. gen33–36 at 10
+runs on main (A1–A3), `api-10.json`, against the direct run on the same code (`a3-10.json`). **Measured.**
+
+| | direct | via the app |
+|---|---|---|
+| gen33 generated / linked / attempts / model time | 8 / 8 / 2.5 / 23.0 s | 10 / 10 / 2.8 / 24.8 s |
+| gen34 generated / linked / attempts / model time | 10 / 10 / 2.2 / 17.7 s | 10 / 10 / 2.1 / 18.3 s |
+| gen35 generated / first attempt | 10 / 10 | 10 / 10 |
+| gen36 generated / first attempt | 9 / 6 | 10 / 8 |
+| failed attempts | link 15, value 6, wrong-parent 5, … (35) | link 14, value 5, wrong-parent 4, undeclared 3, … (31) |
+
+The two paths agree within noise, and every generated example is linked on both. The earlier dev/prod gap
+(dev 7 of 12 linked, prod 0 of 3) came from the dev index (a branch checkout) and from the missing repairs, not
+from the app's path; prod's 4 of 4 after the deploy fits. The direct call stays the default (faster, no answer
+text); `--via-api` is for checks against prod behaviour. Through the app a run takes about 10 s more (the answer
+text).
