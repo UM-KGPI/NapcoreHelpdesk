@@ -342,3 +342,29 @@ The two paths agree within noise, and every generated example is linked on both.
 from the app's path; prod's 4 of 4 after the deploy fits. The direct call stays the default (faster, no answer
 text); `--via-api` is for checks against prod behaviour. Through the app a run takes about 10 s more (the answer
 text).
+
+### B2 (2026-11-13, Opus): wrong-parent feedback says where the element belongs. Not shipped
+
+After A1–A3, `wrong-parent` was 26% of failed attempts (gen01–36), above §3's 10% bar: mostly lists and objects
+written inside the wrong object (`parkings` in a StopPlace, a `Route` where a `RouteRef` fits), which A2 does not
+move. B2 (branch `feat/example-wrong-parent-feedback`, kept on GitHub, no PR) adds to the diagnostic the frame and
+list the standard's examples keep the element in (`ContentModels.home`), the reference the parent takes instead,
+or the elements of the draft that may hold it. On the 17 stored failures the messages read right.
+
+Two 10-run benchmarks of B2 (`b2-10.json`, `b2r-10.json`) against two of main on the same code (`a3-10.json`,
+`api-10.json`), gen33–36, 80 runs each, no outages. **Measured.**
+
+| | main (A1–A3) | B2 |
+|---|---|---|
+| generated / linked | 77 / 77 | 78 / 76 |
+| gen33 attempts / model time | 2.65 / 23.9 s | 3.00 / 25.7 s |
+| `wrong-parent` failed attempts (attempt 1 / later) | 9 (3 / 6) | 19 (12 / 7) |
+| repeated right after its own feedback | 3 of 7 | 3 of 18 |
+| all failed attempts | 66 | 77 |
+
+The gate (the class drops, nothing else worse) is not met. The share of repeats after the feedback falls, but the
+count is the same (3 and 3); most of B2's extra `wrong-parent` attempts are first attempts, which B2 does not
+touch (same prompt; validator logs clean, repair counts equal), so they are the model's spread, not B2. With
+outputs level and gen33 slower, B2 is not shipped. What remains is mostly meaning: `link` and `value`, about two
+thirds of failed attempts. A JSON description (§4) is not indicated either: structural failures the model must fix
+are under a third.
