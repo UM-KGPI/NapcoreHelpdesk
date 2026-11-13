@@ -508,6 +508,11 @@ class ValidatorServiceTests(SimpleTestCase):
         self.assertEqual(result["groups"][0]["children"][0]["documentation"], "Capacity of the frame's vehicles.")
         self.assertEqual(result["attributes"], [{"name": "id", "documentation": "", "owner": "Frame"}])
 
+    def test_required_children_at_the_end_of_a_path(self):
+        found = service.required_children(self.holder, ["PublicationDelivery", "dataObjects", "ResourceFrame"])
+        self.assertEqual(found["required"], [{"label": "Name", "names": ["Name"], "min": 1}])
+        self.assertFalse(service.required_children(self.holder, ["ResourceFrame"])["found"])  # not a global element
+
     def test_structure_of_an_unknown_element(self):
         self.assertEqual(self.holder.element_docs.structure("Nothing")["found"], False)
 
@@ -2155,7 +2160,9 @@ class LinkShapeTests(SimpleTestCase):
 
         root = etree.fromstring(SERVICE_JOURNEY_EXAMPLE)
         journey = root.find(".//{*}ServiceJourney")
-        shape = generator._holder_shape(journey, [["calls", "Call", "ScheduledStopPointRef"], ["JourneyPatternView", "LineRef"]])
+        shape = generator._holder_shape(
+            journey, [["calls", "Call", "ScheduledStopPointRef"], ["JourneyPatternView", "LineRef"]], required=lambda path: []
+        )
         self.assertEqual(shape["place"], ["TimetableFrame", "vehicleJourneys"])
         self.assertEqual(shape["excerpt"], (
             '<ServiceJourney id="sj">\n  <JourneyPatternView>\n    <LineRef ref="l"/>\n  </JourneyPatternView>\n'
@@ -2173,3 +2180,84 @@ class LinkShapeTests(SimpleTestCase):
         self.assertTrue(all("where the example has it: TimetableFrame > vehicleJourneys > ServiceJourney" in p for p in problems))
         self.assertEqual(sum("Its shape there" in p for p in problems), 1)
         self.assertEqual(generator.error_class(problems[0]), "link")
+
+
+STOP_ASSIGNMENT_JOURNEY = (
+    '<ServiceJourney xmlns="http://www.netex.org.uk/netex" id="sj"><LineRef ref="l"/><calls>'
+    '<Call id="c1"><ScheduledStopPointRef ref="a"/><Arrival><ForAlighting>false</ForAlighting>'
+    '<QuayAssignmentView><StopPlaceRef ref="sp"/><QuayName>Platform 4</QuayName></QuayAssignmentView></Arrival>'
+    '<Departure><Time>14:20:00</Time></Departure></Call></calls></ServiceJourney>'
+)
+UNLINKED_STOP_PLACES = (
+    '<CompositeFrame version="1.0" id="hd:CF"><frames>'
+    '<SiteFrame version="1.0" id="hd:SF"><stopPlaces><StopPlace version="1.0" id="hd:SP_Maribor"><Name>Maribor</Name>'
+    '</StopPlace></stopPlaces></SiteFrame>'
+    '<ServiceFrame version="1.0" id="hd:SVF"><lines><Line version="1.0" id="hd:LN"><Name>Maribor - Ptuj</Name></Line>'
+    "</lines></ServiceFrame></frames></CompositeFrame>"
+)
+
+
+class LinkShapeRequiredTests(SimpleTestCase):
+    """Plan 2026-11-13, B1: the excerpt keeps the children the schema requires at every kept element."""
+
+    TO_STOP_PLACE = ["calls", "Call", "Arrival", "QuayAssignmentView", "StopPlaceRef"]
+
+    def test_a_required_sibling_of_the_path_is_kept(self):
+        from lxml import etree
+
+        required = lambda path: [(frozenset({"ScheduledStopPointRef", "ScheduledStopPointView"}), 1)] if path[-1] == "Call" else []  # noqa: E731
+        shape = generator._holder_shape(etree.fromstring(STOP_ASSIGNMENT_JOURNEY), [self.TO_STOP_PLACE, ["LineRef"]], required=required)
+        self.assertIn('<ScheduledStopPointRef ref="a"/>', shape["excerpt"])
+        self.assertNotIn("ForAlighting", shape["excerpt"])  # optional children still go
+        self.assertNotIn("Departure", shape["excerpt"])
+        self.assertEqual(shape["requiredRefs"], [{"parent": "Call", "ref": "ScheduledStopPointRef"}])
+
+    def test_a_required_slot_the_paths_fill_adds_nothing(self):
+        from lxml import etree
+
+        required = lambda path: [(frozenset({"ScheduledStopPointRef"}), 1)] if path[-1] == "Call" else []  # noqa: E731
+        shape = generator._holder_shape(
+            etree.fromstring(STOP_ASSIGNMENT_JOURNEY), [["calls", "Call", "ScheduledStopPointRef"], ["LineRef"]], required=required
+        )
+        self.assertEqual(shape["requiredRefs"], [])
+        self.assertEqual(shape["excerpt"].count("ScheduledStopPointRef"), 1)
+
+    def test_the_feedback_says_which_object_a_required_reference_needs(self):
+        bridge = {"holder": "ServiceJourney", "toElement": self.TO_STOP_PLACE, "toAsked": ["LineRef"],
+                  "sourcePath": "examples/a.xml", "files": 1, "place": ["TimetableFrame", "vehicleJourneys"],
+                  "excerpt": "<ServiceJourney>…</ServiceJourney>", "requiredRefs": [{"parent": "Call", "ref": "ScheduledStopPointRef"}]}
+        found = {**bridge, "holders": {"ServiceJourney": bridge}}
+        with patch.object(generator, "link_example", return_value=found):
+            problems = generator.link_problems(UNLINKED_STOP_PLACES, "Line", LinkRetryTests.QUESTION, ["Maribor", "Ptuj"])
+            self.assertIn("A Call also needs a ScheduledStopPointRef: define a ScheduledStopPoint for each Call and refer to it.", problems[0])
+            # The fragment already defines one: nothing to add.
+            defined = UNLINKED_STOP_PLACES.replace(
+                "</lines>", '</lines><scheduledStopPoints><ScheduledStopPoint version="1.0" id="hd:SSP"/></scheduledStopPoints>'
+            )
+            problems = generator.link_problems(defined, "Line", LinkRetryTests.QUESTION, ["Maribor", "Ptuj"])
+        self.assertNotIn("also needs", " ".join(problems))
+
+    def test_the_standard_example_excerpt_keeps_the_stop_point_reference(self):
+        """Against the NeTEx checkout: the excerpt of Netex_01.5_Bus_SimpleTimetable_StopAssignment.xml's
+        ServiceJourney (StopPlace <-> Line) has a valid shape, its Call with the ScheduledStopPointRef."""
+        import os
+
+        from lxml import etree
+
+        from helpdesk.netex_content_model import ContentModels
+
+        checkout = Path(os.environ.get("NETEX_VALIDATOR_CHECKOUT", "/app/repos/NeTEx"))
+        path = checkout / "examples/functions/timetable/Netex_01.5_Bus_SimpleTimetable_StopAssignment.xml"
+        if not path.is_file() or not (checkout / "xsd").is_dir():
+            self.skipTest("no NeTEx checkout")
+        models = ContentModels()
+        models.load_directory(checkout / "xsd")
+        required = lambda steps: [(frozenset(s.names), s.min) for s in models.slots(models.type_at(list(steps))) if s.min >= 1]  # noqa: E731
+        journey = etree.parse(str(path)).getroot().find(".//{*}ServiceJourney")
+        shape = generator._holder_shape(journey, [self.TO_STOP_PLACE, ["LineRef"]], required=required)
+        self.assertIn("ScheduledStopPointRef", shape["excerpt"])
+        excerpt = etree.fromstring(shape["excerpt"].replace("<ServiceJourney", '<ServiceJourney xmlns="http://www.netex.org.uk/netex"', 1))
+        for node in excerpt.iter():
+            names = [etree.QName(child).localname for child in node]
+            steps = [etree.QName(n).localname for n in reversed([node, *node.iterancestors()])]
+            self.assertEqual(models.match_children(models.type_at(steps), names), [], steps)

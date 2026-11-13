@@ -415,7 +415,12 @@ class ContentModels:
             path.append(local(current.tag))
             current = current.getparent()
         path.reverse()
-        type_key = self.globals.get(path[0], "")
+        return self.type_at(path)
+
+    def type_at(self, path: list[str]) -> str:
+        """The type key at the end of a path of element names that starts at a global element
+        (["ServiceJourney", "calls", "Call"]); "" when the first is not global."""
+        type_key = self.globals.get(path[0], "") if path else ""
         for name in path[1:]:
             entry = next((slot.names[name] for slot in self.slots(type_key) if name in slot.names), None)
             type_key = entry if entry is not None else self.globals.get(name, "")
