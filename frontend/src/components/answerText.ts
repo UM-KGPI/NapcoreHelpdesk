@@ -4,7 +4,7 @@
  * cover the blocks too.
  */
 import { citationDisplayName, citationMarker } from "../citationLabels";
-import { exampleTitle, placeText, validityNote } from "./GeneratedExample";
+import { exampleTitle, placeText, unlinkedObjectsText, validityNote } from "./GeneratedExample";
 import type { AnswerResponse, GeneratedExample, SchemaStructure } from "../types";
 
 export function generatedExampleText(example?: GeneratedExample | null): string {
@@ -14,6 +14,7 @@ export function generatedExampleText(example?: GeneratedExample | null): string 
   const lines = [
     `${exampleTitle(example)} (${validityNote(example)}):`,
     ...(example.origin === "standard" && example.sourceUrl ? [example.sourceUrl] : []),
+    ...(unlinkedObjectsText(example) ? [unlinkedObjectsText(example)] : []),
     ...(example.valuePlaces ?? []).map((place) => `- ${placeText(place)}`),
     "```xml",
     example.xml,

@@ -908,11 +908,16 @@ def standard_example(
 # --- the asked object: resolver, skeleton, check (plan P2 of 2026-11-10) ------------------------
 
 # What the example is an example of, with more endings than _SUBJECT ("a route named …", "a passing time
-# arriving at …", "a fare product for adult …", the end of the sentence).
+# arriving at …", "a fare product for adult …", the end of the sentence). Also before the words that start
+# where it goes or how it runs: "a bus line from Maribor to Ptuj that runs only on school days" had no subject
+# (prod req-mwdzf8px-3qfhdl, 2026-11-12), so no asked object, skeleton or check. Not "to": "a point to point
+# fare" would end at "point".
 _SUBJECT_WIDE = re.compile(
     r"\b(?:examples?|samples?|fragments?|xml(?:\s+(?:files?|documents?|code|snippets?))?)\s+(?:of|for)\s+(?:an?\s+|the\s+|one\s+)?"
     r"(?P<subject>[A-Za-z][\w-]*(?:\s+[A-Za-z][\w-]*){0,2}?)"
-    r"(?=\s+(?:with|having|has|that|containing|including|for|in|named|called|operated|departing|arriving|at|on|of)\b"
+    r"(?=\s+(?:with|having|has|that|containing|including|for|in|named|called|operated|departing|arriving|at|on|of"
+    r"|from|between|via|through|by|near|during|which|whose|where|when|running|serving|operating|connecting|using"
+    r"|and|or)\b"
     r"|\s*$|\s*[,.?!;:])",
     re.I,
 )
@@ -1796,6 +1801,198 @@ def asked_object_problem(fragment: str, element: str, values: list[str], questio
     )
 
 
+# --- objects linked to the asked object (plan 2026-11-12 P2) ------------------------------------
+
+def _local(tag) -> str:
+    return tag.rsplit("}", 1)[-1] if isinstance(tag, str) else ""
+
+
+def unlinked_objects(fragment: str, asked: str) -> list[dict]:
+    """Objects of the fragment (elements with an id that are not frames) not connected to the asked object:
+    {"element", "id", "node"}. Connected: one inside the other (the nearest enclosing object), or a ref
+    attribute equal to an object's id. Prod req-mwdzf8px-3qfhdl (2026-11-12): a Line, two stop points, a
+    vehicle type and a day type, none referring to another; the conditions stood only in a Description.
+    Empty without an asked object in the fragment."""
+    from xml.etree import ElementTree
+
+    if not asked:
+        return []
+    try:
+        root = ElementTree.fromstring(f'<root xmlns="{NETEX_NAMESPACE}">{fragment}</root>')
+    except ElementTree.ParseError:
+        return []
+    parents = {child: parent for parent in root.iter() for child in parent}
+
+    def owner(node):
+        while node is not None and node is not root:
+            if node.get("id") and not _local(node.tag).endswith("Frame"):
+                return node
+            node = parents.get(node)
+        return None
+
+    objects = [node for node in root.iter() if node.get("id") and not _local(node.tag).endswith("Frame")]
+    by_id = {node.get("id"): node for node in objects}
+    edges: dict[int, set[int]] = {id(node): set() for node in objects}
+
+    def join(a, b):
+        edges[id(a)].add(id(b))
+        edges[id(b)].add(id(a))
+
+    for node in objects:
+        if (outer := owner(parents.get(node))) is not None:
+            join(node, outer)
+    for node in root.iter():
+        target = by_id.get(node.get("ref"))
+        if target is not None and (holder := owner(node)) is not None and holder is not target:
+            join(holder, target)
+    start = {id(node) for node in objects if _local(node.tag) == asked}
+    if not start:
+        return []
+    seen, todo = set(start), list(start)
+    while todo:
+        for other in edges[todo.pop()] - seen:
+            seen.add(other)
+            todo.append(other)
+    return [{"element": _local(n.tag), "id": n.get("id"), "node": n} for n in objects if id(n) not in seen]
+
+
+_LINK_CACHE: dict[tuple[str, str], tuple[dict | None, float]] = {}
+MAX_LINK_FILES = 20
+
+
+def link_example(element: str, asked: str) -> dict | None:
+    """How the standard's example files link an object of one kind to the asked one: {"holder", "toElement",
+    "toAsked", "sourcePath"}, the paths from the holder to each reference ("toAsked" empty when the holder is
+    the asked object, "toElement" empty when it is the element), and "holders": every object kind that holds
+    both references, each with its paths and "files", the number of files that show it. The asked object or the element holding the
+    other's reference first, else the kind in most files (a ServiceJourney with a LineRef and calls with
+    ScheduledStopPointRefs; by size alone a Block won for a VehicleType). The validator's lists of parents are
+    cut at a few names and stop at list wrappers (DayTypeRef -> dayTypes), so they cannot name the linking
+    object; the examples can."""
+    from pathlib import Path
+
+    from lxml import etree
+
+    from helpdesk.models import SourceChunk
+
+    key = (element, asked)
+    cached = _LINK_CACHE.get(key)
+    if cached is not None and cached[1] > time.monotonic():
+        return cached[0]
+    ref_element, ref_asked = f"{element}Ref", f"{asked}Ref"
+    base = SourceChunk.objects.filter(repository_url__icontains="netex", source_path__startswith="examples/")
+
+    def files(*names):
+        query = has_tag(names[0])
+        for name in names[1:]:
+            query |= has_tag(name)
+        return dict(base.filter(query).values_list("source_path", "repository_url").distinct())
+
+    with_element, with_asked = files(ref_element, element), files(ref_asked, asked)
+    candidates = sorted(set(with_element) & set(with_asked))[:MAX_LINK_FILES]
+    parser = etree.XMLParser(resolve_entities=False, load_dtd=False, no_network=True, huge_tree=False, remove_comments=True)
+    checkout_root = Path(getattr(settings, "SOURCE_CHECKOUT_DIR", "/app/repos"))
+    direct = None
+    bridges: dict[str, dict] = {}
+    for source_path in candidates:
+        path = checkout_root / with_element[source_path].rstrip("/").rsplit("/", 1)[-1] / source_path
+        try:
+            if path.stat().st_size > MAX_STANDARD_FILE_BYTES:
+                continue
+            root = etree.parse(str(path), parser).getroot()
+        except (OSError, etree.XMLSyntaxError):
+            continue
+        # For each object, the path to the first reference of each kind inside it.
+        reaches: dict = {}
+        for node in root.iter():
+            name = _local(node.tag)
+            if name not in (ref_element, ref_asked):
+                continue
+            steps, up = [name], node.getparent()
+            while up is not None:
+                up_name = _local(up.tag)
+                if up.get("id") and not up_name.endswith("Frame"):
+                    reaches.setdefault(up, {}).setdefault(name, list(reversed(steps)))
+                steps.append(up_name)
+                up = up.getparent()
+        in_file = set()
+        for node, refs in reaches.items():
+            name = _local(node.tag)
+            if name == asked and ref_element in refs:
+                direct = direct or {"holder": asked, "toElement": refs[ref_element], "toAsked": [], "sourcePath": source_path}
+            elif name == element and ref_asked in refs:
+                direct = direct or {"holder": element, "toElement": [], "toAsked": refs[ref_asked], "sourcePath": source_path}
+            elif ref_element in refs and ref_asked in refs and name not in in_file:
+                in_file.add(name)
+                entry = bridges.setdefault(name, {"holder": name, "toElement": refs[ref_element], "toAsked": refs[ref_asked], "sourcePath": source_path, "files": 0})
+                entry["files"] += 1
+        if direct is not None:
+            break
+    found = direct or (max(bridges.values(), key=lambda entry: entry["files"]) if bridges else None)
+    if found is not None:
+        found = {**found, "holders": bridges}
+    _LINK_CACHE[key] = (found, time.monotonic() + _LOOKUP_TTL_SECONDS)
+    return found
+
+
+def _asked_for(node, question: str, values: list[str]) -> bool:
+    """Whether the question asks for this object: one of its values is in it, or a word of its element name or
+    of its Name is in the question ("low-floor" -> a VehicleType named "Low-floor bus")."""
+    texts = [text for n in node.iter() for text in [n.text or "", *n.attrib.values()] if text.strip()]
+    if any(holds_value(text, value) for text in texts for value in values):
+        return True
+    asked_words = {_stem(word) for word in re.findall(r"[a-z]{4,}", (question or "").lower())}
+    words = [w.lower() for w in _camel_words(_local(node.tag)) if len(w) >= 4]
+    name = next((n.text or "" for n in node if _local(n.tag) == "Name"), "")
+    words += re.findall(r"[a-z]{4,}", name.lower())
+    return any(_stem(word) in asked_words for word in words)
+
+
+def link_problems(fragment: str, asked: str, question: str = "", values: list[str] = ()) -> list[str]:
+    """One feedback line per kind of object that nothing links to the asked object, with how the standard's
+    examples link the two."""
+    unlinked = unlinked_objects(fragment, asked)
+    kinds = list(dict.fromkeys(item["element"] for item in unlinked))
+    examples = {}
+    for element in kinds:
+        try:
+            examples[element] = link_example(element, asked)
+        except Exception as exc:  # the index unavailable: the plain request to link it
+            logger.info("link example not available: %s", exc)
+            examples[element] = None
+    # One linking object for several kinds where the examples allow it (a ServiceJourney for the stop points
+    # and the vehicle type), else each kind's own.
+    from collections import Counter
+
+    shared = Counter(name for example in examples.values() if example for name in example.get("holders") or {})
+    problems = []
+    for element in kinds:
+        items = [item for item in unlinked if item["element"] == element]
+        ids = ", ".join(item["id"] for item in items[:3])
+        line = f"the frame defines a {element} ({ids}) that nothing links to the {asked}. "
+        example = examples[element]
+        if example and example["holder"] not in (asked, element) and len(example.get("holders") or {}) > 1:
+            holders = example["holders"]
+            example = holders[max(holders, key=lambda name: (shared[name], holders[name]["files"]))]
+        if example is None:
+            line += f"Link it to the {asked} by a reference, directly or through another object in the frame"
+        elif example["holder"] == asked:
+            line += f"Give the {asked} a reference to it, as the standard's examples do: {' > '.join([asked, *example['toElement']])}"
+        elif example["holder"] == element:
+            line += f"Give the {element} a reference to the {asked}, as the standard's examples do: {' > '.join([element, *example['toAsked']])}"
+        else:
+            holder = example["holder"]
+            line += (
+                f"The standard's examples link them through a {holder} ({example['sourcePath']}): "
+                f"{' > '.join([holder, *example['toElement']])} and {' > '.join([holder, *example['toAsked']])}. "
+                f"Write such a {holder} in the frame with both references"
+            )
+        if not any(_asked_for(item["node"], question, list(values)) for item in items):
+            line += ", or remove it if the question does not need it"
+        problems.append(line + ".")
+    return problems
+
+
 def missing_value_error(value: str, question: str) -> str:
     """The feedback for a value the valid fragment lacks."""
     written = {iso: text for text, _, iso in durations(question)}
@@ -1902,7 +2099,9 @@ _PROMPT = (
     "needs one a version and an id; use the prefix 'hd:' for ids. Reference an object the question does not ask "
     "for with a ...Ref element that has a ref attribute and NO version attribute: it lies outside the fragment. "
     "Define an object in the frame only when the question asks for it or the schema requires it, and give a "
-    "reference to an object defined in the frame the same version as that object. Do not add elements the "
+    "reference to an object defined in the frame the same version as that object. Every object defined in the "
+    "frame is linked to the object the question asks for: one inside the other, or by a reference, directly or "
+    "through another object in the frame.Do not add elements the "
     "question does not need. Use only the values the question gives; where the schema needs another value, use a plain placeholder "
     "('Quay 1', 'Line 1'). Add no real-world facts the question does not give, such as coordinates, addresses, "
     "full names of organisations or opening times. The frame goes inside <dataObjects> of a PublicationDelivery; do not write the PublicationDelivery, "
@@ -1960,6 +2159,7 @@ _ERROR_CLASSES = (
     ("not-expected", ("This element is not expected",)),
     ("value", ("from the question is missing",)),
     ("asked-object", ("the question asks for",)),
+    ("link", ("that nothing links to the",)),
     ("condition", ("the question says the service runs", "is empty: give it the children")),
     ("model-error", ("generation failed",)),
 )
@@ -2082,6 +2282,22 @@ def standard_fallback(asked: str, scope: list[str] | None, values: list[str], la
         "generationErrors": last.get("errors") or [],
         "generationAttempts": last.get("attempts", MAX_ATTEMPTS),
     }
+
+
+def unlinked_text(example: dict | None) -> str:
+    """The sentence shown under an example whose objects are not all linked to the asked one, the same as the
+    frontend's (GeneratedExample.tsx, unlinkedObjectsText): "In this example nothing links the VehicleType and
+    2 ScheduledStopPoints to the Line." "" when everything is linked."""
+    unlinked = (example or {}).get("unlinkedObjects") or []
+    asked = (example or {}).get("askedObject") or ""
+    if not unlinked or not asked:
+        return ""
+    counts: dict[str, int] = {}
+    for item in unlinked:
+        counts[item["element"]] = counts.get(item["element"], 0) + 1
+    parts = [f"{n} {name}s" if n > 1 else f"the {name}" for name, n in counts.items()]
+    listed = parts[0] if len(parts) == 1 else ", ".join(parts[:-1]) + " and " + parts[-1]
+    return f"In this example nothing links {listed} to the {asked}."
 
 
 def example_origin(example: dict | None) -> str:
@@ -2238,6 +2454,38 @@ def _generate(
             "fragment": fragment[:MAX_LOGGED_FRAGMENT_CHARS],
         })
 
+    def accepted(fragment: str, checked: dict, unlinked: list[dict]) -> dict:
+        return {
+            "valid": True,
+            "origin": "generated",
+            "validated": True,
+            "attempts": len(attempt_log),
+            "xml": indented_fragment(fragment),
+            "document": publication_document(fragment),
+            "schema": SCHEMA_ENTRY,
+            "schemaVersion": checked.get("schemaVersion", ""),
+            "schemaCommit": checked.get("commit", ""),
+            "elementNotes": element_notes(checked.get("elements") or []),
+            "valuePlaces": _places(fragment, values, shape_question) + condition_places(fragment, conditions),
+            "evidenceChunkIds": [chunk.get("chunkId") for chunk in used],
+            "attemptLog": attempt_log,
+            **asked_fields,
+            "askedObjectPresent": bool(asked) and not asked_object_problem(fragment, asked, []),
+            **({"unlinkedObjects": unlinked} if unlinked else {}),
+            **timing,
+        }
+
+    # Objects not linked to the asked one are a soft problem (plan 2026-11-12 R1): the attempt is retried to link
+    # them, but a valid fragment that holds the values is never discarded for it. The one with the fewest
+    # unlinked objects is kept and returned when no later attempt does better. Discarding it gave the standard's
+    # example without the question's values (gen33: 5/5 generated on main, 0/5 with the hard check, R0).
+    best: tuple[int, str, dict, list[dict]] | None = None
+
+    def failed(result: dict) -> dict:
+        if best is not None:
+            return accepted(best[1], best[2], best[3])
+        return result
+
     for attempt in range(1, MAX_ATTEMPTS + 1):
         attempt_started = time.perf_counter()
         _LAST_COMPLETION_TOKENS.set(0)
@@ -2250,10 +2498,11 @@ def _generate(
             errors = [f"generation failed: {exc}"[:200]]
             logged(attempt, attempt_started, "", errors)
             if attempt == MAX_ATTEMPTS:
-                return {"valid": False, "attempts": attempt, "errors": errors, "attemptLog": attempt_log, **asked_fields, **timing}
+                return failed({"valid": False, "attempts": attempt, "errors": errors, "attemptLog": attempt_log, **asked_fields, **timing})
             continue
         fragment, parsed = parse_reply(content)
         checked: dict = {}
+        soft = False
         if not fragment:
             errors = ["the reply contained no XML frame"]
         else:
@@ -2261,37 +2510,31 @@ def _generate(
                 checked = timed("validationMs", lambda: validate_fragment(fragment))
             except ValidatorUnavailable as exc:
                 logger.warning("NeTEx example not validated: %s", exc)
-                return {"valid": False, "attempts": attempt, "errors": [str(exc)[:200]], "attemptLog": attempt_log, **asked_fields, **timing}
+                return failed({"valid": False, "attempts": attempt, "errors": [str(exc)[:200]], "attemptLog": attempt_log, **asked_fields, **timing})
             errors = list(checked.get("errors") or [])
             if checked.get("valid") and not errors:
                 errors = [
                     missing_value_error(value, question)
                     for value in _unmet_values(fragment, values, shape_question)
                 ]
-                if not errors and asked and (problem := asked_object_problem(fragment, asked, values, shape_question)):
+                # Hard: the asked object is absent. Whether the values sit in it or in linked objects is the
+                # link check's (soft) question.
+                if not errors and asked and (problem := asked_object_problem(fragment, asked, [], shape_question)):
                     errors = [problem]
                 if not errors:
                     errors = condition_problems(fragment, conditions)
+                if not errors and asked:
+                    errors = link_problems(fragment, asked, shape_question, values)
+                    soft = bool(errors)
         logged(attempt, attempt_started, parsed, errors, checked.get("diagnostics"), fragment)
         if not errors:
-            return {
-                "valid": True,
-                "origin": "generated",
-                "validated": True,
-                "attempts": attempt,
-                "xml": indented_fragment(fragment),
-                "document": publication_document(fragment),
-                "schema": SCHEMA_ENTRY,
-                "schemaVersion": checked.get("schemaVersion", ""),
-                "schemaCommit": checked.get("commit", ""),
-                "elementNotes": element_notes(checked.get("elements") or []),
-                "valuePlaces": _places(fragment, values, shape_question) + condition_places(fragment, conditions),
-                "evidenceChunkIds": [chunk.get("chunkId") for chunk in used],
-                "attemptLog": attempt_log,
-                **asked_fields,
-                "askedObjectPresent": bool(asked) and not asked_object_problem(fragment, asked, []),
-                **timing,
-            }
+            return accepted(fragment, checked, [])
+        if soft:
+            unlinked = [{"element": item["element"], "id": item["id"]} for item in unlinked_objects(fragment, asked)]
+            if best is None or len(unlinked) < best[0]:
+                best = (len(unlinked), fragment, checked, unlinked)
+        if attempt == MAX_ATTEMPTS:
+            break
         if declarations is None:
             declarations = schema_declarations(question)
             if fragment:
@@ -2303,16 +2546,19 @@ def _generate(
         shown = [d for d in declarations if d.get("name") not in explained]
         schema_part = (
             "\n\n" + declarations_block(shown) + "\nPrefer these elements, under the parents given, for what the question asks."
-            if shown
+            if shown and not soft
             else ""
+        )
+        opening = (
+            "The frame is valid NeTEx and holds the question's values, but:" if soft else "The frame is not valid NeTEx:"
         )
         messages = messages + [
             {"role": "assistant", "content": content},
             {
                 "role": "user",
-                "content": "The frame is not valid NeTEx:\n- " + "\n- ".join(feedback_lines(checked, errors))
+                "content": opening + "\n- " + "\n- ".join(feedback_lines(checked, errors))
                 + schema_part
                 + "\nFix these errors and return the whole frame again as JSON {\"xml\": \"...\"}.",
             },
         ]
-    return {"valid": False, "attempts": MAX_ATTEMPTS, "errors": errors, "attemptLog": attempt_log, **asked_fields, **timing}
+    return failed({"valid": False, "attempts": MAX_ATTEMPTS, "errors": errors, "attemptLog": attempt_log, **asked_fields, **timing})

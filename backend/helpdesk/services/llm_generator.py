@@ -1441,7 +1441,9 @@ COMPOSITION_RULE = (
 # (services/netex_example_generator.py), the fragment and its schema notes are shown first and are the
 # answer; the text adds only what the evidence says about the fragment's elements, and may be empty.
 # (Prod req-mw7j8wr6-t4l19q, 2026-11-08: the text said "I cannot provide one" above a valid example.)
-def generated_example_rule(elements: list[str], fragment: str = "", also_asks: str = "", origin: str = "generated") -> str:
+def generated_example_rule(
+    elements: list[str], fragment: str = "", also_asks: str = "", origin: str = "generated", note: str = ""
+) -> str:
     """The text's brief next to an example shown first: it sees the fragment, answers any other part of the
     question first (also_asks: "How do you describe a stop place in NeTEx?" next to "show me an example"),
     then adds how the standard's own examples fill the same elements."""
@@ -1463,7 +1465,12 @@ def generated_example_rule(elements: list[str], fragment: str = "", also_asks: s
     )
     return (
         f"EXAMPLE ALREADY SHOWN: above your text the user sees this NeTEx fragment, {where}:{shown}"
-        f"It uses these elements: {', '.join(elements)}. Above it the user is told "
+        f"It uses these elements: {', '.join(elements)}. "
+        # What code says about the shown example (objects it does not link), so the text does not contradict it
+        # or deny what the example shows (plan 2026-11-12 R2).
+        + (f"With the example the user is also told: \u201c{note}\u201d Do not contradict this, and do not say the "
+           "example lacks what it shows. " if note else "")
+        + "Above it the user is told "
         + ("that the example does not hold the question's values" if origin == "standard-without-values" else "which element holds each value or count of the question")
         + ", and below it each element's definition from the schema. Do not repeat "
         f"or describe the fragment. {first}"
@@ -1542,6 +1549,7 @@ def _build_messages(
     example_fragment: str = "",
     also_asks: str = "",
     example_origin: str = "generated",
+    example_note: str = "",
     existence: bool | str = False,
 ) -> list[dict]:
     context_lines = []
@@ -1749,7 +1757,7 @@ def _build_messages(
         "- If a requested detail is not in the evidence, explicitly state that — in the response language, not English "
         "(unless English is the response language)\n\n"
         f"{COMPOSITION_RULE + chr(10) if composition else ''}"
-        f"{generated_example_rule(example_elements, example_fragment, also_asks, example_origin) + chr(10) + chr(10) if example_elements else ''}"
+        f"{generated_example_rule(example_elements, example_fragment, also_asks, example_origin, example_note) + chr(10) + chr(10) if example_elements else ''}"
         f"{schema_structure_rule(structure_element) + chr(10) + chr(10) if structure_element else ''}"
         f"{(MODELLING_RULE if existence == 'how' else EXISTENCE_RULE) + chr(10) + chr(10) if existence and not example_elements and not structure_element else ''}"
         "Write your answer:"
@@ -2075,6 +2083,7 @@ def generate_answer_llm(
     example_fragment: str = "",
     also_asks: str = "",
     example_origin: str = "generated",
+    example_note: str = "",
     existence: bool | str = False,
 ) -> dict:
     """Generate a grounded answer through a configurable OpenAI-compatible API.
@@ -2114,6 +2123,7 @@ def generate_answer_llm(
         example_fragment=example_fragment,
         also_asks=also_asks,
         example_origin=example_origin,
+        example_note=example_note,
         existence=existence,
     )
 
@@ -2380,6 +2390,7 @@ def stream_answer_llm(
     example_fragment: str = "",
     also_asks: str = "",
     example_origin: str = "generated",
+    example_note: str = "",
     existence: bool | str = False,
 ) -> Generator[tuple[str, object], None, None]:
     """
@@ -2426,6 +2437,7 @@ def stream_answer_llm(
         example_fragment=example_fragment,
         also_asks=also_asks,
         example_origin=example_origin,
+        example_note=example_note,
         existence=existence,
     )
 

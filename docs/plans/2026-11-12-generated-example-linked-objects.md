@@ -62,6 +62,27 @@ skeleton's part.
 
 Stop and report after R0 if the cause is none of the three.
 
+### R0 result (2026-11-13, Opus): the asked-object check causes the regression, not the skeleton
+
+gen33/gen34, 5 runs per configuration, each attempt's fragment kept (`.mylocal/bench/r0.json`; "main" = the branch
+with main's subject pattern and prompt and no link check). **Measured:**
+
+| | main | branch, no skeleton | branch |
+|---|---|---|---|
+| gen33 generated | **5/5** | 0/5 | 0/5 |
+| gen34 generated | 4/5 | 2/5 | 3/5 |
+
+- In all 5 main runs the accepted fragment holds Maribor and Ptuj as the `Name` of two `ScheduledStopPoint`s that
+  nothing links to the Line.
+- The branch reaches that same fragment (or one with the values in unlinked `DestinationDisplay`s or `StopPlace`s)
+  in 8 of 10 gen33 runs, and the second half of `asked_object_problem` rejects it ("the values … are neither in it
+  nor in an object that refers to it"), mostly on the last attempt. Under R1 those 8 runs return a generated
+  fragment; the other 2 never placed the values as whole content (value check, as on main).
+- Without the skeleton the result is the same (0/5), so the skeleton is not the cause. With it the model tries the
+  conditions more often (VehicleType, DayType, DestinationDisplay appear), which costs attempts.
+
+Decision as planned: R1, nothing more.
+
 ### R1. Soft handling of links (changes the branch's P2)
 
 In `_generate`:

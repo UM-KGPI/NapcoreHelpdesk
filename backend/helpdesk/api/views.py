@@ -72,6 +72,7 @@ from helpdesk.services.netex_example_generator import (
     example_element_names,
     example_origin,
     generate_netex_example,
+    unlinked_text,
     main_object,
     other_question,
     value_element_names,
@@ -1514,6 +1515,7 @@ class QuestionAnswerView(APIView):
                             example_fragment=(generated_example or {}).get("xml", "") if example_ready else "",
                             also_asks=other_question(english_question or question) if example_ready else "",
                             example_origin=example_origin(generated_example),
+                            example_note=unlinked_text(generated_example) if example_ready else "",
                             existence=(question_kind(english_question or question) or True) if presence else False,
                         )
                         llm_generated = True
@@ -2209,6 +2211,7 @@ class QuestionAnswerStreamView(APIView):
                             example_fragment=(generated_example or {}).get("xml", "") if example_ready else "",
                             also_asks=other_question(english_question or question) if example_ready else "",
                             example_origin=example_origin(generated_example),
+                            example_note=unlinked_text(generated_example) if example_ready else "",
                             existence=(question_kind(english_question or question) or True) if presence else False,
                         ):
                             if event_type == "token":

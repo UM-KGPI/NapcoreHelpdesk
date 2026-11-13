@@ -43,6 +43,20 @@ export function missingValuesText(example: GeneratedExample): string {
   return `No example with ${asked} validated against the schema; this example from the standard shows the same kind of object and does not contain them.`;
 }
 
+/** "In this example nothing links the VehicleType and 2 ScheduledStopPoints to the Line."; "" when all are linked.
+ * Same wording as the backend's unlinked_text (netex_example_generator.py), which the answer text is told not to contradict. */
+export function unlinkedObjectsText(example: GeneratedExample): string {
+  const unlinked = example.unlinkedObjects ?? [];
+  if (!unlinked.length || !example.askedObject) {
+    return "";
+  }
+  const counts = new Map<string, number>();
+  unlinked.forEach((item) => counts.set(item.element, (counts.get(item.element) ?? 0) + 1));
+  const parts = [...counts].map(([name, n]) => (n > 1 ? `${n} ${name}s` : `the ${name}`));
+  const listed = parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
+  return `In this example nothing links ${listed} to the ${example.askedObject}.`;
+}
+
 /** "two → 2 × Quay in StopPlace › quays", "49 → SeatingCapacity in … › PassengerCapacity". */
 export function placeText(place: { value: string; element: string; path: string[]; count?: number }): string {
   const where = place.path.length ? ` in ${place.path.slice(-3).join(" › ")}` : "";
@@ -81,6 +95,7 @@ export default function GeneratedExampleBlock({ example }: { example?: Generated
           {missingValuesText(example)}
         </p>
       ) : null}
+      {unlinkedObjectsText(example) ? <p className="generated-example-lead">{unlinkedObjectsText(example)}</p> : null}
       {example.valuePlaces && example.valuePlaces.length > 0 ? (
         <ul className="generated-example-lead" aria-label="Where the question's values go">
           {example.valuePlaces.map((place) => (
