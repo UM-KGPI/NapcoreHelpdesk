@@ -1838,22 +1838,41 @@ class LinkRetryTests(SimpleTestCase):
         self.assertEqual(result["attemptLog"][0]["fragment"], UNLINKED_LINE)
 
     def test_last_attempt_with_only_unlinked_objects_is_shown_and_names_them(self):
-        result, _ = self._run([UNLINKED_LINE] * generator.MAX_ATTEMPTS)
-        self.assertEqual((result["valid"], result["origin"], result["attempts"]), (True, "generated", generator.MAX_ATTEMPTS))
+        # One extra attempt, as an acceptable fragment is in hand (revision 2, R3).
+        total = generator.MAX_ATTEMPTS + generator.SOFT_EXTRA_ATTEMPTS
+        result, _ = self._run([UNLINKED_LINE] * total)
+        self.assertEqual((result["valid"], result["origin"], result["attempts"]), (True, "generated", total))
         self.assertEqual([item["element"] for item in result["unlinkedObjects"]],
                          ["VehicleType", "FareDayType", "ScheduledStopPoint", "ScheduledStopPoint"])
 
     def test_an_acceptable_unlinked_fragment_survives_a_broken_last_attempt(self):
-        with patch.object(generator, "_ask_model", side_effect=[_reply(UNLINKED_LINE)] * 3), patch.object(
+        broken = {"valid": False, "errors": ["line 1: Element 'Y': This element is not expected."]}
+        with patch.object(generator, "_ask_model", side_effect=[_reply(UNLINKED_LINE)] * 4), patch.object(
             generator, "validate_fragment",
             side_effect=[{"valid": False, "errors": ["line 1: Element 'X': This element is not expected."]},
-                         {"valid": True, "errors": []},
-                         {"valid": False, "errors": ["line 1: Element 'Y': This element is not expected."]}],
+                         {"valid": True, "errors": []}, broken, broken],
         ):
             result = generator.generate_netex_example(self.QUESTION, [NETEX_CHUNK], ["NeTEx"])
-        self.assertEqual((result["valid"], result["origin"], result["attempts"]), (True, "generated", 3))
+        self.assertEqual((result["valid"], result["origin"], result["attempts"]), (True, "generated", 4))
         self.assertEqual(len(result["unlinkedObjects"]), 4)
-        self.assertEqual([entry["errorClass"] for entry in result["attemptLog"]], ["not-expected", "link", "not-expected"])
+        self.assertEqual([entry["errorClass"] for entry in result["attemptLog"]], ["not-expected", "link", "not-expected", "not-expected"])
+
+    def test_the_extra_attempt_can_link(self):
+        broken = {"valid": False, "errors": ["line 1: Element 'serviceJourneys': This element is not expected."]}
+        with patch.object(generator, "_ask_model", side_effect=[_reply(UNLINKED_LINE), _reply(UNLINKED_LINE), _reply(LINKED_LINE), _reply(LINKED_LINE)]), patch.object(
+            generator, "validate_fragment", side_effect=[broken, {"valid": True, "errors": []}, broken, {"valid": True, "errors": []}]
+        ), patch.object(generator, "asked_object_problem", return_value=""):
+            result = generator.generate_netex_example(self.QUESTION, [NETEX_CHUNK], ["NeTEx"])
+        self.assertEqual((result["valid"], result["attempts"]), (True, 4))
+        self.assertNotIn("unlinkedObjects", result)
+
+    def test_no_extra_attempt_without_an_acceptable_fragment(self):
+        broken = {"valid": False, "errors": ["line 1: Element 'Y': This element is not expected."]}
+        with patch.object(generator, "_ask_model", side_effect=[_reply(UNLINKED_LINE)] * 4) as ask, patch.object(
+            generator, "validate_fragment", return_value=broken
+        ):
+            generator.generate_netex_example(self.QUESTION, [NETEX_CHUNK], ["NeTEx"])
+        self.assertEqual(ask.call_count, generator.MAX_ATTEMPTS)
 
     def test_the_fragment_with_fewer_unlinked_objects_is_kept(self):
         two = UNLINKED_LINE.replace('<ScheduledStopPoint version="any" id="hd:SSP_Maribor"><Name>Maribor</Name></ScheduledStopPoint>', "")
@@ -2071,3 +2090,41 @@ class OrderRepairGenerationTests(SimpleTestCase):
 
         rows = [{"valid": True, "attempts": 1, "attemptLog": [{"parsed": "json", "errorClass": "", "repaired": "order"}]}]
         self.assertEqual(summarize(rows)["repairedOrder"], 1)
+
+
+SERVICE_JOURNEY_EXAMPLE = (
+    '<CompositeFrame xmlns="http://www.netex.org.uk/netex" id="c"><frames><TimetableFrame id="t"><vehicleJourneys>'
+    '<ServiceJourney id="sj"><Name>Morning</Name><dayTypes><DayTypeRef ref="d"/></dayTypes>'
+    '<JourneyPatternView><LineRef ref="l"/></JourneyPatternView>'
+    '<calls><Call id="c1"><ScheduledStopPointRef ref="a"/><Arrival><Time>08:00:00</Time></Arrival></Call>'
+    '<Call id="c2"><ScheduledStopPointRef ref="b"/></Call></calls></ServiceJourney>'
+    "</vehicleJourneys></TimetableFrame></frames></CompositeFrame>"
+)
+
+
+class LinkShapeTests(SimpleTestCase):
+    """Plan 2026-11-12 revision 2, R3: the link feedback says where the linking object sits and shows its shape."""
+
+    def test_place_and_shape_of_the_linking_object(self):
+        from lxml import etree
+
+        root = etree.fromstring(SERVICE_JOURNEY_EXAMPLE)
+        journey = root.find(".//{*}ServiceJourney")
+        shape = generator._holder_shape(journey, [["calls", "Call", "ScheduledStopPointRef"], ["JourneyPatternView", "LineRef"]])
+        self.assertEqual(shape["place"], ["TimetableFrame", "vehicleJourneys"])
+        self.assertEqual(shape["excerpt"], (
+            '<ServiceJourney id="sj">\n  <JourneyPatternView>\n    <LineRef ref="l"/>\n  </JourneyPatternView>\n'
+            '  <calls>\n    <Call id="c1">\n      <ScheduledStopPointRef ref="a"/>\n    </Call>\n  </calls>\n</ServiceJourney>'
+        ))
+        self.assertIsNotNone(root.find(".//{*}Name"))  # the example itself is not changed
+
+    def test_the_feedback_names_the_place_and_shows_the_shape_once(self):
+        bridge = {"holder": "ServiceJourney", "toElement": ["calls", "Call", "ScheduledStopPointRef"],
+                  "toAsked": ["JourneyPatternView", "LineRef"], "sourcePath": "examples/a.xml", "files": 3,
+                  "place": ["TimetableFrame", "vehicleJourneys"], "excerpt": "<ServiceJourney>…</ServiceJourney>"}
+        found = {**bridge, "holders": {"ServiceJourney": bridge}}
+        with patch.object(generator, "link_example", return_value=found):
+            problems = generator.link_problems(UNLINKED_LINE, "Line", LinkRetryTests.QUESTION, ["Maribor", "Ptuj"])
+        self.assertTrue(all("where the example has it: TimetableFrame > vehicleJourneys > ServiceJourney" in p for p in problems))
+        self.assertEqual(sum("Its shape there" in p for p in problems), 1)
+        self.assertEqual(generator.error_class(problems[0]), "link")

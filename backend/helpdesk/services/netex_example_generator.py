@@ -25,6 +25,10 @@ logger = logging.getLogger(__name__)
 
 SCHEMA_ENTRY = "xsd/NeTEx_publication.xsd"
 MAX_ATTEMPTS = 3
+# One more attempt when an acceptable fragment (valid, with the values, only objects left unlinked) is already in
+# hand: the attempt that writes the linking object often fails on its structure, and the acceptable one is kept
+# either way (plan 2026-11-12 revision 2, R3). Never for hard errors alone.
+SOFT_EXTRA_ATTEMPTS = 1
 MAX_LOGGED_FRAGMENT_CHARS = 4000
 MAX_EVIDENCE_CHUNKS = 6
 MAX_EVIDENCE_CHARS = 1800
@@ -1858,6 +1862,49 @@ def unlinked_objects(fragment: str, asked: str) -> list[dict]:
 
 _LINK_CACHE: dict[tuple[str, str], tuple[dict | None, float]] = {}
 MAX_LINK_FILES = 20
+MAX_LINK_EXCERPT_LINES = 14
+
+
+def _holder_shape(node, paths: list[list[str]]) -> dict:
+    """Where a linking object sits in a standard example ("place": its frame and list, ["TimetableFrame",
+    "vehicleJourneys"]) and its shape cut to the paths to its references ("excerpt", at most
+    MAX_LINK_EXCERPT_LINES lines). After the link feedback the model wrote the ServiceJourney in the
+    ServiceFrame, under a list that does not exist there (gen33, 7 of 9 linked attempts; revision 4)."""
+    from copy import deepcopy
+
+    from lxml import etree
+
+    place, up = [], node.getparent()
+    while up is not None:
+        place.append(_local(up.tag))
+        if place[-1].endswith("Frame"):
+            break
+        up = up.getparent()
+    if not place or not place[-1].endswith("Frame"):
+        place = []
+    shape = deepcopy(node)
+    # The elements themselves, not their id(): lxml frees an element's proxy when nothing holds it, so an id
+    # taken on one access need not match the next.
+    kept = [shape]
+    for path in paths:
+        current = shape
+        for step in path:
+            current = next((child for child in current if isinstance(child.tag, str) and _local(child.tag) == step), None)
+            if current is None:
+                break
+            kept.append(current)
+    for element in list(shape.iter()):
+        if not any(element is other for other in kept) and element.getparent() is not None:
+            element.getparent().remove(element)
+    for element in shape.iter():
+        element.tail = None
+        if len(element):
+            element.text = None
+    text = re.sub(r'\s+xmlns(?::\w+)?="[^"]*"', "", etree.tostring(shape, encoding="unicode", with_tail=False))
+    return {
+        "place": list(reversed(place)),
+        "excerpt": "\n".join(indented_fragment(text).splitlines()[:MAX_LINK_EXCERPT_LINES]),
+    }
 
 
 def link_example(element: str, asked: str) -> dict | None:
@@ -1924,8 +1971,12 @@ def link_example(element: str, asked: str) -> dict | None:
                 direct = direct or {"holder": element, "toElement": [], "toAsked": refs[ref_asked], "sourcePath": source_path}
             elif ref_element in refs and ref_asked in refs and name not in in_file:
                 in_file.add(name)
-                entry = bridges.setdefault(name, {"holder": name, "toElement": refs[ref_element], "toAsked": refs[ref_asked], "sourcePath": source_path, "files": 0})
-                entry["files"] += 1
+                if name not in bridges:
+                    bridges[name] = {
+                        "holder": name, "toElement": refs[ref_element], "toAsked": refs[ref_asked], "sourcePath": source_path,
+                        "files": 0, **_holder_shape(node, [refs[ref_element], refs[ref_asked]]),
+                    }
+                bridges[name]["files"] += 1
         if direct is not None:
             break
     found = direct or (max(bridges.values(), key=lambda entry: entry["files"]) if bridges else None)
@@ -1966,10 +2017,12 @@ def link_problems(fragment: str, asked: str, question: str = "", values: list[st
 
     shared = Counter(name for example in examples.values() if example for name in example.get("holders") or {})
     problems = []
+    shown: set[str] = set()
     for element in kinds:
         items = [item for item in unlinked if item["element"] == element]
         ids = ", ".join(item["id"] for item in items[:3])
         line = f"the frame defines a {element} ({ids}) that nothing links to the {asked}. "
+        shape = ""
         example = examples[element]
         if example and example["holder"] not in (asked, element) and len(example.get("holders") or {}) > 1:
             holders = example["holders"]
@@ -1987,9 +2040,14 @@ def link_problems(fragment: str, asked: str, question: str = "", values: list[st
                 f"{' > '.join([holder, *example['toElement']])} and {' > '.join([holder, *example['toAsked']])}. "
                 f"Write such a {holder} in the frame with both references"
             )
+            if example.get("place"):
+                line += f", where the example has it: {' > '.join([*example['place'], holder])}"
+            if example.get("excerpt") and holder not in shown:
+                shown.add(holder)
+                shape = f"\n  Its shape there (the structure only, not the ids or values):\n{example['excerpt']}"
         if not any(_asked_for(item["node"], question, list(values)) for item in items):
             line += ", or remove it if the question does not need it"
-        problems.append(line + ".")
+        problems.append(line + "." + shape)
     return problems
 
 
@@ -2604,7 +2662,10 @@ def _generate(
             return accepted(best[1], best[2], best[3])
         return result
 
-    for attempt in range(1, MAX_ATTEMPTS + 1):
+    def last(attempt: int) -> bool:
+        return attempt >= MAX_ATTEMPTS + (SOFT_EXTRA_ATTEMPTS if best is not None else 0)
+
+    for attempt in range(1, MAX_ATTEMPTS + SOFT_EXTRA_ATTEMPTS + 1):
         attempt_started = time.perf_counter()
         _LAST_COMPLETION_TOKENS.set(0)
         try:
@@ -2615,7 +2676,7 @@ def _generate(
             logger.warning("NeTEx example generation failed (attempt %d): %s", attempt, exc)
             errors = [f"generation failed: {exc}"[:200]]
             logged(attempt, attempt_started, "", errors)
-            if attempt == MAX_ATTEMPTS:
+            if last(attempt):
                 return failed({"valid": False, "attempts": attempt, "errors": errors, "attemptLog": attempt_log, **asked_fields, **timing})
             continue
         fragment, parsed = parse_reply(content)
@@ -2662,7 +2723,7 @@ def _generate(
             unlinked = [{"element": item["element"], "id": item["id"]} for item in unlinked_objects(fragment, asked)]
             if best is None or len(unlinked) < best[0]:
                 best = (len(unlinked), fragment, checked, unlinked)
-        if attempt == MAX_ATTEMPTS:
+        if last(attempt):
             break
         if declarations is None:
             declarations = schema_declarations(question)
@@ -2690,4 +2751,4 @@ def _generate(
                 + "\nFix these errors and return the whole frame again as JSON {\"xml\": \"...\"}.",
             },
         ]
-    return failed({"valid": False, "attempts": MAX_ATTEMPTS, "errors": errors, "attemptLog": attempt_log, **asked_fields, **timing})
+    return failed({"valid": False, "attempts": len(attempt_log), "errors": errors, "attemptLog": attempt_log, **asked_fields, **timing})
