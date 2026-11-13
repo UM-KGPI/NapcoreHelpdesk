@@ -57,6 +57,30 @@ dev DB (5), and the benchmark JSONs (`.mylocal/bench/t0.py`, output `t0.out`). *
 - Baseline on main (S1, for T4): gen33 0 of 12 generated runs split; **gen34 3 of 12** (s1 1/3, s1-10 2/9);
   gen35, gen36 0 of 3; gen01–32 0. So the fault is live on main for gen34 too, not only the one prod draw.
 
+### T1–T4 result (2026-11-13, Opus): release condition met, PR #474
+
+Benchmark on the PR branch, `t.json` (gen01–36, 3 runs) and `t-10.json` (gen33–36, 10 runs), against S1
+(`s1.json`, `s1-10.json`). gen33–36 below are 13 runs (10 + 3). **Measured.**
+
+| | S1 (main) | T |
+|---|---|---|
+| gen01–32 valid | 96/96 | 96/96 |
+| gen01–32 first attempt | 82 | 79 (limit 77) |
+| gen01–32 mean time | 4.1 s | 4.4 s (limit 5.1 s) |
+| gen33 generated / split / linked | 12 / 0 / 0 | 12 / 0 / 1 |
+| gen34 generated / split / linked | 12 / 3 / 8 | 11 / 0 / 5 |
+| gen35 generated | 3/3 | 13/13 |
+| gen36 generated / first attempt | 3/3 / 0 | 13/13 / 6 |
+| gen33, gen34 mean time | 17.9 s, 16.7 s | 21.8 s, 23.8 s |
+
+- No split in any of 153 runs (S1: 3 of 12 gen34 runs).
+- gen34 generated is one below S1 (11 vs 12), read as met: S1's 12 hold the 3 split examples, so correct
+  generated examples went 9 → 11; the 2 others fell back to the standard's example. S1's "linked" 8 includes
+  the 3 splits (one object is trivially linked); without them 5 of 9, now 5 of 11.
+- gen33/gen34 take 4–7 s longer: the split no longer passes, so more attempts run.
+- S4, the linked share: gen33 1 of 12, gen34 5 of 11, gen35/36 all (one object or already linked). gen33 is
+  under half, so R3 of Revision 2 (the linking object's excerpt in the feedback) is the next step for it.
+
 ### T. Two of the question's values are not two names of one object
 
 **T0. Replay first (no shipped code).** New function `shared_name_values(fragment, values) -> list[dict]`: for
