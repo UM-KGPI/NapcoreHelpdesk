@@ -42,11 +42,9 @@ describe("SharedAppLayout branding (#377)", () => {
     expect(within(footer).getByAltText("Co-funded by the European Union")).toBeTruthy();
   });
 
-  it("links the footer to the licence only; About is in the header", () => {
+  it("has no links in the footer; About is in the header, the licence on the About page", () => {
     renderLayout();
     const footer = screen.getByRole("contentinfo");
-    expect(within(footer).queryByRole("link", { name: "About this project" })).toBeNull();
-    expect(within(footer).queryByRole("link", { name: "Source code" })).toBeNull();
-    expect(within(footer).getByRole("link", { name: "Licence (AGPL-3.0)" })).toBeTruthy();
+    expect(within(footer).queryAllByRole("link")).toHaveLength(0);
   });
 });
