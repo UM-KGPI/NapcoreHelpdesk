@@ -27,14 +27,25 @@ from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 DEFAULT_QUESTIONS = Path(__file__).resolve().parents[2] / "benchmarks" / "example-generation-questions.yaml"
 
 
+def is_outage(row: dict) -> bool:
+    """A run whose every attempt failed on the model call (the API answered 503): it measures the provider, not
+    the generator, and its fallback to the standard's example would count as valid (plan 2026-11-13, P0)."""
+    log = row.get("attemptLog") or []
+    return bool(log) and all(entry.get("errorClass") == "model-error" for entry in log)
+
+
 def summarize(rows: list[dict]) -> dict:
-    """Valid, first-attempt and malformed counts, mean attempts and seconds, failed attempts by class."""
+    """Valid, first-attempt and malformed counts, mean attempts and seconds, failed attempts by class. Outage runs
+    (see is_outage) are counted on their own and left out of every other figure."""
+    outages = sum(1 for row in rows if is_outage(row))
+    rows = [row for row in rows if not is_outage(row)]
     valid = [row for row in rows if row.get("valid")]
     attempts = [entry for row in rows for entry in row.get("attemptLog") or []]
     resolved = [row for row in valid if row.get("askedObject")]
     generated = [row for row in valid if row.get("origin") == "generated"]
     return {
         "runs": len(rows),
+        "outages": outages,
         "valid": len(valid),
         # Of the valid runs whose asked object was resolved: how many fragments contain that object.
         "askedObjectResolved": len(resolved),
@@ -95,20 +106,23 @@ class Command(BaseCommand):
             item["id"]: summarize([row for row in rows if row["id"] == item["id"]]) for item in questions
         }
         overall = summarize(rows)
+        counted = [row for row in rows if not is_outage(row)]
         self.stdout.write("")
         for question_id, summary in per_question.items():
             self.stdout.write(
-                f"{question_id}: valid {summary['valid']}/{summary['runs']}, first attempt {summary['firstAttempt']}, "
+                f"{question_id}: valid {summary['valid']}/{summary['runs']}"
+                + (f" (outages left out {summary['outages']})" if summary["outages"] else "")
+                + f", first attempt {summary['firstAttempt']}, "
                 f"attempts {summary['meanAttempts']}, {summary['meanSeconds']} s, asked object "
                 f"{summary['askedObjectPresent']}/{summary['askedObjectResolved']}, generated {summary['generated']} "
                 f"(unlinked {summary['unlinked']}, two values as names of one object {summary['sharedName']}), "
                 f"failed {summary['failuresByClass']}"
             )
         self.stdout.write(
-            f"\nvalid {overall['valid']} of {overall['runs']} | first attempt {overall['firstAttempt']} | "
+            f"\nvalid {overall['valid']} of {overall['runs']} | outages left out {overall['outages']} | first attempt {overall['firstAttempt']} | "
             f"mean attempts {overall['meanAttempts']} | mean {overall['meanSeconds']} s | "
-            f"median model {statistics.median(row.get('generationMs', 0) for row in rows):.0f} ms | "
-            f"median validator {statistics.median(row.get('validationMs', 0) for row in rows):.0f} ms | "
+            f"median model {statistics.median([row.get('generationMs', 0) for row in counted] or [0]):.0f} ms | "
+            f"median validator {statistics.median([row.get('validationMs', 0) for row in counted] or [0]):.0f} ms | "
             f"replies not JSON {overall['notJson']} | order repaired {overall['repairedOrder']} | asked object {overall['askedObjectPresent']}/{overall['askedObjectResolved']} | "
             f"generated {overall['generated']} (unlinked {overall['unlinked']}, two values as names of one object "
             f"{overall['sharedName']}) | failed attempts {overall['failuresByClass']}"
