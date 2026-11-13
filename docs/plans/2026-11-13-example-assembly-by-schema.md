@@ -368,3 +368,41 @@ touch (same prompt; validator logs clean, repair counts equal), so they are the 
 outputs level and gen33 slower, B2 is not shipped. What remains is mostly meaning: `link` and `value`, about two
 thirds of failed attempts. A JSON description (§4) is not indicated either: structural failures the model must fix
 are under a third.
+
+### Count, not value (2026-11-13, Opus): "2 service journeys" is two objects
+
+The prod-question pass (13 prod questions, 5 runs each, `prod-5.json`) showed **zero link failures** in 65 runs,
+so link guidance in the first prompt was not built: before attempt 1 the generator knows only the asked object,
+and the questions that fail do so before any link check. **Measured.**
+
+What it did show: "Show me a NeTEx example for a line with 2 service journeys." failed the value check on the
+first attempt in 5 of 5 runs ("the value 2 from the question is missing"), and the model met it with
+`<Description>2</Description>` or `<PublicCode>2</PublicCode>` on the Line in all 4 generated answers. A digit was
+a value (`_NUMBER` in `requested_values`), a number word never was (`counted_words`), and the count check
+(`count_places`) read only one word after the number ("service" -> no element).
+
+Files: `netex_example_generator.py` (`object_counts`, `_object_kinds`, `counted_out`, `object_count_places`,
+`count_problems`, `counts_line`; error class `count`). A number in digits directly before a noun phrase of up to
+three words that names an object element by its element name (the validator's `/concrete`, `object` true) is how
+many of that object to write: it leaves the values, the prompt gets "Objects to write, each defined with its own
+id: 2 ServiceJourney (“2 service journeys”)", and the check wants that many objects in one parent. Before a
+property (Departure) or words that name no element, it stays a value. The documentation search of
+`resolve_element` is not used: it finds an element for nearly any word ("seats" -> CarModelProfile, "metres" ->
+AccessSpace). Number words are unchanged (still no check). Questions gen37–gen45 (prod log) added.
+
+Values extracted, every question with a digit (gen01–45): unchanged except **gen25** "2 decks" (`['2']` -> count
+2 Deck) and **gen40** "2 service journeys" (`['2']` -> count 2 ServiceJourney). gen14 "3 stop points" stays a
+value (StopPoint is no element name), as on main. **Measured** in the dev container.
+
+| | main | this change |
+|---|---|---|
+| gen40, first attempt / generated / stray "2" / two ServiceJourneys | 0 of 5 / 4 / 4 of 4 / 4 of 4 (`prod-5`) | 2 of 10 / 10 / 0 / 10 of 10 (`count-10`) |
+| gen40 failed attempts | value 5, asked-object 2, … | asked-object 5, keyref 4 (no value, no count) |
+| gen25 first attempt / generated / 2 Decks | 3 / 3 / 3 (`a3`, "2" held by a Label in 2 runs) | 3 / 3 / 3, placed as the count |
+| gen01–36 (3 runs) first attempt / generated | 88 of 108 / 105 (`a3`) | 88 of 108 / 105 (`count-all`) |
+| gen37–45 (3 runs) first attempt / generated | 23 of 45 / 42 of 45 (5 runs, `prod-5`) | 12 of 27 / 25 of 27 |
+
+Only gen25 and gen40 take a different path: for every other question `object_counts` is empty and prompt and
+checks are as on main, so their differences (gen06, gen32, gen36, gen37, gen38, gen44 one or two runs lower;
+gen20, gen34 higher) are run-to-run spread. In gen40 the remaining first-attempt failures are a frame with the
+two ServiceJourneys and a LineRef but no Line.
