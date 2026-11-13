@@ -52,6 +52,8 @@ def summarize(rows: list[dict]) -> dict:
         "meanSeconds": round(statistics.mean(row.get("seconds") or 0 for row in rows), 1) if rows else 0,
         "failuresByClass": dict(Counter(entry["errorClass"] for entry in attempts if entry.get("errorClass")).most_common()),
         "notJson": sum(1 for entry in attempts if entry.get("parsed") != "json"),
+        # Attempts whose children the validator sorted into schema order (plan 2026-11-12 revision 3, S2).
+        "repairedOrder": sum(1 for entry in attempts if entry.get("repaired") == "order"),
         "completionTokens": sum(entry.get("completionTokens") or 0 for entry in attempts),
     }
 
@@ -107,7 +109,7 @@ class Command(BaseCommand):
             f"mean attempts {overall['meanAttempts']} | mean {overall['meanSeconds']} s | "
             f"median model {statistics.median(row.get('generationMs', 0) for row in rows):.0f} ms | "
             f"median validator {statistics.median(row.get('validationMs', 0) for row in rows):.0f} ms | "
-            f"replies not JSON {overall['notJson']} | asked object {overall['askedObjectPresent']}/{overall['askedObjectResolved']} | "
+            f"replies not JSON {overall['notJson']} | order repaired {overall['repairedOrder']} | asked object {overall['askedObjectPresent']}/{overall['askedObjectResolved']} | "
             f"generated {overall['generated']} (unlinked {overall['unlinked']}, two values as names of one object "
             f"{overall['sharedName']}) | failed attempts {overall['failuresByClass']}"
         )

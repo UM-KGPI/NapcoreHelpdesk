@@ -805,13 +805,44 @@ class ValidatorDiagnosticsTests(SimpleTestCase):
         self.assertIn("needs at least 2 of one of (StopPoint, TimingPoint); the fragment has 1", found["min-count"]["detail"])
 
     def test_order_wrong_parent_and_undeclared(self):
-        found = self.kinds('<FareFrame id="f"><passingTimes><PassingTime><StopPointRef>s</StopPointRef></PassingTime></passingTimes><prices><FareProductPrice/></prices></FareFrame>')
+        # The order together with another problem (a missing required reference): no repair, both explained.
+        found = self.kinds('<FareFrame id="f"><passingTimes><PassingTime><ArrivalTime>08:30:00</ArrivalTime></PassingTime></passingTimes><prices><FareProductPrice/></prices></FareFrame>')
         self.assertIn("`prices` is out of order in `FareFrame`", found["order"]["detail"])
+        self.assertIn("missing-required", found)
         found = self.kinds('<FareFrame id="f"><prices><FareProductPrice><Amount>5</Amount></FareProductPrice><Amount>5</Amount></prices></FareFrame>')
         self.assertIn("`Amount` is not a child of `prices`; it belongs under one of:", found["wrong-parent"]["detail"])
         self.assertIn("FareProductPrice", found["wrong-parent"]["detail"])
         found = self.kinds('<FareFrame id="f"><prices><PriceList/></prices></FareFrame>')
         self.assertIn("`PriceList` is not an element of the NeTEx schema", found["undeclared"]["detail"])
+
+    def test_order_alone_is_repaired(self):
+        # Plan 2026-11-12 revision 3, S2: the children sorted into schema order, at every level, text kept.
+        result = self.holder.validate(
+            '<FareFrame id="f">\n  <passingTimes><PassingTime><StopPointRef>s</StopPointRef></PassingTime></passingTimes>\n'
+            '  <prices><FareProductPrice><Currency>EUR</Currency><Amount>5</Amount></FareProductPrice></prices>\n</FareFrame>'
+        )
+        self.assertEqual((result["valid"], result["errors"], result["repaired"]), (True, [], "order"))
+        self.assertEqual(
+            result["fragment"],
+            '<FareFrame id="f">\n  <prices><FareProductPrice><Amount>5</Amount><Currency>EUR</Currency></FareProductPrice></prices>\n'
+            '  <passingTimes><PassingTime><StopPointRef>s</StopPointRef></PassingTime></passingTimes>\n</FareFrame>',
+        )
+        self.assertTrue(result["repairedErrors"])
+        self.assertTrue(self.holder.validate(result["fragment"])["valid"])
+
+    def test_no_repair_when_a_child_has_no_place(self):
+        from lxml import etree
+
+        document = etree.fromstring(service.wrap_fragment(
+            '<FareFrame id="f"><passingTimes><PassingTime><StopPointRef>s</StopPointRef></PassingTime></passingTimes>'
+            "<prices><FareProductPrice/></prices><Amount>5</Amount></FareFrame>"
+        ).encode())
+        before = etree.tostring(document)
+        self.assertFalse(service.repair_order(self.holder.content, document))
+        self.assertEqual(etree.tostring(document), before)
+        models = self.holder.content
+        self.assertIsNone(models.ordered_children(models.type_of(document.find(".//{*}FareFrame")), ["passingTimes", "Amount"]))
+        self.assertEqual(models.ordered_children(models.type_of(document.find(".//{*}FareFrame")), ["passingTimes", "prices"]), [1, 0])
 
     def test_keyref_suggests_a_versionless_reference(self):
         from lxml import etree
@@ -2003,3 +2034,40 @@ class SharedNameRetryTests(SimpleTestCase):
         prompt = ask.call_args_list[0].args[0][1]["content"]
         self.assertIn("whole content of an element or attribute", prompt)
         self.assertIn("are not two names of one object", prompt)
+
+
+@override_settings(LLM_ENABLED=True)
+class OrderRepairGenerationTests(SimpleTestCase):
+    """The generator goes on with the validator's repaired frame (plan 2026-11-12 revision 3, S2)."""
+
+    QUESTION = LinkRetryTests.QUESTION
+    setUp = LinkRetryTests.setUp
+
+    def test_a_repaired_attempt_is_accepted_with_the_repaired_frame(self):
+        repaired = {"valid": True, "errors": [], "repaired": "order", "fragment": LINKED_LINE, "repairedErrors": ["line 1: …"]}
+        written = LINKED_LINE.replace("<LowFloor>true</LowFloor>", "<LowFloor>true</LowFloor>")  # what the model sent
+        with patch.object(generator, "_ask_model", return_value=_reply(written)) as ask, patch.object(
+            generator, "validate_fragment", return_value=repaired
+        ), patch.object(generator, "asked_object_problem", return_value=""):
+            result = generator.generate_netex_example(self.QUESTION, [NETEX_CHUNK], ["NeTEx"])
+        self.assertEqual((result["valid"], result["origin"], result["attempts"]), (True, "generated", 1))
+        self.assertEqual(result["attemptLog"][0]["repaired"], "order")
+        self.assertEqual(result["xml"], generator.indented_fragment(LINKED_LINE))
+        self.assertEqual(ask.call_count, 1)
+
+    def test_later_feedback_shows_the_model_the_repaired_frame(self):
+        split = {"valid": True, "errors": [], "repaired": "order", "fragment": SPLIT_LINE}
+        with patch.object(generator, "_ask_model", side_effect=[_reply(JOINED_LINE), _reply(LINKED_LINE)]) as ask, patch.object(
+            generator, "validate_fragment", side_effect=[split, {"valid": True, "errors": []}]
+        ), patch.object(generator, "asked_object_problem", return_value=""):
+            result = generator.generate_netex_example(self.QUESTION, [NETEX_CHUNK], ["NeTEx"])
+        history = ask.call_args_list[1].args[0]
+        self.assertEqual(json.loads(history[-2]["content"])["xml"], SPLIT_LINE)
+        self.assertIn("has one name", history[-1]["content"])
+        self.assertEqual([entry.get("repaired", "") for entry in result["attemptLog"]], ["order", ""])
+
+    def test_benchmark_counts_repaired_attempts(self):
+        from helpdesk.management.commands.run_example_benchmark import summarize
+
+        rows = [{"valid": True, "attempts": 1, "attemptLog": [{"parsed": "json", "errorClass": "", "repaired": "order"}]}]
+        self.assertEqual(summarize(rows)["repairedOrder"], 1)
