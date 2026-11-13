@@ -116,17 +116,6 @@ body {
   flex: 0 0 auto;
 }
 
-.app-footer-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 1.2rem;
-  font-size: 0.9rem;
-}
-
-.app-footer-links a {
-  color: var(--link);
-}
-
 .ask-own-question-row {
   padding: 1rem;
   text-align: center;
@@ -1477,12 +1466,11 @@ a {
 .app-title-header.glass .app-version-line {
   color: var(--muted);
 }
-.app-title-header.glass .app-about-link,
-.app-footer.glass .app-footer-links a {
+.app-title-header.glass .app-about-link {
   color: var(--link);
 }
 
-/* Footer: links left, the EU emblem (negative version) right. Sara asked for 40 px (#377); the image is 45 px
+/* Footer: the EU emblem (negative version), right. Sara asked for 40 px (#377); the image is 45 px
    because its flag is 85.6 % of it, and the guidelines (p. 9) set a minimum flag height of 1 cm (~38 px):
    45 px gives a 38.5 px flag, 40 px only 34 px. */
 .app-footer.glass {
