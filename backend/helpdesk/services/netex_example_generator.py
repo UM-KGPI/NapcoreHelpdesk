@@ -265,6 +265,110 @@ def element_for_noun(noun: str) -> list[str]:
     return candidate_element_names(singular[:1].upper() + singular[1:])
 
 
+# A number written in digits directly before a kind of object ("2 service journeys") says how many of that object
+# to write, not a value some element holds: asked for "2" as an element's whole content, the model wrote
+# <Description>2</Description> or <PublicCode>2</PublicCode> on the Line (prod question "a line with 2 service
+# journeys", 5 of 5 first attempts failed the value check, 2026-11-13). The same number in words ("two quays")
+# was never a value. A number before a plain-valued element or before words that name no element ("50 seats",
+# "120 spaces", "32 metres", "5 EUR") stays a value.
+_DIGIT_COUNT = re.compile(r"(?<![\w.])(\d{1,4})(?![\w.])\s+([A-Za-z][A-Za-z-]*(?:\s+[A-Za-z][A-Za-z-]*){0,2})")
+
+
+def _object_kinds(phrase: str) -> list[str] | None:
+    """The object elements a noun phrase names by element name ("service journeys" -> [ServiceJourney]; an
+    abstract one stands for its concrete objects), [] when it names an element that is not an object (a
+    property such as Departure), None when it names no element. Only the element name counts, not the
+    documentation search of resolve_element, which finds an element for nearly any word ("seats" ->
+    CarModelProfile, "metres" -> AccessSpace)."""
+    for name in element_for_noun(phrase):
+        entries = concrete_elements(name)
+        if entries:
+            return [entry["name"] for entry in entries if entry.get("object")]
+    return None
+
+
+def object_counts(question: str) -> list[tuple[int, str, str, list[str]]]:
+    """Numbers in digits that count objects: (count, number as written, noun phrase, object elements). "a line
+    with 2 service journeys" -> [(2, "2", "service journeys", ["ServiceJourney"])]. The longest phrase of up to
+    three words after the number that names an element decides; a number before anything else is a value."""
+    unquoted = _QUOTED.sub(" . ", question or "")
+    text = _DURATION.sub(" . ", _TIME.sub(" . ", _DATE.sub(" . ", unquoted)))
+    found = []
+    for match in _DIGIT_COUNT.finditer(text):
+        number, words = match.group(1), match.group(2).split()
+        if int(number) <= 0:
+            continue
+        for size in range(len(words), 0, -1):
+            phrase = " ".join(words[:size])
+            kinds = _object_kinds(phrase)
+            if kinds is None:
+                continue
+            if kinds:
+                found.append((int(number), number, phrase, kinds))
+            break
+    return found
+
+
+def counted_out(values: list[str], question: str, counts: list[tuple[int, str, str, list[str]]]) -> list[str]:
+    """The values without the numbers that only count objects ("2" in "a line with 2 service journeys"); a number
+    the question also gives as a value elsewhere ("line 2 with 2 service journeys") stays."""
+    if not counts:
+        return list(values)
+    text = _DURATION.sub(" ", _TIME.sub(" ", _DATE.sub(" ", _QUOTED.sub(" ", question or ""))))
+    written = _NUMBER.findall(text)
+    counting = [number for _, number, _, _ in counts]
+    return [value for value in values if not (value in counting and written.count(value) <= counting.count(value))]
+
+
+def object_count_places(fragment: str, counts: list[tuple[int, str, str, list[str]]], placed: set[str] = frozenset()) -> list[dict]:
+    """Where the fragment has each counted number of objects, all in one parent: {"value": "2", "element":
+    "ServiceJourney", "count": 2, "path": [...]}."""
+    root = _parsed(fragment)
+    if root is None:
+        return []
+    local = lambda tag: tag.rsplit("}", 1)[-1] if isinstance(tag, str) else ""  # noqa: E731
+    parents = {child: parent for parent in root.iter() for child in parent}
+    places = []
+    for count, written, _, kinds in counts:
+        if written in placed:
+            continue
+        for parent in root.iter():
+            children = [child for child in parent if local(child.tag) in kinds]
+            if len(children) != count:
+                continue
+            path, node = [], parent
+            while node is not None and node is not root:
+                path.append(local(node.tag))
+                node = parents.get(node)
+            places.append({"value": written, "element": local(children[0].tag), "count": count, "path": list(reversed(path))})
+            break
+    return places
+
+
+def count_problems(fragment: str, counts: list[tuple[int, str, str, list[str]]]) -> list[str]:
+    """The feedback for each counted number of objects the fragment does not have in one parent."""
+    placed = {place["value"] for place in object_count_places(fragment, counts)}
+    problems = []
+    for count, written, phrase, kinds in counts:
+        if written in placed:
+            continue
+        kind = kinds[0] if len(kinds) == 1 else " or ".join(kinds[:3])
+        problems.append(
+            f"the question counts {written} {phrase}: write exactly {count} {kind} objects, each with its own id, "
+            f"together in the list the schema has for them; {written} is how many to write, not a value to put "
+            "in an element"
+        )
+    return problems
+
+
+def counts_line(counts: list[tuple[int, str, str, list[str]]]) -> str:
+    """The counted objects for the model's prompt: "2 ServiceJourney (“2 service journeys”)"."""
+    return ", ".join(
+        f"{count} {kinds[0] if len(kinds) == 1 else ' or '.join(kinds[:3])} (“{written} {phrase}”)"
+        for count, written, phrase, kinds in counts
+    )
+
+
 def other_question(question: str) -> str:
     """The part of a question that asks something besides the example ("How do you describe a stop place in
     NeTEx?" in "How do you describe a stop place in NeTEx? Show me an example with two quays."), or ""."""
@@ -2270,10 +2374,11 @@ def part_places(fragment: str, question: str) -> list[dict]:
     return places
 
 
-def _places(fragment: str, values: list[str], question: str) -> list[dict]:
+def _places(fragment: str, values: list[str], question: str, counts: list[tuple[int, str, str, list[str]]] = ()) -> list[dict]:
     """Where the question's values go, then its counts (a number already placed as a value is not a count),
     then the parts it asks for."""
     places = value_places(fragment, values)
+    places += object_count_places(fragment, list(counts), placed={p["value"] for p in places})
     places += count_places(fragment, question, placed={p["value"] for p in places})
     return written_durations(places + part_places(fragment, question), question)
 
@@ -2398,6 +2503,7 @@ _ERROR_CLASSES = (
     ("min-count", ("Missing child element(s)",)),
     ("not-expected", ("This element is not expected",)),
     ("value", ("from the question is missing", "has one name")),
+    ("count", ("the question counts",)),
     ("asked-object", ("the question asks for",)),
     ("link", ("that nothing links to the",)),
     ("condition", ("the question says the service runs", "is empty: give it the children")),
@@ -2407,7 +2513,7 @@ _ERROR_CLASSES = (
 
 def error_class(message: str) -> str:
     """The kind of a failed attempt's first error, from the validator's or the generator's wording:
-    malformed, keyref, min-count, not-expected, value, asked-object, condition, model-error, or other."""
+    malformed, keyref, min-count, not-expected, value, count, asked-object, condition, model-error, or other."""
     for name, markers in _ERROR_CLASSES:
         if any(marker in (message or "") for marker in markers):
             return name
@@ -2647,7 +2753,13 @@ def _generate(
     evidence, used = _evidence_text(chunks)
     if not used:
         return {"valid": False, "attempts": 0, "errors": ["no NeTEx evidence to build the example from"]}
-    values = requested_values(question)
+    # A number in digits that counts objects ("2 service journeys") is checked as that many objects, not as a value.
+    try:
+        counts = object_counts(question)
+    except Exception as exc:  # the validator unavailable: the number stays a value, as before
+        logger.info("object counts not available: %s", exc)
+        counts = []
+    values = counted_out(requested_values(question), question, counts)
     skeleton_part = skeleton_block(skeleton) + "\n\n" if skeleton else ""
     try:
         condition_part = conditions_block(conditions, asked)
@@ -2657,6 +2769,8 @@ def _generate(
     condition_part = condition_part + "\n\n" if conditions else ""
     rule = values_rule(values, asked, own_objects=skeleton_skipped == "values")
     rule_part = rule + "\n" if rule else ""
+    if counts:
+        rule_part += f"Objects to write, each defined with its own id: {counts_line(counts)}\n"
     messages = [
         {"role": "system", "content": _PROMPT},
         {"role": "user", "content": f"Question:\n{question}\n\nValues to use: {values_line(values, question)}\n{rule_part}\n{condition_part}{skeleton_part}EVIDENCE BLOCKS:\n{evidence}"},
@@ -2721,7 +2835,7 @@ def _generate(
             "schemaVersion": checked.get("schemaVersion", ""),
             "schemaCommit": checked.get("commit", ""),
             "elementNotes": element_notes(checked.get("elements") or []),
-            "valuePlaces": _places(fragment, values, shape_question) + condition_places(fragment, conditions),
+            "valuePlaces": _places(fragment, values, shape_question, counts) + condition_places(fragment, conditions),
             "evidenceChunkIds": [chunk.get("chunkId") for chunk in used],
             "attemptLog": attempt_log,
             **asked_fields,
@@ -2783,7 +2897,7 @@ def _generate(
                 errors = [
                     missing_value_error(value, question, fragment, values)
                     for value in _unmet_values(fragment, values, shape_question)
-                ]
+                ] + count_problems(fragment, counts)
                 # Hard: two of the values as the names of one object (Name "Maribor", ShortName "Ptuj" of a
                 # Line) hold the values but state something false (plan 2026-11-12 revision 4, T1).
                 if not errors:

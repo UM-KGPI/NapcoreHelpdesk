@@ -82,3 +82,23 @@ questions:
   question: Give a NeTEx example of a stop place named "Celje Bus Station" with a quay served by wheelchair-accessible vehicles.
 - id: gen36
   question: Show a NeTEx example of a service journey on line "12" that runs only on public holidays.
+# Added 2026-11-13: real requests from the prod question log. gen40 gives a count in digits ("2 service journeys"):
+# how many objects to write, not a value to place; gen38, gen39, gen41 and gen45 give counts in words.
+- id: gen37
+  question: Show me a NeTEx example for a line between Maribor and Ljubljana.
+- id: gen38
+  question: Show me a NeTEx example in XML for a line with two departures on Monday at 14:00.
+- id: gen39
+  question: Create me a NeTEx XML example for timetable with two departures on Monday at 14:00.
+- id: gen40
+  question: Show me a NeTEx example for a line with 2 service journeys.
+- id: gen41
+  question: Show me a NeTEx example for a Maribor bus station with two quays.
+- id: gen42
+  question: Show me an example of NeTEx in XML for a line with departure on Monday 17:00.
+- id: gen43
+  question: Create a new NeTEx XML example for a timetable Call that contains ScheduledStopPoint time departure at 15:00.
+- id: gen44
+  question: Show me an example of line with a stop place departure described in NeTEx XML?
+- id: gen45
+  question: Show me a NeTEx example for a bus with two decks?
