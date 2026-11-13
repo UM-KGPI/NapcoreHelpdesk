@@ -557,6 +557,26 @@ def concrete_elements(holder, element: str, limit: int = 8) -> dict:
     }
 
 
+def required_children(holder, path: list[str]) -> dict:
+    """/required: the required slots of the element at the end of a path from a global element
+    (ServiceJourney/calls/Call), in schema order: {"label", "names", "min"} each. A cut-down excerpt of a standard
+    example keeps one child per slot so that it still shows a valid shape (plan 2026-11-13, B1)."""
+    models = holder.content
+    if models is None or not path:
+        return {"found": False, "path": path, "required": []}
+    type_key = models.type_at(path)
+    if not type_key:
+        return {"found": False, "path": path, "required": []}
+    return {
+        "found": True,
+        "path": path,
+        "required": [
+            {"label": slot.label, "names": list(slot.names), "min": slot.min}
+            for slot in models.slots(type_key) if slot.min >= 1 and slot.names
+        ],
+    }
+
+
 MAX_ACCEPTING_VALUES = 12
 
 
@@ -776,6 +796,13 @@ def make_handler(holder: SchemaHolder):
                     self._reply(400, {"error": "expected ?element=<ElementName>"})
                     return
                 self._reply(200, structure_with_values(holder, element))
+                return
+            if self.path.startswith("/required"):
+                path = [step for step in parse_qs(urlparse(self.path).query).get("path", [""])[0].strip().split("/") if step]
+                if not path or len(path) > 20 or not all(re.fullmatch(r"[A-Za-z][\w.-]{0,80}", step) for step in path):
+                    self._reply(400, {"error": "expected ?path=<Element>/<child>/…"})
+                    return
+                self._reply(200, required_children(holder, path))
                 return
             if self.path.startswith("/declarations"):
                 parameters = parse_qs(urlparse(self.path).query)

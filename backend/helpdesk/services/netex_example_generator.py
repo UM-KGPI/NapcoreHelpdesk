@@ -1862,17 +1862,47 @@ def unlinked_objects(fragment: str, asked: str) -> list[dict]:
 
 _LINK_CACHE: dict[tuple[str, str], tuple[dict | None, float]] = {}
 MAX_LINK_FILES = 20
-MAX_LINK_EXCERPT_LINES = 14
+MAX_LINK_EXCERPT_LINES = 20
+_REQUIRED_CACHE: dict[tuple[str, ...], tuple[list[tuple[frozenset[str], int]], float]] = {}
 
 
-def _holder_shape(node, paths: list[list[str]]) -> dict:
+def required_slots(path: tuple[str, ...]) -> list[tuple[frozenset[str], int]]:
+    """The required slots of the element at the end of a path from a global element (validator /required), each
+    as the names that fill it and how many it needs; [] when unknown or the validator is unavailable."""
+    from urllib import error, parse, request
+
+    cached = _REQUIRED_CACHE.get(path)
+    if cached is not None and cached[1] > time.monotonic():
+        return cached[0]
+    url = settings.NETEX_VALIDATOR_URL.rstrip("/") + "/required?" + parse.urlencode({"path": "/".join(path)})
+    try:
+        with request.urlopen(url, timeout=VALIDATOR_TIMEOUT_SECONDS) as response:
+            found = [
+                (frozenset(slot.get("names") or []), int(slot.get("min") or 1))
+                for slot in json.loads(response.read()).get("required") or []
+            ]
+    except (error.URLError, OSError, ValueError) as exc:
+        logger.info("required children not available: %s", exc)
+        return []
+    _REQUIRED_CACHE[path] = (found, time.monotonic() + _LOOKUP_TTL_SECONDS)
+    return found
+
+
+def _holder_shape(node, paths: list[list[str]], required=None) -> dict:
     """Where a linking object sits in a standard example ("place": its frame and list, ["TimetableFrame",
     "vehicleJourneys"]) and its shape cut to the paths to its references ("excerpt", at most
     MAX_LINK_EXCERPT_LINES lines). After the link feedback the model wrote the ServiceJourney in the
-    ServiceFrame, under a list that does not exist there (gen33, 7 of 9 linked attempts; revision 4)."""
+    ServiceFrame, under a list that does not exist there (gen33, 7 of 9 linked attempts; revision 4).
+
+    The cut keeps, at every kept element, as many children as each slot its content model requires needs
+    (`required(path)`: [(names, minimum)], default the validator's): cut to the paths alone a Call lost its ScheduledStopPointRef, and 16 of 16
+    `Arrival` failures that followed said a Call needs one (plan 2026-11-13, B1). "requiredRefs" lists the
+    references kept that way ({"parent", "ref"}), so the feedback can say which objects they need."""
     from copy import deepcopy
 
     from lxml import etree
+
+    required = required_slots if required is None else required
 
     place, up = [], node.getparent()
     while up is not None:
@@ -1893,8 +1923,34 @@ def _holder_shape(node, paths: list[list[str]]) -> dict:
             if current is None:
                 break
             kept.append(current)
+
+    def is_kept(element) -> bool:
+        return any(element is other for other in kept)
+
+    def path_of(element) -> tuple[str, ...]:
+        steps = []
+        while element is not None:
+            steps.append(_local(element.tag))
+            element = element.getparent()
+        return tuple(reversed(steps))
+
+    required_refs = []
+    pending = list(kept)
+    while pending:
+        element = pending.pop(0)
+        children = [child for child in element if isinstance(child.tag, str)]
+        if not children:
+            continue
+        for names, minimum in required(path_of(element)):
+            short = minimum - sum(1 for child in children if _local(child.tag) in names and is_kept(child))
+            for child in [child for child in children if _local(child.tag) in names and not is_kept(child)][: max(0, short)]:
+                kept.append(child)
+                pending.append(child)
+                item = {"parent": _local(element.tag), "ref": _local(child.tag)}
+                if item["ref"].endswith("Ref") and len(item["ref"]) > 3 and item not in required_refs:
+                    required_refs.append(item)
     for element in list(shape.iter()):
-        if not any(element is other for other in kept) and element.getparent() is not None:
+        if not is_kept(element) and element.getparent() is not None:
             element.getparent().remove(element)
     for element in shape.iter():
         element.tail = None
@@ -1904,6 +1960,7 @@ def _holder_shape(node, paths: list[list[str]]) -> dict:
     return {
         "place": list(reversed(place)),
         "excerpt": "\n".join(indented_fragment(text).splitlines()[:MAX_LINK_EXCERPT_LINES]),
+        "requiredRefs": required_refs,
     }
 
 
@@ -1999,6 +2056,17 @@ def _asked_for(node, question: str, values: list[str]) -> bool:
     return any(_stem(word) in asked_words for word in words)
 
 
+def _defined_kinds(fragment: str) -> set[str]:
+    """The element names of the fragment's elements that have an id: the kinds of object it defines."""
+    from xml.etree import ElementTree
+
+    try:
+        root = ElementTree.fromstring(f'<root xmlns="{NETEX_NAMESPACE}">{fragment}</root>')
+    except ElementTree.ParseError:
+        return set()
+    return {_local(node.tag) for node in root.iter() if node.get("id")}
+
+
 def link_problems(fragment: str, asked: str, question: str = "", values: list[str] = ()) -> list[str]:
     """One feedback line per kind of object that nothing links to the asked object, with how the standard's
     examples link the two."""
@@ -2018,6 +2086,8 @@ def link_problems(fragment: str, asked: str, question: str = "", values: list[st
     shared = Counter(name for example in examples.values() if example for name in example.get("holders") or {})
     problems = []
     shown: set[str] = set()
+    defined = _defined_kinds(fragment)
+    told: set[tuple[str, str]] = set()
     for element in kinds:
         items = [item for item in unlinked if item["element"] == element]
         ids = ", ".join(item["id"] for item in items[:3])
@@ -2045,6 +2115,13 @@ def link_problems(fragment: str, asked: str, question: str = "", values: list[st
             if example.get("excerpt") and holder not in shown:
                 shown.add(holder)
                 shape = f"\n  Its shape there (the structure only, not the ids or values):\n{example['excerpt']}"
+            # For each kind, also when the holder's shape was shown for another kind: the StopPlace's path through
+            # a Call came second to the VehicleType's, and its Call lacked the ScheduledStopPointRef (B1 benchmark).
+            for item in example.get("requiredRefs") or []:
+                kind = item["ref"][: -len("Ref")]
+                if kind and kind not in defined and (item["parent"], item["ref"]) not in told:
+                    told.add((item["parent"], item["ref"]))
+                    shape += f"\n  A {item['parent']} also needs a {item['ref']}: define a {kind} for each {item['parent']} and refer to it."
         if not any(_asked_for(item["node"], question, list(values)) for item in items):
             line += ", or remove it if the question does not need it"
         problems.append(line + "." + shape)
