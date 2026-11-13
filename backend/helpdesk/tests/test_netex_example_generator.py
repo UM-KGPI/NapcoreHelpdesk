@@ -872,8 +872,7 @@ class ValidatorDiagnosticsTests(SimpleTestCase):
         self.assertIn("<prices><FareProductPrice><Amount>5</Amount><Currency>EUR</Currency>", result["fragment"])
         self.assertIn("<ArrivalTime>08:30:00</ArrivalTime><StopPointRef>s</StopPointRef><Amount>", result["fragment"])
         found = self.kinds('<FareFrame id="f"><prices><FareProductPrice><Amount>5</Amount></FareProductPrice><Amount>5</Amount></prices></FareFrame>')
-        self.assertIn("`Amount` is not a child of `prices`; it belongs under one of:", found["wrong-parent"]["detail"])
-        self.assertIn("FareProductPrice", found["wrong-parent"]["detail"])
+        self.assertIn("`Amount` is not a child of `prices`; in this frame it belongs under: FareProductPrice", found["wrong-parent"]["detail"])
         found = self.kinds('<FareFrame id="f"><prices><PriceList/></prices></FareFrame>')
         self.assertIn("`PriceList` is not an element of the NeTEx schema", found["undeclared"]["detail"])
 
@@ -917,6 +916,24 @@ class ValidatorDiagnosticsTests(SimpleTestCase):
         models = self.holder.content
         self.assertIsNone(models.ordered_children(models.type_of(document.find(".//{*}FareFrame")), ["passingTimes", "Amount"]))
         self.assertEqual(models.ordered_children(models.type_of(document.find(".//{*}FareFrame")), ["passingTimes", "prices"]), [1, 0])
+
+    def test_a_misplaced_list_is_named_with_its_frame(self):
+        # Plan 2026-11-13, B2: a frame's list written inside an object; the standard's examples keep it in the frame.
+        from collections import Counter
+
+        self.holder.content.placements = {"FareProductPrice": Counter({("FareFrame", "prices"): 3})}
+        self.assertEqual(self.holder.content.home("prices"), ("FareFrame", "prices"))
+        self.assertEqual(self.holder.content.home("FareProductPrice"), ("FareFrame", "prices"))
+        self.assertIsNone(self.holder.content.home("Amount"))
+        found = self.kinds('<FareFrame id="f"><passingTimes><PassingTime><StopPointRef>s</StopPointRef>'
+                           "<prices><FareProductPrice/></prices></PassingTime></passingTimes></FareFrame>")
+        detail = found["wrong-parent"]["detail"]
+        self.assertIn("`prices` is not a child of `PassingTime`; it is a list of the FareFrame in the standard's examples", detail)
+
+    def test_a_misplaced_element_without_a_known_home_keeps_the_parents(self):
+        self.holder.content.placements = {}
+        found = self.kinds('<FareFrame id="f"><prices><FareProductPrice><Amount>5</Amount></FareProductPrice><Amount>5</Amount></prices></FareFrame>')
+        self.assertIn("`Amount` is not a child of `prices`; in this frame it belongs under: FareProductPrice", found["wrong-parent"]["detail"])
 
     def test_keyref_suggests_a_versionless_reference(self):
         from lxml import etree

@@ -515,9 +515,8 @@ def diagnostics(models, document, log: list[tuple[int, str]], offset: int) -> li
             issue = issues[0] if issues else None
             focus = children(parent) + [name]
             if issue is not None and issue.kind == "wrong-parent":
-                where = models.parents_of(name)
                 add("wrong-parent", node, f"`{name}` is not a child of `{_local(parent.tag)}`"
-                    + (f"; it belongs under one of: {', '.join(where)}" if where else "") + f". {child_list(parent, focus)}.")
+                    + _where_it_belongs(models, document, name, parent) + f". {child_list(parent, focus)}.")
             elif issue is not None and issue.kind == "order":
                 add("order", node, f"`{name}` is out of order in `{_local(parent.tag)}`: it comes before `{issue.detail.get('before')}` "
                     f"in the schema. {child_list(parent, focus)}.")
@@ -804,6 +803,34 @@ def _frame_text(document) -> str:
         text = etree.tostring(frame, encoding="unicode", with_tail=index < len(frames) - 1)
         texts.append(text.replace(f' xmlns="{NETEX_NAMESPACE}"', "", 1))
     return "".join(texts)
+
+
+def _where_it_belongs(models, document, name: str, parent) -> str:
+    """Where a misplaced element belongs, in the order a model can act on (plan 2026-11-13, B2): a frame's list
+    or an object kind, at the frame and list the standard's examples keep it in; a reference the parent can
+    hold instead (a `Route` written where only a `RouteRef` fits); else the elements of this draft that may
+    hold it; else any that may. From the content model and the examples only."""
+    namespace = "{" + NETEX_NAMESPACE + "}"
+    present = {_local(n.tag) for n in document.iter() if isinstance(n.tag, str) and n.tag.startswith(namespace)}
+    parts = []
+    home = models.home(name, {p for p in present if p.endswith("Frame")})
+    if home is not None:
+        frame, wrapper = home
+        if wrapper == name:
+            parts.append(f"it is a list of the {frame} in the standard's examples: write it in the {frame}")
+        else:
+            parts.append(f"in the standard's examples it goes in {frame} > {wrapper}")
+    reference = f"{name}Ref"
+    if reference in models.declared and any(reference in slot.names for slot in models.slots(models.type_of(parent))):
+        parts.append(f"here `{_local(parent.tag)}` takes a `{reference}` to it instead")
+    if not parts:
+        where = models.parents_of(name, limit=40)
+        here = [element for element in where if element in present]
+        if here:
+            parts.append(f"in this frame it belongs under: {', '.join(here[:6])}")
+        elif where:
+            parts.append(f"it belongs under one of: {', '.join(where[:8])}")
+    return "; " + "; ".join(parts) if parts else ""
 
 
 class SchemaHolder:

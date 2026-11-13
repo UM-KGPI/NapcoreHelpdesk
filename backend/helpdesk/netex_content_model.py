@@ -312,6 +312,22 @@ class ContentModels:
         present = [place for place, count in confirmed if place[0] in frames_present and count * PLACEMENT_FACTOR > confirmed[0][1]]
         return present[0] if present else None
 
+    def home(self, name: str, frames_present: set[str] = frozenset()) -> tuple[str, str] | None:
+        """Where the standard's examples keep an object kind or a frame's list: (frame, list). For a kind, its
+        placement; for a list wrapper (`parkings`), the frame whose list it is, from the placements of the
+        objects in it, when the schema confirms the frame has that list. None when not known."""
+        if name in self.placements:
+            return self.placement(name, frames_present)
+        frames: Counter = Counter()
+        for places in self.placements.values():
+            for (frame, wrapper), count in places.items():
+                if wrapper == name:
+                    frames[frame] += count
+        for frame, _count in frames.most_common():
+            if self.accepts_child(self.type_at([frame]), name):
+                return frame, name
+        return None
+
     def in_place_of(self, name: str) -> list[str]:
         """Concrete elements to write instead of an abstract one: its own substitution members, else (an
         abstract element that only marks a kind, FarePrice) the members of the group it belongs to
