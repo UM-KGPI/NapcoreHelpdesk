@@ -2520,3 +2520,103 @@ class BenchmarkViaApiTests(SimpleTestCase):
         with patch("urllib.request.urlopen", return_value=Response(b'{"answer": "no example"}')):
             result = bench.example_via_api("q", "http://app/api/v1", "tok", "bench-2")
         self.assertEqual((result["valid"], result["attempts"]), (False, 0))
+
+
+# The validator's /concrete answers for the element names the count tests look up: objects, a property, and
+# names the schema does not have (prod question "a line with 2 service journeys", 2026-11-13).
+_CONCRETE = {
+    "ServiceJourney": [{"name": "ServiceJourney", "object": True}],
+    "Deck": [{"name": "Deck", "object": True}],
+    "Quay": [{"name": "Quay", "object": True}],
+    "Journey": [{"name": "VehicleJourney", "object": True}, {"name": "ServiceJourney", "object": True}],
+    "Departure": [{"name": "Departure", "object": False}],
+}
+LINE_WITH_JOURNEYS = (
+    '<TimetableFrame version="1" id="hd:TF"><vehicleJourneys>'
+    '<ServiceJourney version="1" id="hd:SJ1"><LineRef ref="hd:L"/></ServiceJourney>'
+    '<ServiceJourney version="1" id="hd:SJ2"><LineRef ref="hd:L"/></ServiceJourney>'
+    "</vehicleJourneys></TimetableFrame>"
+)
+ONE_JOURNEY_AND_A_STRAY_2 = (
+    '<TimetableFrame version="1" id="hd:TF"><Description>2</Description><vehicleJourneys>'
+    '<ServiceJourney version="1" id="hd:SJ1"><LineRef ref="hd:L"/></ServiceJourney>'
+    "</vehicleJourneys></TimetableFrame>"
+)
+
+
+@override_settings(LLM_ENABLED=True)
+class ObjectCountTests(SimpleTestCase):
+    """A number in digits before a kind of object is how many of it to write, not a value to place."""
+
+    def setUp(self):
+        for target, value in (("helpdesk.services.semantic_graph.GRAPH_CONCEPT_ALIASES", {}),):
+            patcher = patch(target, value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        patcher = patch.object(generator, "concrete_elements", side_effect=lambda name: _CONCRETE.get(name))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_a_number_before_a_kind_of_object_is_a_count(self):
+        self.assertEqual(
+            generator.object_counts("Show me a NeTEx example for a line with 2 service journeys."),
+            [(2, "2", "service journeys", ["ServiceJourney"])],
+        )
+        self.assertEqual(generator.object_counts("a vehicle type with a deck plan of 2 decks"), [(2, "2", "decks", ["Deck"])])
+        # An abstract element stands for its concrete objects.
+        self.assertEqual(generator.object_counts("a line with 3 journeys")[0][3], ["VehicleJourney", "ServiceJourney"])
+
+    def test_a_number_before_a_value_or_unknown_words_is_a_value(self):
+        for question in (
+            "Show me a NeTEx example for a bus with 50 seats and 20 standing places",
+            "Show a NeTEx example of a coach with 49 seats and 1 wheelchair area",
+            "Show me a NeTEx example of a parking with 120 spaces",
+            "Show a NeTEx example of a tram vehicle type with a length of 32 metres",
+            "Create a NeTEx XML example for a fare product for adult for 5 EUR.",
+            "a line with 2 departures",  # Departure is a property, not an object
+            'Show a NeTEx example of a service journey on line "12" that runs only on public holidays.',
+            "A TemplateServiceJourney every 10 minutes between 06:00 and 22:00",
+        ):
+            self.assertEqual(generator.object_counts(question), [], question)
+
+    def test_number_words_are_left_as_they_were(self):
+        # "two quays" was never a value; only digits are taken out of the values.
+        self.assertEqual(generator.object_counts("a stop place with two quays"), [])
+
+    def test_a_count_is_taken_out_of_the_values(self):
+        question = "Show me a NeTEx example for a line with 2 service journeys."
+        counts = generator.object_counts(question)
+        self.assertEqual(generator.counted_out(generator.requested_values(question), question, counts), [])
+        # The same number also given as a value stays a value.
+        question = "a line 2 with 2 service journeys"
+        self.assertEqual(generator.counted_out(["2"], question, generator.object_counts(question)), ["2"])
+        bus = "a bus with 50 seats and 20 standing places"
+        self.assertEqual(generator.counted_out(generator.requested_values(bus), bus, generator.object_counts(bus)), ["50", "20"])
+
+    def test_the_count_is_checked_as_objects_in_one_parent(self):
+        counts = generator.object_counts("a line with 2 service journeys")
+        self.assertEqual(generator.count_problems(LINE_WITH_JOURNEYS, counts), [])
+        places = generator.object_count_places(LINE_WITH_JOURNEYS, counts)
+        self.assertEqual([(p["value"], p["element"], p["count"], p["path"]) for p in places],
+                         [("2", "ServiceJourney", 2, ["TimetableFrame", "vehicleJourneys"])])
+        problems = generator.count_problems(ONE_JOURNEY_AND_A_STRAY_2, counts)
+        self.assertEqual(len(problems), 1)
+        self.assertIn("write exactly 2 ServiceJourney objects", problems[0])
+        self.assertEqual(generator.error_class(problems[0]), "count")
+
+    def test_generation_asks_for_the_objects_not_the_value(self):
+        question = "Show me a NeTEx example for a line with 2 service journeys."
+        with patch.object(generator, "_ask_model", side_effect=[_reply(ONE_JOURNEY_AND_A_STRAY_2), _reply(LINE_WITH_JOURNEYS)]) as ask, \
+                patch.object(generator, "validate_fragment", return_value={"valid": True, "errors": []}), \
+                patch.object(generator, "asked_element", return_value=""), \
+                patch.object(generator, "asked_from_parts", return_value=("", [])), \
+                patch.object(generator, "_from_standard", return_value=None), \
+                patch.object(generator, "schema_declarations", return_value=[]), \
+                patch.object(generator, "value_element_declarations", return_value=[]):
+            result = generator.generate_netex_example(question, [NETEX_CHUNK], ["NeTEx"])
+        prompt = ask.call_args_list[0].args[0][1]["content"]
+        self.assertIn("Objects to write, each defined with its own id: 2 ServiceJourney", prompt)
+        self.assertNotIn("Write each value as the whole content", prompt)
+        self.assertEqual((result["valid"], result["attempts"]), (True, 2))
+        self.assertEqual(result["attemptLog"][0]["errorClass"], "count")
+        self.assertEqual([(p["value"], p["element"]) for p in result["valuePlaces"]], [("2", "ServiceJourney")])
