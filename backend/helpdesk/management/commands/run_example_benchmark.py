@@ -34,6 +34,11 @@ def is_outage(row: dict) -> bool:
     return bool(log) and all(entry.get("errorClass") == "model-error" for entry in log)
 
 
+def repairs(entry: dict) -> list[str]:
+    """The validator's repairs of an attempt, from its log entry ("order", or "order,placement")."""
+    return [kind for kind in str(entry.get("repaired") or "").split(",") if kind]
+
+
 def summarize(rows: list[dict]) -> dict:
     """Valid, first-attempt and malformed counts, mean attempts and seconds, failed attempts by class. Outage runs
     (see is_outage) are counted on their own and left out of every other figure."""
@@ -64,7 +69,9 @@ def summarize(rows: list[dict]) -> dict:
         "failuresByClass": dict(Counter(entry["errorClass"] for entry in attempts if entry.get("errorClass")).most_common()),
         "notJson": sum(1 for entry in attempts if entry.get("parsed") != "json"),
         # Attempts whose children the validator sorted into schema order (plan 2026-11-12 revision 3, S2).
-        "repairedOrder": sum(1 for entry in attempts if entry.get("repaired") == "order"),
+        "repairedOrder": sum(1 for entry in attempts if "order" in repairs(entry)),
+        # Of those, the attempts that still failed after the repair (plan 2026-11-13, A1).
+        "repairedOrderFailed": sum(1 for entry in attempts if "order" in repairs(entry) and entry.get("errorClass")),
         "completionTokens": sum(entry.get("completionTokens") or 0 for entry in attempts),
     }
 

@@ -606,10 +606,11 @@ def accepting(holder, values: list[str]) -> dict:
 
 
 def repair_order(models, document) -> bool:
-    """Sort the children of every element whose only problem is their order into the schema's slot order, in
-    place. The schema fixes that order, so a model call to fix it decides nothing (plan 2026-11-12 revision 3,
-    S2: `order` was 11 of 41 failed attempts). False, and nothing moved, when any element has another problem,
-    a child whose slot is not unique, or text between its children."""
+    """Sort the children of every element whose children are out of the schema's slot order, in place, even when
+    the document has other problems (plan 2026-11-13, A1; S2 sorted only when order was the only one). The
+    schema fixes that order, so a model call to fix it decides nothing. An element is sorted only when each of
+    its children fits exactly one slot, no text stands between them, and the sorted children have no order
+    problem left; other elements are left as they are. True when anything moved."""
     namespace = "{" + NETEX_NAMESPACE + "}"
     moves = []
     for node in document.iter():
@@ -619,17 +620,16 @@ def repair_order(models, document) -> bool:
         if not kids:
             continue
         if any(not isinstance(kid.tag, str) or not kid.tag.startswith(namespace) for kid in kids):
-            return False  # comments or foreign elements: no repair
+            continue  # comments or foreign elements: not this element
         names = [_local(kid.tag) for kid in kids]
         type_key = models.type_of(node)
-        issues = models.match_children(type_key, names)
-        if not issues:
+        if not any(issue.kind == "order" for issue in models.match_children(type_key, names)):
             continue
-        if any(issue.kind != "order" for issue in issues) or any((kid.tail or "").strip() for kid in kids):
-            return False
-        order = models.ordered_children(type_key, names)
+        if any((kid.tail or "").strip() for kid in kids):
+            continue
+        order = models.sorted_children(type_key, names)
         if order is None:
-            return False
+            continue
         moves.append((node, kids, order))
     for node, kids, order in moves:
         tails = [kid.tail for kid in kids]
@@ -713,6 +713,35 @@ class SchemaHolder:
                 "error": self.error, "reloading": self._loading}
 
     def validate(self, fragment: str) -> dict:
+        """The validation of the fragment. When it is invalid, the children of its elements are sorted into the
+        schema's order (repair_order) and the sorted frame is validated again: the result is the sorted frame's
+        ("fragment", "repaired": ["order"], valid or not, "repairedErrors" the errors of the frame as written).
+        The caller goes on with that frame as if the model had written it, so later feedback is about a frame
+        that is already in order."""
+        result = self._check(fragment)
+        if result.get("valid") or self.content is None or "document" not in result:
+            result.pop("document", None)
+            return result
+        document = result.pop("document")
+        from copy import deepcopy
+
+        candidate = deepcopy(document)
+        try:
+            moved = repair_order(self.content, candidate)
+        except Exception as exc:  # a repair is an aid: never fail the validation over it
+            logger.warning("order repair failed: %s", exc)
+            moved = False
+        if not moved:
+            return result
+        repaired_text = _frame_text(candidate)
+        repaired = self._check(repaired_text)
+        repaired.pop("document", None)
+        if "Not well-formed" in " ".join(repaired.get("errors") or []):
+            return result
+        return {**repaired, "repaired": ["order"], "fragment": repaired_text, "repairedErrors": (result.get("errors") or [])[:MAX_ERRORS]}
+
+    def _check(self, fragment: str) -> dict:
+        """Validate one fragment as written; an invalid, well-formed one comes with its parsed "document"."""
         from lxml import etree
 
         schema = self.schema
@@ -734,35 +763,12 @@ class SchemaHolder:
         except Exception as exc:  # feedback is an aid: never fail the validation over it
             logger.warning("diagnostics failed: %s", exc)
             found = []
-        # Only the order wrong: sort the children into the schema's order and validate again. The repaired frame
-        # is returned in "fragment"; the caller goes on with it as if the model had written it.
-        if found and self.content is not None and all(entry["kind"] == "order" for entry in found):
-            repaired = self._repaired(document)
-            if repaired is not None:
-                return {**result, **repaired, "repairedErrors": errors[:MAX_ERRORS]}
         # Definitions for any well-formed fragment: an excerpt of a standard example can fail only on
         # references to objects outside it, and is still described.
         return {
             **result, "valid": False, "errors": errors[:MAX_ERRORS], "elements": self.element_docs.notes(document),
-            "diagnostics": found[:MAX_DIAGNOSTICS],
+            "diagnostics": found[:MAX_DIAGNOSTICS], "document": document,
         }
-
-    def _repaired(self, document) -> dict | None:
-        """The valid result for the document with its children in schema order, or None."""
-        from copy import deepcopy
-
-        candidate = deepcopy(document)
-        try:
-            if not repair_order(self.content, candidate):
-                return None
-        except Exception as exc:  # a repair is an aid: never fail the validation over it
-            logger.warning("order repair failed: %s", exc)
-            return None
-        with self._validate_lock:
-            if not self.schema.validate(candidate):
-                return None
-        return {"valid": True, "errors": [], "elements": self.element_docs.notes(candidate), "repaired": "order",
-                "fragment": _frame_text(candidate)}
 
 
 def make_handler(holder: SchemaHolder):

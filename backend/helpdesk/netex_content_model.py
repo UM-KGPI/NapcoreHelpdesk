@@ -487,6 +487,24 @@ class ContentModels:
             return None
         return order
 
+    def sorted_children(self, type_key: str, children: list[str]) -> list[int] | None:
+        """The children's indexes sorted into slot order, stable within a slot, when every child fits exactly one
+        slot and the sorted children have no order problem left; other problems (a missing required child, too
+        many in a single slot) may remain. None otherwise (plan 2026-11-13, A1)."""
+        slots = self.slots(type_key)
+        if not slots:
+            return None
+        keys = []
+        for child in children:
+            found = [index for index, slot in enumerate(slots) if child in slot.names]
+            if len(found) != 1:
+                return None
+            keys.append(found[0])
+        order = sorted(range(len(children)), key=lambda index: keys[index])
+        if any(issue.kind == "order" for issue in self.match_children(type_key, [children[index] for index in order])):
+            return None
+        return order
+
     def child_list(self, type_key: str, focus: set[str] = frozenset(), limit: int = 45) -> str:
         """The type's children in schema order, "?" optional, "*" repeatable, required ones marked; a long
         list keeps the required slots, those holding a focus name and their neighbours."""

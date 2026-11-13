@@ -2703,7 +2703,9 @@ def _generate(
             "error": first[:300],
             # What the model wrote, so a failed attempt can be read later (plan 2026-11-12 R0).
             "fragment": fragment[:MAX_LOGGED_FRAGMENT_CHARS],
-            # "order": the validator sorted the children into schema order and the attempt went on (revision 3, S2).
+            # "order": the validator sorted the children into schema order and the attempt went on with its frame
+            # (revision 3, S2; since plan 2026-11-13 A1 also when other problems remain). "fragment" is what the
+            # model wrote, before any repair.
             **({"repaired": repaired} if repaired else {}),
         })
 
@@ -2769,10 +2771,12 @@ def _generate(
                 logger.warning("NeTEx example not validated: %s", exc)
                 return failed({"valid": False, "attempts": attempt, "errors": [str(exc)[:200]], "attemptLog": attempt_log, **asked_fields, **timing})
             errors = list(checked.get("errors") or [])
-            repaired = str(checked.get("repaired") or "") if checked.get("valid") and checked.get("fragment") else ""
+            repairs = checked.get("repaired") or []
+            repaired = ",".join([repairs] if isinstance(repairs, str) else repairs) if checked.get("fragment") else ""
             if repaired:
-                # The validator put the children in schema order: go on with its frame, and show the model that
-                # frame as its own reply, so any later feedback is about what it sees.
+                # The validator put the children in schema order, valid or not (plan 2026-11-13, A1): go on with its
+                # frame, and show the model that frame as its own reply, so any later feedback is about what it sees.
+                as_written = fragment
                 fragment = checked["fragment"]
                 content = json.dumps({"xml": fragment})
             if checked.get("valid") and not errors:
@@ -2793,7 +2797,7 @@ def _generate(
                 if not errors and asked:
                     errors = link_problems(fragment, asked, shape_question, values)
                     soft = bool(errors)
-        logged(attempt, attempt_started, parsed, errors, checked.get("diagnostics"), fragment, repaired)
+        logged(attempt, attempt_started, parsed, errors, checked.get("diagnostics"), as_written if repaired else fragment, repaired)
         if not errors:
             return accepted(fragment, checked, [])
         if soft:
