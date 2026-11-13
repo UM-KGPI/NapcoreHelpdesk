@@ -1896,3 +1896,110 @@ class SkeletonSkipTests(SimpleTestCase):
     def test_no_validator_keeps_the_skeleton(self):
         _, skeleton_for, _ = self._run("Give me a NeTEx example of a bus line from Maribor to Ptuj", None)
         skeleton_for.assert_called_once()
+
+
+# Prod req-diag-s1-1794542419 (2026-11-13), attempts 2 and 3: the joined name the value check refused, and the split
+# the model wrote to pass it.
+JOINED_LINE = (
+    '<ServiceFrame version="1.0" id="hd:SF_1"><lines><Line version="any" id="hd:LN_1"><Name>Maribor - Ptuj</Name>'
+    "<Description>School days only, low-floor vehicles</Description><TransportMode>bus</TransportMode></Line></lines>"
+    "</ServiceFrame>"
+)
+SPLIT_LINE = JOINED_LINE.replace("<Name>Maribor - Ptuj</Name>", "<Name>Maribor</Name><ShortName>Ptuj</ShortName>")
+
+
+class SharedNameTests(SimpleTestCase):
+    """Plan 2026-11-12 revision 4, T1-T4: two of the question's values are not two names of one object."""
+
+    QUESTION = LinkRetryTests.QUESTION
+    VALUES = ["Maribor", "Ptuj"]
+
+    def test_two_values_as_name_and_short_name_of_one_line_are_found(self):
+        found = generator.shared_name_values(SPLIT_LINE, self.VALUES, self.QUESTION)
+        self.assertEqual(found, [{"element": "Line", "id": "hd:LN_1", "holders": {"Name": "Maribor", "ShortName": "Ptuj"}}])
+        problems = generator.shared_name_problems(SPLIT_LINE, self.VALUES, self.QUESTION)
+        self.assertEqual(len(problems), 1)
+        self.assertIn("Maribor and Ptuj from the question are written as the Name and ShortName of the one Line", problems[0])
+        self.assertIn("link that object to the Line", problems[0])
+        self.assertEqual(generator.error_class(problems[0]), "value")
+
+    def test_name_and_description_count_too(self):
+        fragment = SPLIT_LINE.replace("<ShortName>Ptuj</ShortName>", "").replace(
+            "School days only, low-floor vehicles", "Ptuj")
+        self.assertEqual(generator.shared_name_values(fragment, self.VALUES, self.QUESTION)[0]["holders"],
+                         {"Name": "Maribor", "Description": "Ptuj"})
+
+    def test_each_value_in_its_own_object_is_clean(self):
+        self.assertEqual(generator.shared_name_values(LINKED_LINE, self.VALUES, self.QUESTION), [])
+
+    def test_a_field_the_question_names_does_not_count(self):
+        question = 'Show a NeTEx example of a stop place "Celje Bus Station" with short name "Celje AP"'
+        fragment = ('<SiteFrame version="1" id="hd:SF"><stopPlaces><StopPlace version="1" id="hd:SP"><Name>Celje Bus Station'
+                    "</Name><ShortName>Celje AP</ShortName></StopPlace></stopPlaces></SiteFrame>")
+        self.assertEqual(generator.shared_name_values(fragment, ["Celje Bus Station", "Celje AP"], question), [])
+
+    def test_a_value_in_a_code_is_not_a_name(self):
+        question = 'Show a NeTEx example of a line "12" named "City Express"'
+        fragment = ('<ServiceFrame version="1" id="hd:SF"><lines><Line version="1" id="hd:LN"><Name>City Express</Name>'
+                    "<PublicCode>12</PublicCode></Line></lines></ServiceFrame>")
+        self.assertEqual(generator.shared_name_values(fragment, ["12", "City Express"], question), [])
+
+    def test_a_joined_name_gets_the_own_object_advice(self):
+        message = generator.missing_value_error("Maribor", self.QUESTION, JOINED_LINE, self.VALUES)
+        self.assertTrue(message.startswith("the value Maribor from the question is missing"))
+        self.assertIn("The Line's Name “Maribor - Ptuj” joins it with other values from the question", message)
+        self.assertIn("give it its own object with Maribor as its Name, and link that object to the Line", message)
+
+    def test_one_value_inside_a_longer_name_keeps_the_plain_message(self):
+        fragment = JOINED_LINE.replace("Maribor - Ptuj", "Maribor bus line")
+        message = generator.missing_value_error("Maribor", self.QUESTION, fragment, self.VALUES)
+        self.assertNotIn("joins it", message)
+        self.assertTrue(message.endswith("not part of a Name or Description text"))
+
+    def test_the_value_rule_for_the_first_prompt(self):
+        self.assertEqual(generator.values_rule([]), "")
+        plain = generator.values_rule(["50"])
+        self.assertIn("whole content of an element or attribute", plain)
+        self.assertNotIn("two names of one object", plain)
+        own = generator.values_rule(self.VALUES, "Line", own_objects=True)
+        self.assertIn("are not two names of one object", own)
+        self.assertIn("link those objects to the Line.", own)
+
+    def test_benchmark_counts_the_split(self):
+        from helpdesk.management.commands.run_example_benchmark import summarize
+
+        rows = [
+            {"valid": True, "origin": "generated", "attempts": 3, "xml": SPLIT_LINE, "question": self.QUESTION},
+            {"valid": True, "origin": "generated", "attempts": 1, "xml": LINKED_LINE, "question": self.QUESTION,
+             "unlinkedObjects": [{"element": "VehicleType", "id": "a"}]},
+            {"valid": True, "origin": "standard", "attempts": 3, "xml": SPLIT_LINE, "question": self.QUESTION},
+        ]
+        summary = summarize(rows)
+        self.assertEqual((summary["generated"], summary["unlinked"], summary["sharedName"]), (2, 1, 1))
+
+
+@override_settings(LLM_ENABLED=True)
+class SharedNameRetryTests(SimpleTestCase):
+    """The split is a hard failure: retried, and never shown as the generated example."""
+
+    QUESTION = LinkRetryTests.QUESTION
+    setUp = LinkRetryTests.setUp
+    _run = LinkRetryTests._run
+
+    def test_the_split_is_retried_with_the_own_object_advice(self):
+        result, ask = self._run([SPLIT_LINE, LINKED_LINE])
+        self.assertIn("has one name", ask.call_args_list[1].args[0][-1]["content"])
+        self.assertEqual((result["valid"], result["origin"], result["attempts"]), (True, "generated", 2))
+        self.assertEqual(result["attemptLog"][0]["errorClass"], "value")
+
+    def test_a_split_on_every_attempt_is_not_shown(self):
+        result, _ = self._run([SPLIT_LINE] * generator.MAX_ATTEMPTS)
+        self.assertFalse(result.get("valid") and result.get("origin") == "generated")
+        self.assertEqual([entry["errorClass"] for entry in result["attemptLog"]], ["value"] * generator.MAX_ATTEMPTS)
+
+    def test_the_first_prompt_says_where_the_values_go(self):
+        with patch.object(generator, "value_holders", return_value=[]):
+            _, ask = self._run([LINKED_LINE])
+        prompt = ask.call_args_list[0].args[0][1]["content"]
+        self.assertIn("whole content of an element or attribute", prompt)
+        self.assertIn("are not two names of one object", prompt)

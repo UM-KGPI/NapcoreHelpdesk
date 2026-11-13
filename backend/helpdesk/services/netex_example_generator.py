@@ -1993,8 +1993,11 @@ def link_problems(fragment: str, asked: str, question: str = "", values: list[st
     return problems
 
 
-def missing_value_error(value: str, question: str) -> str:
-    """The feedback for a value the valid fragment lacks."""
+def missing_value_error(value: str, question: str, fragment: str = "", values: list[str] | None = None) -> str:
+    """The feedback for a value the valid fragment lacks. When the value sits in a Name or Description together
+    with another of the question's values ("Maribor - Ptuj"), it also says where such a value goes: told only
+    that a value must be an element's whole content, the model split the name into Name "Maribor" and ShortName
+    "Ptuj" of the one Line (21 of 21 such examples followed this feedback; plan 2026-11-12 revision 4, T0)."""
     written = {iso: text for text, _, iso in durations(question)}
     if value in written:
         return (
@@ -2002,10 +2005,92 @@ def missing_value_error(value: str, question: str) -> str:
             f"{value} in an element that holds a duration, or as two times {written[value]} apart in the same "
             "object (a departure and an arrival), not as a number in a Name or Description text"
         )
-    return (
+    message = (
         f"the value {value} from the question is missing: it must be the whole content of an element "
         "or attribute that holds it, not part of a Name or Description text"
     )
+    if joined := _joined_values(fragment, value, values or []):
+        name, owner, text = joined
+        message += (
+            f". The {owner}'s {name} \u201c{text}\u201d joins it with other values from the question: if {value} is a "
+            f"thing of its own (a place, a stop, an operator), give it its own object with {value} as its Name, "
+            f"and link that object to the {owner}"
+        )
+    return message
+
+
+def _naming_child(name: str) -> bool:
+    return name.endswith("Name") or name == "Description"
+
+
+def _joined_values(fragment: str, value: str, values: list[str]) -> tuple[str, str, str] | None:
+    """The first Name or Description text in the fragment that holds the value and another of the values as
+    words, with the element that owns it: ("Name", "Line", "Maribor - Ptuj")."""
+    from xml.etree import ElementTree
+
+    if not fragment:
+        return None
+    try:
+        root = ElementTree.fromstring(fragment)
+    except ElementTree.ParseError:
+        return None
+
+    def has(text: str, word: str) -> bool:
+        return bool(re.search(rf"(?<![\w.]){re.escape(word)}(?![\w.])", text))
+
+    others = [other for other in values if other != value]
+    for owner in root.iter():
+        for child in owner:
+            name, text = _local(child.tag), (child.text or "").strip()
+            if _naming_child(name) and has(text, value) and any(has(text, other) for other in others):
+                return name, _local(owner.tag), text
+    return None
+
+
+def shared_name_values(fragment: str, values: list[str], question: str = "") -> list[dict]:
+    """Objects that hold two or more different values from the question as the whole content of their naming
+    children (Name, ShortName, Description, ...): {"element": "Line", "id": ..., "holders": {"Name": "Maribor",
+    "ShortName": "Ptuj"}}. Such an object says the line is called Maribor and is short-named Ptuj, which is
+    false (plan 2026-11-12 revision 4, T1). A child the question names ("short name") does not count."""
+    from xml.etree import ElementTree
+
+    try:
+        root = ElementTree.fromstring(fragment)
+    except ElementTree.ParseError:
+        return []
+    asked_words = (question or "").lower()
+    found = []
+    for node in root.iter():
+        if not node.get("id"):
+            continue
+        holders: dict[str, str] = {}
+        for child in node:
+            name = _local(child.tag)
+            words = " ".join(re.findall(r"[A-Z][a-z]*|[a-z]+", name)).lower()
+            if not _naming_child(name) or words in asked_words:
+                continue
+            for value in values:
+                if value not in holders.values() and holds_value(child.text or "", value):
+                    holders[name] = value
+                    break
+        if len(holders) >= 2:
+            found.append({"element": _local(node.tag), "id": node.get("id"), "holders": holders})
+    return found
+
+
+def shared_name_problems(fragment: str, values: list[str], question: str = "") -> list[str]:
+    """The feedback for each object that holds two of the question's values as its names."""
+    problems = []
+    for item in shared_name_values(fragment, values, question):
+        element, holders = item["element"], item["holders"]
+        article = "an" if element[:1] in "AEIOU" else "a"
+        problems.append(
+            f"{' and '.join(holders.values())} from the question are written as the {' and '.join(holders)} of "
+            f"the one {element}: {article} {element} has one name. Give each value that names something else "
+            f"(a place, a stop, an operator) its own object with that value as its Name, and link that object "
+            f"to the {element}"
+        )
+    return problems
 
 
 def _unmet_values(fragment: str, values: list[str], question: str) -> list[str]:
@@ -2072,6 +2157,26 @@ def values_line(values: list[str], question: str) -> str:
         f"{written[v][0]} apart in the same object)" if v in written else v
         for v in values
     )
+
+
+def values_rule(values: list[str], asked: str = "", own_objects: bool = False) -> str:
+    """The value rule for the first prompt, which the check enforces after an attempt anyway: `value` was the
+    largest class of failed attempts (14 of 41, plan 2026-11-12 revision 3, S3). With own_objects (two or more
+    values no element is known to hold, the skeleton skipped) also where such values go, so the model does not
+    write them as the Name and ShortName of the one object (revision 4, T3)."""
+    if not values:
+        return ""
+    rule = (
+        "Write each value as the whole content of an element or attribute that holds it, not inside a longer "
+        "Name or Description text."
+    )
+    if own_objects:
+        target = f" the {asked}" if asked else " the object the question asks for"
+        rule += (
+            " Values that name different things (places, stops, operators) are not two names of one object: give "
+            f"each its own object with that value as its Name, and link those objects to{target}."
+        )
+    return rule
 
 
 def missing_values(fragment: str, values: list[str]) -> list[str]:
@@ -2157,7 +2262,7 @@ _ERROR_CLASSES = (
     ("keyref", ("No match found for key-sequence",)),
     ("min-count", ("Missing child element(s)",)),
     ("not-expected", ("This element is not expected",)),
-    ("value", ("from the question is missing",)),
+    ("value", ("from the question is missing", "has one name")),
     ("asked-object", ("the question asks for",)),
     ("link", ("that nothing links to the",)),
     ("condition", ("the question says the service runs", "is empty: give it the children")),
@@ -2415,9 +2520,11 @@ def _generate(
         logger.info("service condition structure not available: %s", exc)
         condition_part = "HOW THE SERVICE RUNS: " + "; ".join(f"\u201c{p}\u201d in a {e}" for p, e in conditions)
     condition_part = condition_part + "\n\n" if conditions else ""
+    rule = values_rule(values, asked, own_objects=skeleton_skipped == "values")
+    rule_part = rule + "\n" if rule else ""
     messages = [
         {"role": "system", "content": _PROMPT},
-        {"role": "user", "content": f"Question:\n{question}\n\nValues to use: {values_line(values, question)}\n\n{condition_part}{skeleton_part}EVIDENCE BLOCKS:\n{evidence}"},
+        {"role": "user", "content": f"Question:\n{question}\n\nValues to use: {values_line(values, question)}\n{rule_part}\n{condition_part}{skeleton_part}EVIDENCE BLOCKS:\n{evidence}"},
     ]
     errors: list[str] = []
     # Schema declarations go only into the feedback after a failed attempt: given up front they lowered
@@ -2522,9 +2629,13 @@ def _generate(
             errors = list(checked.get("errors") or [])
             if checked.get("valid") and not errors:
                 errors = [
-                    missing_value_error(value, question)
+                    missing_value_error(value, question, fragment, values)
                     for value in _unmet_values(fragment, values, shape_question)
                 ]
+                # Hard: two of the values as the names of one object (Name "Maribor", ShortName "Ptuj" of a
+                # Line) hold the values but state something false (plan 2026-11-12 revision 4, T1).
+                if not errors:
+                    errors = shared_name_problems(fragment, values, question)
                 # Hard: the asked object is absent. Whether the values sit in it or in linked objects is the
                 # link check's (soft) question.
                 if not errors and asked and (problem := asked_object_problem(fragment, asked, [], shape_question)):
