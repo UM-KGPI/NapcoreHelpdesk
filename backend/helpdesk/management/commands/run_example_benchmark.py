@@ -25,6 +25,34 @@ from helpdesk.services.question_parsing import parse_question_to_semantic_query,
 from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 
 DEFAULT_QUESTIONS = Path(__file__).resolve().parents[2] / "benchmarks" / "example-generation-questions.yaml"
+DEFAULT_API_URL = "http://localhost:8000/api/v1"
+
+
+def example_via_api(question: str, api_url: str, token: str, request_id: str, timeout: float = 300) -> dict:
+    """The example the app itself gives: the question posted to /questions/answer, as a user's would be (its
+    English rendering, scope, retrieval settings and evidence order), and the response's generatedExample.
+    The direct call of the generator differed from prod for the same question (plan 2026-11-13, step C)."""
+    from urllib import request
+
+    http_request = request.Request(
+        api_url.rstrip("/") + "/questions/answer",
+        data=json.dumps({"question": question}).encode("utf-8"),
+        method="POST",
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}", "X-Request-Id": request_id},
+    )
+    with request.urlopen(http_request, timeout=timeout) as response:
+        payload = json.loads(response.read())
+    return payload.get("generatedExample") or {"valid": False, "attempts": 0, "errors": ["the answer had no example"]}
+
+
+def api_token(api_url: str) -> str:
+    from urllib import request
+
+    http_request = request.Request(
+        api_url.rstrip("/") + "/auth/dev-token", data=b"{}", method="POST", headers={"Content-Type": "application/json"}
+    )
+    with request.urlopen(http_request, timeout=30) as response:
+        return json.loads(response.read())["token"]
 
 
 def is_outage(row: dict) -> bool:
@@ -88,6 +116,11 @@ class Command(BaseCommand):
         parser.add_argument("--output", default="", help="Write the runs and the summaries as JSON.")
         parser.add_argument("--runs", type=int, default=1, help="Generator runs per question (retrieval runs once).")
         parser.add_argument("--only", default="", help="Comma-separated question ids to run (default: all).")
+        parser.add_argument(
+            "--via-api", action="store_true",
+            help="Ask each question through the app's /questions/answer instead of calling the generator directly.",
+        )
+        parser.add_argument("--api-url", default=DEFAULT_API_URL, help="The app's API base URL for --via-api.")
 
     def handle(self, *args, **options):
         questions = yaml.safe_load(Path(options["input"]).read_text(encoding="utf-8"))["questions"]
@@ -95,15 +128,26 @@ class Command(BaseCommand):
         if only:
             questions = [item for item in questions if item["id"] in only]
         runs = max(1, options["runs"])
+        via_api = options["via_api"]
+        token = api_token(options["api_url"]) if via_api else ""
         rows = []
         for item in questions:
             question = item["question"]
-            semantic_query = parse_question_to_semantic_query(text=question, requested_scope=[])
-            scope, _ = select_effective_scope(semantic_query, [])
-            chunks, _trace = retrieve_chunks_with_trace(question=question, top_k=6, min_score=0.62, scope=scope, graph_rag_enabled=True)
+            if not via_api:
+                semantic_query = parse_question_to_semantic_query(text=question, requested_scope=[])
+                scope, _ = select_effective_scope(semantic_query, [])
+                chunks, _trace = retrieve_chunks_with_trace(question=question, top_k=6, min_score=0.62, scope=scope, graph_rag_enabled=True)
             for run in range(1, runs + 1):
                 started = time.perf_counter()
-                result = generate_netex_example(question, chunks, scope) or {"valid": False, "attempts": 0, "errors": ["not triggered"]}
+                if via_api:
+                    request_id = f"bench-{item['id']}-{run}-{int(time.time())}"
+                    try:
+                        result = example_via_api(question, options["api_url"], token, request_id)
+                    except Exception as exc:  # the app down or the request timed out: a failed run, kept apart below
+                        result = {"valid": False, "attempts": 0, "errors": [f"api: {exc}"[:200]],
+                                  "attemptLog": [{"attempt": 1, "errorClass": "model-error", "error": f"api: {exc}"[:200]}]}
+                else:
+                    result = generate_netex_example(question, chunks, scope) or {"valid": False, "attempts": 0, "errors": ["not triggered"]}
                 seconds = round(time.perf_counter() - started, 1)
                 rows.append({"id": item["id"], "run": run, "question": question, "seconds": seconds, **result})
                 classes = [entry.get("errorClass") for entry in result.get("attemptLog") or [] if entry.get("errorClass")]

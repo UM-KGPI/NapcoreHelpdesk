@@ -2475,3 +2475,48 @@ class PlacementRepairTests(SimpleTestCase):
             # Line has no reference for: left (only its version follows).
             [("OperatorRef", "2"), ("OperatorRef", "2"), ("QuayRef", "3"), ("StopPlaceRef", None)],
         )
+
+
+class BenchmarkViaApiTests(SimpleTestCase):
+    """Plan 2026-11-13, step C: the benchmark can ask through the app's answer endpoint."""
+
+    def test_the_example_comes_from_the_answer_response(self):
+        from io import BytesIO
+
+        from helpdesk.management.commands import run_example_benchmark as bench
+
+        class Response(BytesIO):
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+        sent = {}
+
+        def urlopen(http_request, timeout=0):
+            sent.update(url=http_request.full_url, body=json.loads(http_request.data), headers=dict(http_request.header_items()))
+            return Response(json.dumps({"answer": "…", "generatedExample": {"valid": True, "origin": "generated", "attempts": 2}}).encode())
+
+        with patch("urllib.request.urlopen", side_effect=urlopen):
+            result = bench.example_via_api("Show a NeTEx example of a Line", "http://app/api/v1/", "tok", "bench-1")
+        self.assertEqual(result, {"valid": True, "origin": "generated", "attempts": 2})
+        self.assertEqual(sent["url"], "http://app/api/v1/questions/answer")
+        self.assertEqual(sent["body"], {"question": "Show a NeTEx example of a Line"})
+        self.assertEqual((sent["headers"]["Authorization"], sent["headers"]["X-request-id"]), ("Bearer tok", "bench-1"))
+
+    def test_an_answer_without_an_example_is_a_failed_run(self):
+        from io import BytesIO
+
+        from helpdesk.management.commands import run_example_benchmark as bench
+
+        class Response(BytesIO):
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+        with patch("urllib.request.urlopen", return_value=Response(b'{"answer": "no example"}')):
+            result = bench.example_via_api("q", "http://app/api/v1", "tok", "bench-2")
+        self.assertEqual((result["valid"], result["attempts"]), (False, 0))
