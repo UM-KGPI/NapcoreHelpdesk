@@ -57,6 +57,27 @@ dev DB (5), and the benchmark JSONs (`.mylocal/bench/t0.py`, output `t0.out`). *
 - Baseline on main (S1, for T4): gen33 0 of 12 generated runs split; **gen34 3 of 12** (s1 1/3, s1-10 2/9);
   gen35, gen36 0 of 3; gen01–32 0. So the fault is live on main for gen34 too, not only the one prod draw.
 
+### R3 result (2026-11-13, Opus): linking object's place and shape in the feedback, one soft extra attempt
+
+The link feedback now says where the standard's example has the linking object ("TimetableFrame >
+vehicleJourneys > ServiceJourney") and shows it cut to the paths to its two references; with an acceptable
+unlinked fragment in hand one fourth attempt is allowed. Benchmark `r3.json` + `r3-10.json` against S2,
+gen01–32 3 runs, gen33–36 13 runs. **Measured.**
+
+| | S2 (main) | R3 |
+|---|---|---|
+| gen01–32 valid / first attempt / mean time | 96/96 / 78 / 4.3 s | 96/96 / 78 / 4.4 s |
+| gen33 linked (of generated) | 3 of 13 | 7 of 12 |
+| gen34 linked (of generated) | 6 of 11 | 11 of 13 |
+| gen33 failed `wrong-parent` attempts (10-run) | 10 | 1 |
+| gen33 / gen34 mean time | 22.1 / 22.7 s | 24.4 / 25.0 s |
+| runs with a fourth attempt, gen01–32 | – | 2 of 96 |
+
+gen33 and gen36 generated 12 of 13 (S2 13 of 13): one fallback each to the standard's example, at noise level
+and not caused by the extra attempt (it is only taken when an acceptable fragment exists, which is then kept).
+S4 is answered: the linked share of gen33 is above half. Both parts of R3 kept: the wrong-parent drop is the
+place line; the time cost (~2 s on gen33/34) is the fourth attempt.
+
 ### S2 result (2026-11-13, Opus): order repaired in the validator, condition met
 
 Replay: of 103 distinct stored fragments that failed on `order`, 93 validate after the repair; the other 10 have
