@@ -82,7 +82,9 @@ services:
       - ./scripts:/app/scripts:ro
       - ./api:/app/api:ro
       - ./:/app/repo:ro  # VERSION read via a directory mount: a file mount goes stale after a version bump
-      - ../NeTEx:/app/repos/NeTEx:ro
+      # NETEX_CHECKOUT (in a local .env): the NeTEx checkout to index and validate against. Keep it on upstream
+      # v2.0, as prod, when benchmarks should show what prod does; a branch with own examples changes retrieval.
+      - ${NETEX_CHECKOUT:-../NeTEx}:/app/repos/NeTEx:ro
       - ../OpRa:/app/repos/OpRa:ro
       - ../SIRI:/app/repos/SIRI:ro
     ports:
@@ -134,7 +136,7 @@ services:
     command: python -m helpdesk.netex_validator_service
     volumes:
       - ./backend:/app/backend
-      - ../NeTEx:/app/repos/NeTEx:ro
+      - ${NETEX_CHECKOUT:-../NeTEx}:/app/repos/NeTEx:ro
     ports:
       - "8091:8091"
     mem_limit: ${NETEX_VALIDATOR_MEM_LIMIT:-512m}
