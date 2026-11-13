@@ -1547,6 +1547,13 @@ a {
   box-shadow: none;
 }
 
+/* The "taking longer than usual" notice: the white-card --danger (dark red-brown) is barely visible on the blue
+   glass of the question panel; the brand yellow, as for links there, is. */
+.chat-panel.user-workspace .chat-progress-slow {
+  color: var(--brand-yellow);
+  font-weight: 600;
+}
+
 /* Answer panel: dark glass (Sara's spec, #377, 2026-11-11). White text throughout, no black or dark grey. */
 .chat-panel.user-workspace .chat-log:not(.chat-log-empty) {
   --ink: #ffffff;
