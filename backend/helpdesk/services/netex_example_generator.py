@@ -2087,6 +2087,7 @@ def link_problems(fragment: str, asked: str, question: str = "", values: list[st
     problems = []
     shown: set[str] = set()
     defined = _defined_kinds(fragment)
+    told: set[tuple[str, str]] = set()
     for element in kinds:
         items = [item for item in unlinked if item["element"] == element]
         ids = ", ".join(item["id"] for item in items[:3])
@@ -2114,11 +2115,13 @@ def link_problems(fragment: str, asked: str, question: str = "", values: list[st
             if example.get("excerpt") and holder not in shown:
                 shown.add(holder)
                 shape = f"\n  Its shape there (the structure only, not the ids or values):\n{example['excerpt']}"
-                shape += "".join(
-                    f"\n  A {item['parent']} also needs a {item['ref']}: define a {kind} for each {item['parent']} and refer to it."
-                    for item in example.get("requiredRefs") or []
-                    if (kind := item["ref"][: -len("Ref")]) and kind not in defined
-                )
+            # For each kind, also when the holder's shape was shown for another kind: the StopPlace's path through
+            # a Call came second to the VehicleType's, and its Call lacked the ScheduledStopPointRef (B1 benchmark).
+            for item in example.get("requiredRefs") or []:
+                kind = item["ref"][: -len("Ref")]
+                if kind and kind not in defined and (item["parent"], item["ref"]) not in told:
+                    told.add((item["parent"], item["ref"]))
+                    shape += f"\n  A {item['parent']} also needs a {item['ref']}: define a {kind} for each {item['parent']} and refer to it."
         if not any(_asked_for(item["node"], question, list(values)) for item in items):
             line += ", or remove it if the question does not need it"
         problems.append(line + "." + shape)
