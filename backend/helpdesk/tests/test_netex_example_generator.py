@@ -2320,3 +2320,131 @@ class LinkShapeRequiredTests(SimpleTestCase):
             names = [etree.QName(child).localname for child in node]
             steps = [etree.QName(n).localname for n in reversed([node, *node.iterancestors()])]
             self.assertEqual(models.match_children(models.type_at(steps), names), [], steps)
+
+
+PLACEMENT_XSD = """<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.netex.org.uk/netex"
+  targetNamespace="http://www.netex.org.uk/netex" elementFormDefault="qualified" version="2.0">
+  <xsd:element name="PublicationDelivery">
+    <xsd:complexType><xsd:sequence>
+      <xsd:element name="PublicationTimestamp" type="xsd:dateTime"/>
+      <xsd:element name="ParticipantRef" type="xsd:string"/>
+      <xsd:element name="dataObjects"><xsd:complexType><xsd:choice maxOccurs="unbounded">
+        <xsd:element ref="CompositeFrame"/><xsd:element ref="ServiceFrame"/><xsd:element ref="SiteFrame"/>
+      </xsd:choice></xsd:complexType></xsd:element>
+    </xsd:sequence><xsd:attribute name="version" type="xsd:string"/></xsd:complexType>
+  </xsd:element>
+  <xsd:attributeGroup name="Ids"><xsd:attribute name="id" type="xsd:string"/><xsd:attribute name="version" type="xsd:string"/></xsd:attributeGroup>
+  <xsd:element name="CompositeFrame"><xsd:complexType><xsd:sequence>
+    <xsd:element name="frames" minOccurs="0"><xsd:complexType><xsd:choice maxOccurs="unbounded">
+      <xsd:element ref="ServiceFrame"/><xsd:element ref="SiteFrame"/>
+    </xsd:choice></xsd:complexType></xsd:element>
+  </xsd:sequence><xsd:attributeGroup ref="Ids"/></xsd:complexType></xsd:element>
+  <xsd:element name="ServiceFrame"><xsd:complexType><xsd:sequence>
+    <xsd:element name="operators" type="operators_RelStructure" minOccurs="0"/>
+    <xsd:element name="lines" minOccurs="0"><xsd:complexType><xsd:sequence>
+      <xsd:element ref="Line" maxOccurs="unbounded"/>
+    </xsd:sequence></xsd:complexType></xsd:element>
+  </xsd:sequence><xsd:attributeGroup ref="Ids"/></xsd:complexType></xsd:element>
+  <xsd:element name="SiteFrame"><xsd:complexType><xsd:sequence>
+    <xsd:element name="operators" type="operators_RelStructure" minOccurs="0"/>
+    <xsd:element name="stopPlaces" minOccurs="0"><xsd:complexType><xsd:sequence>
+      <xsd:element ref="StopPlace" maxOccurs="unbounded"/>
+    </xsd:sequence></xsd:complexType></xsd:element>
+  </xsd:sequence><xsd:attributeGroup ref="Ids"/></xsd:complexType></xsd:element>
+  <xsd:complexType name="operators_RelStructure"><xsd:sequence>
+    <xsd:element ref="Operator" maxOccurs="unbounded"/>
+  </xsd:sequence></xsd:complexType>
+  <xsd:element name="Line"><xsd:complexType><xsd:sequence>
+    <xsd:element name="Name" type="xsd:string"/>
+  </xsd:sequence><xsd:attributeGroup ref="Ids"/></xsd:complexType></xsd:element>
+  <xsd:element name="Operator"><xsd:complexType><xsd:sequence>
+    <xsd:element name="Name" type="xsd:string"/>
+  </xsd:sequence><xsd:attributeGroup ref="Ids"/></xsd:complexType></xsd:element>
+  <xsd:element name="StopPlace"><xsd:complexType><xsd:sequence>
+    <xsd:element name="Name" type="xsd:string"/>
+    <xsd:element name="quays" minOccurs="0"><xsd:complexType><xsd:sequence>
+      <xsd:element ref="Quay" maxOccurs="unbounded"/>
+    </xsd:sequence></xsd:complexType></xsd:element>
+  </xsd:sequence><xsd:attributeGroup ref="Ids"/></xsd:complexType></xsd:element>
+  <xsd:element name="Quay"><xsd:complexType><xsd:sequence>
+    <xsd:element name="Name" type="xsd:string"/>
+  </xsd:sequence><xsd:attributeGroup ref="Ids"/></xsd:complexType></xsd:element>
+</xsd:schema>
+"""
+
+PLACEMENT_EXAMPLE = (
+    '<PublicationDelivery xmlns="http://www.netex.org.uk/netex"><dataObjects><CompositeFrame id="c"><frames>'
+    '<SiteFrame id="s"><operators><Operator id="o1"/></operators><stopPlaces><StopPlace id="sp1"/><StopPlace id="sp2"/>'
+    '<StopPlace id="sp3"/></stopPlaces></SiteFrame>'
+    '<ServiceFrame id="f"><operators><Operator id="o2"/></operators><lines><Line id="l1"/></lines>'
+    # Placed where the schema has no such list: not a placement.
+    '<stopPlaces><StopPlace id="sp9"/><StopPlace id="sp8"/><StopPlace id="sp7"/><StopPlace id="sp6"/></stopPlaces>'
+    "</ServiceFrame></frames></CompositeFrame></dataObjects></PublicationDelivery>"
+)
+
+
+class PlacementRepairTests(SimpleTestCase):
+    """Plan 2026-11-13, A2: objects in the wrong frame or list go where the standard's examples put them."""
+
+    def setUp(self):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        checkout = Path(directory.name)
+        (checkout / "xsd").mkdir()
+        (checkout / service.SCHEMA_ENTRY).write_text(PLACEMENT_XSD)
+        (checkout / "examples").mkdir()
+        (checkout / "examples" / "a.xml").write_text(PLACEMENT_EXAMPLE)
+        self.holder = service.SchemaHolder(checkout)
+        self.holder.load()
+
+    def test_placements_are_the_examples_confirmed_by_the_schema(self):
+        models = self.holder.content
+        self.assertEqual(models.placement("StopPlace"), ("SiteFrame", "stopPlaces"))  # 3 there, 4 in a list ServiceFrame lacks
+        self.assertEqual(models.placement("Line"), ("ServiceFrame", "lines"))
+        # Operator: once in each frame, so its place is not clear unless the draft has one of the frames.
+        self.assertIsNone(models.placement("Operator"))
+        self.assertEqual(models.placement("Operator", {"ServiceFrame"}), ("ServiceFrame", "operators"))
+        self.assertIsNone(models.placement("Quay"))  # only nested in the examples
+
+    def test_a_list_in_the_wrong_frame_moves_to_a_new_frame(self):
+        result = self.holder.validate(
+            '<ServiceFrame version="2" id="f"><stopPlaces><StopPlace version="2" id="sp"><Name>Koper</Name><quays>'
+            '<Quay id="q"><Name>1</Name></Quay></quays></StopPlace></stopPlaces>'
+            '<lines><Line id="l"><Name>Koper - Piran</Name></Line></lines></ServiceFrame>'
+        )
+        self.assertEqual((result["valid"], result["repaired"]), (True, ["placement"]))
+        self.assertEqual(result["fragment"], (
+            '<CompositeFrame version="2" id="hd:CompositeFrame_1"><frames>'
+            '<ServiceFrame version="2" id="f"><lines><Line id="l"><Name>Koper - Piran</Name></Line></lines></ServiceFrame>'
+            '<SiteFrame version="2" id="hd:SiteFrame_1"><stopPlaces><StopPlace version="2" id="sp"><Name>Koper</Name><quays>'
+            '<Quay id="q"><Name>1</Name></Quay></quays></StopPlace></stopPlaces></SiteFrame></frames></CompositeFrame>'
+        ))
+
+    def test_a_frame_the_moves_empty_is_removed_and_an_existing_frame_is_used(self):
+        result = self.holder.validate('<ServiceFrame id="f"><stopPlaces><StopPlace id="sp"><Name>Koper</Name></StopPlace></stopPlaces></ServiceFrame>')
+        self.assertEqual(result["fragment"], '<SiteFrame version="1" id="hd:SiteFrame_1"><stopPlaces><StopPlace id="sp"><Name>Koper</Name></StopPlace></stopPlaces></SiteFrame>')
+        result = self.holder.validate(
+            '<CompositeFrame id="c"><frames><SiteFrame id="s"><lines><Line id="l"><Name>A</Name></Line></lines>'
+            '<stopPlaces><StopPlace id="sp"><Name>B</Name></StopPlace></stopPlaces></SiteFrame>'
+            '<ServiceFrame id="f"><operators><Operator id="o"><Name>C</Name></Operator></operators></ServiceFrame></frames></CompositeFrame>'
+        )
+        self.assertTrue(result["valid"], result)
+        self.assertIn('<ServiceFrame id="f"><operators><Operator id="o"><Name>C</Name></Operator></operators><lines><Line id="l">', result["fragment"])
+
+    def test_what_the_schema_accepts_or_has_no_place_is_left_alone(self):
+        from lxml import etree
+
+        models = self.holder.content
+        # An Operator directly in dataObjects with no frame of either kind: its place is not clear.
+        document = etree.fromstring(service.wrap_fragment('<Operator id="o"><Name>C</Name></Operator>').encode())
+        self.assertFalse(service.repair_placement(models, document))
+        # Accepted where it is: an Operator in the SiteFrame stays though the draft also has a ServiceFrame.
+        fragment = ('<SiteFrame id="s"><operators><Operator id="o"><Name>C</Name></Operator></operators></SiteFrame>'
+                    '<ServiceFrame id="f"><lines><Line id="l"><Name>A</Name></Line></lines></ServiceFrame>')
+        document = etree.fromstring(service.wrap_fragment(fragment).encode())
+        self.assertFalse(service.repair_placement(models, document))
+        # The Operator directly in dataObjects, with a ServiceFrame in the draft: into it.
+        result = self.holder.validate('<ServiceFrame id="f"><lines><Line id="l"><Name>A</Name></Line></lines></ServiceFrame><Operator id="o"><Name>C</Name></Operator>')
+        self.assertEqual((result["valid"], result["repaired"]), (True, ["placement", "order"]))
+        self.assertEqual(result["fragment"], '<ServiceFrame id="f"><operators><Operator id="o"><Name>C</Name></Operator></operators><lines><Line id="l"><Name>A</Name></Line></lines></ServiceFrame>')

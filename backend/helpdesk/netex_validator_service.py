@@ -639,6 +639,125 @@ def repair_order(models, document) -> bool:
     return bool(moves)
 
 
+def repair_placement(models, document) -> bool:
+    """Move the objects a draft puts in the wrong frame or list to where the standard puts them, in place (plan
+    2026-11-13, A2). Looked at: the lists directly under a frame, objects directly in a frame, and anything
+    directly in dataObjects or a CompositeFrame's frames. An object moves only when the content model does not
+    accept it where it is (or does not accept its list there) and its kind has a placement
+    (ContentModels.placement); objects nested in other objects are never moved. A missing frame is created
+    (id hd:<Frame>_1, the version of the other frames), a missing list in it too; a list or a frame the moves
+    leave empty is removed; two or more frames at the top are wrapped in a CompositeFrame when a frame was
+    created. True when anything moved."""
+    from lxml import etree
+
+    namespace = "{" + NETEX_NAMESPACE + "}"
+    data_objects = next((n for n in document.iter() if isinstance(n.tag, str) and _local(n.tag) == "dataObjects"), None)
+    if data_objects is None:
+        return False
+
+    def elements(node) -> list:
+        return [child for child in node if isinstance(child.tag, str) and child.tag.startswith(namespace)]
+
+    def is_frame(node) -> bool:
+        return _local(node.tag).endswith("Frame")
+
+    def accepted(parent, name: str) -> bool:
+        return models.accepts_child(models.type_of(parent), name)
+
+    def holders():
+        """The places frames stand in: dataObjects and each CompositeFrame's frames."""
+        found = [data_objects]
+        for node in data_objects.iter():
+            if isinstance(node.tag, str) and _local(node.tag) == "frames" and node.getparent() is not None and is_frame(node.getparent()):
+                found.append(node)
+        return found
+
+    def frames() -> list:
+        return [frame for holder in holders() for frame in elements(holder) if is_frame(frame)]
+
+    # What to move: (object, the list it leaves or None).
+    moving = []
+    for holder in holders():
+        for child in elements(holder):
+            if is_frame(child) and accepted(holder, _local(child.tag)):
+                for item in elements(child):
+                    name = _local(item.tag)
+                    if accepted(child, name):
+                        if item.get("id") or name == "frames":
+                            continue  # a property of the frame, or the frames of a CompositeFrame
+                        moving += [(obj, item) for obj in elements(item) if not accepted(item, _local(obj.tag))]
+                    elif item.get("id"):
+                        moving.append((item, None))  # an object directly in the frame
+                    else:
+                        moving += [(obj, item) for obj in elements(item)]  # a list the frame does not have
+            elif not is_frame(child):
+                if child.get("id"):
+                    moving.append((child, None))  # an object directly in dataObjects or frames
+                else:
+                    moving += [(obj, child) for obj in elements(child)]
+    if not moving:
+        return False
+    version = next((f.get("version") for f in frames() if f.get("version")), "1")
+    ids = {node.get("id") for node in document.iter() if isinstance(node.tag, str) and node.get("id")}
+    created = False
+    moved = False
+    emptied = []
+    for obj, source in moving:
+        present = {_local(f.tag) for f in frames()}
+        place = models.placement(_local(obj.tag), present)
+        if place is None:
+            continue
+        frame_name, list_name = place
+        frame = next((f for f in frames() if _local(f.tag) == frame_name), None)
+        if frame is None:
+            number = 1
+            while f"hd:{frame_name}_{number}" in ids:
+                number += 1
+            ids.add(f"hd:{frame_name}_{number}")
+            frame = etree.Element(namespace + frame_name, version=version, id=f"hd:{frame_name}_{number}")
+            composite = next((f for f in elements(data_objects) if _local(f.tag) == "CompositeFrame"), None)
+            target = data_objects
+            if composite is not None:
+                target = next((n for n in elements(composite) if _local(n.tag) == "frames"), None)
+                if target is None:
+                    target = etree.SubElement(composite, namespace + "frames")
+            target.append(frame)
+            created = True
+        wrapper = next((n for n in elements(frame) if _local(n.tag) == list_name), None)
+        if wrapper is None:
+            wrapper = etree.SubElement(frame, namespace + list_name)
+        if wrapper is source:
+            continue
+        left = next((up for up in obj.iterancestors() if is_frame(up)), None)
+        obj.tail = None
+        wrapper.append(obj)
+        moved = True
+        if source is not None and not elements(source) and source.getparent() is not None:
+            source.getparent().remove(source)
+        if left is not None:
+            emptied.append(left)
+    if not moved:
+        return False
+    # A frame the repair emptied says nothing any more: removed (not one the model wrote empty).
+    for frame in emptied:
+        if not elements(frame) and frame.getparent() is not None:
+            frame.getparent().remove(frame)
+    top = [f for f in elements(data_objects) if is_frame(f)]
+    if created and len(top) > 1 and not any(_local(f.tag) == "CompositeFrame" for f in top):
+        composite = etree.Element(namespace + "CompositeFrame", version=version, id="hd:CompositeFrame_1")
+        holder = etree.SubElement(composite, namespace + "frames")
+        for frame in top:
+            frame.tail = None
+            holder.append(frame)
+        data_objects.append(composite)
+    for node in document.iter():
+        if isinstance(node.tag, str) and len(node) and not (node.text or "").strip():
+            node.text = None
+        if isinstance(node.tag, str) and not (node.tail or "").strip():
+            node.tail = None
+    return True
+
+
 def _frame_text(document) -> str:
     """The frames inside dataObjects, as the fragment was written: without the namespace declaration. Every one
     of them: a model often writes sibling frames without a CompositeFrame, and taking only the first dropped the
@@ -713,9 +832,10 @@ class SchemaHolder:
                 "error": self.error, "reloading": self._loading}
 
     def validate(self, fragment: str) -> dict:
-        """The validation of the fragment. When it is invalid, the children of its elements are sorted into the
-        schema's order (repair_order) and the sorted frame is validated again: the result is the sorted frame's
-        ("fragment", "repaired": ["order"], valid or not, "repairedErrors" the errors of the frame as written).
+        """The validation of the fragment. When it is invalid, misplaced objects are moved to their place
+        (repair_placement), the children of its elements are sorted into the schema's order (repair_order) and
+        the repaired frame is validated again: the result is the repaired frame's ("fragment", "repaired": the
+        repairs done, ["placement", "order"], valid or not, "repairedErrors" the errors of the frame as written).
         The caller goes on with that frame as if the model had written it, so later feedback is about a frame
         that is already in order."""
         result = self._check(fragment)
@@ -726,19 +846,22 @@ class SchemaHolder:
         from copy import deepcopy
 
         candidate = deepcopy(document)
-        try:
-            moved = repair_order(self.content, candidate)
-        except Exception as exc:  # a repair is an aid: never fail the validation over it
-            logger.warning("order repair failed: %s", exc)
-            moved = False
-        if not moved:
+        done = []
+        for kind, repair in (("placement", repair_placement), ("order", repair_order)):
+            try:
+                if repair(self.content, candidate):
+                    done.append(kind)
+            except Exception as exc:  # a repair is an aid: never fail the validation over it
+                logger.warning("%s repair failed: %s", kind, exc)
+                return result
+        if not done:
             return result
         repaired_text = _frame_text(candidate)
         repaired = self._check(repaired_text)
         repaired.pop("document", None)
         if "Not well-formed" in " ".join(repaired.get("errors") or []):
             return result
-        return {**repaired, "repaired": ["order"], "fragment": repaired_text, "repairedErrors": (result.get("errors") or [])[:MAX_ERRORS]}
+        return {**repaired, "repaired": done, "fragment": repaired_text, "repairedErrors": (result.get("errors") or [])[:MAX_ERRORS]}
 
     def _check(self, fragment: str) -> dict:
         """Validate one fragment as written; an invalid, well-formed one comes with its parsed "document"."""

@@ -33,6 +33,8 @@ XSD_NS = "http://www.w3.org/2001/XMLSchema"
 NETEX_NS = "http://www.netex.org.uk/netex"
 _X = "{" + XSD_NS + "}"
 UNBOUNDED = 1_000_000
+MAX_PLACEMENT_FILE_BYTES = 3_000_000
+PLACEMENT_FACTOR = 3  # the most used placement must be used this many times more than the next to be taken alone
 
 
 def _local(name: str | None) -> str:
@@ -87,6 +89,8 @@ class ContentModels:
         self.declared: set[str] = set()  # every element name declared anywhere
         self.local_elements: set[tuple[str, str]] = set()  # (name, type key) of local declarations
         self.usage: Counter = Counter()  # element name -> occurrences in the standard's example files
+        # object kind -> Counter of (frame, list) where the standard's examples put it directly (plan 2026-11-13, A2)
+        self.placements: dict[str, Counter] = {}
         # simple type key (or a complex type with simple content) -> (base key, facets, member keys of a union)
         self.simple: dict[str, tuple[str, dict, tuple[str, ...]]] = {}
         self._slots: dict[str, list[Slot]] = {}
@@ -264,8 +268,49 @@ class ContentModels:
             if total > limit_bytes:
                 break
             self.usage.update(match.decode("ascii", "ignore") for match in pattern.findall(data))
+            if len(data) <= MAX_PLACEMENT_FILE_BYTES:
+                self._count_placements(data)
+
+    def _count_placements(self, data: bytes) -> None:
+        """For each object of an example file that sits in a list directly under a frame, its (frame, list)."""
+        from lxml import etree
+
+        try:
+            root = etree.fromstring(data, etree.XMLParser(resolve_entities=False, load_dtd=False, no_network=True, remove_comments=True))
+        except etree.XMLSyntaxError:
+            return
+        for frame in root.iter():
+            if not isinstance(frame.tag, str) or not _local(frame.tag).endswith("Frame"):
+                continue
+            for wrapper in frame:
+                if not isinstance(wrapper.tag, str) or wrapper.get("id"):
+                    continue
+                for item in wrapper:
+                    if isinstance(item.tag, str) and item.get("id") and not _local(item.tag).endswith("Frame"):
+                        self.placements.setdefault(_local(item.tag), Counter())[(_local(frame.tag), _local(wrapper.tag))] += 1
 
     # --- queries -------------------------------------------------------------------------------
+
+    def accepts_child(self, type_key: str, name: str) -> bool:
+        """Whether the type's content model has `name` as a child anywhere (any slot, or a wildcard)."""
+        return any(name in slot.names or slot.wildcard for slot in self.slots(type_key))
+
+    def placement(self, kind: str, frames_present: set[str] = frozenset()) -> tuple[str, str] | None:
+        """Where an object of this kind goes in a frame: the (frame, list) the standard's examples use most, among
+        those the schema confirms (the frame has the list, the list has the kind). When the second placement is
+        used more than a third as often as the first, the kind's place is not clear: then only a confirmed
+        placement in a frame the draft already has is taken (VehicleType: ResourceFrame and InfrastructureFrame).
+        None when nothing is confirmed."""
+        confirmed = [
+            (place, count) for place, count in (self.placements.get(kind) or Counter()).most_common()
+            if self.accepts_child(self.type_at([place[0]]), place[1]) and self.accepts_child(self.type_at(list(place)), kind)
+        ]
+        if not confirmed:
+            return None
+        if len(confirmed) == 1 or confirmed[1][1] * PLACEMENT_FACTOR <= confirmed[0][1]:
+            return confirmed[0][0]
+        present = [place for place, count in confirmed if place[0] in frames_present and count * PLACEMENT_FACTOR > confirmed[0][1]]
+        return present[0] if present else None
 
     def in_place_of(self, name: str) -> list[str]:
         """Concrete elements to write instead of an abstract one: its own substitution members, else (an
