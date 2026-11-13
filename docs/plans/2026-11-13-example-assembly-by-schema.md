@@ -1,0 +1,236 @@
+# Plan: the model decides the content of a generated example, code does the mechanics
+
+Written 2026-11-13 (Fable) against 0.97.204, for the implementing agent (Opus). Continues
+`2026-11-12-generated-example-linked-objects.md` (its S2 and R3 are live). Each claim is labelled **measured**
+(re-derived for this plan), **believed** or **assumed**.
+
+## 1. The principle
+
+Today the model writes the whole NeTEx frame and code checks it afterwards. Every new kind of question shows a new
+way to get the XML wrong, and a rule is added for it. The change of direction:
+
+1. **The model decides what only it can decide**: which objects, which values, which object relates to which.
+2. **Code does what the schema already decides**: in which frame and list an object goes, the order of children,
+   how a reference is written. No model call is spent on these.
+3. **Only checks that hold for every question remain**: the values are in the example, everything is connected to
+   the asked object, the asked object is there.
+
+One thing differs from the proposal as first described: the model's description stays **XML, read loosely**, not a
+new JSON format. The model's frame is treated as a draft that says which objects, fields and references exist; code
+rebuilds the mechanics around it. Reasons, all from this project's own data:
+- every step can be measured **offline, without a model call**, by replaying the stored failed attempts (the
+  attempt log keeps each fragment since 0.97.197); a JSON format can only be measured by full benchmark runs;
+- the evidence the model learns from is XML, and gen01–32 are at 96/96 valid with 4.4 s mean: a new output format
+  puts that at risk for no measured gain;
+- a JSON description that can hold calls, passing times and properties is XML without its order and wrappers,
+  which is what loose reading gives anyway.
+A JSON description stays possible later; §6 says when it would be worth trying.
+
+## 2. What was measured (2026-11-13)
+
+Baseline for everything below: `.mylocal/bench/up.json` (gen01–36, 3 runs) and `up-10.json` (gen33–36, 10 runs),
+current code, **dev index and validator on upstream NeTEx v2.0 at 5d2e569, the commit prod runs**. Earlier
+benchmark files were taken on a branch checkout and are not comparable for gen33/gen34.
+
+- **Failed attempts by kind**, gen33–36 at 10 runs: 65 failed attempts, 42 of them (65%) structural (wrong-parent
+  19, missing-required 12, order 6, undeclared 4, keyref 1), 21 about meaning (link 17, value 4), 2 other.
+- **What the structural ones are** (`.mylocal/bench/agnostic_probe.py`, 75 diagnostics over both files):
+
+  | Diagnostics | What it is | Who can fix it |
+  |---|---|---|
+  | 25 | a list or object in the wrong frame (`stopPlaces` in a ServiceFrame 15, `dayTypes` in a TimetableFrame 3, …) | code |
+  | 11 | order together with another problem (so S2 did not repair) | code |
+  | 16 | `Call` lacks the required stop point reference before `Arrival` | feedback (B1) |
+  | 16 | an element inside an object that has no such child (`parkings` in StopPlace, `StartPointRef` in Route) | model, with better feedback |
+  | 4 | undeclared element | model |
+  | 3 | other missing required children (`PublicCode` in Line) | model |
+
+- **An object has one place.** In the standard's 287 example files, 273 kinds of object sit directly in a frame
+  list; 236 kinds have exactly one (frame, list) placement, and 28,110 of 29,009 objects (96.9%) sit in their
+  kind's most common one. `Line` → ServiceFrame/lines (289 of 289), `ServiceJourney` →
+  TimetableFrame/vehicleJourneys (351 of 351), `StopPlace` → SiteFrame/stopPlaces (2049 of 2055).
+- **The excerpt R3 shows is itself invalid.** `_holder_shape` cuts the linking object down to the two reference
+  paths and drops required siblings: for StopPlace ↔ Line it shows `Call > Arrival > QuayAssignmentView >
+  StopPlaceRef` without the `ScheduledStopPointRef` a Call requires. All 16 `Arrival` failures say exactly that
+  ("`Call` needs one of (ScheduledStopPointRef, …) before `Arrival`"); 14 of the 16 come directly after the link
+  feedback.
+- **S2 works as designed**: 93 of 103 stored order-only failures repaired; but it repairs only when order is the
+  only problem, and then the model never sees the sorted frame.
+- **Prod is not yet explained.** On identical evidence dev links gen33 in 7 of 12 runs, prod in 0 of 3 since
+  0.97.202. Model, link examples and validator verdicts are the same. **Not checked**: the app's answer path
+  against the benchmark's call (the English rendering of the question, scope, the number of chunks).
+- Seven baseline runs (gen30–32) hit Anthropic API 503 errors and fell back; they are excluded from comparisons.
+
+## 3. Steps
+
+Each step is one PR, measured against `up.json` / `up-10.json`, and stops there: merging and deploying only when
+Andrej says "full cycle". Results go into §7 of this file in the same PR.
+
+### P0. The replay corpus and harness (no shipped behaviour)
+
+`backend/helpdesk/management/commands/replay_example_repairs.py` (or a script under `.mylocal/bench` if a command
+is too heavy; say which): reads benchmark JSON files and prod event exports, takes every attempt with a fragment
+and a structural error class, sends it to the validator, and reports per error class: attempts, valid after
+repair, diagnostics before and after. Corpus: every `*.json` in `.mylocal/bench` with fragments (r1 onwards),
+`prod-examples*.jsonl`, `prod-failed-fragments.json`. Distinct fragments only.
+- Record the starting point (S2 as shipped) in §7.
+- Also fix the benchmark's blind spot: a run whose attempts are all `model-error` (API down) is reported
+  separately and left out of the valid/first-attempt/time figures, so an outage cannot pass for a regression.
+
+### B1. The link excerpt keeps what the schema requires (small, first, because it is measured and cheap)
+
+In `_holder_shape` (netex_example_generator.py): when cutting the linking object to the reference paths, keep,
+at every kept element, the children that fill a **required slot** of its content model (ask the validator: the
+structure endpoint, or a new field of it, gives the slots with `min >= 1`). For the Call above that keeps
+`ScheduledStopPointRef`. The excerpt must validate as a shape: add a unit test that the excerpt of
+`Netex_01.5_Bus_SimpleTimetable_StopAssignment.xml`'s ServiceJourney keeps it.
+- When a required child is a reference to a kind the fragment does not define (a ScheduledStopPoint next to
+  StopPlaces), the feedback says so in one sentence: "a Call also needs a ScheduledStopPointRef: define a
+  ScheduledStopPoint for each stop". Derived from the kept required children, no list of cases.
+- Check: benchmark gen33–36, 10 runs. Expect the `Arrival` missing-required class (16 diagnostics) to drop to a
+  few and the gen33 linked share to rise from 7 of 12. gen01–32, 3 runs, unchanged within noise (first attempts
+  not more than 5 below 71 of 89 clean runs; mean time within 1 s). If linked share does not rise, report the
+  attempt logs before going on.
+
+### A. The validator normalizes the draft (the core; three parts, one PR each if large)
+
+All in the validator service, next to `repair_order`; the generator already continues with a repaired frame.
+
+**A1. Order always, not only alone.** Sort every sortable element's children (as S2) even when other problems
+remain. Return the sorted frame with the remaining diagnostics (`"repaired": ["order"]`, `"fragment"`, `valid`
+false). The generator then continues the conversation with that frame as the model's reply, so the next feedback
+is about a frame that is already in order, and the model does not reintroduce or chase order errors.
+
+**A2. Placement by the standard.** At schema load, extend `count_usage` (netex_content_model.py) to record, for
+each object kind, its (frame, list) placements in the example files; keep the most common one where the schema
+confirms it (the frame's content model has the list, the list's has the kind). Then, for an invalid draft:
+- every object that sits in a frame list, in a list the frame does not have, directly in a frame, or directly in
+  `dataObjects`/`frames`, and that the content model flags (wrong-parent on it or on its list), is moved into its
+  placement; the frame is created when missing (id `hd:<FrameName>_1`, the version of the other frames), and more
+  than one frame is wrapped in a `CompositeFrame > frames` when the root is not one already;
+- a list wrapper that no frame has (`serviceJourneys`, `sites`) is dissolved: its objects are placed one by one;
+- nothing is moved that the content model accepts where it is; an object nested inside another object (a
+  `Quay` in a StopPlace, a `Call` in a journey) is never moved;
+- kinds without a confirmed placement, or with two placements within a factor of 3 in the examples
+  (`VehicleType`: ResourceFrame 6, InfrastructureFrame 6), are left alone unless one of the candidate frames
+  already exists in the draft.
+Then A1's sort, then validation.
+
+**A3. References follow their target.** For each `…Ref` element whose `ref` names an id defined in the draft:
+- the `version` is set to the target's (the keyref failures);
+- when the element name is undeclared or not a child of its parent, and the parent's content model has a
+  reference element for the **target's kind** (`ScheduledStopPointRef` for a ScheduledStopPoint) as a child, the
+  element is renamed to it. No renaming to a kind the target is not; no moving across objects.
+Do A3 only if the P0 replay shows at least 5 distinct fragments it would turn valid; otherwise record the count
+and skip it.
+
+- **Gate for A, offline (P0 harness)**: of the distinct stored structural failures, how many validate after A1+A2
+  (+A3), by class. Stop and report if a repair turns a fragment valid by **changing what it says**: check 30
+  repaired fragments by eye against the originals (same objects, same values, same references).
+- **Gate for A, benchmark**: gen01–32 valid 96/96, first attempts not more than 5 below baseline, mean time within
+  1 s; gen33–36 at 10 runs: mean attempts and mean time down against `up-10.json` (gen33 3.5 attempts, 28.8 s;
+  gen34 3.0, 24.9 s), generated count not below, linked share not below B1's.
+- **Believed, not measured**: A1+A2 remove the 25 frame-level and most of the 11 order diagnostics, about half
+  of the structural ones, and gen33/gen34 lose about one attempt (6–8 s).
+
+### B2. Feedback for what only the model can fix says what the object has
+
+For the remaining structural classes (an element the object has no such child for; undeclared; a missing
+required child), the diagnostics already name the parent's children in schema order. Two general improvements,
+each only if the P0 corpus shows the class still above 10% of failed attempts after A:
+- the feedback for a wrong child names, from the content model, **where that element does belong** among the
+  objects the draft already has ("`parkings` is not a child of StopPlace; in this frame it belongs in the
+  SiteFrame"), which A2's placement table gives;
+- a required child that is a reference names the kind to define.
+No per-element rules. If a rule would need the name of a NeTEx element in code, it does not belong here.
+
+### C. Make the benchmark take prod's path
+
+The benchmark calls `generate_netex_example(question, chunks, scope)` itself. Add `--via-api` (or reuse the
+answer view's function) so a run goes through the same code as `/questions/answer`: the English rendering, scope
+selection, the chunks the app passes. Then compare gen33 at 10 runs both ways. If they differ, the difference is
+the next thing to explain, before any further generator change; if they agree, run gen33 five times on prod
+(`req-diag-*`) after the next deploy and record linked/unlinked in §7.
+
+## 4. What is not planned
+
+- **A JSON description format.** See §1. Entry condition for trying it: after A and B2, structural failures the
+  model must fix are still more than a third of failed attempts on gen33–36.
+- **Rules that name NeTEx elements** in code (a Call needs…, a Line holds…). The schema and the examples are the
+  only sources; that is the point of the plan.
+- **Retiring existing checks** (two values as names of one object, the joined-name advice). They stay until a
+  replay shows them unused for a release; removing them is a separate, measured step.
+- **Raising `MAX_ATTEMPTS`.** A and B1 should lower attempts, not buy more.
+
+## 5. Order of work
+
+1. P0 (harness, benchmark's model-error handling), with this plan in the PR.
+2. B1 (excerpt keeps required children).
+3. A1, A2, then A3 if its gate passes.
+4. C (benchmark through the app's path), then B2 if still needed.
+
+## 6. Working conditions
+
+- Dev stack: `NETEX_CHECKOUT=../NeTEx-upstream` in the root `.env`; before a benchmark check
+  `docker exec napcorehelpdesk-backend-1 python -c "import lxml"` and that
+  `git -C ../NeTEx-upstream rev-parse HEAD` is the commit prod's examples report (`schemaCommit`). The validator
+  must be restarted after a change to `netex_validator_service.py` or `netex_content_model.py` (schema compile
+  about 30 s).
+- `/app/repo` is read-only in the container: write benchmark output to `/tmp` and `docker cp` it to
+  `.mylocal/bench`.
+- Tests without Docker: the database-free classes run with `NAPCORE_SKIP_GRAPHDB_IMPORT=1 GRAPHDB_ENABLED=False
+  LLM_ENABLED=False` (CI's settings; a local `.env` with `LLM_ENABLED=True` hides a missing
+  `@override_settings`).
+- Risks: A2 moves objects, so a wrong placement table makes valid-looking but odd frames; the eye check of 30
+  repairs and the "only what the content model flags" rule are the guards. A1 changes what the model sees as its
+  own reply; if the model starts to copy placeholder frames or ids, the benchmark's first-attempt figure on
+  gen01–32 shows it.
+
+## 7. Results
+
+(to be filled per step: date, files, figures against the baseline)
+
+### P0 (2026-11-13, Opus): replay harness and outage handling
+
+Files: `backend/helpdesk/management/commands/replay_example_repairs.py` (a command, not a script: it needs only
+the validator and reads any benchmark output, prod event export or list of failed attempts; a directory stands for
+its `*.json`/`*.jsonl`), `run_example_benchmark.py` (`is_outage`, `outages` in every summary).
+
+**Outages.** A run is an outage when every attempt in its log is `model-error`; it is counted in `outages` and left
+out of runs, valid, first attempt, mean attempts, mean seconds and the failure classes. On the baseline this rule
+finds 6 runs, not the 7 of §2: gen32 run 2 had two `model-error` attempts and then a real attempt (`other`), so it
+stays in. Either way the gen01–32 baseline is the same: **first attempt 71, mean 5.3 s** (90 runs by the rule,
+89 without that run; valid all). **Measured** with `.mylocal/bench/cmp_plan13.py`.
+
+Baseline (`up.json` + `up-10.json`, outages left out), the reference for every step below. **Measured.**
+
+| | runs | first attempt | generated | linked | mean attempts | mean time |
+|---|---|---|---|---|---|---|
+| gen01–32 (3 runs) | 90 | 71 | 85 | 81 | 1.26 | 5.3 s |
+| gen33 (10 runs) | 10 | 0 | 9 | 5 | 3.50 | 28.8 s |
+| gen34 (10 runs) | 10 | 0 | 9 | 6 | 3.00 | 24.9 s |
+| gen35 (10 runs) | 10 | 10 | 10 | 10 | 1.00 | 5.1 s |
+| gen36 (10 runs) | 10 | 7 | 10 | 10 | 1.50 | 10.4 s |
+
+gen33–36, 10 runs, failed attempts: wrong-parent 19, link 17, missing-required 12, order 6, undeclared 4, value 4,
+other 2, keyref 1 (65, as in §2). gen33 linked over 13 runs (3 + 10): 7 of 12 generated, as in §2.
+
+**Replay starting point (S2 as shipped, validator at 0.97.204).** Corpus: every `*.json` and `*.jsonl` in
+`.mylocal/bench` (all benchmark outputs, `prod-examples*.jsonl`, `prod-failed-fragments.json`), distinct fragments
+whose stored attempt failed on a structural class; none cut by the log's 4000-character limit. **Measured**
+(`replay-p0.json`).
+
+| Stored class | fragments | valid now | diagnostics stored → now |
+|---|---|---|---|
+| wrong-parent | 140 | 0 | 135 → 149 (wrong-parent 145, order 4) |
+| order | 137 | 94 (all by the order repair) | 154 → 60 (order 47, keyref 8, wrong-parent 5) |
+| missing-required | 44 | 0 | 45 → 46 |
+| undeclared | 13 | 0 | 25 → 25 |
+| keyref | 10 | 0 | 16 → 16 |
+| not-expected | 4 | 0 | 4 → 4 |
+| min-count | 2 | 0 | 2 → 2 |
+| **total** | **350** | **94** | 381 → 302 |
+
+"Stored" diagnostics are what the attempt log kept (older logs keep fewer kinds); "now" is the validator's answer
+today, at most six per fragment. The order class is larger than S2's replay (137 vs 103) because the corpus now
+holds the up/up-10 runs and r3.

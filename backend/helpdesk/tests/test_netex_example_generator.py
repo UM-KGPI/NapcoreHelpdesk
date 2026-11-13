@@ -354,6 +354,51 @@ class ExampleBenchmarkSummaryTests(SimpleTestCase):
         self.assertEqual(summary["failuresByClass"], {"keyref": 3, "malformed": 1})
         self.assertEqual((summary["notJson"], summary["completionTokens"]), (1, 220))
 
+    def test_outage_runs_are_counted_apart(self):
+        from helpdesk.management.commands.run_example_benchmark import summarize
+
+        outage = {"valid": True, "origin": "standard", "attempts": 3, "seconds": 7.0,
+                  "attemptLog": [{"parsed": "", "errorClass": "model-error"}] * 3}
+        rows = [
+            {"valid": True, "attempts": 1, "seconds": 4.0, "attemptLog": [{"parsed": "json", "errorClass": ""}]},
+            outage,
+            # One failed call among good ones is the generator's run, not an outage.
+            {"valid": True, "attempts": 2, "seconds": 8.0, "attemptLog": [
+                {"parsed": "", "errorClass": "model-error"}, {"parsed": "json", "errorClass": ""}]},
+        ]
+        summary = summarize(rows)
+        self.assertEqual((summary["runs"], summary["outages"], summary["valid"], summary["firstAttempt"]), (2, 1, 2, 1))
+        self.assertEqual((summary["meanAttempts"], summary["meanSeconds"]), (1.5, 6.0))
+        self.assertEqual(summarize([outage])["runs"], 0)
+
+
+class ReplayRepairsTests(SimpleTestCase):
+    """The offline replay of stored failed attempts (plan 2026-11-13, P0)."""
+
+    def test_distinct_structural_fragments_from_every_kind_of_file(self):
+        from helpdesk.management.commands import replay_example_repairs as replay
+
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        root = Path(directory.name)
+        log = [{"errorClass": "order", "diagnostics": ["order"], "fragment": "<A/>"},
+               {"errorClass": "link", "fragment": "<B/>"}, {"errorClass": "wrong-parent", "fragment": ""}]
+        (root / "bench.json").write_text(json.dumps({"runs": [{"attemptLog": log}, {"attemptLog": log[:1]}]}))
+        (root / "prod.jsonl").write_text(json.dumps({"ex": {"attemptLog": [{"errorClass": "keyref", "fragment": "<C/>"}]}}) + "\nnot json\n")
+        (root / "failed.json").write_text(json.dumps([{"cls": "wrong-parent", "fragment": "<D/>"}, {"cls": "order", "fragment": "<A/>"}]))
+        items = replay.corpus([root])
+        self.assertEqual(sorted((i["errorClass"], i["fragment"]) for i in items),
+                         [("keyref", "<C/>"), ("order", "<A/>"), ("wrong-parent", "<D/>")])
+        answers = {"<A/>": {"valid": True, "repaired": "order", "fragment": "<A></A>"},
+                   "<C/>": {"valid": False, "diagnostics": [{"kind": "keyref"}]},
+                   "<D/>": {"valid": False, "diagnostics": [{"kind": "wrong-parent"}, {"kind": "order"}]}}
+        report = replay.replay(items, validate=lambda fragment: answers[fragment])
+        self.assertEqual(report["byClass"]["order"]["validNow"], 1)
+        self.assertEqual(report["byClass"]["order"]["repaired"], {"order": 1})
+        self.assertEqual(report["byClass"]["wrong-parent"]["diagnosticsAfter"], {"wrong-parent": 1, "order": 1})
+        self.assertEqual((report["total"]["fragments"], report["total"]["validNow"]), (3, 1))
+        self.assertEqual(next(r for r in report["records"] if r["fragment"] == "<A/>")["repairedFragment"], "<A></A>")
+
 
 TINY_XSD = """<?xml version="1.0" encoding="UTF-8"?>
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.netex.org.uk/netex"
