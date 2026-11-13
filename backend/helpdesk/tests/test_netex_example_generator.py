@@ -723,7 +723,7 @@ PRICES_XSD = """<?xml version="1.0" encoding="UTF-8"?>
       <xsd:element name="PublicationTimestamp" type="xsd:dateTime"/>
       <xsd:element name="ParticipantRef" type="xsd:string"/>
       <xsd:element name="dataObjects"><xsd:complexType><xsd:sequence>
-        <xsd:element ref="FareFrame"/>
+        <xsd:element ref="FareFrame" maxOccurs="unbounded"/>
       </xsd:sequence></xsd:complexType></xsd:element>
     </xsd:sequence><xsd:attribute name="version" type="xsd:string"/></xsd:complexType>
   </xsd:element>
@@ -829,6 +829,18 @@ class ValidatorDiagnosticsTests(SimpleTestCase):
         )
         self.assertTrue(result["repairedErrors"])
         self.assertTrue(self.holder.validate(result["fragment"])["valid"])
+
+    def test_a_repaired_fragment_keeps_every_frame(self):
+        # Two sibling frames without a CompositeFrame: the repaired fragment had only the first.
+        result = self.holder.validate(
+            '<FareFrame id="f"><prices><FareProductPrice><Currency>EUR</Currency><Amount>5</Amount></FareProductPrice></prices></FareFrame>\n'
+            '<FareFrame id="g"><prices><UsageParameterPrice/></prices></FareFrame>'
+        )
+        self.assertEqual((result["valid"], result["repaired"]), (True, "order"))
+        self.assertEqual(result["fragment"], (
+            '<FareFrame id="f"><prices><FareProductPrice><Amount>5</Amount><Currency>EUR</Currency></FareProductPrice></prices></FareFrame>\n'
+            '<FareFrame id="g"><prices><UsageParameterPrice/></prices></FareFrame>'
+        ))
 
     def test_no_repair_when_a_child_has_no_place(self):
         from lxml import etree

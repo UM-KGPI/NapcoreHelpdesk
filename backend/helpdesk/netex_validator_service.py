@@ -620,13 +620,18 @@ def repair_order(models, document) -> bool:
 
 
 def _frame_text(document) -> str:
-    """The frame inside dataObjects, as the fragment was written: without the namespace declaration."""
+    """The frames inside dataObjects, as the fragment was written: without the namespace declaration. Every one
+    of them: a model often writes sibling frames without a CompositeFrame, and taking only the first dropped the
+    others from a repaired fragment (7 of 94 order repairs in the replay of plan 2026-11-13)."""
     from lxml import etree
 
     data_objects = next(node for node in document.iter() if isinstance(node.tag, str) and _local(node.tag) == "dataObjects")
-    frame = next(node for node in data_objects if isinstance(node.tag, str))
-    text = etree.tostring(frame, encoding="unicode", with_tail=False)
-    return text.replace(f' xmlns="{NETEX_NAMESPACE}"', "", 1)
+    frames = [node for node in data_objects if isinstance(node.tag, str)]
+    texts = []
+    for index, frame in enumerate(frames):
+        text = etree.tostring(frame, encoding="unicode", with_tail=index < len(frames) - 1)
+        texts.append(text.replace(f' xmlns="{NETEX_NAMESPACE}"', "", 1))
+    return "".join(texts)
 
 
 class SchemaHolder:
