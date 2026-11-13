@@ -2237,6 +2237,24 @@ class LinkShapeRequiredTests(SimpleTestCase):
             problems = generator.link_problems(defined, "Line", LinkRetryTests.QUESTION, ["Maribor", "Ptuj"])
         self.assertNotIn("also needs", " ".join(problems))
 
+    def test_the_sentence_comes_also_when_the_shape_was_shown_for_another_kind(self):
+        vehicle = {"holder": "ServiceJourney", "toElement": ["VehicleTypeRef"], "toAsked": ["LineRef"], "sourcePath": "examples/v.xml",
+                   "files": 2, "place": ["TimetableFrame", "vehicleJourneys"], "excerpt": "<ServiceJourney>…</ServiceJourney>",
+                   "requiredRefs": []}
+        stop = {**vehicle, "toElement": self.TO_STOP_PLACE, "sourcePath": "examples/s.xml",
+                "requiredRefs": [{"parent": "Call", "ref": "ScheduledStopPointRef"}]}
+        examples = {"VehicleType": {**vehicle, "holders": {"ServiceJourney": vehicle}},
+                    "StopPlace": {**stop, "holders": {"ServiceJourney": stop}}}
+        # The VehicleType comes first, so its line shows the ServiceJourney's shape.
+        fragment = UNLINKED_STOP_PLACES.replace(
+            "<frames>", '<frames><ResourceFrame version="1.0" id="hd:RF"><vehicleTypes><VehicleType version="1.0" id="hd:VT">'
+            "<Name>Low-floor bus</Name></VehicleType></vehicleTypes></ResourceFrame>"
+        )
+        with patch.object(generator, "link_example", side_effect=lambda element, asked: examples[element]):
+            problems = generator.link_problems(fragment, "Line", LinkRetryTests.QUESTION, ["Maribor", "Ptuj"])
+        self.assertEqual([("Its shape there" in p, "A Call also needs a ScheduledStopPointRef" in p) for p in problems],
+                         [(True, False), (False, True)])
+
     def test_the_standard_example_excerpt_keeps_the_stop_point_reference(self):
         """Against the NeTEx checkout: the excerpt of Netex_01.5_Bus_SimpleTimetable_StopAssignment.xml's
         ServiceJourney (StopPlace <-> Line) has a valid shape, its Call with the ScheduledStopPointRef."""
