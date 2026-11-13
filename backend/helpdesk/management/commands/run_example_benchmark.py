@@ -72,6 +72,8 @@ def summarize(rows: list[dict]) -> dict:
         "repairedOrder": sum(1 for entry in attempts if "order" in repairs(entry)),
         # Of those, the attempts that still failed after the repair (plan 2026-11-13, A1).
         "repairedOrderFailed": sum(1 for entry in attempts if "order" in repairs(entry) and entry.get("errorClass")),
+        # Attempts whose objects the validator moved to their frame and list (plan 2026-11-13, A2).
+        "repairedPlacement": sum(1 for entry in attempts if "placement" in repairs(entry)),
         "completionTokens": sum(entry.get("completionTokens") or 0 for entry in attempts),
     }
 
@@ -130,7 +132,7 @@ class Command(BaseCommand):
             f"mean attempts {overall['meanAttempts']} | mean {overall['meanSeconds']} s | "
             f"median model {statistics.median([row.get('generationMs', 0) for row in counted] or [0]):.0f} ms | "
             f"median validator {statistics.median([row.get('validationMs', 0) for row in counted] or [0]):.0f} ms | "
-            f"replies not JSON {overall['notJson']} | order repaired {overall['repairedOrder']} | asked object {overall['askedObjectPresent']}/{overall['askedObjectResolved']} | "
+            f"replies not JSON {overall['notJson']} | order repaired {overall['repairedOrder']} | placement repaired {overall['repairedPlacement']} | asked object {overall['askedObjectPresent']}/{overall['askedObjectResolved']} | "
             f"generated {overall['generated']} (unlinked {overall['unlinked']}, two values as names of one object "
             f"{overall['sharedName']}) | failed attempts {overall['failuresByClass']}"
         )
