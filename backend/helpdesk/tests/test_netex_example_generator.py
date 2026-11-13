@@ -329,8 +329,6 @@ class AttemptLogTests(SimpleTestCase):
         log = result["attemptLog"]
         self.assertEqual([(e["attempt"], e["parsed"], e["errorClass"]) for e in log], [(1, "json", "not-expected"), (2, "json", "")])
         self.assertTrue(all("ms" in e and "completionTokens" in e for e in log))
-        self.assertIn("<NumberOfSeats>", log[0]["fragment"])  # the failed attempt can be read later
-        self.assertIn("<SeatingCapacity>", log[1]["fragment"])
 
     def test_failed_runs_carry_the_log(self):
         with patch.object(generator, "_ask_model", side_effect=TimeoutError("timed out")):
@@ -977,6 +975,14 @@ class AskedObjectTests(SimpleTestCase):
             "Give me a NeTEx example of a service journey departing at 07:15": "service journey",
             "Show me a NeTEx example for Ljubljana Bus Station with two quays": "",
             "Show me a NeTEx example of a stop place.": "stop place",
+            # prod req-mwdzf8px-3qfhdl, 2026-11-12: no subject before "from"
+            "Give me a NeTEx example of a bus line from Maribor to Ptuj that runs only on school days and uses "
+            "low-floor vehicles.": "bus line",
+            "Show me a NeTEx example for a line between Maribor and Ljubljana.": "line",
+            "Show a NeTEx example of a ferry line via Koper": "ferry line",
+            "Show a NeTEx example of a service journey which runs on Sundays": "service journey",
+            # "to" does not end a subject: "point to point" stays whole or unmatched, never "point"
+            "Show a NeTEx example of a point to point fare": "",
         }
         for question, subject in cases.items():
             self.assertEqual(generator.asked_subject(question), subject, question)
@@ -1070,11 +1076,12 @@ class SkeletonGenerationTests(SimpleTestCase):
         first = ask.call_args_list[0].args[0][1]["content"]
         self.assertIn("SKELETON: a PreassignedFareProduct", first)
         self.assertLess(first.index("SKELETON"), first.index("EVIDENCE BLOCKS"))
-        self.assertIn("are neither in it", ask.call_args_list[1].args[0][-1]["content"])
+        # A price group nothing links to the fare product: retried with the link feedback (plan 2026-11-12 R1).
+        self.assertIn("PriceGroup (hd:PG_1) that nothing links to the PreassignedFareProduct", ask.call_args_list[1].args[0][-1]["content"])
         self.assertTrue(result["valid"])
         self.assertEqual((result["attempts"], result["askedObject"], result["askedObjectPresent"]), (2, "PreassignedFareProduct", True))
         self.assertEqual(result["skeletonSourcePath"], "examples/fares/a.xml")
-        self.assertEqual(result["attemptLog"][0]["errorClass"], "asked-object")
+        self.assertEqual(result["attemptLog"][0]["errorClass"], "link")
 
     def test_unresolved_question_has_no_skeleton_and_no_check(self):
         with patch.object(generator, "asked_element", return_value=""), patch.object(generator, "skeleton_for") as skeleton, patch.object(
@@ -1698,3 +1705,194 @@ class IdentifierTests(SimpleTestCase):
         self.assertIn("'hd:SSP_SideA' and 'hd:SSP_SideB' for the two sides of a river", block)
         self.assertIn("references to the standard's shared codes (TypeOf…) may stay", block)
         self.assertIn("An id names an object and holds none of the question's values", block)
+
+
+# Prod req-mwdzf8px-3qfhdl (2026-11-12), shortened: valid, but nothing refers to anything.
+UNLINKED_LINE = (
+    '<CompositeFrame version="1.0" id="hd:CF"><frames>'
+    '<ResourceFrame version="1.0" id="hd:RF"><vehicleTypes><VehicleType version="any" id="hd:VT_LowFloor">'
+    "<Name>Low-floor bus</Name></VehicleType></vehicleTypes></ResourceFrame>"
+    '<ServiceCalendarFrame version="1.0" id="hd:SCF"><dayTypes><FareDayType version="any" id="hd:school_day">'
+    "<Name>School day</Name></FareDayType></dayTypes></ServiceCalendarFrame>"
+    '<ServiceFrame version="1.0" id="hd:SF"><lines><Line version="any" id="hd:LN"><Name>Line 1</Name></Line></lines>'
+    '<scheduledStopPoints><ScheduledStopPoint version="any" id="hd:SSP_Maribor"><Name>Maribor</Name></ScheduledStopPoint>'
+    '<ScheduledStopPoint version="any" id="hd:SSP_Ptuj"><Name>Ptuj</Name></ScheduledStopPoint></scheduledStopPoints>'
+    "</ServiceFrame></frames></CompositeFrame>"
+)
+LINKED_LINE = (
+    '<CompositeFrame version="1.0" id="hd:CF"><frames>'
+    '<ResourceFrame version="1.0" id="hd:RF"><vehicleTypes><VehicleType version="any" id="hd:VT">'
+    "<LowFloor>true</LowFloor></VehicleType></vehicleTypes></ResourceFrame>"
+    '<ServiceFrame version="1.0" id="hd:SF"><lines><Line version="any" id="hd:LN"><Name>Line 1</Name></Line></lines>'
+    '<scheduledStopPoints><ScheduledStopPoint version="any" id="hd:SSP_1"><Name>Maribor</Name></ScheduledStopPoint>'
+    '<ScheduledStopPoint version="any" id="hd:SSP_2"><Name>Ptuj</Name></ScheduledStopPoint>'
+    "</scheduledStopPoints></ServiceFrame>"
+    '<TimetableFrame version="1.0" id="hd:TF"><vehicleJourneys><ServiceJourney version="any" id="hd:SJ">'
+    '<VehicleTypeRef ref="hd:VT" version="any"/><LineRef ref="hd:LN" version="any"/><calls><Call id="hd:C1" order="1">'
+    '<ScheduledStopPointRef ref="hd:SSP_1" version="any"/></Call><Call id="hd:C2" order="2">'
+    '<ScheduledStopPointRef ref="hd:SSP_2" version="any"/></Call></calls></ServiceJourney></vehicleJourneys>'
+    "</TimetableFrame></frames></CompositeFrame>"
+)
+STOP_PLACE_WITH_QUAYS = (
+    '<SiteFrame version="1" id="hd:SF"><stopPlaces><StopPlace version="1" id="hd:SP"><Name>Celje</Name><quays>'
+    '<Quay version="1" id="hd:Q1"><Name>Quay 1</Name></Quay></quays></StopPlace></stopPlaces></SiteFrame>'
+)
+
+
+class LinkedObjectTests(SimpleTestCase):
+    def test_objects_nothing_links_to_the_asked_object(self):
+        found = [(item["element"], item["id"]) for item in generator.unlinked_objects(UNLINKED_LINE, "Line")]
+        self.assertEqual(found, [("VehicleType", "hd:VT_LowFloor"), ("FareDayType", "hd:school_day"),
+                                 ("ScheduledStopPoint", "hd:SSP_Maribor"), ("ScheduledStopPoint", "hd:SSP_Ptuj")])
+
+    def test_links_through_another_object_and_nesting_count(self):
+        self.assertEqual(generator.unlinked_objects(LINKED_LINE, "Line"), [])
+        self.assertEqual(generator.unlinked_objects(STOP_PLACE_WITH_QUAYS, "StopPlace"), [])
+
+    def test_no_asked_object_no_check(self):
+        self.assertEqual(generator.unlinked_objects(UNLINKED_LINE, ""), [])
+        self.assertEqual(generator.unlinked_objects(UNLINKED_LINE, "StopPlace"), [])
+
+    def test_feedback_names_the_linking_object_shared_by_several_kinds(self):
+        journey = {"holder": "ServiceJourney", "toElement": ["VehicleTypeRef"], "toAsked": ["LineRef"], "sourcePath": "a.xml", "files": 6}
+        block = {"holder": "Block", "toElement": ["VehicleTypeRef"], "toAsked": ["coursesOfJourneys", "CourseOfJourneys", "LineRef"], "sourcePath": "b.xml", "files": 7}
+        stops = {"holder": "ServiceJourney", "toElement": ["calls", "Call", "ScheduledStopPointRef"], "toAsked": ["LineRef"], "sourcePath": "c.xml", "files": 5}
+        examples = {
+            "VehicleType": {**block, "holders": {"Block": block, "ServiceJourney": journey}},
+            "ScheduledStopPoint": {**stops, "holders": {"ServiceJourney": stops}},
+            "FareDayType": None,
+        }
+        question = "Give me a NeTEx example of a bus line from Maribor to Ptuj that runs only on school days and uses low-floor vehicles."
+        with patch.object(generator, "link_example", side_effect=lambda element, asked: examples[element]):
+            problems = generator.link_problems(UNLINKED_LINE, "Line", question, ["Maribor", "Ptuj"])
+        self.assertEqual(len(problems), 3)
+        self.assertIn("through a ServiceJourney (a.xml): ServiceJourney > VehicleTypeRef and ServiceJourney > LineRef", problems[0])
+        self.assertIn("Link it to the Line by a reference", problems[1])
+        self.assertIn("(hd:SSP_Maribor, hd:SSP_Ptuj)", problems[2])
+        self.assertIn("ServiceJourney > calls > Call > ScheduledStopPointRef", problems[2])
+        # Asked for by the question (low-floor, school day, the values): never "remove it".
+        self.assertFalse(any("remove it" in problem for problem in problems))
+        self.assertEqual(generator.error_class(problems[0]), "link")
+
+    def test_an_object_the_question_does_not_name_may_be_removed(self):
+        with patch.object(generator, "link_example", return_value=None):
+            problems = generator.link_problems(UNLINKED_LINE, "Line", "Show a NeTEx example of a line from Maribor to Ptuj", ["Maribor", "Ptuj"])
+        self.assertTrue(problems[0].endswith("or remove it if the question does not need it."))  # VehicleType
+        self.assertFalse(problems[2].endswith("does not need it."))  # the stop points hold the values
+
+
+@override_settings(LLM_ENABLED=True)
+class LinkRetryTests(SimpleTestCase):
+    def setUp(self):
+        for name, value in (("schema_declarations", []), ("value_element_declarations", []), ("skeleton_for", None),
+                            ("asked_element", "Line"), ("link_example", None), ("_from_standard", None)):
+            patcher = patch.object(generator, name, return_value=value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    QUESTION = "Give me a NeTEx example of a bus line from Maribor to Ptuj that runs only on school days and uses low-floor vehicles."
+
+    def _run(self, replies):
+        with patch.object(generator, "_ask_model", side_effect=[_reply(xml) for xml in replies]) as ask, patch.object(
+            generator, "validate_fragment", return_value={"valid": True, "errors": []}
+        ), patch.object(generator, "asked_object_problem", return_value=""):
+            return generator.generate_netex_example(self.QUESTION, [NETEX_CHUNK], ["NeTEx"]), ask
+
+    def test_unlinked_objects_are_retried(self):
+        result, ask = self._run([UNLINKED_LINE, LINKED_LINE])
+        self.assertIn("that nothing links to the Line", ask.call_args_list[1].args[0][-1]["content"])
+        self.assertEqual((result["valid"], result["attempts"]), (True, 2))
+        self.assertNotIn("unlinkedObjects", result)
+        self.assertEqual(result["attemptLog"][0]["errorClass"], "link")
+        self.assertEqual(result["attemptLog"][0]["fragment"], UNLINKED_LINE)
+
+    def test_last_attempt_with_only_unlinked_objects_is_shown_and_names_them(self):
+        result, _ = self._run([UNLINKED_LINE] * generator.MAX_ATTEMPTS)
+        self.assertEqual((result["valid"], result["origin"], result["attempts"]), (True, "generated", generator.MAX_ATTEMPTS))
+        self.assertEqual([item["element"] for item in result["unlinkedObjects"]],
+                         ["VehicleType", "FareDayType", "ScheduledStopPoint", "ScheduledStopPoint"])
+
+    def test_an_acceptable_unlinked_fragment_survives_a_broken_last_attempt(self):
+        with patch.object(generator, "_ask_model", side_effect=[_reply(UNLINKED_LINE)] * 3), patch.object(
+            generator, "validate_fragment",
+            side_effect=[{"valid": False, "errors": ["line 1: Element 'X': This element is not expected."]},
+                         {"valid": True, "errors": []},
+                         {"valid": False, "errors": ["line 1: Element 'Y': This element is not expected."]}],
+        ):
+            result = generator.generate_netex_example(self.QUESTION, [NETEX_CHUNK], ["NeTEx"])
+        self.assertEqual((result["valid"], result["origin"], result["attempts"]), (True, "generated", 3))
+        self.assertEqual(len(result["unlinkedObjects"]), 4)
+        self.assertEqual([entry["errorClass"] for entry in result["attemptLog"]], ["not-expected", "link", "not-expected"])
+
+    def test_the_fragment_with_fewer_unlinked_objects_is_kept(self):
+        two = UNLINKED_LINE.replace('<ScheduledStopPoint version="any" id="hd:SSP_Maribor"><Name>Maribor</Name></ScheduledStopPoint>', "")
+        two = two.replace("<Line version=\"any\" id=\"hd:LN\"><Name>Line 1</Name></Line>",
+                          '<Line version="any" id="hd:LN"><Name>Maribor</Name></Line>')
+        result, _ = self._run([UNLINKED_LINE, two, UNLINKED_LINE])
+        self.assertEqual([item["id"] for item in result["unlinkedObjects"]], ["hd:VT_LowFloor", "hd:school_day", "hd:SSP_Ptuj"])
+
+    def test_a_missing_value_stays_a_hard_failure(self):
+        without_values = UNLINKED_LINE.replace(">Maribor<", ">Stop 1<").replace(">Ptuj<", ">Stop 2<")
+        result, ask = self._run([without_values] * generator.MAX_ATTEMPTS)
+        self.assertNotIn("unlinkedObjects", result)
+        self.assertEqual([entry["errorClass"] for entry in result["attemptLog"]], ["value"] * generator.MAX_ATTEMPTS)
+
+
+class UnlinkedTextTests(SimpleTestCase):
+    def test_sentence_matches_the_frontend_wording(self):
+        example = {"askedObject": "Line", "unlinkedObjects": [
+            {"element": "VehicleType", "id": "a"}, {"element": "ScheduledStopPoint", "id": "b"}, {"element": "ScheduledStopPoint", "id": "c"}]}
+        self.assertEqual(generator.unlinked_text(example), "In this example nothing links the VehicleType and 2 ScheduledStopPoints to the Line.")
+        self.assertEqual(generator.unlinked_text({"askedObject": "Line", "unlinkedObjects": []}), "")
+        self.assertEqual(generator.unlinked_text(None), "")
+
+    def test_the_narrator_is_told_not_to_contradict_it(self):
+        from helpdesk.services.llm_generator import generated_example_rule
+
+        note = "In this example nothing links the DayType to the Line."
+        rule = generated_example_rule(["Line"], "<ServiceFrame/>", "", "generated", note)
+        self.assertIn(f"With the example the user is also told: “{note}” Do not contradict this", rule)
+        self.assertNotIn("also told", generated_example_rule(["Line"], "<ServiceFrame/>"))
+
+
+@override_settings(LLM_ENABLED=True)
+class SkeletonSkipTests(SimpleTestCase):
+    """Plan 2026-11-12 revision 3, S1: no skeleton when two or more values have no known holder."""
+
+    def setUp(self):
+        for name, value in (("schema_declarations", []), ("value_element_declarations", []), ("asked_element", "Line"),
+                            ("link_example", None), ("_from_standard", None)):
+            patcher = patch.object(generator, name, return_value=value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def _run(self, question, holders):
+        skeleton = {"xml": "<ServiceFrame/>", "element": "Line", "sourcePath": "examples/line/a.xml", "valid": True}
+        with patch.object(generator, "value_holders", return_value=holders), patch.object(
+            generator, "skeleton_for", return_value=skeleton
+        ) as skeleton_for, patch("helpdesk.services.retrieval_gateway.shown_example_chunk", return_value=None), patch.object(
+            generator, "_ask_model", return_value=_reply(LINKED_LINE)
+        ) as ask, patch.object(generator, "validate_fragment", return_value={"valid": True, "errors": []}):
+            result = generator.generate_netex_example(question, [NETEX_CHUNK], ["NeTEx"])
+        return result, skeleton_for, ask.call_args_list[0].args[0][1]["content"]
+
+    def test_two_values_without_a_holder_get_no_skeleton(self):
+        result, skeleton_for, prompt = self._run("Give me a NeTEx example of a bus line from Maribor to Ptuj", [])
+        skeleton_for.assert_not_called()
+        self.assertNotIn("SKELETON", prompt)
+        self.assertEqual(result["skeletonSkipped"], "values")
+
+    def test_one_value_without_a_holder_keeps_the_skeleton(self):
+        result, skeleton_for, prompt = self._run('Show a NeTEx example of a line named "Maribor"', [])
+        skeleton_for.assert_called_once()
+        self.assertIn("SKELETON", prompt)
+        self.assertNotIn("skeletonSkipped", result)
+
+    def test_values_with_a_holder_keep_the_skeleton(self):
+        result, skeleton_for, _ = self._run('Show a NeTEx example of a line with public code "6" operated by "LPP"', [frozenset({"PublicCode"})])
+        skeleton_for.assert_called_once()
+        self.assertNotIn("skeletonSkipped", result)
+
+    def test_no_validator_keeps_the_skeleton(self):
+        _, skeleton_for, _ = self._run("Give me a NeTEx example of a bus line from Maribor to Ptuj", None)
+        skeleton_for.assert_called_once()

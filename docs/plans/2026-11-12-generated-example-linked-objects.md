@@ -9,6 +9,111 @@ This replaces P4 of `2026-11-10-example-request-named-object-durations.md` ("sho
 conditions the example leaves out?"). The prod answer below shows the conditions are not left out; they are
 written as objects that nothing connects.
 
+## Revision 3 (2026-11-13, Fable), after R1 and R2 were measured. Read this first
+
+State: PR #471 (subject fix + link check + R1 soft handling + R2 sentence) is open, CI green, **not merged**.
+Release condition of Revision 2 failed: gen33 generated 5 of 8 with R1 (main: 11 of 11). Everything below is
+**measured** unless labelled.
+
+### S1 result (2026-11-13, Opus): release condition met
+
+Skeleton skipped (replay): benchmark gen33, gen34 only; prod 2 of 29 example questions with an asked object (both
+"from A to B" / "between A and B"); dev 0 of 11. Benchmark, dev (**measured**):
+
+| | result | condition |
+|---|---|---|
+| gen01–32, 3 runs | 96/96 valid, 82 first attempt, 4.1 s mean | 96/96, ≥ 75, ≤ 4.5 s |
+| gen33, 10 runs | 9/10 generated | ≥ 9/10 |
+| gen34, 10 runs | 9/10 generated | ≥ 7/10 |
+| gen35, gen36, 3 runs | 3/3, 3/3 | 3/3 |
+
+Of the generated gen33 examples (13 runs in all, 12 generated), 0 are fully linked and 12 carry the sentence; gen34:
+8 with no unlinked object, 4 with the sentence. Linking the prod question is S2–S4's work.
+
+### What R1 showed
+
+| gen33 | generated | of those fully linked |
+|---|---|---|
+| main (R0 + baseline) | 11/11 | 0 |
+| R1 as in the PR (with skeleton) | 5/8 | 1 linked by a Route; 4 are a Line alone |
+| R1 without the skeleton | 5/5 | 1; the other 4 returned with `unlinkedObjects` and the sentence |
+
+- R1 works: nothing valid with the values is discarded any more, and the soft path returns it with the sentence.
+- The remaining loss is the skeleton. For gen33 it is `Line_with_facilities.xml`: a Line with an
+  `AccessibilityAssessment`, facilities and notices, and no element that can hold a second place name. Its
+  instruction says "write the question's object in this shape … put the question's values in the elements that
+  hold such values". The model obeys: it models low-floor inside the accessibility block (`LowFloor`: wrong parent)
+  and day types inside the Line (`dayTypes`: wrong parent), and runs out of attempts before the values are placed.
+  Without the skeleton it goes straight to two stop points (5/5).
+- The rule Revision 2 proposed ("no skeleton when `value_holders` is empty") is wrong as written: it also drops
+  the skeleton for 11 old questions that pass on the first attempt with it (gen02, 04, 05, 08, 11, 12, 13, 17, 27,
+  28, 31): one name fits the asked object's own `Name`.
+- Where the attempts go (R1 run, 41 failed attempts): `value` 14, `order` 11, `wrong-parent` 8, `link` 4. For
+  gen33 without the skeleton the sequence is `value` → `order` → `link` in 4 of 5 runs: the link feedback arrives
+  on the last attempt, when nothing can act on it.
+
+So two different things are needed: stop the skeleton from misleading (to ship), and free attempts so the link
+feedback can be acted on (to get linked examples).
+
+### S1. The skeleton only when the question's values fit in it (ships PR #471)
+
+Rule, in `_generate` where the skeleton is chosen: do not give the skeleton when the question has **two or more
+values with no known holder** (`value_holders(values)` empty and `len(values) >= 2`, counted values excluded as
+today). One such value fits the asked object's own `Name` (gen02 "Ljubljana Bus Station"); two cannot both be the
+name of one object, so they belong to other objects and the asked object's shape alone tells the model nothing
+about where. Record it in the result: `skeletonSkipped: "values"`.
+
+- In the benchmark this touches gen33 and gen34 only (the list above: every other holderless question has one
+  value). Confirm by printing, for all 36 questions, whether the skeleton is given before and after.
+- Unit tests: two holderless values → no skeleton, no SKELETON block in the prompt; one → skeleton as today;
+  typed values (a time, a number with a holder) → as today.
+- Replay over the prod and dev example questions: list those that lose the skeleton. Read them; each should be
+  of the "from A to B" / "between A and B" kind. Anything else: stop and report.
+
+Release condition for PR #471 (unchanged in spirit, now with more runs because 3 were too few to tell 5/5 from
+5/8):
+- gen01–32, 3 runs: 96/96 valid, first attempts ≥ 75, mean ≤ 4.5 s (today 77–78, 4.0–4.4 s);
+- gen33 and gen34, **10 runs each**: generated at least 9/10 and 7/10 (main: 11/11 and 6/8);
+- gen35, gen36, 3 runs: generated 3/3 as today.
+If met: add the numbers as a PR comment, merge, deploy. Report, without promising: how many of the 10 are fully
+linked and how many carry the sentence.
+
+### S2. Repair element order without the model (own PR, after S1)
+
+`order` is the second largest class of failed attempts (11 of 41) and costs a whole model call each time,
+although nothing has to be decided: the schema fixes the order of an element's children. The validator already
+knows it (`netex_content_model.py` reports `order` from the parent's slots).
+
+- New in the validator service: for a fragment whose only errors are `order`, return the fragment with each
+  offending parent's children sorted into slot order (stable within a slot), revalidated. Only when every child
+  of that parent is in a slot; otherwise no repair.
+- Generator: if the repaired fragment validates, continue with it as if the model had written it; log the
+  attempt with `repaired: "order"` and do not count a model call.
+- Check: unit tests on the order errors in `.mylocal/bench/r1.json` (the stored fragments: `lines` before
+  `scheduledStopPoints`, `FlexibleServiceType`, `DepartureTime`, `Description`); replay all stored `order`
+  fragments and report how many validate after repair; benchmark: gen01–36 valid count unchanged or better,
+  first attempts up, mean time down. **Believed**, not measured: most of the 11 are repairable.
+
+### S3. Say the value rule before the first attempt (own PR, after S2)
+
+As in Revision 2 ("Separate, optional"), now with a reason to do it: `value` is the largest class (14 of 41) and
+is the first failure of gen33 in almost every run (the model writes "Maribor–Ptuj" in a Name). Own benchmark;
+drop it if first attempts on gen01–32 go down.
+
+### S4. Then measure linking again
+
+After S2 and S3 the usual gen33 sequence should have one or two attempts left when the link feedback arrives.
+Run gen33–36 at 10 runs and report the linked share. Only if it is still under half: R3 of Revision 2 (the excerpt
+of the linking object in the feedback).
+
+### Order of work
+
+1. S1 on the PR branch, measurements, merge and deploy if the condition holds.
+2. S2, S3 as separate PRs, each with its benchmark.
+3. S4 measurement and a short report.
+
+Not changed: R1, R2, the link check, P3 (property as a name) still gated on its replay.
+
 ## Revision 2 (2026-11-12, Fable), after P0–P2 were measured
 
 Read this first. It replaces §3 and §4 where they differ; the status sections below hold the measurements it
@@ -61,6 +166,27 @@ skeleton's part.
    - if neither (pure variance): say so, with the 5-run numbers of all three.
 
 Stop and report after R0 if the cause is none of the three.
+
+### R0 result (2026-11-13, Opus): the asked-object check causes the regression, not the skeleton
+
+gen33/gen34, 5 runs per configuration, each attempt's fragment kept (`.mylocal/bench/r0.json`; "main" = the branch
+with main's subject pattern and prompt and no link check). **Measured:**
+
+| | main | branch, no skeleton | branch |
+|---|---|---|---|
+| gen33 generated | **5/5** | 0/5 | 0/5 |
+| gen34 generated | 4/5 | 2/5 | 3/5 |
+
+- In all 5 main runs the accepted fragment holds Maribor and Ptuj as the `Name` of two `ScheduledStopPoint`s that
+  nothing links to the Line.
+- The branch reaches that same fragment (or one with the values in unlinked `DestinationDisplay`s or `StopPlace`s)
+  in 8 of 10 gen33 runs, and the second half of `asked_object_problem` rejects it ("the values … are neither in it
+  nor in an object that refers to it"), mostly on the last attempt. Under R1 those 8 runs return a generated
+  fragment; the other 2 never placed the values as whole content (value check, as on main).
+- Without the skeleton the result is the same (0/5), so the skeleton is not the cause. With it the model tries the
+  conditions more often (VehicleType, DayType, DestinationDisplay appear), which costs attempts.
+
+Decision as planned: R1, nothing more.
 
 ### R1. Soft handling of links (changes the branch's P2)
 

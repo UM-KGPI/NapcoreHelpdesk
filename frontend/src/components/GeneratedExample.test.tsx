@@ -1,11 +1,32 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import GeneratedExampleBlock from "./GeneratedExample";
+import GeneratedExampleBlock, { unlinkedObjectsText } from "./GeneratedExample";
 
 afterEach(cleanup);
 
 describe("GeneratedExampleBlock", () => {
+  it("says which objects the generated example does not link to the asked one", () => {
+    const example = {
+      valid: true,
+      attempts: 3,
+      origin: "generated" as const,
+      askedObject: "Line",
+      xml: "<CompositeFrame/>",
+      unlinkedObjects: [
+        { element: "VehicleType", id: "hd:VT" },
+        { element: "ScheduledStopPoint", id: "hd:S1" },
+        { element: "ScheduledStopPoint", id: "hd:S2" },
+      ],
+    };
+    render(<GeneratedExampleBlock example={example} />);
+    expect(screen.getByText("In this example nothing links the VehicleType and 2 ScheduledStopPoints to the Line.")).toBeTruthy();
+    expect(unlinkedObjectsText({ ...example, unlinkedObjects: [] })).toBe("");
+    expect(unlinkedObjectsText({ ...example, unlinkedObjects: [{ element: "DayType", id: "d" }] })).toBe(
+      "In this example nothing links the DayType to the Line.",
+    );
+  });
+
   it("labels a standard example shown instead of a generated one as not holding the asked values", () => {
     render(
       <GeneratedExampleBlock

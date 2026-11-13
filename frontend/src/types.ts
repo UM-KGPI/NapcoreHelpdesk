@@ -122,6 +122,8 @@ export interface GeneratedExample {
   holdsValues?: boolean;
   /** The question's values the shown standard example does not contain. */
   missingValues?: string[];
+  /** Objects of a generated example that nothing links to the asked object (shown, but not linked). */
+  unlinkedObjects?: { element: string; id: string }[];
   /** The object the question asks for (resolved from the schema) and the standard file its skeleton came from. */
   askedObject?: string;
   skeletonSourcePath?: string;
