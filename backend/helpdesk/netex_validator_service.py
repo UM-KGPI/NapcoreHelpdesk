@@ -33,6 +33,9 @@ model-written XML is parsed outside the backend process.
                     diagnostics (invalid fragments only): what is wrong in terms a model can act on, from the
                     schema's content models (helpdesk/netex_content_model.py): abstract, undeclared,
                     wrong-parent, order, missing-required, min-count, keyref, not-expected.
+                    A fragment whose only problem is the order of children is sorted into schema order and
+                    validated again; if that is valid the answer is valid with "repaired": "order", the
+                    repaired frame in "fragment" and the original errors in "repairedErrors".
 
 A fragment is one NeTEx frame; it is wrapped in a minimal PublicationDelivery before validation, and
 error line numbers count from the fragment's first line. For a valid fragment, "elements" gives each
@@ -582,6 +585,50 @@ def accepting(holder, values: list[str]) -> dict:
     return {"found": True, "accepting": {value: sorted(accepting_elements(models, value)) for value in values}}
 
 
+def repair_order(models, document) -> bool:
+    """Sort the children of every element whose only problem is their order into the schema's slot order, in
+    place. The schema fixes that order, so a model call to fix it decides nothing (plan 2026-11-12 revision 3,
+    S2: `order` was 11 of 41 failed attempts). False, and nothing moved, when any element has another problem,
+    a child whose slot is not unique, or text between its children."""
+    namespace = "{" + NETEX_NAMESPACE + "}"
+    moves = []
+    for node in document.iter():
+        if not isinstance(node.tag, str) or not node.tag.startswith(namespace):
+            continue
+        kids = list(node)
+        if not kids:
+            continue
+        if any(not isinstance(kid.tag, str) or not kid.tag.startswith(namespace) for kid in kids):
+            return False  # comments or foreign elements: no repair
+        names = [_local(kid.tag) for kid in kids]
+        type_key = models.type_of(node)
+        issues = models.match_children(type_key, names)
+        if not issues:
+            continue
+        if any(issue.kind != "order" for issue in issues) or any((kid.tail or "").strip() for kid in kids):
+            return False
+        order = models.ordered_children(type_key, names)
+        if order is None:
+            return False
+        moves.append((node, kids, order))
+    for node, kids, order in moves:
+        tails = [kid.tail for kid in kids]
+        for position, index in enumerate(order):
+            node.append(kids[index])  # moves the element to the end; in order, that sorts them
+            kids[index].tail = tails[position]
+    return bool(moves)
+
+
+def _frame_text(document) -> str:
+    """The frame inside dataObjects, as the fragment was written: without the namespace declaration."""
+    from lxml import etree
+
+    data_objects = next(node for node in document.iter() if isinstance(node.tag, str) and _local(node.tag) == "dataObjects")
+    frame = next(node for node in data_objects if isinstance(node.tag, str))
+    text = etree.tostring(frame, encoding="unicode", with_tail=False)
+    return text.replace(f' xmlns="{NETEX_NAMESPACE}"', "", 1)
+
+
 class SchemaHolder:
     """The compiled schema of the checkout's current commit; recompiled in the background when it moves."""
 
@@ -662,12 +709,35 @@ class SchemaHolder:
         except Exception as exc:  # feedback is an aid: never fail the validation over it
             logger.warning("diagnostics failed: %s", exc)
             found = []
+        # Only the order wrong: sort the children into the schema's order and validate again. The repaired frame
+        # is returned in "fragment"; the caller goes on with it as if the model had written it.
+        if found and self.content is not None and all(entry["kind"] == "order" for entry in found):
+            repaired = self._repaired(document)
+            if repaired is not None:
+                return {**result, **repaired, "repairedErrors": errors[:MAX_ERRORS]}
         # Definitions for any well-formed fragment: an excerpt of a standard example can fail only on
         # references to objects outside it, and is still described.
         return {
             **result, "valid": False, "errors": errors[:MAX_ERRORS], "elements": self.element_docs.notes(document),
             "diagnostics": found[:MAX_DIAGNOSTICS],
         }
+
+    def _repaired(self, document) -> dict | None:
+        """The valid result for the document with its children in schema order, or None."""
+        from copy import deepcopy
+
+        candidate = deepcopy(document)
+        try:
+            if not repair_order(self.content, candidate):
+                return None
+        except Exception as exc:  # a repair is an aid: never fail the validation over it
+            logger.warning("order repair failed: %s", exc)
+            return None
+        with self._validate_lock:
+            if not self.schema.validate(candidate):
+                return None
+        return {"valid": True, "errors": [], "elements": self.element_docs.notes(candidate), "repaired": "order",
+                "fragment": _frame_text(candidate)}
 
 
 def make_handler(holder: SchemaHolder):
