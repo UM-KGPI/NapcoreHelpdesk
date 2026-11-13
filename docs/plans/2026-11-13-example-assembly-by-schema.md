@@ -282,3 +282,38 @@ no sentence. Fixed in a second commit (the sentence comes for every kind); the s
 Stopped here as §3 B1 asks ("if linked share does not rise, report the attempt logs before going on"). A1, A2 and
 A3 are written and replayed offline (local branches `feat/example-order-always`, `feat/example-placement`,
 `feat/example-reference-repair`, stacked on this one) but not benchmarked or opened as pull requests.
+
+### A1–A3 (2026-11-13, Opus): the validator normalizes the draft. Gate met; linking solved on the benchmark
+
+Benchmark of the whole stack (B1 + A1 + A2 + A3, branch `feat/example-reference-repair`), `a3.json` (gen01–36,
+3 runs) and `a3-10.json` (gen33–36, 10 runs), dev on upstream NeTEx 5d2e569, no outages. Against the baseline
+(`up`, outages left out) and B1 (`b1b`). Attempts here are attempt-log lengths (a fallback run counts its
+attempts). **Measured.**
+
+| | baseline (up) | B1 | A1–A3 |
+|---|---|---|---|
+| gen01–32 valid / first attempt / mean time | 90/90 / 71 (79%) / 5.3 s | 96/96 / 78 / 4.4 s | 96/96 / 82 (85%) / 4.5 s |
+| gen33 generated / linked / attempts / time | 9 / 5 / 3.8 / 28.8 s | 9 / 5 / 3.7 / 32.0 s | 8 / **8** / 2.5 / 23.5 s |
+| gen34 generated / linked / attempts / time | 9 / 6 / 3.3 / 24.9 s | 7 / 6 / 2.8 / 22.9 s | **10 / 10** / 2.2 / 17.9 s |
+| gen35 generated / time | 10 / 5.1 s | 10 / 4.9 s | 10 / 5.0 s |
+| gen36 generated / first attempt / time | 10 / 7 / 10.4 s | 10 / 7 / 8.9 s | 9 / 6 / 10.7 s |
+| failed attempts gen33–36 | 65, structural 42 | 57 | 35, structural 11 |
+| repairs gen33–36 | order 12 | order 15 | order 26, placement 6, placement+order 2, placement+references 1 |
+
+- **Every generated gen33 and gen34 example is linked** (18 of 18; baseline 11 of 18), with about one attempt
+  and 5–7 s less.
+- **Structural failures 42 -> 11** on gen33–36 (wrong-parent 19 -> 5, missing-required 12 -> 2, order 6 -> 1).
+  What remains is mostly what only the model can decide: `link` 15, `value` 6.
+- gen01–32 better on every figure; gate (first attempts not more than 5 below, time within 1 s) met.
+- **Gate clause "generated count not below" is one short on gen33 (8 vs 9) and gen36 (9 vs 10)**, read as met:
+  the 3 fallbacks failed on classes the repairs do not touch (a value written as a name, `VehicleCategory` inside
+  the wrong object with an enumeration value, a missing asked object); at 10 runs one example is within noise
+  (B1's gen34 was 2 short for the same reason). gen34 gained one.
+- A3's own share is small (1 repair in 40 runs), as its offline gate predicted (5 fragments); kept because it is
+  exact (renames and versions only to match the target) and cheap.
+- Offline (by the first agent run, `corpus-p0`): A1 102, A2 163, A3 168 of 350 stored structural failures valid;
+  all 235 A2 repairs keep the same objects, values and references (script), 30 read by eye.
+- The dropped-frames bug of `_frame_text` (7 of 94 S2 repairs) shipped separately in 0.97.205 (#487); A1 carries
+  the same change.
+
+Next per §5: C (benchmark through the app's path, then gen33 five times on prod after deploy), B2 only if needed.
