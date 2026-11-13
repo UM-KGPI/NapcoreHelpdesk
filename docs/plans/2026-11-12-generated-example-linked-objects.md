@@ -9,7 +9,114 @@ This replaces P4 of `2026-11-10-example-request-named-object-durations.md` ("sho
 conditions the example leaves out?"). The prod answer below shows the conditions are not left out; they are
 written as objects that nothing connects.
 
-## Revision 3 (2026-11-13, Fable), after R1 and R2 were measured. Read this first
+## Revision 4 (2026-11-13, Fable), after S1 went live. Read this first
+
+State: S1 is live (0.97.198, PR #471). S2–S4 of Revision 3 are not started. This revision adds one step (T) before
+them and folds S3 into it.
+
+### What the live run showed
+
+Prod, the Maribor–Ptuj question again (`req-diag-s1-1794542419`), **measured** from its attempt log:
+
+| Attempt | On the `Line` | Result |
+|---|---|---|
+| 1 | `Name` "Maribor - Ptuj" | `order` only (`RestrictedLine` before `UserTypes`) |
+| 2 | the same, order fixed | `value`: "Maribor … must be the whole content of an element" |
+| 3 | `Name` "Maribor", `ShortName` "Ptuj" | accepted, no unlinked objects |
+
+The accepted example says the line is called "Maribor" and its short name is "Ptuj". It is valid, holds both
+values and has one object, so no check objects and `valuePlaces` reports it as correct. The value feedback caused
+it: it says where a value may not be and not where a place belongs, and the split is the cheapest way to obey.
+The same mechanism as the `<Name>3</Name>` case of 2026-11-10 (`req-mwb6auo0-n3jh83`).
+
+On the dev benchmark the split is in 0 of 12 generated gen33 runs after S1 and in 4 of 5 with R1 (**measured**
+by counting; the attempt logs of those 4 were not read, so "same mechanism" is **believed** for them). Why prod's
+first attempt differs from dev's is **not known** (different retrieved evidence is the guess).
+
+### T0 result (2026-11-13, Opus): 21 flagged, all wrong as written, all after a value failure
+
+Replay of `shared_name_values` (naming children = local name ending in `Name`, plus `Description`; a child whose
+words occur in the question is skipped) over every stored valid generated example: prod log (40 + the live run),
+dev DB (5), and the benchmark JSONs (`.mylocal/bench/t0.py`, output `t0.out`). **Measured.**
+
+| Source | valid generated | flagged |
+|---|---|---|
+| prod log to 2026-11-12 | 40 | 0 |
+| prod live run `req-diag-s1-1794542419` | 1 | 1 |
+| dev DB | 5 | 0 |
+| benchmarks base, p1, p2, r1, r1-5 (incl. p1-examples) | 419 | 17 |
+| s1 + s1-10 (main) | 123 | 3 |
+
+- Every flag is a `Line` holding two values of a gen33/gen34-style question: Maribor/Ptuj, Koper/Piran, and once
+  operator + place (gen20 "a line operated by LPP in Ljubljana" -> `Name` LPP, `Description` Ljubljana, p2). Judged
+  by eye: none is right as written. Holder pairs seen: Name+ShortName, Name+Description, ShortName+Description.
+  No narrowing of the rule needed.
+- In all 21 the example was accepted after a `value` failure ("must be the whole content …"): directly before the
+  accepted attempt in 20, at attempt 1 in gen20 (then an order error). This includes the 4 R1 gen33 runs.
+  The value feedback causes the split; **measured**, no longer believed.
+- Baseline on main (S1, for T4): gen33 0 of 12 generated runs split; **gen34 3 of 12** (s1 1/3, s1-10 2/9);
+  gen35, gen36 0 of 3; gen01–32 0. So the fault is live on main for gen34 too, not only the one prod draw.
+
+### T. Two of the question's values are not two names of one object
+
+**T0. Replay first (no shipped code).** New function `shared_name_values(fragment, values) -> list[dict]`: for
+each object (an element with an `id`, as in `unlinked_objects`), the question's values that are the whole content
+of its direct naming children. Start with the children whose local name ends in `Name`, plus `Description`. Two or
+more different values in one object is a finding: `{"element", "id", "holders": {"Name": "Maribor", …}}`.
+Run it over every stored valid generated example (prod and dev logs, the bench JSONs) and report: how many are
+flagged, each one judged by eye, and for the 4 R1 runs above whether a `value` failure preceded the split.
+- Not a finding when the question names the field: the holder's words occur in the question ("short name",
+  "description"). `PublicCode`, `PrivateCode` and other non-name children do not count, so "line 12 named City
+  Express" is clean.
+- If the replay flags a case that is right as written, narrow the rule on that evidence and say so; if it cannot
+  be narrowed, stop and report.
+
+**T1. The check (hard, class `value`).** After `_unmet_values` finds nothing, `shared_name_values` runs. A finding
+is an error like a missing value, because the value is not where the example claims it is:
+"Maribor and Ptuj are written as Name and ShortName of the one Line. A Line has one name. Give each value that
+names something else (a place, a stop, an operator) its own object with that Name, and link the object to the
+Line." Without an asked object: the same without the last clause.
+Hard and not soft: the soft rule of Revision 2 keeps an example that is true but incomplete; this one is false.
+When no attempt is left, the best earlier attempt or the standard's example is returned as today.
+
+**T2. The value feedback says where the value goes.** In `missing_value_error`, when the missing value occurs
+inside a `Name` or `Description` text of the fragment ("Maribor - Ptuj") and another of the question's values
+occurs in the same text, add the same advice: "…: if Maribor is a thing of its own (a place, a stop, an operator),
+give it its own object with that Name and link it to the Line." One missing value inside a longer name keeps
+today's message.
+
+**T3. The first prompt says it too (this is S3).** The value rule of S3 goes into the first prompt for every
+question with values; when `skeletonSkipped == "values"` (two or more values without a holder in the skeleton)
+it is followed by the T2 advice in general words. Drop the general sentence if first attempts on gen01–32 go
+down; keep the `skeletonSkipped` sentence if gen33–36 gain.
+
+**T4. The benchmark counts it.** `run_example_benchmark` reports per question and in total the runs whose
+accepted example has a `shared_name_values` finding (0 after T1 by construction for generated examples; the
+figure guards the rule and shows it on main first). Run it on main before T1 for the baseline.
+
+**Tests.** The three prod fragments above (joined name: T2 message; split: T1 finding; a `Line` with two
+`ScheduledStopPoint`s named Maribor and Ptuj: clean); "stop place 'Celje Bus Station' with short name 'Celje AP'":
+clean; a value in `Name` and another in `PublicCode`: clean; two objects each with one value: clean.
+
+**Release condition** (10 runs gen33–36, 3 runs gen01–32):
+- gen01–32 stay 96/96 valid; first attempts not more than 5 below S1's 82; mean time within 1 s of 4.1 s;
+- gen33 generated in at least 9 of 10 (S1: 9/10), none with the split; gen34–36 not below their S1 counts;
+- report the linked share of gen33–36 (this is the S4 measurement; no second run needed).
+If gen33 falls below 9 of 10: do not ship T1; ship T2–T4 alone if they pass on their own, and bring the logs back.
+
+### Order of work
+
+1. T0 replay and the T4 baseline on main. Report before building if anything is flagged that looks right.
+2. T1–T4, one PR.
+3. S2 (order repair, Revision 3), own PR. It matters more now: attempt 1 of the live run was lost to order alone,
+   and T1 can use the attempt it frees.
+4. The linked share after both; R3 only if it is under half.
+
+Not changed: the whole-content rule itself. Accepting "Maribor - Ptuj" as the line's name was considered and
+rejected: it is true data, but it reopens the rule that the 2026-11-10 plan put in on purpose, and it gives a
+poorer example than a line with its two stops.
+
+## Revision 3 (2026-11-13, Fable), after R1 and R2 were measured
 
 State: PR #471 (subject fix + link check + R1 soft handling + R2 sentence) is open, CI green, **not merged**.
 Release condition of Revision 2 failed: gen33 generated 5 of 8 with R1 (main: 11 of 11). Everything below is

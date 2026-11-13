@@ -20,7 +20,7 @@ from pathlib import Path
 import yaml
 from django.core.management.base import BaseCommand
 
-from helpdesk.services.netex_example_generator import generate_netex_example
+from helpdesk.services.netex_example_generator import generate_netex_example, requested_values, shared_name_values
 from helpdesk.services.question_parsing import parse_question_to_semantic_query, select_effective_scope
 from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 
@@ -32,6 +32,7 @@ def summarize(rows: list[dict]) -> dict:
     valid = [row for row in rows if row.get("valid")]
     attempts = [entry for row in rows for entry in row.get("attemptLog") or []]
     resolved = [row for row in valid if row.get("askedObject")]
+    generated = [row for row in valid if row.get("origin") == "generated"]
     return {
         "runs": len(rows),
         "valid": len(valid),
@@ -39,6 +40,14 @@ def summarize(rows: list[dict]) -> dict:
         "askedObjectResolved": len(resolved),
         "askedObjectPresent": sum(1 for row in resolved if row.get("askedObjectPresent")),
         "firstAttempt": sum(1 for row in valid if row.get("attempts") == 1),
+        # Generated examples: how many the model wrote, how many leave an object unlinked to the asked one, and how
+        # many hold two of the question's values as the names of one object (plan 2026-11-12 revision 4, T4).
+        "generated": len(generated),
+        "unlinked": sum(1 for row in generated if row.get("unlinkedObjects")),
+        "sharedName": sum(
+            1 for row in generated
+            if shared_name_values(row.get("xml") or "", requested_values(row.get("question") or ""), row.get("question") or "")
+        ),
         "meanAttempts": round(statistics.mean(row.get("attempts") or 0 for row in rows), 2) if rows else 0,
         "meanSeconds": round(statistics.mean(row.get("seconds") or 0 for row in rows), 1) if rows else 0,
         "failuresByClass": dict(Counter(entry["errorClass"] for entry in attempts if entry.get("errorClass")).most_common()),
@@ -89,7 +98,9 @@ class Command(BaseCommand):
             self.stdout.write(
                 f"{question_id}: valid {summary['valid']}/{summary['runs']}, first attempt {summary['firstAttempt']}, "
                 f"attempts {summary['meanAttempts']}, {summary['meanSeconds']} s, asked object "
-                f"{summary['askedObjectPresent']}/{summary['askedObjectResolved']}, failed {summary['failuresByClass']}"
+                f"{summary['askedObjectPresent']}/{summary['askedObjectResolved']}, generated {summary['generated']} "
+                f"(unlinked {summary['unlinked']}, two values as names of one object {summary['sharedName']}), "
+                f"failed {summary['failuresByClass']}"
             )
         self.stdout.write(
             f"\nvalid {overall['valid']} of {overall['runs']} | first attempt {overall['firstAttempt']} | "
@@ -97,7 +108,8 @@ class Command(BaseCommand):
             f"median model {statistics.median(row.get('generationMs', 0) for row in rows):.0f} ms | "
             f"median validator {statistics.median(row.get('validationMs', 0) for row in rows):.0f} ms | "
             f"replies not JSON {overall['notJson']} | asked object {overall['askedObjectPresent']}/{overall['askedObjectResolved']} | "
-            f"failed attempts {overall['failuresByClass']}"
+            f"generated {overall['generated']} (unlinked {overall['unlinked']}, two values as names of one object "
+            f"{overall['sharedName']}) | failed attempts {overall['failuresByClass']}"
         )
         if options["output"]:
             Path(options["output"]).write_text(
