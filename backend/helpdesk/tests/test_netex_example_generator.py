@@ -1978,6 +1978,7 @@ class SharedNameTests(SimpleTestCase):
         self.assertEqual((summary["generated"], summary["unlinked"], summary["sharedName"]), (2, 1, 1))
 
 
+@override_settings(LLM_ENABLED=True)
 class SharedNameRetryTests(SimpleTestCase):
     """The split is a hard failure: retried, and never shown as the generated example."""
 
