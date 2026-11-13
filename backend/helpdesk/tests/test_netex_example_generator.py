@@ -855,10 +855,22 @@ class ValidatorDiagnosticsTests(SimpleTestCase):
         self.assertIn("needs at least 2 of one of (StopPoint, TimingPoint); the fragment has 1", found["min-count"]["detail"])
 
     def test_order_wrong_parent_and_undeclared(self):
-        # The order together with another problem (a missing required reference): no repair, both explained.
-        found = self.kinds('<FareFrame id="f"><passingTimes><PassingTime><ArrivalTime>08:30:00</ArrivalTime></PassingTime></passingTimes><prices><FareProductPrice/></prices></FareFrame>')
-        self.assertIn("`prices` is out of order in `FareFrame`", found["order"]["detail"])
-        self.assertIn("missing-required", found)
+        # The order together with another problem (a missing required reference): sorted all the same (plan
+        # 2026-11-13, A1), and the sorted frame's problem explained.
+        result = self.holder.validate('<FareFrame id="f"><passingTimes><PassingTime><ArrivalTime>08:30:00</ArrivalTime></PassingTime></passingTimes><prices><FareProductPrice/></prices></FareFrame>')
+        self.assertEqual((result["valid"], result["repaired"]), (False, ["order"]))
+        self.assertTrue(result["fragment"].startswith('<FareFrame id="f"><prices>'), result["fragment"])
+        self.assertEqual([d["kind"] for d in result["diagnostics"]], ["missing-required"])
+        self.assertIn("This element is not expected", result["repairedErrors"][0])
+        # A child with no place in its parent: that parent is not sorted, the others are.
+        result = self.holder.validate(
+            '<FareFrame id="f"><passingTimes><PassingTime><ArrivalTime>08:30:00</ArrivalTime><StopPointRef>s</StopPointRef>'
+            '<Amount>5</Amount></PassingTime></passingTimes><prices><FareProductPrice><Currency>EUR</Currency><Amount>5</Amount>'
+            '</FareProductPrice></prices></FareFrame>'
+        )
+        self.assertEqual(result["repaired"], ["order"])
+        self.assertIn("<prices><FareProductPrice><Amount>5</Amount><Currency>EUR</Currency>", result["fragment"])
+        self.assertIn("<ArrivalTime>08:30:00</ArrivalTime><StopPointRef>s</StopPointRef><Amount>", result["fragment"])
         found = self.kinds('<FareFrame id="f"><prices><FareProductPrice><Amount>5</Amount></FareProductPrice><Amount>5</Amount></prices></FareFrame>')
         self.assertIn("`Amount` is not a child of `prices`; it belongs under one of:", found["wrong-parent"]["detail"])
         self.assertIn("FareProductPrice", found["wrong-parent"]["detail"])
@@ -871,7 +883,7 @@ class ValidatorDiagnosticsTests(SimpleTestCase):
             '<FareFrame id="f">\n  <passingTimes><PassingTime><StopPointRef>s</StopPointRef></PassingTime></passingTimes>\n'
             '  <prices><FareProductPrice><Currency>EUR</Currency><Amount>5</Amount></FareProductPrice></prices>\n</FareFrame>'
         )
-        self.assertEqual((result["valid"], result["errors"], result["repaired"]), (True, [], "order"))
+        self.assertEqual((result["valid"], result["errors"], result["repaired"]), (True, [], ["order"]))
         self.assertEqual(
             result["fragment"],
             '<FareFrame id="f">\n  <prices><FareProductPrice><Amount>5</Amount><Currency>EUR</Currency></FareProductPrice></prices>\n'
@@ -886,7 +898,7 @@ class ValidatorDiagnosticsTests(SimpleTestCase):
             '<FareFrame id="f"><prices><FareProductPrice><Currency>EUR</Currency><Amount>5</Amount></FareProductPrice></prices></FareFrame>\n'
             '<FareFrame id="g"><prices><UsageParameterPrice/></prices></FareFrame>'
         )
-        self.assertEqual((result["valid"], result["repaired"]), (True, "order"))
+        self.assertEqual((result["valid"], result["repaired"]), (True, ["order"]))
         self.assertEqual(result["fragment"], (
             '<FareFrame id="f"><prices><FareProductPrice><Amount>5</Amount><Currency>EUR</Currency></FareProductPrice></prices></FareFrame>\n'
             '<FareFrame id="g"><prices><UsageParameterPrice/></prices></FareFrame>'
@@ -2147,11 +2159,28 @@ class OrderRepairGenerationTests(SimpleTestCase):
         self.assertIn("has one name", history[-1]["content"])
         self.assertEqual([entry.get("repaired", "") for entry in result["attemptLog"]], ["order", ""])
 
+    def test_a_sorted_but_invalid_frame_is_what_the_model_sees_next(self):
+        # Plan 2026-11-13, A1: sorted with another problem left; the next turn starts from the sorted frame.
+        sorted_frame = {"valid": False, "errors": ["line 1: Element 'Line': Missing child element(s)."],
+                        "diagnostics": [{"kind": "missing-required", "element": "Line", "detail": "`Line` is missing the required Name."}],
+                        "repaired": ["order"], "fragment": LINKED_LINE}
+        with patch.object(generator, "_ask_model", side_effect=[_reply(JOINED_LINE), _reply(LINKED_LINE)]) as ask, patch.object(
+            generator, "validate_fragment", side_effect=[sorted_frame, {"valid": True, "errors": []}]
+        ), patch.object(generator, "asked_object_problem", return_value=""):
+            result = generator.generate_netex_example(self.QUESTION, [NETEX_CHUNK], ["NeTEx"])
+        history = ask.call_args_list[1].args[0]
+        self.assertEqual(json.loads(history[-2]["content"])["xml"], LINKED_LINE)
+        self.assertIn("missing the required Name", history[-1]["content"])
+        first = result["attemptLog"][0]
+        self.assertEqual((first["repaired"], first["errorClass"], first["fragment"]), ("order", "missing-required", JOINED_LINE))
+
     def test_benchmark_counts_repaired_attempts(self):
         from helpdesk.management.commands.run_example_benchmark import summarize
 
-        rows = [{"valid": True, "attempts": 1, "attemptLog": [{"parsed": "json", "errorClass": "", "repaired": "order"}]}]
-        self.assertEqual(summarize(rows)["repairedOrder"], 1)
+        rows = [{"valid": True, "attempts": 2, "attemptLog": [
+            {"parsed": "json", "errorClass": "wrong-parent", "repaired": "order"},
+            {"parsed": "json", "errorClass": "", "repaired": "order"}]}]
+        self.assertEqual((summarize(rows)["repairedOrder"], summarize(rows)["repairedOrderFailed"]), (2, 1))
 
 
 SERVICE_JOURNEY_EXAMPLE = (
