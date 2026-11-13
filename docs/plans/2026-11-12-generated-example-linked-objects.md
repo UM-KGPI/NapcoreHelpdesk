@@ -57,6 +57,27 @@ dev DB (5), and the benchmark JSONs (`.mylocal/bench/t0.py`, output `t0.out`). *
 - Baseline on main (S1, for T4): gen33 0 of 12 generated runs split; **gen34 3 of 12** (s1 1/3, s1-10 2/9);
   gen35, gen36 0 of 3; gen01–32 0. So the fault is live on main for gen34 too, not only the one prod draw.
 
+### S2 result (2026-11-13, Opus): order repaired in the validator, condition met
+
+Replay: of 103 distinct stored fragments that failed on `order`, 93 validate after the repair; the other 10 have
+a second problem (a duplicate in a single slot, or an error libxml2 reported only after the order was fixed),
+so they are correctly left to the model. Benchmark `s2.json` + `s2-10.json` against T (`t.json` + `t-10.json`),
+gen01–32 3 runs, gen33–36 13 runs. **Measured.**
+
+| | T (main) | S2 |
+|---|---|---|
+| valid | 148/148 | 148/148 |
+| first attempt, all questions | 98 | 102 |
+| mean time, all runs | 8.3 s | 8.1 s |
+| failed `order` attempts (3-run / 10-run) | 10 / 24 | 3 / 7 |
+| attempts repaired | 0 | 24 |
+| gen33 linked | 1 of 12 | 3 of 13 |
+| gen36 first attempt, mean time | 6, 11.4 s | 9, 10.1 s |
+
+gen01–32 first attempts 79 -> 78 (one repair happened there; noise). On gen33 the freed attempt mostly goes to
+the link feedback and then a `wrong-parent` on the linking object: the model writes `serviceJourneys` in the
+ServiceFrame (7 of 9 linked attempts in T). R3 below targets that.
+
 ### T1–T4 result (2026-11-13, Opus): release condition met, PR #474
 
 Benchmark on the PR branch, `t.json` (gen01–36, 3 runs) and `t-10.json` (gen33–36, 10 runs), against S1
