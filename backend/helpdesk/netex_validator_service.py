@@ -758,6 +758,39 @@ def repair_placement(models, document) -> bool:
     return True
 
 
+def repair_references(models, document) -> bool:
+    """Make each reference to an object the draft defines follow its target, in place (plan 2026-11-13, A3): its
+    version is set to the target's (a keyref failure otherwise), and a reference element that is undeclared or not
+    a child of its parent is renamed to the reference element for the target's kind when the parent has that
+    one as a child (a RoutePointRef to a ScheduledStopPoint -> ScheduledStopPointRef). Nothing is renamed to a
+    kind the target is not, nothing moves. True when anything changed."""
+    namespace = "{" + NETEX_NAMESPACE + "}"
+    by_id = {}
+    for node in document.iter():
+        if isinstance(node.tag, str) and node.get("id"):
+            by_id.setdefault(node.get("id"), node)
+    changed = False
+    for node in document.iter():
+        if not isinstance(node.tag, str) or not node.tag.startswith(namespace):
+            continue
+        name = _local(node.tag)
+        target = by_id.get(node.get("ref") or "")
+        if not name.endswith("Ref") or target is None:
+            continue
+        if target.get("version") and node.get("version") and node.get("version") != target.get("version"):
+            node.set("version", target.get("version"))
+            changed = True
+        parent = node.getparent()
+        wanted = _local(target.tag) + "Ref"
+        if wanted == name or parent is None or wanted not in models.declared:
+            continue
+        parent_type = models.type_of(parent)
+        if (name not in models.declared or not models.accepts_child(parent_type, name)) and models.accepts_child(parent_type, wanted):
+            node.tag = namespace + wanted
+            changed = True
+    return changed
+
+
 def _frame_text(document) -> str:
     """The frames inside dataObjects, as the fragment was written: without the namespace declaration. Every one
     of them: a model often writes sibling frames without a CompositeFrame, and taking only the first dropped the
@@ -833,9 +866,10 @@ class SchemaHolder:
 
     def validate(self, fragment: str) -> dict:
         """The validation of the fragment. When it is invalid, misplaced objects are moved to their place
-        (repair_placement), the children of its elements are sorted into the schema's order (repair_order) and
-        the repaired frame is validated again: the result is the repaired frame's ("fragment", "repaired": the
-        repairs done, ["placement", "order"], valid or not, "repairedErrors" the errors of the frame as written).
+        (repair_placement), references follow their target (repair_references), the children of its elements
+        are sorted into the schema's order (repair_order) and the repaired frame is validated again: the result
+        is the repaired frame's ("fragment", "repaired": the repairs done, ["placement", "references", "order"],
+        valid or not, "repairedErrors" the errors of the frame as written).
         The caller goes on with that frame as if the model had written it, so later feedback is about a frame
         that is already in order."""
         result = self._check(fragment)
@@ -847,7 +881,7 @@ class SchemaHolder:
 
         candidate = deepcopy(document)
         done = []
-        for kind, repair in (("placement", repair_placement), ("order", repair_order)):
+        for kind, repair in (("placement", repair_placement), ("references", repair_references), ("order", repair_order)):
             try:
                 if repair(self.content, candidate):
                     done.append(kind)

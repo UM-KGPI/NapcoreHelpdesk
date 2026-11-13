@@ -2357,7 +2357,11 @@ PLACEMENT_XSD = """<?xml version="1.0" encoding="UTF-8"?>
   </xsd:sequence></xsd:complexType>
   <xsd:element name="Line"><xsd:complexType><xsd:sequence>
     <xsd:element name="Name" type="xsd:string"/>
+    <xsd:element name="OperatorRef" type="Reference" minOccurs="0" maxOccurs="unbounded"/>
+    <xsd:element name="QuayRef" type="Reference" minOccurs="0"/>
+    <xsd:element name="StopPlaceRef" type="Reference" minOccurs="0"/>
   </xsd:sequence><xsd:attributeGroup ref="Ids"/></xsd:complexType></xsd:element>
+  <xsd:complexType name="Reference"><xsd:attribute name="ref" type="xsd:string"/><xsd:attribute name="version" type="xsd:string"/></xsd:complexType>
   <xsd:element name="Operator"><xsd:complexType><xsd:sequence>
     <xsd:element name="Name" type="xsd:string"/>
   </xsd:sequence><xsd:attributeGroup ref="Ids"/></xsd:complexType></xsd:element>
@@ -2448,3 +2452,26 @@ class PlacementRepairTests(SimpleTestCase):
         result = self.holder.validate('<ServiceFrame id="f"><lines><Line id="l"><Name>A</Name></Line></lines></ServiceFrame><Operator id="o"><Name>C</Name></Operator>')
         self.assertEqual((result["valid"], result["repaired"]), (True, ["placement", "order"]))
         self.assertEqual(result["fragment"], '<ServiceFrame id="f"><operators><Operator id="o"><Name>C</Name></Operator></operators><lines><Line id="l"><Name>A</Name></Line></lines></ServiceFrame>')
+
+    def test_references_follow_their_target(self):
+        # Plan 2026-11-13, A3: the version of the target, and the reference element of the target's kind where the
+        # parent has one; a reference to an object outside the draft, or to a kind the parent has no reference
+        # for, is left as written.
+        from lxml import etree
+
+        fragment = (
+            '<SiteFrame version="1" id="s"><operators><Operator version="2" id="o"><Name>C</Name></Operator></operators>'
+            '<stopPlaces><StopPlace version="3" id="sp"><Name>B</Name><quays><Quay id="q"><Name>1</Name></Quay></quays>'
+            "</StopPlace></stopPlaces></SiteFrame>"
+            '<ServiceFrame id="f"><lines><Line version="1" id="l"><Name>A</Name><OperatorRef version="1" ref="o"/>'
+            '<AuthorityRef version="1" ref="o"/><QuayRef version="1" ref="sp"/><StopPlaceRef ref="elsewhere"/></Line></lines></ServiceFrame>'
+        )
+        document = etree.fromstring(service.wrap_fragment(fragment).encode())
+        self.assertTrue(service.repair_references(self.holder.content, document))
+        line = document.find(".//{*}Line")
+        self.assertEqual(
+            [(etree.QName(n).localname, n.get("version")) for n in line if n.get("ref")],
+            # AuthorityRef: undeclared, and Line has an OperatorRef: renamed. QuayRef points to a StopPlace, which
+            # Line has no reference for: left (only its version follows).
+            [("OperatorRef", "2"), ("OperatorRef", "2"), ("QuayRef", "3"), ("StopPlaceRef", None)],
+        )
