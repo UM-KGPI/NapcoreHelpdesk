@@ -2374,7 +2374,7 @@ def _generate(
     # starts from the right object and shape (2026-11-10: two of three valid fare examples held 5 EUR in a
     # price group with no fare product; no evidence chunk showed a vehicle type's capacities).
     asked_started = time.perf_counter()
-    asked, skeleton = "", None
+    asked, skeleton, skeleton_skipped = "", None, ""
     try:
         asked = asked_element(shape_question)
         parts: list[frozenset[str]] = []
@@ -2384,9 +2384,16 @@ def _generate(
         counted = {written for _, written, _ in counted_shapes(question)}
         named = [name for noun in wanted_parts(shape_question) if (name := resolve_element(noun)) and name != asked]
         named += [element for _, element in conditions if element != asked and element not in named]
+        skeleton_values = [v for v in requested_values(question) if v not in counted]
+        # Two or more values no element is known to hold ("a bus line from Maribor to Ptuj") cannot all sit in
+        # the asked object (one fits its Name), so they belong to other objects, and the asked object's shape
+        # alone misleads: with Line_with_facilities.xml the model put the conditions into the line and ran out
+        # of attempts (gen33: 5/8 generated with the skeleton, 5/5 without; plan 2026-11-12 revision 3, S1).
+        if asked and len(skeleton_values) >= 2 and value_holders(skeleton_values) == []:
+            skeleton_skipped = "values"
         skeleton = (
-            skeleton_for(asked, [v for v in requested_values(question) if v not in counted], parts, named)
-            if asked else None
+            skeleton_for(asked, skeleton_values, parts, named)
+            if asked and not skeleton_skipped else None
         )
         if skeleton is not None:
             from helpdesk.services.retrieval_gateway import shown_example_chunk
@@ -2423,6 +2430,7 @@ def _generate(
     asked_fields = {
         "askedObject": asked, "skeletonSourcePath": (skeleton or {}).get("sourcePath", ""),
         "skeletonCompanion": (skeleton or {}).get("companion", ""),
+        **({"skeletonSkipped": skeleton_skipped} if skeleton_skipped else {}),
         "serviceConditions": [{"phrase": phrase, "element": element} for phrase, element in conditions],
     }
 

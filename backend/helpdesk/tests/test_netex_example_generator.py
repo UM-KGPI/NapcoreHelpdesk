@@ -1853,3 +1853,46 @@ class UnlinkedTextTests(SimpleTestCase):
         rule = generated_example_rule(["Line"], "<ServiceFrame/>", "", "generated", note)
         self.assertIn(f"With the example the user is also told: “{note}” Do not contradict this", rule)
         self.assertNotIn("also told", generated_example_rule(["Line"], "<ServiceFrame/>"))
+
+
+@override_settings(LLM_ENABLED=True)
+class SkeletonSkipTests(SimpleTestCase):
+    """Plan 2026-11-12 revision 3, S1: no skeleton when two or more values have no known holder."""
+
+    def setUp(self):
+        for name, value in (("schema_declarations", []), ("value_element_declarations", []), ("asked_element", "Line"),
+                            ("link_example", None), ("_from_standard", None)):
+            patcher = patch.object(generator, name, return_value=value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def _run(self, question, holders):
+        skeleton = {"xml": "<ServiceFrame/>", "element": "Line", "sourcePath": "examples/line/a.xml", "valid": True}
+        with patch.object(generator, "value_holders", return_value=holders), patch.object(
+            generator, "skeleton_for", return_value=skeleton
+        ) as skeleton_for, patch("helpdesk.services.retrieval_gateway.shown_example_chunk", return_value=None), patch.object(
+            generator, "_ask_model", return_value=_reply(LINKED_LINE)
+        ) as ask, patch.object(generator, "validate_fragment", return_value={"valid": True, "errors": []}):
+            result = generator.generate_netex_example(question, [NETEX_CHUNK], ["NeTEx"])
+        return result, skeleton_for, ask.call_args_list[0].args[0][1]["content"]
+
+    def test_two_values_without_a_holder_get_no_skeleton(self):
+        result, skeleton_for, prompt = self._run("Give me a NeTEx example of a bus line from Maribor to Ptuj", [])
+        skeleton_for.assert_not_called()
+        self.assertNotIn("SKELETON", prompt)
+        self.assertEqual(result["skeletonSkipped"], "values")
+
+    def test_one_value_without_a_holder_keeps_the_skeleton(self):
+        result, skeleton_for, prompt = self._run('Show a NeTEx example of a line named "Maribor"', [])
+        skeleton_for.assert_called_once()
+        self.assertIn("SKELETON", prompt)
+        self.assertNotIn("skeletonSkipped", result)
+
+    def test_values_with_a_holder_keep_the_skeleton(self):
+        result, skeleton_for, _ = self._run('Show a NeTEx example of a line with public code "6" operated by "LPP"', [frozenset({"PublicCode"})])
+        skeleton_for.assert_called_once()
+        self.assertNotIn("skeletonSkipped", result)
+
+    def test_no_validator_keeps_the_skeleton(self):
+        _, skeleton_for, _ = self._run("Give me a NeTEx example of a bus line from Maribor to Ptuj", None)
+        skeleton_for.assert_called_once()
