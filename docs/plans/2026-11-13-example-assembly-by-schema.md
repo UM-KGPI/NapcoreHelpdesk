@@ -234,3 +234,51 @@ whose stored attempt failed on a structural class; none cut by the log's 4000-ch
 "Stored" diagnostics are what the attempt log kept (older logs keep fewer kinds); "now" is the validator's answer
 today, at most six per fragment. The order class is larger than S2's replay (137 vs 103) because the corpus now
 holds the up/up-10 runs and r3.
+
+### B1 (2026-11-13, Opus): the excerpt keeps required children. Arrival class gone, linked share not up: stopped here
+
+Files: `netex_validator_service.py` (`/required?path=…`: the required slots, with their minimum, at the end of a
+path from a global element), `netex_content_model.py` (`type_at`), `netex_example_generator.py`
+(`required_slots`, `_holder_shape` keeps as many children as each required slot of every kept element needs and
+returns `requiredRefs`; `link_problems` adds "A Call also needs a ScheduledStopPointRef: define a
+ScheduledStopPoint for each Call and refer to it." when the fragment defines no such object;
+`MAX_LINK_EXCERPT_LINES` 14 -> 20). The excerpt for StopPlace <-> Line now has the Call's
+`ScheduledStopPointRef`, and a second Call (`calls` needs at least two): 17 lines. Checked against the checkout:
+every element of that excerpt fits its content model (unit test, skipped without a NeTEx checkout). **Measured.**
+
+Two benchmark rounds. The first (`b1.json` + `b1-10.json`) still had 5 `Arrival` failures: the link feedback
+shows the ServiceJourney's shape once, for the first kind it links (the VehicleType), so the StopPlace's line had
+no sentence. Fixed in a second commit (the sentence comes for every kind); the second round (`b1b.json` +
+`b1b-10.json`) is the one below. The first round's gen35/gen36 lost 9 runs to API 503s (outages, left out).
+
+| | baseline (up) | B1 |
+|---|---|---|
+| gen01–32 valid / first attempt / mean time | 90/90 / 71 / 5.3 s | 96/96 / 78 / 4.4 s |
+| gen33 10 runs: generated / linked / attempts / time | 9 / 5 / 3.50 / 28.8 s | 9 / 5 / 3.40 / 32.0 s |
+| gen33 13 runs: generated / linked | 12 / 7 | 11 / 6 |
+| gen34 10 runs: generated / linked / attempts / time | 9 / 6 / 3.00 / 24.9 s | 7 / 6 / 1.90 / 22.9 s |
+| gen35 10 runs: generated / time | 10 / 5.1 s | 10 / 4.9 s |
+| gen36 10 runs: first attempt / time | 7 / 10.4 s | 7 / 8.9 s |
+| gen33–36 10 runs, failed attempts | wrong-parent 19, link 17, missing-required 12, order 6, … | wrong-parent 18, order 14, link 13, value 8, asked-object 3, undeclared 1 |
+
+(Mean attempts count a run that fell back to the standard's example as 0, as the benchmark always has: gen34's
+1.90 holds 3 such runs.) **Measured.**
+
+- The `Arrival` class is gone: `missing-required` in gen33–36 at 10 runs 12 -> 0 (first round 5, all on the
+  second kind's line).
+- **The linked share did not rise**: gen33 5 of 9 generated at 10 runs, as the baseline (first round 6 of 9;
+  both rounds 11 of 18, 61%, against 56%: noise). gen33 is 3.2 s slower, gen34 generated 2 fewer (its 3 fallbacks
+  failed on wrong-parent/value/asked-object before any link feedback, where B1 does not act).
+- **Attempt logs, gen33 (second round).** What follows the link feedback: accepted 4, `order` 5, `link` 1; in the
+  baseline accepted 3, `missing-required` 6, `order` 3. The model now writes the ScheduledStopPoints and the Call
+  right, but the frame comes back with its lists out of order (`lines` after `scheduledStopPoints`) plus a
+  keyref, which S2 does not repair because order is not the only problem; it is the last attempt, so the run
+  ends unlinked. Before the link feedback, 2–3 attempts go to `wrong-parent`/`order` (stopPlaces in the
+  ServiceFrame), so the link feedback comes at attempt 3 in 7 of 10 runs.
+- Offline replay of the 16 distinct failed attempts that directly follow link feedback in both B1 rounds: with
+  S2 (this PR) 0 validate; with A1 (prepared, not in this PR) 7 do, the 8 order+keyref ones but one (the keyref
+  goes with the order). **Measured** with a local validator built from each branch's code.
+
+Stopped here as §3 B1 asks ("if linked share does not rise, report the attempt logs before going on"). A1, A2 and
+A3 are written and replayed offline (local branches `feat/example-order-always`, `feat/example-placement`,
+`feat/example-reference-repair`, stacked on this one) but not benchmarked or opened as pull requests.
