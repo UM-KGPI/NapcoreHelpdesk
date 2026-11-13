@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 SCHEMA_ENTRY = "xsd/NeTEx_publication.xsd"
 MAX_ATTEMPTS = 3
+MAX_LOGGED_FRAGMENT_CHARS = 4000
 MAX_EVIDENCE_CHUNKS = 6
 MAX_EVIDENCE_CHARS = 1800
 MAX_REPORTED_ERRORS = 5
@@ -2220,7 +2221,9 @@ def _generate(
     # example benchmark reports from it, and the trace shows why an example took three attempts.
     attempt_log: list[dict] = []
 
-    def logged(attempt: int, started: float, parsed: str, attempt_errors: list[str], diagnostics: list | None = None) -> None:
+    def logged(
+        attempt: int, started: float, parsed: str, attempt_errors: list[str], diagnostics: list | None = None, fragment: str = ""
+    ) -> None:
         first = attempt_errors[0] if attempt_errors else ""
         kinds = [d.get("kind") for d in diagnostics or [] if d.get("kind")]
         attempt_log.append({
@@ -2231,6 +2234,8 @@ def _generate(
             "errorClass": (kinds[0] if kinds and attempt_errors else error_class(first)),
             "diagnostics": kinds,
             "error": first[:300],
+            # What the model wrote, so a failed attempt can be read later (plan 2026-11-12 R0).
+            "fragment": fragment[:MAX_LOGGED_FRAGMENT_CHARS],
         })
 
     for attempt in range(1, MAX_ATTEMPTS + 1):
@@ -2267,7 +2272,7 @@ def _generate(
                     errors = [problem]
                 if not errors:
                     errors = condition_problems(fragment, conditions)
-        logged(attempt, attempt_started, parsed, errors, checked.get("diagnostics"))
+        logged(attempt, attempt_started, parsed, errors, checked.get("diagnostics"), fragment)
         if not errors:
             return {
                 "valid": True,

@@ -72,3 +72,13 @@ questions:
 # Added 2026-11-10: how the service runs, modelled by an object of its own (on demand -> FlexibleServiceProperties).
 - id: gen32
   question: Show me a NeTEx example of an on-demand bus ServiceJourney departing at 07:15.
+# Added 2026-11-12 (plan 2026-11-12-generated-example-linked-objects.md): the asked object followed by where it
+# goes, and conditions written as objects of their own that must be linked to it (prod req-mwdzf8px-3qfhdl).
+- id: gen33
+  question: Give me a NeTEx example of a bus line from Maribor to Ptuj that runs only on school days and uses low-floor vehicles.
+- id: gen34
+  question: Show me a NeTEx example of a ferry line between Koper and Piran that runs only in summer.
+- id: gen35
+  question: Give a NeTEx example of a stop place named "Celje Bus Station" with a quay served by wheelchair-accessible vehicles.
+- id: gen36
+  question: Show a NeTEx example of a service journey on line "12" that runs only on public holidays.

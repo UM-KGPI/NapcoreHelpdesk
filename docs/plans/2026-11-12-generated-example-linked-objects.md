@@ -1,0 +1,345 @@
+# Plan: a generated example links the objects it defines to the object the question asks for
+
+Written 2026-11-12 (Fable) against 0.97.196 (main, same build on prod), for the implementing agent (Opus).
+Each claim is labelled **measured** (re-derived for this plan), **believed** or **assumed**. Nothing here was run
+on the dev stack: the measurements are the prod record of one question, the code as read, and a local copy of
+the NeTEx XSD (from the PR #765 review; it may differ from the schema commit prod validates against, 5d2e569).
+
+This replaces P4 of `2026-11-10-example-request-named-object-durations.md` ("should the answer say which
+conditions the example leaves out?"). The prod answer below shows the conditions are not left out; they are
+written as objects that nothing connects.
+
+## Revision 2 (2026-11-12, Fable), after P0–P2 were measured
+
+Read this first. It replaces §3 and §4 where they differ; the status sections below hold the measurements it
+rests on. Labels as before: **measured**, **believed**, **assumed**.
+
+### What the first version got wrong
+
+1. **It treated a missing link as a failed example.** A fragment that is schema-valid and holds the question's
+   values was thrown away for not being linked, and the user got the standard's example without their values. On
+   main that same fragment is shown, and Andrej judged it acceptable ("it looks ok to me"). So every step made the
+   prod question worse: gen33 generated 3/3 on main (6/6 with the re-run), 0/3 with P1, 1/3 with P1+P2
+   (**measured**).
+2. **It assumed linking was the bottleneck.** In 108 runs the link check fired in 3 attempts. For gen33 the model
+   fails earlier, on the value check and on schema order, and the runs that fell back ended on `order`,
+   `wrong-parent`, `value` and `asked-object`, not on `link` (**measured**, `p1.json`, `p2.json`).
+3. **It did not ask for the evidence that would show why.** The attempt log keeps each attempt's first error but not
+   the fragment, so nobody has seen what the model writes for gen33 with P1. Whether the skeleton
+   (`Line_with_facilities.xml`, whose Name is "Line 24 Alpha to Charley") or the asked-object check causes the
+   regression is **not known**. §2's "F1 is the root cause" was right about the resolver and wrong about what
+   resolving it would buy.
+
+What held: the resolver fix finds the right objects and changes nothing else (replay: prod 2 of 452, dev 0 of
+320); `unlinked_objects` has no false positive in 113 stored fragments (8 flagged, 8 real); gen01–32 stay 96/96.
+
+### The principle for the rest
+
+Two kinds of problem, handled differently:
+- **Hard** (as today): not schema-valid, a value of the question missing, the asked element absent. Retry; after
+  the last attempt, the standard's example.
+- **Soft** (new): schema-valid, values present, but objects not linked to the asked one. Retry while attempts
+  remain, to improve it. **Never discard for it.** Keep the best acceptable fragment seen so far (fewest unlinked
+  objects) and return that at the end, with `unlinkedObjects` when not empty.
+
+Consequence, by construction and to be confirmed by measurement: with the resolver fix on, a question can only
+lose against main through the model's own variance or through the skeleton, not through a check. R0 measures the
+skeleton's part.
+
+### R0. See what the model writes (diagnosis, no shipped behaviour)
+
+1. Store each attempt's fragment in the result (`attemptLog[n].fragment`, benchmark and trace; cut at 4,000
+   characters). Small, and needed for every later failure analysis.
+2. gen33 and gen34, 5 runs each, three configurations: main; the branch with the skeleton switched off for these
+   runs (patch `skeleton_for` to return None in a shell, not in code); the branch as it is. Report per
+   configuration: generated n/5, and for each failed attempt what the fragment did with Maribor and Ptuj.
+3. Decide from that, not before:
+   - if the regression follows the skeleton: the skeleton must not be given when it holds none of the question's
+     values and `value_holders` is empty (**believed** to be the gen33 case), or it needs the linked companion;
+     write which, with the fragments as evidence;
+   - if it follows the asked-object check: R1 removes it as a hard failure, nothing more needed;
+   - if neither (pure variance): say so, with the 5-run numbers of all three.
+
+Stop and report after R0 if the cause is none of the three.
+
+### R1. Soft handling of links (changes the branch's P2)
+
+In `_generate`:
+- `asked_object_problem` keeps only its first half as a hard error (the asked element is absent). Its second half
+  (values neither in the asked object nor in a linked one) is dropped: when every object is linked, every value is
+  in a linked object, so `unlinked_objects` covers it and gives the better feedback.
+- After schema and values pass: `link_problems`. If empty, return. If not, remember the fragment as the best so
+  far when it has fewer unlinked objects than the remembered one, and retry with the link feedback if attempts
+  remain.
+- At the end, or when a later attempt fails hard: return the remembered fragment (valid, `origin: generated`,
+  `unlinkedObjects`). Only without a remembered fragment: today's failure path and the standard's example.
+- This replaces the branch's last-attempt rule, which keeps the fragment only when the **last** attempt is the
+  acceptable one.
+
+Unit tests: acceptable-then-broken (attempt 2 acceptable but unlinked, attempt 3 schema-invalid → attempt 2 is
+returned with `unlinkedObjects`); acceptable-then-linked (attempt 3 returned, no field); two acceptable ones (the
+one with fewer unlinked objects); the fare product whose price group does not refer to it
+(`SkeletonGenerationTests`) still retried, now with the link feedback.
+
+Check, 3 runs, plus 5 runs for gen33/34:
+- gen01–32: 96/96 valid; first attempts and mean time within the run-to-run range seen today (77–78, 4.0–4.3 s);
+- gen33–36: generated at least as often as main in the R0 runs. This is the release condition for the resolver
+  fix. If it fails although no check discards anything, the skeleton finding of R0 applies;
+- report, do not promise: in how many runs the returned fragment is fully linked.
+
+### R2. Say it in the answer (was P4)
+
+Needed with R1, because R1 shows unlinked fragments on purpose.
+- `GeneratedExample.tsx` already has `missingValuesText` for "the example does not hold these values". Add the same
+  kind of line from `unlinkedObjects`, built by code: "The example defines a VehicleType and a ScheduledStopPoint
+  but does not link them to the Line." Types in `types.ts`; a Vitest case.
+- Pass the same sentence to `generated_example_rule` as a fact the text must not contradict.
+- F4 (the text denying what the example shows) stays as in the old P4: replay the lack-sentence filter over the
+  new answers and extend it only on that evidence.
+
+### R3. Help the model link (only if R1's numbers show the need)
+
+If after R1 the prod question is linked in fewer than half the runs:
+- give the link feedback a short excerpt of the linking object from the example file `link_example` found (as
+  `condition_example` does: at most 14 lines, "the shape only, not the values"), so the model does not have to
+  invent a journey with calls;
+- allow one extra attempt only for soft problems (4 in total) and measure the time it costs; do not raise
+  `MAX_ATTEMPTS` for hard errors.
+Each measured on gen33–36 and gen01–32 as in R1. Drop either if it does not move the linked count.
+
+### Separate, optional: say the value rule before the first attempt
+
+`value` is the largest class of failed attempts (18 of 43 on main, 11 of 41 with P1; **measured**), and gen14 and
+gen20 fail on it first in almost every run: the prompt says "use the values", and the rule "each value is the
+whole content of an element, not part of a Name or Description" is told only after the first failure. One
+sentence in the `Values to use` line could save an attempt on those questions. Not part of this work: its own PR,
+its own benchmark, because text added up front has lowered the benchmark before (declarations: 18 → 12 of 20).
+
+### Shipping order
+
+1. R0 (diagnosis) → report.
+2. One PR: resolver fix + R1 + R2. Not the resolver fix alone, not P2 as it is on the branch.
+3. R3 and the value-rule sentence only on their own numbers.
+
+P3 of §3 (a property written only as a name) is unchanged and still gated on its replay. §5 and §6 stand.
+
+## Status (2026-11-12, Opus): P0 done, P1 implemented and measured, not shippable alone
+
+Dev, 3 runs per question, Claude Haiku 5.5 (**measured**; logs and JSON in `.mylocal/bench/`):
+
+| | gen01–32 valid | first attempt | mean | gen33 (prod question) | gen34 | gen35 | gen36 |
+|---|---|---|---|---|---|---|---|
+| main (baseline) | 96/96 | 78 | 4.0 s | 3/3 generated, asked "" | 2/3 generated | 3/3 | 3/3 |
+| P1 | 96/96 | 77 | 4.3 s | **0/3 generated**: all fell back to the standard's Line without Maribor/Ptuj | 2/3 | 3/3 | 2/3 |
+
+- P1 resolves the right object: gen33/34 → `Line`, gen35 → `StopPlace`, gen36 → `ServiceJourney`; gen01–29 asked
+  objects identical before and after. Subject replay: prod 452 distinct questions → 2 change (both newly resolved,
+  correct); dev 320 → 0.
+- Why gen33 regresses: with `Line` resolved, `asked_object_problem` demands Maribor and Ptuj in the line or an object
+  linked to it. On main the model put them in two unlinked `ScheduledStopPoint`s (the unlinked-object count of P2:
+  2 of 3 objects in all 3 runs) and passed. With P1 the skeleton (`Line_with_facilities.xml`) has no element that
+  holds a place name (`value_holders` → []), the feedback does not say which object links a stop to a line, and 3
+  attempts are not enough.
+- gen36 is not changed by P1 (same asked object); its one fallback is run-to-run variance.
+- The validator's `/declarations` gives the holders P2 needs: `VehicleTypeRef` and `LineRef` in `ServiceJourney`
+  (and others); `DayTypeRef` only in the `dayTypes` wrapper, so P2's feedback must name the wrapper's owner.
+
+Conclusion: ship P1 together with P2 (the link feedback that names the bridging object), not alone.
+
+### P2 implemented and measured (2026-11-12, Opus)
+
+`unlinked_objects`, `link_example` (the linking object from the standard's example files, ranked by the number of
+files and shared across the unlinked kinds; the validator's parent lists are cut at 12 names), `link_problems`,
+the last-attempt rule (`unlinkedObjects`), one prompt sentence, error class `link`. 7 unit tests.
+
+Replay gate (**measured**): prod, 33 stored valid generated examples with an asked object → 4 flagged (the two
+Maribor questions; a Parking without ParentSiteRef, twice); benchmark P1 fragments, 80 → 4 (the same Parking; a
+GroupOfLines/LineNetwork "Ljubljana" holding no line). All 8 are real misses; no false positive.
+
+| | gen01–32 valid | first attempt | mean | gen33 | gen34 | gen35 | gen36 |
+|---|---|---|---|---|---|---|---|
+| P1 + P2 | 96/96 | 77 | 4.3 s | 1/3 generated, 2 fallbacks | 2/3, 1 fallback | 3/3 | 3/3 |
+
+The link check fired once in 108 runs (gen18). gen33 does not get that far: the model cannot place Maribor and
+Ptuj ("value" first, then "asked-object"); the one generated run passed by writing `<Name>Maribor</Name>` and
+`<Description>Ptuj</Description>` in the Line. The bottleneck is where place names go for a Line (stop points in
+a journey or route), before linking.
+
+## 1. The problem, measured
+
+Prod question `req-mwdzf8px-3qfhdl` (2026-11-12, 0.97.196, read through `/questions/events/<id>`):
+
+> Give me a NeTEx example of a bus line from Maribor to Ptuj that runs only on school days and uses low-floor vehicles.
+
+The generated example is schema-valid (3 attempts, 17.7 s of generation) and contains, in a `CompositeFrame`:
+a `VehicleType` named "Low-floor bus"; a `FareDayType` "School day" with `HolidayTypes` = `SchoolDay`; a `Line`
+with `Description` "School day service with low-floor vehicles"; two `ScheduledStopPoint`s named Maribor and Ptuj.
+
+Four faults, all **measured** on that record:
+
+| # | Fault | Evidence |
+|---|---|---|
+| F1 | The asked object was not resolved | trace: `askedObject: ""`, `skeletonSourcePath: ""`, `askedObjectPresent: false` |
+| F2 | No object refers to another: the line, the stop points, the vehicle type and the day type are five unconnected objects. The conditions are stated only in the `Description` text | the fragment has no `…Ref` element at all |
+| F3 | "Low-floor" is only a `Name`; the schema has a boolean `LowFloor` for a vehicle type | local XSD, `netex_vehicleType_version.xsd:402` |
+| F4 | The text contradicts the example: "These show how a school bus line is classified, but not that it runs on school days or that its vehicles are low-floor", next to an example that shows both | the `answer` field |
+
+A fifth observation, not planned as a fix (§5): the day type is a `FareDayType` (fares domain), not a `DayType`.
+
+## 2. Causes
+
+**F1, measured.** `_SUBJECT_WIDE` (`netex_example_generator.py:911`) ends the subject only before
+`with|having|has|that|containing|including|for|in|named|called|operated|departing|arriving|at|on|of`, the end of
+the sentence, or punctuation. "bus line **from** Maribor" has none of these within three words, so the regex does
+not match. Run on the regex alone: the prod question → no match; the same question without "from Maribor to Ptuj"
+→ `bus line`; "example of a line between Maribor and Ptuj" → no match.
+
+With no asked object, three things are skipped (`_generate`, lines 2146–2165 and 2262): the skeleton from the
+standard's examples, `asked_object_problem` (the check that the question's values sit in the asked object or in
+one linked to it by a reference), and the fallback to the standard's example.
+
+**F2, measured in the code.** Nothing checks that an object defined in the fragment is connected to anything.
+`asked_object_problem` returns "" as soon as **one** value sits in a linked object, and it does not run at all
+without an asked object. The prompt's "Define an object in the frame only when the question asks for it" does not
+say to link it.
+
+The schema can express the links (**measured**, local XSD): a `ServiceJourney` may hold `LineRef`
+(`netex_serviceJourney_version.xsd:194`), `dayTypes` and `VehicleTypeRef` (`:405`, `:415`); `FareDayTypeRef`
+is in the substitution group of `DayTypeRef`. So a linked example needs one more object, a journey.
+
+**F3, believed.** No check compares the words of a `Name`/`Description` with the elements the object's own
+structure offers. The existing value check does this only for the question's values.
+
+**F4, believed.** `generated_example_rule` (`llm_generator.py:1444`) tells the model "do not say what the evidence
+lacks", and the model did it anyway about cited blocks E2 and E4. The removal filter (#425) did not catch "These
+show …, but not that …". The narrator is told which elements hold the question's **values**; the two conditions are
+not values, so nothing told it the example covers them.
+
+## 3. The plan (first version; Revision 2 at the top replaces it where they differ)
+
+Order by dependency. P1 is the load-bearing piece: without an asked object nothing in P2–P4 has an anchor.
+Each step is one PR with its own measurement; stop and report if a step's check fails.
+
+### P0. Measure before changing anything (no shipped code)
+
+1. Add to `backend/benchmarks/example-generation-questions.yaml`: the prod question (gen32) and three questions of
+   the same shape with other objects, so the mechanism is tested and not this wording. Suggested: a ferry line
+   between two named ports that runs only on Sundays; a stop place with a named quay served by wheelchair-accessible
+   vehicles; a service journey on a named line that runs only on public holidays. Check the wording triggers a
+   generated example before fixing the list.
+2. Baseline on dev, 3 runs each, existing 31 questions and the new ones: valid, first attempt, time, and for the
+   new ones `askedObject` and the number of objects not connected to it (count by hand or with the P2 function
+   written first as a script).
+3. Confirm on the dev validator that `/declarations?q=VehicleTypeRef` returns the elements that may hold a
+   `VehicleTypeRef` in `parents` (**believed** from `_declared_parents`; P2's feedback depends on it). If not,
+   P2's feedback names no holder and says only "link it by a reference".
+
+### P1. Resolve the asked object when the subject is followed by another preposition
+
+Extend the endings of `_SUBJECT_WIDE` with the words that can follow the subject noun: `from`, `to`, `between`,
+`via`, `through`, `by`, `near`, `during`, `which`, `whose`, `where`, `when`, `running`, `serving`, `operating`,
+`connecting`, `using`, `and`, `or`. The match is lazy, so a new ending can only shorten a subject that used to
+match, or make one match that did not.
+
+Check (the trigger-replay pattern of the 2026-11-10 plan):
+- unit tests: the three regex cases of §2, and "example of a point to point fare" (must not become "point");
+- replay `asked_element` over the distinct example questions in the dev and prod logs, before and after; list every
+  question whose result changes. Accept only if each change is a newly resolved, correct object. A subject that
+  gets shorter and resolves to a different object is a regression: drop the word that caused it;
+- benchmark: gen01–31 stay 93/93 valid; record gen32+ after P1 alone. With `Line` resolved, the existing
+  `asked_object_problem` already demands Maribor and Ptuj in the line or in an object linked to it, so P1 may by
+  itself force a journey or route. Measure this before writing P2: it decides how much P2 has to do.
+
+Rejected: trying every prefix of the three words until one resolves. "fare product" would resolve on "fare" first.
+
+### P2. Check that every object in the fragment is connected to the asked object
+
+New function `unlinked_objects(fragment, asked) -> list[node]`, next to `asked_object_problem`, reusing its
+`owner` logic:
+- objects: elements with an `id` whose name does not end in `Frame`;
+- edges: an object nested inside another object; an element with a `ref` equal to an object's `id` joins the
+  object that contains the reference with the referred one. References to objects outside the fragment are ignored;
+- result: the objects outside the connected component of the asked object(s). Empty when `asked` is "".
+
+Run it in `_generate` after `asked_object_problem` and before `condition_problems`. Each unlinked object gives one
+feedback line:
+
+> the frame defines a VehicleType (hd:VT_LowFloor) that nothing links to the Line. Link it by a reference from an
+> object that is linked to the Line; a VehicleTypeRef may be written in: ServiceJourney, … . Define that object if
+> the frame has none, and give it a LineRef.
+
+The holder list comes from `_declared_parents(<element>Ref)`, first those that can also hold `<asked>Ref`
+(the intersection names the bridging object, here the journey), at most six names. Add "or remove it" only when no
+word of the object's element name or `Name` text occurs in the question: an object the question asks for must be
+linked, not dropped. Add `link` to `_ERROR_CLASSES` so the attempt log shows it.
+
+One sentence in `_PROMPT`: every object defined in the frame is referred to by, or refers to, the object the
+question asks for, directly or through another object in the frame.
+
+**Decision built in (assumed; say so in the PR and let Andrej overrule):** on the last attempt, a fragment that is
+schema-valid, holds the values and has only link problems is returned as valid, with `unlinkedObjects`
+(element, id) in the result and the trace. Failing it would swap it for the standard's example without the
+question's values, which is worse. P4 uses the field to say so in plain words.
+
+Check:
+- unit tests on hand-written fragments: the prod fragment (four unlinked objects for asked `Line`); the same with
+  a `ServiceJourney` carrying `LineRef`, `dayTypes/DayTypeRef`, `VehicleTypeRef` and two calls (none); a StopPlace
+  with nested quays (none); no asked object (none);
+- offline replay over every stored valid generated example in the dev and prod logs: how many have unlinked
+  objects. This is the expected rise in retries. Report the number. If more than about one in five stored examples
+  is flagged, do not ship the retry; ship only the `unlinkedObjects` field and bring the numbers back;
+- benchmark, 3 runs: gen01–31 stay 93/93 valid, first-attempt count and mean time reported against P0 (expect
+  some loss; more than 5 first attempts or 1 s mean is a stop-and-report); gen32+ valid with no unlinked objects in
+  at least 2 of 3 runs each.
+
+### P3. A property written only as a name (measure first, ship only if clean)
+
+New check `named_not_set(fragment)`: for each object, take the 1–3-word runs of its `Name` and `Description`
+(lower case, hyphens and spaces removed) and compare them with the names of the child elements its structure
+allows (`_structure(element)`, all groups) that the object does not have. A match ("Low-floor bus" ↔ `LowFloor`)
+gives the feedback: "the VehicleType is named 'Low-floor bus'; it has an element LowFloor for that: set it".
+
+Replay over the stored valid examples first. Ship only if every flagged case is right; candidates for false
+positives are placeholder names that equal a child element ("Line 1" under an object with a `Line` child), so
+require a match of two or more camel-case parts or a boolean/enumerated child if the replay shows them.
+If the replay is not clean after that, drop P3 and record why.
+
+### P4. The text agrees with the example
+
+Only after P2, on the benchmark answers of gen32+:
+- add the linked objects whose element-name or `Name` words occur in the question to `valuePlaces`
+  (value: the question's words, element, path), as `condition_places` does for service conditions, so the line
+  above the fragment and the narrator's brief cover them;
+- when `unlinkedObjects` is not empty, the answer gets one sentence built by code, not by the model: "The example
+  defines a VehicleType but does not link it to the Line." Look at how `valuePlaces` reaches the frontend before
+  choosing where it is shown (not read for this plan);
+- then replay the lack-sentence filter over the new answers. If "…, but not that …" sentences without a citation
+  remain next to a generated example, extend the filter the way #425 did, measured by replay over all stored
+  answers with a schema block (none removed that states a cited fact).
+
+## 4. Expected result (first version; see Revision 2: a linked example is reported, not promised)
+
+The prod question returns a `Line`, a journey that refers to it, to a day type with `SchoolDay` and to a vehicle
+type with `LowFloor` true, and stop points referred to from the journey's calls or pattern; the text does not deny
+what the example shows. Not promised: first-attempt validity for this question (it took 3 attempts before), and
+the choice of `DayType` over `FareDayType`.
+
+## 5. Not planned
+
+- **A list of condition phrases** ("only on school days" → DayType), as `_SERVICE_CONDITIONS` has for on-demand
+  services. It fixes named cases and misses the next one; the link check needs no list.
+- **`FareDayType` instead of `DayType`.** Valid and linkable (`FareDayTypeRef` substitutes `DayTypeRef`), wrong
+  domain. No general rule for "the plainer element" is known. Look again after P1–P2: the skeleton and the journey
+  evidence may change what the model picks. Record what gen32 produces.
+- **Saying which conditions are missing** (old P4). After P2 an asked-for object cannot be removed on feedback, and
+  an unlinked one is reported by code. A condition the model never writes at all stays undetected; the benchmark
+  questions of P0 are the only guard. If they show it, bring it back with the data.
+
+## 6. Risks
+
+- P1 changes which questions get a skeleton and the asked-object check; a wrongly resolved object gives a worse
+  example than none. The replay diff is the guard.
+- P2 makes fragments larger (a journey, calls), so more schema-order errors and time. The stop conditions in P2
+  are the guard; the last-attempt rule keeps a usable example.
+- The local XSD used for §2 is not the prod schema commit. The validator decides, not this plan.
+- One prod answer is the whole evidence for F3 and F4. P3 and P4 are gated on replay for that reason.

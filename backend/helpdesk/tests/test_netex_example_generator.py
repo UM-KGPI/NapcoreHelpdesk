@@ -329,6 +329,8 @@ class AttemptLogTests(SimpleTestCase):
         log = result["attemptLog"]
         self.assertEqual([(e["attempt"], e["parsed"], e["errorClass"]) for e in log], [(1, "json", "not-expected"), (2, "json", "")])
         self.assertTrue(all("ms" in e and "completionTokens" in e for e in log))
+        self.assertIn("<NumberOfSeats>", log[0]["fragment"])  # the failed attempt can be read later
+        self.assertIn("<SeatingCapacity>", log[1]["fragment"])
 
     def test_failed_runs_carry_the_log(self):
         with patch.object(generator, "_ask_model", side_effect=TimeoutError("timed out")):
