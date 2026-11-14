@@ -266,8 +266,7 @@ readings:
   asked: [Line, ServiceJourney]
   objects: [{kind: StopPlace, count: 2}]
   values: []
-  unsure: true
-  note: no object named; "boat as transport mode" is a mode value (water) or a vehicle; "ports" may be stop places
+  note: 'boat as transport mode is TransportMode water on a Line in the standard''s examples (13 of 20 uses), so no vehicle is asked for; the two ports are two stop places'
 - id: p03
   question: Show me a NeTEx example for a Maribor bus station with two quay.
   asked: StopPlace
