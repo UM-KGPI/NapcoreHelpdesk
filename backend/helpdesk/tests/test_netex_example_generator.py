@@ -2620,3 +2620,37 @@ class ObjectCountTests(SimpleTestCase):
         self.assertEqual((result["valid"], result["attempts"]), (True, 2))
         self.assertEqual(result["attemptLog"][0]["errorClass"], "count")
         self.assertEqual([(p["value"], p["element"]) for p in result["valuePlaces"]], [("2", "ServiceJourney")])
+
+
+@override_settings(LLM_ENABLED=True)
+class NamedObjectPartTests(SimpleTestCase):
+    """A part the question names by an object's element name must be defined in the frame."""
+
+    def setUp(self):
+        concrete = {**_CONCRETE, "StopPlace": [{"name": "StopPlace", "object": True}], "WaitTime": [{"name": "WaitTime", "object": False}]}
+        patcher = patch.object(generator, "concrete_elements", side_effect=lambda name: concrete.get(name))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_a_part_named_by_an_object_element_is_found(self):
+        question = "Show me an example of line with a stop place departure described in NeTEx XML?"
+        self.assertEqual(generator.named_object_parts(question, "Line"), [("stop place", ["StopPlace"])])
+        self.assertEqual(generator.parts_line([("stop place", ["StopPlace"])]), "StopPlace (“stop place”)")
+
+    def test_a_property_unknown_words_and_the_asked_object_are_not_parts(self):
+        self.assertEqual(generator.named_object_parts("a ServiceJourney with a wait time of 30 seconds", "ServiceJourney"), [])
+        self.assertEqual(generator.named_object_parts("a sales offer package with a price of 10 EUR", "SalesOfferPackage"), [])
+        self.assertEqual(generator.named_object_parts("a stop place with a quay", "Quay"), [])
+
+    def test_a_frame_without_the_part_gets_feedback(self):
+        parts = [("stop place", ["StopPlace"])]
+        line_only = '<ServiceFrame version="1" id="hd:SF"><lines><Line version="1" id="hd:L"><Name>Line 1</Name></Line></lines></ServiceFrame>'
+        problems = generator.part_problems(line_only, parts, "Line")
+        self.assertEqual(len(problems), 1)
+        self.assertIn("defines no StopPlace", problems[0])
+        self.assertEqual(generator.error_class(problems[0]), "part")
+        with_stop = '<SiteFrame version="1" id="hd:S"><stopPlaces><StopPlace version="1" id="hd:SP"/></stopPlaces></SiteFrame>'
+        self.assertEqual(generator.part_problems(with_stop, parts, "Line"), [])
+        # A reference alone does not define the part.
+        ref_only = '<ServiceFrame version="1" id="hd:SF"><StopPlaceRef ref="x"/></ServiceFrame>'
+        self.assertEqual(len(generator.part_problems(ref_only, parts, "Line")), 1)

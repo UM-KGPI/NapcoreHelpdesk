@@ -369,6 +369,50 @@ def counts_line(counts: list[tuple[int, str, str, list[str]]]) -> str:
     )
 
 
+def named_object_parts(question: str, asked: str = "") -> list[tuple[str, list[str]]]:
+    """The parts the question wants the example to have that name an object element by its element name:
+    "a line with a stop place departure" -> [("stop place", ["StopPlace"])]. The longest words that name an
+    element decide, as for counts; a property ("a wait time") or words that name no element ("a price") are not
+    checked here: the documentation search finds an element for nearly any word."""
+    found = []
+    for noun in wanted_parts(question):
+        words = noun.split()
+        for size in range(len(words), 0, -1):
+            phrase = " ".join(words[:size])
+            kinds = _object_kinds(phrase)
+            if kinds is None:
+                continue
+            if kinds and asked not in kinds and all(phrase != seen for seen, _ in found):
+                found.append((phrase, kinds))
+            break
+    return found
+
+
+def part_problems(fragment: str, parts: list[tuple[str, list[str]]], asked: str = "") -> list[str]:
+    """The feedback for each named part the fragment does not define. Accepted without this check, "a line
+    with a stop place departure" came back as a Line alone (prod question, 5 of 5 answers, 2026-11-13)."""
+    root = _parsed(fragment)
+    if root is None or not parts:
+        return []
+    present = {tag.rsplit("}", 1)[-1] for node in root.iter() if isinstance(tag := node.tag, str)}
+    problems = []
+    for phrase, kinds in parts:
+        if present.intersection(kinds):
+            continue
+        kind = kinds[0] if len(kinds) == 1 else " or ".join(kinds[:3])
+        owner = f", linked to the {asked}" if asked else ""
+        problems.append(
+            f"the question wants a {phrase} in the example and the frame defines no {kind}: write a {kind} "
+            f"object with its own id{owner}"
+        )
+    return problems
+
+
+def parts_line(parts: list[tuple[str, list[str]]]) -> str:
+    """The named parts for the model's prompt: "StopPlace (“stop place”)"."""
+    return ", ".join(f"{kinds[0] if len(kinds) == 1 else ' or '.join(kinds[:3])} (“{phrase}”)" for phrase, kinds in parts)
+
+
 def other_question(question: str) -> str:
     """The part of a question that asks something besides the example ("How do you describe a stop place in
     NeTEx?" in "How do you describe a stop place in NeTEx? Show me an example with two quays."), or ""."""
@@ -2504,6 +2548,7 @@ _ERROR_CLASSES = (
     ("not-expected", ("This element is not expected",)),
     ("value", ("from the question is missing", "has one name")),
     ("count", ("the question counts",)),
+    ("part", ("and the frame defines no",)),
     ("asked-object", ("the question asks for",)),
     ("link", ("that nothing links to the",)),
     ("condition", ("the question says the service runs", "is empty: give it the children")),
@@ -2513,7 +2558,7 @@ _ERROR_CLASSES = (
 
 def error_class(message: str) -> str:
     """The kind of a failed attempt's first error, from the validator's or the generator's wording:
-    malformed, keyref, min-count, not-expected, value, count, asked-object, condition, model-error, or other."""
+    malformed, keyref, min-count, not-expected, value, count, part, asked-object, condition, model-error, or other."""
     for name, markers in _ERROR_CLASSES:
         if any(marker in (message or "") for marker in markers):
             return name
@@ -2769,8 +2814,15 @@ def _generate(
     condition_part = condition_part + "\n\n" if conditions else ""
     rule = values_rule(values, asked, own_objects=skeleton_skipped == "values")
     rule_part = rule + "\n" if rule else ""
-    if counts:
-        rule_part += f"Objects to write, each defined with its own id: {counts_line(counts)}\n"
+    # A part named by an object's element name ("a line with a stop place") must be defined in the frame.
+    try:
+        named_parts = named_object_parts(shape_question, asked)
+    except Exception as exc:  # the validator unavailable: the part is not checked, as before
+        logger.info("named parts not available: %s", exc)
+        named_parts = []
+    to_write = ", ".join(filter(None, [counts_line(counts), parts_line(named_parts)]))
+    if to_write:
+        rule_part += f"Objects to write, each defined with its own id: {to_write}\n"
     messages = [
         {"role": "system", "content": _PROMPT},
         {"role": "user", "content": f"Question:\n{question}\n\nValues to use: {values_line(values, question)}\n{rule_part}\n{condition_part}{skeleton_part}EVIDENCE BLOCKS:\n{evidence}"},
@@ -2897,7 +2949,7 @@ def _generate(
                 errors = [
                     missing_value_error(value, question, fragment, values)
                     for value in _unmet_values(fragment, values, shape_question)
-                ] + count_problems(fragment, counts)
+                ] + count_problems(fragment, counts) + part_problems(fragment, named_parts, asked)
                 # Hard: two of the values as the names of one object (Name "Maribor", ShortName "Ptuj" of a
                 # Line) hold the values but state something false (plan 2026-11-12 revision 4, T1).
                 if not errors:
