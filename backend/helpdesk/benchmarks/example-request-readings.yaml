@@ -150,18 +150,16 @@ readings:
 - id: gen27
   question: I want to map a ferry service into a NeTEx TemplateServiceJourney. The ferry operates between two sides of the river when there is demand, it takes 3 minutes from side to side. Can you create an XML file modelling such TemplateServiceJourney?
   asked: TemplateServiceJourney
-  objects: []
+  objects: [{kind: [ScheduledStopPoint, StopPointInJourneyPattern], count: 2}]
   values: [PT3M]
   conditions: [when there is demand]
-  unsure: true
-  note: '"between two sides of the river" may ask for two stop points (count 2); written here as no objects'
+  note: 'the two sides of the river are two stop points'
 - id: gen28
   question: I want to map a ferry service into a NeTEx TemplateServiceJourney. The ferry operates between two sides of the river when there is demand, it takes 3 minutes from side to side. Can you give an XML snippet modelling such TemplateServiceJourney?
   asked: TemplateServiceJourney
-  objects: []
+  objects: [{kind: [ScheduledStopPoint, StopPointInJourneyPattern], count: 2}]
   values: [PT3M]
   conditions: [when there is demand]
-  unsure: true
   note: as gen27
 - id: gen29
   question: Can you write the XML for a NeTEx FlexibleLine?
