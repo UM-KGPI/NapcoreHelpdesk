@@ -320,11 +320,10 @@ readings:
   values: []
 - id: p13
   question: Show example for wheelchair modelling in NeTEx.
-  asked: ""
+  asked: [StopPlace, Quay, NavigationPath, VehicleType]
   objects: []
   values: []
-  unsure: true
-  note: no object named; accessibility of a stop place or a vehicle type are both possible
+  note: 'no object named; any object the standard''s examples state wheelchair access on is right: a stop place, a quay or a path (WheelchairAccess in an AccessibilityAssessment), or a vehicle type'
 - id: p14
   lang: sl
   question: Prikaži primer voznega reda v NeTEx XML iz Slovenije?
