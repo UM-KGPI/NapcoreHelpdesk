@@ -2187,29 +2187,64 @@ def link_example(element: str, asked: str) -> dict | None:
 
     with_element, with_asked = files(ref_element, element), files(ref_asked, asked)
     candidates = sorted(set(with_element) & set(with_asked))[:MAX_LINK_FILES]
+    found = _link_in_files(element, asked, candidates, with_element, by_target=False)
+    if found is None:
+        # No reference named after either kind (ParkingRef, StopPlaceRef): a reference with a general name that
+        # points at an object of the kind in the same file (a Parking's ParentSiteRef to the StopPlace it
+        # belongs to). Named after the kinds only, the feedback said "link it by a reference" without saying
+        # which object carries it, and the model wrote a ParkingRef or a parkings list inside the StopPlace,
+        # which the schema has not (gen18: 0 of 16 first attempts, 8 of 16 answers unlinked; plan 2026-11-14, F4).
+        found = _link_in_files(element, asked, candidates, with_element, by_target=True)
+    _LINK_CACHE[key] = (found, time.monotonic() + _LOOKUP_TTL_SECONDS)
+    return found
+
+
+def _link_in_files(element: str, asked: str, candidates: list[str], repositories: dict, by_target: bool) -> dict | None:
+    """link_example's search of the example files. A reference counts by its name ({element}Ref, {asked}Ref); with
+    by_target, any ...Ref element whose ref is the id of an object of either kind defined in the same file counts
+    as a reference to that kind, under its own name."""
+    from pathlib import Path
+
+    from lxml import etree
+
+    ref_element, ref_asked = f"{element}Ref", f"{asked}Ref"
     parser = etree.XMLParser(resolve_entities=False, load_dtd=False, no_network=True, huge_tree=False, remove_comments=True)
     checkout_root = Path(getattr(settings, "SOURCE_CHECKOUT_DIR", "/app/repos"))
     direct = None
     bridges: dict[str, dict] = {}
     for source_path in candidates:
-        path = checkout_root / with_element[source_path].rstrip("/").rsplit("/", 1)[-1] / source_path
+        path = checkout_root / repositories[source_path].rstrip("/").rsplit("/", 1)[-1] / source_path
         try:
             if path.stat().st_size > MAX_STANDARD_FILE_BYTES:
                 continue
             root = etree.parse(str(path), parser).getroot()
         except (OSError, etree.XMLSyntaxError):
             continue
+        targets = {}
+        if by_target:
+            targets = {
+                node.get("id"): (ref_element if _local(node.tag) == element else ref_asked)
+                for node in root.iter()
+                if isinstance(node.tag, str) and node.get("id") and _local(node.tag) in (element, asked)
+            }
         # For each object, the path to the first reference of each kind inside it.
         reaches: dict = {}
         for node in root.iter():
+            if not isinstance(node.tag, str):
+                continue
             name = _local(node.tag)
-            if name not in (ref_element, ref_asked):
+            if by_target:
+                kind = targets.get(node.get("ref")) if name.endswith("Ref") else None
+            else:
+                kind = name if name in (ref_element, ref_asked) else None
+            if kind is None:
                 continue
             steps, up = [name], node.getparent()
             while up is not None:
                 up_name = _local(up.tag)
-                if up.get("id") and not up_name.endswith("Frame"):
-                    reaches.setdefault(up, {}).setdefault(name, list(reversed(steps)))
+                # An object's reference to itself (a path link inside a parking that starts at the parking) links nothing.
+                if up.get("id") and not up_name.endswith("Frame") and not (by_target and up.get("id") == node.get("ref")):
+                    reaches.setdefault(up, {}).setdefault(kind, list(reversed(steps)))
                 steps.append(up_name)
                 up = up.getparent()
         in_file = set()
@@ -2232,7 +2267,6 @@ def link_example(element: str, asked: str) -> dict | None:
     found = direct or (max(bridges.values(), key=lambda entry: entry["files"]) if bridges else None)
     if found is not None:
         found = {**found, "holders": bridges}
-    _LINK_CACHE[key] = (found, time.monotonic() + _LOOKUP_TTL_SECONDS)
     return found
 
 

@@ -2687,3 +2687,49 @@ class NamedObjectPartTests(SimpleTestCase):
         # A reference alone does not define the part.
         ref_only = '<ServiceFrame version="1" id="hd:SF"><StopPlaceRef ref="x"/></ServiceFrame>'
         self.assertEqual(len(generator.part_problems(ref_only, parts, "Line")), 1)
+
+
+class LinkByTargetTests(SimpleTestCase):
+    """A link the standard's examples make through a reference with a general name, found by what it points at
+    (plan 2026-11-14, F4)."""
+
+    SITE = (
+        '<PublicationDelivery xmlns="http://www.netex.org.uk/netex"><dataObjects><SiteFrame version="1" id="x:SF">'
+        '<stopPlaces><StopPlace version="1" id="x:SP"><Name>Station</Name></StopPlace></stopPlaces>'
+        '<parkings><Parking version="1" id="x:P"><ParentSiteRef ref="x:SP"/>'
+        '<pathLinks><SitePathLink version="1" id="x:L"><From><PlaceRef ref="x:P"/></From></SitePathLink></pathLinks>'
+        "<TotalCapacity>40</TotalCapacity></Parking></parkings></SiteFrame></dataObjects></PublicationDelivery>"
+    )
+
+    def setUp(self):
+        import tempfile
+        from pathlib import Path
+
+        self.tmp = tempfile.TemporaryDirectory()
+        examples = Path(self.tmp.name) / "NeTEx" / "examples"
+        examples.mkdir(parents=True)
+        (examples / "site.xml").write_text(self.SITE)
+        self.repositories = {"examples/site.xml": "https://github.com/x/NeTEx"}
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_a_general_reference_counts_by_its_target_only_when_asked(self):
+        with self.settings(SOURCE_CHECKOUT_DIR=self.tmp.name):
+            by_name = generator._link_in_files("Parking", "StopPlace", ["examples/site.xml"], self.repositories, by_target=False)
+            by_target = generator._link_in_files("Parking", "StopPlace", ["examples/site.xml"], self.repositories, by_target=True)
+        self.assertIsNone(by_name)
+        self.assertEqual(
+            {key: by_target[key] for key in ("holder", "toElement", "toAsked")},
+            {"holder": "Parking", "toElement": [], "toAsked": ["ParentSiteRef"]},
+        )
+
+    def test_the_feedback_says_which_object_carries_the_reference(self):
+        found = {"holder": "Parking", "toElement": [], "toAsked": ["ParentSiteRef"], "sourcePath": "examples/site.xml", "holders": {}}
+        fragment = (
+            '<SiteFrame version="1" id="hd:SF"><stopPlaces><StopPlace version="1" id="hd:SP"/></stopPlaces>'
+            '<parkings><Parking version="1" id="hd:P"><TotalCapacity>40</TotalCapacity></Parking></parkings></SiteFrame>'
+        )
+        with patch.object(generator, "link_example", return_value=found):
+            problems = generator.link_problems(fragment, "StopPlace", "a stop place with a parking of 40 spaces", ["40"])
+        self.assertIn("Give the Parking a reference to the StopPlace, as the standard's examples do: Parking > ParentSiteRef", problems[0])
