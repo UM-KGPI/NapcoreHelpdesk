@@ -336,8 +336,7 @@ readings:
   asked: Line
   objects: []
   values: []
-  unsure: true
-  note: '"from Slovenia" read as where the example comes from, not a value; could be a value (a Slovenian line)'
+  note: '"from Slovenia" asks where the example comes from, not for a value (as p14)'
 - id: p16
   lang: sl
   question: Pokaži mi primer za opis linije v NeTEx?
@@ -350,8 +349,7 @@ readings:
   asked: [FareProduct, FareTable, FarePrice]
   objects: []
   values: []
-  unsure: true
-  note: '"price of a ticket": a fare product with its price, or the price element/table itself'
+  note: 'the price of a ticket: a fare product, a fare table or a price object (FarePrice stands for the concrete prices) is right; in the standard''s examples the amount sits in a price object, most often a cell of a fare table, never in the product'
 - id: p18
   question: Show me an example of a stop place with quays.
   asked: StopPlace
@@ -374,8 +372,7 @@ readings:
   asked: [TimetableFrame, ServiceJourney]
   objects: []
   values: []
-  unsure: true
-  note: as p14
+  note: 'a timetable is a TimetableFrame, as gen39'
 - id: p22
   question: Show me an example of ServiceCalendarFrame in NeTEx XML.
   asked: ServiceCalendarFrame
@@ -389,8 +386,7 @@ readings:
   asked: Quay
   objects: [{kind: StopPlace, count: null}]
   values: []
-  unsure: true
-  note: '"de uma estação" may be context only, not a stop place the example must have'
+  note: 'the quay is asked for and the station is where it is (as p10); in the standard''s examples 1,499 of 1,505 quays are written inside a StopPlace'
 - id: p24
   lang: pt
   question: Como descrever uma estação StopPlace em NeTEx XML?
@@ -403,8 +399,7 @@ readings:
   asked: Quay
   objects: [{kind: StopPlace, count: null}]
   values: []
-  unsure: true
-  note: as p23
+  note: 'as p23'
 - id: p26
   question: Show an example on how to model a train with multiple carriages in NeTEx XML?
   asked: [Train, VehicleType]
@@ -442,8 +437,7 @@ readings:
   asked: [TimetableFrame, ServiceJourney]
   objects: []
   values: []
-  unsure: true
-  note: as p14
+  note: 'a timetable is a TimetableFrame, as gen39'
 - id: p32
   question: Show me a fare product example in NeTEx XML?
   asked: FareProduct
