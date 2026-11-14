@@ -330,8 +330,7 @@ readings:
   asked: [TimetableFrame, ServiceJourney]
   objects: []
   values: []
-  unsure: true
-  note: '"vozni red" (timetable) has no single object; "iz Slovenije" asks where the example comes from, not a value'
+  note: 'a timetable ("vozni red") is a TimetableFrame, as gen39; "iz Slovenije" asks where the example comes from, not for a value'
 - id: p15
   question: Show me a fragment of NeTEx XMl for a line from Slovenia.
   asked: Line
