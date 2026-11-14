@@ -240,11 +240,10 @@ readings:
   values: [Monday, "17:00"]
 - id: gen43
   question: Create a new NeTEx XML example for a timetable Call that contains ScheduledStopPoint time departure at 15:00.
-  asked: Call
+  asked: [Call, ServiceJourney]
   objects: [{kind: ScheduledStopPoint, count: null}]
   values: ["15:00"]
-  unsure: true
-  note: a Call sits in a journey; the example may be of the ServiceJourney with the call
+  note: 'in the standard''s examples a Call always sits in the calls of a journey (9,477 of 9,523 in a ServiceJourney) and refers to a ScheduledStopPoint defined in the same file; the journey is accepted as the asked object as well'
 - id: gen44
   question: Show me an example of line with a stop place departure described in NeTEx XML?
   asked: Line
