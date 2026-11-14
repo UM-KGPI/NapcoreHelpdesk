@@ -1403,6 +1403,12 @@ a {
 .answer-in-standard > p {
   margin: 0 0 0.25rem;
 }
+.answer-in-standard > .answer-unvalidated {
+  margin: 0 0 0.4rem;
+  padding: 0.3rem 0.5rem;
+  border-left: 3px solid var(--warning, #b7791f);
+  color: var(--muted, inherit);
+}
 .generated-example-notes dl {
   margin: 0 0 0.5rem;
   font-size: 0.9em;

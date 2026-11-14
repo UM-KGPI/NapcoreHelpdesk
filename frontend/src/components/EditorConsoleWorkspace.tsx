@@ -356,7 +356,12 @@ export default function EditorConsoleWorkspace(props: EditorConsoleWorkspaceProp
                     <p>{question}</p>
                   </div>
                   <p className="mode-pill">mode: {answerResult.mode}</p>
-                  <AnswerBody text={answerResult.answer} example={answerResult.generatedExample} structure={answerResult.schemaStructure} />
+                  <AnswerBody
+                    text={answerResult.answer}
+                    example={answerResult.generatedExample}
+                    structure={answerResult.schemaStructure}
+                    unvalidated={answerResult.trace?.llmAnswerValidated === false}
+                  />
                   <p>
                     confidence: <strong>{answerResult.confidence.toFixed(2)}</strong>
                   </p>

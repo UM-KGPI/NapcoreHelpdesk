@@ -56,7 +56,12 @@ from helpdesk.services.event_logger import log_question_event
 from helpdesk.services.faq_matcher import match_faq
 from helpdesk.services.faq_publication import publish_queue_item_to_faq
 from helpdesk.services.grounded_generator import generate_answer
-from helpdesk.services.llm_generator import LLMGenerationError, generate_answer_llm, stream_answer_llm
+from helpdesk.services.llm_generator import (
+    LLMGenerationError,
+    generate_answer_llm,
+    has_ungrounded_code_block,
+    stream_answer_llm,
+)
 from helpdesk.services.llm_model_recovery import check_gateway_models, get_cached_correction
 from helpdesk.services.ontology_registry import current_ontology_version_payload
 from helpdesk.services.policy_guard import evaluate_policy
@@ -253,6 +258,22 @@ def _without_lack_sentences(answer_text: str) -> str:
         text = text.replace("\x00", block, 1)
     text = re.sub(r"[ \t]+\n", "\n", text)
     return re.sub(r"\n{3,}", "\n\n", text).strip()
+
+
+def _keeps_unvalidated_text(answer_text: str, citations: list[dict], chunks: list[dict], shown_fragment: str) -> bool:
+    """Whether text that failed validation on both attempts stays next to a block from the schema.
+
+    It stays, marked unvalidated (trace.llmAnswerValidated false), when it is text the reader can weigh: the
+    validator's checks compare its words with English evidence, so an accurate answer in another language can
+    fail them on both attempts. It is still left out when it would add something the marker does not cover:
+    a code block that is not in the evidence or the shown example (a second, unchecked fragment next to the
+    checked one), or citations the policy does not allow (the whole answer would abstain over the text).
+    """
+    if not answer_text.strip():
+        return False
+    if has_ungrounded_code_block(answer=answer_text, chunks=chunks, shown_fragment=shown_fragment):
+        return False
+    return bool(evaluate_policy(answer_text=answer_text, citations=citations)["allowed"])
 
 
 def _legal_context(mode: str, scope: list[str] | None, question: str = "") -> list[dict]:
@@ -1545,8 +1566,18 @@ class QuestionAnswerView(APIView):
                     citations = _select_citations(chunks=chunks, max_citations=max_citations)
                 if example_ready or structure_shown:
                     answer_text = _without_lack_sentences(answer_text)
-                if (example_ready or structure_shown) and generated.get("answer_validated") is False:
-                    # With a block from the schema (example or structure), text that failed validation is noise.
+                if (
+                    (example_ready or structure_shown)
+                    and generated.get("answer_validated") is False
+                    and not _keeps_unvalidated_text(
+                        answer_text=answer_text,
+                        citations=citations,
+                        chunks=chunks,
+                        shown_fragment=(generated_example or {}).get("xml", "") if example_ready else "",
+                    )
+                ):
+                    # Next to a block from the schema, unvalidated text is kept (marked) unless it adds an
+                    # unchecked code block or citations the policy blocks; then the block stands alone.
                     dropped_answer, answer_text = answer_text, ""
                 if (example_ready or structure_shown) and not answer_text.strip():
                     # The block from the schema is the answer; the text had nothing to add.
@@ -2249,8 +2280,18 @@ class QuestionAnswerStreamView(APIView):
                     citations = _select_citations(chunks=chunks, max_citations=max_citations)
                 if example_ready or structure_shown:
                     answer_text = _without_lack_sentences(answer_text)
-                if (example_ready or structure_shown) and generated.get("answer_validated") is False:
-                    # With a block from the schema (example or structure), text that failed validation is noise.
+                if (
+                    (example_ready or structure_shown)
+                    and generated.get("answer_validated") is False
+                    and not _keeps_unvalidated_text(
+                        answer_text=answer_text,
+                        citations=citations,
+                        chunks=chunks,
+                        shown_fragment=(generated_example or {}).get("xml", "") if example_ready else "",
+                    )
+                ):
+                    # Next to a block from the schema, unvalidated text is kept (marked) unless it adds an
+                    # unchecked code block or citations the policy blocks; then the block stands alone.
                     dropped_answer, answer_text = answer_text, ""
                 if (example_ready or structure_shown) and not answer_text.strip():
                     # The block from the schema is the answer; the text had nothing to add.
