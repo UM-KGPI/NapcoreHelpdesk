@@ -1064,15 +1064,21 @@ def standard_example(
 # where it goes or how it runs: "a bus line from Maribor to Ptuj that runs only on school days" had no subject
 # (prod req-mwdzf8px-3qfhdl, 2026-11-12), so no asked object, skeleton or check. Not "to": "a point to point
 # fare" would end at "point".
-_SUBJECT_WIDE = re.compile(
-    r"\b(?:examples?|samples?|fragments?|xml(?:\s+(?:files?|documents?|code|snippets?))?)\s+(?:of|for)\s+(?:an?\s+|the\s+|one\s+)?"
+_SUBJECT_PHRASE = (
+    r"(?:an?\s+|the\s+|one\s+)?"
     r"(?P<subject>[A-Za-z][\w-]*(?:\s+[A-Za-z][\w-]*){0,2}?)"
     r"(?=\s+(?:with|having|has|that|containing|including|for|in|named|called|operated|departing|arriving|at|on|of"
     r"|from|between|via|through|by|near|during|which|whose|where|when|running|serving|operating|connecting|using"
     r"|and|or)\b"
-    r"|\s*$|\s*[,.?!;:])",
+    r"|\s*$|\s*[,.?!;:])"
+)
+_SUBJECT_WIDE = re.compile(
+    r"\b(?:examples?|samples?|fragments?|xml(?:\s+(?:files?|documents?|code|snippets?))?)\s+(?:of|for)\s+" + _SUBJECT_PHRASE,
     re.I,
 )
+# Where the subject is only the name of a standard ("an example of NeTEx in XML for a line"), the subject is
+# what the next "of" or "for" introduces (plan 2026-11-14, F3).
+_SUBJECT_AFTER = re.compile(r"\b(?:of|for)\s+" + _SUBJECT_PHRASE, re.I)
 _LOOKUP_TTL_SECONDS = 3600.0
 _CONCRETE_CACHE: dict[str, tuple[list[dict] | None, float]] = {}
 _IN_EXAMPLES_CACHE: dict[str, tuple[bool, float]] = {}
@@ -1112,11 +1118,27 @@ def _in_examples(name: str) -> bool:
     return found
 
 
+def _names_only_the_standard(phrase: str) -> bool:
+    """A subject made of the name of a standard and the format word the subject pattern already reads ("NeTEx",
+    "NeTEx XML"): what the example is written in, not what it is an example of. The names are the app's own
+    (question_parsing), not a list here."""
+    from helpdesk.services.question_parsing import is_standard_name
+
+    words = phrase.split()
+    return is_standard_name(phrase) or (
+        any(is_standard_name(word) for word in words) and all(is_standard_name(word) or word.lower() == "xml" for word in words)
+    )
+
+
 def asked_subject(question: str) -> str:
     """The noun phrase the example is of ("fare product", "timetabled passing time"); "" for a proper name
     ("an example for Ljubljana Bus Station")."""
     match = _SUBJECT_WIDE.search(question or "")
+    while match and _names_only_the_standard(match.group("subject")):
+        match = _SUBJECT_AFTER.search(question, match.end("subject"))
     subject = match.group("subject").strip() if match else example_subject(question)
+    if _names_only_the_standard(subject):
+        return ""
     words = subject.split()
     if len(words) > 1 and all(word[:1].isupper() for word in words):
         return ""

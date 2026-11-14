@@ -1095,6 +1095,12 @@ class AskedObjectTests(SimpleTestCase):
             "Show a NeTEx example of a service journey which runs on Sundays": "service journey",
             # "to" does not end a subject: "point to point" stays whole or unmatched, never "point"
             "Show a NeTEx example of a point to point fare": "",
+            # The name of a standard is what the example is written in, not its subject (plan 2026-11-14, F3)
+            "Show me an example of NeTEx in XML for a line with departure on Monday 17:00.": "line",
+            "Show me an example of NeTEx XML for a stop place with two quays": "stop place",
+            "Give an example of SIRI for a vehicle activity": "vehicle activity",
+            "Show me an example of NeTEx in XML.": "",
+            "Show me an example of NeTEx for Ljubljana Bus Station": "",
         }
         for question, subject in cases.items():
             self.assertEqual(generator.asked_subject(question), subject, question)

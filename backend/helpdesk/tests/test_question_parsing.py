@@ -331,3 +331,13 @@ class AnchorTermsTests(SimpleTestCase):
         service._graphdb_connector = lambda: connector
 
         self.assertEqual(service._anchor_with_graphdb(["stop place", "quay"]), ["transmodel:STOP_PLACE", "transmodel:QUAY"])
+
+
+class StandardNameTests(SimpleTestCase):
+    def test_whole_names_of_standards_only(self):
+        from helpdesk.services.question_parsing import is_standard_name
+
+        for name in ("NeTEx", "netex", "SIRI", "Transmodel", "DATEX II", "OpRa"):
+            self.assertTrue(is_standard_name(name), name)
+        for phrase in ("NeTEx line", "line", "XML", "NAPCORE", "regulation", ""):
+            self.assertFalse(is_standard_name(phrase), phrase)
