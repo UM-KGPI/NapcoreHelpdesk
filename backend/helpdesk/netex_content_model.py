@@ -93,6 +93,9 @@ class ContentModels:
         self.placements: dict[str, Counter] = {}
         # simple type key (or a complex type with simple content) -> (base key, facets, member keys of a union)
         self.simple: dict[str, tuple[str, dict, tuple[str, ...]]] = {}
+        # simple type key of an xsd:list (whitespace-separated items: DaysOfWeek "Monday Tuesday") -> its item type key
+        self.lists: dict[str, str] = {}
+        self._in_lists: dict[str, frozenset[str]] = {}
         self._slots: dict[str, list[Slot]] = {}
         self._accepting: dict[str, frozenset[str]] = {}
 
@@ -177,7 +180,15 @@ class ContentModels:
                 members.append(f"{key}/{index}")
             self.simple[key] = ("", {}, tuple(members))
             return
-        # xsd:list and anything else: free text for this purpose.
+        # xsd:list and anything else: free text for this purpose; a list's item type is kept apart (lists).
+        listed = node.find(_X + "list")
+        if listed is not None:
+            item = self._ref(listed, "itemType")
+            if not item and listed.find(_X + "simpleType") is not None:
+                item = key + "/item"
+                self._add_simple(item, listed.find(_X + "simpleType"))
+            if item:
+                self.lists[key] = item
         self.simple[key] = (XSD_NS + "|string", {}, ())
 
     @staticmethod
@@ -703,6 +714,56 @@ def accepting_elements(models: ContentModels, value: str) -> frozenset[str]:
             found.add(name)
     models._accepting[value] = frozenset(found)
     return models._accepting[value]
+
+
+def _enumeration(models: ContentModels, type_key: str) -> tuple[str, ...]:
+    """The enumeration a simple type is restricted to, through its base types; () when it has none."""
+    seen: set[str] = set()
+    while type_key and type_key in models.simple and type_key not in seen:
+        seen.add(type_key)
+        base, facets, members = models.simple[type_key]
+        if facets.get("enumeration"):
+            return tuple(facets["enumeration"])
+        if members:
+            return ()
+        type_key = base
+    return ()
+
+
+def _list_item(models: ContentModels, type_key: str) -> str:
+    """The item type of a simple type that is an xsd:list (directly or through restrictions), else ""."""
+    seen: set[str] = set()
+    while type_key and type_key not in seen:
+        seen.add(type_key)
+        if type_key in models.lists:
+            return models.lists[type_key]
+        if type_key not in models.simple or models.simple[type_key][2]:
+            return ""
+        type_key = models.simple[type_key][0]
+    return ""
+
+
+def list_elements_accepting(models: ContentModels, value: str) -> frozenset[str]:
+    """The names of the elements whose declared content is a whitespace-separated list of an enumerated item type
+    that has the value as one item: "Monday" -> DaysOfWeek ("Monday Tuesday"), which accepting_elements cannot
+    see, since it reads a list as free text. Only enumerated items: a value from a closed set, written as one
+    item of the list."""
+    if value in models._in_lists:
+        return models._in_lists[value]
+    declarations = [(_display(name), type_key) for name, type_key in models.globals.items()]
+    declarations += sorted(models.local_elements)
+    found = set()
+    verdicts: dict[str, bool] = {}
+    for name, type_key in declarations:
+        if name in found or not type_key:
+            continue
+        if type_key not in verdicts:
+            item = _list_item(models, type_key)
+            verdicts[type_key] = bool(item) and value in _enumeration(models, item)
+        if verdicts[type_key]:
+            found.add(name)
+    models._in_lists[value] = frozenset(found)
+    return models._in_lists[value]
 
 
 def audit(models: ContentModels, files: list[Path]) -> tuple[int, int, Counter]:

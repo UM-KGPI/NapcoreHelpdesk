@@ -1364,6 +1364,105 @@ class ValueHolderTests(SimpleTestCase):
         self.assertEqual(holders, [frozenset({"Currency", "DefaultCurrency"})])
 
 
+DAYS_XSD = """<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.netex.org.uk/netex"
+  targetNamespace="http://www.netex.org.uk/netex" elementFormDefault="qualified">
+  <xsd:simpleType name="DaysOfWeekListOfEnumerations"><xsd:list itemType="DayOfWeekEnumeration"/></xsd:simpleType>
+  <xsd:simpleType name="DayOfWeekEnumeration"><xsd:restriction base="xsd:string">
+    <xsd:enumeration value="Monday"/><xsd:enumeration value="Tuesday"/>
+  </xsd:restriction></xsd:simpleType>
+  <xsd:simpleType name="NumbersList"><xsd:list itemType="xsd:integer"/></xsd:simpleType>
+  <xsd:simpleType name="Words"><xsd:list><xsd:simpleType><xsd:restriction base="xsd:NMTOKEN">
+    <xsd:enumeration value="Monday"/></xsd:restriction></xsd:simpleType></xsd:list></xsd:simpleType>
+  <xsd:complexType name="PropertyOfDayStructure"><xsd:sequence>
+    <xsd:element name="Name" type="xsd:string" minOccurs="0"/>
+    <xsd:element name="DaysOfWeek" type="DaysOfWeekListOfEnumerations" minOccurs="0"/>
+    <xsd:element name="Numbers" type="NumbersList" minOccurs="0"/>
+    <xsd:element name="Inline" type="Words" minOccurs="0"/>
+  </xsd:sequence></xsd:complexType>
+  <xsd:element name="PropertyOfDay" type="PropertyOfDayStructure"/>
+</xsd:schema>
+"""
+
+
+class WeekdayValueTests(SimpleTestCase):
+    """A day of the week is a value, held by an element the schema declares for days (plan 2026-11-14, F2)."""
+
+    GEN38 = "Show me a NeTEx example in XML for a line with two departures on Monday at 14:00."
+
+    def setUp(self):
+        generator._DAY_HOLDERS_CACHE.clear()
+
+    def test_the_schema_says_which_lists_take_a_day_as_one_item(self):
+        from lxml import etree
+
+        from helpdesk.netex_content_model import ContentModels, accepting_elements, list_elements_accepting
+
+        models = ContentModels()
+        models.add_schema(etree.fromstring(DAYS_XSD.encode()))
+        self.assertEqual(list_elements_accepting(models, "Monday"), {"DaysOfWeek", "Inline"})
+        self.assertEqual(list_elements_accepting(models, "Tuesday"), {"DaysOfWeek"})
+        self.assertEqual(list_elements_accepting(models, "Friday"), frozenset())
+        # Only enumerated items: a list of numbers does not take a number as a value of the question.
+        self.assertEqual(list_elements_accepting(models, "5"), frozenset())
+        self.assertEqual(accepting_elements(models, "Monday"), frozenset())  # unchanged: a list is free text there
+
+    def test_days_are_read_as_values_and_not_as_names(self):
+        self.assertEqual(generator.requested_values(self.GEN38), ["14:00", "Monday"])
+        self.assertEqual(generator.weekdays("a journey which runs on Sundays and mondays"), ["Sunday", "Monday"])
+        self.assertEqual(generator.requested_values("a journey which runs on Sundays"), ["Sunday"])
+        # A day inside a quoted or proper name is not a second value.
+        self.assertEqual(generator.requested_values('a day type called "Monday"'), ["Monday"])
+        self.assertEqual(generator.weekdays("Show the Black Friday Express on Friday"), ["Friday"])
+        self.assertEqual(generator.weekdays("a stop named Monday Market"), [])
+        self.assertEqual(generator.weekdays("Monday departures of line 6"), ["Monday"])
+
+    def test_a_day_is_held_only_where_the_schema_declares_days(self):
+        held = (
+            '<ServiceCalendarFrame version="1" id="hd:SCF"><dayTypes><DayType version="1" id="hd:DT">'
+            "<properties><PropertyOfDay><DaysOfWeek>Monday Tuesday</DaysOfWeek></PropertyOfDay></properties>"
+            "</DayType></dayTypes></ServiceCalendarFrame>"
+        )
+        in_ref = (
+            '<TimetableFrame version="1" id="hd:TF"><vehicleJourneys><ServiceJourney version="1" id="hd:SJ">'
+            '<Name>Monday</Name><dayTypes><DayTypeRef ref="Monday"/></dayTypes>'
+            "</ServiceJourney></vehicleJourneys></TimetableFrame>"
+        )
+        with patch.object(generator, "day_holders", return_value=frozenset({"DaysOfWeek"})):
+            self.assertEqual(generator.missing_values(held, ["Monday"]), [])
+            self.assertEqual(generator.missing_values(in_ref, ["Monday"]), ["Monday"])
+            self.assertEqual(generator.value_places(held, ["Monday"])[0]["element"], "DaysOfWeek")
+            self.assertEqual(generator.value_places(in_ref, ["Monday"]), [])
+            error = generator.missing_value_error("Monday", self.GEN38)
+        self.assertTrue(error.startswith("the day Monday from the question is missing"), error)
+        self.assertIn("(DaysOfWeek)", error)
+        # Without the validator's lists the day is checked as any other value.
+        with patch.object(generator, "day_holders", return_value=None):
+            self.assertEqual(generator.missing_values(in_ref, ["Monday"]), [])
+
+    def test_day_holders_need_a_validator_that_reports_lists(self):
+        class Reply:
+            def __init__(self, payload):
+                self.payload = payload
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def read(self):
+                return json.dumps(self.payload).encode()
+
+        with patch("urllib.request.urlopen", return_value=Reply({"found": True, "accepting": {"Monday": []}})):
+            self.assertIsNone(generator.day_holders("Monday"))
+        reply = Reply({"found": True, "accepting": {"Monday": []}, "inLists": {"Monday": ["DaysOfWeek"]}})
+        with patch("urllib.request.urlopen", return_value=reply):
+            self.assertEqual(generator.day_holders("Monday"), {"DaysOfWeek"})
+
+    def test_the_prompt_says_where_a_day_goes(self):
+        self.assertIn("Monday (a day of the week:", generator.values_line(["14:00", "Monday"], self.GEN38))
+
+
 # A fare product without a price, as in 72 of the 73 example files with one; the price is in a price group
 # that refers to it; a user profile also refers to it and holds a number.
 LINKED_PRICE_FILE = (
