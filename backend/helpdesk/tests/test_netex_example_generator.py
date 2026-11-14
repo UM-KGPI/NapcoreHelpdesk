@@ -234,6 +234,33 @@ class GenerationTests(SimpleTestCase):
         self.assertTrue(result["errors"][0].startswith("the value 20 from the question is missing"), result["errors"])
         self.assertNotIn("xml", result)
 
+    def test_an_empty_frame_is_retried(self):
+        question = "Show an example of a timetable in NeTEx XML named \"Winter\""
+        empty = '<TimetableFrame version="1" id="hd:TF"><Name>Winter</Name></TimetableFrame>'
+        full = (
+            '<TimetableFrame version="1" id="hd:TF"><Name>Winter</Name><vehicleJourneys>'
+            '<ServiceJourney version="1" id="hd:SJ"/></vehicleJourneys></TimetableFrame>'
+        )
+        concrete = lambda element: [{"name": element, "object": element == "ServiceJourney"}]  # noqa: E731
+        with patch.object(generator, "_ask_model", side_effect=[_reply(empty), _reply(full)]) as ask, patch.object(
+            generator, "validate_fragment", return_value={"valid": True, "errors": []}
+        ), patch.object(generator, "concrete_elements", side_effect=concrete):
+            result = generator.generate_netex_example(question, [NETEX_CHUNK], ["NeTEx"])
+        self.assertTrue(result["valid"])
+        self.assertEqual(result["attempts"], 2)
+        self.assertEqual(result["attemptLog"][0]["errorClass"], "empty-frame")
+        self.assertIn("the frame holds no object", ask.call_args_list[1].args[0][-1]["content"])
+
+    def test_holds_object_asks_the_validator_and_passes_when_it_cannot(self):
+        concrete = lambda element: [{"name": element, "object": element == "ServiceJourney"}]  # noqa: E731
+        with patch.object(generator, "concrete_elements", side_effect=concrete):
+            self.assertFalse(generator.holds_object('<TimetableFrame version="1" id="a"><Name>X</Name></TimetableFrame>'))
+            self.assertTrue(generator.holds_object(
+                '<TimetableFrame version="1" id="a"><vehicleJourneys><ServiceJourney version="1" id="b"/></vehicleJourneys></TimetableFrame>'
+            ))
+        with patch.object(generator, "concrete_elements", return_value=None):
+            self.assertTrue(generator.holds_object('<TimetableFrame version="1" id="a"/>'))
+
     def test_a_failed_model_call_is_retried(self):
         with patch.object(generator, "_ask_model", side_effect=[TimeoutError("The read operation timed out"), _reply(FRAME)]) as ask, patch.object(
             generator, "validate_fragment", return_value={"valid": True, "errors": []}
@@ -772,6 +799,74 @@ class PlainStandardExcerptTests(TestCase):
         self.assertIsNone(none_direct)
         self.assertEqual(deep["sourcePath"], "examples/a_deep.xml")
         self.assertIsNone(deep_limited)
+
+
+class ContainerExcerptTests(TestCase):
+    """A frame cut to an excerpt keeps the first object of the list the examples most often fill, not an empty frame."""
+
+    FRAME = (
+        '<PublicationDelivery xmlns="http://www.netex.org.uk/netex"><dataObjects><CompositeFrame version="1" id="t:CF"><frames>'
+        '<TimetableFrame version="1" id="t:TF"><Name>Winter</Name>'
+        '<validityConditions><AvailabilityCondition version="1" id="t:AC1"/><AvailabilityCondition version="1" id="t:AC2"/>'
+        "</validityConditions><vehicleJourneys>"
+        + "".join(
+            f'<ServiceJourney version="1" id="t:SJ{n}"><Name>Journey {n}</Name><DepartureTime>0{n}:00:00</DepartureTime>'
+            '<JourneyPatternRef version="1" ref="t:JP"/></ServiceJourney>'
+            for n in range(1, 10)
+        )
+        + "</vehicleJourneys></TimetableFrame></frames></CompositeFrame></dataObjects></PublicationDelivery>"
+    )
+    OTHER = (
+        '<PublicationDelivery xmlns="http://www.netex.org.uk/netex"><dataObjects><TimetableFrame version="1" id="u:TF">'
+        '<vehicleJourneys><ServiceJourney version="1" id="u:SJ"/></vehicleJourneys></TimetableFrame></dataObjects></PublicationDelivery>'
+    )
+
+    def setUp(self):
+        from helpdesk.models import SourceChunk
+
+        self.root = tempfile.TemporaryDirectory()
+        repo = Path(self.root.name) / "NeTEx" / "examples"
+        repo.mkdir(parents=True)
+        for name, text in (("timetable.xml", self.FRAME), ("other.xml", self.OTHER)):
+            (repo / name).write_text(text)
+            SourceChunk.objects.create(
+                repository_url="https://github.com/TransmodelEcosystem/NeTEx", commit_sha="abc", source_path=f"examples/{name}",
+                chunk_id=name, text=text, embedding_vector=[0.0] * 1535 + [1.0],
+            )
+        generator._USUAL_LIST_CACHE.clear()
+        self.addCleanup(generator._USUAL_LIST_CACHE.clear)
+
+    def tearDown(self):
+        self.root.cleanup()
+
+    def _concrete(self, element):
+        return [{"name": element, "object": not element.endswith("Frame")}]
+
+    def test_the_excerpt_of_a_frame_keeps_one_object_of_its_usual_list(self):
+        with override_settings(SOURCE_CHECKOUT_DIR=self.root.name), patch.object(
+            generator, "concrete_elements", side_effect=self._concrete
+        ), patch.object(generator, "MAX_STANDARD_EXAMPLE_ELEMENTS", 20):
+            found = generator.standard_example(
+                "Show me a timetable example in NeTEx.", ["NeTEx"], "TimetableFrame",
+                exclude=frozenset({"examples/other.xml"}),
+            )
+        self.assertTrue(found["excerpt"])
+        self.assertIn('<ServiceJourney version="1" id="t:SJ1">', found["fragment"])
+        self.assertIn("Journey 1", found["fragment"])
+        self.assertNotIn("t:SJ2", found["fragment"])
+        self.assertNotIn("AvailabilityCondition", found["fragment"])
+        # The journey pattern is not in the excerpt: a reference to it would fail the schema's keyref.
+        self.assertNotIn("JourneyPatternRef", found["fragment"])
+
+    def test_an_object_excerpt_is_cut_as_before(self):
+        with override_settings(SOURCE_CHECKOUT_DIR=self.root.name), patch.object(
+            generator, "concrete_elements", return_value=[{"name": "TimetableFrame", "object": True}]
+        ), patch.object(generator, "MAX_STANDARD_EXAMPLE_ELEMENTS", 20):
+            found = generator.standard_example(
+                "Show me a timetable example in NeTEx.", ["NeTEx"], "TimetableFrame",
+                exclude=frozenset({"examples/other.xml"}),
+            )
+        self.assertNotIn("ServiceJourney", found["fragment"])
 
 
 PRICES_XSD = """<?xml version="1.0" encoding="UTF-8"?>
