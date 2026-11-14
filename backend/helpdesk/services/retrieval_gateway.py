@@ -15,12 +15,30 @@ from __future__ import annotations
 import logging
 import re
 import time
+from contextlib import contextmanager
+from contextvars import ContextVar
 from functools import lru_cache
 from uuid import uuid4
 from django.db import connection, models
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
+
+# A measuring hook for locate_answer_sources (docs/plans/2026-11-14-retrieval-misses.md, Q0): where in retrieval
+# a passage is lost. None in the app, so each stage below costs one check. When set (retrieval_probe), every stage
+# of _retrieve_chunks_once passes its candidates to it as (stage, items); the hook only reads them and must not
+# change them.
+_retrieval_probe: ContextVar = ContextVar("retrieval_probe", default=None)
+
+
+@contextmanager
+def retrieval_probe(callback):
+    """Within the block, retrieval reports each stage's candidates to callback(stage, items)."""
+    token = _retrieval_probe.set(callback)
+    try:
+        yield
+    finally:
+        _retrieval_probe.reset(token)
 
 
 class ChunkDict:
@@ -1886,7 +1904,12 @@ def _retrieve_chunks_with_trace_untimed(
             "allCandidates": _merge_by_rank(english_trace.get("allCandidates", []), trace.get("allCandidates", [])),
             "legalStatusStandards": english_trace.get("legalStatusStandards") or trace.get("legalStatusStandards"),
         }
-    return _with_scope_coverage(english or question, chunks, trace, arguments)
+        if (probe := _retrieval_probe.get()) is not None:
+            probe("merged", chunks)
+    result = _with_scope_coverage(english or question, chunks, trace, arguments)
+    if (probe := _retrieval_probe.get()) is not None:
+        probe("returned", result[0])
+    return result
 
 
 # Chunks a scope missing from the result gets: its two best, since the best match by similarity is not
@@ -1989,6 +2012,9 @@ def _retrieve_chunks_once(
     retrieval_start_time = time.time()
     retrieval_start_perf = time.perf_counter()
     stage_timing_ms: dict[str, float] = {}
+    probe = _retrieval_probe.get()
+    if probe is not None:
+        probe("begin", {"question": question, "scope": scope, "top_k": top_k, "min_score": min_score, "min_results": min_results})
 
     def _record_stage(stage_key: str, stage_start: float) -> None:
         elapsed_ms = (time.perf_counter() - stage_start) * 1000
@@ -2184,6 +2210,18 @@ def _retrieve_chunks_once(
         kind="query",
     )
     _record_stage("queryEmbeddingMs", stage_start)
+    if probe is not None:
+        probe(
+            "query",
+            {
+                "concepts": sorted(question_concepts),
+                "expandedConcepts": len(expanded_concepts),
+                "rareTerms": list(rare_lexemes),
+                "docTypeHints": sorted(hinted_doc_types),
+                "graphCandidateCap": graph_expansion_max_candidates,
+                "embedding": query_embedding,
+            },
+        )
 
     stage_start = time.perf_counter()
     postgres_candidates = _postgres_hybrid_candidates(
@@ -2192,8 +2230,12 @@ def _retrieve_chunks_once(
         top_k=top_k,
         scope=scope,
     )
+    if probe is not None and postgres_candidates is not None:
+        probe("vector", postgres_candidates)
     if postgres_candidates is None:
         postgres_candidates = _postgres_fts_candidates(question=question, top_k=top_k, scope=scope)
+        if probe is not None and postgres_candidates is not None:
+            probe("full_text", postgres_candidates)
     elif scope and len(scope) > 1:
         # A small opt-in source (EU legislation) asked for together with a standard gets its own share
         # of candidates; in one shared pool the standard's tens of thousands of chunks crowd it out.
@@ -2201,6 +2243,8 @@ def _retrieve_chunks_once(
             opt_in_candidates = _postgres_hybrid_candidates(
                 question=question, query_embedding=query_embedding, top_k=top_k, scope=[opt_in]
             )
+            if probe is not None:
+                probe("vector_opt_in", opt_in_candidates)
             pooled = list(postgres_candidates)
             pooled_ids = {chunk.id for chunk in pooled}
             postgres_candidates = pooled + [c for c in opt_in_candidates if c.id not in pooled_ids]
@@ -2208,20 +2252,22 @@ def _retrieve_chunks_once(
         pooled = list(postgres_candidates)
         pooled_ids = {chunk.id for chunk in pooled}
         lexical_pool_size = max(0, int(getattr(settings, "RETRIEVAL_LEXICAL_POOL_SIZE", 8)))
-        postgres_candidates = pooled + [
-            chunk
-            for chunk in _lexical_recall_candidates(
-                question=question, limit=lexical_pool_size, scope=scope, rare=rare_lexemes
-            )
-            if chunk.id not in pooled_ids
-        ]
+        rare_term_chunks = _lexical_recall_candidates(
+            question=question, limit=lexical_pool_size, scope=scope, rare=rare_lexemes
+        )
+        if probe is not None:
+            probe("rare_terms", rare_term_chunks)
+        postgres_candidates = pooled + [chunk for chunk in rare_term_chunks if chunk.id not in pooled_ids]
     _record_stage("postgresCandidateQueryMs", stage_start)
 
     stage_start = time.perf_counter()
     if postgres_candidates is not None:
         chunk_iterable = list(postgres_candidates)
         existing_ids = {chunk.id for chunk in chunk_iterable}
-        for hinted_chunk in _path_hint_candidates(question=question, top_k=top_k, scope=scope):
+        hinted_chunks = _path_hint_candidates(question=question, top_k=top_k, scope=scope)
+        if probe is not None:
+            probe("path_hints", hinted_chunks)
+        for hinted_chunk in hinted_chunks:
             if hinted_chunk.id not in existing_ids:
                 chunk_iterable.append(hinted_chunk)
     else:
@@ -2247,6 +2293,8 @@ def _retrieve_chunks_once(
                 if example_files:
                     example_chunks = format_examples_as_chunks(example_files)
                     example_chunks_added = len(example_chunks)
+                    if probe is not None:
+                        probe("graph_examples", example_chunks)
                     # Add examples to the retrieval results (will be scored like other chunks)
                     if not isinstance(chunk_iterable, list):
                         chunk_iterable = list(chunk_iterable)
@@ -2275,6 +2323,8 @@ def _retrieve_chunks_once(
                 if definitions:
                     definition_chunks = format_definitions_as_chunks(definitions, commit_shas=indexed_commit_shas())
                     ontology_definitions_added = len(definition_chunks)
+                    if probe is not None:
+                        probe("ontology_definitions", definition_chunks)
                     logger.info(f"Retrieved {ontology_definitions_added} ontology definitions for {len(question_concepts)} concepts")
                     # Add definitions to the retrieval results (highest quality evidence)
                     if not isinstance(chunk_iterable, list):
@@ -2295,7 +2345,10 @@ def _retrieve_chunks_once(
         if not isinstance(chunk_iterable, list):
             chunk_iterable = list(chunk_iterable)
         present_ids = {int(chunk.id) for chunk in chunk_iterable}
-        for element_chunk in _element_candidates(question_element_names):
+        element_candidates = _element_candidates(question_element_names)
+        if probe is not None:
+            probe("element_candidates", element_candidates)
+        for element_chunk in element_candidates:
             element_chunk_ids.add(int(element_chunk.id))
             if int(element_chunk.id) not in present_ids:
                 chunk_iterable.append(element_chunk)
@@ -2322,14 +2375,17 @@ def _retrieve_chunks_once(
         if not isinstance(chunk_iterable, list):
             chunk_iterable = list(chunk_iterable)
             existing_ids = {chunk.id for chunk in chunk_iterable}
-        for graph_chunk in _graph_concept_candidates(
+        graph_chunks = _graph_concept_candidates(
             expanded_concepts=specific_expanded_concepts,
             top_k=top_k,
             max_candidates=graph_expansion_max_candidates,
             scope=scope,
             question=question,
             hinted_doc_types=hinted_doc_types,
-        ):
+        )
+        if probe is not None:
+            probe("graph_candidates", graph_chunks)
+        for graph_chunk in graph_chunks:
             if graph_chunk.id not in existing_ids:
                 chunk_iterable.append(graph_chunk)
                 existing_ids.add(graph_chunk.id)
@@ -2337,6 +2393,8 @@ def _retrieve_chunks_once(
                 graph_candidate_ids.append(int(graph_chunk.id))
     _record_stage("graphCandidateQueryMs", stage_start)
 
+    if probe is not None:
+        probe("pool", chunk_iterable)
     stage_start = time.perf_counter()
     selected_graph_ids: set[int] = set()
     if len(chunk_iterable) > retrieval_scoring_candidate_cap:
@@ -2376,10 +2434,13 @@ def _retrieve_chunks_once(
             if int(chunk.id) in selected_base_ids or int(chunk.id) in selected_graph_ids or int(chunk.id) in definition_ids
         ]
     _record_stage("candidatePreselectMs", stage_start)
+    if probe is not None:
+        probe("preselected", chunk_iterable)
 
     stage_start = time.perf_counter()
     candidates = []
     below_threshold_candidates: list[dict] = []
+    dropped_below_min_score: list = []  # filled for the probe only
     # With semantic vectors, similarity decides the ranking: it is rescaled to 0-1 over this
     # question's candidates (the model's similarities fall in a narrow band), and the legacy
     # floor and README penalty below, tuned for hash vectors, no longer override it. Both
@@ -2497,6 +2558,8 @@ def _retrieve_chunks_once(
         score = min(1.0, max(0.0, raw_score))
         below_threshold = score < min_score
         if below_threshold and not min_results:
+            if probe is not None:
+                dropped_below_min_score.append(chunk)
             continue
 
         # Break ties deterministically; keyword-trap chunks rank below genuine matches.
@@ -2528,14 +2591,20 @@ def _retrieve_chunks_once(
                 "_graphProvenanceConceptIds": sorted(matching_concepts),
             }
         )
+    if probe is not None:
+        probe("scored", candidates + below_threshold_candidates + dropped_below_min_score)
     if candidates and len(candidates) < min_results:
         below_threshold_candidates.sort(key=lambda value: value["_rankScore"], reverse=True)
         candidates.extend(below_threshold_candidates[: min_results - len(candidates)])
     _record_stage("candidateScoringMs", stage_start)
+    if probe is not None:
+        probe("min_score", candidates)
 
     # Add XSD schema definitions if they were retrieved for domain concepts
     # These chunks have high quality scores and provide structural information
     if xsd_schema_chunks:
+        if probe is not None:
+            probe("xsd_definitions", xsd_schema_chunks)
         for xsd_chunk in xsd_schema_chunks:
             candidates.append(
                 {
@@ -2565,6 +2634,8 @@ def _retrieve_chunks_once(
     if graph_rag_enabled and question_concepts and is_relation_question(question):
         try:
             relation_candidates = _relation_path_candidates(question_concepts)
+            if probe is not None:
+                probe("relation_paths", relation_candidates)
             candidates.extend(relation_candidates)
             relation_paths_added = sum(1 for c in relation_candidates if c["docType"] == "ontology-relation")
         except Exception:
@@ -2604,13 +2675,21 @@ def _retrieve_chunks_once(
 
     stage_start = time.perf_counter()
     candidates.sort(key=lambda value: (value["_rankScore"], value["score"]), reverse=True)
+    if probe is not None:
+        probe("ranked", candidates)
     candidates = _apply_source_path_cap(candidates=candidates, max_per_source_path=source_path_cap)
+    if probe is not None:
+        probe("source_path_cap", candidates)
     if retrieval_diversity_enabled:
         trimmed = _diversified_top_k(candidates=candidates, top_k=top_k, mmr_lambda=mmr_lambda)
     else:
         trimmed = candidates[:top_k]
+    if probe is not None:
+        probe("top_k", trimmed)
     trimmed = _ensure_element_coverage(trimmed, candidates, question_element_names, top_k)
     trimmed = _ensure_source_coverage(trimmed, candidates, _question_service_paths(question), top_k)
+    if probe is not None:
+        probe("coverage", trimmed)
     # A question about a standard's legal status ("Is NeTEx mandatory in the EU?") gets the provisions that
     # name that standard, next to the best standards evidence. They are added, not ranked: by similarity
     # legal text would compete with the standards evidence in every question.
@@ -2635,6 +2714,8 @@ def _retrieve_chunks_once(
         top_score = float(trimmed[0].get("score") or 0.0)
         provisions = _linked_provision_candidates(legal_standards, score=top_score, acts=legal_acts)
         added = provisions + _standard_identity_candidates(provisions, score=top_score)
+        if probe is not None:
+            probe("provisions", added)
         added_ids = {c["chunkId"] for c in added}
         trimmed = (trimmed[:1] + [c for c in added if c["chunkId"] != trimmed[0].get("chunkId")]
                    + [c for c in trimmed[1:] if c["chunkId"] not in added_ids])[:top_k]
@@ -2643,6 +2724,8 @@ def _retrieve_chunks_once(
     named_examples_added = 0
     if "example" in hinted_doc_types and trimmed:
         examples = _named_example_candidates(question, scope, score=float(trimmed[0].get("score") or 0.0))
+        if probe is not None:
+            probe("named_examples", examples)
         example_ids = {c["chunkId"] for c in examples}
         trimmed_ids = {c.get("chunkId") for c in trimmed}
         named_examples_added = sum(1 for c in examples if c["chunkId"] not in trimmed_ids)
@@ -2650,6 +2733,8 @@ def _retrieve_chunks_once(
             trimmed = (trimmed[:1] + [c for c in examples if c["chunkId"] != trimmed[0].get("chunkId")]
                        + [c for c in trimmed[1:] if c["chunkId"] not in example_ids])[:top_k]
     _record_stage("candidateSelectionMs", stage_start)
+    if probe is not None:
+        probe("final", trimmed)
 
     stage_start = time.perf_counter()
     graph_hits = 0

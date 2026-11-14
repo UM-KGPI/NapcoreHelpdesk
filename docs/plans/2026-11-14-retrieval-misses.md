@@ -16,7 +16,9 @@ After #523, a question can still end without a useful answer in two ways:
   of that name, not from the regulation) (**measured**, the record §5). These were hidden behind a refusal before.
 
 Both are the same fault seen from two sides: the passage that answers the question does not reach the model.
-The model sees 4 passages (`LLM_MAX_EVIDENCE_CHUNKS`); retrieval is asked for 6.
+The model sees 4 passages (`LLM_MAX_EVIDENCE_CHUNKS`); retrieval is asked for 6. (Checked in Q0: the web page sends
+`retrievalTopK: 6`, the prompt takes `chunks[:4]` with their text and lists the paths of up to 20 more candidates
+without text.)
 
 ### What a first look shows
 
@@ -46,7 +48,12 @@ ordering. Two patterns stand out, both **believed** until Q0 measures them:
   schemas and examples. The candidate list holds no passage of the regulation at all.
 
 Limits of this look: one run per question, 10 questions, my own choice of "wanted source", and the pool never
-returned more than 27 candidates although 60 were asked for.
+returned more than 27 candidates although 60 were asked for. (Q0 found why: the candidate list in the trace is taken
+after the preselection cap, `RETRIEVAL_SCORING_CANDIDATE_CAP` = 32, and after the per-file cap,
+`RETRIEVAL_MAX_SAME_SOURCE_PATH`, which is 1 in the dev `.env` and 2 by default. top_k only sets the size of the
+vector pool before them. On the app's path it is still 7 of 10, but not the same 7: "In which legislation is DATEX
+included?" is answered, from the legal-status provisions added after ranking, and the MMTIS Annex is a candidate (at
+23 of 29), while "number of late journeys" and "elevator in a stop place" are not candidates.)
 
 ## 2. Principle
 
@@ -142,11 +149,193 @@ many answers, so none ships without its gate and Andrej's word.
 - **The gold file is written by us**, and "the source that answers" is a judgement. Andrej reviews it; where two
   sources answer, both are listed.
 - **Dev and prod indexes differ** (the record found DATEX II indexed on prod; the content was not compared).
-  Q0's table is for dev; before a step ships, the questions it should fix are asked on prod.
+  Q0's table is for dev; before a step ships, the questions it should fix are asked on prod. (Q0: DATEX II is
+  indexed on dev as well, 1,240 model chunks and the v3.7 documentation; every wanted source of the gold file is
+  in the dev index.)
 - **A fix for these questions makes others worse.** That is what happened with plural matching and coverage
   ranking. Hence the 140-question gate on every step.
 - **The first look may mislead**: it used the bare retrieval call. Q0 measures the app's real path.
 
 ## 8. Results
 
-(Each step records its numbers here.)
+### Q0 (2026-11-14, dev, 0.97.221)
+
+**Finding.** The passages are lost at two places, not spread over many. 57 gold questions asked as the chat page
+asks them (no scope): 29 reach the model's 4 passages, 17 never become candidates, 11 are candidates but end
+below a cut. Of the 17, 6 are not even searched: their source (EU legislation, mobilityDCAT-AP) is an opt-in scope
+that a question without a named source never searches. The other 11 are searched, but their wanted passage is
+74th to 12,142nd by vector similarity, where the pool takes the nearest 30; all 11 are in everyday words. With the
+fitting scope sent as `standardsScope`, 33–34 of 57 are found, 10 are still never candidates (the same everyday
+questions), and 13–14 are candidates below a cut. The 140 benchmark questions are lost elsewhere: 114 of 139 found,
+22 of the 25 losses are candidates ranked below a cut, 2 are not candidates. So the gold questions lose their
+passages where the benchmark does not look (finding), and both lose them by ordering.
+
+All numbers **measured** with `locate_answer_sources`, unless marked.
+
+**How retrieval works on the app's path** (read from `api/views.py` and `retrieval_gateway.py`, and confirmed by
+the probe on every question):
+
+1. The view renders a non-English question in English (one model call) and searches both: the question as asked and
+   the rendering, each through the whole pass below; the two results are interleaved, the rendering first, and cut
+   to 6. Scope: the request's `standardsScope`, else the standards the parser finds in the question. With no scope,
+   the opt-in sources (EU legislation, mobilityDCAT-AP, NAPCORE, INSPIRE, DATEX II, TN-ITS) are not searched at all
+   (`_scope_query_filter`).
+2. Candidates: the 30 nearest chunks by vector (`max(25, 5 × top_k)`; the text rank only breaks ties at the 30th),
+   a separate 30 for each opt-in source when the scope names several, up to 8 chunks with the question's rare
+   terms, path hints, GraphDB examples and Transmodel definitions, element chunks and graph alias candidates (cap 12
+   on dev). There is no separate full-text candidate list while vectors are semantic; full text is only the
+   fallback without pgvector.
+3. Preselection to 32 (`RETRIEVAL_SCORING_CANDIDATE_CAP`), scoring, `min_score` 0.62 (topped up to 4 with the best
+   below it), schema definitions and relation paths added, sorted, per-file cap (1 on dev, 2 by default), MMR
+   diversification to top_k = 6, coverage of named elements and services, legal-status provisions and named
+   examples inserted after the first passage.
+4. Scope coverage: a searched standard missing from the 6 is searched alone and its best 2 inserted (these passes
+   run with `min_results` 0, so nothing below 0.62 survives them).
+5. The view puts "does X exist / how is X defined" definitions first (`presence_evidence`), and for example questions
+   replaces the evidence with the example's element evidence. The model gets the first 4 with text.
+
+**Counts per step.** "Lost at" is the first step after the last one the passage is in. Three runs each, with
+fresh English renderings and different hash seeds; the unscoped runs gave the same step for all 57 in all three,
+the scoped runs differ in one question (a15).
+
+| Lost at | gold, no scope | gold, fitting scope | benchmark (139), no scope |
+|---|---|---|---|
+| found (among the 4 passages) | 29 | 33–34 | 114 |
+| not a candidate: source not searched (opt-in scope) | 6 | 0 | 0 |
+| not a candidate: searched, vector rank beyond the pool | 11 | 10 | 2 |
+| preselection cap (32) | 1 | 0 | 2 |
+| min_score | 1 | 1 | 1 |
+| top_k cut (6, after diversification) | 3 | 5 | 10 |
+| merge of the two searches | 1 | 1 | 0 |
+| view additions (presence definitions first) | 1 | 1 | 1 |
+| prompt cut (4) | 4 | 5–6 | 9 |
+
+Never the loss step: the per-file cap, the scope filter in scoring, the coverage step, scope coverage. Two benchmark
+questions (q025, q032) are left out: their pattern `VehicleLoadEntry` matches nothing in the index.
+
+By kind (gold, found of all, no scope → fitting scope): everyday 13/27 → 13/27, legislation 7/13 → 9/13,
+overview 7/12 → 7/12, profile 1/3 → 3/3, element 1/2 → 1/2.
+
+Keyword rules: 14 of the 57 (a01–a14) are refused before retrieval on prod as it is (relevance check off); the table
+measures them as if let through.
+
+**What it supports.**
+
+- **Q1 (wording gap): supported, 10 questions** (11 without scope): a06, a11 (no scope only), a12, a21, a22, b20–b24,
+  b30. Their wanted passage is 74th to 11,918th by vector similarity in the right scope; rare-term recall adds
+  nothing (the question's words are not in the sources). No reordering can reach them; they need other search
+  terms. The existing vocabulary bridge is the candidate, as planned.
+- **Q2 (sources never candidates): supported, 6 questions, and the cause is the scope, not the scores.** a01, a13,
+  a14 (legislation), a08, a17 (profile) and b16 (parsed to NAPCORE, the regulation not searched). With the fitting
+  scope all 6 become candidates and 3 are found (a01, a08, a17); a13, a14, b16 are then lost by ordering. Two more
+  show the same in a mixed scope: b10 ("What is INSPIRE?", searched in INSPIRE and EU legislation, Directive Art. 1
+  below min_score) and b17 (NAPCORE and EU legislation, MMTIS cut at preselection) are found when only EU
+  legislation is searched. This agrees with the prod check the coordinator ran today (11 of 14 answered with a
+  scope; **reported to me, not re-measured**). The fix is a scope decision for questions that name no source, not a
+  share of candidates by kind.
+- **Q3 (ordering): supported, 10 gold questions (13–14 with the scope) and 22 of the 139 benchmark questions.**
+  Patterns: an overview README under schema files (a15 9th of 32, b01 21st, b02, b05), the Annex under articles of
+  the same act (a16, 23rd of 29 even in EU legislation alone), and presence definitions put before the retrieved
+  passage (b26, b27, benchmark q053, q063: the passage was 1st to 3rd, the definitions moved it out of the first 4).
+  Passages just below the cut (5th or 6th of 6, lost at the prompt cut): 4 gold (5–6 with scope), 9 benchmark.
+- **Not supported:** that the pool size is the cause. The pool being smaller than top_k=60 in the first look is the
+  preselection and per-file caps (§1); in the app's path the preselection cap is the loss step for 1 gold and 2
+  benchmark questions. Nothing here points at plural forms, coverage ranking or related-match expansion.
+
+**Determinism.** Everything up to the graph alias candidates is deterministic for a fixed question, scope and
+rendering. `_graph_concept_candidates` returns different chunks between calls, in one process too (measured on
+"What fields are included in PlannedServiceDimensions?": vector pool, rare terms, definitions identical, graph
+candidates and everything after different); that makes 7 of the 149 benchmark questions differ between runs in
+graph mode (0 without graph). In the gold runs it changes one question (a15: found in 1 of 3 scoped runs). The
+English rendering is the only model call; three fresh renderings differed in wording for 5 of the 15 non-English
+questions and changed no step. Not model-dependent otherwise: the example generator ran with the model off; one gold
+and three benchmark questions used a standard example, none needed a generated one.
+
+**Behaviour unchanged.** The probe is a `ContextVar` that is `None` in the app; the gateway's results with it off were
+compared on the 149 benchmark questions (top_k 20, both modes, full chunk lists and scores) against three runs of
+unchanged main: without graph identical in all 149; with graph identical in 142, and the other 7 differ between
+the runs of main themselves (3 different results in 3 runs for 6 of them). A test checks that the same retrieval
+gives the same chunks and scores with the probe on and off. The added cost when off is one context lookup and about
+20 `is None` checks per pass (**believed** negligible; not timed separately).
+
+**Dev settings that differ from the defaults** (and possibly from prod, whose `.env.prod` I did not read):
+`RETRIEVAL_MAX_SAME_SOURCE_PATH` 1 (default 2), `GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS` 12 (default 36,
+`.env.prod.example` 12). The per-file cap was never the loss step here.
+
+**Not checked.** Whether the 4 passages would make the model answer (that is the "found" of §4 through the API, for
+the step that changes something). The FAQ route: 3 gold and 23 benchmark questions match an FAQ entry well enough
+that the controller model decides the route; I measured the RAG route (the prod log shows the RAG route's presence
+definitions for a21).
+
+Raw outputs are outside the repository. To repeat: `manage.py locate_answer_sources [--fitting-scope]
+--translations <file>`, and `--input helpdesk/benchmarks/benchmark-questions.yaml` for the benchmark.
+
+**Next.** Q2 and Q1 both have a clear cause and a measurable gate. I would do Q1 first, because it costs no code:
+the vocabulary bridge off against on, on the 57 with and without scope; gate as in §3 plus at least 5 of the 11
+wording questions found. Then Q2 as a scope decision for questions that name no source (gate: the 6 found or
+candidates, and no benchmark question loses its source from the 4 passages). Q3 last, starting with the presence
+definitions that push a retrieved passage out of the first 4, since that one is a single mechanism.
+
+Per question (step in each of the three runs when they differ; rank after scoring = the passage's place in the
+sorted candidates of the better of the two searches; "–" = not among them, or added after scoring, as the presence
+definitions of a04 and a05; vector rank = exact rank by similarity among the searched chunks):
+
+| id | question | kind | no scope: lost at | rank after scoring | vector rank | fitting scope | with it: lost at | rank after scoring | vector rank |
+|---|---|---|---|---|---|---|---|---|---|
+| a01 | Which formats count as machine-readable? | legislation | not a candidate | – | not searched | EU legislation | **found** | 6/11 | 5 |
+| a02 | Make a example file of observed delays. | everyday | **found** | 1/17 | 1 | OpRa | **found** | 1/20 | 1 |
+| a03 | How are parkings defined in standards? | everyday | **found** | 1/4 | 1 | NeTEx | **found** | 1/4 | 1 |
+| a04 | How do I describe a lift in a station? | everyday | **found** | – | 68 | NeTEx | **found** | – | 65 |
+| a05 | How do I describe an escalator in a station? | everyday | **found** | – | 278 | NeTEx | **found** | – | 275 |
+| a06 | How do I describe an elevator in a station? | everyday | not a candidate | – | 4369 | NeTEx | not a candidate | – | 4293 |
+| a07 | What is seat capacity? | everyday | **found** | 1/6 | 1 | NeTEx | **found** | 1/5 | 1 |
+| a08 | Kaj so to metapodatki? | profile (sl) | not a candidate | – | not searched | mobilityDCAT-AP | **found** | 3/4 | 1 |
+| a09 | Kaj je vozni red avtobusa? | everyday (sl) | **found** | 1/4 | 78 | NeTEx | **found** | 1/4 | 78 |
+| a10 | kaj je vozni red? | everyday (sl) | **found** | 1/11 | 1 | NeTEx | **found** | 1/8 | 1 |
+| a11 | How to model number of late journeys? | everyday | not a candidate | – | 630 | OpRa | prompt cut | 10/19 | 15 |
+| a12 | How to describe a bus ticket? | everyday | not a candidate | – | 1017 | NeTEx | not a candidate | – | 980 |
+| a13 | How are static data described? | legislation | not a candidate | – | not searched | EU legislation | top_k cut | 7/9 | 13 |
+| a14 | How are dynamical data described? | legislation | not a candidate | – | not searched | EU legislation | min_score | – | 17 |
+| a15 | What is OpRa used for? | overview | prompt cut | 9/32 | 1 | OpRa | **found** / prompt cut / prompt cut | 8/32 | 1 |
+| a16 | Which fare data must be provided to be in accordance with… | legislation | top_k cut | 23/29 | 7 | EU legislation | top_k cut | 23/29 | 7 |
+| a17 | What if my dataset is available in several formats? | profile | not a candidate | – | not searched | mobilityDCAT-AP | **found** | 2/8 | 4 |
+| a18 | How to define a location of a parking bay in DATEX? | element | **found** | 1/6 | 1 | DATEX II | **found** | 1/7 | 1 |
+| a19 | How are DATEX and SIRI connected? | overview | **found** | 24/32 | 75 | SIRI | top_k cut | 7/28 | 3 |
+| a20 | In which legislation is DATEX. included? | legislation | **found** | – | 1843 | EU legislation | **found** | 3/17 | 1 |
+| a21 | How do I describe an elevator in a station in NeTEx? | everyday | not a candidate | – | 636 | NeTEx | not a candidate | – | 636 |
+| a22 | How do I describe an elevator in a stop place? | everyday | not a candidate | – | 12142 | NeTEx | not a candidate | – | 11918 |
+| a23 | when describing the calendar of a service journey, how to… | element | prompt cut | 7/39 | 1 | NeTEx | prompt cut | 7/35 | 1 |
+| b01 | What is SIRI used for? | overview | top_k cut | 21/32 | 1 | SIRI | top_k cut | 21/32 | 1 |
+| b02 | Wofür wird SIRI verwendet? | overview (de) | merge of the two searches | 6/30 | 1 | SIRI | merge of the two searches | 6/30 | 1 |
+| b03 | what is NETEX? | overview | **found** | 2/20 | 1 | NeTEx | **found** | 2/20 | 1 |
+| b04 | What kind of data does OpRa exchange? | overview | **found** | 1/10 | 1 | OpRa | **found** | 1/10 | 1 |
+| b05 | Kannst du mir einfach erklären, was NeTEx, SIRI und OpRa … | overview (de) | prompt cut | 1/32 | 1 | NeTEx, SIRI, OpRa | prompt cut | 1/32 | 1 |
+| b06 | Kako je Opra povezana z NeTEx? | overview (sl) | **found** | 1/32 | 1 | OpRa | **found** | 1/32 | 1 |
+| b07 | What are parts of SIRI? | overview | **found** | 5/31 | 1 | SIRI | **found** | 5/31 | 1 |
+| b08 | what is the cen reference of netex ? | overview | **found** | 1/31 | 1 | NeTEx | **found** | 1/31 | 1 |
+| b09 | What is DATEX? | overview | **found** | 2/22 | 1 | DATEX II | **found** | 2/22 | 1 |
+| b10 | What is INSPIRE? | overview | min_score | – | 105 | EU legislation | **found** | 4/4 | 5 |
+| b11 | What is a national access point? | legislation | **found** | 1/16 | 1 | EU legislation | **found** | 1/14 | 1 |
+| b12 | Which standard must be used for static travel data under … | legislation | **found** | 1/24 | 1 | EU legislation | **found** | 1/24 | 1 |
+| b13 | Hvilke standarder krever MMTIS-forordningen for statiske … | legislation (no) | **found** | 2/19 | 3 | EU legislation | **found** | 2/19 | 3 |
+| b14 | Como operador de uma rede nacional de autocarros, que cat… | legislation (pt) | **found** | 1/4 | 1 | EU legislation | **found** | 1/4 | 1 |
+| b15 | Which formats machine-readable as specified in the MMTIS … | legislation | **found** | 2/18 | 2 | EU legislation | **found** | 2/18 | 2 |
+| b16 | What are metadata in NAP used for? | legislation | not a candidate | – | not searched | EU legislation | prompt cut | 6/6 | 4 |
+| b17 | Kaj so metapodatki v NAP? | legislation (sl) | preselection cap | – | 1886 | EU legislation | **found** | 2/7 | 6 |
+| b18 | What is TEL-TSI and how is it connected to Transmodel rel… | legislation | **found** | 1/26 | 1 | EU legislation | **found** | 1/19 | 1 |
+| b19 | What is a Dataset in mobilityDCAT-AP? | profile | **found** | 3/32 | 3 | mobilityDCAT-AP | **found** | 3/32 | 3 |
+| b20 | Where can a passenger buy tickets in NeTEx? | everyday | not a candidate | – | 1873 | NeTEx | not a candidate | – | 1873 |
+| b21 | Kje lahko potnik kupi vozovnico v NeTEx? | everyday (sl) | not a candidate | – | 1709 | NeTEx | not a candidate | – | 1709 |
+| b22 | How to describe a bus fare? | everyday | not a candidate | – | 210 | NeTEx | not a candidate | – | 210 |
+| b23 | Kako NeTEx opisuje cene vozovnic? | everyday (sl) | not a candidate | – | 74 | NeTEx | not a candidate | – | 74 |
+| b24 | Kako je postaja definirana v NeTEx? | everyday (sl) | not a candidate | – | 2342 | NeTEx | not a candidate | – | 2342 |
+| b25 | Wie beschreibt man eine Haltestelle in NetEx? | everyday (de) | **found** | 3/29 | 122 | NeTEx | **found** | 3/29 | 122 |
+| b26 | comment sont définis les arrêts flexibles en NeTEx ? | everyday (fr) | view additions | 2/30 | 1 | NeTEx | view additions | 2/30 | 1 |
+| b27 | How are e charging stations represented in NeTex ? | everyday | prompt cut | 1/32 | 66 | NeTEx | prompt cut | 1/32 | 66 |
+| b28 | How to model a train? | everyday | **found** | 1/23 | 58 | NeTEx | **found** | 5/21 | 45 |
+| b29 | How are operators linked to lines? | everyday | **found** | 1/12 | 14 | NeTEx | **found** | 1/10 | 12 |
+| b30 | How is NeTEx exchanging data about public transport lines? | everyday | not a candidate | – | 235 | NeTEx | not a candidate | – | 235 |
+| b31 | What is canceled journey? | everyday | **found** | 2/27 | 6 | OpRa | **found** | 1/24 | 3 |
+| b32 | How to model number of passengers driven in OpRa? | everyday | top_k cut | 12/31 | 14 | OpRa | top_k cut | 12/31 | 14 |
+| b33 | Any timetable from Slovenia? | everyday | **found** | 1/28 | 1 | NeTEx | **found** | 1/26 | 1 |
+| b34 | Prikaži primer voznega reda v NeTEx XML iz Slovenije? | everyday (sl) | **found** | 1/4 | 1 | NeTEx | **found** | 1/4 | 1 |
