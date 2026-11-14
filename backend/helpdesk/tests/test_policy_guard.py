@@ -87,9 +87,29 @@ class PolicyGuardTests(SimpleTestCase):
         result = evaluate_policy(
             answer_text="Grounded answer.",
             citations=[
-                {"repositoryUrl": "https://github.com/UM-KGPI/NapcoreHelpdesk/blob/main/docs/ontology/standards/netex.ttl"}
+                {"repositoryUrl": "https://github.com/UM-KGPI/NapcoreHelpdesk/blob/main/docs/ontology/standards/examples.ttl"}
             ],
         )
 
         self.assertFalse(result["allowed"])
         self.assertEqual(result["reason"], "POLICY_BLOCK")
+
+    @override_settings(ALLOWED_SOURCE_REPOSITORIES={"https://github.com/TransmodelEcosystem/NeTEx"})
+    def test_allows_relation_path_citing_a_generated_standard_ontology(self):
+        # A relation path whose steps have no schema file of their own cites its standard's ontology file.
+        from helpdesk.services.relation_paths import SUBCLASS_STEP_COST, RelationPath, format_relation_paths_as_chunks
+
+        path = RelationPath(
+            source="netex:ServiceJourney",
+            target="netex:Journey",
+            down_from_source=(),
+            properties=(),
+            down_from_target=(("netex:Journey", "netex:ServiceJourney"),),
+            cost=SUBCLASS_STEP_COST,
+        )
+        chunk = format_relation_paths_as_chunks([path])[0]
+        self.assertTrue(chunk["repositoryUrl"].endswith("/docs/ontology/standards/netex.ttl"))
+
+        result = evaluate_policy(answer_text="Grounded answer.", citations=[chunk])
+
+        self.assertTrue(result["allowed"])

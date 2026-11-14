@@ -36,6 +36,7 @@ from helpdesk.services.graphdb_client import (
     _iri_to_concept_id,
     execute_sparql_query,
 )
+from helpdesk.services.ontology_evidence import STANDARD_ONTOLOGIES_URL
 from helpdesk.services.transmodel_alignment import clean_definition
 
 logger = logging.getLogger(__name__)
@@ -604,7 +605,7 @@ def format_relation_paths_as_chunks(paths: list[RelationPath], commit_shas: dict
                 f"/blob/{commit_sha}/{_xsd_path(decisive.xsd)}"
             )
         else:
-            repository_url = f"https://github.com/UM-KGPI/NapcoreHelpdesk/blob/main/docs/ontology/standards/{prefix}.ttl"
+            repository_url = f"{STANDARD_ONTOLOGIES_URL}/{prefix}.ttl"
         chunk_id = f"relation-path-{_local(path.source)}-{_local(path.target)}-{index}".lower()
         chunks.append(
             {

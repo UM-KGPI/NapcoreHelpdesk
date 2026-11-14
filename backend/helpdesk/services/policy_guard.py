@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from django.conf import settings
 
-from helpdesk.services.ontology_evidence import TRANSMODEL_SOURCE_URL
+from helpdesk.services.ontology_evidence import GENERATED_ONTOLOGY_URLS
 from helpdesk.services.datex import is_datex_url
 from helpdesk.services.inspire import is_inspire_url
 from helpdesk.services.napcore_site import is_napcore_url
@@ -40,14 +40,16 @@ def _normalize_repository_url(raw_url: str) -> str:
 
 
 def _is_generated_ontology_source(raw_url: str) -> bool:
-    """True for the Transmodel definition evidence: the generated ontology file or a Transmodel class page.
+    """True for evidence from the generated ontologies: one of their files or a Transmodel class page.
 
-    The file lives in this project's own repository, which is not an approved source repository, so it is
-    matched by its exact file URL and not by repository. A class page is in the configured Transmodel HTML
-    export (TRANSMODEL_HTML_BASE_URL), opened by GUID.
+    The files (Transmodel definitions; relation paths derived from the NeTEx, SIRI and OpRa ontologies) live
+    in this project's own repository, which is not an approved source repository, so they are matched by
+    their exact file URLs and not by repository. A relation path without a schema file of its own cites its
+    standard's ontology file, and before 2026-11-14 that blocked the whole answer. A class page is in the
+    configured Transmodel HTML export (TRANSMODEL_HTML_BASE_URL), opened by GUID.
     """
 
-    if raw_url.split("#", 1)[0].split("?", 1)[0] == TRANSMODEL_SOURCE_URL:
+    if raw_url.split("#", 1)[0].split("?", 1)[0] in GENERATED_ONTOLOGY_URLS:
         return True
     html_base_url = getattr(settings, "TRANSMODEL_HTML_BASE_URL", "")
     return bool(html_base_url) and raw_url.startswith(f"{html_base_url}/index.htm?guid=")

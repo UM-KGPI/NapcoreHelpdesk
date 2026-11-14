@@ -24,8 +24,13 @@ logger = logging.getLogger(__name__)
 
 TRANSMODEL_NAMESPACE = "https://transmodel-cen.eu/6.2/"
 TRANSMODEL_SOURCE_PATH = "docs/ontology/standards/transmodel.ttl"
-TRANSMODEL_SOURCE_URL = (
-    "https://github.com/UM-KGPI/NapcoreHelpdesk/blob/main/docs/ontology/standards/transmodel.ttl"
+STANDARD_ONTOLOGIES_URL = "https://github.com/UM-KGPI/NapcoreHelpdesk/blob/main/docs/ontology/standards"
+TRANSMODEL_SOURCE_URL = f"{STANDARD_ONTOLOGIES_URL}/transmodel.ttl"
+# The ontology files evidence may cite: Transmodel definitions, and the relation paths derived from the NeTEx,
+# SIRI and OpRa ontologies (services/relation_paths.py). The three are generated from the standards'
+# repositories by build_standard_ontologies and never edited by hand (docs/ontology/README.md).
+GENERATED_ONTOLOGY_URLS = frozenset(
+    f"{STANDARD_ONTOLOGIES_URL}/{name}.ttl" for name in ("transmodel", "netex", "siri", "opra")
 )
 _TRANSMODEL_TTL = Path(__file__).resolve().parents[3] / "docs" / "ontology" / "standards" / "transmodel.ttl"
 
