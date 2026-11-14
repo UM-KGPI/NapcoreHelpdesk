@@ -2457,13 +2457,23 @@ def written_durations(places: list[dict], question: str) -> list[dict]:
 
 
 def values_line(values: list[str], question: str) -> str:
-    """The values for the model's prompt, a duration with how the schema writes it."""
+    """The values for the model's prompt, a duration or a clock time with how the schema writes it. A time the
+    question writes without seconds ("14:00") was written as it stands, and the schema rejects it as an xs:time:
+    8 of 10 gen38 runs and 3 of 3 gen32 runs lost their first attempt to it (plan 2026-11-14, F1). The value
+    check takes either form (holds_value)."""
     written = {iso: (text, seconds) for text, seconds, iso in durations(question)}
-    return ", ".join(
-        f"{written[v][0]} (an xs:duration {v} in an element the schema has for such a duration, or two times "
-        f"{written[v][0]} apart in the same object)" if v in written else v
-        for v in values
-    )
+
+    def described(value: str) -> str:
+        if value in written:
+            return (
+                f"{written[value][0]} (an xs:duration {value} in an element the schema has for such a duration, "
+                f"or two times {written[value][0]} apart in the same object)"
+            )
+        if re.fullmatch(r"\d{2}:\d{2}", value):
+            return f"{value} (an xs:time is written with seconds: {value}:00)"
+        return value
+
+    return ", ".join(described(v) for v in values)
 
 
 def values_rule(values: list[str], asked: str = "", own_objects: bool = False) -> str:

@@ -1055,6 +1055,13 @@ class TemporalValueTests(SimpleTestCase):
         self.assertTrue(generator.holds_value("2026-12-01T07:15:00Z", "07:15"))
         self.assertFalse(generator.holds_value("2026-12-011", "2026-12-01"))
         self.assertFalse(generator.holds_value("08:30:15", "08:30"))
+
+    def test_the_prompt_gives_a_time_without_seconds_in_the_schema_form(self):
+        line = generator.values_line(["14:00", "2026-12-01", "07:15:30", "EUR"], "at 14:00 on 2026-12-01, 07:15:30, EUR")
+        self.assertEqual(line, "14:00 (an xs:time is written with seconds: 14:00:00), 2026-12-01, 07:15:30, EUR")
+        # The check keeps taking both forms.
+        self.assertTrue(generator.holds_value("14:00", "14:00"))
+        self.assertTrue(generator.holds_value("14:00:00", "14:00"))
 FARE_PRODUCT = (
     '<FareFrame version="1" id="hd:FF_1"><fareProducts><PreassignedFareProduct version="1" id="hd:PFP_1">'
     '<Name>Adult single</Name><prices><FareProductPrice version="1" id="hd:FPP_1"><Amount>5</Amount>'
