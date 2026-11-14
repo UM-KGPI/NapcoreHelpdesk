@@ -1,0 +1,469 @@
+# What each example request asks for, written by hand from the question's words (plan
+# 2026-11-14-example-request-reading.md, R0). Measured with: python manage.py read_example_requests
+#
+# asked:      the element of the object the example is of; a list when more than one is right; "" when the
+#             question names none. An abstract element (FareProduct) stands for its concrete objects.
+# objects:    the other objects the example must have: kind (an element, or a list of acceptable ones) and count
+#             (only when the question gives a number; null for "a quay", "quays"). The asked object is not listed.
+# values:     the data the example must hold, as written, a clock time as HH:MM, a duration as xs:duration
+#             (PT3M); an entry that is a list accepts any one of its spellings. Numbers that count objects are not
+#             values. A currency code ("EUR") and a day ("Monday") are values.
+# conditions: phrases that say when or how a service runs (reported, not in the gate).
+# lang:       the question's language when not English. The app reads the asked object and parts from its English
+#             rendering; the command gives the patterns the question as typed, so it reports these entries apart.
+# unsure:     true where the right reading is open; note says why. Such entries are reported apart, not gated.
+#
+# gen01-gen45 are the questions of example-generation-questions.yaml; p01-p33 are requests from the prod question
+# log as typed (spelling kept), not already among gen01-gen45.
+readings:
+- id: gen01
+  question: Show me a NeTEx example for a bus with 50 seats and 20 standing places
+  asked: VehicleType
+  objects: []
+  values: ["50", "20"]
+- id: gen02
+  question: Give a NeTEx example of a stop place named "Ljubljana Bus Station" with two quays
+  asked: StopPlace
+  objects: [{kind: Quay, count: 2}]
+  values: [Ljubljana Bus Station]
+- id: gen03
+  question: Show a NeTEx example of a line with public code "6" operated by the operator "LPP"
+  asked: Line
+  objects: [{kind: Operator, count: null}]
+  values: ["6", LPP]
+- id: gen04
+  question: NeTEx example of a scheduled stop point named "Kongresni trg"
+  asked: ScheduledStopPoint
+  objects: []
+  values: [Kongresni trg]
+- id: gen05
+  question: Show a NeTEx example of a day type called "Weekdays"
+  asked: DayType
+  objects: []
+  values: [Weekdays]
+- id: gen06
+  question: Give me a NeTEx example of a service journey departing at 07:15
+  asked: ServiceJourney
+  objects: []
+  values: ["07:15"]
+- id: gen07
+  question: Show a NeTEx example of a tram vehicle type with a length of 32 metres
+  asked: VehicleType
+  objects: []
+  values: ["32"]
+- id: gen08
+  question: NeTEx example of a fare zone named "Zone 1"
+  asked: FareZone
+  objects: []
+  values: [Zone 1]
+- id: gen09
+  question: Show me a NeTEx example of a parking with 120 spaces
+  asked: Parking
+  objects: []
+  values: ["120"]
+- id: gen10
+  question: Give a NeTEx example of a quay with public code "A3"
+  asked: Quay
+  objects: []
+  values: [A3]
+- id: gen11
+  question: Show a NeTEx example of an operator named "Arriva Slovenija"
+  asked: Operator
+  objects: []
+  values: [Arriva Slovenija]
+- id: gen12
+  question: NeTEx example of a route named "Route 1 outbound"
+  asked: Route
+  objects: []
+  values: [Route 1 outbound]
+- id: gen13
+  question: Show me a NeTEx example of a notice with the text "No service on public holidays"
+  asked: Notice
+  objects: []
+  values: [No service on public holidays]
+- id: gen14
+  question: Give a NeTEx example of a journey pattern with 3 stop points
+  asked: JourneyPattern
+  objects: [{kind: [StopPointInJourneyPattern, ScheduledStopPoint], count: 3}]
+  values: []
+- id: gen15
+  question: Show a NeTEx example of a coach with 49 seats and 1 wheelchair area
+  asked: VehicleType
+  objects: []
+  values: ["49", "1"]
+- id: gen16
+  question: NeTEx example of a timetabled passing time arriving at 08:30
+  asked: TimetabledPassingTime
+  objects: []
+  values: ["08:30"]
+- id: gen17
+  question: Show a NeTEx example of a vehicle with registration number "LJ 123-AB"
+  asked: Vehicle
+  objects: []
+  values: [LJ 123-AB]
+- id: gen18
+  question: Give a NeTEx example of a stop place with a parking of 40 spaces
+  asked: StopPlace
+  objects: [{kind: Parking, count: null}]
+  values: ["40"]
+- id: gen19
+  question: Show me a NeTEx example for Ljubljana Bus Station with two quays
+  asked: StopPlace
+  objects: [{kind: Quay, count: 2}]
+  values: [Ljubljana Bus Station]
+- id: gen20
+  question: Show a NeTEx example of a line operated by LPP in Ljubljana
+  asked: Line
+  objects: [{kind: Operator, count: null}]
+  values: [LPP, Ljubljana]
+- id: gen21
+  question: Create a NeTEx XML example for a fare product for adult for 5 EUR.
+  asked: FareProduct
+  objects: []
+  values: ["5", EUR]
+  unsure: true
+  note: '"for adult" may be a UserProfile object, or the value "adult"; written here as neither'
+- id: gen22
+  question: Show me a NeTEx example of a sales offer package with a price of 10 EUR
+  asked: SalesOfferPackage
+  objects: []
+  values: ["10", EUR]
+- id: gen23
+  question: Write a NeTEx example of a tariff with two fare zones
+  asked: Tariff
+  objects: [{kind: FareZone, count: 2}]
+  values: []
+- id: gen24
+  question: Show a NeTEx example of a dated service journey on 2026-12-01
+  asked: DatedServiceJourney
+  objects: []
+  values: ["2026-12-01"]
+- id: gen25
+  question: Give a NeTEx example of a vehicle type with a deck plan of 2 decks
+  asked: VehicleType
+  objects: [{kind: DeckPlan, count: null}, {kind: Deck, count: 2}]
+  values: []
+- id: gen26
+  question: Show a NeTEx example of a stop place with a lift and two quays
+  asked: StopPlace
+  objects: [{kind: LiftEquipment, count: null}, {kind: Quay, count: 2}]
+  values: []
+- id: gen27
+  question: I want to map a ferry service into a NeTEx TemplateServiceJourney. The ferry operates between two sides of the river when there is demand, it takes 3 minutes from side to side. Can you create an XML file modelling such TemplateServiceJourney?
+  asked: TemplateServiceJourney
+  objects: []
+  values: [PT3M]
+  conditions: [when there is demand]
+  unsure: true
+  note: '"between two sides of the river" may ask for two stop points (count 2); written here as no objects'
+- id: gen28
+  question: I want to map a ferry service into a NeTEx TemplateServiceJourney. The ferry operates between two sides of the river when there is demand, it takes 3 minutes from side to side. Can you give an XML snippet modelling such TemplateServiceJourney?
+  asked: TemplateServiceJourney
+  objects: []
+  values: [PT3M]
+  conditions: [when there is demand]
+  unsure: true
+  note: as gen27
+- id: gen29
+  question: Can you write the XML for a NeTEx FlexibleLine?
+  asked: FlexibleLine
+  objects: []
+  values: []
+- id: gen30
+  question: Create NeTEx XML for a TemplateServiceJourney that runs every 10 minutes between 06:00 and 22:00.
+  asked: TemplateServiceJourney
+  objects: []
+  values: [PT10M, "06:00", "22:00"]
+- id: gen31
+  question: Show me a NeTEx example of a ServiceJourney with a wait time of 30 seconds at the second stop.
+  asked: ServiceJourney
+  objects: []
+  values: [PT30S]
+- id: gen32
+  question: Show me a NeTEx example of an on-demand bus ServiceJourney departing at 07:15.
+  asked: ServiceJourney
+  objects: []
+  values: ["07:15"]
+  conditions: [on-demand]
+- id: gen33
+  question: Give me a NeTEx example of a bus line from Maribor to Ptuj that runs only on school days and uses low-floor vehicles.
+  asked: Line
+  objects: []
+  values: [Maribor, Ptuj]
+  conditions: [runs only on school days]
+  unsure: true
+  note: '"school days" may be a DayType and "low-floor vehicles" a VehicleType the question wants as objects'
+- id: gen34
+  question: Show me a NeTEx example of a ferry line between Koper and Piran that runs only in summer.
+  asked: Line
+  objects: []
+  values: [Koper, Piran]
+  conditions: [runs only in summer]
+- id: gen35
+  question: Give a NeTEx example of a stop place named "Celje Bus Station" with a quay served by wheelchair-accessible vehicles.
+  asked: StopPlace
+  objects: [{kind: Quay, count: null}]
+  values: [Celje Bus Station]
+  unsure: true
+  note: '"wheelchair-accessible vehicles" may be a VehicleType object or a condition; written here as neither'
+- id: gen36
+  question: Show a NeTEx example of a service journey on line "12" that runs only on public holidays.
+  asked: ServiceJourney
+  objects: [{kind: Line, count: null}]
+  values: ["12"]
+  conditions: [runs only on public holidays]
+- id: gen37
+  question: Show me a NeTEx example for a line between Maribor and Ljubljana.
+  asked: Line
+  objects: []
+  values: [Maribor, Ljubljana]
+- id: gen38
+  question: Show me a NeTEx example in XML for a line with two departures on Monday at 14:00.
+  asked: Line
+  objects: [{kind: ServiceJourney, count: 2}]
+  values: [Monday, "14:00"]
+- id: gen39
+  question: Create me a NeTEx XML example for timetable with two departures on Monday at 14:00.
+  asked: [TimetableFrame, ServiceJourney]
+  objects: [{kind: ServiceJourney, count: 2}]
+  values: [Monday, "14:00"]
+  unsure: true
+  note: '"timetable" has no single object; TimetableFrame is not an object for the validator, so grounding strips it'
+- id: gen40
+  question: Show me a NeTEx example for a line with 2 service journeys.
+  asked: Line
+  objects: [{kind: ServiceJourney, count: 2}]
+  values: []
+- id: gen41
+  question: Show me a NeTEx example for a Maribor bus station with two quays.
+  asked: StopPlace
+  objects: [{kind: Quay, count: 2}]
+  values: [[Maribor, Maribor bus station]]
+- id: gen42
+  question: Show me an example of NeTEx in XML for a line with departure on Monday 17:00.
+  asked: Line
+  objects: [{kind: ServiceJourney, count: null}]
+  values: [Monday, "17:00"]
+- id: gen43
+  question: Create a new NeTEx XML example for a timetable Call that contains ScheduledStopPoint time departure at 15:00.
+  asked: Call
+  objects: [{kind: ScheduledStopPoint, count: null}]
+  values: ["15:00"]
+  unsure: true
+  note: a Call sits in a journey; the example may be of the ServiceJourney with the call
+- id: gen44
+  question: Show me an example of line with a stop place departure described in NeTEx XML?
+  asked: Line
+  objects: [{kind: StopPlace, count: null}]
+  values: []
+  unsure: true
+  note: '"departure" may also ask for a ServiceJourney'
+- id: gen45
+  question: Show me a NeTEx example for a bus with two decks?
+  asked: VehicleType
+  objects: [{kind: Deck, count: 2}]
+  values: []
+# Requests from the prod question log.
+- id: p01
+  question: Show a NeTEx example for  "a bus with 50 seats".
+  asked: VehicleType
+  objects: []
+  values: ["50"]
+- id: p02
+  question: Show me a NeTEx example for a boat as transport mode operating between two ports.
+  asked: [Line, ServiceJourney]
+  objects: [{kind: StopPlace, count: 2}]
+  values: []
+  unsure: true
+  note: no object named; "boat as transport mode" is a mode value (water) or a vehicle; "ports" may be stop places
+- id: p03
+  question: Show me a NeTEx example for a Maribor bus station with two quay.
+  asked: StopPlace
+  objects: [{kind: Quay, count: 2}]
+  values: [[Maribor, Maribor bus station]]
+- id: p04
+  question: Show me a NeTEx example in XML for a line with a departure on Monday at 11:00.
+  asked: Line
+  objects: [{kind: ServiceJourney, count: null}]
+  values: [Monday, "11:00"]
+- id: p05
+  question: Show a NeTEx example of a vehicle type.
+  asked: VehicleType
+  objects: []
+  values: []
+- id: p06
+  question: How do you describe a stop place in NeTEx? Show me an example with two quays.
+  asked: StopPlace
+  objects: [{kind: Quay, count: 2}]
+  values: []
+- id: p07
+  question: Show me a NeTEx example of a day type.
+  asked: DayType
+  objects: []
+  values: []
+- id: p08
+  question: Give me an example of a quay in NeTEx.
+  asked: Quay
+  objects: []
+  values: []
+- id: p09
+  question: Show me a NeTEx example of a stop place with an elevator.
+  asked: StopPlace
+  objects: [{kind: LiftEquipment, count: null}]
+  values: []
+- id: p10
+  question: How do I describe a lift in a station in NeTEx? Show me an example in XML.
+  asked: [LiftEquipment, StopPlace]
+  objects: []
+  values: []
+  unsure: true
+  note: the example may be of the lift, or of the station with the lift (then LiftEquipment is an object)
+- id: p11
+  question: Show me a NeTEx example of a stop place with two quays.
+  asked: StopPlace
+  objects: [{kind: Quay, count: 2}]
+  values: []
+- id: p12
+  question: Show me a NeTEx example for a stop place with an elevator equipment.
+  asked: StopPlace
+  objects: [{kind: LiftEquipment, count: null}]
+  values: []
+- id: p13
+  question: Show example for wheelchair modelling in NeTEx.
+  asked: ""
+  objects: []
+  values: []
+  unsure: true
+  note: no object named; accessibility of a stop place or a vehicle type are both possible
+- id: p14
+  lang: sl
+  question: Prikaži primer voznega reda v NeTEx XML iz Slovenije?
+  asked: [TimetableFrame, ServiceJourney]
+  objects: []
+  values: []
+  unsure: true
+  note: '"vozni red" (timetable) has no single object; "iz Slovenije" asks where the example comes from, not a value'
+- id: p15
+  question: Show me a fragment of NeTEx XMl for a line from Slovenia.
+  asked: Line
+  objects: []
+  values: []
+  unsure: true
+  note: '"from Slovenia" read as where the example comes from, not a value; could be a value (a Slovenian line)'
+- id: p16
+  lang: sl
+  question: Pokaži mi primer za opis linije v NeTEx?
+  asked: Line
+  objects: []
+  values: []
+- id: p17
+  lang: sl
+  question: Pokaži mi primer cene vozovnice v NeTEx?
+  asked: [FareProduct, FareTable, FarePrice]
+  objects: []
+  values: []
+  unsure: true
+  note: '"price of a ticket": a fare product with its price, or the price element/table itself'
+- id: p18
+  question: Show me an example of a stop place with quays.
+  asked: StopPlace
+  objects: [{kind: Quay, count: null}]
+  values: []
+- id: p19
+  question: I want to map a service into a NeTEx TemplateServiceJourney. The service operates when there is a demand. Can you give an XML snippet?
+  asked: TemplateServiceJourney
+  objects: []
+  values: []
+  conditions: [when there is a demand]
+- id: p20
+  question: I want to map a service into a NeTEx TemplateServiceJourney. The service operates between when there is a demand, service duration is 3 minutes. Can you give an XML snippet?
+  asked: TemplateServiceJourney
+  objects: []
+  values: [PT3M]
+  conditions: [when there is a demand]
+- id: p21
+  question: give me an snippet example of timetable in NeTEx
+  asked: [TimetableFrame, ServiceJourney]
+  objects: []
+  values: []
+  unsure: true
+  note: as p14
+- id: p22
+  question: Show me an example of ServiceCalendarFrame in NeTEx XML.
+  asked: ServiceCalendarFrame
+  objects: []
+  values: []
+  unsure: true
+  note: the question names the frame, but the validator does not count frames as objects, so grounding strips it and neither side can be right
+- id: p23
+  lang: pt
+  question: Como descrever uma plataforma (Quay) de uma estação em NeTEx XML?
+  asked: Quay
+  objects: [{kind: StopPlace, count: null}]
+  values: []
+  unsure: true
+  note: '"de uma estação" may be context only, not a stop place the example must have'
+- id: p24
+  lang: pt
+  question: Como descrever uma estação StopPlace em NeTEx XML?
+  asked: StopPlace
+  objects: []
+  values: []
+- id: p25
+  lang: pt
+  question: Como descrever uma plataforma de uma estação em NeTEx XML?
+  asked: Quay
+  objects: [{kind: StopPlace, count: null}]
+  values: []
+  unsure: true
+  note: as p23
+- id: p26
+  question: Show an example on how to model a train with multiple carriages in NeTEx XML?
+  asked: [Train, VehicleType]
+  objects: [{kind: [TrainElement, TrainComponent], count: null}]
+  values: []
+  unsure: true
+  note: '"multiple" is no number; carriages may be TrainElement or TrainComponent'
+- id: p27
+  lang: sl
+  question: Pokaži primer NeTEx XML za Line.
+  asked: Line
+  objects: []
+  values: []
+- id: p28
+  lang: sl
+  question: Prikaži primer za Line z NeTEx.
+  asked: Line
+  objects: []
+  values: []
+- id: p29
+  question: Show an example for FULFILMENT METHOD in NeTEx.
+  asked: FulfilmentMethod
+  objects: []
+  values: []
+- id: p30
+  question: Which XML element does a NeTEx ServiceJourney use to reference its Line? Show an example.
+  asked: ServiceJourney
+  objects: [{kind: Line, count: null}]
+  values: []
+  unsure: true
+  note: a LineRef shows the reference without a Line object; whether the Line must be defined is open
+- id: p31
+  lang: sl
+  question: Pokaži mi primer voznega reda v NeTEx.
+  asked: [TimetableFrame, ServiceJourney]
+  objects: []
+  values: []
+  unsure: true
+  note: as p14
+- id: p32
+  question: Show me a fare product example in NeTEx XML?
+  asked: FareProduct
+  objects: []
+  values: []
+- id: p33
+  lang: no
+  question: Hvordan knytter jeg DatedServiceJourney til ServiceJourney (NeTEx XML)?
+  asked: DatedServiceJourney
+  objects: [{kind: ServiceJourney, count: null}]
+  values: []
