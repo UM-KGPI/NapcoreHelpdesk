@@ -80,20 +80,30 @@ class RelevanceCheckHybridTests(SimpleTestCase):
         ask.assert_not_called()
 
     def test_a_question_with_an_artifact_term_is_answered_without_a_call(self, ask):
-        self.assertIsNone(_decide(_query(), question="What is ServiceJourneyPattern?"))
+        query = _query(terms=("ServiceJourneyPattern",))
+        self.assertIsNone(_decide(query, question="What is ServiceJourneyPattern?"))
         ask.assert_not_called()
 
-    def test_other_questions_go_to_the_model_and_its_verdict_decides(self, ask):
+    def test_a_keyword_refusal_goes_to_the_model_and_its_verdict_decides(self, ask):
         ask.return_value = False
         self.assertEqual(_decide(_query(), question="What is the weather?"), NOT_RELEVANT_MESSAGE)
         ask.return_value = True
-        # the keyword rules would refuse this one; the model overrides them
-        self.assertIsNone(_decide(_query(), question="fares"))
+        # the keyword rules refuse this one; the model overrides them
+        self.assertIsNone(_decide(_query(), question="How do I describe a lift in a station?"))
+        low = _query(concept="transmodel:FARE", confidence=0.45, discovered=[])
+        self.assertIsNone(_decide(low, question="fares"))
+
+    def test_a_question_the_keyword_rules_answer_is_not_put_to_the_model(self, ask):
+        ask.return_value = False
+        answered = _query(concept="transmodel:TIMETABLE_FRAME", confidence=0.95, discovered=["NeTEx"])
+        self.assertIsNone(_decide(answered, question="Any timetable from Slovenia?"))
+        ask.assert_not_called()
 
     def test_a_model_failure_falls_back_to_the_keyword_rules(self, ask):
         ask.return_value = None
         self.assertEqual(_decide(_query(), question="What is the weather?"), NO_CONCEPT_MESSAGE)
-        self.assertIsNone(_decide(_query(concept="transmodel:STOP_PLACE", confidence=0.95, discovered=["NeTEx"]), question="stop point"))
+        low = _query(concept="transmodel:FARE", confidence=0.45, discovered=[])
+        self.assertEqual(_decide(low, question="fares"), LOW_CONFIDENCE_MESSAGE)
 
     def test_allow_abstain_false_makes_no_call(self, ask):
         self.assertIsNone(_decide(_query(), allow=False, question="What is the weather?"))

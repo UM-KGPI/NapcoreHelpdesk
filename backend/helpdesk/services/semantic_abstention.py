@@ -40,27 +40,9 @@ def _has_capitalised_term(semantic_query) -> bool:
     return any(any(c.isupper() for c in term[1:]) for term in semantic_query.original_terms)
 
 
-def semantic_abstention_message(
-    *, semantic_query, effective_scope, requested_scope, allow_abstain: bool, question: str | None = None
-) -> str | None:
-    """The refusal message when the question should be refused, else None.
-
-    With the relevance check enabled, a question that names a standard (or has a requested scope) or
-    contains a CamelCase artifact term is answered without any check, and every other question is put
-    to the controller model. When the check is off, or cannot decide, the keyword rules below decide.
-    """
-
-    if not allow_abstain:
-        return None
-    if question is not None and relevance_check_enabled():
-        if effective_scope or has_artifact_term(question):
-            return None
-        verdict = is_relevant(question)
-        if verdict is True:
-            return None
-        if verdict is False:
-            return NOT_RELEVANT_MESSAGE
-    # The capitalised-term check goes last in each rule, as it did when the rules were inline.
+def _keyword_rule_message(*, semantic_query, effective_scope, requested_scope) -> str | None:
+    """The keyword rules: no standards concept matched, or one matched with low confidence, and no hint of
+    a standard. The capitalised-term check goes last in each rule, as it did when the rules were inline."""
     if (
         semantic_query.core_concept == UNKNOWN_CONCEPT_SENTINEL
         and not has_scope_hint(semantic_query, effective_scope)
@@ -78,3 +60,35 @@ def semantic_abstention_message(
     ):
         return LOW_CONFIDENCE_MESSAGE
     return None
+
+
+def semantic_abstention_message(
+    *, semantic_query, effective_scope, requested_scope, allow_abstain: bool, question: str | None = None
+) -> str | None:
+    """The refusal message when the question should be refused, else None.
+
+    The keyword rules decide first. They match ontology label words, so everyday wording ("a lift in a
+    station", "seat capacity", "timetable") matches no concept and is refused although the sources cover
+    it. With the relevance check enabled, a question the keyword rules refuse is put to the controller
+    model as a second opinion: RELEVANT answers it, IRRELEVANT refuses it with the message that says what
+    the helpdesk covers, and a failed call leaves the keyword refusal. A question the keyword rules let
+    through is not asked about: until 2026-11-14 every question naming no standard and no artifact was put
+    to the model, which then also refused questions the keyword rules answered ("Any timetable from
+    Slovenia?", which has an example in NeTEx).
+    """
+
+    if not allow_abstain:
+        return None
+    message = _keyword_rule_message(
+        semantic_query=semantic_query, effective_scope=effective_scope, requested_scope=requested_scope
+    )
+    if message is None or question is None or not relevance_check_enabled():
+        return message
+    if effective_scope or has_artifact_term(question):
+        return message
+    verdict = is_relevant(question)
+    if verdict is True:
+        return None
+    if verdict is False:
+        return NOT_RELEVANT_MESSAGE
+    return message
