@@ -247,10 +247,9 @@ readings:
 - id: gen44
   question: Show me an example of line with a stop place departure described in NeTEx XML?
   asked: Line
-  objects: [{kind: StopPlace, count: null}]
+  objects: [{kind: StopPlace, count: null}, {kind: ServiceJourney, count: null}]
   values: []
-  unsure: true
-  note: '"departure" may also ask for a ServiceJourney'
+  note: 'a stop place and a departure from it; in the standard''s examples a departure exists only on a journey (a DepartureTime, or a Departure in a call)'
 - id: gen45
   question: Show me a NeTEx example for a bus with two decks?
   asked: VehicleType
