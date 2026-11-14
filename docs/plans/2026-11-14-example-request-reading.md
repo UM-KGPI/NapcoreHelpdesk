@@ -344,3 +344,83 @@ keep the gains of gen14, gen38 and the "two …" questions (grounding rule 4 anc
 uncounted kind has no anchor beyond its phrase). The Operator gains of gen03 and gen20 (first attempt 1 → 9 and
 3 → 9 of 10) and gen43's ScheduledStopPoint come from uncounted objects and would be lost. A counts-only R1 is a new
 variant chosen after seeing these runs, so it needs its own run before any gate is read from it.
+
+### R1, counted only (2026-11-14): no wrong claims, but gen23 loses first attempts and the total does not rise: gate failed, code taken out
+
+**What I built** (commit bf93301, reverted by the next commit). R1's code again, with one change in
+`request_reading_objects`: only objects the reading gives with a count (grounded as a number in the phrase, rule 4)
+are added, as counts. Objects without a count are not used, and named parts come from the patterns alone, as on
+main. The other R1 rules stay (the patterns' entry stands on overlap; the asked object and objects counted two ways
+are left out; each count checked on its own). Behind `EXAMPLE_REQUEST_READING`. The gate was the same as R1's,
+fixed before the run: no wrong claim reaches a check, and no question loses generated or first-attempt answers
+against main beyond run-to-run spread.
+
+**Setup.** As R1: host-side against the dev stack on 0.97.214 plus this branch (main has not moved since
+`r1-main.json` and `r1-main-10.json`, so I compare against those). Raw output in `.mylocal/bench/`:
+`counted-branch.json` (45 x3), `counted-branch-10.json` (the eight questions of `r1-main-10.json`, x10), and three
+extra sets decided after seeing the 10-run set: `counted-branch-10b.json` (gen23 and gen33 x10),
+`counted-gen23-20.json` (gen23 x20) and `counted-off-gen23-20.json` (gen23 x20 with `EXAMPLE_REQUEST_READING=False`,
+the same day's baseline).
+
+**Gen01–45 x3.** No outages, no failed reading call. **Measured.**
+
+| | valid | generated | first attempt | mean s | reading used / added / failed |
+|---|---|---|---|---|---|
+| main | 135/135 | 129 | 98 | 6.8 | – |
+| R1 | 135/135 | 131 | 104 | 7.6 | 132 / 32 / 0 |
+| counted only | 135/135 | 128 | 98 | 7.5 | 132 / 18 / 0 |
+
+Questions where counted only differs from main (generated/first attempt of 3): gen14 3/2 → 3/3, gen20 3/1 → 3/2,
+gen37 3/2 → 3/3, gen39 3/2 → 3/3, gen40 3/0 → 3/1; lower gen25 3/3 → 3/2, gen32 3/1 → 3/0, gen34 3/0 → 2/0, gen42
+3/3 → 3/1, gen45 3/1 → 3/0. Of these only gen14 had an object added; on the others the prompt and the checks are
+the same as main's, so the differences are spread (gen25's failed attempt is the patterns' own "2 decks" count).
+The R1 gains of gen03 (3/0 → 3/1) and gen38 (0/0 → 2/0) are gone.
+
+**The eight questions x10.** **Measured.**
+
+| | main generated / first | R1 generated / first | counted generated / first | added (runs of 10) |
+|---|---|---|---|---|
+| gen03 | 10 / 1 | 10 / 9 | 10 / 1 | – |
+| gen14 | 10 / 6 | 10 / 10 | 10 / 10 | 3 StopPointInJourneyPattern, "3 stop points" (10) |
+| gen20 | 10 / 3 | 10 / 9 | 10 / 5 | – |
+| gen23 | 10 / 10 | 10 / 10 | 10 / **8** | 2 FareZone, "two fare zones" (10) |
+| gen33 | 10 / 0 | 6 / 0 | 8 / 0 | – |
+| gen38 | 1 / 0 | 4 / 0 | 5 / 0 | 2 ServiceJourney, "two departures" (3) |
+| gen43 | 10 / 0 | 9 / 0 | 10 / 0 | – |
+| gen44 | 10 / 0 | 10 / 0 | 10 / 0 | – |
+| all | 71 / 20 | 69 / 38 | 73 / 24 | |
+
+gen33's two runs on the standard's example are spread: nothing was added there, so its prompt and checks are
+main's; the extra set had it at 10/10. gen38: the reading gave "two departures" a kind in 3 of 10 runs (6 times the
+kind was stripped by grounding, once no object), and those 3 runs all generated an example with two
+`ServiceJourney`s; 2 of the other 7 generated as well, against 1 of 10 on main, so I cannot tell the gain from
+spread. gen14: three `StopPointInJourneyPattern` in every answer on both sides; no `value` failed attempt on the
+branch, 4 on main.
+
+**gen23, the one loss.** First attempts with the added "2 FareZone" count: 3/3, 8/10, 8/10, 17/20, together
+**36/43**. Without it: main 3/3 and 10/10, and the same day with the setting off 20/20, together **33/33**. Every
+run generated an example. The 7 failed first attempts are a `FareZone` written in the wrong place (4, `wrong-parent`) or the `Tariff` left out (3): both read as the model giving its
+attention to the fare zones the prompt now lists. R1 had the same addition on gen23 and 13 of 13 first attempts,
+so this is not certain; at about one failed first attempt in six, 13 clean runs happen about one time in ten. I
+read it as an effect, not spread.
+
+**Every object the reading added** (45 x3 and the 10-run sets): 2 Quay "two quays" (gen02, gen19, gen26, gen41,
+3 runs each), 3 StopPointInJourneyPattern "3 stop points" (gen14, 13), 2 FareZone "two fare zones" (gen23,
+all 43 runs), 2 ServiceJourney "two departures" (gen38, 3). All are what the question asks for (the gold entries
+of R0). The uncounted objects of R1's wrong claims came back in the readings (gen33 `Vehicle`, `ServiceJourney`
+"runs …", gen44 `ServiceJourneyPattern` "departure") and none reached a check.
+
+**Call time** (no call failed or timed out): 45 x3 median 1.03 s, p90 1.18 s, max 2.19 s; 10-run set median
+1.09 s, p90 1.30 s. Mean seconds per example 6.8 → 7.5 (45 x3), 13.0 → 14.2 (10-run set).
+
+**Gate: failed.** The first condition holds: no wrong claim reached a check. The second does not: gen23 loses
+first attempts (36/43 against 33/33) for a count the patterns did not check before. Against that the variant
+gains gen14's first attempts (6 → 10 of 10) and possibly gen38's generated answers, and over 45 x3 first attempts
+stay at 98, for one more model call and about 0.7 s per example. I took the code out again; the branch keeps it.
+
+**What this leaves.** Counting is not where the reading pays: counted objects are almost all caught by the
+patterns already (the reading added a count in 18 of 135 runs, on six questions), and a correct count can still
+cost an attempt when it puts an object into the prompt that the model then places badly. R1's large gains (gen03,
+gen20) came from uncounted objects, which are also where its wrong claims were. Any further R1 variant would need
+to tell a named object from a property or condition phrase without a count to lean on; I am not starting one
+without deciding that first.
