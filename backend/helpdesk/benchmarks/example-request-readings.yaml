@@ -222,8 +222,7 @@ readings:
   asked: [TimetableFrame, ServiceJourney]
   objects: [{kind: ServiceJourney, count: 2}]
   values: [Monday, "14:00"]
-  unsure: true
-  note: '"timetable" has no single object; TimetableFrame is not an object for the validator, so grounding strips it'
+  note: 'a timetable is a TimetableFrame (130 in the standard''s examples, holding journeys); the validator does not count a frame as an object, so a ServiceJourney is accepted as well'
 - id: gen40
   question: Show me a NeTEx example for a line with 2 service journeys.
   asked: Line
