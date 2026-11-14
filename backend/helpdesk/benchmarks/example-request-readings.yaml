@@ -304,11 +304,10 @@ readings:
   values: []
 - id: p10
   question: How do I describe a lift in a station in NeTEx? Show me an example in XML.
-  asked: [LiftEquipment, StopPlace]
-  objects: []
+  asked: LiftEquipment
+  objects: [{kind: StopPlace, count: null}]
   values: []
-  unsure: true
-  note: the example may be of the lift, or of the station with the lift (then LiftEquipment is an object)
+  note: 'the lift is asked for and the station is where it is; in the standard''s examples 35 of 44 lifts are written inside a StopPlace and the rest are referred to from one'
 - id: p11
   question: Show me a NeTEx example of a stop place with two quays.
   asked: StopPlace
