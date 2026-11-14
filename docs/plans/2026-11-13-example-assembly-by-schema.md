@@ -609,3 +609,162 @@ has an asked object and the two-frame fault of gen38), gen06 and gen14 +1, gen20
 last six have no time and no standard name in the question and their first prompt is the same on all three sides,
 so these are run-to-run spread (gen34 and gen36 x10 above: 2 and 2, 5 and 7). gen18 now takes 3 attempts in each
 run, not 4, and links its parking in all three.
+
+### Slovenian timetable request (2026-11-14): "from Slovenia", the empty frame, the empty answer
+
+On prod (0.97.217) "Prikaži primer voznega reda v NeTEx XML iz Slovenije?" gave twice an empty TimetableFrame named
+"Slovenije" and no answer text or citations; the English wording gave text, but wrote "Slovenia" into the frame's
+Description. Three faults, each looked at on its own. Both wordings are now gen46 and gen47 in the benchmark, and
+the direct benchmark reads a non-English question through the app's English rendering (as `_generate` does), so
+gen46 is triggered as in the app. Outputs are in `.mylocal/bench/sl-*`.
+
+**A. The place the example comes from was a value. Fixed.**
+
+1. Why it was a value. `named_values` takes every capitalised run that does not start a sentence, so "Slovenia" in
+   the English rendering and "Slovenije" in the question as typed were values. The Slovenian question has no English
+   example word, so `_generate` triggers it on the English rendering (there "Slovenia" was the only value, so it
+   asked for generation), and then reads the values from the question as typed ("Slovenije"). The model wrote the
+   value into a Name or Description to pass the value check. **Measured** (calling the functions by hand; on dev, x10
+   on main: the place in a Name or Description in 20 of 20 runs of both wordings, `sl-before-10`).
+2. What tells it apart from "a bus line from Maribor to Ptuj". Where "from" attaches: after an example word or after
+   the format or the name of a standard ("Any NeTEx example from Slovenia?", "… in NeTEx XML from Slovenia") it says
+   where the example comes from; after an object's noun ("a bus line from Maribor") it says where the object goes.
+   That is a rule about word order, with no place or element named; the names of the standards come from
+   `question_parsing.is_standard_name`, as in F3.
+3. What it does not cover. "a fragment of NeTEx XMl for a line from Slovenia" (p15) has the same shape as "a line
+   from Maribor": nothing general tells them apart, so "Slovenia" stays a value there (the gold reading marks it
+   unsure). And the rule reads English "from": a non-English question that is triggered by other values and also
+   names where it comes from ("… iz Slovenije" next to a time) would still give the place as a value, because the
+   values are read from the question as typed. I did not build a mapping between the two wordings for this.
+
+Value table before and after (`requested_values` for the 45 benchmark questions, the 13 of `prod-questions.yaml` and
+the 78 gold readings): no difference. The English wording is in none of them; p14 is read on the question as typed
+and keeps "Slovenije" (in the app the English rendering decides, see 1). Over the 665 distinct questions of the prod
+and dev logs one changes: "Any NeTEx example from Slovenia?" ['Slovenia'] -> []. No real name value is lost
+(Maribor, Ptuj, Ljubljana, Koper, Piran, LPP, Ljubljana Bus Station all stay). **Measured.**
+
+| x10 | main (`sl-before-10`) | A (`sl-a-10`) |
+|---|---|---|
+| gen46 (Slovenian): the place in a name or description | 10 | 0 |
+| gen47 (English): the place in a name or description | 10 | 0 |
+| gen46 / gen47 answer | generated, 2 of the gen46 ones an empty frame | the standard's own example, `Netex_09.2_Bus_SimpleTimetable_Slovenia.xml`, 10 + 10 |
+| gen39 generated / first attempt | 10 / 10 | 10 / 10 |
+
+Gate met. Generated falls from 30 to 10 because both wordings now have nothing to generate: no values, so the
+standard's example is shown, and it is the Slovenian file (its name has both "timetable" and "slovenia"). But with A
+alone that example was an empty TimetableFrame excerpt (Name, VehicleModes, "…"): fault B on the standard's route.
+
+**B. An empty frame was accepted, and shown. Fixed.**
+
+1. Why nothing required content. "timetable" resolves to TimetableFrame (`candidate_element_names`), and the
+   validator's `/concrete` answers `object: false` for it, as for every frame (CompositeFrame too), so
+   `asked_element` gives "" and no asked-object check runs. With "Slovenije" as the only requirement, a TimetableFrame
+   with only `<Name>Slovenije</Name>` passed every check: 2 of 10 gen46 runs on main. **Measured.**
+2. What the standard's examples do. Of the 128 TimetableFrames in the NeTEx examples, 110 fill `vehicleJourneys`,
+   and 3 hold no object at all. Over 3,451 accepted answers in all stored benchmark runs, none was a frame without an
+   object, so a check for one can only fire on this kind of question. **Measured** (scan of the example files and of
+   `.mylocal/bench/*.json`).
+3. The same fault on the standard's route. An excerpt keeps an object's simple children and drops every branch the
+   question does not ask for; for a frame that is all its content. "Show me a timetable example in NeTEx." (a prod
+   question) was shown a TimetableFrame with only a "…" inside; after A the Slovenian file's frame was shown the
+   same way. **Measured.**
+
+Change, no element named: (a) a generated fragment must hold at least one object, an element the validator's
+`/concrete` calls an object (`holds_object`; it passes when the validator cannot tell); else the attempt is retried
+with "the frame holds no object …" (error class `empty-frame`). (b) When the standard's example of a container (not
+an object for `/concrete`) is cut to an excerpt, it keeps the first object of the list the standard's examples
+most often fill in that container (`usual_list`, counted over up to 40 example files that use it, cached), cut to
+its simple children and without its references: the objects they point to are left out and the schema's keyrefs
+fail (the Slovenian file's journey with its ServicePatternRef failed validation, and the next file was shown).
+
+| x10 | A only (`sl-a-10`) | A+B (`sl-b-10`) | B without A (`sl-b-only-10`, against `sl-before-10`) |
+|---|---|---|---|
+| gen46 empty frame accepted | 10 (standard, empty excerpt) | 0 | 0 (before: 2) |
+| gen47 empty frame accepted | 10 (standard, empty excerpt) | 0 | 0 (before: 0) |
+| gen39 empty / generated / first attempt | 0 / 10 / 10 | 0 / 10 / 10 | not run |
+| generated, all three or both | 10 | 10 | 20 (before: 20) |
+
+With A and B, both wordings show `Netex_09.2_Bus_SimpleTimetable_Slovenia.xml`: its TimetableFrame (Name "Winter
+timetable for route 66 outbound", VehicleModes bus) with its first ServiceJourney (DepartureTime 14:20), validated, in
+20 of 20. Without A the generator check fired twice (both on an attempt that was only a named TimetableFrame) and the
+retry gave a frame with a journey both times. gen39's accepted answers are unchanged: a TimetableFrame with two
+ServiceJourneys at 14:00 and a DayTypeRef. Gate met.
+
+Not done: making "timetable" mean the container's usual content as the asked object (ServiceJourney), which would
+also give a skeleton and the link checks. It changes more than the fault needs; measured nowhere yet.
+
+**C. No answer text and no citations for the Slovenian wording. One cause fixed; the cause seen on prod is a
+diagnosis only.**
+
+Where the text goes. When an example is shown and the answer failed the answer validator on both attempts
+(`answer_validated` false), the answer view drops the text and the citations (`views.py`, "With a block from the
+schema … text that failed validation is noise"). Confidence 0.80 on prod is the cap for an unvalidated answer.
+The prod response's trace confirms it: `llmAnswerValidated` false, both attempts rejected. The English rendering and
+retrieval were right (the Slovenian example's description block was cited). Dev runs the same model as prod
+(`claude-haiku-5-5`, provider anthropic, host and container).
+
+Two different validator false positives make a Slovenian answer fail, both because the checks compare the answer's
+words with English evidence:
+
+1. A cited sentence with only plain words. "Dokazi prikazujejo slovenski primer enostavnega avtobusnega voznega
+   reda v NeTEx XML, ki je poravnan s profilom NeTEx EU [E3]." has no term the validator counts (NeTEx and XML are
+   ubiquitous), is not read as a statement about the evidence (`_is_evidence_scope_statement` knows English words
+   only), and `_plain_sentence_grounded` needs a run of the block's own words, which a Slovenian sentence about an
+   English block never has. This is prod's cause, on both attempts: the two rejected texts from the prod trace,
+   replayed offline against the Slovenian file's blocks, are rejected by main's validator and by the branch's.
+   **Measured.** On dev it is also the most common rejection of Slovenian answers: 6 of the 11 rejections left in
+   the capture below, over four Slovenian questions.
+2. An inflected name. "… iz Slovenije …, primer za Slovenijo [E1]" is checked for "Slovenije" and "Slovenijo"; the
+   English block has "Slovenia", so the sentence "does not ground the claim". **Measured**: on the branch with A and
+   B (where the Slovenian file is now the cited example), 2 of 11 runs of the Slovenian wording came back empty,
+   one rejected for this on both attempts, the other first for this and then for 1.
+
+Main on dev did not show the empty answer: 0 of 6 through the API and 0 of 5 with prod's empty frame put in by hand
+(`sl-c-main-api-*`, `sl-c-replay-prodexample-5`). So on prod it depends on which sentences the model writes;
+believed, as the two prod tries are the only sample.
+
+Change for 2 (general, no word or language named): in an answer whose question is not in English, a capitalised
+word without inner capitals (a name, not an identifier) is found in the cited block by its first letters, all but
+the last three and at least six ("Slovenijo" by "sloven"). Identifiers and English answers are compared as before.
+Offline replay of 39 validator calls captured over 30 questions (8 of the two wordings, 12 Slovenian and German,
+10 English; `sl-c-capture`, `sl-c-replay`): rejections 13 -> 11; the two that pass are both case 2 and both were
+the sentences that emptied a run; no other verdict changes. English answers cannot change (the function returns the
+old comparison when the language is English).
+
+| Slovenian wording, whole answer path on the branch | text and citations | first attempt rejected |
+|---|---|---|
+| A+B, before this change (`sl-c-branch-path-5`, `sl-c-capture`) | 9 of 11 | 3 of 11 (2 case 2, 1 an English answer) |
+| A+B+C (`sl-c-after-10`) | 10 of 10 | 1 of 10 (case 1; the retry passed) |
+
+Gate (5 of 5) met on dev, but it does not cover prod's cause: case 1 is untouched and can still empty the answer
+when both attempts write such a sentence. I did not build a fix for it: grounding a Slovenian plain sentence in an
+English block needs a translation (a model call) or a loose word-stem heuristic that would also let filler through.
+Options for later: check plain sentences of a non-English answer against an English rendering of that sentence; or,
+when an example is shown, keep text that failed validation and mark it unvalidated instead of dropping it (a change
+of the rule in the view, not of the validator).
+
+**Why the standard's Slovenian example was not shown before.** The app shows an example from the standard's files
+on three routes: (1) a request with counts or parts and no other value ("a stop place with two quays",
+`standard_example` through `_from_standard`); (2) a request with no values, counts or parts at all: the elements the
+question names or the nearest concepts (`concept_elements`), the file whose name has most of the question's words
+first, the first excerpt that validates (`_plain_standard_example`); (3) after generation fails, an object of the
+asked element (`standard_fallback`). Any value that is not a count rules out routes 1 and 2. With "Slovenia" as a
+value, the request went to generation, so `Netex_09.2_Bus_SimpleTimetable_Slovenia.xml` was never looked at. Once
+the place is no value (A), route 2 ranks that file first (its name has "timetable" and "slovenia") and shows it in
+20 of 20 runs (with B, with a journey). **Measured.**
+
+**All questions x3 on the final state** (`sl-final-all`, against `faults-final-all`, the same generator code as
+main):
+
+| gen01–45, 3 runs | main (`faults-final-all`) | final (`sl-final-all`) |
+|---|---|---|
+| generated | 132 | 132 |
+| first attempt | 98 | 100 |
+| asked object present | 120 | 120 |
+| answers with an unlinked object | 0 | 0 |
+| accepted answers without an object | 0 | 0 |
+
+No question generated fewer. First attempts: gen20, gen34, gen45 +1, gen36 -1. None of the 45 questions reads a
+different value (the value table is the same), and the empty-frame check fired in none of the 135 runs, so their
+prompts and checks are those of main: run-to-run spread. gen46 and gen47 show the Slovenian file's TimetableFrame with
+a ServiceJourney, validated, in 3 of 3 each, with no "Slovenia" written anywhere.
