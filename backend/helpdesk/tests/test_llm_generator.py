@@ -794,6 +794,30 @@ class PlainSentenceGroundingTests(SimpleTestCase):
         self.assertFalse(_plain_sentence_grounded(sentence, [self.DEFINITION]))
 
 
+
+class InflectedNameGroundingTests(SimpleTestCase):
+    EXAMPLE = {
+        "sourcePath": "examples/functions/timetable/Netex_09.2_Bus_SimpleTimetable_Slovenia.xml",
+        "text": "<Description>a simple bus timetable (from Slovenia) for a linear route in NeTex XML</Description>",
+    }
+    SENTENCE = "Dokazi vsebujejo primer voznega reda iz Slovenije: datoteka je označena kot primer za Slovenijo [E1]."
+
+    def test_an_inflected_name_in_a_non_english_answer_is_found_by_its_stem(self):
+        _validate_citation_grounding(self.SENTENCE, [self.EXAMPLE], inflected=True)
+
+    def test_english_answers_and_identifiers_are_compared_as_written(self):
+        with self.assertRaises(LLMGenerationError):
+            _validate_citation_grounding(self.SENTENCE, [self.EXAMPLE])
+        # An identifier is not inflected: TimetableFrameRef is not grounded by TimetableFrame.
+        with self.assertRaises(LLMGenerationError):
+            _validate_citation_grounding(
+                "Primer vsebuje TimetableFrameRef [E1].", [{"sourcePath": "x.xml", "text": "<TimetableFrame/>"}], inflected=True
+            )
+        # A name sharing only its first letters with the block's word is not found: Slovakia is not Slovenia.
+        with self.assertRaises(LLMGenerationError):
+            _validate_citation_grounding("Primer je iz Slovakije [E1].", [self.EXAMPLE], inflected=True)
+
+
 class GeneratedExamplePromptTests(SimpleTestCase):
     QUESTION = "Show me a NeTEx example for Ljubljana Bus Station with two quays"
     CHUNK = {"repositoryUrl": "https://github.com/TransmodelEcosystem/NeTEx", "commitSha": "abc",

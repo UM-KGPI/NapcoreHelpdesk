@@ -83,22 +83,42 @@ def _is_concept_label(phrase: str) -> bool:
     return any(normalized == _normalize_for_matching(label) for labels in GRAPH_CONCEPT_ALIASES.values() for label in labels)
 
 
+_EXAMPLE_NOUNS = frozenset("example examples sample samples snippet snippets fragment fragments".split())
+
+
+def _says_where_the_example_comes_from(before: list[str]) -> bool:
+    """Whether the words before a name make it where the example comes from, not a value of it: "from" right
+    after an example word or after the name of a standard or the format ("Any NeTEx example from Slovenia?",
+    "an example of a timetable in NeTEx XML from Slovenia"). After an object's noun ("a bus line from Maribor
+    to Ptuj") the name is where the object goes, a value. The standards' names are the app's own
+    (question_parsing), not a list here."""
+    from helpdesk.services.question_parsing import is_standard_name
+
+    if len(before) < 2 or before[-1].lower() != "from":
+        return False
+    previous = before[-2]
+    return previous.lower() in _EXAMPLE_NOUNS or previous.lower() == "xml" or is_standard_name(previous)
+
+
 def named_values(question: str) -> list[str]:
     """Proper names written without quotes: runs of capitalised words that do not start a sentence
-    ("Show me ... for Ljubljana Bus Station with two quays" -> "Ljubljana Bus Station")."""
+    ("Show me ... for Ljubljana Bus Station with two quays" -> "Ljubljana Bus Station"). Not a name that says
+    where the example comes from (_says_where_the_example_comes_from)."""
     words = _WORD.findall(_QUOTED.sub(" . ", question or ""))
-    names, current, sentence_start = [], [], True
-    for word in words:
+    names, current, sentence_start, start = [], [], True, 0
+    for index, word in enumerate(words):
         if not sentence_start and (_is_name_word(word) or (current and word.lower() in _JOINING_WORDS)):
+            if not current:
+                start = index
             current.append(word)
         else:
             while current and current[-1].lower() in _JOINING_WORDS:
                 current.pop()
-            if current:
+            if current and not _says_where_the_example_comes_from(words[:start]):
                 names.append(" ".join(current))
             current = []
         sentence_start = word in {".", "!", "?", ":"}
-    if current:
+    if current and not _says_where_the_example_comes_from(words[:start]):
         names.append(" ".join(current))
     label_words = _concept_label_words()
     return [
@@ -882,9 +902,11 @@ def resolve_element(noun: str) -> str:
     return found
 
 
-def _pruned(obj, keep: set, local, max_leaves: int = 6):
+def _pruned(obj, keep: set, local, max_leaves: int = 6, shown: frozenset = frozenset(), references: bool = True):
     """A copy of obj with its simple children (at most max_leaves), the branches leading to the elements in
-    keep, those elements whole, and a "…" comment where anything else was left out."""
+    keep, those elements whole, the elements in shown cut the same way but without their references (the
+    objects they point to are left out, and the schema's keyrefs would fail), and a "…" comment where anything
+    else was left out."""
     import copy
 
     from lxml import etree
@@ -905,16 +927,110 @@ def _pruned(obj, keep: set, local, max_leaves: int = 6):
         if child in keep:
             shell.append(copy.deepcopy(child))
             omitted = False
-        elif any(child is k or child in k.iterancestors() for k in keep):
-            shell.append(_pruned(child, keep, local, max_leaves=3))
+        elif child in shown:
+            shell.append(_pruned(child, keep, local, references=False))
             omitted = False
-        elif len(child) == 0 and "id" not in child.attrib and leaves < max_leaves and len((child.text or "").strip()) <= 120:
+        elif any(child is k or child in k.iterancestors() for k in set(keep) | set(shown)):
+            shell.append(_pruned(child, keep, local, max_leaves=3, shown=shown))
+            omitted = False
+        elif (
+            len(child) == 0 and "id" not in child.attrib and leaves < max_leaves and len((child.text or "").strip()) <= 120
+            and (references or not local(child.tag).endswith("Ref"))
+        ):
             shell.append(copy.deepcopy(child))
             leaves += 1
             omitted = False
         else:
             mark()
     return shell
+
+
+def is_container(element: str) -> bool:
+    """Whether the schema's element holds objects without being one (a frame: the validator's /concrete says it
+    is no object). False when the validator does not know it or is unreachable."""
+    entries = concrete_elements(element)
+    return bool(entries) and not any(entry.get("object") for entry in entries if entry.get("name") == element)
+
+
+_USUAL_LIST_CACHE: dict[str, tuple[str, float]] = {}
+
+
+def usual_list(container: str) -> str:
+    """The list the standard's examples most often fill in this container ("vehicleJourneys" for a
+    TimetableFrame: 110 of its 128 occurrences), from up to MAX_STANDARD_FILES example files that use it; ""
+    when none is found."""
+    from collections import Counter
+    from pathlib import Path
+
+    from lxml import etree
+
+    from helpdesk.models import SourceChunk
+
+    cached = _USUAL_LIST_CACHE.get(container)
+    if cached is not None and cached[1] > time.monotonic():
+        return cached[0]
+    rows = (
+        SourceChunk.objects.filter(repository_url__icontains="netex", source_path__startswith="examples/")
+        .filter(has_tag(container)).values("source_path", "repository_url").order_by("source_path").distinct()
+    )
+    files = list(dict.fromkeys((row["repository_url"], row["source_path"]) for row in rows))[:MAX_STANDARD_FILES]
+    checkout_root = Path(getattr(settings, "SOURCE_CHECKOUT_DIR", "/app/repos"))
+    parser = etree.XMLParser(resolve_entities=False, load_dtd=False, no_network=True, huge_tree=False)
+    filled: Counter = Counter()
+    for repository_url, source_path in files:
+        path = checkout_root / repository_url.rstrip("/").rsplit("/", 1)[-1] / source_path
+        try:
+            if path.stat().st_size > MAX_STANDARD_FILE_BYTES:
+                continue
+            tree = etree.parse(str(path), parser)
+        except (OSError, etree.XMLSyntaxError):
+            continue
+        for node in tree.getroot().iter(f"{{{NETEX_NAMESPACE}}}{container}"):
+            for wrapper in node:
+                name = etree.QName(wrapper.tag).localname if isinstance(wrapper.tag, str) else ""
+                if name[:1].islower() and any(isinstance(child.tag, str) and child.get("id") for child in wrapper):
+                    filled[name] += 1
+    found = filled.most_common(1)[0][0] if filled else ""
+    _USUAL_LIST_CACHE[container] = (found, time.monotonic() + _LOOKUP_TTL_SECONDS)
+    return found
+
+
+def _first_content(obj, local) -> frozenset:
+    """For a container cut to an excerpt: the first object of the list the standard's examples most often fill
+    in it (usual_list: a TimetableFrame's first journey), else of its fullest list, so the excerpt is not an
+    empty frame. Empty for an object."""
+    name = local(obj.tag)
+    if not is_container(name):
+        return frozenset()
+    lists = {
+        local(wrapper.tag): [child for child in wrapper if isinstance(child.tag, str) and child.get("id")]
+        for wrapper in obj if isinstance(wrapper.tag, str) and local(wrapper.tag)[:1].islower()
+    }
+    usual = lists.get(usual_list(name)) or max(lists.values(), key=len, default=[])
+    return frozenset(usual[:1])
+
+
+def holds_object(fragment: str) -> bool:
+    """Whether the fragment has at least one object (an element the validator's /concrete calls an object), not
+    only frames and their names. True when that cannot be told (no validator, a fragment that does not parse)."""
+    root = _parsed(fragment)
+    if root is None:
+        return True
+    known = False
+    for name in dict.fromkeys(_local(node.tag) for node in root.iter() if isinstance(node.tag, str) and node.get("id")):
+        entries = concrete_elements(name)
+        if entries is None:
+            continue
+        known = True
+        if any(entry.get("object") for entry in entries if entry.get("name") == name):
+            return True
+    return not known
+
+
+EMPTY_FRAME_ERROR = (
+    "the frame holds no object, only the frame itself: write in its lists the objects the example is of, each "
+    "with its own id"
+)
 
 
 def standard_example(
@@ -1018,7 +1134,7 @@ def standard_example(
                         c for w in [obj] + [w for w in obj if isinstance(w.tag, str) and local(w.tag)[:1].islower()]
                         for c in w if isinstance(c.tag, str) and local(c.tag) == element
                     )
-                whole = _pruned(obj, keep, local)
+                whole = _pruned(obj, keep, local, shown=_first_content(obj, local) if plain and not keep else frozenset())
             chain = list(reversed(ancestors[: frame_index + 1]))  # frame ... direct parent
             # A shell's references (dataSourceRef="nptg:NaPTAN") point to objects the excerpt leaves out, and
             # the schema's keyrefs then fail; the object itself is kept whole.
@@ -2640,6 +2756,7 @@ _ERROR_CLASSES = (
     ("part", ("and the frame defines no",)),
     ("asked-object", ("the question asks for",)),
     ("link", ("that nothing links to the",)),
+    ("empty-frame", ("the frame holds no object",)),
     ("condition", ("the question says the service runs", "is empty: give it the children")),
     ("model-error", ("generation failed",)),
 )
@@ -2647,7 +2764,8 @@ _ERROR_CLASSES = (
 
 def error_class(message: str) -> str:
     """The kind of a failed attempt's first error, from the validator's or the generator's wording:
-    malformed, keyref, min-count, not-expected, value, count, part, asked-object, condition, model-error, or other."""
+    malformed, keyref, min-count, not-expected, value, count, part, asked-object, link, empty-frame, condition,
+    model-error, or other."""
     for name, markers in _ERROR_CLASSES:
         if any(marker in (message or "") for marker in markers):
             return name
@@ -3043,6 +3161,10 @@ def _generate(
                 # Line) hold the values but state something false (plan 2026-11-12 revision 4, T1).
                 if not errors:
                     errors = shared_name_problems(fragment, values, question)
+                # Hard: a frame with nothing in it is no example of anything, whatever values its name holds
+                # (a timetable request accepted as an empty TimetableFrame named after the country).
+                if not errors and not holds_object(fragment):
+                    errors = [EMPTY_FRAME_ERROR]
                 # Hard: the asked object is absent. Whether the values sit in it or in linked objects is the
                 # link check's (soft) question.
                 if not errors and asked and (problem := asked_object_problem(fragment, asked, [], shape_question)):
