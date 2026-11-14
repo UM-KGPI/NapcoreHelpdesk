@@ -247,3 +247,100 @@ gated questions, against 95%. R1 is not started. What would decide it: a call th
 (majority or unanimity of several calls, at several times the cost), or an agreement measure on the checks a
 reading leads to rather than on its exact content (p32's two names are one check). Each is a change of the gate,
 for Andrej to decide, not taken here.
+
+### R1 (2026-11-14): the reading's objects added to the counts and parts. More first attempts, but wrong claims: gate failed, code taken out
+
+**Why R1 was started after R0 failed, and its gate restated.** A breakdown of R0's stored readings
+(`request-reading-r0-rev0.json`, 57 gated questions x 5 readings) showed that for objects the reading never
+claimed a wrong one (0 of 80 claimed; it missed 45 of 125, the patterns missed 13 of 25): the variation between
+calls was all omission. On that basis Andrej approved R1 only, with two changes: the reading's objects are added
+to what the patterns find (a union; nothing the patterns catch may be lost), and the gate is "no wrong claim that
+reaches a check", not "identical readings". R2 (the asked object) is on hold: the reading says `Vehicle` where the
+gold says `VehicleType`. The reading's `asked`, `values`, `of` and `conditions` were not used.
+
+**What was built** (commit a24ea72, reverted by the next commit, so the PR ships only this record). In
+`_generate`, after the patterns' `object_counts` and `named_object_parts`, one call `request_reading(question)`
+(`read_request` in a thread with a 3 s deadline, before the first attempt, grounding through the generator's
+cached `/concrete` lookup), then `request_reading_objects`: a grounded object with a count became a count in
+`object_counts`' shape (the number as written, digits or word), one without a count a named part; skipped were
+objects whose kinds overlap an entry of the patterns (the patterns' entry stands, same or different count, count
+or part), the asked object, and objects the reading counts two ways. `counted_out` then took a counted number out
+of the values as for a digit count (number words were never values: `requested_values` has no number words, so
+nothing was handled twice). Setting `EXAMPLE_REQUEST_READING` (default True); `requestReadingMs` in the timing
+fields; `requestReading` (used, failed, objects, added) in the result; `readingUsed`, `readingAdded`,
+`readingFailed` and the call's median and p90 in the benchmark. Also: each count checked on its own (two counts
+written "two" were met by either). 16 tests; the existing generator tests ran with `EXAMPLE_REQUEST_READING=False`
+in their `override_settings`, and a run with the model call replaced by a raising guard showed 0 calls.
+
+**Gen01–45 x3** (`.mylocal/bench/r1-main.json` on 0.97.214, `r1-branch.json`). No outages. **Measured.**
+
+| | valid | generated | first attempt | mean s | reading used / added / failed |
+|---|---|---|---|---|---|
+| main | 135/135 | 129 | 98 | 6.8 | – |
+| branch | 135/135 | 131 | 104 | 7.6 | 132 / 32 / 0 |
+
+Questions where the two differ (generated/first attempt of 3): gen03 3/0 → 3/1, gen14 3/2 → 3/3, gen20 3/1 → 3/3,
+gen33 3/0 → 3/1, gen36 3/2 → 3/3, gen37 3/2 → 3/3, gen38 0/0 → 2/0, gen39 3/2 → 3/3; lower: gen06 3/3 → 3/2, gen32
+3/1 → 3/0, gen42 3/3 → 3/2, all three with nothing added by the reading (run-to-run spread). The reading added
+nothing in 3 runs (gen29: no call, a standard example).
+
+**The eight questions where the reading added an object, x10 each** (`r1-main-10.json`, `r1-branch-10.json`; gen02,
+gen19, gen26 and gen41 also had additions, all "two quays" → 2 Quay, and are 3/3 first attempt on both sides).
+**Measured.**
+
+| | main generated / first | branch generated / first | added (runs of 10) |
+|---|---|---|---|
+| gen03 | 10 / 1 | 10 / 9 | Operator, "the operator "LPP"" (10) |
+| gen14 | 10 / 6 | 10 / 10 | 3 StopPointInJourneyPattern, "3 stop points" (10) |
+| gen20 | 10 / 3 | 10 / 9 | Operator, "operated by LPP" (8) |
+| gen23 | 10 / 10 | 10 / 10 | 2 FareZone, "two fare zones" (10) |
+| gen33 | 10 / 0 | **6** / 0 | see below (8) |
+| gen38 | 1 / 0 | 4 / 0 | 2 ServiceJourney, "two departures" (3) |
+| gen43 | 10 / 0 | 9 / 0 | ScheduledStopPoint, "ScheduledStopPoint" (10) |
+| gen44 | 10 / 0 | 10 / 0 | ServiceJourney, "departure" (2) |
+| all | 71 / 20 | 69 / 38 | |
+
+**Every object the reading added, with the verdict** (3- and 10-run files together; "check" = it failed an
+attempt's count or part check at least once).
+
+| question | added | runs | right? |
+|---|---|---|---|
+| gen02, gen19, gen26, gen41 | 2 Quay, "two quays" | 3 each | right |
+| gen03 | Operator, "the operator "LPP"" | 13 | right (gold) |
+| gen14 | 3 StopPointInJourneyPattern, "3 stop points" | 13 | right (gold) |
+| gen20 | Operator, "operated by LPP" | 11 | right (gold) |
+| gen23 | 2 FareZone, "two fare zones" | 13 | right (gold) |
+| gen38 | 2 ServiceJourney, "two departures" | 4 | right (gold) |
+| gen43 | ScheduledStopPoint, "ScheduledStopPoint" | 13, check 7 | right (gold, unsure entry) |
+| gen33 | ServiceJourney, "runs only on school days" / "runs" / "a bus line from Maribor to Ptuj" | 8 | **wrong**: a condition and the line itself, no journey asked for |
+| gen33 | ServiceJourneyPattern, "runs only on school days" | 1 | **wrong** |
+| gen33 | Vehicle, "uses low-floor vehicles" / "low-floor vehicles" | 5, check 4 | **wrong**: a kind of vehicle, not a vehicle |
+| gen33 | VehicleType, "uses low-floor vehicles" / "low-floor vehicles" | 4 | unsure (gold: no objects, noted as possible) |
+| gen44 | ScheduledStopPoint, "departure" | 1 | **wrong** (the stop is the stop place the patterns already find) |
+| gen44 | ServiceJourney, "departure" | 2 | unsure (gold note: "departure" may ask for one) |
+
+Every counted object the reading added is right (Quay, FareZone, StopPointInJourneyPattern, ServiceJourney); the
+wrong ones are all objects without a count, read from a condition or property phrase. That differs from R0's
+breakdown (no wrong claims) because gen33 and gen44 are unsure entries, outside the 57 gated ones it covered.
+
+**Answers.** gen14: the three stop points are three `StopPointInJourneyPattern` in all 13 branch runs (as on main),
+and a `3` only as the third point's `order` (main: 30 `value` failed attempts in the 10-run set, branch 13). gen38:
+the 6 generated frames hold two `ServiceJourney`s each. gen33: the `Vehicle` part check failed an attempt in 4 runs
+and three accepted answers define a `Vehicle` the question does not ask for, written to satisfy it; 4 of 10 runs ended on the
+standard's example (0 of 10 on main). gen43: a `ScheduledStopPoint` is now defined in every accepted answer.
+
+**Call time** (no call failed or timed out, 212 calls): 45 x3 median 1.12 s, p90 1.32 s, max 1.95 s (8 of 132 over
+1.5 s); 10-run set median 1.17 s, p90 1.33 s. One cold call in the container took 2.7 s. Mean seconds per example
+6.8 → 7.6 (45 x3).
+
+**Gate R1: failed.** First-attempt counts rose (98 → 104 over 45 x3; 20 → 38 in the 10-run set) and no question
+lost generated examples beyond spread on 45 x3, but the reading made wrong claims that reached a check (gen33
+Vehicle, a failed attempt in 4 runs; ServiceJourney and ServiceJourneyPattern for "runs …"; gen44 ScheduledStopPoint),
+gen33 fell from 10/10 to 6/10 generated, and three accepted gen33 answers carry a `Vehicle` written for the check.
+The code was taken out again; the branch history keeps it.
+
+**What the data suggests, not decided here.** Restricted to counted objects, the same runs have no wrong claim and
+keep the gains of gen14, gen38 and the "two …" questions (grounding rule 4 anchors a count in the question; an
+uncounted kind has no anchor beyond its phrase). The Operator gains of gen03 and gen20 (first attempt 1 → 9 and
+3 → 9 of 10) and gen43's ScheduledStopPoint come from uncounted objects and would be lost. A counts-only R1 is a new
+variant chosen after seeing these runs, so it needs its own run before any gate is read from it.
