@@ -375,11 +375,10 @@ readings:
   note: 'a timetable is a TimetableFrame, as gen39'
 - id: p22
   question: Show me an example of ServiceCalendarFrame in NeTEx XML.
-  asked: ServiceCalendarFrame
+  asked: [ServiceCalendarFrame, ServiceCalendar, DayType, OperatingPeriod]
   objects: []
   values: []
-  unsure: true
-  note: the question names the frame, but the validator does not count frames as objects, so grounding strips it and neither side can be right
+  note: 'the question names the frame; the validator does not count a frame as an object, so its usual content in the standard''s examples (a service calendar, day types, operating periods) is accepted as well'
 - id: p23
   lang: pt
   question: Como descrever uma plataforma (Quay) de uma estação em NeTEx XML?
@@ -405,8 +404,7 @@ readings:
   asked: [Train, VehicleType]
   objects: [{kind: [TrainElement, TrainComponent], count: null}]
   values: []
-  unsure: true
-  note: '"multiple" is no number; carriages may be TrainElement or TrainComponent'
+  note: '"multiple" is no number; in the standard''s examples a train lists its carriages as TrainComponents, each holding or referring to a TrainElement, so either is right'
 - id: p27
   lang: sl
   question: Pokaži primer NeTEx XML za Line.
@@ -429,8 +427,7 @@ readings:
   asked: ServiceJourney
   objects: [{kind: Line, count: null}]
   values: []
-  unsure: true
-  note: a LineRef shows the reference without a Line object; whether the Line must be defined is open
+  note: 'the Line the journey refers to must be defined: in the standard''s examples 481 of 492 journeys with a LineRef have their Line in the same file'
 - id: p31
   lang: sl
   question: Pokaži mi primer voznega reda v NeTEx.
