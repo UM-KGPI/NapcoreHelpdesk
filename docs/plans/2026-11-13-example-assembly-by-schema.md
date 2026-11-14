@@ -768,3 +768,68 @@ No question generated fewer. First attempts: gen20, gen34, gen45 +1, gen36 -1. N
 different value (the value table is the same), and the empty-frame check fired in none of the 135 runs, so their
 prompts and checks are those of main: run-to-run spread. gen46 and gen47 show the Slovenian file's TimetableFrame with
 a ServiceJourney, validated, in 3 of 3 each, with no "Slovenia" written anywhere.
+
+### Unvalidated text next to an example (2026-11-14): kept and marked, not dropped
+
+Decision: when an example (or an element's structure) is shown and the answer text fails the answer validator on
+both attempts, I keep the text and mark it, instead of leaving the example alone. This answers case 1 of C above
+(a plain Slovenian sentence can never be grounded in an English block) without touching the validator and without a
+new model call.
+
+**What the old rule did and why.** Since #305 (2026-11-08) the view emptied such a text and its
+citations and kept it only in `trace.llmDroppedAnswer`: "text that fails validation is left out instead of being
+shown marked for review next to a valid example". At that time the text often narrated a different file than the
+one shown (DeckPlans and other alphabetical neighbours, fixed by P7 in 0.97.151) and attributed meanings to elements
+that no evidence defines. The drop was a blunt guard: it did not detect either fault, it only hid the texts the
+validator happened to reject.
+
+**What I found in the dev log** (all question events since 2026-11-08, **measured**): 415 answers with a valid
+example, 14 of them unvalidated, all 14 dropped. 12 of the 14 are English; their reasons are mostly "attributes a
+purpose to an element no evidence defines" and "does not ground the claim". Two narrate other files than the shown
+one (both before P7). 9 of the 14 hold a code block, and all 9 blocks are lines of the evidence or of the shown
+example (checked against the stored retrieval chunks; the prompt's chunks are not stored, so this is close, not
+exact). So the change is not about Slovenian only: it brings back English text that the validator found ungrounded,
+now with a marker.
+
+**The new rule** (both endpoints, one function, `_keeps_unvalidated_text` in `views.py`). The text stays, with
+`trace.llmAnswerValidated` false (already in the API, confidence capped at 0.80 as before), unless:
+
+- it holds a code block that is neither in the evidence nor in the shown example (a second, unchecked fragment next
+  to the checked one: a marker on the text does not make a copied XML block safe), or
+- its citations are refused by the policy (keeping it would turn the whole answer into an abstention and hide the
+  example).
+
+Then it is dropped as before (`trace.llmDroppedAnswer`). The code-block check is the one the generator already used
+for verbatim example questions (`has_ungrounded_code_block`), now without the question-shape gate. Answers without
+an example are unchanged: there the rule never applied, unvalidated text was already served (marked only in the
+trace).
+
+**For a reader**: under the example, above the text, a note: "Not confirmed against the sources: the automatic check
+could not match this text to the cited evidence." It shows only next to an example or a structure and only when
+`trace.llmAnswerValidated` is false. The UI has no translation mechanism (every label is English; only the answer
+follows the question's language), so the note is English like the rest of the page.
+
+**Measured on dev** (host backend from the branch on port 8011, the dev database, model `claude-haiku-5-5`):
+
+| question | path | runs | text and citations | rejected twice -> kept and marked | validated, no note |
+|---|---|---|---|---|---|
+| Slovenian wording (gen46) | answer | 10 | 10 of 10 | 1 | 9 |
+| Slovenian wording (gen46) | stream | 3 | 3 of 3 | 2 | 1 |
+| English wording (gen47) | answer | 5 | 5 of 5 | 0 | 5 |
+| gen01, gen02, gen06, gen19, gen39 | answer | 1 each | 5 of 5 | 0 | 5 |
+
+The three kept Slovenian texts are accurate about the shown file (Name, VehicleModes, validity Sept to April). All
+three were rejected for "does not ground the claim" on a sentence about `DepartureTime`, which is in the shown
+example but not in the cited block: a third false-positive class, next to the two in C. One of them also says in
+Slovenian that the block does not show `DepartureTime`; the lack-sentence filter reads English only (**observed**, not
+changed). Rejected twice on dev is 3 of 13 Slovenian runs here against 0 of 6 on main in C, which is spread on a
+small sample (**believed**).
+
+**Forced case**: a view test feeds the prod Slovenian sentence to both endpoints twice with the model mocked; the
+real validator rejects both attempts ("Citation [E1] without specific technical content", as on prod) and the
+answer keeps the text, its citation and `llmAnswerValidated` false. Further tests: the text with an invented XML
+block is dropped, text citing an unapproved source is dropped (no abstention), validated text carries no mark; each
+condition was removed once to see its test fail.
+
+Not done: the copy-answer and export texts do not carry the note; the editor's stored-answer view (`AnswerDetail`)
+has no trace and shows no note.
