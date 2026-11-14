@@ -1,0 +1,63 @@
+version: "1.0"
+description: >
+  Questions the helpdesk refused on prod (question log 2026-10-14 to 2026-11-14, still refused on 0.97.219), and
+  questions it must keep refusing. `expect` is the judgement from checking the index for evidence (answer: the
+  indexed sources answer it; abstain: they do not, or the question is not about the sources). `cause` is the
+  mechanism that refused it on 0.97.219: keyword_rule (no standards concept matched, semantic_abstention),
+  evidence_verdict (the answer model said the evidence does not answer it), policy_block (a cited source failed
+  the allow-list). The must_refuse questions come from the log, from abstention-probe-questions.yaml and from the
+  abstention questions of benchmark-questions.yaml. probe_abstention runs the keyword rules (and the relevance
+  check when enabled) on them; the evidence_verdict ones need the answer model, so they are measured by asking
+  the running backend (docs/plans/2026-11-14-refused-questions.md).
+questions:
+  # Refused by the keyword rules; the sources answer them.
+  - {id: k01, category: keyword_rule, cause: keyword_rule, expect: answer, question: "Which formats count as machine-readable?"}
+  - {id: k02, category: keyword_rule, cause: keyword_rule, expect: answer, question: "Make a example file of observed delays."}
+  - {id: k03, category: keyword_rule, cause: keyword_rule, expect: answer, question: "How are parkings defined in standards?"}
+  - {id: k04, category: keyword_rule, cause: keyword_rule, expect: answer, question: "How do I describe a lift in a station?"}
+  - {id: k05, category: keyword_rule, cause: keyword_rule, expect: answer, question: "How do I describe an escalator in a station?"}
+  - {id: k06, category: keyword_rule, cause: keyword_rule, expect: answer, question: "How do I describe an elevator in a station?"}
+  - {id: k07, category: keyword_rule, cause: keyword_rule, expect: answer, question: "What is seat capacity?"}
+  - {id: k08, category: keyword_rule, cause: keyword_rule, expect: answer, question: "Kaj so to metapodatki?"}
+  - {id: k09, category: keyword_rule, cause: keyword_rule, expect: answer, question: "Kaj je vozni red avtobusa?"}
+  - {id: k10, category: keyword_rule, cause: keyword_rule, expect: answer, question: "kaj je vozni red?"}
+  - {id: k11, category: keyword_rule, cause: keyword_rule, expect: answer, question: "How to model number of late journeys?"}
+  - {id: k12, category: keyword_rule, cause: keyword_rule, expect: answer, question: "How to describe a bus ticket?"}
+  - {id: k13, category: keyword_rule, cause: keyword_rule, expect: answer, question: "How are static data described?"}
+  - {id: k14, category: keyword_rule, cause: keyword_rule, expect: answer, question: "How are dynamical data described?"}
+  # Refused after retrieval: the answer model judged that the evidence does not answer them, or a source was blocked.
+  - {id: e01, category: evidence_verdict, cause: evidence_verdict, expect: answer, question: "What is OpRa used for?"}
+  - {id: e02, category: evidence_verdict, cause: evidence_verdict, expect: answer, question: "Which fare data must be provided to be in accordance with the MMTIS delegated regulation?"}
+  - {id: e03, category: evidence_verdict, cause: evidence_verdict, expect: answer, question: "What if my dataset is available in several formats?"}
+  - {id: e04, category: evidence_verdict, cause: evidence_verdict, expect: answer, question: "How to define a location of a parking bay in DATEX?"}
+  - {id: e05, category: evidence_verdict, cause: evidence_verdict, expect: answer, question: "How are DATEX and SIRI connected?"}
+  - {id: e06, category: evidence_verdict, cause: evidence_verdict, expect: answer, question: "In which legislation is DATEX. included?"}
+  - {id: e07, category: evidence_verdict, cause: evidence_verdict, expect: answer, question: "How do I describe an elevator in a station in NeTEx?"}
+  - {id: e08, category: evidence_verdict, cause: evidence_verdict, expect: answer, question: "How do I describe an elevator in a stop place?"}
+  - {id: p01, category: policy_block, cause: policy_block, expect: answer, question: "when describing the calendar of a service journey, how to choose between UIC bit field and explicit Operational Days?"}
+  # Must stay refused.
+  - {id: m01, category: must_refuse, cause: keyword_rule, expect: abstain, question: "hi"}
+  - {id: m02, category: must_refuse, cause: keyword_rule, expect: abstain, question: "what is narcose"}
+  - {id: m03, category: must_refuse, cause: keyword_rule, expect: abstain, question: "ma che cosa e un sapore helpdesk?"}
+  - {id: m04, category: must_refuse, cause: evidence_verdict, expect: abstain, question: "is croatian NAP good?"}
+  - {id: m05, category: must_refuse, cause: evidence_verdict, expect: abstain, question: "What does NeTEx say about the colour of bus seats?"}
+  - {id: m06, category: must_refuse, cause: evidence_verdict, expect: abstain, question: "Is it ok to round ExpectedArrivalTime and ExpectedDepartureTime to whole minutes?"}
+  - {id: m07, category: must_refuse, expect: abstain, question: "What is the weather in Ljubljana tomorrow?"}
+  - {id: m08, category: must_refuse, expect: abstain, question: "How do I bake sourdough bread?"}
+  - {id: m09, category: must_refuse, expect: abstain, question: "Who won the football match last night?"}
+  - {id: m10, category: must_refuse, expect: abstain, question: "Write me a poem about the sea."}
+  - {id: m11, category: must_refuse, expect: abstain, question: "What is the capital of Australia?"}
+  - {id: m12, category: must_refuse, expect: abstain, question: "Can you recommend a good laptop?"}
+  - {id: m13, category: must_refuse, expect: abstain, question: "How does it work?"}
+  - {id: m14, category: must_refuse, expect: abstain, question: "Can you help me?"}
+  - {id: m15, category: must_refuse, expect: abstain, question: "What should I do first?"}
+  - {id: m16, category: must_refuse, expect: abstain, question: "Explain the data format."}
+  - {id: m17, category: must_refuse, expect: abstain, question: "What are the rules?"}
+  - {id: m18, category: must_refuse, expect: abstain, question: "Is this mandatory?"}
+  - {id: m19, category: must_refuse, expect: abstain, question: "What does GTFS say about stop times?"}
+  - {id: m20, category: must_refuse, expect: abstain, question: "How do I use the OpenStreetMap API?"}
+  - {id: m21, category: must_refuse, expect: abstain, question: "How does NeTEx compare to GTFS in terms of real-time data quality?"}
+  - {id: m22, category: must_refuse, expect: abstain, question: "What is the estimated cost of implementing OpRa for a national transport authority?"}
+  - {id: m23, category: must_refuse, expect: abstain, question: "What is the formal W3C or OGC ontology for NeTEx concepts?"}
+  - {id: m24, category: must_refuse, expect: abstain, question: "How does OpRa integrate with GTFS-RT for open journey planning data?"}
+  - {id: m25, category: must_refuse, expect: abstain, question: "What is the DATEX II equivalent of an OpRa capacity indicator?"}
