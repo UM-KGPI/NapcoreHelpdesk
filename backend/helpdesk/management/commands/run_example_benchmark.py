@@ -20,6 +20,7 @@ from pathlib import Path
 import yaml
 from django.core.management.base import BaseCommand
 
+from helpdesk.services.llm_generator import english_search_query
 from helpdesk.services.netex_example_generator import generate_netex_example, requested_values, shared_name_values
 from helpdesk.services.question_parsing import parse_question_to_semantic_query, select_effective_scope
 from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
@@ -133,10 +134,15 @@ class Command(BaseCommand):
         rows = []
         for item in questions:
             question = item["question"]
+            english = None
             if not via_api:
+                # A question in another language is read on the app's English rendering too (None for English).
+                english = english_search_query(question)
                 semantic_query = parse_question_to_semantic_query(text=question, requested_scope=[])
                 scope, _ = select_effective_scope(semantic_query, [])
-                chunks, _trace = retrieve_chunks_with_trace(question=question, top_k=6, min_score=0.62, scope=scope, graph_rag_enabled=True)
+                chunks, _trace = retrieve_chunks_with_trace(
+                    question=question, top_k=6, min_score=0.62, scope=scope, graph_rag_enabled=True, english_question=english
+                )
             for run in range(1, runs + 1):
                 started = time.perf_counter()
                 if via_api:
@@ -147,9 +153,11 @@ class Command(BaseCommand):
                         result = {"valid": False, "attempts": 0, "errors": [f"api: {exc}"[:200]],
                                   "attemptLog": [{"attempt": 1, "errorClass": "model-error", "error": f"api: {exc}"[:200]}]}
                 else:
-                    result = generate_netex_example(question, chunks, scope) or {"valid": False, "attempts": 0, "errors": ["not triggered"]}
+                    result = generate_netex_example(question, chunks, scope, english) or {
+                        "valid": False, "attempts": 0, "errors": ["not triggered"]
+                    }
                 seconds = round(time.perf_counter() - started, 1)
-                rows.append({"id": item["id"], "run": run, "question": question, "seconds": seconds, **result})
+                rows.append({"id": item["id"], "run": run, "question": question, "english": english, "seconds": seconds, **result})
                 classes = [entry.get("errorClass") for entry in result.get("attemptLog") or [] if entry.get("errorClass")]
                 self.stdout.write(
                     f"{item['id']} run {run} valid={result.get('valid')} origin={result.get('origin', '')} "

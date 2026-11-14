@@ -102,3 +102,10 @@ questions:
   question: Show me an example of line with a stop place departure described in NeTEx XML?
 - id: gen45
   question: Show me a NeTEx example for a bus with two decks?
+# Added 2026-11-14: a prod question in Slovenian and its English wording. "from Slovenia" says where the example comes
+# from, not a value; a timetable is a frame, which must not be shown empty. The Slovenian one is read through the
+# app's English rendering, as in the app.
+- id: gen46
+  question: Prikaži primer voznega reda v NeTEx XML iz Slovenije?
+- id: gen47
+  question: Show an example of a timetable in NeTEx XML from Slovenia?
