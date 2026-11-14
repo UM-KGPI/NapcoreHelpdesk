@@ -760,9 +760,10 @@ confirm it cites the SIRI repository. Only then switch on the daily refresh (7.3
 
 ### 12.4 Relevance check (optional)
 
-`RELEVANCE_CHECK_ENABLED` is off by default. When on, a question that names no standard and no artifact is
-put to the controller model, which answers RELEVANT or IRRELEVANT; a failed call falls back to the keyword
-rules. First prove the model call works from the server (it prints `None` when it does not):
+`RELEVANCE_CHECK_ENABLED` is off by default. When on, a question the keyword rules refuse (no standards concept
+matched, no standard and no artifact named) is put to the controller model, which answers RELEVANT or
+IRRELEVANT; RELEVANT answers it, a failed call keeps the keyword refusal. Questions the keyword rules let through
+are not asked about. Measured effect: `docs/plans/2026-11-14-refused-questions.md`. First prove the model call works from the server (it prints `None` when it does not):
 
 ```bash
 $C exec -T backend python manage.py shell -c "

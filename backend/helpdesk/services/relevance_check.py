@@ -32,11 +32,12 @@ _PROMPT = """You screen questions for a helpdesk about European public-transport
 - Transmodel: the reference model behind them.
 - mobilityDCAT-AP (also DCAT-AP): the metadata profile for describing datasets on National Access Points (NAPs).
 - DATEX II: road traffic and travel information (situations such as roadworks and accidents, traffic data, variable message signs, parking, energy infrastructure and charging points, traffic management and regulations, location referencing), also TN-ITS road attribute updates.
+- EU legislation on transport data: the MMTIS Delegated Regulation (EU) 2017/1926 and its 2024 amendment, the ITS Directive 2010/40/EU and its 2023 amendment, and the TEL TSI (which travel and traffic data must be made available, through National Access Points and in which standards, and the terms these acts define).
 - INSPIRE: the EU spatial data rules (Directive 2007/2/EC, Regulation 1089/2010) that MMTIS requires for the spatial network, in particular the Transport Networks theme (road, rail, water, air and cable networks).
 - NAPCORE: the EU coordination platform of the National Access Points and National Bodies (its working groups, deliverables, data quality frameworks, compliance assessment and the EU legislation the NAPs implement).
 
-Decide whether the question can be answered from the documentation of those standards and NAPCORE's material.
-- "relevant": it is about public-transport data, concepts, messages or modelling that these standards cover, even if phrased briefly or in another language.
+Decide whether the question can be answered from the documentation of those standards, the legislation and NAPCORE's material.
+- "relevant": it is about transport data, concepts, messages, modelling or legal requirements that these sources cover, even if phrased briefly or in another language.
 - "irrelevant": it is about something else (general knowledge, other software, other standards such as GTFS or OpenStreetMap) or it is too vague to tell what is being asked.
 
 Question: {question}
