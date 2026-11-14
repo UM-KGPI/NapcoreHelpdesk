@@ -119,10 +119,9 @@ readings:
 - id: gen21
   question: Create a NeTEx XML example for a fare product for adult for 5 EUR.
   asked: FareProduct
-  objects: []
+  objects: [{kind: UserProfile, count: null}]
   values: ["5", EUR]
-  unsure: true
-  note: '"for adult" may be a UserProfile object, or the value "adult"; written here as neither'
+  note: 'the standard''s examples model "adult" as a UserProfile of its own (65 definitions in 45 example files), tied to the product by a parameter assignment; "adult" is not also a value'
 - id: gen22
   question: Show me a NeTEx example of a sales offer package with a price of 10 EUR
   asked: SalesOfferPackage
@@ -151,18 +150,16 @@ readings:
 - id: gen27
   question: I want to map a ferry service into a NeTEx TemplateServiceJourney. The ferry operates between two sides of the river when there is demand, it takes 3 minutes from side to side. Can you create an XML file modelling such TemplateServiceJourney?
   asked: TemplateServiceJourney
-  objects: []
+  objects: [{kind: [ScheduledStopPoint, StopPointInJourneyPattern], count: 2}]
   values: [PT3M]
   conditions: [when there is demand]
-  unsure: true
-  note: '"between two sides of the river" may ask for two stop points (count 2); written here as no objects'
+  note: 'the two sides of the river are two stop points'
 - id: gen28
   question: I want to map a ferry service into a NeTEx TemplateServiceJourney. The ferry operates between two sides of the river when there is demand, it takes 3 minutes from side to side. Can you give an XML snippet modelling such TemplateServiceJourney?
   asked: TemplateServiceJourney
-  objects: []
+  objects: [{kind: [ScheduledStopPoint, StopPointInJourneyPattern], count: 2}]
   values: [PT3M]
   conditions: [when there is demand]
-  unsure: true
   note: as gen27
 - id: gen29
   question: Can you write the XML for a NeTEx FlexibleLine?
@@ -188,11 +185,10 @@ readings:
 - id: gen33
   question: Give me a NeTEx example of a bus line from Maribor to Ptuj that runs only on school days and uses low-floor vehicles.
   asked: Line
-  objects: []
+  objects: [{kind: DayType, count: null}, {kind: VehicleType, count: null}]
   values: [Maribor, Ptuj]
   conditions: [runs only on school days]
-  unsure: true
-  note: '"school days" may be a DayType and "low-floor vehicles" a VehicleType the question wants as objects'
+  note: 'the standard''s examples write school days as a day type with a property of day (HolidayTypes SchoolDay) and low floor as the LowFloor property of a VehicleType; a Vehicle (one bus) is not asked for'
 - id: gen34
   question: Show me a NeTEx example of a ferry line between Koper and Piran that runs only in summer.
   asked: Line
