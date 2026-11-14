@@ -185,11 +185,10 @@ readings:
 - id: gen33
   question: Give me a NeTEx example of a bus line from Maribor to Ptuj that runs only on school days and uses low-floor vehicles.
   asked: Line
-  objects: []
+  objects: [{kind: DayType, count: null}, {kind: VehicleType, count: null}]
   values: [Maribor, Ptuj]
   conditions: [runs only on school days]
-  unsure: true
-  note: '"school days" may be a DayType and "low-floor vehicles" a VehicleType the question wants as objects'
+  note: 'the standard''s examples write school days as a day type with a property of day (HolidayTypes SchoolDay) and low floor as the LowFloor property of a VehicleType; a Vehicle (one bus) is not asked for'
 - id: gen34
   question: Show me a NeTEx example of a ferry line between Koper and Piran that runs only in summer.
   asked: Line
