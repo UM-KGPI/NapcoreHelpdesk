@@ -1125,6 +1125,26 @@ class AskedObjectTests(SimpleTestCase):
         # One of the values inside is enough: a line's operator may be an object of its own next to it.
         self.assertEqual(generator.asked_object_problem(PRICE_GROUP, "PreassignedFareProduct", ["Adult single", "5"]), "")
 
+    def test_missing_asked_object_feedback_names_the_reference_and_two_frames(self):
+        # The values sit in objects of one kind of frame that refer to the asked object, which the standard puts
+        # in another kind of frame: the feedback names the reference and says how both frames go together.
+        frame = (
+            '<ThingFrame version="1" id="hd:FB"><things><Thing version="1" id="hd:T1"><Time>14:00:00</Time>'
+            '<WidgetRef ref="hd:W1"/></Thing><Thing version="1" id="hd:T2"><Time>14:00:00</Time>'
+            '<WidgetRef ref="hd:W1"/></Thing></things></ThingFrame>'
+        )
+        problem = generator.asked_object_problem(frame, "Widget", [])
+        self.assertTrue(problem.startswith("the question asks for a Widget; the frame has none, only a reference to one (hd:W1)."), problem)
+        self.assertIn("write a CompositeFrame whose <frames> holds both: the Widget in its frame, the objects you wrote in this ThingFrame", problem)
+        self.assertEqual(generator.error_class(problem), "asked-object")
+        # Without a reference: no reference named, the two-frame advice stays.
+        plain = generator.asked_object_problem(frame.replace("WidgetRef", "GadgetRef"), "Widget", [])
+        self.assertNotIn("only a reference", plain)
+        self.assertIn("CompositeFrame", plain)
+        # A composite frame already holds several frames: no advice to write one.
+        composite = f'<CompositeFrame version="1" id="hd:CF"><frames>{frame}</frames></CompositeFrame>'
+        self.assertNotIn("write a CompositeFrame", generator.asked_object_problem(composite, "Widget", []))
+
     def test_values_in_linked_objects_times_and_counts(self):
         parking = (
             '<SiteFrame version="1" id="hd:SF"><stopPlaces><StopPlace version="1" id="hd:SP"><Name>S</Name></StopPlace>'

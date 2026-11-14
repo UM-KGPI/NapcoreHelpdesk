@@ -1900,6 +1900,32 @@ def skeleton_block(skeleton: dict) -> str:
     )
 
 
+def missing_asked_object(root, element: str, local) -> str:
+    """The feedback for a frame without the asked object. The check runs after the value check, so the frame
+    already holds the question's values; when they sit in objects of another kind of frame than the one the
+    standard puts the asked object in, no single frame holds both, and the model went back and forth between
+    the two frames until it ran out of attempts (2026-11-14: a line with timed departures, a frame of journeys
+    that refer to the line, then a frame with the line alone and no times; 1 of 10 generated). The feedback says
+    which reference already points at the asked object and how two frames go together."""
+    frames = [local(child.tag) for child in root if local(child.tag).endswith("Frame")]
+    written = frames[0] if len(frames) == 1 else ""
+    refs = sorted({
+        node.get("ref") for node in root.iter()
+        if local(node.tag) == f"{element}Ref" and node.get("ref")
+    })
+    referred = f", only a reference to one ({', '.join(refs)})" if refs else ""
+    keep = (
+        f" Keep the objects that hold the question's values. If the standard puts a {element} in another kind of "
+        f"frame than this {written} (the SKELETON or the evidence examples show which), write a CompositeFrame "
+        f"whose <frames> holds both: the {element} in its frame, the objects you wrote in this {written}."
+        if written and written != "CompositeFrame" else ""
+    )
+    return (
+        f"the question asks for a {element}; the frame has none{referred}. Write the {element} itself (the "
+        f"SKELETON shows one) with the question's values in it or in objects it is linked to by references.{keep}"
+    )
+
+
 def asked_object_problem(fragment: str, element: str, values: list[str], question: str = "") -> str:
     """Why a valid fragment does not answer the question's object, or "": it has no such element, or none of
     the question's values sits in it or in an object linked to it by a reference (a Parking whose
@@ -1914,10 +1940,7 @@ def asked_object_problem(fragment: str, element: str, values: list[str], questio
     local = lambda tag: tag.rsplit("}", 1)[-1] if isinstance(tag, str) else ""  # noqa: E731
     objects = [node for node in root.iter() if local(node.tag) == element]
     if not objects:
-        return (
-            f"the question asks for a {element}; the frame has none. Write the {element} itself (the SKELETON shows "
-            "one) with the question's values in it or in objects it is linked to by references."
-        )
+        return missing_asked_object(root, element, local)
     counted = {written for _, written, _ in counted_shapes(question)}
     wanted = [value for value in values if value not in counted]
     if not wanted:

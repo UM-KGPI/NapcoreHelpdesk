@@ -427,3 +427,47 @@ gen44 now links the StopPlace to the Line through a journey with calls; all ten 
 and the feedback fixed them. gen18 is not changed by this step within 10 runs (4 and 6 of 10 unlinked; every first
 attempt fails `wrong-parent` on both sides), but it is weak on main itself: a Parking left unlinked to its
 StopPlace in 4 of 10 answers. Open.
+
+### Asked object in another frame (2026-11-14): "a line with two departures on Monday at 14:00"
+
+gen38 (a prod question) ended with a generated example in 1 of 10 runs on main (`r1-main-10`), 0 of 3 (`r1-main`)
+and 4 of 10 today (`gen38-main-10`); otherwise the standard's example. **Measured.**
+
+Cause: the question's values belong in objects of one kind of frame (two ServiceJourneys with DepartureTime 14:00:00
+in a TimetableFrame) and the asked object in another (the Line in a ServiceFrame). The prompt asks for ONE frame,
+so the model wrote the TimetableFrame with journeys that refer to `hd:Line_1`; the asked-object check rejected it
+("the frame has none"), the model then wrote a ServiceFrame with the Line alone, the value check rejected that
+(14:00 missing), and the three attempts ran out. Every rejected attempt in every stored gen38 run is one of these
+two frames (or a first attempt with `<DepartureTime>14:00</DepartureTime>`, not an xs:time). An answer came only
+when the model wrote a CompositeFrame with both frames on its own, or put the journeys in the ServiceFrame and the
+validator's placement repair split them. Checked by hand on stored fragments: the TimetableFrame passes the value
+and link checks and fails only `asked_object_problem`; the ServiceFrame fails only the value check; the accepted
+CompositeFrame passes all. **Measured.**
+
+Same shape elsewhere: every asked-object rejection in `r1-main`, `prod-5` and `count-all` (gen37, gen38, gen40,
+gen44 and their prod copies, 28 attempts) is a TimetableFrame that refers to the asked Line by a LineRef. gen40 and
+gen44 recovered on main more often because their retry wrote a CompositeFrame or a ServiceFrame that still held what
+their checks want.
+
+Change: only the feedback after an asked-object rejection (`missing_asked_object`). It names the reference that
+already points at the asked object ("the frame has none, only a reference to one (hd:Line_1)") and, when one frame
+was written, says to keep the objects that hold the values and, if the standard puts the asked object in another
+kind of frame, to write a CompositeFrame whose frames hold both. The element and frame names come from the attempt;
+no check changed and the first prompt is unchanged.
+
+| | main | this change |
+|---|---|---|
+| gen38, 10 runs, generated | 1 (`r1-main-10`), 4 (`gen38-main-10`, same day) | 10 (`gen38-frames-10`) |
+| gen38, retry after asked-object feedback is a CompositeFrame | 4 of 13 (rest: ServiceFrame alone) | 13 of 13 |
+| gen01–45, 3 runs: generated / first attempt | 129 / 98 of 135 (`r1-main`) | 132 / 101 (`gen38-frames-all`) |
+
+Per question only gen38 changed in generated (0 -> 3 of 3); no question generated fewer. First attempts differ by
+one run in gen06 (3 -> 2), gen32 (1 -> 0), gen20, gen34, gen37, gen39 (higher): the first prompt is identical on
+both sides, so these are run-to-run spread.
+
+What the accepted gen38 answers hold (10 of 10): one Line (placeholder name "Line 1") in a ServiceFrame, two
+ServiceJourneys with DepartureTime 14:00:00 that refer to it, in a TimetableFrame. Monday appears only as the id of
+a DayTypeRef (`hd:DT_Monday`) to a DayType that is not in the frame; no DaysOfWeek. This was the same in the
+answer main accepted: a weekday is not read as a value, so no check asks for it. Open, with two more seen here: a
+first attempt that writes 14:00 as written in the question (not an xs:time) costs one attempt in 7 of 10 runs, and
+"example of NeTEx in XML for a line …" (gen42) reads "NeTEx" as the subject, so no asked object is checked.
