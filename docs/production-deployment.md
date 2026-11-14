@@ -908,6 +908,9 @@ service, `netex-validator` (`backend/helpdesk/netex_validator_service.py`):
 Settings: `NETEX_EXAMPLE_GENERATOR_ENABLED` (default `True`), `NETEX_VALIDATOR_URL` (default
 `http://netex-validator:8091`), `NETEX_VALIDATOR_MEM_LIMIT` (default `512m`), `NETEX_VALIDATOR_CPUS`
 (default `1.0`). Check it with `$C exec -T netex-validator curl -s localhost:8091/health`.
+`EXAMPLE_REQUEST_READING` (default `True`): one short model call per generated example reads which objects the
+request asks for and adds the objects it counts ("two departures") to the counts the generator checks; `False`
+turns the call off (rollback, plan `docs/plans/2026-11-14-example-request-reading.md`, R1 counted only).
 
 Measure the generator with `$C exec -T backend python manage.py run_example_benchmark` (20 questions,
 `backend/helpdesk/benchmarks/example-generation-questions.yaml`).
