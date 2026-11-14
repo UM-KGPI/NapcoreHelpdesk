@@ -67,6 +67,14 @@ def repairs(entry: dict) -> list[str]:
     return [kind for kind in str(entry.get("repaired") or "").split(",") if kind]
 
 
+def reading_ms(rows: list[dict]) -> dict:
+    """Median and 90th percentile of the request reading's time over the runs that made the call."""
+    times = sorted(row["requestReadingMs"] for row in rows if row.get("requestReadingMs"))
+    if not times:
+        return {"median": 0, "p90": 0}
+    return {"median": round(statistics.median(times)), "p90": times[min(len(times) - 1, int(0.9 * len(times)))]}
+
+
 def summarize(rows: list[dict]) -> dict:
     """Valid, first-attempt and malformed counts, mean attempts and seconds, failed attempts by class. Outage runs
     (see is_outage) are counted on their own and left out of every other figure."""
@@ -105,6 +113,12 @@ def summarize(rows: list[dict]) -> dict:
         # Attempts whose references the validator made follow their target (plan 2026-11-13, A3).
         "repairedReferences": sum(1 for entry in attempts if "references" in repairs(entry)),
         "completionTokens": sum(entry.get("completionTokens") or 0 for entry in attempts),
+        # The request reading (plan 2026-11-14, R1): runs where it was used, where it added an object beyond the
+        # patterns, and where the call failed or timed out (patterns only).
+        "readingUsed": sum(1 for row in rows if (row.get("requestReading") or {}).get("used")),
+        "readingAdded": sum(1 for row in rows if (row.get("requestReading") or {}).get("added")),
+        "readingFailed": sum(1 for row in rows if (row.get("requestReading") or {}).get("failed")),
+        "readingMs": reading_ms(rows),
     }
 
 
@@ -155,7 +169,8 @@ class Command(BaseCommand):
                     f"{item['id']} run {run} valid={result.get('valid')} origin={result.get('origin', '')} "
                     f"attempts={result.get('attempts')} {seconds} s asked={result.get('askedObject', '')} "
                     f"present={result.get('askedObjectPresent', '')} model={result.get('generationMs', 0)} ms "
-                    f"validator={result.get('validationMs', 0)} ms failed={classes}"
+                    f"validator={result.get('validationMs', 0)} ms reading={result.get('requestReadingMs', 0)} ms "
+                    f"added={(result.get('requestReading') or {}).get('added') or ''} failed={classes}"
                 )
         per_question = {
             item["id"]: summarize([row for row in rows if row["id"] == item["id"]]) for item in questions
@@ -171,6 +186,7 @@ class Command(BaseCommand):
                 f"attempts {summary['meanAttempts']}, {summary['meanSeconds']} s, asked object "
                 f"{summary['askedObjectPresent']}/{summary['askedObjectResolved']}, generated {summary['generated']} "
                 f"(unlinked {summary['unlinked']}, two values as names of one object {summary['sharedName']}), "
+                f"reading added {summary['readingAdded']} failed {summary['readingFailed']}, "
                 f"failed {summary['failuresByClass']}"
             )
         self.stdout.write(
@@ -180,7 +196,9 @@ class Command(BaseCommand):
             f"median validator {statistics.median([row.get('validationMs', 0) for row in counted] or [0]):.0f} ms | "
             f"replies not JSON {overall['notJson']} | order repaired {overall['repairedOrder']} | placement repaired {overall['repairedPlacement']} | references repaired {overall['repairedReferences']} | asked object {overall['askedObjectPresent']}/{overall['askedObjectResolved']} | "
             f"generated {overall['generated']} (unlinked {overall['unlinked']}, two values as names of one object "
-            f"{overall['sharedName']}) | failed attempts {overall['failuresByClass']}"
+            f"{overall['sharedName']}) | reading used {overall['readingUsed']} added {overall['readingAdded']} failed "
+            f"{overall['readingFailed']} (median {overall['readingMs']['median']} ms, p90 {overall['readingMs']['p90']} ms) | "
+            f"failed attempts {overall['failuresByClass']}"
         )
         if options["output"]:
             Path(options["output"]).write_text(
