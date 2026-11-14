@@ -18,7 +18,9 @@ docs/plans/2026-11-14-retrieval-misses.md, step Q0.
 from __future__ import annotations
 
 import json
+import time
 from collections import Counter
+from contextlib import contextmanager
 from pathlib import Path
 
 import yaml
@@ -158,6 +160,7 @@ def pass_report(recorded: dict, patterns: list[str]) -> dict:
         "question": recorded["args"].get("question"),
         "scope": recorded["args"].get("scope"),
         "concepts": recorded["query"].get("concepts", []),
+        "bridgedConcepts": recorded["query"].get("bridgedConcepts", []),
         "rareTerms": recorded["query"].get("rareTerms", []),
         "generators": generators,
         "stages": filters,
@@ -238,6 +241,56 @@ class Translations:
             self.path.write_text(json.dumps(self.stored, indent=1, ensure_ascii=False, sort_keys=True), encoding="utf-8")
 
 
+class BridgeTerms:
+    """The vocabulary bridge's replies (the model terms for a question), kept in a file so that a rerun
+    compares the later stages of retrieval on the same terms (Q1 of the plan).
+
+    Each reply is stored with the seconds the call took, or the error it raised; a stored error is raised
+    again, so a call that timed out stays a failed call (the bridge then adds nothing, as in the app)."""
+
+    def __init__(self, path: Path | None, fresh: bool, use_model: bool = True):
+        self.path = path
+        self.use_model = use_model
+        self.stored: dict = {}
+        if path and path.exists() and not fresh:
+            self.stored = json.loads(path.read_text(encoding="utf-8"))
+        self.calls = 0
+
+    @contextmanager
+    def active(self):
+        from helpdesk.services import vocabulary_bridge
+
+        ask = vocabulary_bridge._ask_for_terms
+
+        def stored_or_asked(question: str) -> list[str]:
+            if question not in self.stored:
+                if not self.use_model:
+                    raise RuntimeError("not asked (--no-model)")
+                self.calls += 1
+                start = time.perf_counter()
+                try:
+                    self.stored[question] = {"terms": ask(question), "seconds": round(time.perf_counter() - start, 2)}
+                except Exception as exc:  # recorded and raised again, as the bridge's own failure
+                    self.stored[question] = {"error": str(exc)[:200], "seconds": round(time.perf_counter() - start, 2)}
+            reply = self.stored[question]
+            if "error" in reply:
+                raise RuntimeError(reply["error"])
+            return list(reply["terms"])
+
+        vocabulary_bridge.bridged_question_concepts.cache_clear()
+        vocabulary_bridge._ask_for_terms = stored_or_asked
+        try:
+            yield
+        finally:
+            vocabulary_bridge._ask_for_terms = ask
+            vocabulary_bridge.bridged_question_concepts.cache_clear()
+
+    def save(self) -> None:
+        if self.path:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self.path.write_text(json.dumps(self.stored, indent=1, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+
+
 def run_question(entry: dict, translations: Translations, index: SourceIndex, requested_scope: list[str] | None = None) -> dict:
     """One question as the answer view runs it, with the wanted source's rank at every stage.
 
@@ -292,6 +345,7 @@ def run_question(entry: dict, translations: Translations, index: SourceIndex, re
         english_question=english,
     )
     recorder = StageRecorder()
+    retrieval_start = time.perf_counter()
     with retrieval_probe(recorder):
         chunks, _trace = retrieve_chunks_with_trace(min_score=min_score, **arguments)
     relaxed = False
@@ -300,6 +354,7 @@ def run_question(entry: dict, translations: Translations, index: SourceIndex, re
         recorder = StageRecorder()
         with retrieval_probe(recorder):
             chunks, _trace = retrieve_chunks_with_trace(min_score=min(min_score, 0.45), **arguments)
+    retrieval_seconds = round(time.perf_counter() - retrieval_start, 2)
 
     presence = presence_evidence(question, scope, english)
     if presence:
@@ -383,6 +438,8 @@ def run_question(entry: dict, translations: Translations, index: SourceIndex, re
         "keywordRefusal": keyword_refusal,
         "faqRoute": faq_route,
         "relaxedRetry": relaxed,
+        "retrievalSeconds": retrieval_seconds,
+        "bridgedConcepts": sorted({c for report in passes for c in report["bridgedConcepts"]}),
         "presenceAdded": len(presence),
         "examplePath": example_path,
         "wantedChunks": len(wanted_ids),
@@ -413,13 +470,21 @@ class Command(BaseCommand):
         parser.add_argument("--output", default="", help="Write the per-question JSON report here.")
         parser.add_argument("--ids", nargs="*", default=None, help="Only these question ids.")
         parser.add_argument("--translations", default="", help="JSON file of English renderings, read and updated.")
-        parser.add_argument("--no-model", action="store_true", help="Never call the model; unrendered questions are searched as asked.")
+        parser.add_argument("--no-model", action="store_true", help="Never call the model; unrendered questions are searched as asked, and the bridge adds nothing for a question without a stored reply.")
         parser.add_argument("--fresh-translations", action="store_true", help="Ask the model again instead of the stored renderings.")
         parser.add_argument(
             "--fitting-scope",
             action="store_true",
             help="Send each question's fitting_scope as the request's standardsScope (default: empty, as the chat page).",
         )
+        parser.add_argument(
+            "--bridge",
+            choices=("on", "off"),
+            default=None,
+            help="Switch the vocabulary bridge (VOCABULARY_BRIDGE_ENABLED) on or off for this run (default: the setting).",
+        )
+        parser.add_argument("--bridge-terms", default="", help="JSON file of the bridge's replies, read and updated.")
+        parser.add_argument("--fresh-bridge-terms", action="store_true", help="Ask the model again instead of the stored replies.")
         parser.add_argument("--check-sources", action="store_true", help="Only report how many indexed chunks each pattern matches.")
 
     def handle(self, *args, **options):
@@ -448,10 +513,22 @@ class Command(BaseCommand):
             use_model=not options.get("no_model"),
             fresh=bool(options.get("fresh_translations")),
         )
+        bridge_terms = BridgeTerms(
+            Path(options["bridge_terms"]).expanduser() if options.get("bridge_terms") else None,
+            fresh=bool(options.get("fresh_bridge_terms")),
+            use_model=not options.get("no_model"),
+        )
+        bridge = {} if options.get("bridge") is None else {"VOCABULARY_BRIDGE_ENABLED": options["bridge"] == "on"}
         reports = []
         for number, entry in enumerate(entries, start=1):
             requested = list(entry.get("fitting_scope") or []) if options.get("fitting_scope") else []
-            report = run_question(entry, translations, index, requested)
+            with override_settings(**bridge), bridge_terms.active():
+                report = run_question(entry, translations, index, requested)
+            report["bridgeReplies"] = {
+                text: bridge_terms.stored[text]
+                for text in (report["question"], report["english"])
+                if text and text in bridge_terms.stored
+            }
             reports.append(report)
             best = report["passes"][report["bestPass"]] if report["bestPass"] is not None else {}
             self.stdout.write(
@@ -462,10 +539,12 @@ class Command(BaseCommand):
                 f"scope {report['scope']}"
             )
         translations.save()
+        bridge_terms.save()
 
         counts = Counter("found" if r["found"] else LOSS_STEP.get(r["lostAt"], str(r["lostAt"])) for r in reports)
         self.stdout.write("")
         self.stdout.write(f"Questions: {len(reports)}; renderings computed (english_search_query, English questions included): {translations.calls}")
+        self.stdout.write(f"Vocabulary bridge: {options.get('bridge') or 'as set'}; replies asked of the model: {bridge_terms.calls}")
         for step, count in counts.most_common():
             self.stdout.write(f"  {count:4d}  {step}")
         if options.get("output"):

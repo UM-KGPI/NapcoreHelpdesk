@@ -2215,6 +2215,7 @@ def _retrieve_chunks_once(
             "query",
             {
                 "concepts": sorted(question_concepts),
+                "bridgedConcepts": sorted(bridged_concepts),
                 "expandedConcepts": len(expanded_concepts),
                 "rareTerms": list(rare_lexemes),
                 "docTypeHints": sorted(hinted_doc_types),

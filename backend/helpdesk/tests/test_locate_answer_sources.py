@@ -113,3 +113,42 @@ class TranslationsTests(SimpleTestCase):
         rendering.assert_not_called()
         self.assertIsNone(english)
         self.assertIn("no-model", origin)
+
+
+@override_settings(
+    VOCABULARY_BRIDGE_ENABLED=True,
+    CONTROLLER_LLM_ENABLED=True,
+    CONTROLLER_LLM_API_BASE_URL="http://controller.invalid",
+    CONTROLLER_LLM_API_MODEL="m",
+)
+class BridgeTermsTests(SimpleTestCase):
+    def test_a_stored_reply_is_used_without_asking_the_model(self):
+        from helpdesk.management.commands.locate_answer_sources import BridgeTerms
+        from helpdesk.services import vocabulary_bridge
+
+        terms = BridgeTerms(None, fresh=False)
+        terms.stored = {"q": {"terms": ["FARE PRODUCT"], "seconds": 1.0}}
+        with patch("helpdesk.services.vocabulary_bridge.request.urlopen") as call, terms.active():
+            self.assertEqual(vocabulary_bridge._ask_for_terms("q"), ["FARE PRODUCT"])
+        call.assert_not_called()
+        self.assertEqual(terms.calls, 0)
+
+    def test_a_stored_failure_stays_a_failure(self):
+        from helpdesk.management.commands.locate_answer_sources import BridgeTerms
+        from helpdesk.services import vocabulary_bridge
+
+        terms = BridgeTerms(None, fresh=False)
+        terms.stored = {"q": {"error": "timed out", "seconds": 3.0}}
+        with terms.active():
+            self.assertEqual(vocabulary_bridge.bridged_question_concepts("q"), frozenset())
+
+    def test_a_new_reply_is_asked_once_and_stored(self):
+        from helpdesk.management.commands.locate_answer_sources import BridgeTerms
+        from helpdesk.services import vocabulary_bridge
+
+        terms = BridgeTerms(None, fresh=False)
+        with patch.object(vocabulary_bridge, "_ask_for_terms", return_value=["TICKET"]) as ask, terms.active():
+            vocabulary_bridge._ask_for_terms("q")
+            vocabulary_bridge._ask_for_terms("q")
+        ask.assert_called_once_with("q")
+        self.assertEqual(terms.stored["q"]["terms"], ["TICKET"])
