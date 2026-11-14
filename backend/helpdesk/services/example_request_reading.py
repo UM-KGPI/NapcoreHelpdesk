@@ -15,8 +15,8 @@ then keeps only what it can ground in the question and the schema (plan §2):
    count fails this keeps its kind and loses its count.
 
 So a wrong reading can make a later check stricter or laxer, never put content into an example the question does
-not have. The command read_example_requests measures it against the generator's patterns (R0). Since R1 the
-generator adds the reading's counted objects to the counts its patterns find (request_reading_objects).
+not have. R0 ships no behaviour: nothing in the generator calls this yet; the command read_example_requests
+measures it against the generator's patterns.
 """
 
 from __future__ import annotations
@@ -91,17 +91,16 @@ def candidate_names(question: str) -> list[str]:
     return list(dict.fromkeys(names))[:MAX_CANDIDATE_NAMES]
 
 
-def _call_model(messages: list[dict], timeout_seconds: float | None = None) -> str:
+def _call_model(messages: list[dict]) -> str:
     """The generator's client and model, without thinking, temperature 0 (an OpenAI-style gateway takes it; the
-    Anthropic SDK path does not send sampling parameters) and a small max_tokens. timeout_seconds: the client's
-    timeout per request (LLM_TIMEOUT_SECONDS by default)."""
+    Anthropic SDK path does not send sampling parameters) and a small max_tokens."""
     from helpdesk.services.llm_generator import _request_chat_completion
 
     response = _request_chat_completion(
         api_base_url=(settings.LLM_API_BASE_URL or "").strip(),
         api_key=(settings.LLM_API_KEY or "").strip(),
         model=settings.LLM_MODEL,
-        timeout_seconds=timeout_seconds or settings.LLM_TIMEOUT_SECONDS,
+        timeout_seconds=settings.LLM_TIMEOUT_SECONDS,
         temperature=0.0,
         max_tokens=READING_MAX_TOKENS,
         messages=messages,
@@ -251,14 +250,14 @@ def ground(reading: dict, question: str, lookup=None) -> tuple[dict, list[dict]]
     return grounded, dropped
 
 
-def read_request(question: str, candidates: list[str] | None = None, lookup=None, timeout_seconds: float | None = None) -> dict:
+def read_request(question: str, candidates: list[str] | None = None, lookup=None) -> dict:
     """What the question asks an example of, read by the model and grounded (see the module docstring):
     {"ok", "asked", "askedKinds", "objects", "values", "conditions", "dropped", "ms", "raw", "error"}.
     ok is False when the call failed or its reply had no JSON object; the patterns are the fallback then."""
     empty = {"asked": "", "askedKinds": [], "objects": [], "values": [], "conditions": []}
     started = time.perf_counter()
     try:
-        raw = _call_model(reading_messages(question, candidates), timeout_seconds)
+        raw = _call_model(reading_messages(question, candidates))
     except Exception as exc:  # any failed call: the caller falls back to the patterns
         return {"ok": False, **empty, "dropped": [], "ms": round((time.perf_counter() - started) * 1000), "raw": "", "error": str(exc)[:300]}
     ms = round((time.perf_counter() - started) * 1000)

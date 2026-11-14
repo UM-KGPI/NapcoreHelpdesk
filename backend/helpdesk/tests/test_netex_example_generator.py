@@ -136,7 +136,7 @@ class QuestionWordTests(SimpleTestCase):
         self.assertIn("- Quay: A place.", block)
 
 
-@override_settings(LLM_ENABLED=True, EXAMPLE_REQUEST_READING=False)
+@override_settings(LLM_ENABLED=True)
 class GenerationTests(SimpleTestCase):
     def setUp(self):
         patcher = patch.object(generator, "schema_declarations", return_value=[])
@@ -287,7 +287,7 @@ class GenerationTests(SimpleTestCase):
         self.assertIn("no text before or after it", generator._PROMPT)
 
 
-@override_settings(LLM_ENABLED=True, EXAMPLE_REQUEST_READING=False)
+@override_settings(LLM_ENABLED=True)
 class AttemptLogTests(SimpleTestCase):
     def setUp(self):
         patcher = patch.object(generator, "schema_declarations", return_value=[])
@@ -610,7 +610,7 @@ class CompositionTests(SimpleTestCase):
         self.assertFalse(generator.wants_generated_example(question, ["NeTEx"]))
         with patch.object(generator, "_from_standard", return_value=None), patch.object(
             generator, "_ask_model", return_value=_reply(FRAME)
-        ), patch.object(generator, "validate_fragment", return_value={"valid": True, "errors": []}), override_settings(LLM_ENABLED=True, EXAMPLE_REQUEST_READING=False):
+        ), patch.object(generator, "validate_fragment", return_value={"valid": True, "errors": []}), override_settings(LLM_ENABLED=True):
             result = generator.generate_netex_example(
                 question, [NETEX_CHUNK], ["NeTEx"], english_question="Show me a NeTEx example for a bus with 50 seats and 20 standing places"
             )
@@ -973,7 +973,7 @@ class StandardExampleOrderTests(SimpleTestCase):
         self.assertGreaterEqual(fitting / checked, 0.99, kinds)
 
 
-@override_settings(LLM_ENABLED=True, EXAMPLE_REQUEST_READING=False)
+@override_settings(LLM_ENABLED=True)
 class FeedbackTests(SimpleTestCase):
     def test_diagnostics_replace_the_errors_they_explain(self):
         checked = {"diagnostics": [{"line": 5, "element": "FarePrice", "kind": "abstract", "detail": "`FarePrice` is abstract; use FareProductPrice."}]}
@@ -1160,7 +1160,7 @@ class AskedObjectTests(SimpleTestCase):
         self.assertNotIn("note", xml)
 
 
-@override_settings(LLM_ENABLED=True, EXAMPLE_REQUEST_READING=False)
+@override_settings(LLM_ENABLED=True)
 class SkeletonGenerationTests(SimpleTestCase):
     def setUp(self):
         for name, value in (("schema_declarations", []), ("value_element_declarations", [])):
@@ -1198,7 +1198,7 @@ class SkeletonGenerationTests(SimpleTestCase):
         self.assertEqual((result["valid"], result["askedObject"], result["askedObjectPresent"]), (True, "", False))
 
 
-@override_settings(LLM_ENABLED=True, EXAMPLE_REQUEST_READING=False)
+@override_settings(LLM_ENABLED=True)
 class StandardFallbackTests(SimpleTestCase):
     def setUp(self):
         for name, value in (("schema_declarations", []), ("value_element_declarations", []), ("skeleton_for", None)):
@@ -1438,7 +1438,7 @@ class AskedFromPartsTests(SimpleTestCase):
         self.assertEqual(near, 2)
         self.assertGreater(far, near)
 
-    @override_settings(LLM_ENABLED=True, EXAMPLE_REQUEST_READING=False)
+    @override_settings(LLM_ENABLED=True)
     def test_an_unresolved_noun_takes_the_object_of_its_parts(self):
         parts = [frozenset({"SeatingCapacity"})]
         with patch.object(generator, "schema_declarations", return_value=[]), patch.object(
@@ -1666,7 +1666,7 @@ class DurationTests(SimpleTestCase):
         self.assertTrue(generator.missing_value_error("PT3M", FERRY).startswith("the duration 3 minutes (PT3M) from the question is missing"))
         self.assertTrue(generator.missing_value_error("5", "5 EUR").startswith("the value 5 from the question is missing"))
 
-    @override_settings(LLM_ENABLED=True, EXAMPLE_REQUEST_READING=False)
+    @override_settings(LLM_ENABLED=True)
     def test_the_ferry_question_is_generated_for_its_named_object_in_one_attempt(self):
         with patch.object(generator, "asked_element", return_value="TemplateServiceJourney"), patch.object(
             generator, "skeleton_for", return_value=None
@@ -1749,7 +1749,7 @@ class ServiceConditionTests(SimpleTestCase):
         self.assertNotIn("JourneyRef", block)
         self.assertNotIn("keyList", block)
 
-    @override_settings(LLM_ENABLED=True, EXAMPLE_REQUEST_READING=False)
+    @override_settings(LLM_ENABLED=True)
     def test_the_on_demand_ferry_is_generated_with_the_condition_and_retried_without_it(self):
         replies = [_reply(CROSSING), _reply(ON_DEMAND_FERRY)]
         with patch.object(generator, "asked_element", return_value="TemplateServiceJourney"), patch.object(
@@ -1886,7 +1886,7 @@ class LinkedObjectTests(SimpleTestCase):
         self.assertFalse(problems[2].endswith("does not need it."))  # the stop points hold the values
 
 
-@override_settings(LLM_ENABLED=True, EXAMPLE_REQUEST_READING=False)
+@override_settings(LLM_ENABLED=True)
 class LinkRetryTests(SimpleTestCase):
     def setUp(self):
         for name, value in (("schema_declarations", []), ("value_element_declarations", []), ("skeleton_for", None),
@@ -1979,7 +1979,7 @@ class UnlinkedTextTests(SimpleTestCase):
         self.assertNotIn("also told", generated_example_rule(["Line"], "<ServiceFrame/>"))
 
 
-@override_settings(LLM_ENABLED=True, EXAMPLE_REQUEST_READING=False)
+@override_settings(LLM_ENABLED=True)
 class SkeletonSkipTests(SimpleTestCase):
     """Plan 2026-11-12 revision 3, S1: no skeleton when two or more values have no known holder."""
 
@@ -2102,7 +2102,7 @@ class SharedNameTests(SimpleTestCase):
         self.assertEqual((summary["generated"], summary["unlinked"], summary["sharedName"]), (2, 1, 1))
 
 
-@override_settings(LLM_ENABLED=True, EXAMPLE_REQUEST_READING=False)
+@override_settings(LLM_ENABLED=True)
 class SharedNameRetryTests(SimpleTestCase):
     """The split is a hard failure: retried, and never shown as the generated example."""
 
@@ -2129,7 +2129,7 @@ class SharedNameRetryTests(SimpleTestCase):
         self.assertIn("are not two names of one object", prompt)
 
 
-@override_settings(LLM_ENABLED=True, EXAMPLE_REQUEST_READING=False)
+@override_settings(LLM_ENABLED=True)
 class OrderRepairGenerationTests(SimpleTestCase):
     """The generator goes on with the validator's repaired frame (plan 2026-11-12 revision 3, S2)."""
 
@@ -2544,7 +2544,7 @@ ONE_JOURNEY_AND_A_STRAY_2 = (
 )
 
 
-@override_settings(LLM_ENABLED=True, EXAMPLE_REQUEST_READING=False)
+@override_settings(LLM_ENABLED=True)
 class ObjectCountTests(SimpleTestCase):
     """A number in digits before a kind of object is how many of it to write, not a value to place."""
 
@@ -2622,7 +2622,7 @@ class ObjectCountTests(SimpleTestCase):
         self.assertEqual([(p["value"], p["element"]) for p in result["valuePlaces"]], [("2", "ServiceJourney")])
 
 
-@override_settings(LLM_ENABLED=True, EXAMPLE_REQUEST_READING=False)
+@override_settings(LLM_ENABLED=True)
 class NamedObjectPartTests(SimpleTestCase):
     """A part the question names by an object's element name must be defined in the frame."""
 
@@ -2654,190 +2654,3 @@ class NamedObjectPartTests(SimpleTestCase):
         # A reference alone does not define the part.
         ref_only = '<ServiceFrame version="1" id="hd:SF"><StopPlaceRef ref="x"/></ServiceFrame>'
         self.assertEqual(len(generator.part_problems(ref_only, parts, "Line")), 1)
-
-
-def _reading(*objects, ok=True):
-    """A grounded reading as request_reading returns it: objects as (kind, kinds, count, phrase)."""
-    return {
-        "ok": ok, "ms": 900, "error": "" if ok else "503",
-        "objects": [{"kind": kind, "kinds": kinds, "count": count, "phrase": phrase} for kind, kinds, count, phrase in objects],
-    }
-
-
-@override_settings(LLM_ENABLED=True)
-class RequestReadingObjectsTests(SimpleTestCase):
-    """The reading's counted objects are added to the patterns' counts, never against them; its objects without a
-    count are not used (plan 2026-11-14, R1 counted only)."""
-
-    def setUp(self):
-        patcher = patch.object(generator, "concrete_elements", side_effect=lambda name: _CONCRETE.get(name))
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-    def test_a_count_in_words_becomes_a_count(self):
-        question = "Show me a NeTEx example for a line with two service journeys."
-        counts, parts, added = generator.request_reading_objects(
-            _reading(("ServiceJourney", ["ServiceJourney"], 2, "two service journeys")), generator.object_counts(question), [], "Line"
-        )
-        self.assertEqual(counts, [(2, "two", "service journeys", ["ServiceJourney"])])
-        self.assertEqual((parts, added), ([], [{"kind": "ServiceJourney", "count": 2, "phrase": "two service journeys"}]))
-        self.assertEqual(generator.counts_line(counts), "2 ServiceJourney (“two service journeys”)")
-        self.assertEqual(generator.count_problems(LINE_WITH_JOURNEYS, counts), [])
-        problems = generator.count_problems(ONE_JOURNEY_AND_A_STRAY_2, counts)
-        self.assertEqual(len(problems), 1)
-        self.assertEqual(generator.error_class(problems[0]), "count")
-
-    def test_a_counted_number_in_digits_leaves_the_values(self):
-        question = "Give a NeTEx example of a journey pattern with 3 stop points"
-        self.assertEqual(generator.object_counts(question), [])
-        counts, _, _ = generator.request_reading_objects(
-            _reading(("Point", ["PointA", "PointB"], 3, "3 stop points")), [], [], "JourneyPattern"
-        )
-        self.assertEqual(counts, [(3, "3", "stop points", ["PointA", "PointB"])])
-        self.assertEqual(generator.counted_out(generator.requested_values(question), question, counts), [])
-        # Without the reading the number stays a value, as before.
-        self.assertEqual(generator.counted_out(generator.requested_values(question), question, []), ["3"])
-
-    def test_the_patterns_entry_stands_where_the_two_overlap(self):
-        question = "a line with 2 service journeys"
-        pattern_counts = generator.object_counts(question)
-        for count in (2, 3):
-            counts, parts, added = generator.request_reading_objects(
-                _reading(("Journey", ["VehicleJourney", "ServiceJourney"], count, "2 service journeys")), pattern_counts, [], "Line"
-            )
-            self.assertEqual((counts, parts, added), (pattern_counts, [], []))
-        # A part the patterns found is not turned into a count by the reading.
-        pattern_parts = [("quay", ["Quay"])]
-        counts, parts, added = generator.request_reading_objects(
-            _reading(("Quay", ["Quay"], 2, "two quays")), [], pattern_parts, "StopPlace"
-        )
-        self.assertEqual((counts, parts, added), ([], pattern_parts, []))
-
-    def test_an_object_without_a_count_is_not_used(self):
-        reading = _reading(
-            ("Vehicle", ["Vehicle"], None, "uses low-floor vehicles"),
-            ("ServiceJourney", ["ServiceJourney"], None, "runs only on school days"),
-        )
-        self.assertEqual(generator.request_reading_objects(reading, [], [], "Line"), ([], [], []))
-        # The patterns' parts stay as they are.
-        pattern_parts = [("stop place", ["StopPlace"])]
-        self.assertEqual(generator.request_reading_objects(reading, [], pattern_parts, "Line"), ([], pattern_parts, []))
-        # Next to a counted entry of the same kind, an uncounted one neither adds a part nor cancels the count.
-        both = _reading(("Deck", ["Deck"], 2, "two decks"), ("Deck", ["Deck"], None, "a deck"))
-        counts, parts, added = generator.request_reading_objects(both, [], [], "VehicleType")
-        self.assertEqual((counts, parts), ([(2, "two", "decks", ["Deck"])], []))
-        self.assertEqual(added, [{"kind": "Deck", "count": 2, "phrase": "two decks"}])
-
-    def test_left_out_the_asked_object_kindless_and_self_contradicting_entries(self):
-        reading = _reading(
-            ("Line", ["Line"], 2, "two lines"),
-            ("", [], 2, "two departures"),
-            ("Deck", ["Deck"], 2, "two decks"),
-            ("Deck", ["Deck"], 3, "three decks"),
-        )
-        self.assertEqual(generator.request_reading_objects(reading, [], [], "Line"), ([], [], []))
-        # The same object read twice with the same count is one count.
-        twice = _reading(("Deck", ["Deck"], 2, "two decks"), ("Deck", ["Deck"], 2, "two decks"))
-        counts, _, added = generator.request_reading_objects(twice, [], [], "VehicleType")
-        self.assertEqual((len(counts), len(added)), (1, 1))
-
-    def test_no_reading_leaves_the_patterns(self):
-        pattern_counts = [(2, "2", "service journeys", ["ServiceJourney"])]
-        for reading in (None, _reading(("Deck", ["Deck"], 2, "two decks"), ok=False)):
-            self.assertEqual(generator.request_reading_objects(reading, pattern_counts, [], "Line"), (pattern_counts, [], []))
-
-    def test_each_count_is_checked_on_its_own(self):
-        counts = [(2, "two", "service journeys", ["ServiceJourney"]), (2, "two", "decks", ["Deck"])]
-        problems = generator.count_problems(LINE_WITH_JOURNEYS, counts)
-        self.assertEqual(len(problems), 1)
-        self.assertIn("2 Deck objects", problems[0])
-
-    def test_generation_reads_once_and_checks_the_added_count(self):
-        question = "Show me a NeTEx example for a line with two service journeys."
-        reading = _reading(("ServiceJourney", ["ServiceJourney"], 2, "two service journeys"))
-        with patch.object(generator, "request_reading", return_value=reading) as read, \
-                patch.object(generator, "_ask_model", side_effect=[_reply(ONE_JOURNEY_AND_A_STRAY_2), _reply(LINE_WITH_JOURNEYS)]) as ask, \
-                patch.object(generator, "validate_fragment", return_value={"valid": True, "errors": []}), \
-                patch.object(generator, "asked_element", return_value=""), \
-                patch.object(generator, "asked_from_parts", return_value=("", [])), \
-                patch.object(generator, "_from_standard", return_value=None), \
-                patch.object(generator, "schema_declarations", return_value=[]), \
-                patch.object(generator, "value_element_declarations", return_value=[]):
-            result = generator.generate_netex_example(question, [NETEX_CHUNK], ["NeTEx"])
-        self.assertEqual(read.call_count, 1)
-        prompt = ask.call_args_list[0].args[0][1]["content"]
-        self.assertIn("Objects to write, each defined with its own id: 2 ServiceJourney (“two service journeys”)", prompt)
-        self.assertEqual((result["valid"], result["attempts"]), (True, 2))
-        self.assertEqual(result["attemptLog"][0]["errorClass"], "count")
-        self.assertEqual(result["requestReadingMs"], 900)
-        self.assertEqual(result["requestReading"]["added"], [{"kind": "ServiceJourney", "count": 2, "phrase": "two service journeys"}])
-        self.assertEqual((result["requestReading"]["used"], result["requestReading"]["failed"]), (True, False))
-
-    def test_a_failed_reading_is_patterns_only(self):
-        question = "Show me a NeTEx example for a line with 2 service journeys."
-        with patch.object(generator, "request_reading", return_value=_reading(ok=False)), \
-                patch.object(generator, "_ask_model", return_value=_reply(LINE_WITH_JOURNEYS)) as ask, \
-                patch.object(generator, "validate_fragment", return_value={"valid": True, "errors": []}), \
-                patch.object(generator, "asked_element", return_value=""), \
-                patch.object(generator, "asked_from_parts", return_value=("", [])), \
-                patch.object(generator, "_from_standard", return_value=None):
-            result = generator.generate_netex_example(question, [NETEX_CHUNK], ["NeTEx"])
-        self.assertIn("2 ServiceJourney (“2 service journeys”)", ask.call_args_list[0].args[0][1]["content"])
-        self.assertEqual((result["requestReading"]["used"], result["requestReading"]["failed"]), (False, True))
-        self.assertEqual(result["requestReading"]["added"], [])
-
-
-class RequestReadingCallTests(SimpleTestCase):
-    """The call: off by setting, bounded in time, any failure is patterns only."""
-
-    @override_settings(EXAMPLE_REQUEST_READING=False)
-    def test_the_setting_switches_the_call_off(self):
-        from helpdesk.services import example_request_reading as reading
-
-        with patch.object(reading, "read_request") as read:
-            result = generator.request_reading("a line with two service journeys")
-        read.assert_not_called()
-        self.assertEqual((result["ok"], result.get("skipped")), (False, True))
-
-    @override_settings(EXAMPLE_REQUEST_READING=True)
-    def test_a_slow_or_failing_call_is_no_reading(self):
-        import time as _time
-
-        from helpdesk.services import example_request_reading as reading
-
-        with patch.object(generator, "READING_TIMEOUT_SECONDS", 0.2), \
-                patch.object(reading, "read_request", side_effect=lambda *a, **k: _time.sleep(1) or {"ok": True}):
-            started = _time.perf_counter()
-            result = generator.request_reading("a line with two service journeys")
-            self.assertLess(_time.perf_counter() - started, 0.8)
-        self.assertFalse(result["ok"])
-        self.assertIn("within", result["error"])
-        with patch.object(reading, "read_request", side_effect=RuntimeError("503")):
-            result = generator.request_reading("a line with two service journeys")
-        self.assertEqual((result["ok"], result["error"]), (False, "503"))
-        with patch.object(reading, "read_request", return_value={"ok": True, "objects": [], "ms": 5}) as read:
-            result = generator.request_reading("a line with two service journeys")
-        self.assertTrue(result["ok"])
-        # The question, no candidate names, the generator's lookup and the short timeout.
-        self.assertEqual(read.call_args.args[1:], (None, generator._reading_lookup, generator.READING_TIMEOUT_SECONDS))
-
-    def test_the_lookup_keeps_object_elements_only(self):
-        concrete = {"Journey": [{"name": "VehicleJourney", "object": True}], "Departure": [{"name": "Departure", "object": False}]}
-        with patch.object(generator, "concrete_elements", side_effect=lambda name: concrete.get(name)):
-            self.assertEqual(generator._reading_lookup("Journey"), ["VehicleJourney"])
-            self.assertEqual(generator._reading_lookup("Departure"), [])
-            self.assertEqual(generator._reading_lookup("Bus"), [])
-            self.assertEqual(generator._reading_lookup("not a name"), [])
-
-    def test_the_benchmark_counts_the_reading(self):
-        from helpdesk.management.commands.run_example_benchmark import summarize
-
-        rows = [
-            {"valid": True, "attempts": 1, "requestReadingMs": 1000, "requestReading": {"used": True, "failed": False, "added": [{"kind": "Deck"}]}},
-            {"valid": True, "attempts": 1, "requestReadingMs": 1200, "requestReading": {"used": True, "failed": False, "added": []}},
-            {"valid": True, "attempts": 1, "requestReadingMs": 3000, "requestReading": {"used": False, "failed": True, "added": []}},
-            {"valid": True, "attempts": 1},
-        ]
-        summary = summarize(rows)
-        self.assertEqual((summary["readingUsed"], summary["readingAdded"], summary["readingFailed"]), (2, 1, 1))
-        self.assertEqual(summary["readingMs"], {"median": 1200, "p90": 3000})
