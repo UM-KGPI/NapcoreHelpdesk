@@ -34,9 +34,6 @@ MAX_EVIDENCE_CHUNKS = 6
 MAX_EVIDENCE_CHARS = 1800
 MAX_REPORTED_ERRORS = 5
 VALIDATOR_TIMEOUT_SECONDS = 10
-# The reading of the request (plan 2026-11-14, R1): one short model call per generated example; past this many
-# seconds the example goes on with the patterns alone, so a slow call cannot hold the answer.
-READING_TIMEOUT_SECONDS = 3.0
 
 _EXAMPLE_WORDS = re.compile(r"\b(?:examples?|samples?|snippets?|fragments?|show\s+(?:me\s+)?(?:how|the\s+xml))\b", re.I)
 # A request to produce XML without an example word (prod req-mwb6auo0-n3jh83, 2026-11-10: "Can you create an
@@ -349,11 +346,11 @@ def object_count_places(fragment: str, counts: list[tuple[int, str, str, list[st
 
 
 def count_problems(fragment: str, counts: list[tuple[int, str, str, list[str]]]) -> list[str]:
-    """The feedback for each counted number of objects the fragment does not have in one parent. Each count is
-    looked for on its own: "two quays and two entrances" are two checks, not one met by either."""
+    """The feedback for each counted number of objects the fragment does not have in one parent."""
+    placed = {place["value"] for place in object_count_places(fragment, counts)}
     problems = []
     for count, written, phrase, kinds in counts:
-        if object_count_places(fragment, [(count, written, phrase, kinds)]):
+        if written in placed:
             continue
         kind = kinds[0] if len(kinds) == 1 else " or ".join(kinds[:3])
         problems.append(
@@ -405,7 +402,7 @@ def part_problems(fragment: str, parts: list[tuple[str, list[str]]], asked: str 
         kind = kinds[0] if len(kinds) == 1 else " or ".join(kinds[:3])
         owner = f", linked to the {asked}" if asked else ""
         problems.append(
-            f"the question wants \u201c{phrase}\u201d in the example and the frame defines no {kind}: write a {kind} "
+            f"the question wants a {phrase} in the example and the frame defines no {kind}: write a {kind} "
             f"object with its own id{owner}"
         )
     return problems
@@ -414,98 +411,6 @@ def part_problems(fragment: str, parts: list[tuple[str, list[str]]], asked: str 
 def parts_line(parts: list[tuple[str, list[str]]]) -> str:
     """The named parts for the model's prompt: "StopPlace (“stop place”)"."""
     return ", ".join(f"{kinds[0] if len(kinds) == 1 else ' or '.join(kinds[:3])} (“{phrase}”)" for phrase, kinds in parts)
-
-
-def _reading_lookup(name: str) -> list[str]:
-    """Grounding rule 3 for the reading, through the generator's cached /concrete lookup: the object elements a
-    name stands for, [] for a name that is no object element or when the validator does not answer (the reading's
-    objects then lose their kinds and the patterns alone decide)."""
-    if not re.fullmatch(r"[A-Za-z][\w.-]*", name or ""):
-        return []
-    return [entry["name"] for entry in concrete_elements(name) or [] if entry.get("object")]
-
-
-def request_reading(question: str) -> dict:
-    """The model's grounded reading of the request (services/example_request_reading.read_request), made once per
-    generated example and given at most READING_TIMEOUT_SECONDS: {"ok", "objects", ..., "ms", "error"}. ok is
-    False when the setting EXAMPLE_REQUEST_READING is off ("skipped"), or the call failed or timed out; the
-    patterns alone are used then, as before R1."""
-    if not getattr(settings, "EXAMPLE_REQUEST_READING", True):
-        return {"ok": False, "skipped": True, "objects": [], "ms": 0, "error": "EXAMPLE_REQUEST_READING is off"}
-    from concurrent.futures import ThreadPoolExecutor
-    from concurrent.futures import TimeoutError as ReadingTimeout
-
-    from helpdesk.services.example_request_reading import read_request
-
-    started = time.perf_counter()
-    # A thread with a deadline: the client's own timeout is per request and it may retry once.
-    executor = ThreadPoolExecutor(max_workers=1)
-    future = executor.submit(
-        contextvars.copy_context().run, read_request, question, None, _reading_lookup, READING_TIMEOUT_SECONDS
-    )
-    try:
-        reading = dict(future.result(timeout=READING_TIMEOUT_SECONDS))
-    except ReadingTimeout:
-        reading = {"ok": False, "objects": [], "error": f"no reading within {READING_TIMEOUT_SECONDS:g} s"}
-    except Exception as exc:  # any failure: the patterns alone
-        reading = {"ok": False, "objects": [], "error": str(exc)[:300]}
-    finally:
-        executor.shutdown(wait=False)
-    reading["ms"] = round((time.perf_counter() - started) * 1000)
-    if not reading.get("ok"):
-        logger.info("request reading not available, patterns only: %s", reading.get("error"))
-    return reading
-
-
-def _reading_count(entry: dict) -> tuple[int, str, str, list[str]] | None:
-    """A counted object of the reading in object_counts' shape: (count, number as written in the phrase, the words
-    after it, object elements). None when the phrase does not hold the number (grounding rule 4 already
-    requires it)."""
-    count, phrase = entry.get("count"), entry.get("phrase") or ""
-    for match in re.finditer(r"\d+|[^\W\d_]+", phrase):
-        token = match.group(0)
-        if token == str(count) or _NUMBER_WORD_VALUES.get(token.lower()) == count:
-            return (count, token, phrase[match.end():].strip() or phrase, list(entry["kinds"]))
-    return None
-
-
-def request_reading_objects(
-    reading: dict | None,
-    counts: list[tuple[int, str, str, list[str]]],
-    parts: list[tuple[str, list[str]]],
-    asked: str = "",
-) -> tuple[list[tuple[int, str, str, list[str]]], list[tuple[str, list[str]]], list[dict]]:
-    """The patterns' counts and named parts with the reading's grounded objects added (plan 2026-11-14, R1): an
-    object with a count becomes a count, one without a count a named part. Nothing the patterns find is lost, and
-    no check is made where the two sources disagree: an object whose kinds overlap one the patterns found is left
-    to the patterns' entry (the same count, a different count, or a part), objects the reading itself counts two
-    ways are left out, and so is the asked object. Returns (counts, parts, added), added as {"kind", "count",
-    "phrase"}."""
-    counts, parts = list(counts), list(parts)
-    if not reading or not reading.get("ok"):
-        return counts, parts, []
-    entries = [
-        entry for entry in reading.get("objects") or []
-        if entry.get("kinds") and entry.get("phrase") and not (asked and asked in entry["kinds"])
-    ]
-    taken = [frozenset(kinds) for *_, kinds in counts] + [frozenset(kinds) for _, kinds in parts]
-    added: list[dict] = []
-    for entry in entries:
-        kinds = frozenset(entry["kinds"])
-        if any(kinds & seen for seen in taken):
-            continue
-        if any(other is not entry and kinds & frozenset(other["kinds"]) and other.get("count") != entry.get("count") for other in entries):
-            continue
-        if entry.get("count"):
-            shape = _reading_count(entry)
-            if shape is None:
-                continue
-            counts.append(shape)
-        else:
-            parts.append((entry["phrase"], list(entry["kinds"])))
-        taken.append(kinds)
-        added.append({"kind": entry.get("kind") or entry["kinds"][0], "count": entry.get("count"), "phrase": entry["phrase"]})
-    return counts, parts, added
 
 
 def other_question(question: str) -> str:
@@ -2811,8 +2716,7 @@ def generate_netex_example(
         return result
     written = {iso: text for text, _, iso in durations(question)}
     fallback["missingValues"] = [written.get(value, value) for value in fallback.get("missingValues") or []]
-    for key in ("askedObject", "attemptLog", "generationMs", "validationMs", "schemaDeclarations", "askedObjectMs",
-                "requestReading", "requestReadingMs"):
+    for key in ("askedObject", "attemptLog", "generationMs", "validationMs", "schemaDeclarations", "askedObjectMs"):
         if key in result:
             fallback.setdefault(key, result[key])
     fallback["generationMs"] = result.get("generationMs", 0)
@@ -2900,16 +2804,6 @@ def _generate(
     except Exception as exc:  # the validator unavailable: the number stays a value, as before
         logger.info("object counts not available: %s", exc)
         counts = []
-    # A part named by an object's element name ("a line with a stop place") must be defined in the frame.
-    try:
-        named_parts = named_object_parts(shape_question, asked)
-    except Exception as exc:  # the validator unavailable: the part is not checked, as before
-        logger.info("named parts not available: %s", exc)
-        named_parts = []
-    # The model's reading of the request adds the objects the patterns miss ("two service journeys", "3 stop
-    # points"): one call, before the first attempt (plan 2026-11-14, R1).
-    reading = request_reading(question)
-    counts, named_parts, reading_added = request_reading_objects(reading, counts, named_parts, asked)
     values = counted_out(requested_values(question), question, counts)
     skeleton_part = skeleton_block(skeleton) + "\n\n" if skeleton else ""
     try:
@@ -2920,6 +2814,12 @@ def _generate(
     condition_part = condition_part + "\n\n" if conditions else ""
     rule = values_rule(values, asked, own_objects=skeleton_skipped == "values")
     rule_part = rule + "\n" if rule else ""
+    # A part named by an object's element name ("a line with a stop place") must be defined in the frame.
+    try:
+        named_parts = named_object_parts(shape_question, asked)
+    except Exception as exc:  # the validator unavailable: the part is not checked, as before
+        logger.info("named parts not available: %s", exc)
+        named_parts = []
     to_write = ", ".join(filter(None, [counts_line(counts), parts_line(named_parts)]))
     if to_write:
         rule_part += f"Objects to write, each defined with its own id: {to_write}\n"
@@ -2934,24 +2834,12 @@ def _generate(
     declarations: list[dict] | None = None
     # Time spent waiting for the model and for the validator, so the validator's share of an answer's
     # latency shows in the trace; and how many schema declarations the model was given.
-    timing = {"generationMs": 0, "validationMs": 0, "schemaDeclarations": 0, "askedObjectMs": asked_ms,
-              "requestReadingMs": reading.get("ms", 0)}
+    timing = {"generationMs": 0, "validationMs": 0, "schemaDeclarations": 0, "askedObjectMs": asked_ms}
     asked_fields = {
         "askedObject": asked, "skeletonSourcePath": (skeleton or {}).get("sourcePath", ""),
         "skeletonCompanion": (skeleton or {}).get("companion", ""),
         **({"skeletonSkipped": skeleton_skipped} if skeleton_skipped else {}),
         "serviceConditions": [{"phrase": phrase, "element": element} for phrase, element in conditions],
-        # What the reading gave and what of it was added to the checks (the benchmark counts these).
-        "requestReading": {
-            "used": bool(reading.get("ok")),
-            "failed": not reading.get("ok") and not reading.get("skipped"),
-            "error": str(reading.get("error") or "")[:200],
-            "objects": [
-                {"kind": entry.get("kind", ""), "count": entry.get("count"), "phrase": entry.get("phrase", "")}
-                for entry in reading.get("objects") or []
-            ],
-            "added": reading_added,
-        },
     }
 
     def timed(key: str, call):

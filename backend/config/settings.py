@@ -104,9 +104,6 @@ env = environ.Env(
     # Generated NeTEx fragments for "example with values" questions, validated against the XSD
     # (netex_example_generator).
     NETEX_EXAMPLE_GENERATOR_ENABLED=(bool, True),
-    # One short model call reads what an example request asks for; its objects are added to the generator's
-    # counts and named parts (plan 2026-11-14, R1). False: the patterns alone, as before.
-    EXAMPLE_REQUEST_READING=(bool, True),
     SCHEMA_STRUCTURE_ENABLED=(bool, True),
     CONCEPT_PRESENCE_ENABLED=(bool, True),
     STREAM_KEEPALIVE_SECONDS=(float, 5.0),
@@ -391,7 +388,6 @@ VOCABULARY_BRIDGE_TIMEOUT_SECONDS = env("VOCABULARY_BRIDGE_TIMEOUT_SECONDS")
 PROPERTY_TERMS_ENABLED = env("PROPERTY_TERMS_ENABLED")
 ANSWER_COMPOSITION_ENABLED = env("ANSWER_COMPOSITION_ENABLED")
 NETEX_EXAMPLE_GENERATOR_ENABLED = env("NETEX_EXAMPLE_GENERATOR_ENABLED")
-EXAMPLE_REQUEST_READING = env("EXAMPLE_REQUEST_READING")
 # "What does X contain" answered from the NeTEx schema index (services/schema_structure.py).
 SCHEMA_STRUCTURE_ENABLED = env("SCHEMA_STRUCTURE_ENABLED")
 # "Does NeTEx have X?" gets the model's definition of X and the schema elements named after it (concept_presence).
