@@ -128,3 +128,11 @@ stop.
 ## 7. Results
 
 (Each step records its numbers in §7 of `2026-11-13-example-assembly-by-schema.md`; this section links them.)
+
+| Step | Result | Entry in `2026-11-13-example-assembly-by-schema.md` §7 |
+|---|---|---|
+| F1 | Shipped. xs:time rejections on gen32/gen38/gen42 (x10) 19 -> 0; gen32 first attempts 0 -> 10 | "F1 (2026-11-14): a time is given to the model in its xs:time form" |
+| F3 | Shipped. gen42 has its Line in 10 of 10 answers (0 before); first attempts 8 -> 0, as expected | "F3 (2026-11-14): the name of a standard is not the subject" |
+| F2 | Reverted. Day in DaysOfWeek in 26 of 26 accepted answers (5 of 30 before), but generated 30 -> 26 | "F2 (2026-11-14): a day of the week as a value" |
+| F4 | Shipped. The link was invisible to `link_example` (a general `ParentSiteRef`); gen18 unlinked 7 -> 0 of 10 | "F4 (2026-11-14): the parking that stays unlinked" |
+| All | 45 x3 on the final state: generated 132 (main 132), unlinked 0 (main 3), first attempt 98 (main 101) | "F1–F4 together (2026-11-14)" |
