@@ -198,10 +198,9 @@ readings:
 - id: gen35
   question: Give a NeTEx example of a stop place named "Celje Bus Station" with a quay served by wheelchair-accessible vehicles.
   asked: StopPlace
-  objects: [{kind: Quay, count: null}]
+  objects: [{kind: Quay, count: null}, {kind: VehicleType, count: null}]
   values: [Celje Bus Station]
-  unsure: true
-  note: '"wheelchair-accessible vehicles" may be a VehicleType object or a condition; written here as neither'
+  note: 'the wheelchair-accessible vehicles are a VehicleType the example must have; the standard''s examples give a quay no reference to a vehicle type (it is reached through a journey that stops there)'
 - id: gen36
   question: Show a NeTEx example of a service journey on line "12" that runs only on public holidays.
   asked: ServiceJourney
