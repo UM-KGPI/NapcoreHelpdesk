@@ -509,7 +509,25 @@ def _shares_word_run(sentence: str, text: str, length: int = 3) -> bool:
     return any(f" {' '.join(words[i:i + length])} " in text_words for i in range(len(words) - length + 1))
 
 
-def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
+# A word in an answer that is not in English may be inflected: "Slovenije", "Slovenijo" and "Sloveniji" are
+# "Slovenia" in a Slovenian answer, and the English evidence has none of them, so a cited sentence about the
+# Slovenian example was rejected twice and the answer dropped (2026-11-14). In such an answer a capitalised
+# word without inner capitals (a name, not an identifier) is found in the block by its first letters: all but
+# the last three, at least INFLECTED_STEM_MIN_LETTERS. Identifiers and English answers are compared as written.
+INFLECTED_STEM_MIN_LETTERS = 6
+
+
+def _term_in_block(term: str, haystack: str, inflected: bool = False) -> bool:
+    """Whether a checked term occurs in the block's comparable text (see _comparable)."""
+    if _comparable(term) in haystack:
+        return True
+    if not inflected or not term[:1].isupper() or not term.isalpha() or any(c.isupper() for c in term[1:]):
+        return False
+    stem = term.lower()[: max(INFLECTED_STEM_MIN_LETTERS, len(term) - 3)]
+    return len(stem) < len(term) and re.search(r"(?<![^\W\d_])" + re.escape(stem), haystack) is not None
+
+
+def _validate_citation_grounding(answer: str, chunks: list[dict], inflected: bool = False) -> None:
     """
     Verify that each [E#] citation is grounded in the referenced chunk's text.
 
@@ -638,7 +656,7 @@ def _validate_citation_grounding(answer: str, chunks: list[dict]) -> None:
                         f"Citation [E{citation_str}] grounding check FAILED: strong terms {strong_terms} not found in chunk source '{chunk.get('sourcePath', 'unknown')}'"
                     )
             elif weak_terms:
-                grounded = any(_comparable(term) in haystack for term in weak_terms)
+                grounded = any(_term_in_block(term, haystack, inflected) for term in weak_terms)
                 if not grounded:
                     logger.debug(
                         f"Citation [E{citation_str}] grounding check FAILED: weak terms {weak_terms} not found in chunk source '{chunk.get('sourcePath', 'unknown')}'"
@@ -1081,6 +1099,11 @@ def _is_pure_boilerplate(answer: str) -> bool:
 def _normalized_language(name: str | None) -> str:
     name = (name or "").strip().lower()
     return "english" if name == "en" else name
+
+
+def _not_english(language: str | None) -> bool:
+    """A known language other than English: its answer's words may be inflected (_term_in_block)."""
+    return _normalized_language(language) not in ("", "english")
 
 
 def _validate_answer_language(answer: str, question: str, target_language: str | None = None) -> None:
@@ -1971,7 +1994,7 @@ def _generate_answer_text(
     return answer
 
 
-def _validate_generated_answer(answer: str, chunks: list[dict]) -> None:
+def _validate_generated_answer(answer: str, chunks: list[dict], inflected: bool = False) -> None:
     """Run all grounding validators against a generated answer.
 
     Raises LLMGenerationError on the first failed check. Standards validation
@@ -1980,7 +2003,7 @@ def _validate_generated_answer(answer: str, chunks: list[dict]) -> None:
     """
     try:
         _validate_citations_to_chunks(answer=answer, chunks=chunks)
-        _validate_citation_grounding(answer=answer, chunks=chunks)
+        _validate_citation_grounding(answer=answer, chunks=chunks, inflected=inflected)
         _validate_no_raw_filenames(answer=answer, chunks=chunks)
         _validate_answer_has_specificity(answer=answer)
         _validate_no_unsupported_element_purpose_claims(answer=answer, chunks=chunks)
@@ -2173,7 +2196,7 @@ def generate_answer_llm(
         if (example_elements or structure_element) and not answer.strip():
             return _nothing_to_add(chunks)
         _validate_answer_language(answer=answer, question=question, target_language=target_language)
-        _validate_generated_answer(answer=answer, chunks=chunks)
+        _validate_generated_answer(answer=answer, chunks=chunks, inflected=_not_english(target_language))
     except LLMGenerationError as first_error:
         rejected_answer = answer or ""
         rejection_reason = str(first_error)
@@ -2227,7 +2250,7 @@ def generate_answer_llm(
             return _nothing_to_add(chunks)
         try:
             _validate_answer_language(answer=answer, question=question, target_language=target_language)
-            _validate_generated_answer(answer=answer, chunks=chunks)
+            _validate_generated_answer(answer=answer, chunks=chunks, inflected=_not_english(target_language))
         except LLMGenerationError as retry_error:
             # Retry failed validation too, but it did produce an answer. Keep it
             # as-is rather than paying for a third generation call — the feedback
@@ -2513,7 +2536,7 @@ def stream_answer_llm(
         full_answer = _strip_non_evidence_markup(full_answer)
         full_answer = _complete_xml_snippets(full_answer)
         _validate_answer_language(answer=full_answer, question=question, target_language=effective_language)
-        _validate_generated_answer(answer=full_answer, chunks=chunks)
+        _validate_generated_answer(answer=full_answer, chunks=chunks, inflected=_not_english(effective_language))
         _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks, shown_fragment=example_fragment)
     except LLMGenerationError as first_error:
         rejected_answer = full_answer if "full_answer" in dir() else ""
@@ -2549,7 +2572,7 @@ def stream_answer_llm(
         full_answer = _complete_xml_snippets(full_answer)
         try:
             _validate_answer_language(answer=full_answer, question=question, target_language=effective_language)
-            _validate_generated_answer(answer=full_answer, chunks=chunks)
+            _validate_generated_answer(answer=full_answer, chunks=chunks, inflected=_not_english(effective_language))
             _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks, shown_fragment=example_fragment)
         except LLMGenerationError as retry_error:
             # Retry failed validation too. A real, on-topic answer that fails a strict
