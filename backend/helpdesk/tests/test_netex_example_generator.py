@@ -1055,6 +1055,13 @@ class TemporalValueTests(SimpleTestCase):
         self.assertTrue(generator.holds_value("2026-12-01T07:15:00Z", "07:15"))
         self.assertFalse(generator.holds_value("2026-12-011", "2026-12-01"))
         self.assertFalse(generator.holds_value("08:30:15", "08:30"))
+
+    def test_the_prompt_gives_a_time_without_seconds_in_the_schema_form(self):
+        line = generator.values_line(["14:00", "2026-12-01", "07:15:30", "EUR"], "at 14:00 on 2026-12-01, 07:15:30, EUR")
+        self.assertEqual(line, "14:00 (an xs:time is written with seconds: 14:00:00), 2026-12-01, 07:15:30, EUR")
+        # The check keeps taking both forms.
+        self.assertTrue(generator.holds_value("14:00", "14:00"))
+        self.assertTrue(generator.holds_value("14:00:00", "14:00"))
 FARE_PRODUCT = (
     '<FareFrame version="1" id="hd:FF_1"><fareProducts><PreassignedFareProduct version="1" id="hd:PFP_1">'
     '<Name>Adult single</Name><prices><FareProductPrice version="1" id="hd:FPP_1"><Amount>5</Amount>'
@@ -1088,6 +1095,12 @@ class AskedObjectTests(SimpleTestCase):
             "Show a NeTEx example of a service journey which runs on Sundays": "service journey",
             # "to" does not end a subject: "point to point" stays whole or unmatched, never "point"
             "Show a NeTEx example of a point to point fare": "",
+            # The name of a standard is what the example is written in, not its subject (plan 2026-11-14, F3)
+            "Show me an example of NeTEx in XML for a line with departure on Monday 17:00.": "line",
+            "Show me an example of NeTEx XML for a stop place with two quays": "stop place",
+            "Give an example of SIRI for a vehicle activity": "vehicle activity",
+            "Show me an example of NeTEx in XML.": "",
+            "Show me an example of NeTEx for Ljubljana Bus Station": "",
         }
         for question, subject in cases.items():
             self.assertEqual(generator.asked_subject(question), subject, question)
@@ -2674,3 +2687,49 @@ class NamedObjectPartTests(SimpleTestCase):
         # A reference alone does not define the part.
         ref_only = '<ServiceFrame version="1" id="hd:SF"><StopPlaceRef ref="x"/></ServiceFrame>'
         self.assertEqual(len(generator.part_problems(ref_only, parts, "Line")), 1)
+
+
+class LinkByTargetTests(SimpleTestCase):
+    """A link the standard's examples make through a reference with a general name, found by what it points at
+    (plan 2026-11-14, F4)."""
+
+    SITE = (
+        '<PublicationDelivery xmlns="http://www.netex.org.uk/netex"><dataObjects><SiteFrame version="1" id="x:SF">'
+        '<stopPlaces><StopPlace version="1" id="x:SP"><Name>Station</Name></StopPlace></stopPlaces>'
+        '<parkings><Parking version="1" id="x:P"><ParentSiteRef ref="x:SP"/>'
+        '<pathLinks><SitePathLink version="1" id="x:L"><From><PlaceRef ref="x:P"/></From></SitePathLink></pathLinks>'
+        "<TotalCapacity>40</TotalCapacity></Parking></parkings></SiteFrame></dataObjects></PublicationDelivery>"
+    )
+
+    def setUp(self):
+        import tempfile
+        from pathlib import Path
+
+        self.tmp = tempfile.TemporaryDirectory()
+        examples = Path(self.tmp.name) / "NeTEx" / "examples"
+        examples.mkdir(parents=True)
+        (examples / "site.xml").write_text(self.SITE)
+        self.repositories = {"examples/site.xml": "https://github.com/x/NeTEx"}
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_a_general_reference_counts_by_its_target_only_when_asked(self):
+        with self.settings(SOURCE_CHECKOUT_DIR=self.tmp.name):
+            by_name = generator._link_in_files("Parking", "StopPlace", ["examples/site.xml"], self.repositories, by_target=False)
+            by_target = generator._link_in_files("Parking", "StopPlace", ["examples/site.xml"], self.repositories, by_target=True)
+        self.assertIsNone(by_name)
+        self.assertEqual(
+            {key: by_target[key] for key in ("holder", "toElement", "toAsked")},
+            {"holder": "Parking", "toElement": [], "toAsked": ["ParentSiteRef"]},
+        )
+
+    def test_the_feedback_says_which_object_carries_the_reference(self):
+        found = {"holder": "Parking", "toElement": [], "toAsked": ["ParentSiteRef"], "sourcePath": "examples/site.xml", "holders": {}}
+        fragment = (
+            '<SiteFrame version="1" id="hd:SF"><stopPlaces><StopPlace version="1" id="hd:SP"/></stopPlaces>'
+            '<parkings><Parking version="1" id="hd:P"><TotalCapacity>40</TotalCapacity></Parking></parkings></SiteFrame>'
+        )
+        with patch.object(generator, "link_example", return_value=found):
+            problems = generator.link_problems(fragment, "StopPlace", "a stop place with a parking of 40 spaces", ["40"])
+        self.assertIn("Give the Parking a reference to the StopPlace, as the standard's examples do: Parking > ParentSiteRef", problems[0])

@@ -145,6 +145,14 @@ _STANDARD_KEYWORD_PATTERNS: dict[str, re.Pattern] = {
 NAPCORE_SCOPE = "NAPCORE"
 _NON_STANDARD_SCOPES = frozenset({"EU legislation", NAPCORE_SCOPE})
 
+
+def is_standard_name(phrase: str) -> bool:
+    """Whether the phrase is, as a whole, the name of one of the standards ("NeTEx", "DATEX II")."""
+    phrase = (phrase or "").strip()
+    return bool(phrase) and any(
+        pattern.fullmatch(phrase) for name, pattern in _STANDARD_KEYWORD_PATTERNS.items() if name not in _NON_STANDARD_SCOPES
+    )
+
 _INTENT_PATTERNS = {
     "normative_status": [r"\bshall\b", r"\bmust\b", r"\bshould\b", r"\bmay\b"],
     "definition": [r"\bwhat is\b", r"\bdefine\b", r"\bmeaning of\b"],

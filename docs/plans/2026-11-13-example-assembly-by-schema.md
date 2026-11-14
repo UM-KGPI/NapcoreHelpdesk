@@ -471,3 +471,141 @@ a DayTypeRef (`hd:DT_Monday`) to a DayType that is not in the frame; no DaysOfWe
 answer main accepted: a weekday is not read as a value, so no check asks for it. Open, with two more seen here: a
 first attempt that writes 14:00 as written in the question (not an xs:time) costs one attempt in 7 of 10 runs, and
 "example of NeTEx in XML for a line …" (gen42) reads "NeTEx" as the subject, so no asked object is checked.
+
+### F1 (2026-11-14): a time is given to the model in its xs:time form. Shipped
+
+Plan `2026-11-14-example-open-faults.md`, F1. A time the question writes without seconds ("14:00") was written as
+it stands, and the schema rejects it as an xs:time. `values_line` now gives it with its form, "14:00 (an xs:time is
+written with seconds: 14:00:00)", as it already did for a duration. The value check is unchanged and takes both
+forms. Measured x10 the same day on both sides (`faults-f1-before-10`, `faults-f1-10`):
+
+| x10 | xs:time rejections (first error of an attempt) | attempts with an `hh:mm` element | first attempt | generated |
+|---|---|---|---|---|
+| gen32 | 10 -> 0 | 10 -> 0 | 0 -> 10 | 10 -> 10 |
+| gen38 | 7 -> 0 | 7 -> 0 | 0 -> 0 | 10 -> 10 |
+| gen42 | 2 -> 0 | 2 -> 0 | 5 -> 8 | 10 -> 10 |
+| gen06, gen16, gen24, gen30, gen39 | 0 -> 0 | 0 -> 0 | 10 each, unchanged | 10 each |
+| gen43 | 0 -> 0 | 0 -> 0 | 0 -> 0 (`min-count`, not a time) | 10 -> 10 |
+
+The accepted answers hold the time in the same element on both sides (DepartureTime, ArrivalTime, Time,
+LastDepartureTime), 10 of 10 per question. gen38's first attempt still fails in 10 of 10: that is the asked object in
+another frame (§5 of the new plan), not the time. Gate met.
+
+### F3 (2026-11-14): the name of a standard is not the subject. Shipped
+
+"Show me an example of NeTEx in XML for a line …" (gen42, a prod question) had "NeTEx" as its subject, so no asked
+object, no skeleton and no asked-object check. `asked_subject` now reads on when the subject is only the name of a
+standard (with "XML" at most): the subject is what the next "of" or "for" introduces. The names come from the app's
+own list (`question_parsing.is_standard_name`, from the scope patterns), not from a list in the generator.
+
+`asked_subject` and `asked_element` for gen01–45 and the 13 prod questions (`prod-questions.yaml`), before and
+after: two differ, gen42 and its prod copy (prod07), both "NeTEx" -> "line" / Line. Over the 665 distinct questions
+in the prod and dev logs, three differ: the same one, and "Show me a fragment of NeTEx XMl for a line from
+Slovenia." and "… NeTEx XMl for line." ("" -> "line"; "NeTEx XMl" ended as a proper name before). "A NeTEx example
+of …" is not touched (the subject pattern starts after "example").
+
+| gen42, x10 | asked object | first attempt | generated | accepted answers with a Line |
+|---|---|---|---|---|
+| before (`faults-f1-10`) | none | 8 | 10 | 0 (a TimetableFrame with journeys only) |
+| after (`faults-f3-10`) | Line, 10 of 10 | 0 | 10 | 10 (CompositeFrame: Line in a ServiceFrame, journeys with a LineRef to it) |
+
+The first attempt now fails the asked-object check in 10 of 10, as gen38's does: the same two-frame fault, expected
+by the plan and not a failure of the step. Gate met.
+
+### F2 (2026-11-14): a day of the week as a value. Not shipped (reverted)
+
+Reading: the seven English day names as a closed vocabulary ("on Mondays" -> Monday, the schema's spelling), outside
+quotes and not inside a proper name ("Black Friday Express"). A single "Monday" was no value before because it is a
+concept label (TN-ITS code list), so `named_values` left it out. Over the 665 distinct questions of the prod and dev
+logs, five name a day, all in English, all "Monday"; so English is enough today. The values are read from the
+question as written, not from the app's English rendering (checked in `_generate`: `requested_values(question)`).
+Values before and after for gen01–45 and the prod questions: only gen38, gen39, gen42 and their prod copies gain
+"Monday"; nothing else changes.
+
+Checking: the schema writes the days as a list (DaysOfWeek "Monday Tuesday", type `DaysOfWeekListOfEnumerations`, an
+`xsd:list` of `DayOfWeekEnumeration`). The validator's content model read every list as free text. It now keeps a
+list's item type, and `/accepting` also answers `inLists`: the elements whose content is a list of an enumerated
+item type that has the value as one item ("Monday" -> DaysOfWeek, RequiresNightsAway). A day then counted only in
+such an element, as its content or one item of it; an id, a reference, a Name or a Description did not count. No
+element was named in code.
+
+Measured x10 on both sides the same day, the after side against a validator run from the branch (port 8092; the
+dev container runs main's validator):
+
+| x10 | generated | day in DaysOfWeek in the accepted answers | first attempt |
+|---|---|---|---|
+| gen38, before (`faults-f1-10`) / after (`faults-f2-10`) | 10 / 9 | 0 / 9 | 0 / 0 |
+| gen39 | 10 / 9 | 0 / 9 | 10 / 4 |
+| gen42, before (`faults-f3-10`) / after | 10 / 8 | 5 / 8 | 0 / 0 |
+
+Every accepted answer after the step holds Monday in DaysOfWeek of a DayType's PropertyOfDay, and the DayType is
+linked (no unlinked answers); none passed by writing the day into a name or description. But generated fell from 30
+to 26, so the gate ("generated not below the state before") is not met. The four lost runs ran out of attempts on
+the day's object: a DayType written inside a journey's `dayTypes` (the schema wants a DayTypeRef there; 3 of 4),
+then a retry that left the day out (3 of 4), a PropertyOfDay given a version and an id (2 of 4), and for gen38 and
+gen42 the asked-object attempt (two frames) on top. gen39
+also lost first attempts (10 -> 4): before, it passed with Monday only as the id of a DayTypeRef. Reverted
+(commit "revert: a day of the week as a value (F2), gate not met"); the change stays in the branch history.
+
+Open: the day's object needs its shape before the first attempt (where DaysOfWeek sits: a DayType, its properties,
+a PropertyOfDay without an id), the same way the skeleton gives the asked object's. Whether to take the 26 correct
+answers at the cost of 4 standard examples is a decision for later.
+
+### F4 (2026-11-14): the parking that stays unlinked. Diagnosis, then shipped
+
+1. How the standard links the two. In the schema both directions validate (checked against the validator): a Parking
+   is a Site and has `ParentSiteRef` (the parking names the place it belongs to), and a StopPlace has `adjacentSites`
+   that may hold a ParkingRef. Neither a `parkings` list nor a bare ParkingRef is allowed inside a StopPlace, and a
+   Parking has no StopPlaceRef. In the standard's examples (every file with both objects) a Parking is linked to a
+   StopPlace once, by `ParentSiteRef` (`examples/standards/epiap/Chur_Equipment_Pathlink_V1.0.xml`); elsewhere it is
+   reached only through path links (PlaceRef in From/To) or not at all. The skeleton's companion comes from
+   `StopPlace-with-equipment-and-parking_example.xml`, where the parkings are not linked to the stop place. **Measured.**
+2. `link_example("Parking", "StopPlace")` returned None: it looked only for references named after the two kinds
+   (ParkingRef, StopPlaceRef), and no example has one between these two. So the feedback was the bare "Link it to the
+   StopPlace by a reference, directly or through another object in the frame": it said neither which object carries
+   the reference nor which element. The model then wrote a ParkingRef or a `parkings` list inside the StopPlace, or a
+   StopPlaceRef inside the Parking (`wrong-parent`), and the attempts ran out. Over all stored runs, a `link` attempt
+   followed by `wrong-parent` is gen18 in 45 of 66 cases (ParkingRef 33, StopPlaceRef 8, parkings 4). The plan's
+   belief was half right: not a wrong direction in the feedback, but no direction at all, because the examples'
+   reference has a general name. **Measured.**
+3. Other pairs with the bare feedback in the stored runs: WheelchairVehicleEquipment to VehicleType (7 attempts,
+   gen15), FareDayType to Line (4), TopographicPlace to Line (1). These are not the same shape: in the examples
+   those objects sit in their frames' lists and no reference of any name links them to the asked kind, so the
+   change below does not find a link for them either. **Measured.**
+
+Change: when no reference named after the kinds is found, `link_example` searches the same files again and counts
+any `...Ref` element whose `ref` is the id of an object of either kind in that file, under its own name (an object's
+reference to itself does not count). The name-based search runs first and is unchanged, so every pair it already
+resolved resolves as before (checked for 21 pairs: only Parking/StopPlace changed, None -> "Parking >
+ParentSiteRef"). The feedback is the existing one for that case: "Give the Parking a reference to the StopPlace, as
+the standard's examples do: Parking > ParentSiteRef". Nothing names an element.
+
+| x10, same day | generated | first attempt | unlinked answers | mean attempts |
+|---|---|---|---|---|
+| gen18 before (`faults-f4-before-10`) / after (`faults-f4-10`) | 10 / 10 | 0 / 0 | 7 / 0 | 3.8 / 2.9 |
+| gen33 | 8 / 9 | 1 / 1 | 0 / 0 | 2.7 / 2.5 |
+| gen34 | 9 / 10 | 2 / 2 | 0 / 0 | 2.2 / 1.9 |
+| gen35 | 10 / 10 | 10 / 10 | 0 / 0 | 1.0 / 1.0 |
+| gen36 | 10 / 10 | 5 / 7 | 0 / 0 | 1.6 / 1.3 |
+
+All 10 gen18 answers after the change hold the Parking with TotalCapacity 40 and a `ParentSiteRef` to the
+StopPlace's id, in one SiteFrame: the way the standard's example links it. Every link feedback was followed in one
+retry. The first attempt still fails in 10 of 10, on a `parkings` list inside the StopPlace (9) before any link
+feedback: that comes from the skeleton's companion, whose file does not link the parking. Open. gen33–gen36 get no
+other link feedback than before (their pairs resolve by name), so their differences are run-to-run spread.
+
+### F1–F4 together (2026-11-14): all 45 questions x3 on the final state (F1, F3, F4; F2 reverted)
+
+| gen01–45, 3 runs | main (`gen38-frames-all`) | F3 state (`faults-f3-all`) | final (`faults-final-all`) |
+|---|---|---|---|
+| generated | 132 | 132 | 132 |
+| first attempt | 101 | 101 | 98 |
+| answers with an unlinked object | 3 (gen18 x3) | 3 (gen15, gen18, gen37) | 0 |
+| asked object present | 117 | 120 | 120 |
+| xs:time rejections | 4 | 0 | 0 |
+
+No question generated fewer than on main. First attempts against main: gen32 0 -> 3 (F1), gen42 3 -> 0 (F3: it now
+has an asked object and the two-frame fault of gen38), gen06 and gen14 +1, gen20, gen34, gen36 -1, gen37 -2. The
+last six have no time and no standard name in the question and their first prompt is the same on all three sides,
+so these are run-to-run spread (gen34 and gen36 x10 above: 2 and 2, 5 and 7). gen18 now takes 3 attempts in each
+run, not 4, and links its parking in all three.

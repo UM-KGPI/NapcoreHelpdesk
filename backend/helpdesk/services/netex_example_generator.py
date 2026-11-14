@@ -1064,15 +1064,21 @@ def standard_example(
 # where it goes or how it runs: "a bus line from Maribor to Ptuj that runs only on school days" had no subject
 # (prod req-mwdzf8px-3qfhdl, 2026-11-12), so no asked object, skeleton or check. Not "to": "a point to point
 # fare" would end at "point".
-_SUBJECT_WIDE = re.compile(
-    r"\b(?:examples?|samples?|fragments?|xml(?:\s+(?:files?|documents?|code|snippets?))?)\s+(?:of|for)\s+(?:an?\s+|the\s+|one\s+)?"
+_SUBJECT_PHRASE = (
+    r"(?:an?\s+|the\s+|one\s+)?"
     r"(?P<subject>[A-Za-z][\w-]*(?:\s+[A-Za-z][\w-]*){0,2}?)"
     r"(?=\s+(?:with|having|has|that|containing|including|for|in|named|called|operated|departing|arriving|at|on|of"
     r"|from|between|via|through|by|near|during|which|whose|where|when|running|serving|operating|connecting|using"
     r"|and|or)\b"
-    r"|\s*$|\s*[,.?!;:])",
+    r"|\s*$|\s*[,.?!;:])"
+)
+_SUBJECT_WIDE = re.compile(
+    r"\b(?:examples?|samples?|fragments?|xml(?:\s+(?:files?|documents?|code|snippets?))?)\s+(?:of|for)\s+" + _SUBJECT_PHRASE,
     re.I,
 )
+# Where the subject is only the name of a standard ("an example of NeTEx in XML for a line"), the subject is
+# what the next "of" or "for" introduces (plan 2026-11-14, F3).
+_SUBJECT_AFTER = re.compile(r"\b(?:of|for)\s+" + _SUBJECT_PHRASE, re.I)
 _LOOKUP_TTL_SECONDS = 3600.0
 _CONCRETE_CACHE: dict[str, tuple[list[dict] | None, float]] = {}
 _IN_EXAMPLES_CACHE: dict[str, tuple[bool, float]] = {}
@@ -1112,11 +1118,27 @@ def _in_examples(name: str) -> bool:
     return found
 
 
+def _names_only_the_standard(phrase: str) -> bool:
+    """A subject made of the name of a standard and the format word the subject pattern already reads ("NeTEx",
+    "NeTEx XML"): what the example is written in, not what it is an example of. The names are the app's own
+    (question_parsing), not a list here."""
+    from helpdesk.services.question_parsing import is_standard_name
+
+    words = phrase.split()
+    return is_standard_name(phrase) or (
+        any(is_standard_name(word) for word in words) and all(is_standard_name(word) or word.lower() == "xml" for word in words)
+    )
+
+
 def asked_subject(question: str) -> str:
     """The noun phrase the example is of ("fare product", "timetabled passing time"); "" for a proper name
     ("an example for Ljubljana Bus Station")."""
     match = _SUBJECT_WIDE.search(question or "")
+    while match and _names_only_the_standard(match.group("subject")):
+        match = _SUBJECT_AFTER.search(question, match.end("subject"))
     subject = match.group("subject").strip() if match else example_subject(question)
+    if _names_only_the_standard(subject):
+        return ""
     words = subject.split()
     if len(words) > 1 and all(word[:1].isupper() for word in words):
         return ""
@@ -2165,29 +2187,64 @@ def link_example(element: str, asked: str) -> dict | None:
 
     with_element, with_asked = files(ref_element, element), files(ref_asked, asked)
     candidates = sorted(set(with_element) & set(with_asked))[:MAX_LINK_FILES]
+    found = _link_in_files(element, asked, candidates, with_element, by_target=False)
+    if found is None:
+        # No reference named after either kind (ParkingRef, StopPlaceRef): a reference with a general name that
+        # points at an object of the kind in the same file (a Parking's ParentSiteRef to the StopPlace it
+        # belongs to). Named after the kinds only, the feedback said "link it by a reference" without saying
+        # which object carries it, and the model wrote a ParkingRef or a parkings list inside the StopPlace,
+        # which the schema has not (gen18: 0 of 16 first attempts, 8 of 16 answers unlinked; plan 2026-11-14, F4).
+        found = _link_in_files(element, asked, candidates, with_element, by_target=True)
+    _LINK_CACHE[key] = (found, time.monotonic() + _LOOKUP_TTL_SECONDS)
+    return found
+
+
+def _link_in_files(element: str, asked: str, candidates: list[str], repositories: dict, by_target: bool) -> dict | None:
+    """link_example's search of the example files. A reference counts by its name ({element}Ref, {asked}Ref); with
+    by_target, any ...Ref element whose ref is the id of an object of either kind defined in the same file counts
+    as a reference to that kind, under its own name."""
+    from pathlib import Path
+
+    from lxml import etree
+
+    ref_element, ref_asked = f"{element}Ref", f"{asked}Ref"
     parser = etree.XMLParser(resolve_entities=False, load_dtd=False, no_network=True, huge_tree=False, remove_comments=True)
     checkout_root = Path(getattr(settings, "SOURCE_CHECKOUT_DIR", "/app/repos"))
     direct = None
     bridges: dict[str, dict] = {}
     for source_path in candidates:
-        path = checkout_root / with_element[source_path].rstrip("/").rsplit("/", 1)[-1] / source_path
+        path = checkout_root / repositories[source_path].rstrip("/").rsplit("/", 1)[-1] / source_path
         try:
             if path.stat().st_size > MAX_STANDARD_FILE_BYTES:
                 continue
             root = etree.parse(str(path), parser).getroot()
         except (OSError, etree.XMLSyntaxError):
             continue
+        targets = {}
+        if by_target:
+            targets = {
+                node.get("id"): (ref_element if _local(node.tag) == element else ref_asked)
+                for node in root.iter()
+                if isinstance(node.tag, str) and node.get("id") and _local(node.tag) in (element, asked)
+            }
         # For each object, the path to the first reference of each kind inside it.
         reaches: dict = {}
         for node in root.iter():
+            if not isinstance(node.tag, str):
+                continue
             name = _local(node.tag)
-            if name not in (ref_element, ref_asked):
+            if by_target:
+                kind = targets.get(node.get("ref")) if name.endswith("Ref") else None
+            else:
+                kind = name if name in (ref_element, ref_asked) else None
+            if kind is None:
                 continue
             steps, up = [name], node.getparent()
             while up is not None:
                 up_name = _local(up.tag)
-                if up.get("id") and not up_name.endswith("Frame"):
-                    reaches.setdefault(up, {}).setdefault(name, list(reversed(steps)))
+                # An object's reference to itself (a path link inside a parking that starts at the parking) links nothing.
+                if up.get("id") and not up_name.endswith("Frame") and not (by_target and up.get("id") == node.get("ref")):
+                    reaches.setdefault(up, {}).setdefault(kind, list(reversed(steps)))
                 steps.append(up_name)
                 up = up.getparent()
         in_file = set()
@@ -2210,7 +2267,6 @@ def link_example(element: str, asked: str) -> dict | None:
     found = direct or (max(bridges.values(), key=lambda entry: entry["files"]) if bridges else None)
     if found is not None:
         found = {**found, "holders": bridges}
-    _LINK_CACHE[key] = (found, time.monotonic() + _LOOKUP_TTL_SECONDS)
     return found
 
 
@@ -2457,13 +2513,23 @@ def written_durations(places: list[dict], question: str) -> list[dict]:
 
 
 def values_line(values: list[str], question: str) -> str:
-    """The values for the model's prompt, a duration with how the schema writes it."""
+    """The values for the model's prompt, a duration or a clock time with how the schema writes it. A time the
+    question writes without seconds ("14:00") was written as it stands, and the schema rejects it as an xs:time:
+    8 of 10 gen38 runs and 3 of 3 gen32 runs lost their first attempt to it (plan 2026-11-14, F1). The value
+    check takes either form (holds_value)."""
     written = {iso: (text, seconds) for text, seconds, iso in durations(question)}
-    return ", ".join(
-        f"{written[v][0]} (an xs:duration {v} in an element the schema has for such a duration, or two times "
-        f"{written[v][0]} apart in the same object)" if v in written else v
-        for v in values
-    )
+
+    def described(value: str) -> str:
+        if value in written:
+            return (
+                f"{written[value][0]} (an xs:duration {value} in an element the schema has for such a duration, "
+                f"or two times {written[value][0]} apart in the same object)"
+            )
+        if re.fullmatch(r"\d{2}:\d{2}", value):
+            return f"{value} (an xs:time is written with seconds: {value}:00)"
+        return value
+
+    return ", ".join(described(v) for v in values)
 
 
 def values_rule(values: list[str], asked: str = "", own_objects: bool = False) -> str:
