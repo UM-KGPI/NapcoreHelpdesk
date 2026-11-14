@@ -406,3 +406,24 @@ Only gen25 and gen40 take a different path: for every other question `object_cou
 checks are as on main, so their differences (gen06, gen32, gen36, gen37, gen38, gen44 one or two runs lower;
 gen20, gen34 higher) are run-to-run spread. In gen40 the remaining first-attempt failures are a frame with the
 two ServiceJourneys and a LineRef but no Line.
+
+### Named part present (2026-11-14): "a line with a stop place departure" has its stop place
+
+Prod question gen44 was accepted as a Line alone (0 of 8 answers had a StopPlace). A part the question names by an
+object element's name is now listed in the first prompt and must be defined in the frame (error class `part`).
+Only element names count: the documentation search resolves "a price" to CellPrice, which correct answers do not
+contain (0 of 3), so properties and loose words are not checked. Of gen01–45 four questions have such a part.
+
+| 10 runs each | generated | has the part | unlinked answers | attempts | model s |
+|---|---|---|---|---|---|
+| gen44 StopPlace (main, 8 runs) | 8 | 0 | 0 | 2.5 | 13.5 |
+| gen44 StopPlace | 10 | 10 | 0 | 2.1 | 17.3 |
+| gen18 Parking (main, 10 runs) | 10 | 10 | 4 | 3.6 | 17.5 |
+| gen18 Parking | 10 | 10 | 6 | 3.8 | 18.0 |
+| gen25 DeckPlan | 10 | 10 | 0 | 1.1 | 6.1 |
+| gen35 Quay | 10 | 10 | 0 | 1.0 | 5.7 |
+
+gen44 now links the StopPlace to the Line through a journey with calls; all ten first attempts failed on linking
+and the feedback fixed them. gen18 is not changed by this step within 10 runs (4 and 6 of 10 unlinked; every first
+attempt fails `wrong-parent` on both sides), but it is weak on main itself: a Parking left unlinked to its
+StopPlace in 4 of 10 answers. Open.
