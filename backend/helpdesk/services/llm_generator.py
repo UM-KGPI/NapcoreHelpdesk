@@ -105,10 +105,17 @@ def _extract_grounded_lines(text: str) -> set[str]:
 def _validate_grounded_example_output(question: str, answer: str, chunks: list[dict], shown_fragment: str = "") -> None:
     if not _question_requests_verbatim_example(question):
         return
+    if has_ungrounded_code_block(answer=answer, chunks=chunks, shown_fragment=shown_fragment):
+        raise LLMGenerationError(
+            "Generated example block is not grounded in retrieved evidence; refusing fabricated XML/example output."
+        )
 
+
+def has_ungrounded_code_block(answer: str, chunks: list[dict], shown_fragment: str = "") -> bool:
+    """True when the answer holds an XML/JSON/YAML code block whose lines are mostly not in the evidence."""
     code_blocks = FENCED_CODE_BLOCK_PATTERN.findall(answer or "")
     if not code_blocks:
-        return
+        return False
 
     evidence_lines: set[str] = set()
     for chunk in chunks:
@@ -135,9 +142,8 @@ def _validate_grounded_example_output(question: str, answer: str, chunks: list[d
 
         matched_lines = sum(1 for line in block_lines if line in evidence_lines)
         if matched_lines < max(3, (len(block_lines) * 2 + 2) // 3):
-            raise LLMGenerationError(
-                "Generated example block is not grounded in retrieved evidence; refusing fabricated XML/example output."
-            )
+            return True
+    return False
 
 
 def _fix_out_of_range_citations(answer: str, max_chunk_idx: int) -> str:

@@ -88,6 +88,10 @@ export interface AnswerTrace {
   userDislikes?: boolean;
   answerSuccess?: boolean | null;
   citationClickCount?: number;
+  /** False when the answer text failed validation on both attempts and is served marked; null without an LLM answer. */
+  llmAnswerValidated?: boolean | null;
+  /** The text left out next to a block from the schema (it failed validation and could not be kept); null otherwise. */
+  llmDroppedAnswer?: string | null;
 }
 
 export interface CrossStandardEvidencePartition {

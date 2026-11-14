@@ -2,8 +2,9 @@
  * The body of an assistant turn. A block taken from the schema comes first when there is one: a valid
  * generated example (an "example with values" question) or what an element contains (a "what does X
  * contain" question). The text follows it, without a heading (every answer is source-grounded), only when there is any: it then adds
- * what the evidence says, and is left out when it had nothing to add or failed validation. Without a
- * block, the text alone, as before.
+ * what the evidence says, and is left out when it had nothing to add. Text that failed the answer check on
+ * both attempts is kept next to the block with a notice that it was not confirmed against the sources
+ * (trace.llmAnswerValidated false). Without a block, the text alone, as before.
  */
 import AnswerMarkdown from "./AnswerMarkdown";
 import GeneratedExampleBlock from "./GeneratedExample";
@@ -14,10 +15,13 @@ export default function AnswerBody({
   text,
   example,
   structure,
+  unvalidated = false,
 }: {
   text: string;
   example?: GeneratedExample | null;
   structure?: SchemaStructure | null;
+  /** The text failed the answer check on both attempts (trace.llmAnswerValidated === false). */
+  unvalidated?: boolean;
 }) {
   const block = example?.valid ? (
     <GeneratedExampleBlock example={example} />
@@ -32,6 +36,12 @@ export default function AnswerBody({
       {block}
       {text.trim() ? (
         <div className="answer-in-standard">
+          {unvalidated ? (
+            <p className="tiny answer-unvalidated" role="note">
+              Not confirmed against the sources: the automatic check could not match this text to the cited
+              evidence.
+            </p>
+          ) : null}
           <AnswerMarkdown text={text} />
         </div>
       ) : null}

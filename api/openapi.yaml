@@ -1827,13 +1827,16 @@ components:
         llmDroppedAnswer:
           type: [string, "null"]
           description: >-
-            For an example request with a valid generated example: the answer text that failed validation
-            and was left out of the answer (the example and its schema notes stand alone); null otherwise.
+            Next to a block from the schema (an example or what an element contains): the answer text that
+            failed validation on both attempts and was left out, because it held a code block found neither in
+            the evidence nor in the shown example, or citations the policy does not allow (the block then stands
+            alone); null otherwise. Other text that failed validation is kept and marked by llmAnswerValidated.
         llmAnswerValidated:
           type: [boolean, "null"]
           description: >-
-            False when the answer was served although its retry also failed validation (the answer is then
-            marked for review and its confidence capped at 0.80); null when no LLM answer was generated.
+            False when the answer text was served although its retry also failed validation (it is then
+            marked for review, its confidence capped at 0.80, and the page says it was not confirmed against
+            the sources); null when no LLM answer was generated.
         generatedExample:
           oneOf:
             - $ref: '#/components/schemas/GeneratedExample'

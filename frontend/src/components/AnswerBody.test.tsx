@@ -30,4 +30,19 @@ describe("AnswerBody", () => {
     expect(screen.queryByText(/^Generated example/)).toBeNull();
     expect(screen.queryByText("In the standard")).toBeNull();
   });
+
+  it("marks text that failed validation next to a block as not confirmed against the sources", () => {
+    const { container } = render(<AnswerBody text="Primer kaže sedeže [E1]." example={example} unvalidated />);
+    const note = screen.getByRole("note");
+    expect(note.textContent).toMatch(/^Not confirmed against the sources/);
+    const html = container.innerHTML;
+    expect(html.indexOf("Generated example")).toBeLessThan(html.indexOf("Not confirmed"));
+    expect(html.indexOf("Not confirmed")).toBeLessThan(html.indexOf("Primer kaže"));
+  });
+
+  it("does not mark validated text", () => {
+    render(<AnswerBody text="A `Quay` sits inside `quays` [E1]." example={example} />);
+    expect(screen.queryByRole("note")).toBeNull();
+    expect(screen.queryByText(/Not confirmed against the sources/)).toBeNull();
+  });
 });

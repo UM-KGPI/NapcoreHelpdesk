@@ -1389,23 +1389,199 @@ class HelpdeskApiTests(APITestCase):
         self.assertFalse(response.data["abstained"])
         self.assertTrue(response.data["generatedExample"]["valid"])
 
+    _UNVALIDATED = {"confidence": 0.8, "review_required": True, "answer_validated": False,
+                    "rejected_answer": "first try", "rejection_reason": "ungrounded | retry also failed: ungrounded",
+                    "provider": "anthropic", "model": "test-model"}
+
+    def _answer_with_example(self, url_name: str, request_id: str, generated: dict, retrieve_mock, llm_mock,
+                             stream_mock, example_mock, chunks=None) -> dict:
+        """The answer of either endpoint for an example request whose text the (mocked) model returns as given."""
+        retrieve_mock.return_value = copy.deepcopy(chunks or self._NON_ANSWER_CHUNKS)
+        example_mock.return_value = dict(self._VALID_EXAMPLE)
+        llm_mock.return_value = dict(generated)
+
+        def fake_stream(**kwargs):
+            yield ("token", generated["answer"])
+            yield ("done", dict(generated))
+
+        stream_mock.side_effect = fake_stream
+        response = self._post_non_answer_question(url_name, request_id)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        if url_name == "answer-question":
+            llm_mock.assert_called_once()
+            stream_mock.assert_not_called()
+            return response.data
+        body = b"".join(response.streaming_content).decode("utf-8")
+        stream_mock.assert_called_once()
+        llm_mock.assert_not_called()
+        events = [json.loads(part[len("data:"):]) for part in body.split("\n\n") if part.startswith("data:")]
+        return events[-1]["answer"]
+
     @override_settings(LLM_ENABLED=True)
     @patch("helpdesk.api.views.generate_netex_example")
+    @patch("helpdesk.api.views.stream_answer_llm")
     @patch("helpdesk.api.views.generate_answer_llm")
     @patch("helpdesk.api.views.retrieve_chunks_with_trace")
-    def test_text_that_failed_validation_is_dropped_next_to_a_valid_example(self, retrieve_mock, llm_mock, example_mock):
-        retrieve_mock.return_value = copy.deepcopy(self._NON_ANSWER_CHUNKS)
-        example_mock.return_value = dict(self._VALID_EXAMPLE)
-        llm_mock.return_value = {"answer": "The blocks show seats [E1].", "confidence": 0.8, "review_required": True,
-                                 "answer_validated": False, "rejected_answer": "first try", "rejection_reason": "ungrounded"}
+    def test_text_that_failed_validation_is_kept_marked_next_to_a_valid_example(
+        self, retrieve_mock, llm_mock, stream_mock, example_mock
+    ):
+        """Both attempts rejected (e.g. a plain sentence in another language): the text stays, marked unvalidated."""
+        for url_name in ("answer-question", "answer-question-stream"):
+            with self.subTest(url_name):
+                for mock in (retrieve_mock, llm_mock, stream_mock, example_mock):
+                    mock.reset_mock()
+                answer = self._answer_with_example(
+                    url_name, f"req-unvalidated-kept-{url_name}",
+                    {"answer": "Primer kaže sedeže v vozilu [E1].", **self._UNVALIDATED},
+                    retrieve_mock, llm_mock, stream_mock, example_mock,
+                )
+                self.assert_matches_schema("AnswerResponse", answer)
+                self.assertEqual(answer["mode"], "rag")
+                self.assertFalse(answer["abstained"])
+                self.assertEqual(answer["answer"], "Primer kaže sedeže v vozilu [E1].")
+                self.assertEqual([c["chunkId"] for c in answer["citations"]], ["chunk-non-answer-1"])
+                self.assertIs(answer["trace"]["llmAnswerValidated"], False)
+                self.assertIsNone(answer["trace"]["llmDroppedAnswer"])
+                self.assertEqual(answer["confidence"], 0.8)
+                self.assertTrue(answer["generatedExample"]["valid"])
 
-        response = self._post_non_answer_question("answer-question", "req-generated-example-005")
+    @override_settings(LLM_ENABLED=True)
+    @patch("helpdesk.api.views.generate_netex_example")
+    @patch("helpdesk.api.views.stream_answer_llm")
+    @patch("helpdesk.api.views.generate_answer_llm")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_unvalidated_text_with_an_unchecked_code_block_is_dropped_next_to_a_valid_example(
+        self, retrieve_mock, llm_mock, stream_mock, example_mock
+    ):
+        """A second fragment that is neither in the evidence nor the shown example must not sit next to it."""
+        text = (
+            "Seats are set like this [E1].\n\n```xml\n<VehicleType id=\"x:1\">\n  <SeatingCapacity>50</SeatingCapacity>\n"
+            "  <StandingCapacity>20</StandingCapacity>\n  <Name>Made up bus</Name>\n</VehicleType>\n```"
+        )
+        for url_name in ("answer-question", "answer-question-stream"):
+            with self.subTest(url_name):
+                for mock in (retrieve_mock, llm_mock, stream_mock, example_mock):
+                    mock.reset_mock()
+                answer = self._answer_with_example(
+                    url_name, f"req-unvalidated-code-{url_name}", {"answer": text, **self._UNVALIDATED},
+                    retrieve_mock, llm_mock, stream_mock, example_mock,
+                )
+                self.assertEqual(answer["mode"], "rag")
+                self.assertEqual(answer["answer"], "")
+                self.assertEqual(answer["citations"], [])
+                self.assertEqual(answer["trace"]["llmDroppedAnswer"], text)
+                self.assertTrue(answer["generatedExample"]["valid"])
 
-        self.assertEqual(response.data["mode"], "rag")
-        self.assertEqual(response.data["answer"], "")
-        self.assertEqual(response.data["citations"], [])
-        self.assertEqual(response.data["trace"]["llmDroppedAnswer"], "The blocks show seats [E1].")
-        self.assertTrue(response.data["generatedExample"]["valid"])
+    @override_settings(LLM_ENABLED=True)
+    @patch("helpdesk.api.views.generate_netex_example")
+    @patch("helpdesk.api.views.stream_answer_llm")
+    @patch("helpdesk.api.views.generate_answer_llm")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_unvalidated_text_the_policy_blocks_is_dropped_next_to_a_valid_example(
+        self, retrieve_mock, llm_mock, stream_mock, example_mock
+    ):
+        """Text citing a source outside the approved repositories must not turn an example answer into a refusal."""
+        chunks = copy.deepcopy(self._NON_ANSWER_CHUNKS)
+        chunks[0][0]["repositoryUrl"] = "https://github.com/example/not-approved"
+        for url_name in ("answer-question", "answer-question-stream"):
+            with self.subTest(url_name):
+                for mock in (retrieve_mock, llm_mock, stream_mock, example_mock):
+                    mock.reset_mock()
+                answer = self._answer_with_example(
+                    url_name, f"req-unvalidated-blocked-{url_name}",
+                    {"answer": "The blocks show seats [E1].", **self._UNVALIDATED},
+                    retrieve_mock, llm_mock, stream_mock, example_mock, chunks=chunks,
+                )
+                self.assertEqual(answer["mode"], "rag")
+                self.assertFalse(answer["abstained"])
+                self.assertEqual(answer["answer"], "")
+                self.assertEqual(answer["citations"], [])
+                self.assertEqual(answer["trace"]["llmDroppedAnswer"], "The blocks show seats [E1].")
+                self.assertTrue(answer["generatedExample"]["valid"])
+
+    _PLAIN_NON_ENGLISH = (
+        "Dokazi prikazujejo slovenski primer enostavnega avtobusnega voznega reda, "
+        "ki je poravnan s profilom NeTEx EU [E1]."
+    )
+
+    @override_settings(
+        LLM_ENABLED=True,
+        LLM_PROVIDER="openai-compatible",
+        LLM_API_BASE_URL="https://llm.example.test",
+        LLM_STREAMING=True,
+        CONTROLLER_LLM_ENABLED=False,
+        SEARCH_TRANSLATION_ENABLED=False,
+    )
+    @patch("urllib.request.urlopen", side_effect=AssertionError("no network in tests"))
+    @patch("helpdesk.services.llm_generator.question_language", return_value="Slovenian")
+    @patch("helpdesk.services.llm_generator._stream_request_chat_completion")
+    @patch("helpdesk.services.llm_generator._generate_answer_text")
+    @patch("helpdesk.api.views.generate_netex_example")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_a_plain_non_english_text_rejected_twice_by_the_validator_is_kept_marked(
+        self, retrieve_mock, example_mock, generate_text_mock, stream_mock, _language, _network
+    ):
+        """The real validator rejects both attempts (a plain sentence cannot be grounded in an English block);
+        the model is mocked. Both endpoints keep the text, marked unvalidated, next to the example."""
+        chunks = copy.deepcopy(self._NON_ANSWER_CHUNKS)
+        chunks[0][0]["text"] = (
+            "Simple bus timetable for Slovenia, aligned with the NeTEx EU profile. "
+            "<TimetableFrame><Name>Winter timetable for route 66 outbound</Name></TimetableFrame>"
+        )
+        for url_name in ("answer-question", "answer-question-stream"):
+            with self.subTest(url_name):
+                for mock in (retrieve_mock, example_mock, generate_text_mock, stream_mock):
+                    mock.reset_mock()
+                retrieve_mock.return_value = copy.deepcopy(chunks)
+                example_mock.return_value = dict(self._VALID_EXAMPLE)
+                generate_text_mock.side_effect = [self._PLAIN_NON_ENGLISH, self._PLAIN_NON_ENGLISH]
+                stream_mock.side_effect = [iter([self._PLAIN_NON_ENGLISH]), iter([self._PLAIN_NON_ENGLISH])]
+                response = self.client.post(
+                    reverse(url_name),
+                    {"question": "Prikaži primer voznega reda v NeTEx XML iz Slovenije?", "generationProfile": "llm-ready",
+                     "options": {"allowAbstain": True}},
+                    format="json",
+                    HTTP_X_REQUEST_ID=f"req-plain-rejected-{url_name}",
+                    **self.auth_headers(),
+                )
+                if url_name == "answer-question":
+                    answer = response.data
+                    self.assertEqual(generate_text_mock.call_count, 2)
+                else:
+                    body = b"".join(response.streaming_content).decode("utf-8")
+                    events = [json.loads(part[len("data:"):]) for part in body.split("\n\n") if part.startswith("data:")]
+                    answer = events[-1]["answer"]
+                    self.assertEqual(stream_mock.call_count, 2)
+                self.assertIn("retry also failed", answer["trace"]["llmRejectionReason"])
+                self.assertIs(answer["trace"]["llmAnswerValidated"], False)
+                self.assertIsNone(answer["trace"]["llmDroppedAnswer"])
+                self.assertEqual(answer["mode"], "rag")
+                self.assertIn("slovenski primer", answer["answer"])
+                self.assertEqual([c["chunkId"] for c in answer["citations"]], ["chunk-non-answer-1"])
+                self.assertLessEqual(answer["confidence"], 0.8)
+                self.assertTrue(answer["generatedExample"]["valid"])
+
+    @override_settings(LLM_ENABLED=True)
+    @patch("helpdesk.api.views.generate_netex_example")
+    @patch("helpdesk.api.views.stream_answer_llm")
+    @patch("helpdesk.api.views.generate_answer_llm")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_validated_text_next_to_a_valid_example_is_not_marked(
+        self, retrieve_mock, llm_mock, stream_mock, example_mock
+    ):
+        validated = {**self._UNVALIDATED, "answer": "Seats are in `SeatingCapacity` [E1].", "answer_validated": True,
+                     "confidence": 0.9, "review_required": False, "rejected_answer": None, "rejection_reason": None}
+        for url_name in ("answer-question", "answer-question-stream"):
+            with self.subTest(url_name):
+                for mock in (retrieve_mock, llm_mock, stream_mock, example_mock):
+                    mock.reset_mock()
+                answer = self._answer_with_example(
+                    url_name, f"req-validated-{url_name}", validated,
+                    retrieve_mock, llm_mock, stream_mock, example_mock,
+                )
+                self.assertEqual(answer["answer"], "Seats are in `SeatingCapacity` [E1].")
+                self.assertIs(answer["trace"]["llmAnswerValidated"], True)
+                self.assertIsNone(answer["trace"]["llmDroppedAnswer"])
 
     @override_settings(LLM_ENABLED=True)
     @patch("helpdesk.api.views.generate_netex_example")

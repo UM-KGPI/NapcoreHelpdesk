@@ -275,7 +275,12 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
             >
               <p className="chat-role">{turn.role}</p>
               {turn.role === "assistant" ? (
-                <AnswerBody text={turn.text} example={turn.answer?.generatedExample} structure={turn.answer?.schemaStructure} />
+                <AnswerBody
+                  text={turn.text}
+                  example={turn.answer?.generatedExample}
+                  structure={turn.answer?.schemaStructure}
+                  unvalidated={turn.answer?.trace?.llmAnswerValidated === false}
+                />
               ) : (
                 <p>{turn.text}</p>
               )}
