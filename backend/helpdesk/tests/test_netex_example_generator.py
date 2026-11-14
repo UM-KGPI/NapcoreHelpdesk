@@ -67,6 +67,15 @@ class TriggerTests(SimpleTestCase):
         self.assertEqual(generator.named_values("NeTEx example for the Gare de Lyon station"), ["Gare de Lyon"])
         self.assertEqual(generator.named_values("Show a NeTEx line operated by LPP in Ljubljana"), ["LPP", "Ljubljana"])
 
+    def test_where_the_example_comes_from_is_no_value(self):
+        # "from" after an example word or after the standard or format: where the example comes from.
+        self.assertEqual(generator.named_values("Show an example of a timetable in NeTEx XML from Slovenia?"), [])
+        self.assertEqual(generator.named_values("Any NeTEx example from Slovenia?"), [])
+        self.assertFalse(generator.wants_generated_example("Show an example of a timetable in NeTEx XML from Slovenia?", ["NeTEx"]))
+        # After the object's noun the name is where the object goes: a value.
+        self.assertEqual(generator.named_values("Show me a NeTEx example of a bus line from Maribor to Ptuj"), ["Maribor", "Ptuj"])
+        self.assertEqual(generator.named_values("Show me a NeTEx example for Ljubljana Bus Station"), ["Ljubljana Bus Station"])
+
     def test_not_names(self):
         # The first word of a sentence, standard names, identifiers, short abbreviations and concept labels.
         with patch("helpdesk.services.semantic_graph.GRAPH_CONCEPT_ALIASES", {"netex:StopPlace": {"stop place"}}):

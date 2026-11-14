@@ -83,22 +83,42 @@ def _is_concept_label(phrase: str) -> bool:
     return any(normalized == _normalize_for_matching(label) for labels in GRAPH_CONCEPT_ALIASES.values() for label in labels)
 
 
+_EXAMPLE_NOUNS = frozenset("example examples sample samples snippet snippets fragment fragments".split())
+
+
+def _says_where_the_example_comes_from(before: list[str]) -> bool:
+    """Whether the words before a name make it where the example comes from, not a value of it: "from" right
+    after an example word or after the name of a standard or the format ("Any NeTEx example from Slovenia?",
+    "an example of a timetable in NeTEx XML from Slovenia"). After an object's noun ("a bus line from Maribor
+    to Ptuj") the name is where the object goes, a value. The standards' names are the app's own
+    (question_parsing), not a list here."""
+    from helpdesk.services.question_parsing import is_standard_name
+
+    if len(before) < 2 or before[-1].lower() != "from":
+        return False
+    previous = before[-2]
+    return previous.lower() in _EXAMPLE_NOUNS or previous.lower() == "xml" or is_standard_name(previous)
+
+
 def named_values(question: str) -> list[str]:
     """Proper names written without quotes: runs of capitalised words that do not start a sentence
-    ("Show me ... for Ljubljana Bus Station with two quays" -> "Ljubljana Bus Station")."""
+    ("Show me ... for Ljubljana Bus Station with two quays" -> "Ljubljana Bus Station"). Not a name that says
+    where the example comes from (_says_where_the_example_comes_from)."""
     words = _WORD.findall(_QUOTED.sub(" . ", question or ""))
-    names, current, sentence_start = [], [], True
-    for word in words:
+    names, current, sentence_start, start = [], [], True, 0
+    for index, word in enumerate(words):
         if not sentence_start and (_is_name_word(word) or (current and word.lower() in _JOINING_WORDS)):
+            if not current:
+                start = index
             current.append(word)
         else:
             while current and current[-1].lower() in _JOINING_WORDS:
                 current.pop()
-            if current:
+            if current and not _says_where_the_example_comes_from(words[:start]):
                 names.append(" ".join(current))
             current = []
         sentence_start = word in {".", "!", "?", ":"}
-    if current:
+    if current and not _says_where_the_example_comes_from(words[:start]):
         names.append(" ".join(current))
     label_words = _concept_label_words()
     return [
