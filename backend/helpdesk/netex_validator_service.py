@@ -597,17 +597,12 @@ def structure_with_values(holder, element: str) -> dict:
 def accepting(holder, values: list[str]) -> dict:
     """For each value, the elements whose declared simple content accepts it and is specific (a number,
     date or time type, or text narrowed by an enumeration, pattern or length): where such a value belongs."""
-    from helpdesk.netex_content_model import accepting_elements, list_elements_accepting
+    from helpdesk.netex_content_model import accepting_elements
 
     models = holder.content
     if models is None:
         return {"found": False, "accepting": {}}
-    return {
-        "found": True,
-        "accepting": {value: sorted(accepting_elements(models, value)) for value in values},
-        # Elements whose content is a list that has the value as one item ("Monday" in DaysOfWeek "Monday Tuesday").
-        "inLists": {value: sorted(list_elements_accepting(models, value)) for value in values},
-    }
+    return {"found": True, "accepting": {value: sorted(accepting_elements(models, value)) for value in values}}
 
 
 def repair_order(models, document) -> bool:

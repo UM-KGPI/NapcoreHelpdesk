@@ -105,7 +105,6 @@ def named_values(question: str) -> list[str]:
         name
         for name in names
         if not _is_concept_label(name) and not (" " not in name and not name.isupper() and name.lower() in label_words)
-        and not all(_WEEKDAY.fullmatch(word) for word in name.split())  # days are values of their own (weekdays)
     ]
 
 
@@ -190,49 +189,13 @@ def is_duration_value(value: str) -> bool:
     return duration_seconds(value) is not None
 
 
-# Days of the week, a closed vocabulary like the number words: "on Monday" is a value of the example, not a name
-# (a single "Monday" is a concept label, so named_values leaves it out) and not nothing: gen38's "two departures
-# on Monday at 14:00" had the values ['14:00'], and every accepted answer carried Monday only as the id of a
-# reference to an object the frame did not define (plan 2026-11-14, F2). English only: the questions of the prod
-# log name days in English alone, and the values are read from the question as written, not from the app's English
-# rendering of it. Written as the schema's enumeration writes them ("Monday").
-_WEEKDAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
-_WEEKDAY = re.compile(r"(?i:(" + "|".join(_WEEKDAYS) + r"))s?")
-
-
-def weekdays(question: str) -> list[str]:
-    """The days of the week a question names outside quotes ("on Mondays" -> "Monday"). A day that is part of a
-    proper name ("Black Friday Express", "Monday Market") is not one: a capitalised word next to it, other than
-    the first of a sentence, makes it part of the name."""
-    words = _WORD.findall(_QUOTED.sub(" . ", question or ""))
-    found = []
-    for index, word in enumerate(words):
-        match = _WEEKDAY.fullmatch(word)
-        if not match:
-            continue
-        before = words[index - 1] if index else "."
-        after = words[index + 1] if index + 1 < len(words) else "."
-        sentence_start = index < 2 or words[index - 2] in {".", "!", "?", ":"}
-        if (_is_name_word(before) and not sentence_start) or _is_name_word(after):
-            if not _WEEKDAY.fullmatch(before) and not _WEEKDAY.fullmatch(after):
-                continue
-        found.append(match.group(1).capitalize())
-    return found
-
-
-def is_weekday(value: str) -> bool:
-    return value in _WEEKDAYS
-
-
 def requested_values(question: str) -> list[str]:
     """The concrete values a question gives, each of which the fragment must contain: quoted names,
-    dates and times, days of the week, durations (as xs:duration), numbers, and proper names written without
-    quotes."""
+    dates and times, durations (as xs:duration), numbers, and proper names written without quotes."""
     values = [(straight or curly).strip() for straight, curly in _QUOTED.findall(question or "")]
     unquoted = _QUOTED.sub(" ", question or "")
     values += _DATE.findall(unquoted)
     values += [_time_value(match) for match in _TIME.finditer(unquoted)]
-    values += weekdays(question)
     values += [iso for _, _, iso in durations(unquoted)]
     values += _NUMBER.findall(_DURATION.sub(" ", _TIME.sub(" ", _DATE.sub(" ", unquoted))))
     values += named_values(question)
@@ -817,11 +780,6 @@ def value_places(fragment: str, values: list[str]) -> list[dict]:
 
     places = []
     for value in values:
-        if is_weekday(value) and (holders := day_holders(value)) is not None:
-            found = _day_holder(root, value, holders)
-            if found is not None:
-                places.append({"value": value, "element": local(found.tag), "path": path_of(found)})
-            continue
         found = next((n for n in root.iter() if n is not root and holds_value(n.text or "", value)), None)
         if found is not None:
             places.append({"value": value, "element": local(found.tag), "path": path_of(found)})
@@ -2282,7 +2240,7 @@ def _asked_for(node, question: str, values: list[str]) -> bool:
     """Whether the question asks for this object: one of its values is in it, or a word of its element name or
     of its Name is in the question ("low-floor" -> a VehicleType named "Low-floor bus")."""
     texts = [text for n in node.iter() for text in [n.text or "", *n.attrib.values()] if text.strip()]
-    if any(holds_value(text, value) or (is_weekday(value) and value in text.split()) for text in texts for value in values):
+    if any(holds_value(text, value) for text in texts for value in values):
         return True
     asked_words = {_stem(word) for word in re.findall(r"[a-z]{4,}", (question or "").lower())}
     words = [w.lower() for w in _camel_words(_local(node.tag)) if len(w) >= 4]
@@ -2369,14 +2327,6 @@ def missing_value_error(value: str, question: str, fragment: str = "", values: l
     that a value must be an element's whole content, the model split the name into Name "Maribor" and ShortName
     "Ptuj" of the one Line (21 of 21 such examples followed this feedback; plan 2026-11-12 revision 4, T0)."""
     written = {iso: text for text, _, iso in durations(question)}
-    if is_weekday(value):
-        holders = day_holders(value)
-        declared = f" ({', '.join(sorted(holders))})" if holders else ""
-        return (
-            f"the day {value} from the question is missing: write it in an element the schema declares for days of "
-            f"the week{declared}, as its content or as one item of its list of days; an id, a reference, a Name or "
-            "a Description does not hold it"
-        )
     if value in written:
         return (
             f"the duration {written[value]} ({value}) from the question is missing: write it as the xs:duration "
@@ -2543,8 +2493,6 @@ def values_line(values: list[str], question: str) -> str:
             )
         if re.fullmatch(r"\d{2}:\d{2}", value):
             return f"{value} (an xs:time is written with seconds: {value}:00)"
-        if is_weekday(value):
-            return f"{value} (a day of the week: in an element the schema declares for days of the week, not in an id, a Name or a Description)"
         return value
 
     return ", ".join(described(v) for v in values)
@@ -2580,53 +2528,7 @@ def missing_values(fragment: str, values: list[str]) -> list[str]:
     fields = _field_values(fragment)
     if fields is None:
         return [value for value in values if not re.search(rf"(?<![\w.]){re.escape(value)}(?![\w.])", fragment)]
-    missing = []
-    for value in values:
-        if is_weekday(value) and (holders := day_holders(value)) is not None:
-            if _day_holder(_parsed(fragment), value, holders) is None:
-                missing.append(value)
-        elif value not in fields and not any(holds_value(field, value) for field in fields):
-            missing.append(value)
-    return missing
-
-
-_DAY_HOLDERS_CACHE: dict[str, tuple[frozenset[str], float]] = {}
-
-
-def day_holders(value: str) -> frozenset[str] | None:
-    """The elements the schema declares for a day of the week (validator /accepting): those whose content is the
-    day, and those whose content is a list of days that has it as one item (DaysOfWeek "Monday Tuesday"). None
-    without the validator, or from a validator that does not yet report lists: the value is then checked as any
-    other, as the whole content of an element or attribute."""
-    from urllib import error, parse, request
-
-    cached = _DAY_HOLDERS_CACHE.get(value)
-    if cached is not None and cached[1] > time.monotonic():
-        return cached[0]
-    url = settings.NETEX_VALIDATOR_URL.rstrip("/") + "/accepting?" + parse.urlencode({"value": value})
-    try:
-        with request.urlopen(url, timeout=VALIDATOR_TIMEOUT_SECONDS) as response:
-            payload = json.loads(response.read())
-    except (error.URLError, OSError, ValueError) as exc:
-        logger.info("day holders not available: %s", exc)
-        return None
-    if not payload.get("found") or "inLists" not in payload:
-        return None
-    names = frozenset((payload.get("accepting") or {}).get(value) or []) | frozenset((payload.get("inLists") or {}).get(value) or [])
-    _DAY_HOLDERS_CACHE[value] = (names, time.monotonic() + _LOOKUP_TTL_SECONDS)
-    return names
-
-
-def _day_holder(root, value: str, holders: frozenset[str]):
-    """The first element of the parsed fragment that the schema declares for the day and that holds it: as its
-    content, or as one item of its list of days. Not an id, a reference, a Name or a Description: those are not
-    declared for days, so a day written there is not in the example (plan 2026-11-14, F2)."""
-    if root is None:
-        return None
-    return next(
-        (node for node in root.iter() if _local(node.tag) in holders and value in (node.text or "").split()),
-        None,
-    )
+    return [value for value in values if value not in fields and not any(holds_value(field, value) for field in fields)]
 
 
 # --- generation ----------------------------------------------------------------------------------
