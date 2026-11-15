@@ -1030,6 +1030,94 @@ def _apply_source_path_cap(candidates: list[dict], max_per_source_path: int) -> 
     return kept
 
 
+_CAMEL_WORD = re.compile(r"\b[A-Za-z][A-Za-z0-9]{5,}\b")
+_CAMEL_BOUNDARY = re.compile(r"([a-z0-9])([A-Z])")
+
+
+def _piece_terms(question: str) -> list[str]:
+    """The question's terms for telling the pieces of one file apart: its English stems, CamelCase split
+    (an XML piece is matched through its semantic summary, which spells "LateDatedVehicleJourneyCount" as
+    "late dated vehicle journey count"), without the standards' names, which name the file, not the piece."""
+    text = _CAMEL_WORD.sub(lambda m: _CAMEL_BOUNDARY.sub(r"\1 \2", m.group(0)), question or "")
+    return [lexeme for lexeme in dict.fromkeys(_question_lexemes(text)) if lexeme not in STANDARD_NAME_LEXEMES]
+
+
+_PIECE_QUERY = """
+SELECT chunk_id, matched FROM (
+    SELECT chunk_id, id, {matched} AS matched FROM (
+        SELECT chunk_id, id, to_tsvector('english'::regconfig, text) AS v FROM {table}
+        WHERE repository_url = %s AND source_path = %s AND heading = ''
+          AND (chunk_id = %s OR to_tsvector('english'::regconfig, text) @@ to_tsquery('simple'::regconfig, %s))
+        OFFSET 0
+    ) pieces
+) scored
+ORDER BY (chunk_id = %s) DESC, matched DESC, id
+LIMIT 8
+"""
+
+
+def _best_pieces_of_files(trimmed: list[dict], question: str) -> tuple[list[dict], int]:
+    """Give each passage of a file the piece of that file that holds most of the question's terms.
+
+    A file without structure the chunker can name (an XML example: heading empty) is cut by size, without
+    overlap, mostly in the middle of an element. The pieces of one file have nearly the same vector, since
+    what they share (the file, the standard, the header) dominates it, so which piece represents the file is
+    decided by small differences, often for the opening piece with the root element and the frame
+    ("How to model number of late journeys?": the opening piece of the example scored 0.855, the piece with
+    the count element 0.843 and was 548th by vector). Among those pieces the one that holds strictly more of
+    the question's terms takes the passage's place; on a tie the retrieved piece stays. Pieces with a heading
+    (a schema declaration, a document section, an article) are units chosen for what they declare and are
+    left as they are. The file and its rank do not change, only the text the model reads of it.
+    """
+    if connection.vendor != "postgresql" or not trimmed:
+        return trimmed, 0
+    terms = _piece_terms(question)
+    if not terms:
+        return trimmed, 0
+    matched = " + ".join(["(v @@ to_tsquery('simple'::regconfig, %s))::int"] * len(terms))
+    sql = _PIECE_QUERY.format(matched=matched, table=SourceChunk._meta.db_table)
+    any_term = " | ".join(terms)
+    taken = {str(candidate.get("chunkId") or "") for candidate in trimmed}
+    replaced = 0
+    result = []
+    for candidate in trimmed:
+        chunk_id = str(candidate.get("chunkId") or "")
+        path = str(candidate.get("sourcePath") or "")
+        if not chunk_id or not path or "#" in path or candidate.get("heading"):
+            result.append(candidate)
+            continue
+        with connection.cursor() as cursor:
+            cursor.execute(sql, [*terms, candidate.get("repositoryUrl") or "", path, chunk_id, any_term, chunk_id])
+            rows = cursor.fetchall()
+        # The first row is the retrieved piece itself, when it is an indexed piece without a heading.
+        if len(rows) < 2 or rows[0][0] != chunk_id:
+            result.append(candidate)
+            continue
+        given_matched = rows[0][1]
+        best = next((row for row in rows[1:] if row[0] not in taken), None)
+        if best is None or best[1] <= given_matched:
+            result.append(candidate)
+            continue
+        piece = SourceChunk.objects.filter(chunk_id=best[0]).first()
+        if piece is None:
+            result.append(candidate)
+            continue
+        taken.add(piece.chunk_id)
+        replaced += 1
+        result.append(
+            {
+                **candidate,
+                "text": piece.text,
+                "chunkId": piece.chunk_id,
+                "label": piece.label,
+                "commitSha": piece.commit_sha,
+                "structuredMetadata": piece.structured_metadata or {},
+                "retrievedChunkId": chunk_id,
+            }
+        )
+    return result, replaced
+
+
 DOC_TYPE_BASE_ADJUSTMENTS = {
     "frame": 0.10,
     "object": 0.09,
@@ -2734,6 +2822,11 @@ def _retrieve_chunks_once(
             trimmed = (trimmed[:1] + [c for c in examples if c["chunkId"] != trimmed[0].get("chunkId")]
                        + [c for c in trimmed[1:] if c["chunkId"] not in example_ids])[:top_k]
     _record_stage("candidateSelectionMs", stage_start)
+    stage_start = time.perf_counter()
+    file_pieces_replaced = 0
+    if getattr(settings, "RETRIEVAL_BEST_FILE_PIECE", True):
+        trimmed, file_pieces_replaced = _best_pieces_of_files(trimmed, question)
+    _record_stage("filePieceMs", stage_start)
     if probe is not None:
         probe("final", trimmed)
 
@@ -2801,6 +2894,7 @@ def _retrieve_chunks_once(
         "exampleChunksAdded": example_chunks_added + named_examples_added,
         "ontologyDefinitionsAdded": ontology_definitions_added,
         "relationPathsAdded": relation_paths_added,
+        "filePiecesReplaced": file_pieces_replaced,
         "repositoryCoverageCount": repository_coverage_count,
         "conceptCoverageCount": len(graph_concepts_in_trimmed),
         "semanticAlignmentScore": round(sum(vector_scores_trimmed) / len(vector_scores_trimmed), 4) if vector_scores_trimmed else 0.0,
