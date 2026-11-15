@@ -59,7 +59,6 @@ LOSS_STEP = {
 GENERATORS = (
     "vector",
     "vector_opt_in",
-    "vector_unsearched",
     "full_text",
     "rare_terms",
     "path_hints",

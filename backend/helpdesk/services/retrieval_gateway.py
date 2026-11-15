@@ -181,9 +181,8 @@ def _token_overlap_score(question: str, chunk_text: str) -> float:
 # Sources searched only when the question's scope names them: EU legislation (issue #91), the
 # mobilityDCAT-AP metadata profile, NAPCORE's own material (napcore.eu), the INSPIRE Transport Networks
 # specification and DATEX II would otherwise compete with the standards in every question that names no
-# standard. A question without scope still gets a few places for each of them among the candidates
-# (_unsearched_source_candidates, RETRIEVAL_UNSCOPED_PLACES_PER_SOURCE).
-OPT_IN_SCOPES =("EU legislation", "mobilityDCAT-AP", "NAPCORE", "INSPIRE", "DATEX II", "TN-ITS")
+# standard.
+OPT_IN_SCOPES = ("EU legislation", "mobilityDCAT-AP", "NAPCORE", "INSPIRE", "DATEX II", "TN-ITS")
 # A chunk that also belongs to one of these is never opt-in: SIRI's copy of the DATEX II situation schema
 # (scope DATEX II and SIRI) stays in the unscoped search, as it was before DATEX II became a source.
 CORE_SCOPES = ("NeTEx", "SIRI", "OpRa", "Transmodel")
@@ -500,64 +499,6 @@ def _postgres_hybrid_candidates(
         # id last: rows tied on both scores come back in a stable order, not in storage order
         .order_by("-vector_similarity", "-lexical_rank", "id")[:limit]
     )
-
-
-def _opt_in_only_filter():
-    """Chunks the unscoped search leaves out: those of an opt-in source that belong to no core standard."""
-    core = models.Q()
-    for standard in CORE_SCOPES:
-        core |= models.Q(standards_scope__contains=[standard])
-    opt_in = models.Q()
-    for source in OPT_IN_SCOPES:
-        opt_in |= models.Q(standards_scope__contains=[source])
-    return opt_in & ~core
-
-
-def _unsearched_source_candidates(question: str, query_embedding: list[float], per_source: int) -> list:
-    """For a question without scope: the `per_source` chunks nearest to the query of each opt-in source.
-
-    The unscoped search leaves the opt-in sources out (OPT_IN_SCOPES), so a question that names no source
-    never sees the act, profile or portal that answers it ("Which formats count as machine-readable?").
-    Each opt-in source gets a few places among the candidates, as it does next to a standard when the scope
-    names both; scoring then chooses among them on the same terms as the standards' chunks. One exact scan
-    over the opt-in chunks (about 8,000) ranks them all; the per-source cut is made on that order.
-    """
-    if per_source <= 0 or not (
-        connection.vendor == "postgresql"
-        and HAS_NATIVE_PGVECTOR
-        and CosineDistance is not None
-        and all([SearchQuery, SearchRank, SearchVector])
-    ):
-        return []
-    ranked = (
-        SourceChunk.objects.filter(_opt_in_only_filter())
-        .annotate(vector_distance=CosineDistance("embedding_vector", query_embedding))
-        .order_by("vector_distance", "id")
-        .values_list("id", "standards_scope")
-    )
-    kept: list[int] = []
-    taken: dict[str, int] = {}
-    for chunk_id, chunk_scope in ranked.iterator(chunk_size=2000):
-        # A chunk tagged with two opt-in sources (TN-ITS is also DATEX II) takes a place in each.
-        sources = [source for source in OPT_IN_SCOPES if source in (chunk_scope or [])]
-        if not any(taken.get(source, 0) < per_source for source in sources):
-            continue
-        for source in sources:
-            taken[source] = taken.get(source, 0) + 1
-        kept.append(int(chunk_id))
-        if all(taken.get(source, 0) >= per_source for source in OPT_IN_SCOPES):
-            break
-    if not kept:
-        return []
-    rows = (
-        SourceChunk.objects.filter(id__in=kept)
-        .annotate(
-            lexical_rank=SearchRank(_search_vector(), SearchQuery(question)),
-            vector_distance=CosineDistance("embedding_vector", query_embedding),
-        )
-        .annotate(vector_similarity=1.0 - models.F("vector_distance"))
-    )
-    return sorted(rows, key=lambda chunk: (-float(chunk.vector_similarity), int(chunk.id)))
 
 
 MAX_LINKED_PROVISIONS = 2
@@ -2308,18 +2249,6 @@ def _retrieve_chunks_once(
             pooled = list(postgres_candidates)
             pooled_ids = {chunk.id for chunk in pooled}
             postgres_candidates = pooled + [c for c in opt_in_candidates if c.id not in pooled_ids]
-    unsearched_ids: set[int] = set()
-    if postgres_candidates is not None and not scope:
-        unsearched = _unsearched_source_candidates(
-            question=question,
-            query_embedding=query_embedding,
-            per_source=max(0, int(getattr(settings, "RETRIEVAL_UNSCOPED_PLACES_PER_SOURCE", 0))),
-        )
-        if probe is not None:
-            probe("vector_unsearched", unsearched)
-        if unsearched:
-            unsearched_ids = {int(chunk.id) for chunk in unsearched}
-            postgres_candidates = list(postgres_candidates) + unsearched
     if postgres_candidates is not None and semantic_enabled():
         pooled = list(postgres_candidates)
         pooled_ids = {chunk.id for chunk in pooled}
@@ -2483,9 +2412,6 @@ def _retrieve_chunks_once(
             if int(chunk.id) in selected_graph_ids:
                 continue
             doc_type = (getattr(chunk, "doc_type", "guide") or "guide").lower()
-            if int(chunk.id) in unsearched_ids:
-                # Their places come on top of the cap, so the standards' candidates keep theirs.
-                continue
             if doc_type == "ontology-definition" or int(chunk.id) in element_chunk_ids:
                 definition_ids.add(int(chunk.id))
             else:
@@ -2506,10 +2432,7 @@ def _retrieve_chunks_once(
         chunk_iterable = [
             chunk
             for chunk in chunk_iterable
-            if int(chunk.id) in selected_base_ids
-            or int(chunk.id) in selected_graph_ids
-            or int(chunk.id) in definition_ids
-            or int(chunk.id) in unsearched_ids
+            if int(chunk.id) in selected_base_ids or int(chunk.id) in selected_graph_ids or int(chunk.id) in definition_ids
         ]
     _record_stage("candidatePreselectMs", stage_start)
     if probe is not None:
@@ -2535,7 +2458,7 @@ def _retrieve_chunks_once(
         if raw_vectors:
             vector_range = (min(raw_vectors), max(raw_vectors))
     for chunk in chunk_iterable:
-        if not _scope_matches(chunk.standards_scope or [], scope) and int(chunk.id) not in unsearched_ids:
+        if not _scope_matches(chunk.standards_scope or [], scope):
             continue
 
 
