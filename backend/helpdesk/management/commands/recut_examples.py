@@ -80,7 +80,9 @@ class Command(BaseCommand):
             )
             new = example_xml_chunks(raw, source_path, cut)
             new_ids = [build_chunk_id(repo_url, source_path, i, c["text"]) for i, c in enumerate(new)]
-            if {c.chunk_id for c in existing} == set(new_ids):
+            # Compared by text: a chunk id is built from the text before the summary, so ids alone would take
+            # a one-piece file's old chunk (with its summary) for a new one without.
+            if old_texts == collections.Counter(c["text"] for c in new) and {c.chunk_id for c in existing} == set(new_ids):
                 stats["already cut"] += 1
                 continue
             if old_texts != line_cut:
