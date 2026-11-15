@@ -1516,7 +1516,7 @@ def generated_example_rule(
 EXISTENCE_RULE = (
     "WHETHER THE STANDARD HAS IT: the question asks whether the standard has or describes something. The first "
     "evidence blocks are the model's definition of that concept (with the standards that implement it, or the note "
-    "that none does) and the schema elements named after it. Your first sentence answers Yes or No about the "
+    "that none does) or the schema elements named after it; the blocks after them are what the search found. Your first sentence answers Yes or No about the "
     "standard, not about the evidence: name the element or class that exists, or say that the standard has no "
     "element or class for it, and what it has instead (for example only a reference), citing [E#]. Then explain in "
     "at most three sentences. Do not describe example blocks that do not show the asked-for thing."
@@ -1526,7 +1526,7 @@ EXISTENCE_RULE = (
 MODELLING_RULE = (
     "HOW THE STANDARD MODELS IT: the question asks how the standard defines or describes something. The first "
     "evidence blocks are the model's definitions of the concepts involved (with the standard's class that implements "
-    "each) and the schema elements for them. Start by naming the classes or elements the standard uses for it and "
+    "each) or the schema elements for them; the blocks after them are what the search found. Start by naming the classes or elements the standard uses for it and "
     "what each is, citing [E#]; then say how they relate and where they sit (frame, container, what refers to them) "
     "as far as the blocks say. Do not build the answer on example blocks about something else."
 )

@@ -106,6 +106,7 @@ env = environ.Env(
     NETEX_EXAMPLE_GENERATOR_ENABLED=(bool, True),
     SCHEMA_STRUCTURE_ENABLED=(bool, True),
     CONCEPT_PRESENCE_ENABLED=(bool, True),
+    CONCEPT_PRESENCE_PROMPT_PLACES=(int, 2),
     STREAM_KEEPALIVE_SECONDS=(float, 5.0),
     NETEX_VALIDATOR_URL=(str, "http://netex-validator:8091"),
     CONTROLLER_LLM_CTX_SIZE=(int, 2048),
@@ -392,6 +393,9 @@ NETEX_EXAMPLE_GENERATOR_ENABLED = env("NETEX_EXAMPLE_GENERATOR_ENABLED")
 SCHEMA_STRUCTURE_ENABLED = env("SCHEMA_STRUCTURE_ENABLED")
 # "Does NeTEx have X?" gets the model's definition of X and the schema elements named after it (concept_presence).
 CONCEPT_PRESENCE_ENABLED = env("CONCEPT_PRESENCE_ENABLED")
+# How many of the LLM_MAX_EVIDENCE_CHUNKS places those definitions may take; retrieval's best passages keep the
+# others. LLM_MAX_EVIDENCE_CHUNKS or more: the definitions take every place they fill, as before 2026-11-15.
+CONCEPT_PRESENCE_PROMPT_PLACES = env("CONCEPT_PRESENCE_PROMPT_PLACES")
 # A streamed answer sends an SSE comment after this many silent seconds, so mobile networks, browsers and proxies
 # never see a silent connection (prod 2026-11-08: retrieval can take 30-40 s; iPhone Safari reported "Load failed").
 # 0 runs the stream inline (tests: database access stays in the test's transaction).

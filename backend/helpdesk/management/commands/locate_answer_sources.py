@@ -297,7 +297,7 @@ def run_question(entry: dict, translations: Translations, index: SourceIndex, re
     requested_scope: the request's standardsScope (the chat page always sends an empty one)."""
     requested_scope = list(requested_scope or [])
     from helpdesk.api import views
-    from helpdesk.services.concept_presence import presence_evidence
+    from helpdesk.services.concept_presence import presence_evidence, with_presence
     from helpdesk.services.faq_matcher import match_faq
     from helpdesk.services.netex_example_generator import (
         example_element_names,
@@ -360,9 +360,7 @@ def run_question(entry: dict, translations: Translations, index: SourceIndex, re
     returned_ids = {row[2] for row in returned_rows}
     presence = presence_evidence(question, scope, english)
     presence_chunk_ids = {c.get("chunkId") for c in presence}
-    if presence:
-        presence_ids = {c["chunkId"] for c in presence}
-        chunks = (presence + [c for c in chunks if c.get("chunkId") not in presence_ids])[: max(top_k, len(presence))]
+    chunks = with_presence(presence, chunks, top_k)
     example_path = "none"
     if chunks:
         wants_model_example = wants_generated_example(question, scope) or bool(english and wants_generated_example(english, scope))

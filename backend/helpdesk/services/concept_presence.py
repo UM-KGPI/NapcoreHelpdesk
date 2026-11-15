@@ -11,9 +11,14 @@ For a question of that shape only, the concept is recognised with plurals and it
 which standards implement it) and the definitions of the schema elements named after it go first among the
 evidence. Retrieval ranking is not touched.
 
+They take at most CONCEPT_PRESENCE_PROMPT_PLACES (2) of the places the model reads (with_presence). Before
+2026-11-15 they took all 4 whenever there were 4 of them, and the passage retrieval had ranked 1st to 3rd was
+not shown: "How are e charging stations represented in NeTEx?" got CHARGING MOMENT and CHARGING POLICY, fare
+concepts, instead of the recharging point schema retrieval had first (docs/plans/2026-11-14-retrieval-misses.md, Q3).
+
 Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
 Crafted by: AI coding agents
-Created: 2026-11-08  |  Modified: 2026-11-08
+Created: 2026-11-08  |  Modified: 2026-11-15
 """
 
 from __future__ import annotations
@@ -238,3 +243,24 @@ def presence_evidence(question: str, scope: list[str] | None, english_question: 
         if not chunk.get("score"):
             chunk["score"] = 1.0
     return chunks
+
+
+def with_presence(presence: list[dict], chunks: list[dict], top_k: int) -> list[dict]:
+    """The evidence with the presence passages added: at most CONCEPT_PRESENCE_PROMPT_PLACES of them first, then
+    retrieval's best passages up to the places the model reads (LLM_MAX_EVIDENCE_CHUNKS), then the other presence
+    passages, then the rest of retrieval; top_k passages, or all the presence ones when they are more.
+
+    The presence passages come in their own order (the concepts' definitions, then their schema elements), so the
+    places they keep hold the definitions, which name the standard's implementing class. The concept found by
+    meaning is the wrong one in some questions (charging stations: fare concepts) and retrieval's passages are
+    beside the point in others (a driver's name: timetable examples); their scores do not tell which, so both
+    keep places. When retrieval has fewer passages, the presence ones fill the places left."""
+    if not presence:
+        return chunks
+    presence_ids = {c.get("chunkId") for c in presence}
+    retrieved = [c for c in chunks if c.get("chunkId") not in presence_ids]
+    prompt_places = max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 4)))
+    first = presence[: max(0, int(getattr(settings, "CONCEPT_PRESENCE_PROMPT_PLACES", 2)))]
+    kept = retrieved[: max(0, prompt_places - len(first))]
+    ordered = first + kept + presence[len(first):] + retrieved[len(kept):]
+    return ordered[: max(top_k, len(presence))]

@@ -82,7 +82,7 @@ from helpdesk.services.netex_example_generator import (
     other_question,
     value_element_names,
 )
-from helpdesk.services.concept_presence import presence_evidence, question_kind
+from helpdesk.services.concept_presence import presence_evidence, question_kind, with_presence
 from helpdesk.services import request_timing
 from helpdesk.services.schema_structure import definition_chunk, schema_structure_for
 from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
@@ -1458,11 +1458,10 @@ class QuestionAnswerView(APIView):
                 )
 
             # "Does NeTEx have X?": the model's definition of X (with which standards implement it) and the
-            # schema elements named after X go first; text retrieval alone found unrelated examples.
+            # schema elements named after X go first, in at most two of the places the model reads; text
+            # retrieval alone found unrelated examples.
             presence = presence_evidence(question, effective_scope, english_question)
-            if presence:
-                presence_ids = {c["chunkId"] for c in presence}
-                chunks = (presence + [c for c in chunks if c.get("chunkId") not in presence_ids])[: max(retrieval_top_k, len(presence))]
+            chunks = with_presence(presence, chunks, retrieval_top_k)
             retrieved_chunks = chunks
             retrieval_event_ids = [chunk["retrievalEventId"] for chunk in chunks]
             all_candidates = graph_trace.get("allCandidates", [])
@@ -2161,11 +2160,10 @@ class QuestionAnswerStreamView(APIView):
                 )
 
             # "Does NeTEx have X?": the model's definition of X (with which standards implement it) and the
-            # schema elements named after X go first; text retrieval alone found unrelated examples.
+            # schema elements named after X go first, in at most two of the places the model reads; text
+            # retrieval alone found unrelated examples.
             presence = presence_evidence(question, effective_scope, english_question)
-            if presence:
-                presence_ids = {c["chunkId"] for c in presence}
-                chunks = (presence + [c for c in chunks if c.get("chunkId") not in presence_ids])[: max(retrieval_top_k, len(presence))]
+            chunks = with_presence(presence, chunks, retrieval_top_k)
             retrieved_chunks = chunks
             retrieval_event_ids = [chunk["retrievalEventId"] for chunk in chunks]
             all_candidates = graph_trace.get("allCandidates", [])

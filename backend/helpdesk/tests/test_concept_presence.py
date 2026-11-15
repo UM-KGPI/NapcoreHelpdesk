@@ -137,3 +137,42 @@ class ModellingTests(SimpleTestCase):
         user = _build_messages("How can fare distribution be defined in NeTEx?", [chunk], existence="how")[1]["content"]
         self.assertIn(MODELLING_RULE, user)
         self.assertNotIn(EXISTENCE_RULE, user)
+
+
+class PlacesTests(SimpleTestCase):
+    """with_presence: the presence passages take at most CONCEPT_PRESENCE_PROMPT_PLACES of the places the model
+    reads (docs/plans/2026-11-14-retrieval-misses.md, Q3)."""
+
+    @staticmethod
+    def chunks(prefix, count):
+        return [{"chunkId": f"{prefix}{n}"} for n in range(1, count + 1)]
+
+    @staticmethod
+    def ids(chunks):
+        return [c["chunkId"] for c in chunks]
+
+    @override_settings(LLM_MAX_EVIDENCE_CHUNKS=4, CONCEPT_PRESENCE_PROMPT_PLACES=2)
+    def test_retrieval_keeps_the_places_the_presence_passages_do_not_take(self):
+        merged = presence.with_presence(self.chunks("p", 4), self.chunks("r", 6), top_k=6)
+        self.assertEqual(self.ids(merged), ["p1", "p2", "r1", "r2", "p3", "p4"])
+
+    @override_settings(LLM_MAX_EVIDENCE_CHUNKS=4, CONCEPT_PRESENCE_PROMPT_PLACES=2)
+    def test_presence_passages_fill_the_places_retrieval_leaves(self):
+        merged = presence.with_presence(self.chunks("p", 4), self.chunks("r", 1), top_k=6)
+        self.assertEqual(self.ids(merged), ["p1", "p2", "r1", "p3", "p4"])
+        self.assertEqual(self.ids(presence.with_presence(self.chunks("p", 3), [], top_k=6)), ["p1", "p2", "p3"])
+
+    @override_settings(LLM_MAX_EVIDENCE_CHUNKS=4, CONCEPT_PRESENCE_PROMPT_PLACES=2)
+    def test_a_passage_found_both_ways_is_kept_once_in_the_presence_order(self):
+        retrieved = [{"chunkId": "p3"}] + self.chunks("r", 5)
+        merged = presence.with_presence(self.chunks("p", 4), retrieved, top_k=6)
+        self.assertEqual(self.ids(merged), ["p1", "p2", "r1", "r2", "p3", "p4"])
+
+    @override_settings(LLM_MAX_EVIDENCE_CHUNKS=4, CONCEPT_PRESENCE_PROMPT_PLACES=4)
+    def test_as_many_places_as_the_model_reads_is_the_old_order(self):
+        merged = presence.with_presence(self.chunks("p", 4), self.chunks("r", 6), top_k=6)
+        self.assertEqual(self.ids(merged), ["p1", "p2", "p3", "p4", "r1", "r2"])
+
+    def test_no_presence_passages_leave_the_evidence_as_it_is(self):
+        retrieved = self.chunks("r", 6)
+        self.assertIs(presence.with_presence([], retrieved, top_k=6), retrieved)
