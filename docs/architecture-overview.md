@@ -33,6 +33,17 @@ NAPCORE Helpdesk is a FAQ-first, RAG-fallback system for transport standards.
 
 ![RAG Activity Diagram](diagrams/rag-activity-graphdb.svg)
 
+## Semantic search in the pipeline
+
+Where meaning-based search sits: preparing the sources (cutting files into pieces, embedding them, the index) and
+answering a question (language, screen, candidates, ordering, answer model, checks). State 0.97.226, 2026-11-15; the
+orange step marks the weak spot measured that day (example files cut by size), see
+`docs/plans/2026-11-15-xml-example-chunks.md`.
+
+- SVG render: [docs/diagrams/semantic-search-pipeline.svg](diagrams/semantic-search-pipeline.svg)
+
+![Semantic search in the pipeline](diagrams/semantic-search-pipeline.svg)
+
 ## NeTEx Line–Journey class relations
 
 How `netex:Line` and `netex:Journey` connect once `rdfs:subClassOf` is followed downward only
