@@ -55,6 +55,7 @@ from helpdesk.services.evidence_mapper import map_evidence
 from helpdesk.services.event_logger import log_question_event
 from helpdesk.services.faq_matcher import match_faq
 from helpdesk.services.faq_publication import publish_queue_item_to_faq
+from helpdesk.services.fixed_text_language import in_question_language
 from helpdesk.services.grounded_generator import generate_answer
 from helpdesk.services.llm_generator import (
     LLMGenerationError,
@@ -71,7 +72,7 @@ from helpdesk.services.question_parsing import (
     parse_question_to_semantic_query,
     select_effective_scope,
 )
-from helpdesk.services.semantic_abstention import semantic_abstention_message
+from helpdesk.services.semantic_abstention import INSUFFICIENT_EVIDENCE_MESSAGE, semantic_abstention_message
 from helpdesk.services.index_builder import index_repository
 from helpdesk.services.netex_example_generator import (
     example_element_names,
@@ -1428,7 +1429,7 @@ class QuestionAnswerView(APIView):
             abstention_reason = QuestionEvent.REASON_INSUFFICIENT_EVIDENCE
             review_required = True
             semantic_fallback = "NO_CONCEPT_MATCH"
-            answer_text = abstention_message
+            answer_text = in_question_language(abstention_message, question=question, english_question=english_question)
             citations = []
         else:
             # 2) RAG fallback: retrieve evidence, generate, then run policy gate.
@@ -1485,7 +1486,7 @@ class QuestionAnswerView(APIView):
                 review_required = evidence_gate.get("review_required", False)
                 if semantic_fallback is None and not evidence_gate.get("allowed", True):
                     semantic_fallback = "PARTIAL_EVIDENCE"
-                answer_text = "I do not have sufficient approved-source evidence to answer this safely."
+                answer_text = in_question_language(INSUFFICIENT_EVIDENCE_MESSAGE, question=question, english_question=english_question)
             else:
                 # What the element contains, from the schema, for "what does X contain" questions (no model).
                 schema_structure = schema_structure_for(question, effective_scope, english_question)
@@ -1594,7 +1595,7 @@ class QuestionAnswerView(APIView):
                         abstention_reason = policy["reason"]
                         review_required = policy["review_required"]
                         citations = []
-                        answer_text = "I do not have sufficient approved-source evidence to answer this safely."
+                        answer_text = in_question_language(INSUFFICIENT_EVIDENCE_MESSAGE, question=question, english_question=english_question)
                     else:
                         return _error_response(
                             code="POLICY_BLOCK",
@@ -2133,7 +2134,7 @@ class QuestionAnswerStreamView(APIView):
             abstention_reason = QuestionEvent.REASON_INSUFFICIENT_EVIDENCE
             review_required = True
             semantic_fallback = "NO_CONCEPT_MATCH"
-            answer_text = abstention_message
+            answer_text = in_question_language(abstention_message, question=question, english_question=english_question)
             citations = []
         else:
             graph_rag_enabled = _resolve_graph_rag_enabled(options)
@@ -2187,7 +2188,7 @@ class QuestionAnswerStreamView(APIView):
                 review_required = evidence_gate.get("review_required", False)
                 if semantic_fallback is None and not evidence_gate.get("allowed", True):
                     semantic_fallback = "PARTIAL_EVIDENCE"
-                answer_text = "I do not have sufficient approved-source evidence to answer this safely."
+                answer_text = in_question_language(INSUFFICIENT_EVIDENCE_MESSAGE, question=question, english_question=english_question)
             else:
                 use_llm = generation_profile == "llm-ready" and settings.LLM_ENABLED
                 if use_llm:
@@ -2307,7 +2308,7 @@ class QuestionAnswerStreamView(APIView):
                         abstention_reason = policy["reason"]
                         review_required = policy["review_required"]
                         citations = []
-                        answer_text = "I do not have sufficient approved-source evidence to answer this safely."
+                        answer_text = in_question_language(INSUFFICIENT_EVIDENCE_MESSAGE, question=question, english_question=english_question)
                     else:
                         yield self._sse({
                             "type": "error",
