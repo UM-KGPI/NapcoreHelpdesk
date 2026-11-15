@@ -56,7 +56,9 @@ interface UserChatWorkspaceProps {
 
 // Export chat to a Markdown text file: hidden for now (copy answer covers the single answer); the
 // code stays for later use. Set to true to show the 💾 button again.
-const SHOW_EXPORT_CHAT = false;
+function questionLink(questionId: string): string {
+  return `${window.location.origin}/napcore-helpdesk/question?questionId=${questionId}`;
+}
 
 export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
   const {
@@ -114,8 +116,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
       return;
     }
 
-    const baseUrl = window.location.origin;
-    const deepLink = `${baseUrl}/napcore-helpdesk/question?questionId=${questionId}`;
+    const deepLink = questionLink(questionId);
 
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(deepLink);
@@ -166,13 +167,10 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
         lines.push("### Legal context");
         (turn.answer.legalContext ?? []).forEach((item) => lines.push(`- ${item.label} | ${item.url}`));
       }
-      if (turn.answer) {
-        const feedbackLike = turn.answer.trace.userLikes ?? false;
-        const feedbackDislike = turn.answer.trace.userDislikes ?? false;
+      const questionId = turn.requestId ?? turn.answer?.trace.requestId;
+      if (turn.answer && questionId) {
         lines.push("");
-        lines.push(
-          `Trace: requestId=${turn.requestId ?? turn.answer.trace.requestId}; mode=${turn.answer.mode}; confidence=${turn.answer.confidence.toFixed(2)}; userLikes=${String(feedbackLike)}; userDislikes=${String(feedbackDislike)}; answerSuccess=${String(turn.answer.trace.answerSuccess ?? null)}; citationClickCount=${String(turn.answer.trace.citationClickCount ?? 0)}`
-        );
+        lines.push(`Link: ${questionLink(questionId)}`);
       }
       lines.push("");
     }
@@ -335,7 +333,7 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                       >
                         📋
                       </button>
-                      {SHOW_EXPORT_CHAT && (<button
+                      <button
                           type="button"
                           className="chat-icon-button"
                           onClick={exportChatAsTextMarkdown}
@@ -344,7 +342,6 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                         >
                           💾
                         </button>
-                      )}
                       <button
                         type="button"
                         className="chat-icon-button"
