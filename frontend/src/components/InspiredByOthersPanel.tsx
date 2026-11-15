@@ -123,14 +123,6 @@ export default function InspiredByOthersPanel(props: InspiredByOthersPanelProps)
             <p className="inspired-card-answer muted">
               {truncateText(question.answer, 150)}
             </p>
-            <div className="inspired-card-meta">
-              <span className="inspired-badge">
-                {question.mode === "faq" ? "📋 FAQ" : "🔍 RAG"}
-              </span>
-              <span className="inspired-confidence">
-                Confidence: {(question.confidence * 100).toFixed(0)}%
-              </span>
-            </div>
           </article>
         ))}
       </div>
