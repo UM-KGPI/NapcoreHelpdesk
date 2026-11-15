@@ -18,9 +18,15 @@ from helpdesk.services.semantic_abstention import INSUFFICIENT_EVIDENCE_MESSAGE,
 QUESTION = "Kaj so to metapodatki?"
 ENGLISH = "What is metadata?"
 SLOVENIAN = (
-    "Ta služba za pomoč odgovarja na vprašanja o standardih NeTEx, SIRI, OpRa in Transmodel, DATEX II in TN-ITS, "
-    "profilu mobilityDCAT-AP in zakonodaji EU. Preoblikujte vprašanje ali navedite standard, ki ga mislite."
+    "Ta služba za pomoč uporabnikom odgovarja na vprašanja o standardih za podatke v javnem prometu NeTEx, SIRI, "
+    "OpRa in Transmodel, o standardih za cestni promet DATEX II in TN-ITS, o profilu metapodatkov mobilityDCAT-AP "
+    "za nacionalne dostopne točke, o zakonodaji EU, ki ureja te podatke (MMTIS, direktiva ITS, TEL TSI in pravila "
+    "INSPIRE za prometna omrežja), ter o gradivu NAPCORE o nacionalnih dostopnih točkah in nacionalnih organih. "
+    "Kot kaže, se vaše vprašanje ne nanaša na nobeno od teh področij. Prosimo, preoblikujte ga ali navedite "
+    "standard, akt ali pojem, ki ga imate v mislih."
 )
+SLOVENIAN_INSUFFICIENT = "Nimam dovolj dokazov iz odobrenih virov, da bi lahko na to vprašanje varno odgovoril."
+GERMAN_INSUFFICIENT = "Mir liegen nicht genügend Belege aus freigegebenen Quellen vor, um diese Frage verlässlich zu beantworten."
 
 
 def _reply(text: str) -> dict:
@@ -65,29 +71,91 @@ class FixedTextLanguageTests(SimpleTestCase):
         self.assertEqual(chat_mock.call_args.kwargs["model"], settings.FIXED_TEXT_TRANSLATION_MODEL)
 
     def test_another_text_or_language_is_rendered_anew(self, chat_mock, language_mock):
-        chat_mock.side_effect = [_reply(SLOVENIAN), _reply("Nimam dovolj dokazov."), _reply("Ich habe nicht genug Belege.")]
+        chat_mock.side_effect = [_reply(SLOVENIAN), _reply(SLOVENIAN_INSUFFICIENT), _reply(GERMAN_INSUFFICIENT)]
         _render(NOT_RELEVANT_MESSAGE)
-        self.assertEqual(_render(INSUFFICIENT_EVIDENCE_MESSAGE), "Nimam dovolj dokazov.")
+        self.assertEqual(_render(INSUFFICIENT_EVIDENCE_MESSAGE), SLOVENIAN_INSUFFICIENT)
         language_mock.return_value = "German"
-        self.assertEqual(_render(INSUFFICIENT_EVIDENCE_MESSAGE, question="Wie wird das Wetter?"), "Ich habe nicht genug Belege.")
+        self.assertEqual(_render(INSUFFICIENT_EVIDENCE_MESSAGE, question="Wie wird das Wetter?"), GERMAN_INSUFFICIENT)
         self.assertEqual(chat_mock.call_count, 3)
 
-    def test_an_unreachable_model_keeps_the_english_text_and_caches_nothing(self, chat_mock, _language):
+    def test_an_unreachable_model_keeps_the_english_text_and_is_tried_again_later(self, chat_mock, _language):
         chat_mock.side_effect = ConnectionError("model unreachable")
         self.assertEqual(_render(NOT_RELEVANT_MESSAGE), NOT_RELEVANT_MESSAGE)
+        self.assertEqual(chat_mock.call_count, 2)  # the call and its one retry
         chat_mock.side_effect = None
         chat_mock.return_value = _reply(SLOVENIAN)
+        # The failure is remembered for a while: no call on every refusal while the model fails.
+        self.assertEqual(_render(NOT_RELEVANT_MESSAGE), NOT_RELEVANT_MESSAGE)
+        self.assertEqual(chat_mock.call_count, 2)
+        cache.delete(fixed_text_language._failed_key(fixed_text_language._cache_key(NOT_RELEVANT_MESSAGE, "Slovenian")))
         self.assertEqual(_render(NOT_RELEVANT_MESSAGE), SLOVENIAN)
+        self.assertEqual(chat_mock.call_count, 3)
 
     def test_an_empty_or_unparsable_rendering_keeps_the_english_text(self, chat_mock, _language):
         for content in ('{"text": ""}', "not json", '{"other": 1}'):
             with self.subTest(content):
+                cache.clear()
                 chat_mock.return_value = {"choices": [{"message": {"content": content}}]}
                 self.assertEqual(_render(NOT_RELEVANT_MESSAGE), NOT_RELEVANT_MESSAGE)
 
     def test_a_rendering_that_drops_a_standard_name_keeps_the_english_text(self, chat_mock, _language):
         chat_mock.return_value = _reply(SLOVENIAN.replace("NeTEx", "NETEKS"))
         self.assertEqual(_render(NOT_RELEVANT_MESSAGE), NOT_RELEVANT_MESSAGE)
+
+    def test_a_raw_line_break_inside_the_json_string_is_read(self, chat_mock, _language):
+        content = '{"draft": "x", "text": "' + SLOVENIAN.replace(" Kot kaže", "\n Kot kaže") + '"}'
+        chat_mock.return_value = {"choices": [{"message": {"content": content}}]}
+        self.assertEqual(_render(NOT_RELEVANT_MESSAGE), SLOVENIAN)
+
+    def test_a_failed_check_is_retried_once(self, chat_mock, _language):
+        chat_mock.side_effect = [_reply(SLOVENIAN.replace("koncept", "концепт").replace("vprašanje", "vprašaнje")), _reply(SLOVENIAN)]
+        self.assertEqual(_render(NOT_RELEVANT_MESSAGE), SLOVENIAN)
+        self.assertEqual(chat_mock.call_count, 2)
+
+
+class RenderingCheckTests(SimpleTestCase):
+    def _problem(self, rendered, *, text=NOT_RELEVANT_MESSAGE, language="Slovenian", finish="end_turn"):
+        return fixed_text_language._rendering_problem(text, language, rendered, finish)
+
+    def test_a_good_rendering_passes(self):
+        self.assertIsNone(self._problem(SLOVENIAN))
+        self.assertIsNone(self._problem(GERMAN_INSUFFICIENT, text=INSUFFICIENT_EVIDENCE_MESSAGE, language="German"))
+
+    def test_a_word_mixing_scripts_fails(self):
+        self.assertIn("mixed scripts", self._problem(SLOVENIAN.replace("vprašanje", "vprašaнje")))
+
+    def test_a_word_in_another_script_fails_unless_it_comes_from_the_english_text(self):
+        self.assertIn("script", self._problem(SLOVENIAN.replace("akt", "акт")))
+        greek = (
+            "Αυτή η υπηρεσία απαντά σε ερωτήσεις για τα πρότυπα NeTEx, SIRI, OpRa και Transmodel, τα πρότυπα "
+            "οδικής κυκλοφορίας DATEX II και TN-ITS, το προφίλ μεταδεδομένων mobilityDCAT-AP για τα εθνικά σημεία "
+            "πρόσβασης, την ενωσιακή νομοθεσία (MMTIS, οδηγία ITS, TEL TSI, κανόνες INSPIRE) και το υλικό του "
+            "NAPCORE. Η ερώτησή σας δεν φαίνεται να αφορά αυτά τα θέματα. Παρακαλούμε να τη διατυπώσετε ξανά."
+        )
+        self.assertIsNone(self._problem(greek, language="Greek"))
+
+    def test_another_language_fails(self):
+        croatian = "Nemam dovoljno dokaza iz odobrenih izvora da bih na ovo pitanje mogao sigurno odgovoriti."
+        self.assertIsNotNone(self._problem("I do not have enough evidence from approved sources to answer this.", text=INSUFFICIENT_EVIDENCE_MESSAGE))
+        self.assertIsNotNone(self._problem(croatian, text=INSUFFICIENT_EVIDENCE_MESSAGE))
+
+    def test_a_dropped_name_an_odd_length_or_a_cut_off_rendering_fails(self):
+        self.assertIn("dropped NeTEx", self._problem(SLOVENIAN.replace("NeTEx", "NETEKS")))
+        self.assertIn("length", self._problem(SLOVENIAN[:80] + " NeTEx, SIRI, OpRa, Transmodel, DATEX II, TN-ITS, mobilityDCAT-AP"))
+        self.assertIn("length", self._problem(SLOVENIAN + " " + SLOVENIAN + " " + SLOVENIAN))
+        self.assertIn("token limit", self._problem(SLOVENIAN, finish="max_tokens"))
+
+    def test_a_language_the_detector_does_not_know_skips_the_language_check(self):
+        self.assertIsNone(self._problem(SLOVENIAN, language="Serbian"))
+
+
+@override_settings(LLM_ENABLED=True, FIXED_TEXT_TRANSLATION_TIMEOUT_SECONDS=3.0)
+@patch("helpdesk.services.llm_generator.question_language", return_value="Slovenian")
+@patch("helpdesk.services.llm_generator._request_chat_completion")
+class SlowRenderingTests(SimpleTestCase):
+    def setUp(self):
+        cache.clear()
+        request_timing.start()
 
     @override_settings(FIXED_TEXT_TRANSLATION_TIMEOUT_SECONDS=0.2)
     def test_a_slow_rendering_keeps_the_english_text_and_is_cached_when_it_arrives(self, chat_mock, _language):
@@ -101,8 +169,8 @@ class FixedTextLanguageTests(SimpleTestCase):
         chat_mock.side_effect = slow
         original_set = fixed_text_language._cache_set
 
-        def cache_set(key, value):
-            original_set(key, value)
+        def cache_set(key, value, seconds):
+            original_set(key, value, seconds)
             done.set()
 
         with patch.object(fixed_text_language, "_cache_set", side_effect=cache_set):
@@ -164,9 +232,9 @@ class LanguageFromTheSearchTranslationTests(SimpleTestCase):
         self.assertIn("Slovenian", chat_mock.call_args.kwargs["messages"][0]["content"])
 
     @patch("helpdesk.services.llm_generator.question_language", return_value="German")
-    @patch("helpdesk.services.llm_generator._request_chat_completion", return_value=_reply("Ich habe nicht genug Belege."))
+    @patch("helpdesk.services.llm_generator._request_chat_completion", return_value=_reply(GERMAN_INSUFFICIENT))
     def test_without_a_noted_language_the_question_is_asked(self, _chat, language_mock):
-        self.assertEqual(_render(INSUFFICIENT_EVIDENCE_MESSAGE, question="Wie wird das Wetter?"), "Ich habe nicht genug Belege.")
+        self.assertEqual(_render(INSUFFICIENT_EVIDENCE_MESSAGE, question="Wie wird das Wetter?"), GERMAN_INSUFFICIENT)
         language_mock.assert_called_once()
 
 

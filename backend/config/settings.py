@@ -459,8 +459,8 @@ SEARCH_TRANSLATION_ENABLED = env("SEARCH_TRANSLATION_ENABLED")
 # How long a refusal waits for its fixed text in the question's language (services/fixed_text_language.py)
 # the first time per language; afterwards the rendering comes from the cache. 0: refusals stay in English.
 FIXED_TEXT_TRANSLATION_TIMEOUT_SECONDS = env("FIXED_TEXT_TRANSLATION_TIMEOUT_SECONDS")
-# The model that renders them; empty: LANGUAGE_CLASSIFIER_MODEL (Sonnet with Claude).
-FIXED_TEXT_TRANSLATION_MODEL = env("FIXED_TEXT_TRANSLATION_MODEL", default="").strip() or LANGUAGE_CLASSIFIER_MODEL
+# The model that renders them; empty: LLM_MODEL, the model of the app's ordinary calls.
+FIXED_TEXT_TRANSLATION_MODEL = env("FIXED_TEXT_TRANSLATION_MODEL", default="").strip() or LLM_MODEL
 GRAPH_RAG_ENABLED = env("GRAPH_RAG_ENABLED")
 SEMANTIC_LOW_CONFIDENCE_THRESHOLD = env("SEMANTIC_LOW_CONFIDENCE_THRESHOLD")
 EVIDENCE_GATE_ENABLED = env("EVIDENCE_GATE_ENABLED")
