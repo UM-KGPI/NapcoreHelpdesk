@@ -75,6 +75,9 @@ them. Ways to compare, all from what exists:
    another user's question is acceptable in general (the page does it already for liked questions), and that
    nothing personal can be in such a question.
 3. **Both**, earlier answered questions first, then written ones.
+4. **The source named in words** (added during S0, measured in runs of its own with the same gate): the controller
+   model names the sources that may answer the question, as in C0, and restates the question with the source in it,
+   so it goes through the screen as an ordinary unscoped question.
 
 For each way, measured on the 23 wrongly refused questions, the 25 must-refuse questions
 (`refused-questions.yaml`) and the questions of the gold file (`answer-source-questions.yaml`) that are refused
@@ -232,3 +235,192 @@ controller's own options, 4 were answered. A plain scope selector, the fallback,
 - Seven of the 23 stay refused with the right scope: those are retrieval faults (the retrieval-misses plan).
 - So the second means keeps the scope out of the request: a suggestion is a whole question sent unscoped, through
   the screen, the search and the checks as any question.
+
+### S0 (2026-11-15, dev, 0.97.225): gate failed for every way
+
+**Verdict.** No way meets gate S0, so S1 is not started. The best, way 1 (questions written from passages of every
+source), is useful for 5, 6 and 7 of the 12 questions refused today (42–58 %, gate 60 % in 3 of 3 runs), 6–31 % of
+its shown suggestions are refused when asked (gate 10 %), and it adds 5.7 s to a refusal after the search at the
+median (gate 2 s). Way 2 (earlier answered questions) is fast and almost never dead, but is useful for 3 of 12 and
+offers questions that have little to do with what was asked. Way 3 is way 2 by construction. Way 4 (the source
+named in words, from the C0 idea) is useful for 2–4 of 12 and two thirds of its suggestions are refused. The cheap
+check before showing passed every one of 536 suggestions, so it predicts nothing. All numbers **measured** unless
+marked.
+
+**How it was measured.** A host server from this branch on port 8061 (`RELEVANCE_CHECK_ENABLED=True`,
+`LLM_MAX_EVIDENCE_CHUNKS=6`, as prod runs; controller model `claude-haiku-5-5`; graph mode on), one request
+at a time. `measure_suggested_questions` (this branch): `baseline` asks every question twice through the API;
+`suggest` makes the suggestions of each way and runs the check for each; `score` asks every suggestion through the
+API as the chat page asks (no scope); `summary` counts. Three runs for ways 1–3 (runs 1–3), three separate runs for
+way 4 (runs 11–13), and a timing run at the end. "Useful" = at least one suggestion shown after the check that is
+answered and cites a wanted source of the original question (the gold file's patterns; for the 23 through `ref`,
+so every one has its wanted source and none was judged by reading). "Dead" = a shown suggestion that is refused.
+Suggestion texts are model output: a way-1 or way-4 suggestion is a new text in every run.
+
+**Today's state** (2 runs each, refused in at least one counts as refused today, decided before the runs):
+
+| Group | Asked | Refused today | Of them refused in both | Where |
+|---|---|---|---|---|
+| wrongly refused (refused-questions.yaml) | 23 | 10 | 7 | all by the answer model's verdict, after the search |
+| gold b-questions (answer-source-questions.yaml) | 34 | 2 (b14, b30) | 1 | verdict |
+| must-refuse | 25 | 24 (m19 answered in both) | 24 | 14 at the screen (second opinion IRRELEVANT), 10 by the verdict |
+
+So the gate's denominator is 12: k11, k14, e02–e08, p01, b14, b30. None of the 12 is refused at the screen any more
+(the second opinion lets all 14 keyword-refused ones through). "Kaj so to metapodatki?" was answered in both runs on
+my server (from the GML metadata property types, beside the point, as Q3 found), so it is not in the set.
+
+**Gate S0** (skip: no suggestions when the second opinion said IRRELEVANT; the other skip options below):
+
+| Gate | Needed | Way 1 written | Way 2 earlier | Way 3 both | Way 4 source named |
+|---|---|---|---|---|---|
+| 1. useful, of 12, per run | ≥ 60 % in 3 of 3 | 5, 6, 7 | 3, 3, 3 | 3, 3, 3 | 2, 4, 2 |
+| 2. shown suggestions refused when asked | ≤ 10 % | 11/35, 4/33, 2/33 | 2/66, 1/66, 1/66 | as way 2 | 20/31, 23/30, 20/31 |
+| 3a. must-refuse not about the sources get none | none | none (also without skip) | none with skip; 3 each without | as way 2 | none (also without skip) |
+| 3b. no suggestion that answers the original | none | none; 1 borderline (m06) | none read as such | as way 2 | 2 restatements answered (m23, m25), text declines |
+| 4. added to a refusal after the search, median | ≤ 2 s | 5.7 s (8.6 s with check) | 0.05 s (4.4 s with check) | sum | 2.7 s (4.0 s with check) |
+| | | fails 1, 2, 4 | fails 1 | fails 1 | fails 1, 2, 3b |
+
+Useful per question, way 1: k11, e03, e06, p01, b14 in 3 of 3 runs; e02 in 2; b30 in 1; never k14, e04, e05, e07, e08.
+Way 2: k11, e06, b30 in 3 of 3 (deterministic). Way 4: b14 3, k11 2, e06 2, e03 1. The union of ways 1 and 2 (not a
+way that was defined before the runs) would be 6, 7 and 7 of 12, still below 60 %. Way 3 equals way 2 because way 2
+always fills the three places and the check never removes one; the order "earlier first" was fixed by the plan.
+
+**Way 2 needed a stand-in.** The dev question log holds 156 distinct questions that were answered, validated and not
+disliked; 68 of them are questions of the test sets themselves and the other 88 are questions from earlier
+measurements (presence, example and concept benchmarks), some of them paraphrases of the test questions ("How do I
+describe a lift in a station in NeTEx? Show me an example in XML."). It is too contaminated to judge way 2, and it is
+not users' data. As a stand-in, **clearly not the real thing**, the pool was the 140 answerable benchmark questions
+asked once through the API: 126 answered, 123 validated, 2 of them also in the test sets and left out, so 121. The
+benchmark covers NeTEx, SIRI and OpRa only, so way 2 could never be useful for the legislation and profile questions;
+on prod's log the result may differ in both directions (**believed**).
+
+**The check before showing.** Keyword screen (no second opinion), then the unscoped search with the app's scope
+selection, pass when one passage reaches 0.62. It passed all 444 suggestions of ways 1–2 and all 92 of way 4. Of
+the passed ones, 23 of 444 and 63 of 92 were refused when asked: every refusal came from the answer model's verdict,
+which the check cannot see. It costs 0.8 s (at the screen) to 1.4 s (after the search) per suggestion at the median,
+for nothing. The full check is asking the suggestion: 3.9–5.4 s per suggestion at the median through the API, so
+about 4–5 s added per refusal if three are asked in parallel, 13 s one after the other, and twice the model cost.
+
+**Skipping questions that are not about the sources.** Three options, fixed before the runs: no skip; skip when
+the second opinion said IRRELEVANT; skip every refusal at the screen. On today's state the last two are the same (no
+refusal at the screen is the keyword message alone) and cost nothing in usefulness (none of the 12 is refused at the
+screen). What they let through: with the skip, the 14 screen-refused must-refuse questions get nothing, and the 10
+refused by the verdict get suggestions. Without a skip, way 1 still writes nothing for the nine questions that are not
+about the sources (greetings, weather, bread, football, poem, capital, laptop, narcose, the Italian question) in 3 of
+3 runs: the model follows "suggest nothing" even with passages above the score; but it does write for the vague
+"Explain the data format.", "What are the rules?" and "Is this mandatory?" (DATEX II regulation profiles, the
+mobilityDCAT-AP mandatory properties). Way 2 without a skip gives three benchmark questions to every question, "hi"
+and the weather in Ljubljana included. The skip costs nothing (the verdict is already known); with it, nothing is
+added to a refusal at the screen.
+
+**Must-refuse: every way-1 suggestion shown with the skip, read with its answer** (3 runs; short form):
+
+| Original | Suggestions (answered unless marked) | Reading |
+|---|---|---|
+| m04 is croatian NAP good? | goal of NAPCORE; how NAPCORE's data insights report assesses NAPs (refused once) | related, does not judge a NAP |
+| m05 colour of bus seats | seats of a double-decker bus in the deck plan example; what that example includes | related, about deck plans |
+| m06 round ExpectedArrivalTime to whole minutes? | SIRI definition of ExpectedDepartureTime; NeTEx EstimatedTimesAtStopGroup; "What time precision is used … in the SIRI stop monitoring example?" (answer: to the second) | **borderline**: the last does not say whether rounding is allowed, but a reader may take it as an answer |
+| m20 OpenStreetMap API | why data consumers use OSM, NAPCORE cycling conclusions | related, says nothing about the API |
+| m21 NeTEx vs GTFS real-time quality | NeTEx is for scheduled data; what EN 15531-2 covers | related, no comparison |
+| m22 cost of implementing OpRa | what gap OpRa fills (refused in all runs) | — |
+| m23 W3C/OGC ontology for NeTEx | NeTEx is an XML representation of Transmodel; Transmodel version | related, no ontology named |
+| m24 OpRa with GTFS-RT | OpRa's four data groups; the gap OpRa fills (refused in run 1) | related |
+| m13, m25 | none in any run | — |
+
+Way 4 restates the must-refuse question with a source in it ("Is it ok to round … to whole minutes in SIRI?", "What is
+the estimated cost of implementing OpRa …, according to NAPCORE's material …?"). Most were refused; m23 ("… as
+described in the Transmodel reference data model?") and m25 ("What is the Transmodel equivalent of an OpRa capacity
+indicator?") were answered once each (run 11), with texts that say the evidence does not name one; in run 13 m25 got
+two related questions that were answered ("What is an OpRa capacity indicator?"). That is the risk
+expected when the way was proposed: naming a source in the words is the same move as a scope, and the restatement is the original
+question. None of the nine not about the sources got a way-4 suggestion (the model named no source).
+
+**Suggestions to read** (original → suggestion; way 1 unless marked):
+
+- "How to model number of late journeys?" → "How is the late dated vehicle journey count reported in an OpRa
+  ServiceDelivery response?" (answered from `opra_lateDatedVehicleJourney`: useful)
+- "What if my dataset is available in several formats?" → "In mobilityDCAT-AP, can one dataset have multiple
+  distributions, with the same dataset provided in different ways such as a zip file or XML?" (useful)
+- "In which legislation is DATEX. included?" → "Which formats must data holders use for dynamic road travel and traffic
+  data under Article 5 of Delegated Regulation (EU) 2017/1926 (MMTIS)?" (useful)
+- "Como operador de uma rede nacional de autocarros, que categorias de datasets tenho de ter em conta, do regulamento
+  MMTIS?" → "Em que secção do anexo do Regulamento Delegado (UE) 2017/1926 (MMTIS) se tratam os tipos de dados
+  dinâmicos de viagem e tráfego?" (useful, in Portuguese)
+- "when describing the calendar of a service journey, how to choose between UIC bit field and explicit Operational
+  Days?" → "In NeTEx, how is a service journey linked to day types through the ServiceCalendar?" (useful by the gold
+  patterns, but it does not answer the choice the user asked about)
+- "How do I describe an elevator in a station in NeTEx?" → "What are the allowed values of the AccessFeatureEnumeration
+  in the NeTEx netex_environment_support.xsd schema?" (refused)
+- "How to define a location of a parking bay in DATEX?" → "How is the location of a ParkingBay expressed in NeTEx,
+  using a Centroid and a gml:Polygon?" (refused; and it moved to another standard)
+- "How are dynamical data described?" → "How is dynamic road status data on the availability of charging points for
+  electric vehicles defined in DD 2015 962?" (refused; drifted to a NAPCORE data dictionary)
+- "What does NeTEx say about the colour of bus seats?" → "How does NeTEx represent the seats of a double decker bus in a
+  deck plan?" (answered; acceptable)
+- "Is this mandatory?" → "Which properties are mandatory in the mobilityDCAT-AP quick reference of classes and
+  properties?" (only without the skip; a guess at what the user meant)
+- Way 2: "How to define a location of a parking bay in DATEX?" → "What is a NeTEx Route and how is it different from a
+  Line?" (similarity 0.85; unrelated)
+- Way 2 without skip: "What is the weather in Ljubljana tomorrow?" → "What does a ResponseLateDatedVehicleJourneys OpRa
+  message look like?"
+- One trial, not in the set (answered on my server): "Kaj so to metapodatki?" → "Kaj je metapodatkovni zapis v
+  mobilityDCAT-AP?" and "Kako so metapodatki opredeljeni v MMTIS DR in Aktu EU o podatkih (EU) 2023/2854?"; asked
+  once, both answered, from mobilityDCAT-AP and MMTIS Art. 2, the sources the user meant.
+
+**Without a gate.**
+
+- Language: the only non-English question in the set with suggestions is the Portuguese b14; 5 of 5 way-1
+  suggestions were in Portuguese (detector). Way 2 suggests in the pool's language (English here).
+- Stability: way 1 wrote 1–3 suggestions per question; no suggestion text recurs in all three runs for any question
+  (2–9 distinct per question). The useful ones stay useful by content: 5 questions useful in 3 of 3.
+- Difference from the original: no way-1 suggestion repeats the original (0 of 120). For the 12 wrongly refused
+  questions (62 suggestions) the cosine similarity to the original is 0.78–0.97, median 0.88 (way 2: 0.85); word
+  overlap median 0.11. They are new questions, often longer and in the
+  source's terms ("late dated vehicle journey", "AccessFeatureEnumeration").
+- Model calls: way 1 one controller call per refusal, 0 failed of 108; way 4 one call, 0 failed of 108. Way 2 none.
+- Privacy, way 2: a logged question is free text and holds whatever the user typed. In the dev log I found place and
+  operator names in example requests ("Ljubljana Bus Station", "Arriva Slovenija", "LPP"), and the record knows of a
+  question with a pasted SIRI document. Nothing filters these before a question would be shown to another user; a
+  filter would be needed and is not in the plan.
+
+**Time** (the timing run at the end, the dev stack otherwise idle: the other two measurements had finished; the runs
+before were under their load and slower). Seconds added to a refusal, median (90th percentile):
+
+| | at the screen (14) | after the search (22) |
+|---|---|---|
+| way 1: search over every source | 2.1 (2.3) | 2.6 (3.1) |
+| way 1: model call | 1.1 (3.2) | 3.1 (4.1) |
+| way 1 total, without the check | 3.2 (5.4) | 5.7 (7.9) |
+| way 1 total, with the check | 3.2 (10.1) | 8.6 (10.8) |
+| way 2: embedding and nearest, without the check | 0.04 | 0.05 |
+| way 2 with the check | 3.0 (4.2) | 4.4 (5.9) |
+| way 4: model call, without / with the check | 1.2 (2.1) / 1.2 (2.1) | 2.7 (4.3) / 4.0 (10.1) |
+
+With the skip, a refusal at the screen gets nothing and pays nothing. A refusal today takes 0.8 s at the screen and
+5.4 s after the search (median of the baseline). Nothing runs for an answered question: in S0 by construction (the
+suggestions are made only for refused questions); the English rendering and the language are known to the app
+before the screen and are not counted.
+
+**What is believed, not verified.**
+
+- That prod behaves like dev here: prod's index and settings file were not read; the 12 refused today are dev's.
+- That way 2 on prod's real log would do better than on the benchmark stand-in: not measured, and the log is not
+  filtered for personal data.
+- That the gold patterns judge "useful" fairly: p01 counts as useful from relation paths that do not answer the
+  user's choice; the gold file's patterns were used as they are.
+- That m06's borderline suggestion is acceptable: my reading; it is Andrej's call.
+
+**What was not tried.**
+
+- Showing way 1's suggestions only after asking them in full (the full check): it would remove the dead ones, at
+  about 4–5 s more per refusal in parallel and three more answer-model calls; usefulness would stay at 5–7 of 12.
+- Way 1 from the passages the answer model already read (no second search), which would save 2.6 s after the search;
+  those passages come from the unscoped search, so the legislation and profile questions would lose their sources.
+- A faster model call (no thinking), or fewer passages in the prompt.
+- Way 2 on prod's log.
+- Any variant thought of after seeing these numbers needs its own run, by the plan's rule.
+
+**Next.** The plan stops here by its own rule. What S0 shows: the passages near a wrongly refused question do exist
+for most of them (way 1 found an answering source for 7 of 12 at best), but a question written from them is refused
+by the same verdict in about one case in six (19 of 120), and the cheap check cannot tell. The two numbers that fail most
+clearly, dead suggestions and time, both come from the answer model's verdict and the search over every source.
