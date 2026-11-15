@@ -86,15 +86,25 @@ Relation questions keep using the graph as today. I do not measure the helpdesk 
 
 R0 showed that the file-level count alone cannot judge this change. The measures for every step:
 
-- **Answers.** The 23 answerable and the 25 must-refuse questions, 3 runs each. Every answer that is new or
-  changed is read against its passages.
+- **Answers.** The 23 answerable and the 25 must-refuse questions, 3 runs each. The verdicts taken before the
+  search (the relevance check above all) do not depend on the index; they are recorded with the baseline and held
+  equal in every variant. A question is asked again only where what the model is given differs from the baseline;
+  elsewhere the baseline's answer counts. Every answer that was asked again is read against its passages, and the
+  comparison is made question by question, not on the sum.
 - **Files.** Gold (57) and benchmark (141) at file level. Each question lost at file level is read: it counts as
   lost only if the passages given no longer hold what the named file holds for the question.
 - **The case.** The late-journeys question, 3 runs, and the 7 questions with a better piece left out, read by hand.
 - **Examples.** The example benchmark, all questions, 3 runs: generated, first attempts, linked objects.
 - **Cost.** Rows, index size, embedding time, retrieval time.
 
-"Not lower" means not lower than the baseline by more than the spread measured in step 0.
+"Not lower" means not lower than the baseline by more than the spread measured in step 0 (§10): files found,
+the retrieval benchmark and generated examples did not move, so any loss there is real; first attempts: a fall of
+6 or more; answers on the sum: 7 of 69 runs, which is why the questions asked again are read one by one. Questions
+whose passages move between two runs on the same index are listed with the baseline and marked in every
+comparison. Retrieval time is compared on warm runs only.
+
+(§5 was written this way on 2026-11-16, after step 0 and before any number of step 1 existed. The first version
+said only "3 runs each" and "the spread measured in step 0".)
 
 ## 6. Steps
 
@@ -503,3 +513,21 @@ Verified (**measured**):
 - Not done: the live dev embedder serves `/count` only after it is started again with this code, and prod's after
   the next deploy (the deploy rebuilds the embedder). I did not restart it. The check above ran the new handler on
   the host, with the embedder image's library versions, not inside the running service.
+
+### Corrections to the step 0 record (2026-11-16, from building the local measurement tool)
+
+- **Measured** (the three functions called by hand with a counting stand-in for the model): of the three verdicts
+  cached per process, only the relevance check was a source of spread in step 0. The vocabulary bridge is switched
+  off in the host settings and made no call; the controller route is asked only on an FAQ match, and none of the
+  288 runs had one.
+- **Measured**: the passages that move between two runs on the same index are not caused by a GraphDB timeout, as
+  I believed above. GraphDB gave identical answers, without a failure and without a call over 1 s. The same
+  retrieval repeated in one process gives 4 different results with the graph candidates on and 1 with them off.
+  The cause is in the graph candidate code in the process; the line is not found yet. In the validation the
+  questions e01, e03 and m22 moved (and e04 once).
+- **Measured**: in the table, "26 of 30" and "83 of 90" mix two sets. 26 and 83 count the questions with a wanted
+  file among the passages (of 32 and 92); on the measurable subset the numbers are 24 of 30 and 81 of 90.
+- **Measured** (validation of the tool on the step 0 copy, 2 runs of the 48 questions): with the verdicts held
+  equal and unchanged prompts replayed, 90 of 96 question runs needed no model call, and all 90 gave the recorded
+  outcome. On a copy with one schema file removed, exactly the two questions that had read it were asked again,
+  plus the moving ones: 13 model calls where a full run makes 213.
