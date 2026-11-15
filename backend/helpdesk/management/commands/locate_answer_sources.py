@@ -18,6 +18,7 @@ docs/plans/2026-11-14-retrieval-misses.md, step Q0.
 from __future__ import annotations
 
 import json
+import re
 import time
 from collections import Counter
 from contextlib import contextmanager
@@ -169,6 +170,114 @@ def pass_report(recorded: dict, patterns: list[str]) -> dict:
         "lostAt": lost_at(presence),
         "furthest": max((i for i, (_n, p) in enumerate(presence) if p), default=-1),
     }
+
+
+# CamelCase is split in identifiers of 6 characters or more (NumberOfOccurrences), not in the short mixed-case
+# names of the standards themselves (NeTEx, OpRa), which would otherwise become two stray stems.
+_CAMEL_WORD = re.compile(r"\b[A-Za-z][A-Za-z0-9]{5,}\b")
+_CAMEL_BOUNDARY = re.compile(r"([a-z0-9])([A-Z])")
+# Markup characters become spaces: PostgreSQL's parser drops a whole <Tag> as one markup token.
+_MARKUP = re.compile(r"[<>/=\"]")
+_IDENTIFIER = re.compile(r"\b[A-Z][a-z0-9]+(?:[A-Z][A-Za-z0-9]*)+\b")
+_LEXEME = re.compile(r"'((?:[^']|'')+)'")
+
+
+def answer_terms(question: str, english: str | None, note: str) -> str:
+    """What the piece of a file that answers the question is recognised by: the question (its English rendering
+    when there is one) and the element names the gold note writes (LateDatedVehicleJourneyCount). A proxy for
+    hand labels: it rates the piece by the words it shares with the question, not by what the piece says."""
+    return " ".join([english or question, " ".join(_IDENTIFIER.findall(note or ""))])
+
+
+def lexemes_of(texts: list[str]) -> list[set[str]]:
+    """English stems of each text, markup removed and CamelCase split ("NumberOfOccurrences" -> number, occurr), by
+    PostgreSQL's English text search configuration (its stop words, no list of ours)."""
+    from django.db import connection
+
+    if not texts:
+        return []
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT to_tsvector('english', t)::text FROM unnest(%s::text[]) WITH ORDINALITY AS u(t, n) ORDER BY n",
+            [[_CAMEL_WORD.sub(lambda m: _CAMEL_BOUNDARY.sub(r"\1 \2", m.group(0)), _MARKUP.sub(" ", text or "")) for text in texts]],
+        )
+        return [{m.group(1) for m in _LEXEME.finditer(row[0] or "")} for row in cursor.fetchall()]
+
+
+def file_pieces(repository_url: str, source_path: str, terms: set[str]) -> list[dict]:
+    """The chunks of one file in index order, each with how many of the terms it holds."""
+    rows = list(
+        SourceChunk.objects.filter(repository_url=repository_url, source_path=source_path)
+        .order_by("id")
+        .values_list("chunk_id", "text")
+    )
+    stems = lexemes_of([text for _chunk_id, text in rows])
+    return [
+        {"position": position, "chunkId": chunk_id, "chars": len(text), "matched": len(terms & stems[position - 1])}
+        for position, (chunk_id, text) in enumerate(rows, start=1)
+    ]
+
+
+def furthest_stage(recorder: "StageRecorder", chunk_ids: set[str]) -> str | None:
+    """The last stage of any retrieval pass, or of the question, that holds one of the chunks."""
+    furthest, furthest_index = None, -1
+    order = PASS_STAGES + QUESTION_STAGES
+    for recorded in recorder.passes:
+        for stage in ("ranked",) + PASS_STAGES:
+            rows = recorded["stages"].get(stage) or []
+            if any(row[2] in chunk_ids for row in rows):
+                index = order.index("scored") if stage == "ranked" else order.index(stage)
+                if index > furthest_index:
+                    furthest, furthest_index = stage, index
+    for stage in ("merged", "returned"):
+        if any(row[2] in chunk_ids for row in recorder.outer.get(stage) or []):
+            if order.index(stage) > furthest_index:
+                furthest, furthest_index = stage, order.index(stage)
+    return furthest
+
+
+def pieces_report(
+    entry: dict, english: str | None, prompt_rows: list, recorder: "StageRecorder", patterns: list[str] | None
+) -> list[dict]:
+    """For each wanted file among the model's passages: is the piece given the file's best piece?
+
+    The best piece is the chunk of the file that holds the most answer terms (answer_terms); the given piece is
+    the best of the file's chunks among the passages. A file of one chunk, or whose chunks share no term with the
+    question, has no best piece (bestMatched 0) and is not counted either way. patterns None: every file among
+    the passages, wanted or not."""
+    question = entry["question"].strip()
+    terms_list = lexemes_of([answer_terms(question, english, entry.get("note") or "")])
+    terms = terms_list[0] if terms_list else set()
+    report = []
+    seen = set()
+    for repo, path, _chunk_id, _score in prompt_rows:
+        if (repo, path) in seen or (patterns is not None and not matches(patterns, repo, path)):
+            continue
+        seen.add((repo, path))
+        pieces = file_pieces(repo, path, terms)
+        if not pieces:
+            continue  # a passage that is not an indexed file (ontology definition, relation path)
+        given_ids = {row[2] for row in prompt_rows if (row[0], row[1]) == (repo, path)}
+        given = [p for p in pieces if p["chunkId"] in given_ids]
+        best_matched = max(p["matched"] for p in pieces)
+        best = [p for p in pieces if p["matched"] == best_matched]
+        given_matched = max((p["matched"] for p in given), default=0)
+        first_content = next((p["position"] for p in pieces if p["chars"] >= 100), 1)
+        report.append(
+            {
+                "path": path,
+                "chunks": len(pieces),
+                "terms": sorted(terms),
+                "given": [p["position"] for p in given],
+                "givenMatched": given_matched,
+                "givenIsOpening": any(p["position"] <= first_content for p in given),
+                "best": [p["position"] for p in best],
+                "bestMatched": best_matched,
+                "givenIsBest": len(pieces) == 1 or best_matched == 0 or given_matched == best_matched,
+                "bestFurthestStage": furthest_stage(recorder, {p["chunkId"] for p in best}),
+            }
+        )
+    return report
 
 
 class SourceIndex:
@@ -458,6 +567,11 @@ def run_question(entry: dict, translations: Translations, index: SourceIndex, re
         "found": outer["prompt"],
         "lostAt": None if outer["prompt"] else (question_lost or "prompt"),
         "promptSources": [row[1] for row in prompt_rows],
+        "promptChunks": [{"path": row[1], "chunkId": row[2]} for row in prompt_rows],
+        # The finer measure (docs/plans/2026-11-15-right-piece-of-cited-file.md): for a wanted file among the
+        # passages, whether the piece given is the file's best piece.
+        "pieces": pieces_report(entry, english, prompt_rows, recorder, patterns),
+        "piecesAllFiles": pieces_report(entry, english, prompt_rows, recorder, None),
         # Every passage the view hands on, in order, with where it came from: the presence definitions, or the
         # retrieval's own rank (for reading what stands in front of a passage that is lost).
         "viewSources": [

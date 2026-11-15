@@ -9,7 +9,7 @@ with zeros to the column's dimension, which leaves cosine similarity unchanged.
 
 Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
 Crafted by: AI coding agents
-Created: 2026-03-28  |  Modified: 2026-10-26
+Created: 2026-03-28  |  Modified: 2026-11-15
 """
 
 from __future__ import annotations
@@ -115,6 +115,43 @@ def _service_embed(texts: list[str], kind: str) -> list[list[float]]:
     if len(vectors) != len(texts) or any(len(v) > EMBEDDING_DIMENSION for v in vectors):
         raise EmbeddingServiceError(f"Embedding service at {url} returned {len(vectors)} vectors for {len(texts)} texts.")
     return [list(map(float, v)) + [0.0] * (EMBEDDING_DIMENSION - len(v)) for v in vectors]
+
+
+# Texts per count request: the service's limit per request (embedding_service.MAX_TEXTS_PER_REQUEST); counting
+# is fast, so no smaller batch is needed for the timeout.
+COUNT_BATCH_SIZE = 256
+
+
+def count_embedded_tokens(texts: list[str], kind: str = "passage") -> tuple[list[int], int]:
+    """Tokens the embedding model reads of each text, counted by the embedding service with the tokenizer it
+    embeds with (the kind's prefix and the special tokens included), before its cut; and that cut
+    (EMBEDDER_MAX_TOKENS of the service). A count above the cut means the vector describes the text's first
+    tokens only. Raises EmbeddingServiceError when the service cannot count (unreachable, or a version
+    without /count); never estimates."""
+    from django.conf import settings
+
+    url = settings.EMBEDDING_SERVICE_URL.rstrip("/") + "/count"
+    counts: list[int] = []
+    max_tokens: int | None = None
+    for start in range(0, len(texts), COUNT_BATCH_SIZE):
+        body = json.dumps({"texts": texts[start : start + COUNT_BATCH_SIZE], "kind": kind}).encode("utf-8")
+        request = Request(url, data=body, headers={"Content-Type": "application/json"}, method="POST")
+        try:
+            with urlopen(request, timeout=settings.EMBEDDING_SERVICE_TIMEOUT_SECONDS) as response:
+                answer = json.loads(response.read())
+            batch, max_tokens = [int(n) for n in answer["counts"]], int(answer["maxTokens"])
+        except (URLError, OSError, ValueError, KeyError, TypeError) as exc:
+            raise EmbeddingServiceError(f"Embedding service at {url} failed: {exc}") from exc
+        counts.extend(batch)
+    if len(counts) != len(texts):
+        raise EmbeddingServiceError(f"Embedding service at {url} returned {len(counts)} counts for {len(texts)} texts.")
+    return counts, (max_tokens if max_tokens is not None else 0)
+
+
+def count_passage_tokens(chunks: list[tuple[str, str, str]]) -> tuple[list[int], int]:
+    """count_embedded_tokens for indexed chunks given as (source path, heading, text): the text the indexer
+    embeds for each (passage_text, as build_chunk_embedding_text with semantic vectors)."""
+    return count_embedded_tokens([passage_text(path, heading, text) for path, heading, text in chunks], "passage")
 
 
 def build_text_embedding(text: str, kind: str = "passage") -> list[float]:

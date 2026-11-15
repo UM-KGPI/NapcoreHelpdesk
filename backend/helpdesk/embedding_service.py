@@ -8,6 +8,11 @@ docs/production-deployment.md, "Semantic embeddings".
 
     GET  /health  -> {"status": "ok", "model": ..., "dimension": 384}
     POST /embed   {"texts": [...], "kind": "query" | "passage"} -> {"vectors": [[...], ...]}
+    POST /count   {"texts": [...], "kind": "query" | "passage"} -> {"counts": [...], "maxTokens": 256}
+
+/count gives the number of tokens the model's own tokenizer makes of each text as /embed sends it to the
+model (with the kind's prefix and the special tokens), before the cut at maxTokens: a text whose count is
+above maxTokens is embedded from its first maxTokens tokens only.
 
 Run with: python -m helpdesk.embedding_service  (no Django needed). Its settings are
 EMBEDDER_* variables; the older EMBEDDING_MODEL in existing env files belongs to a removed
@@ -15,7 +20,7 @@ provider and is ignored.
 
 Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
 Crafted by: AI coding agents
-Created: 2026-10-26  |  Modified: 2026-11-09
+Created: 2026-10-26  |  Modified: 2026-11-15
 """
 
 from __future__ import annotations
@@ -91,7 +96,41 @@ def embed_texts(model, texts: list[str], kind: str) -> list[list[float]]:
     return [[float(x) for x in vector] for vector in model.embed([prefix + text for text in texts], batch_size=BATCH_SIZE)]
 
 
-def make_handler(model):
+def counting_tokenizer(tokenizer):
+    """A copy of the model's tokenizer that neither cuts nor pads, so it counts every token of a text.
+
+    The copy keeps everything else of the model's tokenizer (vocabulary, normalizer, pre-tokenizer, special
+    tokens and the post-processor that adds them); only the cut at MAX_TOKENS and the padding of a batch are
+    left out. The model's own tokenizer is not changed."""
+    from tokenizers import Tokenizer
+
+    counter = Tokenizer.from_str(tokenizer.to_str())
+    counter.no_truncation()
+    counter.no_padding()
+    return counter
+
+
+def count_tokens(counter, texts: list[str], kind: str) -> list[int]:
+    """Tokens of each text as embed_texts gives it to the model (the kind's prefix, special tokens included),
+    counted by counting_tokenizer(model's tokenizer)."""
+    prefix = PREFIXES[kind]
+    return [len(encoding.ids) for encoding in counter.encode_batch([prefix + text for text in texts])]
+
+
+def _model_tokenizer(model):
+    """The tokenizer the model embeds with (fastembed's TextEmbedding keeps it on its inner model)."""
+    return model.model.tokenizer
+
+
+def make_handler(model, counter=None):
+    """The HTTP handler. counter: counting_tokenizer of the model's tokenizer; built from the model when not
+    given, and only when the model has a tokenizer (a stand-in model in tests may not)."""
+    if counter is None:
+        try:
+            counter = counting_tokenizer(_model_tokenizer(model))
+        except (AttributeError, ImportError):
+            counter = None
+
     class Handler(BaseHTTPRequestHandler):
         def _reply(self, status: int, payload: dict) -> None:
             body = json.dumps(payload).encode("utf-8")
@@ -108,7 +147,7 @@ def make_handler(model):
                 self._reply(404, {"error": "not found"})
 
         def do_POST(self):  # noqa: N802
-            if self.path != "/embed":
+            if self.path not in ("/embed", "/count") or (self.path == "/count" and counter is None):
                 self._reply(404, {"error": "not found"})
                 return
             try:
@@ -120,6 +159,9 @@ def make_handler(model):
                     raise ValueError(f"at most {MAX_TEXTS_PER_REQUEST} texts per request")
             except (ValueError, json.JSONDecodeError) as exc:
                 self._reply(400, {"error": str(exc)})
+                return
+            if self.path == "/count":
+                self._reply(200, {"counts": count_tokens(counter, texts, kind), "maxTokens": MAX_TOKENS})
                 return
             self._reply(200, {"vectors": embed_texts(model, texts, kind)})
 
