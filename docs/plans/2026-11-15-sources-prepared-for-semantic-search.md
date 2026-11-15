@@ -210,7 +210,88 @@ step 0 makes its own.
 
 ### Step 0 (2026-11-15, dev copy `napcore_helpdesk_s0base`, 0.97.226 with #540 and #542)
 
-<!-- step0-A -->
+**Verdict.** The spread of the answer sets is as large as the differences R0 read as results, so the gates of steps 1
+to 4 do not stand as written for answers: R0's baseline on another copy of the same data and code answered 40 of 69
+runs of the answerable set; my two passes, same code and data, answered 45 and 43. V3's 46, read in R0 as the gain
+of fitting the embedder, is inside that range. The main cause is not the model's wording but a verdict cached once
+per server process (below), so three runs in one process are not three samples. The file-level, pieces, retrieval
+benchmark and example-generated measures did not move at all; first attempts moved by 1 between passes. The gold file
+undercounted: 5 of the 23 questions it counted as lost have another source among the passages that holds the answer
+(B). Prod's limit of one piece per file is believed, not read (C). The token counter counts exactly what the embedder
+reads (D).
+
+**A. The spread of the measures.** One copy of the dev database, `napcore_helpdesk_s0base` (copied 2026-11-15 in the evening,
+vector index rebuilt fresh, 484 MB), code frozen at the branch's commit before any step 0 change (exported tree), the
+app's models as configured (Haiku 5.5), host servers pointed at the copy as in R0. Two passes one after the other,
+each: `locate_answer_sources` gold and benchmark twice (model off, stored renderings), `run_retrieval_benchmark`,
+`run_example_benchmark --runs 3`, the 23 answerable and 25 must-refuse questions through the API three times (two
+workers, one server process per pass). A first start of pass 1 was stopped after its first locate run and thrown
+away: the dev embedder restarted under it (my token check for D ran out of the embedder container's memory, see D);
+both passes below ran after that, on a healthy embedder. The dev database is unchanged (61,877 chunks, 43,193
+example chunks, last update 2026-11-13 12:08:35, before and after). All figures **measured** unless marked.
+
+What makes two runs differ, checked before the passes (by reading the code and the effective settings of the host
+runs, which are those of R0):
+
+- The model samples: the Anthropic call sends no temperature (`anthropic_chat.chat_completion`), so the API default
+  applies to every call: the answer, the relevance check, the controller, the vocabulary bridge, the English
+  rendering and the example generator. Active on the copy.
+- Verdicts cached per process: the relevance check (`relevance_check._ask`), the controller route
+  (`_decide_route_cached`) and the bridge (`bridged_question_concepts`) are `lru_cache`d by question text. Inside one
+  server process the second and third run of a question reuse the first run's verdict; a new process samples again.
+  Active: one process per pass.
+- The Redis caches: not active on host runs. `CACHE_URL` is empty there, so the fixed texts of refusals are kept in
+  the process's memory; question embeddings are not cached anywhere, definition passages only in the process
+  (`cached_passage_embedding`, vectors are deterministic). These change time, not results.
+- Retrieval caches with one hour's life (examples by element, element candidates, alias matches) and the database's
+  own caches: time only.
+- GraphDB calls with a 3 s timeout (`GRAPHDB_TIMEOUT_SECONDS` in the dev env): a timed-out call drops its
+  candidates (**believed** to be why a few questions get other passages from run to run, below).
+- Order: two workers, run 1 of every question before run 2; the order does not change any cached verdict's value,
+  only which run samples it.
+
+| measure | pass 1: run 1 / run 2 (/ run 3) | pass 2: run 1 / run 2 (/ run 3) | pass totals | spread seen | smallest difference a later step may call real |
+|---|---|---|---|---|---|
+| gold found, old file (57) | 34 / 34 | 34 / 34 | – | 0 (R0's copy: 34 / 34) | 1 question, after reading it (see the passage note below) |
+| benchmark found (141) | 124 / 124 | 124 / 124 | – | 0 (R0: 124 / 124) | 1 question, as above |
+| pieces: best piece given (gold of 30, bench of 90) | 26, 83 / 26, 83 | 26, 83 / 26, 83 | – | 0 (R0: 26, 83) | 1 |
+| retrieval benchmark hit@10 / MRR@10 | 0.893 / 0.564 | 0.893 / 0.564 | – | 0 (R0 the same) | any change |
+| example benchmark generated (of 47 a run) | 44 / 44 / 44 | 44 / 44 / 44 | 132 / 132 | 0 (R0: 132) | 1 |
+| example benchmark first attempts (of 47 a run) | 35 / 32 / 32 | 33 / 32 / 33 | 99 / 98 | 1 between passes (R0: 99); 3 between runs; 8 questions move between passes | 6 of 141 (**believed**, see below) |
+| example benchmark unlinked | 0 / 0 / 0 | 0 / 0 / 0 | 0 / 0 | 0–1 (R0: 1) | 2 |
+| answerable answered (of 23 a run) | 16 / 14 / 15 | 15 / 13 / 15 | 45 / 43 of 69 | 2 between my passes, 5 against R0's copy (40); 13–16 per run | 7 of 69 with three runs in one process; see below |
+| must-refuse answered (of 25 a run) | 1 / 1 / 1 | 1 / 2 / 1 | 3 / 4 of 75 | 1 (R0: 4) | 2 of 75, or any new question answered twice |
+| the case (k11): piece with the count element given / answered | 0 / 0 / 0, refused | 0 / 0 / 0, refused | 0 of 6 | 0 (R0: 0 of 3) | 1 of 3 |
+| retrieval median, locate gold / bench | 0.97, 0.61 s / 0.67, 0.60 s | 0.76, 0.68 s / 0.76, 0.67 s | – | 0.30 s gold (first run cold), 0.08 s bench | 0.3 s, warm runs only |
+| retrieval median, API answerable | 0.52 s | 0.56 s | – | 0.04 s | as above |
+
+Per question over the six API runs (pass 1 + pass 2): answerable e05 2 (1+1), e06 2 (1+1), e07 2 (2+0), k02 5
+(2+3), k14 5 (3+2), every other question 0 or 6; must-refuse m19 6 (3+3), m13 1 (0+1), all others 0. R0's baseline
+copy, same code and data, a separate process: k08 0 of 3 (refused before retrieval, no evidence, so by the
+relevance check) where both my passes answered it 6 of 6, and e06 3 of 3 against my 2 of 6. A question decided by a
+cached verdict flips all three runs of a process at once: that is three answered runs from one sample.
+**Consequence** (**measured** for k08, **believed** in general): R0's k08 "answered in all three V1 runs" and its
+must-refuse differences of one run are within this spread, and V3's 46 against 40 is too.
+
+The passages (not the files) are not fully repeatable: with the model off, the six passages of a15 and a17 (gold) and
+of 4 benchmark questions per run (q031, q071, q104, q125, q136, q144 in turn) differ from run to run, also inside a
+pass; R0's baseline copy differed from mine on the same questions. No file-level or pieces result moved with them.
+So a question lost or gained among these is read before it counts.
+
+What a later gate needs (**believed**, from these numbers):
+
+- Files, pieces, retrieval benchmark, generated examples: one run is enough; any difference is real, read the
+  question if it is one of the eight with moving passages.
+- First attempts: the pass totals moved by 1, but 8 questions moved between passes in both directions and single
+  runs ranged 32–35; if the runs were independent, the difference of two 141-run totals would have a standard
+  deviation of about 7. I would call 6 or more real and 1–5 spread until more runs; R0's 94 (−5) is spread, its 90
+  (−9) real.
+- Answers: run each of the three runs in its own server process (or clear the three caches between runs), so each
+  run samples the relevance check, the route and the bridge anew. With that, compare per question over 6 runs (two
+  passes of three), and call a question changed when it moves by 4 or more of 6; a gate on answered runs needs a
+  margin of about 7 of 69, which R0's +6 does not clear. That doubles the API runs of every gate (288 questions asked per variant instead of 144).
+- Must-refuse: m19 is answered every time; any other question answered twice or more is a change.
+- Time: compare warm runs; the first locate run after a copy is up to 0.3 s slower, which is gate 1's whole margin.
 
 **B. The gold file, read for further sources.** I went through all 57 questions of `answer-source-questions.yaml`,
 not only the ones R0 lost. For each I searched the dev index for passages that hold what the question asks (by the
