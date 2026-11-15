@@ -223,3 +223,19 @@ class NamedSourceTests(SimpleTestCase):
         from helpdesk.api.serializers import STANDARDS_SCOPE_CHOICES
 
         self.assertTrue(set(sq.SOURCE_DESCRIPTIONS) <= set(STANDARDS_SCOPE_CHOICES))
+
+
+class CitesTests(SimpleTestCase):
+    def test_a_github_file_link_is_matched_by_its_repository_and_path(self):
+        from helpdesk.management.commands.measure_suggested_questions import cites
+
+        outcome = {
+            "citations": [
+                {
+                    "repositoryUrl": "https://github.com/mobilityDCAT-AP/mobilityDCAT-AP/blob/1ae93b2/src/tables/class-distribution.html",
+                    "sourcePath": "src/tables/class-distribution.html",
+                }
+            ]
+        }
+        self.assertTrue(cites(outcome, ["mobilityDCAT-AP/src/tables/class-distribution"]))
+        self.assertFalse(cites(outcome, ["mobilityDCAT-AP/src/index.html"]))

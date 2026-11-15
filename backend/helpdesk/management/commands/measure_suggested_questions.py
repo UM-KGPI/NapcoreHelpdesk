@@ -161,7 +161,12 @@ def ask(api_url: str, token: str, question: str, timeout: float = 240) -> dict:
 
 
 def cites(outcome: dict, patterns: list[str]) -> bool:
-    return any(matches(patterns, c["repositoryUrl"], c["sourcePath"]) for c in outcome.get("citations") or [])
+    """Whether a citation is a wanted source. A citation's repositoryUrl is the link to the file (for a GitHub file
+    ".../blob/<commit>/<path>"), so the repository is what stands before "/blob/"."""
+    return any(
+        matches(patterns, (c["repositoryUrl"] or "").split("/blob/")[0], c["sourcePath"])
+        for c in outcome.get("citations") or []
+    )
 
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
