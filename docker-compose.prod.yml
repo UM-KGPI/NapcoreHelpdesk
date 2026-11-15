@@ -12,6 +12,8 @@ x-backend-base: &backend-base
     POSTGRES_PORT: "5432"
     CELERY_BROKER_URL: redis://redis:6379/0
     CELERY_RESULT_BACKEND: redis://redis:6379/1
+    # Django cache (refusals rendered in other languages); databases 0 and 1 are Celery's.
+    CACHE_URL: redis://redis:6379/2
     GRAPHDB_SPARQL_ENDPOINT: http://graphdb:7200/repositories/napcore-helpdesk
     GRAPHDB_REPOSITORY: napcore-helpdesk
     GRAPHDB_TIMEOUT_SECONDS: "30"

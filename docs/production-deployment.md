@@ -605,6 +605,30 @@ To add an act or a newer consolidated version: add it to `ACTS` in
 (EUR-Lex itself refuses scripted downloads; Cellar serves the same text), run `build_legislation_vocabulary`, review the new files in git,
 and deploy. A published text never changes: a new consolidated version has a new CELEX number.
 
+### Refusals in the question's language
+
+A refusal the backend writes itself (the keyword rules, the relevance check, "I do not have sufficient
+approved-source evidence ...") is an English text. When the question is not English (the search translation
+found it in another language), the text is given in the question's language: the model renders it once per
+text and language, and the rendering is kept in the Django cache, so later refusals in that language read it
+from there (a few milliseconds). An English question gets the English text with no model call.
+
+The rendering uses the app's ordinary model, so each one is checked before it is shown: a standard's name it
+dropped, a length far from the English text's, a word that mixes scripts (or one in a foreign script that is not
+in the English text), and the app's own language detection reading it as another language. A rendering that
+fails is asked for once more; when that fails too, or the call fails or is slow, the English text is shown and
+the failure is remembered for ten minutes before the next try.
+
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `CACHE_URL` | set in `docker-compose.prod.yml` to `redis://redis:6379/2` | The Django cache, shared by the gunicorn workers. Empty: each worker keeps its own cache in memory. Databases 0 and 1 are Celery's. |
+| `FIXED_TEXT_TRANSLATION_TIMEOUT_SECONDS` | `3` | How long a refusal waits for a rendering the first time. A slower rendering is still cached when it arrives. `0` keeps refusals in English. |
+| `FIXED_TEXT_TRANSLATION_MODEL` | `LLM_MODEL` | The model that renders the texts. |
+
+The cache key is made from the language, the model, the instruction and the text, so changing a text or the
+instruction gives a new rendering; old entries expire after 90 days. To clear them all:
+`$C exec -T redis redis-cli -n 2 FLUSHDB`.
+
 ### Database backup
 
 ```bash

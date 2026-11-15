@@ -28,6 +28,9 @@ LOW_CONFIDENCE_MESSAGE = (
     "Please clarify the target concept or provide a standards scope."
 )
 
+# Not a keyword rule: the answer views refuse with it when nothing was retrieved or the policy blocks the answer.
+INSUFFICIENT_EVIDENCE_MESSAGE = "I do not have sufficient approved-source evidence to answer this safely."
+
 
 def _concept_confidence(semantic_query):
     confidence = getattr(semantic_query, "confidence", None)

@@ -44,6 +44,19 @@ def timed(key: str, count_key: str | None = None):
         add(key, (time.perf_counter() - started) * 1000, count_key)
 
 
+def note(key, value) -> None:
+    """Keep a fact found while answering (the question's language) for a later step of the same request."""
+    record = _TIMINGS.get()
+    if record is not None:
+        record.setdefault("_notes", {})[key] = value
+
+
+def noted(key):
+    """A fact kept with note() in this request; None when there is none or outside a request."""
+    record = _TIMINGS.get()
+    return (record or {}).get("_notes", {}).get(key)
+
+
 def snapshot() -> dict:
     """The record so far, with totalMs since start(); {} outside a request."""
     record = _TIMINGS.get()

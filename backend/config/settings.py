@@ -58,6 +58,8 @@ env = environ.Env(
     GITHUB_CA_BUNDLE=(str, ""),
     TRANSMODEL_HTML_BASE_URL=(str, "https://kgpi.fgpa.um.si/napcore-helpdesk/transmodel"),
     SEARCH_TRANSLATION_ENABLED=(bool, True),
+    FIXED_TEXT_TRANSLATION_TIMEOUT_SECONDS=(float, 3.0),
+    CACHE_URL=(str, ""),
     LLM_ENABLED=(bool, False),
     LLM_PROVIDER=(str, "openai-compatible"),
     LLM_API_BASE_URL=(str, "https://api.openai.com/v1"),
@@ -454,6 +456,11 @@ ALLOWED_SOURCE_REPOSITORIES |= {
 TRANSMODEL_HTML_BASE_URL = env("TRANSMODEL_HTML_BASE_URL").strip().rstrip("/")
 # Search a non-English question also in English (llm_generator.english_search_query); off: question only.
 SEARCH_TRANSLATION_ENABLED = env("SEARCH_TRANSLATION_ENABLED")
+# How long a refusal waits for its fixed text in the question's language (services/fixed_text_language.py)
+# the first time per language; afterwards the rendering comes from the cache. 0: refusals stay in English.
+FIXED_TEXT_TRANSLATION_TIMEOUT_SECONDS = env("FIXED_TEXT_TRANSLATION_TIMEOUT_SECONDS")
+# The model that renders them; empty: LLM_MODEL, the model of the app's ordinary calls.
+FIXED_TEXT_TRANSLATION_MODEL = env("FIXED_TEXT_TRANSLATION_MODEL", default="").strip() or LLM_MODEL
 GRAPH_RAG_ENABLED = env("GRAPH_RAG_ENABLED")
 SEMANTIC_LOW_CONFIDENCE_THRESHOLD = env("SEMANTIC_LOW_CONFIDENCE_THRESHOLD")
 EVIDENCE_GATE_ENABLED = env("EVIDENCE_GATE_ENABLED")
@@ -494,6 +501,21 @@ SEMANTIC_CLUSTER_WINDOW_DAYS = env("SEMANTIC_CLUSTER_WINDOW_DAYS")
 SEMANTIC_CLUSTER_MIN_SIZE = env("SEMANTIC_CLUSTER_MIN_SIZE")
 SEMANTIC_CLUSTER_SIMILARITY_THRESHOLD = env("SEMANTIC_CLUSTER_SIMILARITY_THRESHOLD")
 SEMANTIC_CLUSTER_MAX_EVENTS = env("SEMANTIC_CLUSTER_MAX_EVENTS")
+
+# The Django cache, shared by the gunicorn workers and kept across restarts when CACHE_URL names a Redis
+# database (docker-compose sets redis://redis:6379/2). Empty: each process keeps its own in memory (tests,
+# host runs). It holds the fixed texts rendered in other languages.
+CACHE_URL = env("CACHE_URL").strip()
+if CACHE_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": CACHE_URL,
+            "OPTIONS": {"socket_connect_timeout": 0.5, "socket_timeout": 0.5},
+        }
+    }
+else:
+    CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 
 CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://localhost:6379/1")

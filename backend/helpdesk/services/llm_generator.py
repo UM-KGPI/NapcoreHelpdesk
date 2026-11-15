@@ -1377,6 +1377,10 @@ def english_search_query(question: str) -> str | None:
     language = question_language(question)
     if not base_url or not language or language == "English":
         return None
+    from helpdesk.services import request_timing
+
+    # A refusal in the question's language (fixed_text_language) needs the name; asking again can cost a call.
+    request_timing.note(("question_language", _language_key(question)), language)
     messages = [
         {
             "role": "system",
