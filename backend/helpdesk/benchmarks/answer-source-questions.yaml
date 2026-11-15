@@ -12,6 +12,8 @@ description: >
   was checked against the dev index (SourceChunk) on 2026-11-14; the Transmodel definitions
   (docs/ontology/standards/transmodel.ttl#...) come from GraphDB and were checked there. A question is found
   when any of its patterns matches. Several patterns are listed where more than one source answers.
+  Patterns added in the step 0 review (2026-11-15, plan 2026-11-15-sources-prepared-for-semantic-search.md)
+  were added only after reading the passage, each matches one indexed file (two for a03's parking examples).
   fitting_scope is the standardsScope a user who picked the standard would send (the chat page sends none);
   locate_answer_sources --fitting-scope measures with it.
   `unsure: true` marks entries where the wanted source is a judgement call; `note` gives the reason in one line.
@@ -26,48 +28,48 @@ questions:
     language: en
     fitting_scope: ["EU legislation"]
     beside_point: true
-    expected_source_patterns: ["02017R1926-20240304#art_4$", "02017R1926-20240304#art_5$", "32024R0490#art_1$"]
-    note: "MMTIS Art. 4(1) and 5(1) list the standards and 'any digital machine-readable format' compatible with them; 2024/490 Art. 1 is the amended text. No act defines the term itself."
+    expected_source_patterns: ["02017R1926-20240304#art_4$", "02017R1926-20240304#art_5$", "32024R0490#art_1$", "FAQs-on-the-Delegated-Regulations.pdf"]
+    note: "MMTIS Art. 4(1) and 5(1) list the standards and 'any digital machine-readable format' compatible with them; 2024/490 Art. 1 is the amended text. No act defines the term itself. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: a02
     ref: k02
     question: "Make a example file of observed delays."
     kind: everyday
     language: en
     fitting_scope: ["OpRa"]
-    expected_source_patterns: ["DelayedAndCancelledJourneysWithEvents", "opra_lateDatedVehicleJourney_version"]
-    note: "OpRa's example of delayed journeys and the schema of late journeys; 'observed delays' is OpRa's subject, the question names no standard."
+    expected_source_patterns: ["DelayedAndCancelledJourneysWithEvents", "opra_lateDatedVehicleJourney_version", "OpRa/examples/ResponseLateDatedVehicleJourneys.xml", "OpRa/examples/CancelledAndLateDatedVehicleJourneys.xml"]
+    note: "OpRa's example of delayed journeys and the schema of late journeys; 'observed delays' is OpRa's subject, the question names no standard. Step 0 review (2026-11-15): 2 further sources added after reading the passage, listed in the plan's record."
   - id: a03
     ref: k03
     question: "How are parkings defined in standards?"
     kind: everyday
     language: en
     fitting_scope: ["NeTEx"]
-    expected_source_patterns: ["netex_ifopt_parking_version", "transmodel.ttl#PARKING$", "datex-model-v3.7/Parking."]
-    note: "Parking in NeTEx IFOPT and in Transmodel; DATEX II's Parking namespace also answers but is an opt-in scope."
+    expected_source_patterns: ["netex_ifopt_parking_version", "transmodel.ttl#PARKING$", "datex-model-v3.7/Parking.", "Netex_21_Sites_Parking_", "TN-ITS-Open/OWL/codelists/ParkingSiteTypeCode.ttl", "M4.3.5-Technical-mapping-of-multimodal-data-standards"]
+    note: "Parking in NeTEx IFOPT and in Transmodel; DATEX II's Parking namespace also answers but is an opt-in scope. Step 0 review (2026-11-15): 3 further sources added after reading the passage, listed in the plan's record."
   - id: a04
     ref: k04
     question: "How do I describe a lift in a station?"
     kind: everyday
     language: en
     fitting_scope: ["NeTEx"]
-    expected_source_patterns: ["netex_ifopt_equipmentAccess_version", "transmodel.ttl#LIFT_EQUIPMENT$"]
-    note: "LiftEquipment is defined in netex_ifopt_equipmentAccess_version.xsd; Transmodel LIFT EQUIPMENT."
+    expected_source_patterns: ["netex_ifopt_equipmentAccess_version", "transmodel.ttl#LIFT_EQUIPMENT$", "Chur_Equipment_Pathlink_V1.0.xml", "Netex_10_StopPlace_uk_ComplexStation_Wimbledon_1", "910GWIMBLDN-accessibility", "Netex_10_StopPlace_withParking_1"]
+    note: "LiftEquipment is defined in netex_ifopt_equipmentAccess_version.xsd; Transmodel LIFT EQUIPMENT. Step 0 review (2026-11-15): 4 further sources added after reading the passage, listed in the plan's record."
   - id: a05
     ref: k05
     question: "How do I describe an escalator in a station?"
     kind: everyday
     language: en
     fitting_scope: ["NeTEx"]
-    expected_source_patterns: ["netex_ifopt_equipmentAccess_version", "transmodel.ttl#ESCALATOR_EQUIPMENT$"]
-    note: "EscalatorEquipment is in the same file as LiftEquipment; Transmodel ESCALATOR EQUIPMENT."
+    expected_source_patterns: ["netex_ifopt_equipmentAccess_version", "transmodel.ttl#ESCALATOR_EQUIPMENT$", "Chur_Equipment_Pathlink_V1.0.xml"]
+    note: "EscalatorEquipment is in the same file as LiftEquipment; Transmodel ESCALATOR EQUIPMENT. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: a06
     ref: k06
     question: "How do I describe an elevator in a station?"
     kind: everyday
     language: en
     fitting_scope: ["NeTEx"]
-    expected_source_patterns: ["netex_ifopt_equipmentAccess_version", "transmodel.ttl#LIFT_EQUIPMENT$"]
-    note: "'Elevator' is the standards' LiftEquipment."
+    expected_source_patterns: ["netex_ifopt_equipmentAccess_version", "transmodel.ttl#LIFT_EQUIPMENT$", "Chur_Equipment_Pathlink_V1.0.xml", "Netex_10_StopPlace_uk_ComplexStation_Wimbledon_1", "910GWIMBLDN-accessibility", "Netex_10_StopPlace_withParking_1"]
+    note: "'Elevator' is the standards' LiftEquipment. Step 0 review (2026-11-15): 4 further sources added after reading the passage, listed in the plan's record."
   - id: a07
     ref: k07
     question: "What is seat capacity?"
@@ -83,8 +85,8 @@ questions:
     language: sl
     fitting_scope: ["mobilityDCAT-AP"]
     unsure: true
-    expected_source_patterns: ["mobilityDCAT-AP/src/index.html", "02017R1926-20240304#art_2$"]
-    note: "'What are metadata?': the metadata profile's overview, or the MMTIS definition (Art. 2(14)); which one the asker wanted is a guess."
+    expected_source_patterns: ["mobilityDCAT-AP/src/index.html", "02017R1926-20240304#art_2$", "02007L0002-20241126#art_3$", "napcore.eu/metadata"]
+    note: "'What are metadata?': the metadata profile's overview, or the MMTIS definition (Art. 2(14)); which one the asker wanted is a guess. Step 0 review (2026-11-15): 2 further sources added after reading the passage, listed in the plan's record."
   - id: a09
     ref: k09
     question: "Kaj je vozni red avtobusa?"
@@ -92,8 +94,8 @@ questions:
     language: sl
     fitting_scope: ["NeTEx"]
     unsure: true
-    expected_source_patterns: ["netex_timetableFrame_version", "Netex_09.2_Bus_SimpleTimetable_Slovenia"]
-    note: "'What is a bus timetable?': NeTEx's TimetableFrame, or the Slovenian bus timetable example; no single passage defines a timetable."
+    expected_source_patterns: ["netex_timetableFrame_version", "Netex_09.2_Bus_SimpleTimetable_Slovenia", "Netex_01.1_Bus_SimpleTimetable_JourneysOnly"]
+    note: "'What is a bus timetable?': NeTEx's TimetableFrame, or the Slovenian bus timetable example; no single passage defines a timetable. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: a10
     ref: k10
     question: "kaj je vozni red?"
@@ -101,16 +103,16 @@ questions:
     language: sl
     fitting_scope: ["NeTEx"]
     unsure: true
-    expected_source_patterns: ["netex_timetableFrame_version", "Netex_09.2_Bus_SimpleTimetable_Slovenia"]
-    note: "'What is a timetable?': as a09."
+    expected_source_patterns: ["netex_timetableFrame_version", "Netex_09.2_Bus_SimpleTimetable_Slovenia", "Netex_01.1_Bus_SimpleTimetable_JourneysOnly", "32026R0253#art_3$"]
+    note: "'What is a timetable?': as a09. Step 0 review (2026-11-15): 2 further sources added after reading the passage, listed in the plan's record."
   - id: a11
     ref: k11
     question: "How to model number of late journeys?"
     kind: everyday
     language: en
     fitting_scope: ["OpRa"]
-    expected_source_patterns: ["opra_lateDatedVehicleJourney_version", "CancelledAndLateDatedVehicleJourneys"]
-    note: "OpRa's late dated vehicle journey indicator. OpRa's example CancelledAndLateDatedVehicleJourneys.xml answers it too: its LateDatedVehicleJourneyCount counts late journeys per journey pattern in delay intervals (added 2026-11-15)."
+    expected_source_patterns: ["opra_lateDatedVehicleJourney_version", "CancelledAndLateDatedVehicleJourneys", "DelayedAndCancelledJourneysWithEvents", "OpRa/examples/ResponseLateDatedVehicleJourneys.xml"]
+    note: "OpRa's late dated vehicle journey indicator. OpRa's example CancelledAndLateDatedVehicleJourneys.xml answers it too: its LateDatedVehicleJourneyCount counts late journeys per journey pattern in delay intervals (added 2026-11-15). Step 0 review (2026-11-15): 2 further sources added after reading the passage, listed in the plan's record."
   - id: a12
     ref: k12
     question: "How to describe a bus ticket?"
@@ -119,8 +121,8 @@ questions:
     fitting_scope: ["NeTEx"]
     beside_point: true
     unsure: true
-    expected_source_patterns: ["netex_typeOfTravelDocument_version", "netex_travelDocument_version", "netex_fareProduct_version"]
-    note: "A ticket is a travel document in NeTEx, what it entitles to a fare product; either answers part of it."
+    expected_source_patterns: ["netex_typeOfTravelDocument_version", "netex_travelDocument_version", "netex_fareProduct_version", "FX-PI-01_UK_AMSY_NETWORK_FARE_Arriva-trip_20200417"]
+    note: "A ticket is a travel document in NeTEx, what it entitles to a fare product; either answers part of it. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: a13
     ref: k13
     question: "How are static data described?"
@@ -144,16 +146,16 @@ questions:
     kind: overview
     language: en
     fitting_scope: ["OpRa"]
-    expected_source_patterns: ["OpRa/README.md$"]
-    note: "OpRa's README overview says what it is for."
+    expected_source_patterns: ["OpRa/README.md$", "D2.2.1_Mapping_EU-based_requirements_final.pdf"]
+    note: "OpRa's README overview says what it is for. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: a16
     ref: e02
     question: "Which fare data must be provided to be in accordance with the MMTIS delegated regulation?"
     kind: legislation
     language: en
     fitting_scope: ["EU legislation"]
-    expected_source_patterns: ["02017R1926-20240304#anx_1$", "32024R0490#anx_1$"]
-    note: "The Annex (levels of service 1.1-1.3) lists the fare data; 2024/490 replaced the Annex."
+    expected_source_patterns: ["02017R1926-20240304#anx_1$", "32024R0490#anx_1$", "FAQs-on-the-Delegated-Regulations.pdf", "NAPCORE-MMTIS-Quality-Framework_v1_250411.pdf"]
+    note: "The Annex (levels of service 1.1-1.3) lists the fare data; 2024/490 replaced the Annex. Step 0 review (2026-11-15): 2 further sources added after reading the passage, listed in the plan's record."
   - id: a17
     ref: e03
     question: "What if my dataset is available in several formats?"
@@ -186,24 +188,24 @@ questions:
     kind: legislation
     language: en
     fitting_scope: ["EU legislation"]
-    expected_source_patterns: ["02017R1926-20240304#art_4$", "02017R1926-20240304#art_5$", "32024R0490#art_1$"]
-    note: "MMTIS Art. 4(2) and 5(2) name DATEX II."
+    expected_source_patterns: ["02017R1926-20240304#art_4$", "02017R1926-20240304#art_5$", "32024R0490#art_1$", "FAQs-on-the-Delegated-Regulations.pdf"]
+    note: "MMTIS Art. 4(2) and 5(2) name DATEX II. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: a21
     ref: e07
     question: "How do I describe an elevator in a station in NeTEx?"
     kind: everyday
     language: en
     fitting_scope: ["NeTEx"]
-    expected_source_patterns: ["netex_ifopt_equipmentAccess_version", "transmodel.ttl#LIFT_EQUIPMENT$"]
-    note: "As a06, with NeTEx named."
+    expected_source_patterns: ["netex_ifopt_equipmentAccess_version", "transmodel.ttl#LIFT_EQUIPMENT$", "Chur_Equipment_Pathlink_V1.0.xml", "Netex_10_StopPlace_uk_ComplexStation_Wimbledon_1", "910GWIMBLDN-accessibility", "Netex_10_StopPlace_withParking_1"]
+    note: "As a06, with NeTEx named. Step 0 review (2026-11-15): 4 further sources added after reading the passage, listed in the plan's record."
   - id: a22
     ref: e08
     question: "How do I describe an elevator in a stop place?"
     kind: everyday
     language: en
     fitting_scope: ["NeTEx"]
-    expected_source_patterns: ["netex_ifopt_equipmentAccess_version", "transmodel.ttl#LIFT_EQUIPMENT$"]
-    note: "As a06, with the standard's StopPlace."
+    expected_source_patterns: ["netex_ifopt_equipmentAccess_version", "transmodel.ttl#LIFT_EQUIPMENT$", "Chur_Equipment_Pathlink_V1.0.xml", "Netex_10_StopPlace_uk_ComplexStation_Wimbledon_1", "910GWIMBLDN-accessibility", "Netex_10_StopPlace_withParking_1"]
+    note: "As a06, with the standard's StopPlace. Step 0 review (2026-11-15): 4 further sources added after reading the passage, listed in the plan's record."
   - id: a23
     ref: p01
     question: "when describing the calendar of a service journey, how to choose between UIC bit field and explicit Operational Days?"
@@ -219,43 +221,43 @@ questions:
     kind: overview
     language: en
     fitting_scope: ["SIRI"]
-    expected_source_patterns: ["SIRI/README.md$"]
-    note: "SIRI's README overview lists its services; prod answered from schema files."
+    expected_source_patterns: ["SIRI/README.md$", "napcore.eu/multimodal-data"]
+    note: "SIRI's README overview lists its services; prod answered from schema files. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: b02
     question: "Wofür wird SIRI verwendet?"
     kind: overview
     language: de
     fitting_scope: ["SIRI"]
-    expected_source_patterns: ["SIRI/README.md$"]
-    note: "German form of b01."
+    expected_source_patterns: ["SIRI/README.md$", "napcore.eu/multimodal-data"]
+    note: "German form of b01. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: b03
     question: "what is NETEX?"
     kind: overview
     language: en
     fitting_scope: ["NeTEx"]
-    expected_source_patterns: ["NeTEx/README.md$"]
-    note: "NeTEx's README overview (CEN/TS 16614, what it exchanges)."
+    expected_source_patterns: ["NeTEx/README.md$", "napcore.eu/multimodal-data"]
+    note: "NeTEx's README overview (CEN/TS 16614, what it exchanges). Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: b04
     question: "What kind of data does OpRa exchange?"
     kind: overview
     language: en
     fitting_scope: ["OpRa"]
-    expected_source_patterns: ["OpRa/README.md$"]
-    note: "OpRa's README overview; control: prod cited it."
+    expected_source_patterns: ["OpRa/README.md$", "D2.2.1_Mapping_EU-based_requirements_final.pdf"]
+    note: "OpRa's README overview; control: prod cited it. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: b05
     question: "Kannst du mir einfach erklären, was NeTEx, SIRI und OpRa sind?"
     kind: overview
     language: de
     fitting_scope: ["NeTEx", "SIRI", "OpRa"]
-    expected_source_patterns: ["NeTEx/README.md$", "SIRI/README.md$", "OpRa/README.md$"]
-    note: "'Explain simply what NeTEx, SIRI and OpRa are': the three READMEs."
+    expected_source_patterns: ["NeTEx/README.md$", "SIRI/README.md$", "OpRa/README.md$", "D2.2.1_Mapping_EU-based_requirements_final.pdf", "napcore.eu/multimodal-data"]
+    note: "'Explain simply what NeTEx, SIRI and OpRa are': the three READMEs. Step 0 review (2026-11-15): 2 further sources added after reading the passage, listed in the plan's record."
   - id: b06
     question: "Kako je Opra povezana z NeTEx?"
     kind: overview
     language: sl
     fitting_scope: ["OpRa"]
-    expected_source_patterns: ["OpRa/README.md$", "opra_netex_imports"]
-    note: "'How is OpRa related to NeTEx?': OpRa's README (complements NeTEx) and its NeTEx imports."
+    expected_source_patterns: ["OpRa/README.md$", "opra_netex_imports", "D2.2.1_Mapping_EU-based_requirements_final.pdf"]
+    note: "'How is OpRa related to NeTEx?': OpRa's README (complements NeTEx) and its NeTEx imports. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: b07
     question: "What are parts of SIRI?"
     kind: overview
@@ -268,74 +270,74 @@ questions:
     kind: overview
     language: en
     fitting_scope: ["NeTEx"]
-    expected_source_patterns: ["NeTEx/README.md$", "02017R1926-20240304#art_4$"]
-    note: "CEN/TS 16614 is in NeTEx's README and in MMTIS Art. 4(1)."
+    expected_source_patterns: ["NeTEx/README.md$", "02017R1926-20240304#art_4$", "32024R0490#art_1$", "32026R0253#app_C$", "SIRI/README.md$", "napcore.eu/multimodal-data"]
+    note: "CEN/TS 16614 is in NeTEx's README and in MMTIS Art. 4(1). Step 0 review (2026-11-15): 4 further sources added after reading the passage, listed in the plan's record."
   - id: b09
     question: "What is DATEX?"
     kind: overview
     language: en
     fitting_scope: ["DATEX II"]
-    expected_source_patterns: ["docs.datex2.eu/v3.7/user-guide--Background", "docs.datex2.eu/v3.7/levels--basics"]
-    note: "The DATEX II user guide background; prod answered from TN-ITS ontology files."
+    expected_source_patterns: ["docs.datex2.eu/v3.7/user-guide--Background", "docs.datex2.eu/v3.7/levels--basics", "docs.datex2.eu/v3.7/user-guide$", "napcore.eu/standards$"]
+    note: "The DATEX II user guide background; prod answered from TN-ITS ontology files. Step 0 review (2026-11-15): 2 further sources added after reading the passage, listed in the plan's record."
   - id: b10
     question: "What is INSPIRE?"
     kind: overview
     language: en
     fitting_scope: ["EU legislation"]
     unsure: true
-    expected_source_patterns: ["02007L0002-20241126#art_1$", "02007L0002-20241126#art_3$"]
-    note: "The INSPIRE Directive Art. 1 (purpose) and Art. 3 (definition); the TN data specification describes only the transport part. Prod answered from code lists."
+    expected_source_patterns: ["02007L0002-20241126#art_1$", "02007L0002-20241126#art_3$", "dataspecification_tn.adoc#L93$"]
+    note: "The INSPIRE Directive Art. 1 (purpose) and Art. 3 (definition); the TN data specification describes only the transport part. Prod answered from code lists. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: b11
     question: "What is a national access point?"
     kind: legislation
     language: en
     fitting_scope: ["EU legislation"]
-    expected_source_patterns: ["02017R1926-20240304#art_3$", "02010L0040-20231220#art_4$", "32023L2661#art_1$"]
-    note: "MMTIS Art. 3 and the ITS Directive's definition (22) of NAP."
+    expected_source_patterns: ["02017R1926-20240304#art_3$", "02010L0040-20231220#art_4$", "32023L2661#art_1$", "FAQs-on-the-Delegated-Regulations.pdf"]
+    note: "MMTIS Art. 3 and the ITS Directive's definition (22) of NAP. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: b12
     question: "Which standard must be used for static travel data under MMTIS?"
     kind: legislation
     language: en
     fitting_scope: ["EU legislation"]
-    expected_source_patterns: ["02017R1926-20240304#art_4$", "32024R0490#art_1$"]
-    note: "MMTIS Art. 4 names NeTEx and DATEX II; control: prod cited it."
+    expected_source_patterns: ["02017R1926-20240304#art_4$", "32024R0490#art_1$", "NAPCORE-MMTIS-Quality-Framework_v1_250411.pdf"]
+    note: "MMTIS Art. 4 names NeTEx and DATEX II; control: prod cited it. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: b13
     question: "Hvilke standarder krever MMTIS-forordningen for statiske reisedata?"
     kind: legislation
     language: "no"
     fitting_scope: ["EU legislation"]
-    expected_source_patterns: ["02017R1926-20240304#art_4$", "32024R0490#art_1$"]
-    note: "Norwegian form of b12."
+    expected_source_patterns: ["02017R1926-20240304#art_4$", "32024R0490#art_1$", "NAPCORE-MMTIS-Quality-Framework_v1_250411.pdf"]
+    note: "Norwegian form of b12. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: b14
     question: "Como operador de uma rede nacional de autocarros, que categorias de datasets tenho de ter em conta, do regulamento MMTIS?"
     kind: legislation
     language: pt
     fitting_scope: ["EU legislation"]
-    expected_source_patterns: ["02017R1926-20240304#anx_1$", "32024R0490#anx_1$"]
-    note: "'Which dataset categories must a national bus operator consider under MMTIS?': the Annex lists the data categories."
+    expected_source_patterns: ["02017R1926-20240304#anx_1$", "32024R0490#anx_1$", "NAPCORE-MMTIS-Quality-Framework_v1_250411.pdf"]
+    note: "'Which dataset categories must a national bus operator consider under MMTIS?': the Annex lists the data categories. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: b15
     question: "Which formats machine-readable as specified in the MMTIS Delegated Regulation?"
     kind: legislation
     language: en
     fitting_scope: ["EU legislation"]
-    expected_source_patterns: ["02017R1926-20240304#art_4$", "02017R1926-20240304#art_5$", "32024R0490#art_1$"]
-    note: "As a01 with MMTIS named; prod answered from 2024/490 recitals."
+    expected_source_patterns: ["02017R1926-20240304#art_4$", "02017R1926-20240304#art_5$", "32024R0490#art_1$", "FAQs-on-the-Delegated-Regulations.pdf"]
+    note: "As a01 with MMTIS named; prod answered from 2024/490 recitals. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: b16
     question: "What are metadata in NAP used for?"
     kind: legislation
     language: en
     fitting_scope: ["EU legislation"]
     unsure: true
-    expected_source_patterns: ["02017R1926-20240304#art_3$", "02017R1926-20240304#art_8$", "mobilityDCAT-AP/src/index.html"]
-    note: "MMTIS Art. 3 and 8 require metadata on the NAP; the metadata profile explains their use. Prod answered from NaPTAN example files."
+    expected_source_patterns: ["02017R1926-20240304#art_3$", "02017R1926-20240304#art_8$", "mobilityDCAT-AP/src/index.html", "napcore.eu/metadata"]
+    note: "MMTIS Art. 3 and 8 require metadata on the NAP; the metadata profile explains their use. Prod answered from NaPTAN example files. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: b17
     question: "Kaj so metapodatki v NAP?"
     kind: legislation
     language: sl
     fitting_scope: ["EU legislation"]
     unsure: true
-    expected_source_patterns: ["02017R1926-20240304#art_2$", "02017R1926-20240304#art_3$", "mobilityDCAT-AP/src/index.html"]
-    note: "'What are metadata in a NAP?': the MMTIS definition and Art. 3, or the profile."
+    expected_source_patterns: ["02017R1926-20240304#art_2$", "02017R1926-20240304#art_3$", "mobilityDCAT-AP/src/index.html", "napcore.eu/metadata"]
+    note: "'What are metadata in a NAP?': the MMTIS definition and Art. 3, or the profile. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: b18
     question: "What is TEL-TSI and how is it connected to Transmodel related standards?"
     kind: legislation
@@ -355,72 +357,72 @@ questions:
     kind: everyday
     language: en
     fitting_scope: ["NeTEx"]
-    expected_source_patterns: ["netex_salesDistribution_version", "netex_salesOfferPackage_version"]
-    note: "Distribution channels (where a product is sold) are in salesDistribution; sales offer packages say through which channels."
+    expected_source_patterns: ["netex_salesDistribution_version", "netex_salesOfferPackage_version", "FX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-pass-(Z2Z)"]
+    note: "Distribution channels (where a product is sold) are in salesDistribution; sales offer packages say through which channels. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: b21
     question: "Kje lahko potnik kupi vozovnico v NeTEx?"
     kind: everyday
     language: sl
     fitting_scope: ["NeTEx"]
-    expected_source_patterns: ["netex_salesDistribution_version", "netex_salesOfferPackage_version"]
-    note: "Slovenian form of b20."
+    expected_source_patterns: ["netex_salesDistribution_version", "netex_salesOfferPackage_version", "FX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-pass-(Z2Z)"]
+    note: "Slovenian form of b20. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: b22
     question: "How to describe a bus fare?"
     kind: everyday
     language: en
     fitting_scope: ["NeTEx"]
     unsure: true
-    expected_source_patterns: ["netex_fareProduct_version", "netex_farePrice_version", "netex_fareTable_version"]
-    note: "A fare in NeTEx is a fare product with prices in fare tables; prod cited fare examples, which also answer in part."
+    expected_source_patterns: ["netex_fareProduct_version", "netex_farePrice_version", "netex_fareTable_version", "FX-PI-01_UK_AMSY_NETWORK_FARE_Arriva-trip_20200417"]
+    note: "A fare in NeTEx is a fare product with prices in fare tables; prod cited fare examples, which also answer in part. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: b23
     question: "Kako NeTEx opisuje cene vozovnic?"
     kind: everyday
     language: sl
     fitting_scope: ["NeTEx"]
-    expected_source_patterns: ["netex_farePrice_version", "netex_fareTable_version"]
-    note: "'How does NeTEx describe ticket prices?': fare prices and fare tables; prod answered from a timetable example."
+    expected_source_patterns: ["netex_farePrice_version", "netex_fareTable_version", "FX-PI-01_UK_AMSY_NETWORK_FARE_Arriva-trip_20200417"]
+    note: "'How does NeTEx describe ticket prices?': fare prices and fare tables; prod answered from a timetable example. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: b24
     question: "Kako je postaja definirana v NeTEx?"
     kind: everyday
     language: sl
     fitting_scope: ["NeTEx"]
-    expected_source_patterns: ["netex_ifopt_stopPlace_version"]
-    note: "'How is a station defined in NeTEx?': StopPlace; prod answered from fare examples."
+    expected_source_patterns: ["netex_ifopt_stopPlace_version", "Netex_04_Stops_SimpleStation_1", "Netex_10_StopPlace_uk_ComplexStation_Wimbledon_1"]
+    note: "'How is a station defined in NeTEx?': StopPlace; prod answered from fare examples. Step 0 review (2026-11-15): 2 further sources added after reading the passage, listed in the plan's record."
   - id: b25
     question: "Wie beschreibt man eine Haltestelle in NetEx?"
     kind: everyday
     language: de
     fitting_scope: ["NeTEx"]
-    expected_source_patterns: ["netex_ifopt_stopPlace_version"]
-    note: "'How does one describe a stop in NeTEx?': StopPlace; control: prod cited it."
+    expected_source_patterns: ["netex_ifopt_stopPlace_version", "Netex_01_Stops_SingleStopOnStreet_1"]
+    note: "'How does one describe a stop in NeTEx?': StopPlace; control: prod cited it. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: b26
     question: "comment sont définis les arrêts flexibles en NeTEx ?"
     kind: everyday
     language: fr
     fitting_scope: ["NeTEx"]
-    expected_source_patterns: ["netex_ifopt_flexibleStopPlace_version"]
-    note: "'How are flexible stops defined in NeTEx?': FlexibleStopPlace; prod answered from a French profile example."
+    expected_source_patterns: ["netex_ifopt_flexibleStopPlace_version", "Netex_07.1_Bus_FlexibleTimetable_ZonesOnly"]
+    note: "'How are flexible stops defined in NeTEx?': FlexibleStopPlace; prod answered from a French profile example. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: b27
     question: "How are e charging stations represented in NeTex ?"
     kind: everyday
     language: en
     fitting_scope: ["NeTEx"]
-    expected_source_patterns: ["netex_rechargingPointAssignment_version", "netex_nm_chargingEquipmentProfile_version"]
-    note: "Recharging points and charging equipment profiles; control: prod cited the first."
+    expected_source_patterns: ["netex_rechargingPointAssignment_version", "netex_nm_chargingEquipmentProfile_version", "netex_nm_equipmentEnergy_version"]
+    note: "Recharging points and charging equipment profiles; control: prod cited the first. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: b28
     question: "How to model a train?"
     kind: everyday
     language: en
     fitting_scope: ["NeTEx"]
-    expected_source_patterns: ["netex_trainElement_version", "transmodel.ttl#TRAIN$"]
-    note: "Train and TrainElement in NeTEx, TRAIN in Transmodel; control: prod cited both."
+    expected_source_patterns: ["netex_trainElement_version", "transmodel.ttl#TRAIN$", "norway/vehicles/submodel-Train.xml"]
+    note: "Train and TrainElement in NeTEx, TRAIN in Transmodel; control: prod cited both. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: b29
     question: "How are operators linked to lines?"
     kind: everyday
     language: en
     fitting_scope: ["NeTEx"]
-    expected_source_patterns: ["netex_line_version"]
-    note: "Line holds OperatorRef; prod answered from fare and TransXChange examples."
+    expected_source_patterns: ["netex_line_version", "Netex_01.1_Bus_SimpleTimetable_JourneysOnly"]
+    note: "Line holds OperatorRef; prod answered from fare and TransXChange examples. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: b30
     question: "How is NeTEx exchanging data about public transport lines?"
     kind: everyday
@@ -434,15 +436,15 @@ questions:
     kind: everyday
     language: en
     fitting_scope: ["OpRa"]
-    expected_source_patterns: ["opra_cancelledDatedVehicleJourney_version", "CancelledAndLateDatedVehicleJourneys"]
-    note: "OpRa's cancelled dated vehicle journey and its example; control: prod cited both."
+    expected_source_patterns: ["opra_cancelledDatedVehicleJourney_version", "CancelledAndLateDatedVehicleJourneys", "DelayedAndCancelledJourneysWithEvents"]
+    note: "OpRa's cancelled dated vehicle journey and its example; control: prod cited both. Step 0 review (2026-11-15): 1 further source added after reading the passage, listed in the plan's record."
   - id: b32
     question: "How to model number of passengers driven in OpRa?"
     kind: everyday
     language: en
     fitting_scope: ["OpRa"]
-    expected_source_patterns: ["PassengerCount_version"]
-    note: "OpRa's passenger count indicators (on-board device, ticketing, external, expected)."
+    expected_source_patterns: ["PassengerCount_version", "OpRa/examples/TicketingBasedPassengerCount.xml", "OpRa/examples/ExpectedPassengerCount.xml"]
+    note: "OpRa's passenger count indicators (on-board device, ticketing, external, expected). Step 0 review (2026-11-15): 2 further sources added after reading the passage, listed in the plan's record."
   - id: b33
     question: "Any timetable from Slovenia?"
     kind: everyday

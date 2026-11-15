@@ -212,7 +212,118 @@ step 0 makes its own.
 
 <!-- step0-A -->
 
-<!-- step0-B -->
+**B. The gold file, read for further sources.** I went through all 57 questions of `answer-source-questions.yaml`,
+not only the ones R0 lost. For each I searched the dev index for passages that hold what the question asks (by the
+question's terms and the standard's element names, in every source kind), read every candidate, and added a source
+only when the passage I read holds the answer, or the same share of it as the sources already named. No source was
+added because a retrieval run returned it, and none was removed. 44 questions got 70 further patterns (each matches
+one indexed file, a03's parking pattern two examples; checked against the index). The `unsure` marks stay as they
+were. The entries are below for review; the YAML notes say only that a source was added and point here.
+
+| question | pattern added | where in the file | why |
+|---|---|---|---|
+| a01 | `FAQs-on-the-Delegated-Regulations.pdf` | NAPCORE WG5 FAQs on the Delegated Regulations, §3.5 "Which formats are considered machine-readable?" | answers the question by name (CSV, XML exports; the formats the Delegated Regulations specify); NAPCORE scope, opt-in |
+| a02 | `OpRa/examples/ResponseLateDatedVehicleJourneys.xml` | IndicatorFrame / indicatorLogEntries / LateDatedVehicleJourneyEntry with DelayDuration | an OpRa example file of observed delays, one entry per late journey |
+| a02 | `OpRa/examples/CancelledAndLateDatedVehicleJourneys.xml` | indicatorLogEntries (LateDatedVehicleJourneyEntry, DelayDuration) and indicators (LateDatedVehicleJourneyCount) | an OpRa example file of observed delays, entries and counts per delay interval |
+| a03 | `Netex_21_Sites_Parking_` | NeTEx examples Netex_21_Sites_Parking_1.xml and _2.xml: parkings / Parking (multistorey car park, on-street parking) with ParkingProperties and ParkingCapacity | a parking defined in NeTEx, element by element |
+| a03 | `TN-ITS-Open/OWL/codelists/ParkingSiteTypeCode.ttl` | the code list's skos:definition of each parking site type (e.g. interUrbanParkingSite) | TN-ITS defines kinds of parking sites; another standard's definition |
+| a04 | `Chur_Equipment_Pathlink_V1.0.xml` | StopPlace / placeEquipments / LiftEquipment (Name, Width, Depth, MaximumLoad) with EquipmentPlace refs | a lift described in a station (EPIAP profile example) |
+| a04 | `Netex_10_StopPlace_uk_ComplexStation_Wimbledon_1` | StopPlace / … / equipmentPlaces / EquipmentPlace / placeEquipments / LiftEquipment (Lift to Platforms 1-4) | a lift described in a station |
+| a04 | `910GWIMBLDN-accessibility` | same LiftEquipment in the Wimbledon accessibility example | a lift described in a station |
+| a04 | `Netex_10_StopPlace_withParking_1` | same LiftEquipment (Wimbledon) in the stop place example with parking | a lift described in a station |
+| a06 | `Chur_Equipment_Pathlink_V1.0.xml` | StopPlace / placeEquipments / LiftEquipment (Name, Width, Depth, MaximumLoad) with EquipmentPlace refs | a lift described in a station (EPIAP profile example) |
+| a06 | `Netex_10_StopPlace_uk_ComplexStation_Wimbledon_1` | StopPlace / … / equipmentPlaces / EquipmentPlace / placeEquipments / LiftEquipment (Lift to Platforms 1-4) | a lift described in a station |
+| a06 | `910GWIMBLDN-accessibility` | same LiftEquipment in the Wimbledon accessibility example | a lift described in a station |
+| a06 | `Netex_10_StopPlace_withParking_1` | same LiftEquipment (Wimbledon) in the stop place example with parking | a lift described in a station |
+| a21 | `Chur_Equipment_Pathlink_V1.0.xml` | StopPlace / placeEquipments / LiftEquipment (Name, Width, Depth, MaximumLoad) with EquipmentPlace refs | a lift described in a station (EPIAP profile example) |
+| a21 | `Netex_10_StopPlace_uk_ComplexStation_Wimbledon_1` | StopPlace / … / equipmentPlaces / EquipmentPlace / placeEquipments / LiftEquipment (Lift to Platforms 1-4) | a lift described in a station |
+| a21 | `910GWIMBLDN-accessibility` | same LiftEquipment in the Wimbledon accessibility example | a lift described in a station |
+| a21 | `Netex_10_StopPlace_withParking_1` | same LiftEquipment (Wimbledon) in the stop place example with parking | a lift described in a station |
+| a22 | `Chur_Equipment_Pathlink_V1.0.xml` | StopPlace / placeEquipments / LiftEquipment (Name, Width, Depth, MaximumLoad) with EquipmentPlace refs | a lift described in a station (EPIAP profile example) |
+| a22 | `Netex_10_StopPlace_uk_ComplexStation_Wimbledon_1` | StopPlace / … / equipmentPlaces / EquipmentPlace / placeEquipments / LiftEquipment (Lift to Platforms 1-4) | a lift described in a station |
+| a22 | `910GWIMBLDN-accessibility` | same LiftEquipment in the Wimbledon accessibility example | a lift described in a station |
+| a22 | `Netex_10_StopPlace_withParking_1` | same LiftEquipment (Wimbledon) in the stop place example with parking | a lift described in a station |
+| a05 | `Chur_Equipment_Pathlink_V1.0.xml` | StopPlace / placeEquipments / EscalatorEquipment (Rolltreppe …, Width) with EquipmentPlace refs | an escalator described in a station; the only example with EscalatorEquipment |
+| a08 | `02007L0002-20241126#art_3$` | INSPIRE Directive Art. 3(6): 'metadata' means information describing spatial data sets and services, to discover, inventory and use them | another act's definition of metadata |
+| a08 | `napcore.eu/metadata` | NAPCORE page 'mobilityDCAT-AP': metadata as the building block that describes datasets on NAPs | says what metadata are for on a NAP |
+| b16 | `napcore.eu/metadata` | NAPCORE page 'mobilityDCAT-AP', opening paragraphs | metadata make NAP datasets accessible, reusable and discoverable: what they are used for |
+| b17 | `napcore.eu/metadata` | NAPCORE page 'mobilityDCAT-AP', opening paragraphs | what metadata on a NAP are |
+| a09 | `Netex_01.1_Bus_SimpleTimetable_JourneysOnly` | header comment: 'the encoding of a simple bus timetable for a linear route … SERVICE JOURNEYS with CALLS with computed passing times' | says what a bus timetable is in NeTEx terms, with the example |
+| a10 | `Netex_01.1_Bus_SimpleTimetable_JourneysOnly` | same header comment | as a09 |
+| a10 | `32026R0253#art_3$` | TEL TSI Art. 3(33): 'passenger timetable' means the date and time of passenger rail services … | a legal definition of a timetable (rail) |
+| a11 | `DelayedAndCancelledJourneysWithEvents` | indicators / LateDatedVehicleJourneyCount ('Delayed Journey Statistics') with intervals | counts late journeys per journey pattern, as in the example already named |
+| a11 | `OpRa/examples/ResponseLateDatedVehicleJourneys.xml` | indicators / LateDatedVehicleJourneyCount with intervals, after the LateDatedVehicleJourneyEntry log | counts late journeys, as in the example already named |
+| a12 | `FX-PI-01_UK_AMSY_NETWORK_FARE_Arriva-trip_20200417` | ValueSet TypeOfTravelDocument: paper ticket bought on the bus, m-ticket, contactless (UK fare profile) | bus tickets described in NeTEx, as travel document types |
+| a15 | `D2.2.1_Mapping_EU-based_requirements_final.pdf` | NAPCORE D2.2.1, section 4 'OpRa' (4.1 The need for OpRa) | OpRa's purpose: operational raw data (timestamps, positions, delays, dwell times) linked to planned NeTEx data, for performance monitoring |
+| b04 | `D2.2.1_Mapping_EU-based_requirements_final.pdf` | NAPCORE D2.2.1, section 4 'OpRa' (4.1 The need for OpRa) | OpRa's purpose: operational raw data (timestamps, positions, delays, dwell times) linked to planned NeTEx data, for performance monitoring |
+| b05 | `D2.2.1_Mapping_EU-based_requirements_final.pdf` | NAPCORE D2.2.1, section 4 'OpRa' (4.1 The need for OpRa) | OpRa's purpose: operational raw data (timestamps, positions, delays, dwell times) linked to planned NeTEx data, for performance monitoring |
+| b06 | `D2.2.1_Mapping_EU-based_requirements_final.pdf` | NAPCORE D2.2.1, section 4 'OpRa' (4.1 The need for OpRa) | OpRa's purpose: operational raw data (timestamps, positions, delays, dwell times) linked to planned NeTEx data, for performance monitoring |
+| a16 | `FAQs-on-the-Delegated-Regulations.pdf` | NAPCORE WG5 FAQs, §2.1.4 'Which data must be provided regarding fares information parameters?' | answers the question for MMTIS: static fare data usable in a route planner, if available |
+| b11 | `FAQs-on-the-Delegated-Regulations.pdf` | NAPCORE WG5 FAQs, §1.1 'What is a NAP? Why do I need to provide data on the NAPs?' | defines a NAP and its legal basis |
+| a03 | `M4.3.5-Technical-mapping-of-multimodal-data-standards` | NAPCORE M4.3.5, the parking section: parking data in Transmodel/NeTEx, SIRI, APDS and DATEX II, and their mappings | surveys how parkings are defined across the standards |
+| a20 | `FAQs-on-the-Delegated-Regulations.pdf` | NAPCORE WG5 FAQs, §3.4 (formats of the delegated regulations: RTTI DATEX II, MMTIS DATEX II/SIRI/NeTEx, SSTP DATEX II, SRTI DATEX II) and §2.3.2 (SRTI in DATEX II) | names the delegated regulations that require DATEX II |
+| b08 | `32024R0490#art_1$` | Art. 1 (amended Art. 4 of 2017/1926): 'NeTEx CEN/TS 16614 and subsequent versions' | gives the CEN reference |
+| b08 | `32026R0253#app_C$` | TEL TSI Appendix C, [P.1]/[P.2]: CEN/TS 16614-1:2025 … (NeTEx) Part 1, Part 2 | gives the CEN reference with parts |
+| b08 | `SIRI/README.md$` | SIRI README overview: 'relates to NeTEx (CEN/TS 16614 series)' | gives the CEN reference |
+| b08 | `napcore.eu/multimodal-data` | NAPCORE page 'multimodal data', Static multimodal data: NeTEx parts 1-6 with CEN/TS 16614-1 … -5 | gives the CEN reference per part |
+| b03 | `napcore.eu/multimodal-data` | same page, 'NeTEx is a CEN Technical Standard for exchanging Public Transport schedules and related data', its parts | says what NeTEx is |
+| b01 | `napcore.eu/multimodal-data` | same page, Dynamic multimodal data: 'SIRI … enables the exchange of information on transport operations between different computer systems' | says what SIRI is for (short) |
+| b02 | `napcore.eu/multimodal-data` | as b01 | German form of b01 |
+| b05 | `napcore.eu/multimodal-data` | same page: Transmodel, NeTEx (static) and SIRI (dynamic) explained | explains two of the three standards, as each README explains one |
+| b09 | `docs.datex2.eu/v3.7/user-guide$` | DATEX II user guide, 'What is DATEX II?': a standard for the traffic and travel information sector to share data … | answers the question by name |
+| b09 | `napcore.eu/standards$` | NAPCORE page 'DATEX II': 'the electronic language used in Europe for the exchange of traffic information and traffic data', history and governance | says what DATEX II is |
+| b10 | `dataspecification_tn.adoc#L93$` | INSPIRE TN Technical Guidelines, 'General Executive Summary': Directive 2007/2/EC establishes an Infrastructure for Spatial Information in the European Community (INSPIRE) … | says what INSPIRE is |
+| b14 | `NAPCORE-MMTIS-Quality-Framework_v1_250411.pdf` | NAPCORE MMTIS Quality Framework, Table 2: the time and service related data types of 2024/490 by level (S-1 … D-2) | lists the MMTIS data categories |
+| a16 | `NAPCORE-MMTIS-Quality-Framework_v1_250411.pdf` | same Table 2, rows S-2 'basic common standard fares' (fare network data …) | lists the fare data categories of MMTIS |
+| b12 | `NAPCORE-MMTIS-Quality-Framework_v1_250411.pdf` | the guidance-paper passage: 'NeTEx (stop registry, schedules, fares), SIRI (real-time), OJP …' | names NeTEx for static data under MMTIS |
+| b13 | `NAPCORE-MMTIS-Quality-Framework_v1_250411.pdf` | as b12 | Norwegian form of b12 |
+| b15 | `FAQs-on-the-Delegated-Regulations.pdf` | NAPCORE WG5 FAQs §3.5 'Which formats are considered machine-readable?' | as a01 |
+| b20 | `FX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-pass-(Z2Z)` | FareFrame / distributionChannels / DistributionChannel (First travel shop, Tourist Information Centre, Travelwest outlets) with Description and Url 'where-buy' | where passengers buy tickets, in NeTEx |
+| b21 | `FX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-pass-(Z2Z)` | FareFrame / distributionChannels / DistributionChannel (First travel shop, Tourist Information Centre, Travelwest outlets) with Description and Url 'where-buy' | where passengers buy tickets, in NeTEx |
+| b22 | `FX-PI-01_UK_AMSY_NETWORK_FARE_Arriva-trip_20200417` | FareTable 'ArrivaSingleTrip - Cash' / prices / DistanceMatrixElementPrice with Amount per zone pair, for a sales offer package and user profile | a bus fare with its prices, in NeTEx |
+| b23 | `FX-PI-01_UK_AMSY_NETWORK_FARE_Arriva-trip_20200417` | FareTable 'ArrivaSingleTrip - Cash' / prices / DistanceMatrixElementPrice with Amount per zone pair, for a sales offer package and user profile | a bus fare with its prices, in NeTEx |
+| b24 | `Netex_04_Stops_SimpleStation_1` | header comment and StopPlace: 'a simple station with two platforms encoded in NeTEx XML' (quays, access space, entrance) | how a station is defined in NeTEx, by example |
+| b24 | `Netex_10_StopPlace_uk_ComplexStation_Wimbledon_1` | StopPlace of a complex station (levels, quays, equipment places) | how a station is defined in NeTEx, by example |
+| b25 | `Netex_01_Stops_SingleStopOnStreet_1` | header comment: a single stop on a street: a STOP PLACE with a QUAY, scheduled stop point and stop assignment | how a stop is described in NeTEx, by example |
+| b26 | `Netex_07.1_Bus_FlexibleTimetable_ZonesOnly` | SiteFrame / flexibleStopPlaces / FlexibleStopPlace 'Flexible Zone Sigma' with Centroid and area | a flexible stop defined in NeTEx, by example |
+| b27 | `netex_nm_equipmentEnergy_version` | VehicleChargingEquipment: 'Specialisation of PLACE EQUIPMENT for vehicle charging', its type and group | the NeTEx element for charging equipment at a place |
+| b28 | `norway/vehicles/submodel-Train.xml` | the Train element: TrainSize, components / TrainComponent / TrainElement (carriage) | a train modelled in NeTEx, by example |
+| b29 | `Netex_01.1_Bus_SimpleTimetable_JourneysOnly` | lines / Line 'Line 24' with OperatorRef | the link of an operator to a line, by example |
+| b31 | `DelayedAndCancelledJourneysWithEvents` | indicatorLogEntries / CancelledDatedVehicleJourneyEntry ('Cancelled Journey 1: No replacement service') with ControlActionType JourneyCancellation | shows what a cancelled journey is in OpRa, by example |
+| b32 | `OpRa/examples/TicketingBasedPassengerCount.xml` | indicators / TicketingBasedPassengerCount with BoardingCount and AlightingCount, from ValidationEntry log entries | passenger counts modelled in OpRa, by example |
+| b32 | `OpRa/examples/ExpectedPassengerCount.xml` | indicators / ExpectedPassengerCount per scheduled stop point and time band with BoardingCount | passenger counts modelled in OpRa, by example |
+
+Read and not added (the passage I found does not hold the answer): a07 (examples give values of `SeatingCapacity`, no
+meaning; the occupancy enumeration is about free seats), a13 and a14 (no other act defines static or dynamic data; the
+NAPCORE quality framework uses the words without defining them), a17, a18, a19 (NAPCORE M4.3.5 names DATEX II and SIRI
+side by side for parking, not how they connect), a23, b07, b18, b19, b30, b33 and b34 (one Slovenian timetable
+example only). b01/b02 got only the short NAPCORE description of SIRI; the SIRI schema's own documentation of its root
+element is one line and was not added.
+
+What it shows (**measured** by reading, not by a run): for 44 of 57 questions more than one indexed source holds the
+answer, and most of the further holders are of a kind the old entries did not name: example files for element
+questions (a02, a04–a06, a11, a12, b20–b29, b31, b32) and NAPCORE documents for legislation and overview questions
+(a01, a15, a16, a20, b03–b06, b08–b17). So the file-level measure did count a question as lost when another passage
+held the same answer; how often, the run below says.
+
+**The benchmark question file** (149 questions, 141 with patterns) I did not edit. Its patterns are coarser than the
+gold file's (`README.md` matches every README, 55 questions name one pattern), so it already counts many neighbours as
+found; two questions have the same text as gold questions (q145 = b04, q147 = b01) and the same additions would apply
+to them, but the file is also the CI retrieval benchmark's input and CI's index has no NAPCORE pages, so the rule does
+not apply cleanly there. Left for step 1's reading of lost questions (**assumed**: the reading rule of §5 covers it).
+
+**File-level baseline, old and new gold file side by side** (same copy, same code, model off, two runs each;
+**measured**):
+
+| | found (of 57) | gained | lost |
+|---|---|---|---|
+| old gold file (pass 1 and 2, four runs) | 34 / 34 / 34 / 34 | – | – |
+| new gold file (two runs) | 39 / 39 | b10, b16, b17, b24, b32 | none |
+
+Still not found with the new file (18): a01, a06, a08, a12, a13, a14, a16, a17, a21, a22, b01, b02, b20, b21, b22, b23,
+b26, b30. So 5 of the 23 questions the old file counted as lost had another indexed source among the passages that
+holds the answer: the file-level measure undercounted by 5 of 57 (**measured**). Step 1 and later steps measure with the
+new file; the old numbers stay here for comparison.
 
 <!-- step0-C -->
 
