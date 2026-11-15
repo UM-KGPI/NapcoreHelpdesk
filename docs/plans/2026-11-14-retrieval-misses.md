@@ -486,3 +486,69 @@ does not depend on it and can go first.
 
 Raw outputs are outside the repository. To repeat: `manage.py locate_answer_sources --bridge on --bridge-terms <file>
 [--fitting-scope] --translations <file>`; with `--no-model` a stored reply is used and a missing one adds nothing.
+
+### Q3 (2026-11-15, dev, 0.97.222): ordering
+
+#### Diagnosis (written before any change)
+
+All numbers **measured** on the branch after merging main (0.97.222), with no change, unless marked. Gold questions
+without scope, `locate_answer_sources --no-model` with the English renderings of Q1 fixed in a file; two runs each.
+
+**Before (step 0).** Gold found 29 and 29 of 57 (the same 29 both times). Benchmark found 114 of 141 (run 1).
+Retrieval benchmark on the dev index, graph mode (not comparable with `ci-baseline.json`, which is the CI index with
+hash vectors): hit@5 0.772, hit@10 0.886, MRR@10 0.569, the same as Q1. Retrieval time per question (locate): gold
+median 2.9 / 2.2 s, p90 5.4 / 4.1 s; benchmark median 2.1 s, p90 3.3 s.
+
+**Where each candidate is lost, and what stands in front of it.** The command now also writes, for every question,
+the passages the view hands on in order and where each came from (presence definitions, retrieval, example evidence),
+so the table below is read from them. 11 gold and 23 benchmark questions are candidates but not found; one of the 23
+(q144) was found on a rerun, so 22.
+
+| Mechanism | gold | benchmark | what is in front | lost at |
+|---|---|---|---|---|
+| **A. Presence definitions take all 4 places** | b26, b27 | q053, q063 | 4 presence passages (2 Transmodel definitions, 2 schema elements); the wanted passage was 1st to 3rd of retrieval | prompt cut, or out of the 6 entirely (b26, q063) |
+| **B. Just below the prompt cut** (5th or 6th of the 6, no single cause in front) | a15, a23 | q013, q016, q083, q117, q119, q140, q143 | other files of the same standard: schemas before the example (q016, q119), four `netex.ttl#…` property definitions (a23, q117), examples before the schema (q013) | prompt cut 6 → 4 |
+| **C. Overview README below schema files** | a15, b01, b02, b05 | q143, q146, q147 | the standard's top schema files (`siri_all_functionalServices.xsd` and its `wsdl` copy, `opra.xsd`, imports) | prompt, top_k, merge, preselection |
+| **D. Two-standard questions, wanted passage far down** (OpRa with NeTEx) | b32 | q007, q015, q077, q078, q084, q085, q088, q099 | OpRa examples and imports, `README.md`; the wanted passage 12th to 23rd after scoring | top_k cut |
+| E. Annex below the act's articles | a16 | – | articles 1, 2, 6, 9 of the same act | top_k cut |
+| F. Scope, preselection, min_score (Q2's subject) | b10, b17 | q133, q137, q146 | – | min_score, preselection cap |
+
+(a15, b05 and q143 fall in both B and C: a README just below the cut.)
+
+**Mechanism A verified by an independent route.** I called the view's steps by hand (retrieval with top_k 6, min_score
+0.62, min_results 4, the relaxed retry, then `presence_evidence` put in front as `api/views.py` does) for b26, b27, q053,
+q063, and printed the first 4 with and without the presence passages. Without them the wanted passage is in the 4 in
+all four cases (retrieval rank 3, 1, 2, 3); with them all 4 places are presence passages in all four. Through the API
+(23 presence-kind questions, 3 runs), the 4 passages the model got were presence passages in every answer: presence
+always fills 3 or 4 of the 4.
+
+**What the presence definitions are for.** Asked through the API with `CONCEPT_PRESENCE_ENABLED` off (2 runs) and on
+(3 runs), on the 21 presence-kind questions of `concept-questions.yaml` and gold a04, a05 (answers read):
+
+- **Needed** (without them refused, or answered beside the point; with them answered from the right definition):
+  a04 lift (off: the UK "Lift Station" stop classification; on: `LiftEquipment`), a05 escalator, c01 fare distribution
+  (off: GTFS fare mapping; on: `DistributionAssignment`, `DistributionChannel`), c03 driver's name (off: refused 2 of 2;
+  on: DRIVER not aligned to a NeTEx class, `DriverRef`), c12 bus company (off: refused 1 of 2, no operator; on:
+  `Operator`), c23 type of bus (off: refused 2 of 2; on: `VehicleType`). Weaker: c16, c20, c21 (off refused 1 of 2).
+- **Harmful**, the concepts chosen are beside the point and push out good retrieval: c05 elevator (on: PASSENGER
+  ENTRANCE and TAXI STAND, refused 3 of 3), c17 ticket delivery (on: CUSTOMER ACCOUNT, refused 3 of 3; off: answered from
+  `FulfilmentMethod`, the right element), c26 bike racks (on: RECHARGING STATION, TAXI RANK). b27 is the same kind
+  (CHARGING MOMENT and CHARGING POLICY, fare concepts, for charging stations).
+- The other 11 are answered either way.
+
+So the presence passages are right in some questions and wrong in others, and the retrieval passages likewise. The
+retrieval scores do not tell them apart: after rescaling, the retrieved passages score 1.00 in most of these questions,
+the ones beside the point (c03, c23: timetable and tariff examples) as well. A rule on the score is therefore out.
+
+**Mechanism chosen for step 2:** the presence passages take at most 2 of the 4 places, the best retrieved passages
+the others; the rest of the presence passages follow them. Two because the presence evidence names up to two concepts
+and their definitions come first (each states the standard's implementing class, which is what the needed questions
+are answered from); the schema element passages of the presence evidence then lose their place in the 4. Expected
+from the table (**believed**): b27 and q053 found (retrieval rank 1 and 2); b26 and q063 not (rank 3); c03 loses the
+`DriverRef` passage from the 4. With one place the four named cases would all be reached, but the needed questions
+whose first concept is the wrong one (a04: LIFT CALL EQUIPMENT before LIFT EQUIPMENT, c23: TRANSPORT TYPE before
+VEHICLE TYPE) would lose their definition; I did not choose it.
+
+**Step 3 candidates:** B (8–9 questions, one cause: the prompt shows 4 of 6) has a general fix, more passages for the
+model, allowed only with its cost measured. C (6–7) is a doc-type ordering question; D (9) and E (1) have the wanted
+passage far down, where reordering the top does not reach it.

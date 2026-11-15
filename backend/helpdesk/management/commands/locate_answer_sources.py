@@ -356,7 +356,10 @@ def run_question(entry: dict, translations: Translations, index: SourceIndex, re
             chunks, _trace = retrieve_chunks_with_trace(min_score=min(min_score, 0.45), **arguments)
     retrieval_seconds = round(time.perf_counter() - retrieval_start, 2)
 
+    returned_rows = _snapshot(chunks)
+    returned_ids = {row[2] for row in returned_rows}
     presence = presence_evidence(question, scope, english)
+    presence_chunk_ids = {c.get("chunkId") for c in presence}
     if presence:
         presence_ids = {c["chunkId"] for c in presence}
         chunks = (presence + [c for c in chunks if c.get("chunkId") not in presence_ids])[: max(top_k, len(presence))]
@@ -455,6 +458,17 @@ def run_question(entry: dict, translations: Translations, index: SourceIndex, re
         "found": outer["prompt"],
         "lostAt": None if outer["prompt"] else (question_lost or "prompt"),
         "promptSources": [row[1] for row in prompt_rows],
+        # Every passage the view hands on, in order, with where it came from: the presence definitions, or the
+        # retrieval's own rank (for reading what stands in front of a passage that is lost).
+        "viewSources": [
+            {
+                "path": row[1],
+                "wanted": matches(patterns, row[0], row[1]),
+                "from": "presence" if row[2] in presence_chunk_ids else ("retrieval" if row[2] in returned_ids else "view"),
+            }
+            for row in view_rows
+        ],
+        "returnedSources": [{"path": row[1], "wanted": matches(patterns, row[0], row[1])} for row in returned_rows],
     }
 
 
