@@ -207,3 +207,53 @@ step 0 makes its own.
 ## 10. Results
 
 (Each step records its numbers here, dated.)
+
+### Step 0 (2026-11-15, dev copy `napcore_helpdesk_s0base`, 0.97.226 with #540 and #542)
+
+<!-- step0-A -->
+
+<!-- step0-B -->
+
+<!-- step0-C -->
+
+**D. A token counter that counts as the embedder does.** How the embedder counts (**measured** by reading
+`embedding_service.py` and fastembed 0.9.1 in the embedder image): `load_model` builds fastembed's `TextEmbedding`
+for `intfloat/multilingual-e5-small` and sets the model's own `tokenizers` tokenizer (0.23.3, the model's
+`tokenizer.json` with fastembed's special-token and padding set-up) to cut at `EMBEDDER_MAX_TOKENS` (256);
+`embed_texts` prefixes each text with `passage: ` or `query: ` and fastembed tokenizes it with `encode_batch`, which
+adds `<s>` and `</s>`; the model reads the first 256 tokens including those two (fastembed's own `token_count` is the
+sum of the attention mask, so it never exceeds 256). The indexer embeds `passage_text` = source path, heading and
+text, each on its own line.
+
+Where the counter lives, and why: in the embedding service, as `POST /count`, with a backend call
+`count_embedded_tokens(texts, kind)` and `count_passage_tokens(chunks)` in `services/embeddings.py`. The service
+counts with a copy of the very tokenizer it embeds with (cut and padding switched off on the copy), on the same
+prefix, so the count cannot drift from what is embedded when the model, the library or the cut changes; the backend
+and worker images have the `tokenizers` library but not the model's files (they live in the embedder's volume), and
+the indexer already calls the embedder for every piece. The cost is an HTTP call per batch of 256 texts, and a cut
+that tries many sizes must send its candidates in batches. Nothing calls the counter yet; the indexer's cut and every
+index result are unchanged (the counter's functions are referenced only by tests).
+
+Verified (**measured**):
+
+- On 1,500 random indexed chunks spread over all 17 kinds (`doc_type`, `chunk_type`, source; up to 60 per kind,
+  the rest at random): the new `/count` handler, built from the model as in production and run with the embedder
+  image's fastembed 0.9.1 and tokenizers 0.23.3 and the model files copied from the embedder's volume, gives for
+  every chunk the same number as fastembed's own `token_count` on a model whose cut is set above any chunk (1,500 of
+  1,500), and cut at 256 the same as fastembed's `token_count` of the model as the service configures it, which is
+  what the embedder reads (1,500 of 1,500). The model's tokenizer still cuts after the counter is built.
+- Against the running dev embedder: for 93 chunks over 256 tokens from 15 kinds, the text cut right after its 254th
+  content token (256 tokens by the counter) gives the same vector as the whole chunk, and the text cut one token
+  earlier (255) a different vector, 93 of 93. So the running embedder reads exactly the 256 tokens the counter
+  counts.
+- Of the 1,500 chunks, 983 are longer than 256 tokens (XML examples 653 of 667, NAPCORE 144 of 149, guides 70 of
+  135, regulation 31 of 68, INSPIRE 37 of 107, DATEX II 33 of 98, READMEs 11 of 61, schema declarations 1 of 202),
+  in line with the audit.
+- Unit tests (`test_embedding_service.py`): the count is of the text with its kind's prefix; `/count` rejects what
+  `/embed` rejects; without a tokenizer there is no `/count`; with a small real tokenizer the count includes the
+  special tokens and is not cut while the model's tokenizer still cuts and pads; the backend call sends exactly
+  `passage_text`, batches by 256, and raises when the service cannot count. 27 tests of the embedding and re-embed
+  files pass with `tokenizers` installed (the real-tokenizer test skips without it).
+- Not done: the live dev embedder serves `/count` only after it is started again with this code, and prod's after
+  the next deploy (the deploy rebuilds the embedder). I did not restart it. The check above ran the new handler on
+  the host, with the embedder image's library versions, not inside the running service.

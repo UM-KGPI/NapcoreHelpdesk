@@ -144,3 +144,116 @@ class EmbeddingServiceTests(SimpleTestCase):
         self.assertEqual(self._post({"texts": ["abc"], "kind": "document"})[0], 400)
         self.assertEqual(self._post({"texts": "abc", "kind": "query"})[0], 400)
         self.assertEqual(self._post({"texts": ["x"] * 257, "kind": "passage"})[0], 400)
+
+
+def _word_tokenizer(cut: int):
+    """A small real tokenizer shaped like the model's: words, special tokens around the text, a cut and padding."""
+    from tokenizers import Tokenizer, models, pre_tokenizers, processors
+
+    vocab = {"<pad>": 0, "<s>": 1, "</s>": 2, "<unk>": 3, "passage:": 4, "query:": 5, "a": 6, "b": 7}
+    tokenizer = Tokenizer(models.WordLevel(vocab, unk_token="<unk>"))
+    tokenizer.pre_tokenizer = pre_tokenizers.WhitespaceSplit()
+    tokenizer.post_processor = processors.TemplateProcessing(single="<s> $A </s>", special_tokens=[("<s>", 1), ("</s>", 2)])
+    tokenizer.enable_truncation(max_length=cut)
+    tokenizer.enable_padding(pad_id=0, pad_token="<pad>")
+    return tokenizer
+
+
+class _FakeTokenizedModel(_FakeModel):
+    """A stand-in with the attribute path of fastembed's TextEmbedding to its tokenizer."""
+
+    def __init__(self, tokenizer):
+        self.model = type("Inner", (), {"tokenizer": tokenizer})()
+
+
+class _StubCounter:
+    """Counts characters, so a test sees exactly which text was counted."""
+
+    def encode_batch(self, texts):
+        return [type("Encoding", (), {"ids": list(text)})() for text in texts]
+
+
+class TokenCountServiceTests(SimpleTestCase):
+    def _serve(self, model, counter=None):
+        server = HTTPServer(("127.0.0.1", 0), embedding_service.make_handler(model, counter))
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        return f"http://127.0.0.1:{server.server_port}"
+
+    def _post(self, base, payload):
+        request = Request(base + "/count", data=json.dumps(payload).encode(), headers={"Content-Type": "application/json"})
+        try:
+            with urlopen(request, timeout=5) as response:
+                return response.status, json.loads(response.read())
+        except Exception as exc:  # urllib raises HTTPError for 4xx
+            return exc.code, json.loads(exc.read())
+
+    def test_count_is_of_the_text_with_the_prefix_of_its_kind(self):
+        base = self._serve(_FakeModel(), _StubCounter())
+
+        self.assertEqual(
+            self._post(base, {"texts": ["abc", ""], "kind": "passage"}),
+            (200, {"counts": [len("passage: abc"), len("passage: ")], "maxTokens": embedding_service.MAX_TOKENS}),
+        )
+        self.assertEqual(self._post(base, {"texts": ["abc"], "kind": "query"})[1]["counts"], [len("query: abc")])
+
+    def test_count_rejects_what_embed_rejects(self):
+        base = self._serve(_FakeModel(), _StubCounter())
+
+        self.assertEqual(self._post(base, {"texts": ["abc"], "kind": "document"})[0], 400)
+        self.assertEqual(self._post(base, {"texts": ["x"] * 257, "kind": "passage"})[0], 400)
+
+    def test_without_a_tokenizer_there_is_no_count(self):
+        self.assertEqual(self._post(self._serve(_FakeModel()), {"texts": ["a"], "kind": "passage"})[0], 404)
+
+    def test_the_count_includes_special_tokens_and_is_not_cut(self):
+        try:
+            tokenizer = _word_tokenizer(cut=4)
+        except ImportError:
+            self.skipTest("tokenizers is not installed (it comes with fastembed)")
+        base = self._serve(_FakeTokenizedModel(tokenizer))
+
+        # <s> passage: a b a b a </s>: 8 tokens, above the cut of 4; <s> passage: </s>: 3.
+        self.assertEqual(self._post(base, {"texts": ["a b a b a", ""], "kind": "passage"})[1]["counts"], [8, 3])
+        # The model's own tokenizer still cuts and pads: what it embeds is unchanged.
+        encodings = tokenizer.encode_batch(["passage: a b a b a", "passage: "])
+        self.assertEqual([len(e.ids) for e in encodings], [4, 4])
+        self.assertEqual([sum(e.attention_mask) for e in encodings], [4, 3])
+
+
+class TokenCountClientTests(SimpleTestCase):
+    def _answer(self, seen, max_tokens=256, drop=0):
+        def fake_urlopen(request, timeout):
+            payload = json.loads(request.data)
+            seen.append((request.full_url, payload["kind"], payload["texts"]))
+            counts = [len(text) for text in payload["texts"]][drop:]
+            return _FakeResponse(json.dumps({"counts": counts, "maxTokens": max_tokens}).encode())
+
+        return fake_urlopen
+
+    @override_settings(EMBEDDING_SERVICE_URL="http://embedder:8090/")
+    def test_passages_are_counted_as_the_indexer_embeds_them(self):
+        seen = []
+        with patch.object(embeddings, "urlopen", self._answer(seen)):
+            counts, cut = embeddings.count_passage_tokens([("examples/stop.xml", "Stops", "<StopPlace/>"), ("README.md", "", "x")])
+
+        text = embeddings.passage_text("examples/stop.xml", "Stops", "<StopPlace/>")
+        self.assertEqual(seen, [("http://embedder:8090/count", "passage", [text, "README.md\n\nx"])])
+        self.assertEqual((counts, cut), ([len(text), len("README.md\n\nx")], 256))
+
+    def test_counts_are_asked_in_batches_the_service_accepts(self):
+        seen = []
+        with patch.object(embeddings, "urlopen", self._answer(seen)):
+            counts, _ = embeddings.count_embedded_tokens(["a"] * 600, "passage")
+
+        self.assertEqual([len(texts) for _, _, texts in seen], [256, 256, 88])
+        self.assertEqual(len(counts), 600)
+
+    def test_a_service_that_cannot_count_raises(self):
+        with patch.object(embeddings, "urlopen", side_effect=URLError("404 not found")):
+            with self.assertRaises(EmbeddingServiceError):
+                embeddings.count_embedded_tokens(["a"])
+        with patch.object(embeddings, "urlopen", self._answer([], drop=1)):
+            with self.assertRaises(EmbeddingServiceError):
+                embeddings.count_embedded_tokens(["a", "b"])
