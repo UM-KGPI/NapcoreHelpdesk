@@ -389,9 +389,6 @@ export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
                   )}
                   {!turn.answer.generatedExample?.valid && <GeneratedExampleBlock example={turn.answer.generatedExample} />}
                   <LegalContext items={turn.answer.legalContext} />
-                  <p className="muted tiny">
-                    requestId: {turn.requestId ?? turn.answer.trace.requestId} · mode: {turn.answer.mode} · confidence: {turn.answer.confidence.toFixed(2)}
-                  </p>
                 </>
               )}
             </article>
