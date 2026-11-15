@@ -763,11 +763,7 @@ confirm it cites the SIRI repository. Only then switch on the daily refresh (7.3
 `RELEVANCE_CHECK_ENABLED` is off by default. When on, a question the keyword rules refuse (no standards concept
 matched, no standard and no artifact named) is put to the controller model, which answers RELEVANT or
 IRRELEVANT; RELEVANT answers it, a failed call keeps the keyword refusal. Questions the keyword rules let through
-are not asked about. A question sent with a `standardsScope` (API clients; the chat page sends none) is judged
-as if asked without the scope: when the keyword rules would refuse it, the model is asked, and only IRRELEVANT
-refuses it; RELEVANT and a failed call answer it within the scope. With the check off, a scoped question is
-never refused by the keyword rules, so "Is this mandatory?" with a scope reaches the answer model. Measured
-effect: `docs/plans/2026-11-14-refused-questions.md` (§7 for scoped questions). First prove the model call works from the server (it prints `None` when it does not):
+are not asked about. Measured effect: `docs/plans/2026-11-14-refused-questions.md`. First prove the model call works from the server (it prints `None` when it does not):
 
 ```bash
 $C exec -T backend python manage.py shell -c "
@@ -784,8 +780,7 @@ recreate the backend:
 $C up -d --force-recreate backend
 ```
 
-Check that a weather question abstains, also with `"standardsScope": ["NeTEx"]`, and that "fares" and "What is
-SIRI?" are answered. To switch it
+Check that a weather question abstains, and that "fares" and "What is SIRI?" are answered. To switch it
 off set the variable to `False` and recreate the backend. It uses the `CONTROLLER_LLM_*` settings.
 
 ## 13. Semantic embeddings
