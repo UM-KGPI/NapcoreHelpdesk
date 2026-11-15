@@ -155,3 +155,74 @@ heading (schema declarations, sections, articles, classes), which are units chos
 also change pieces that were right.
 
 ## 5. Results
+### Step 0 (2026-11-15, dev, 0.97.225, no change)
+
+All **measured**. File level: gold found 33 and 32 of 57, benchmark 124 and 124 of 141 (`locate_answer_sources
+--no-model`, the English renderings of Q3 fixed in a file). Finer measure: §4.2 (gold 26 and 26 of 29 and 28,
+benchmark 83 and 83 of 90). Retrieval median (locate): gold 1.67 / 1.57 s, benchmark 1.45 / 1.27 s. Through the API
+(2 runs): answerable 27 answered runs of 46 (12 questions in both runs; k11, the case, 0 of 2); must-refuse 2 of 50
+(m19 2 of 2). Twelve benchmark questions (q004, q016, q028, q049, q058, q061, q070, q103, q109, q112, q118, q145):
+answered 24 of 24.
+
+### Step 2: the piece with most of the question's terms — gate failed, reverted
+
+`retrieval_gateway._best_pieces_of_files`, after the final selection of each retrieval pass (commit d552389,
+reverted in the next commit). All **measured** unless marked.
+
+| Gate | step 0 | step 2 | |
+|---|---|---|---|
+| 1. finer measure (gold + benchmark) | 26 + 83 = 109 of 119 (gold 26 in both runs, benchmark 83 in both) | 26 + 85 = 111 | +2 (q059, q109), gate +4 (25 % of 14 affected): **fail**; read by hand, q059's new piece is worse (below) |
+| 2. found (file level) | gold 33 / 32, benchmark 124 / 124 | 33, 124 | the mechanism never changes the file: pass by construction |
+| 3. CI retrieval benchmark | – | not run | file level, unchanged by construction; not measured |
+| 4. the case, API, 3 runs | refused 2 of 2, piece 2 given | answered 3 of 3, piece 4 given | **pass** (below) |
+| 5.–6. API sets | above | not run | stopped after gate 1 and the reading below |
+| 7. retrieval median (locate, one run) | gold 1.67 / 1.57 s, benchmark 1.45 / 1.27 s | 1.73 s, 1.18 s | no measurable change under the load; no model call added |
+
+What the mechanism changed: 9 pieces in the gold run and 63 in the benchmark run (step 0 between its own two runs:
+1 and 0). I read all 9 of gold and 20 of the 63, drawn at random:
+
+- Gold: better 2 (the case; "Where can a passenger buy tickets in NeTEx?" now gets the `DistributionAssignment`
+  "Pay for ticket onboard" piece), worse 3 ("How are operators linked to lines?" loses two pieces that show `Line`
+  with `OperatorRef` for a network with tariff zones and a commented-out TransXChange block; "How is a station
+  defined in NeTEx?" loses the example's header describing the station), neutral 4.
+- Benchmark: better 3, worse 7, neutral 10. The worse ones follow one pattern: the piece that shows the asked
+  thing (the `RhythmicalJourneyGroup` for frequency groups, `DatedVehicleJourney` for q087, the passenger spot
+  pieces for seat allocation, the `Line` element for q068, the end of the late-journey counts for q001 and q019) is
+  replaced by the file's opening or by a piece with more prose. The PostgreSQL text parser drops XML tags, so for an
+  example only its comments, descriptions and the summary of at most 18 element names are seen; a header comment
+  or a `Description` paragraph holds more of the question's words than the element that answers it.
+
+So the signal that finds piece 4 in the case is wrong about as often as it is right elsewhere: over the 29 changed
+pieces read, 5 better, 10 worse, 14 neutral. This agrees with the proxy's accuracy in §4.2, which uses the same
+kind of signal. Reverted.
+
+The case answer with the right piece (run 1 of 3, quoted in short): "The evidence does not describe a model for
+the number of late journeys as such. … The example shows late-dated journeys as `LateDatedVehicleJourneyEntry`
+elements … with a `DelayDuration` such as `PT10M` [E5]. The same example reports counts per journey pattern, using
+`LateDatedVehicleJourneyCount` with `intervals` containing `DurationInterval` elements …". Read against piece 4:
+every element and value it names is there (`EndOfInterval` PT5M, `EndIncluded` false, `NumberOfOccurrences` 69 and
+`PercentageOfOccurrences` 0.9324 in runs 1 and 3; the snippet is copied from the piece). It still opens with "the evidence does not describe", because the evidence is an example, not a definition.
+
+How much is fitted to the test questions: the mechanism was chosen from the case and §4.1 before the sizing; no
+variant was tried after the numbers.
+
+## 6. What is left
+
+- **The pattern is not frequent** on these sets (7 of 119 questions by hand, §4.2), and it is spread over three
+  kinds with different causes: a choice between declarations of one schema (3), a choice between size cuts of one
+  example (2), an annex and a README section (2). No single mechanism on the index as it is reaches more than two
+  of them, and the only within-file signal the index offers for examples (text-search terms) is not reliable.
+- **Re-chunking the XML examples** is what would address the example half, and the case (**believed**, not built):
+  split at element boundaries at any depth (the largest whole elements up to the size limit) instead of only at
+  the top two levels, and begin each piece with its ancestor path (for the case:
+  `Opra / ServiceDelivery / … / IndicatorFrame / indicators`) so that its text and vector carry where it sits and
+  the count element stays in one piece. It needs the 43,193 example chunks of 405 files rebuilt and embedded again,
+  on dev and on prod, and a measurement on a separate index with the finer measure and the same hand reading; the
+  per-file cap and the presence definitions would still decide whether a second piece of a file reaches the model.
+- The gold file names only the late-journey schema for a11; the example that answers it is not a wanted source, so
+  the case does not count in the gold measure. Whether to add it is a judgement on the gold file.
+- Prod's `RETRIEVAL_MAX_SAME_SOURCE_PATH` (dev 1, default 2) decides whether a second piece of the file can survive
+  retrieval; with 2 on dev it does, and is then cut by the presence definitions. Not checked on prod.
+
+Raw outputs are outside the repository. To repeat: `manage.py locate_answer_sources [--input …] --output …` and
+read the `pieces` and `piecesAllFiles` fields.
