@@ -552,3 +552,43 @@ VEHICLE TYPE) would lose their definition; I did not choose it.
 **Step 3 candidates:** B (8–9 questions, one cause: the prompt shows 4 of 6) has a general fix, more passages for the
 model, allowed only with its cost measured. C (6–7) is a doc-type ordering question; D (9) and E (1) have the wanted
 passage far down, where reordering the top does not reach it.
+
+#### Step 2: presence definitions in at most two of the four places — gate failed, reverted
+
+`concept_presence.with_presence` (used by both answer views and by `locate_answer_sources`): the presence passages
+first, at most `CONCEPT_PRESENCE_PROMPT_PLACES` = 2 of them, then retrieval's best passages up to the 4 places, then
+the other presence passages; the existence and modelling briefs said the blocks after the definitions are what the
+search found. Commit 846c166, reverted in 9f05154. All **measured**; API runs on two host servers from snapshots of
+the branch, relevance check on (as the deploy now sets it on prod), 3 runs each.
+
+| Gate | before | step 2 | |
+|---|---|---|---|
+| 1. gold found (2 runs) | 29, 29 | 30, 31 | b27 found 2 of 2; a15 1 of 2 (a15 moves between runs with graph candidates, Q0): **+1 beyond the spread, gate +2: fail** |
+| 2. benchmark found (2 runs) | 114, 115 | 113, 113 | q053 found 2 of 2; **lost q052, q129** (2 of 2 before, 0 of 2 after), q144 is spread: **fail** |
+| 3. retrieval benchmark | 0.772 / 0.886 / 0.569 | unchanged by construction | the change is after retrieval; `run_retrieval_benchmark` never calls the view |
+| 4. must-refuse, answered runs of 75 | 6 (m13 3, m19 3) | 4 (m13 1, m19 3) | none more often: pass |
+| 5. presence questions answered (23 × 3) | 58 runs, 19 questions ≥ 2/3 | 65 runs, 21 questions | needed ones all still answered with their definition; c03 lost `DriverRef` (below) |
+| 6. answerable (23 × 3) | 30 runs, 8 questions ≥ 2/3 | 41 runs, 15 questions | of the 7 newly answered, 4 beside the point (below) |
+| 7. retrieval median (locate, gold) | 2.9 / 2.2 s | 2.3 / 1.7 s | no added work; differences are load |
+
+Why the two benchmark questions were lost: "How does NeTEx define scheduled stop points for timetabled journeys?"
+(q052) and "How are journey patterns represented?" (q129) are answered by the schema element passages of the
+presence evidence (`netex_journeyPattern_version.xsd`, `netex_servicePattern_version.xsd`), 3rd and 4th of the
+presence passages; the change put two retrieved examples (an interchange schema and a GTFS stops example; a TransXChange
+extract and a timetable example) in their place. The same trade shows in c03: with the change the answer still says
+DRIVER is not aligned to any NeTEx class, but no longer that NeTEx has a `DriverRef` (0 of 3 runs mention it; 3 of 3
+before). So the schema element passages are what some questions need, and the definitions what others need: two
+places are not enough for both, and retrieval's passages are what a third group needs.
+
+What the answers through the API showed (read): c05 (elevator) and c17 (ticket delivery), refused 3 of 3 before,
+answered 3 of 3; c17 from `FulfilmentMethod`, the right element, c05 from `AccessFeatureEnumeration` (`lift`), close but
+not `LiftEquipment`. Of the answerable set, newly answered in ≥ 2 of 3: e01 OpRa (from the OpRa README: a gain), e05
+DATEX and SIRI (from the SIRI SX example that carries DATEX II content: a partial gain), e06 DATEX legislation (from
+MMTIS Art. 4, 5, the wanted source: a gain), e07 and k06 elevator (from `AccessFeatureEnumeration`, beside the point),
+k12 bus ticket (from ticketing equipment: beside the point), k13 static data (from `DataManagedObject`: beside the
+point). So about half the rise is answers that were refusals and are now beside the point.
+
+Not tried: a different number of places (1 would have reached all four named cases but loses the definition where the
+first concept is the wrong one, a04 and c23; 3 would keep the element passage in some questions); reordering the
+presence passages (definition and element of the first concept first). Each would need its own full run, and both
+are fitted to what the numbers above show.
