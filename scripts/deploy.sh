@@ -33,6 +33,36 @@ else
   git clone --depth 1 "${TRANSMODEL_HTML_REPO}" "${TRANSMODEL_HTML_DIR}"
 fi
 
+# Settings the deploy makes sure are in the server's settings file. The file is otherwise edited only by hand on
+# the server (it holds the secrets, and is not in the repository). A line is added only when its key is not in
+# the file yet: a value set on the server, True or False, is never changed from here, so the server stays the
+# place to switch a setting off. Only settings without a secret belong in this list. A file that cannot be
+# written gives a warning, not a failed deploy.
+ENV_FILE="${ENV_FILE:-${REPO_DIR}/backend/.env.prod}"
+ENSURED_SETTINGS=(
+  # Second opinion on questions the keyword rules refuse (docs/production-deployment.md, section 12.4).
+  "RELEVANCE_CHECK_ENABLED=True"
+)
+ensure_settings() {
+  local line key
+  if [[ ! -f "${ENV_FILE}" ]]; then
+    echo "WARNING: ${ENV_FILE} not found; no setting ensured" >&2
+    return 0
+  fi
+  for line in "${ENSURED_SETTINGS[@]}"; do
+    key="${line%%=*}"
+    if grep -q "^${key}=" "${ENV_FILE}"; then
+      echo "    ${key}: already set on the server, left as it is"
+    elif { [[ -z "$(tail -c1 "${ENV_FILE}")" ]] || printf '\n' >> "${ENV_FILE}"; } && printf '%s\n' "${line}" >> "${ENV_FILE}"; then
+      echo "    ${key}: added (${line})"
+    else
+      echo "WARNING: could not add ${key} to ${ENV_FILE}" >&2
+    fi
+  done
+}
+echo "==> Ensuring settings"
+ensure_settings
+
 echo "==> Building images"
 # Without these, docker-compose.prod.yml falls back to defaults: the frontend shows its
 # hardcoded "0.6.1" version, and the backend reports build reference "dev" and keeps a stale
