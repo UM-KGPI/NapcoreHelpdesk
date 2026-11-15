@@ -557,6 +557,39 @@ def enrich_xml_example_text(*, chunk_text: str, source_path: str) -> str:
     return f"{chunk_text}\n\n{summary}"
 
 
+@dataclass(frozen=True)
+class ExampleCut:
+    """How XML examples are cut when the element cut is chosen (xml_example_cut). Not used by default: the index
+    cuts examples with split_xml; recut_examples applies this to a database chosen for it
+    (docs/plans/2026-11-15-xml-example-chunks.md, R0)."""
+
+    max_chars: int = 1200
+    summary: bool = True  # append the XML semantic summary, as the line cut does
+
+
+EXAMPLE_PATH_PREFIX = "Element path: "
+
+
+def example_xml_chunks(raw_text: str, source_path: str, cut: ExampleCut) -> list[dict]:
+    """The chunks of an XML example under the element cut: text (path line, piece, optional summary),
+    the piece alone (for the scope) and the path. A document that is not well formed keeps the line cut."""
+    from helpdesk.services.xml_example_cut import cut_xml_example
+
+    try:
+        pieces = [(piece.text, piece.path) for piece in cut_xml_example(raw_text, cut.max_chars)]
+    except ValueError:
+        pieces = [(chunk_text, ()) for chunk_text, _, _ in split_xml(raw_text, max_chars=cut.max_chars)]
+    chunks = []
+    for body, path in pieces:
+        text = f"{EXAMPLE_PATH_PREFIX}{' / '.join(path)}\n{body}" if path else body
+        if cut.summary:
+            # The summary names the piece's own elements and comments, not its ancestors.
+            signals = enrich_xml_example_text(chunk_text=body, source_path=source_path)[len(body):]
+            text += signals
+        chunks.append({"text": text, "body": body, "path": path})
+    return chunks
+
+
 def _first_nonempty_text(values: list[str]) -> str:
     for value in values:
         cleaned = " ".join(value.split())
