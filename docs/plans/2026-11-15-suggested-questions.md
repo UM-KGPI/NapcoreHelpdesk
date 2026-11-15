@@ -424,3 +424,25 @@ before the screen and are not counted.
 for most of them (way 1 found an answering source for 7 of 12 at best), but a question written from them is refused
 by the same verdict in about one case in six (19 of 120), and the cheap check cannot tell. The two numbers that fail most
 clearly, dead suggestions and time, both come from the answer model's verdict and the search over every source.
+
+### A case for a later step: an answer to the other reading (2026-11-15, prod 0.97.225)
+
+Not a refusal, so nothing above covers it. "Which formats count as machine-readable?" was answered, confidence
+0.94, text confirmed against its citations, about how a ticket can be read by a machine (`TypeOfMachineReadability`
+in the NeTEx fare schema: OCR, magnetic stripe, bar code). The reading a user of a National Access Point has in
+mind is the regulation's: machine-readable formats of data, and the standards it requires.
+
+- **Measured** (Q2 of the retrieval-misses plan): the regulation's passage for this question ranks 65th by vector
+  among all sources and 5th within the legislation alone. An unscoped question does not search the legislation,
+  and adding the opt-in sources to the unscoped search does not bring this passage in (Q2's step, gate failed).
+- **Measured** (S0, one trial): for "Kaj so to metapodatki?", which has the same shape (answered from a GML type,
+  meant as metadata of datasets), the written suggestions named mobilityDCAT-AP and the MMTIS regulation, and
+  both were answered from the sources the user meant.
+- **Believed**: a question like this has two readings in two kinds of source, and that can be seen without a
+  model call: the best passages of the default search and the best passages of a search over the other sources
+  are both strong and of different kinds. Where that holds, the helpdesk could answer the first reading and offer
+  the second beneath the answer as a question to click.
+- Not measured: how often this holds on answered questions, how often the offered reading would be the wanted
+  one, and what the second search costs on every answer (Q2 measured about 0.5 s for a similar search).
+
+It would be its own step with its own gate, and only after a way of making suggestions has passed S0's gate.
