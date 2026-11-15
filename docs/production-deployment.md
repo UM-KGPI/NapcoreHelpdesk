@@ -777,6 +777,9 @@ line for it (`ENSURED_SETTINGS` in `scripts/deploy.sh`). A value already in the 
 is, so to switch the check off set it to `False` on the server. A failed model call keeps the keyword refusal, so the
 check cannot make an answer worse when the model is unreachable.
 
+The same step moves a default that changed (`MOVED_DEFAULTS`): when the file still holds the old default of a
+setting (`LLM_MAX_EVIDENCE_CHUNKS=4`), it is set to the new one (6). Any other value is left as it is.
+
 To set it by hand: expect `False`, `True`, `True` above. If that matches, set `RELEVANCE_CHECK_ENABLED=True` in
 `backend/.env.prod` and recreate the backend:
 

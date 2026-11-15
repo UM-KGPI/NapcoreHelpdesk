@@ -945,3 +945,27 @@ class TranslatorConfirmsEnglishTests(SimpleTestCase):
         ):
             self.assertEqual(llm_generator.english_search_query(question), "How is a stop place entrance described in NeTEx?")
             self.assertEqual(llm_generator.question_language(question), "Slovenian")
+
+
+class EvidenceBlockCountTests(SimpleTestCase):
+    """The model reads LLM_MAX_EVIDENCE_CHUNKS blocks, 6 since 2026-11-15 (the web page's retrievalTopK), and the
+    citation list mirrors them (docs/plans/2026-11-14-retrieval-misses.md, Q3)."""
+
+    def test_the_default_is_six(self):
+        from config import settings as project_settings
+
+        # The default of the setting, not the value: a server's settings file may set it.
+        self.assertEqual(project_settings.env.scheme["LLM_MAX_EVIDENCE_CHUNKS"], (int, 6))
+
+    @override_settings(LLM_MAX_EVIDENCE_CHUNKS=6)
+    def test_six_blocks_and_the_citations_follow_them(self):
+        from helpdesk.api.views import _citations_from_prompt_order, _min_evidence_results
+
+        self.assertEqual(_min_evidence_results(), 6)
+        chunks = [
+            {"repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx", "commitSha": "a" * 40, "sourcePath": f"xsd/f{n}.xsd", "chunkId": f"c{n}"}
+            for n in range(1, 8)
+        ]
+        citations = _citations_from_prompt_order(chunks, "From the fifth and sixth blocks [E5] [E6].")
+        self.assertEqual([c["label"] for c in citations], ["E1", "E2", "E3", "E4", "E5", "E6"])
+        self.assertEqual(citations[-1]["chunkId"], "c6")
