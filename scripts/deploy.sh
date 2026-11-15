@@ -60,8 +60,32 @@ ensure_settings() {
     fi
   done
 }
+# Defaults that moved. A line here is KEY=old=new: when the server's file still holds the old default, it is set
+# to the new one. Any other value was chosen on the server and is left; a key not in the file follows the code's
+# default already.
+MOVED_DEFAULTS=(
+  # The answer model reads six evidence blocks, not four (docs/plans/2026-11-14-retrieval-misses.md, Q3).
+  "LLM_MAX_EVIDENCE_CHUNKS=4=6"
+)
+move_defaults() {
+  local line key rest old new updated
+  [[ -f "${ENV_FILE}" ]] || return 0
+  for line in "${MOVED_DEFAULTS[@]}"; do
+    key="${line%%=*}"; rest="${line#*=}"; old="${rest%%=*}"; new="${rest#*=}"
+    if ! grep -q "^${key}=" "${ENV_FILE}"; then
+      echo "    ${key}: not in the file, the default (${new}) applies"
+    elif ! grep -q "^${key}=${old}[[:space:]]*$" "${ENV_FILE}"; then
+      echo "    ${key}: set on the server to another value, left as it is"
+    elif updated="$(sed "s/^${key}=${old}[[:space:]]*$/${key}=${new}/" "${ENV_FILE}")" && printf '%s\n' "${updated}" > "${ENV_FILE}"; then
+      echo "    ${key}: ${old} -> ${new}"
+    else
+      echo "WARNING: could not change ${key} in ${ENV_FILE}" >&2
+    fi
+  done
+}
 echo "==> Ensuring settings"
 ensure_settings
+move_defaults
 
 echo "==> Building images"
 # Without these, docker-compose.prod.yml falls back to defaults: the frontend shows its
