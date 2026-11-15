@@ -339,3 +339,150 @@ definitions of a04 and a05; vector rank = exact rank by similarity among the sea
 | b32 | How to model number of passengers driven in OpRa? | everyday | top_k cut | 12/31 | 14 | OpRa | top_k cut | 12/31 | 14 |
 | b33 | Any timetable from Slovenia? | everyday | **found** | 1/28 | 1 | NeTEx | **found** | 1/26 | 1 |
 | b34 | Prikaži primer voznega reda v NeTEx XML iz Slovenije? | everyday (sl) | **found** | 1/4 | 1 | NeTEx | **found** | 1/4 | 1 |
+
+### Q1 (2026-11-14, dev, 0.97.221): the vocabulary bridge as it is
+
+**Verdict: the gate fails, on every count but the must-refuse set.** With the bridge on, 2 of the 11 wording
+questions reach the 4 passages in at least 2 of 3 runs (gate: 5); 9 gold questions found today are lost in at
+least 2 of 3 runs (gate: 0); the 140 benchmark questions found go from 114–115 to 109–111; the retrieval benchmark
+on the dev index drops from hit@10 0.886 to 0.785. No must-refuse question is newly answered. Retrieval takes about
+5 s more per question. I do not recommend switching it on in prod. All numbers **measured**, unless marked.
+
+**What the bridge does** (read from `vocabulary_bridge.py` and `retrieval_gateway.py`):
+
+- Called once per retrieval pass with graph mode on, after concept extraction, with the pass's question text: the
+  question as asked and, for a non-English question, its English rendering separately (two calls, one after the
+  other). The scope-coverage passes reuse the reply (`lru_cache` on the question text, per process; in a running
+  server a repeated question costs nothing).
+- It asks the controller model (dev: Claude Haiku 5.5, effort low) for at most 6 Transmodel/NeTEx concept names
+  "in the models' own wording" that the question refers to. The quoted strings of the reply are matched to class
+  labels (`concepts_named_by_terms`, the longest matching label wins); a concept whose label the question already
+  mostly spells out is dropped (`_described_in_other_words`).
+- The concepts are added to the question's concepts. They do **not** reach the vector query: with semantic vectors
+  the query text is the question alone (`_build_query_embedding_input`), and the 30 nearest chunks are the same as
+  with the bridge off. They do not reach the rare terms or the keyword refusal either (the parser and
+  `semantic_abstention` never call the bridge). They enter: property concepts, graph expansion and so the graph alias
+  candidates (cap 12 on dev), the GraphDB definitions (`ontology-definition` chunks), the element candidates (up to
+  4 elements × 6 chunks), GraphDB examples for example questions, the graph and definition boosts in scoring, the
+  element coverage step and relation paths. Definitions and element chunks are exempt from the preselection cap.
+- Timeout `VOCABULARY_BRIDGE_TIMEOUT_SECONDS` = 3 per attempt, with one retry in the Anthropic client, so a failed
+  call takes up to about 6.5 s. Any failure is logged and the bridge adds nothing. On the Anthropic provider it is
+  enabled only when `CONTROLLER_LLM_API_BASE_URL` is also set (not used by that provider). CI runs with
+  `CONTROLLER_LLM_ENABLED=False`, so the CI retrieval benchmark never calls it.
+- Cost: one controller call (at most 200 tokens plus the reasoning allowance, 1000 on dev) per English question, two per non-English one.
+  Measured call time over 3 × 71 gold and 3 × 141 benchmark calls: median 2.8–2.9 s, 90th percentile 6.5 s;
+  **20–27 % of the gold calls and 31–38 % of the benchmark calls failed with a timeout**, so on a fair share of
+  questions the bridge silently did nothing (the dev stack had other load at the time; prod's rate is not known).
+
+**How it was measured.** `locate_answer_sources --bridge on|off --bridge-terms <file>` (this branch): the bridge's
+replies are stored per question text with their time or error, a stored error is raised again. Unscoped runs asked
+the model afresh (3 samples of terms, `terms-1..3`); the scoped runs reused the same 3 files, so scoped and unscoped
+run k compare later stages on the same terms. English renderings fixed to one file for all runs. Off: 3 runs each.
+
+**Found among the 4 passages** (3 runs each):
+
+| | off | on | found off ≥ 2/3, on < 2/3 | found on ≥ 2/3, off < 2/3 |
+|---|---|---|---|---|
+| gold, no scope | 29, 30, 30 | 25, 26, 22 | 9: a09, a10, a15, a18, b08, b11, b12, b29, b33 | 3: a23, b20, b21 |
+| gold, fitting scope | 33, 33, 34 | 30, 30, 25 | 9: a09, a10, a18, b08, b11, b12, b17, b29, b33 | 3: a23, b20, b21 |
+| benchmark (141, no scope) | 115, 114, 114 | 111, 109, 110 | 6: q060, q061, q062, q072, q121, q131 | 4: q013, q016, q083, q144 |
+
+Retrieval benchmark, graph mode, on the dev index (semantic vectors, GraphDB; not comparable with `ci-baseline.json`,
+which is the CI index with hash vectors), one run each: off hit@5 0.772, hit@10 0.886, MRR@10 0.569; on 0.685,
+0.785, 0.524.
+
+**The 11 wording questions** (no scope; scoped the same, except a11 which with OpRa as scope is a candidate cut at
+the prompt in all runs, on and off). Pool = rank among the candidates, scored = rank after scoring.
+
+| id | terms returned (3 runs, abridged) | wanted passage, on | in short |
+|---|---|---|---|
+| a06 elevator in a station | ACCESS SPACE, STOP PLACE, PATH LINK, LEVEL, ACCESSIBILITY … | never a candidate | terms beside the point: no equipment term |
+| a11 number of late journeys | SERVICE / DATED VEHICLE JOURNEY, RECORDED CALL; 1 timeout | not a candidate 2×, top_k cut 1× (scored 21) | wrong model: the prompt names Transmodel and NeTEx, the answer is in OpRa |
+| a12 bus ticket | TRAVEL DOCUMENT, FARE PRODUCT, USAGE PARAMETER …; 1 timeout | candidate (pool 60), scored 2nd and 14th, lost at the prompt cut and the view's presence definitions; 1× no candidate | right terms; lost by ordering after the pool |
+| a21 elevator in a station in NeTEx | STOP PLACE, ACCESS SPACE, ACCESSIBILITY ASSESSMENT … | candidate 1× (graph, scored 20), else none | terms beside the point |
+| a22 elevator in a stop place | same kind | never a candidate | terms beside the point |
+| b20 where to buy tickets | DISTRIBUTION OUTLET / CHANNEL, SALES OFFER PACKAGE, RETAILER; 1 timeout | **found 2 of 3** (graph candidates, scored 7–8) | works; the miss is the timeout |
+| b21 same, Slovenian | DISTRIBUTION CHANNEL, SALES OFFER PACKAGE … (2 calls) | **found 3 of 3** (scored 10–13) | works |
+| b22 bus fare | FARE PRODUCT, FARE TABLE, FARE STRUCTURE ELEMENT | never a candidate | right terms, but the 2–4 concepts' graph candidates and definitions do not include the fare product / price schema files |
+| b23 fare prices, Slovenian | FARE PRODUCT, PRICE GROUP, FARE TABLE …; 1 timeout | candidate 2× (scored 11, 18), top_k cut | right terms; lost by ordering |
+| b24 station, Slovenian | STOP PLACE, STOP PLACE COMPONENT | scored 1st in all 3, lost at the prompt cut | right term; ordering after retrieval |
+| b30 lines | LINE, NETWORK, ROUTE, PUBLICATION DELIVERY; 1 timeout | found 1 of 3 (scored 2) | timeout in one run, not a candidate in the third |
+
+**What it gets wrong**, in general terms:
+
+1. **It is applied to every question, and its concepts are treated as if the question named them.** For questions
+   that were found without it (a timetable from Slovenia, what a national access point is, which standard MMTIS
+   requires) the model returns broad model terms (LINE, SERVICE JOURNEY, STOP PLACE, DATA SOURCE, PUBLICATION
+   DELIVERY). Their element chunks (up to 24) and definitions (up to 12) are exempt from the preselection cap of 32,
+   so the room left for the vector pool falls to 0–12, and the passage that was nearest by vector (b11, b12, b33:
+   vector rank 1) is cut before scoring. 7 of the 9 gold losses are lost at the preselection cap in at least one run;
+   the others (a10, b08) and the remaining runs are lost behind the added chunks at the coverage step, the top_k cut
+   or the prompt cut.
+2. **Where the terms are right, the wanted passage enters only through the graph candidates and definitions**, never
+   the vector pool (the query text is unchanged), and then has to win against the passages the vector pool brought.
+   It does for the sales-distribution questions (b20, b21); for a12, b23, b24 it becomes a candidate but is cut by
+   ordering (Q3's subject), and for b22 the concepts' graph candidates do not contain the wanted file.
+3. **The terms are beside the point for equipment** (the 3 elevator questions: always spaces and accessibility, never
+   the equipment) and for a question whose answer is in OpRa (the prompt asks for Transmodel and NeTEx names).
+4. **A quarter to a third of the calls time out**: at a 3 s timeout the call's median of 2.9 s is a coin toss, and a
+   failure costs 6.5 s for nothing.
+
+**The one change I measured**, from finding 1: element candidates only for the concepts the question names, not for
+the bridged ones (`question_element_names = concept_element_names(question_concepts - bridged_concepts)`, which also
+takes them out of the element boost and the coverage step; definitions, graph candidates and scoring unchanged).
+Measured on the same stored terms, gold without scope, 3 runs: found 30, 30, 29 (off 29, 30, 30); losses down from 9
+to 2 (a09, a10, the Slovenian timetable); wording questions found 2 of 11 (b20, b21, now 2 of 3 each). Retrieval
+benchmark (fresh calls, one run): hit@5 0.711, hit@10 0.879, MRR@10 0.545. It removes most of the damage but finds no
+more wording questions, so it cannot reach the gate. Not committed.
+
+**Through the API** (two host servers from this branch, bridge off on 8011 and on on 8012, relevance check off as on
+prod, 3 runs each; the server's cache means runs 2 and 3 reuse run 1's terms, as prod would):
+
+- Must-refuse set (25): off, "What does GTFS say about stop times?" answered 3 of 3 and "How does it work?" 1 of 3;
+  on, none answered. No question newly answered.
+- Newly found: b20 ("Where can a passenger buy tickets in NeTEx?") answered 3 of 3 from the sales-distribution and
+  sales-offer-package schemas with two fare examples, on the question; off it cited neither. b21 (the
+  same in Slovenian) answered 2 of 3 from the wanted sources, refused once on the same evidence. b30 refused 3 of 3
+  on and off.
+- Made worse: "Any timetable from Slovenia?" (b33) refused 2 of 3 on ("the blocks do not mention Slovenia"; off: answered
+  from the Slovenian example 3 of 3); "Hvilke standarder krever MMTIS …" (b13) refused 3 of 3 for insufficient evidence
+  (off: answered from the regulation 3 of 3); "How are operators linked to lines?" (b29) answered from organisation
+  definitions instead of the line schema, and refused once.
+- a06, a09–a12 are refused by the keyword rules before retrieval on both (relevance check off), so the bridge cannot
+  help them in the app as prod is configured; that needs the relevance check on as well.
+
+**Time** (the dev stack had other load during all runs; off and on ran at the same time, so the difference is
+**believed** fair, the absolute values high):
+
+| | off median / p90 | on median / p90 |
+|---|---|---|
+| retrieval, gold, locate (fresh calls) | 2.5 / 5.2 s | 8.2 / 12.5 s |
+| retrieval, benchmark, locate (fresh calls) | 1.8 / 3.0 s | 6.9 / 8.6 s |
+| API, 16 retrieved gold questions, first run: retrieval | 2.7 / 7.4 s | 7.7 / 12.1 s |
+| API, same: total | 8.9 / 19.1 s | 15.9 / 25.5 s |
+
+Of the added time, the bridge call is about 2.9 s (median of the stage); the rest is the extra graph, element and
+scoring work for the added concepts and, for non-English questions, the second call. For prod's 504s (proxy 120 s,
+retrieval CPU) this is a large step in the wrong direction.
+
+**Options not built** (each would be its own step with this gate):
+
+- **The bridge's terms in the vector query**: embed the question together with the bridged labels (or search a second
+  time with them), so the wanted passage can enter the nearest 30. This is the stage the wording gap is at; it needs
+  a second vector search per pass (about 2 s on dev) and its own measure of what generic terms do to the pool.
+- **The bridge only when the question names no concept of its own**, so answered questions are not touched. Measured
+  here not to separate the cases: 3 of the 9 losses (a09, a10, b08) also have no concept of their own.
+- **A longer timeout or no retry**: removes the coin toss but makes the added time worse; only worth it with the call
+  moved off the critical path (in parallel with the English rendering, for example).
+- **OpRa and SIRI names in the prompt**, and equipment as a kind of concept: would address a11 and the elevator
+  questions; a prompt change measured on the same gate.
+- **Query expansion of our own, a synonym list, HyDE**: not built, as instructed; HyDE would need one answer-model
+  call per question and a second vector search.
+
+**Recommendation.** Leave `VOCABULARY_BRIDGE_ENABLED` off in prod. Q1 as planned ("the existing bridge, no code")
+does not close the wording gap; the measurements point at the vector query as the stage that must see other words,
+which is a new mechanism and needs Andrej's decision before it is built. Q2 (scope for questions that name no source)
+does not depend on it and can go first.
+
+Raw outputs are outside the repository. To repeat: `manage.py locate_answer_sources --bridge on --bridge-terms <file>
+[--fitting-scope] --translations <file>`; with `--no-model` a stored reply is used and a missing one adds nothing.
