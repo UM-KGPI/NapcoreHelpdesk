@@ -78,7 +78,7 @@ env = environ.Env(
     EMBEDDING_BACKEND=(str, "hash"),
     EMBEDDING_SERVICE_URL=(str, "http://embedder:8090"),
     EMBEDDING_SERVICE_TIMEOUT_SECONDS=(int, 120),
-    LLM_MAX_EVIDENCE_CHUNKS=(int, 4),
+    LLM_MAX_EVIDENCE_CHUNKS=(int, 6),
     LLM_MAX_EVIDENCE_CHARS_PER_CHUNK=(int, 1200),
     CONTROLLER_LLM_ENABLED=(bool, False),
     CONTROLLER_LLM_PROVIDER=(str, "subprocess"),
@@ -373,6 +373,10 @@ if EMBEDDING_BACKEND not in {"hash", "semantic"}:
     raise ImproperlyConfigured("EMBEDDING_BACKEND must be 'hash' or 'semantic'.")
 EMBEDDING_SERVICE_URL = env("EMBEDDING_SERVICE_URL").strip()
 EMBEDDING_SERVICE_TIMEOUT_SECONDS = env("EMBEDDING_SERVICE_TIMEOUT_SECONDS")
+# Evidence blocks the answer model reads with their text; also the min_results of retrieval (views._min_evidence_results).
+# 4 until 2026-11-15; 6 is the web page's retrievalTopK, so the model now reads every passage retrieval returns
+# (docs/plans/2026-11-14-retrieval-misses.md, Q3: passages ranked 5th and 6th were the answer for 4 of 57 gold
+# and 9 of 141 benchmark questions). About 2,200 characters more prompt per question.
 LLM_MAX_EVIDENCE_CHUNKS = env("LLM_MAX_EVIDENCE_CHUNKS")
 LLM_MAX_EVIDENCE_CHARS_PER_CHUNK = env("LLM_MAX_EVIDENCE_CHARS_PER_CHUNK")
 CONTROLLER_LLM_ENABLED = env("CONTROLLER_LLM_ENABLED")

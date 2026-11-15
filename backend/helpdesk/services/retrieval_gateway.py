@@ -1963,7 +1963,7 @@ def _with_scope_coverage(question: str, chunks: list[dict], trace: dict, argumen
                     len(result) - 1,
                 )
                 result.pop(drop)
-            # Right after the top chunk: the model reads only the first few (LLM_MAX_EVIDENCE_CHUNKS, 4).
+            # Right after the top chunk: the model reads only the first few (LLM_MAX_EVIDENCE_CHUNKS).
             result.insert(min(1 + len(added), len(result)), best)
             added.append({"standard": standard, "sourcePath": best.get("sourcePath")})
     trace = {

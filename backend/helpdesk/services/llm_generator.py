@@ -2133,7 +2133,7 @@ def generate_answer_llm(
     if settings.LLM_PROVIDER not in SUPPORTED_LLM_PROVIDERS:
         raise LLMGenerationError(f"Unsupported LLM provider: {settings.LLM_PROVIDER}")
 
-    max_chunks = max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 4)))
+    max_chunks = max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 6)))
     max_chars_per_chunk = max(200, int(getattr(settings, "LLM_MAX_EVIDENCE_CHARS_PER_CHUNK", 1200)))
     # Detected once: the prompt names it, and _validate_answer_language checks the answer against it.
     target_language = question_language(question)
@@ -2444,7 +2444,7 @@ def stream_answer_llm(
     if not primary_base_url:
         raise LLMGenerationError("LLM API base URL is not configured.")
 
-    max_chunks = max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 4)))
+    max_chunks = max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 6)))
     max_chars_per_chunk = max(200, int(getattr(settings, "LLM_MAX_EVIDENCE_CHARS_PER_CHUNK", 1200)))
     # Detect once and share: _build_messages uses it for the prompt's language
     # instruction, and the _validate_answer_language() calls below compare

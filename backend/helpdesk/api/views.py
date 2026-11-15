@@ -186,7 +186,7 @@ def _parse_strength(semantic_query) -> tuple[int, bool]:
 def _min_evidence_results() -> int:
     """As many evidence blocks as the answer prompt shows, so a lone chunk above the score threshold
     does not leave the answer with one block (see retrieve_chunks_with_trace)."""
-    return max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 4)))
+    return max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 6)))
 
 
 # Words that make a question about law or obligation: only then is the "Legal context" line relevant.
@@ -566,7 +566,7 @@ def _citations_from_prompt_order(chunks: list[dict], answer_text: str) -> list[d
     list does not advertise references the answer never uses; interior entries
     are kept so positions still match labels for position-based consumers.
     """
-    max_chunks = max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 4)))
+    max_chunks = max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 6)))
     prompt_chunks = chunks[:max_chunks]
     cited = {
         int(num)

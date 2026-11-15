@@ -392,7 +392,7 @@ def run_question(entry: dict, translations: Translations, index: SourceIndex, re
             if element_chunks:
                 chunks = element_chunks
     view_rows = _snapshot(chunks)
-    prompt_rows = view_rows[: max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 4)))]
+    prompt_rows = view_rows[: max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 6)))]
 
     # The passes: the question as asked, its English rendering, then any scope-coverage passes.
     passes = [pass_report(recorded, patterns) for recorded in recorder.passes]
