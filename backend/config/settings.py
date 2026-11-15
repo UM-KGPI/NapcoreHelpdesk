@@ -147,6 +147,7 @@ env = environ.Env(
     RETRIEVAL_GRAPH_PRESELECT_MULTIPLIER=(float, 2.0),
     RETRIEVAL_LEXICAL_PRESELECT_RESERVE=(int, 8),
     RETRIEVAL_LEXICAL_POOL_SIZE=(int, 8),
+    RETRIEVAL_UNSCOPED_PLACES_PER_SOURCE=(int, 6),
     VECTOR_INDEX_SEARCH=(bool, True),
     VECTOR_INDEX_PROBES=(int, 20),
     GRAPH_ALIAS_MAX_CHUNKS=(int, 1000),
@@ -476,6 +477,9 @@ RETRIEVAL_LEXICAL_PRESELECT_RESERVE = env("RETRIEVAL_LEXICAL_PRESELECT_RESERVE")
 # Text-search matches added to the vector-ranked candidate pool when vectors are semantic
 # (retrieval_gateway._lexical_recall_candidates); 0 turns it off.
 RETRIEVAL_LEXICAL_POOL_SIZE = env("RETRIEVAL_LEXICAL_POOL_SIZE")
+# Candidates kept for each opt-in source (retrieval_gateway.OPT_IN_SCOPES) when a question has no scope
+# (retrieval_gateway._unsearched_source_candidates); 0: the unscoped search leaves those sources out.
+RETRIEVAL_UNSCOPED_PLACES_PER_SOURCE = env("RETRIEVAL_UNSCOPED_PLACES_PER_SOURCE")
 # Vector search through the ivfflat index (retrieval_gateway._nearest_ids_by_index); False: the exact scan.
 VECTOR_INDEX_SEARCH = env("VECTOR_INDEX_SEARCH")
 VECTOR_INDEX_PROBES = env("VECTOR_INDEX_PROBES")

@@ -1036,3 +1036,75 @@ class ComposeExampleEvidenceTests(SimpleTestCase):
 
         self.assertEqual([c["chunkId"] for c in composed][:2], ["own", "deck"])
         self.assertEqual(len(composed), 6)
+
+
+class UnsearchedSourcePlacesTests(TestCase):
+    """A question without scope gets a few candidates of each opt-in source (RETRIEVAL_UNSCOPED_PLACES_PER_SOURCE),
+    which the unscoped search otherwise leaves out (docs/plans/2026-11-14-retrieval-misses.md, Q2)."""
+
+    @staticmethod
+    def _vector(similarity: float) -> list[float]:
+        vector = [0.0] * 1536
+        vector[0] = similarity
+        vector[1] = (1.0 - similarity * similarity) ** 0.5
+        return vector
+
+    def setUp(self):
+        from django.db import connection
+
+        from helpdesk.models import SourceChunk
+        from helpdesk.services import retrieval_gateway
+
+        if connection.vendor != "postgresql" or not retrieval_gateway.HAS_NATIVE_PGVECTOR:
+            self.skipTest("needs PostgreSQL with pgvector")
+
+        def chunk(chunk_id: str, scope: list[str], similarity: float, text: str, doc_type: str = "guide") -> None:
+            SourceChunk.objects.create(
+                repository_url="https://example.org/" + scope[0].replace(" ", "-"),
+                commit_sha="abc",
+                source_path=f"{chunk_id}.txt",
+                chunk_id=chunk_id,
+                label=chunk_id,
+                text=text,
+                standards_scope=scope,
+                quality_score=0.8,
+                doc_type=doc_type,
+                embedding_vector=self._vector(similarity),
+            )
+
+        for index in range(30):
+            chunk(f"netex-{index}", ["NeTEx"], 0.30 + index * 0.001, f"Schema text {index}.", "schema")
+        for index in range(3):
+            chunk(f"act-{index}", ["EU legislation"], 0.95 - index * 0.01, "Machine-readable format means a file format.")
+        chunk("portal-0", ["NAPCORE"], 0.90, "NAPCORE page on formats.")
+        chunk("tnits-0", ["DATEX II", "TN-ITS"], 0.85, "TN-ITS road attribute update.")
+        chunk("siri-datex-0", ["DATEX II", "SIRI"], 0.99, "SIRI's copy of a DATEX II schema.")
+
+    def test_places_per_source_on_the_vector_order(self):
+        from helpdesk.services import retrieval_gateway
+
+        found = retrieval_gateway._unsearched_source_candidates("formats", self._vector(1.0), per_source=2)
+        self.assertEqual([c.chunk_id for c in found], ["act-0", "act-1", "portal-0", "tnits-0"])
+        self.assertTrue(all(hasattr(c, "vector_similarity") and hasattr(c, "lexical_rank") for c in found))
+        self.assertEqual(retrieval_gateway._unsearched_source_candidates("formats", self._vector(1.0), per_source=0), [])
+
+    def _unscoped_ids(self, places: int) -> list[str]:
+        from helpdesk.services import retrieval_gateway
+
+        with override_settings(RETRIEVAL_UNSCOPED_PLACES_PER_SOURCE=places, EMBEDDING_BACKEND="semantic"), patch.object(
+            retrieval_gateway, "build_text_embedding", return_value=self._vector(1.0)
+        ):
+            chunks, _trace = retrieval_gateway.retrieve_chunks_with_trace(
+                question="Which formats count as machine-readable?", top_k=6, min_score=0.0, scope=[], graph_rag_enabled=False
+            )
+        return [chunk["chunkId"] for chunk in chunks]
+
+    def test_unscoped_question_reaches_the_opt_in_sources(self):
+        ids = self._unscoped_ids(2)
+        self.assertIn("act-0", ids)
+        self.assertIn("siri-datex-0", ids)  # a chunk that also belongs to a core standard is searched as before
+
+    def test_without_places_the_opt_in_sources_stay_out(self):
+        ids = self._unscoped_ids(0)
+        self.assertFalse([i for i in ids if i.startswith(("act-", "portal-", "tnits-"))])
+        self.assertIn("siri-datex-0", ids)
