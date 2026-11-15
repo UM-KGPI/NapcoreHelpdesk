@@ -325,7 +325,61 @@ b26, b30. So 5 of the 23 questions the old file counted as lost had another inde
 holds the answer: the file-level measure undercounted by 5 of 57 (**measured**). Step 1 and later steps measure with the
 new file; the old numbers stay here for comparison.
 
-<!-- step0-C -->
+**C. Prod's room.** What I could read without changing anything (**measured**, 2026-11-15 evening):
+
+- `health/ready`: version 0.97.226, database and broker ok, 3,125 concept vectors, concept index complete;
+  `health/llm`: answer and controller model Haiku 5.5, reachable. No endpoint reports disk, memory, row counts or
+  settings.
+- The last deploy log (workflow run of 2026-11-15 10:55 UTC, read with `gh run view --log`): the deploy script checks
+  a few keys in `.env.prod` and prints only those (`LLM_MAX_EVIDENCE_CHUNKS` not set, default 6 applies;
+  `RELEVANCE_CHECK_ENABLED` set). It prints nothing about disk, rows or `RETRIEVAL_MAX_SAME_SOURCE_PATH`.
+- `docker-compose.prod.yml`: the `db` service has no memory or CPU limit (it shares the host's memory); the
+  embedder has 1.5 GB and 2 CPUs, GraphDB 6 GB, backend 3 GB, worker 2 GB.
+- The prod question log since 2026-11-12 (296 events, 219 with evidence blocks, read through the API): no answer has
+  two evidence blocks from the same file. On dev (limit 1) the step 0 API runs show the same (0 of 204 answers). With the limit at 2, the model-free
+  locate run on the copy puts two pieces of one file among the passages for 36 of 57 gold and 98 of 141 benchmark
+  questions, so with 2 on prod most answers would show it. So prod's `RETRIEVAL_MAX_SAME_SOURCE_PATH` is **believed** to be 1, not
+  read.
+
+What cannot be read from here, as commands for Andrej on the prod host (all read-only; nothing restarts):
+
+```
+cd /opt/napcore-helpdesk
+# 1. disk where Docker keeps the database volume, and the volume's size
+df -h "$(docker info -f '{{.DockerRootDir}}')"
+docker system df -v | grep -E 'VOLUME NAME|postgres-data'
+# 2. memory of the host and of each container
+free -h; nproc
+docker stats --no-stream --format '{{.Name}}\t{{.MemUsage}}'
+# 3. rows, sizes and Postgres memory settings
+docker compose -f docker-compose.prod.yml exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "${POSTGRES_DB:-napcore_helpdesk}"' <<'SQL'
+select count(*) as rows from helpdesk_sourcechunk;
+select pg_size_pretty(pg_total_relation_size('helpdesk_sourcechunk')) as chunk_table,
+       pg_size_pretty(pg_relation_size('sourcechunk_embedding_ivfflat_idx')) as vector_index,
+       pg_size_pretty(pg_database_size(current_database())) as database;
+show shared_buffers; show maintenance_work_mem; show max_wal_size;
+SQL
+# 4. the per-file limit as the app sees it (default 2 when the key is not in .env.prod)
+docker compose -f docker-compose.prod.yml exec -T backend python manage.py shell -c "from django.conf import settings as s; print('RETRIEVAL_MAX_SAME_SOURCE_PATH', s.RETRIEVAL_MAX_SAME_SOURCE_PATH)"
+```
+
+What each must show for the rows to grow to the plan's bound of 2.5 times (step 1's gate):
+
+- Rows (3): today's count N. Dev has 61,877; prod should be close (same sources; **assumed** until read).
+- Size per row (**measured** on the fresh dev copy after `VACUUM FULL`): the chunk table is 1,598 MB for 61,877 rows,
+  25.8 KB a row, of which 915 MB are the two 1,536-wide vectors in TOAST and 484 MB the vector index (7.8 KB a row;
+  R0's doubled copy had the same 7.8 KB a row). Dev's own table is 3,198 MB for the same rows (dead space).
+- Disk (1): at least **8 GB available**. Reasoning (**believed**): 2.5 × N × 25.8 KB ≈ 4.0 GB for the new pieces at
+  dev's N, written while the old ones stay (step 5), up to `max_wal_size` (1 GB by default) of WAL, and a dump of the
+  database before the switch (the fresh dev copy is 1.7 GB). If (3) shows N much above 62,000, scale the 4.0 GB.
+- Memory (2): free memory beside the running containers of at least the new vector index, about 2.5 × N × 7.8 KB ≈
+  1.2 GB at dev's N, so the index stays in the page cache (**believed**: ivfflat reads about a fifth of its lists per
+  question at 20 probes of 100). The db container has no limit of its own, so the host's free memory is what counts.
+- `maintenance_work_mem` (3): building the vector index of today's rows needs 65 MB (**measured**: the copy's restore
+  failed at the default 64 MB). A build at 2.5 times the rows needs the session setting raised, as the R0 copies did
+  with 512 MB; not a reason to change the server, a step for step 5's command.
+- (4) prints 1 or 2. If 2, every measure of this plan on dev (limit 1) differs from prod in one more way, and the
+  six places of design point 5 must be measured with prod's value as well.
 
 **D. A token counter that counts as the embedder does.** How the embedder counts (**measured** by reading
 `embedding_service.py` and fastembed 0.9.1 in the embedder image): `load_model` builds fastembed's `TextEmbedding`
