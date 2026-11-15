@@ -772,8 +772,13 @@ for q in ['What is the weather in Ljubljana tomorrow?','fares','Can roadwork war
     print(repr(is_relevant(q)), '|', q)"
 ```
 
-Expect `False`, `True`, `True`. If that matches, set `RELEVANCE_CHECK_ENABLED=True` in `backend/.env.prod` and
-recreate the backend:
+Since 2026-11-15 the deploy script adds `RELEVANCE_CHECK_ENABLED=True` to `backend/.env.prod` when the file has no
+line for it (`ENSURED_SETTINGS` in `scripts/deploy.sh`). A value already in the file, `True` or `False`, is left as it
+is, so to switch the check off set it to `False` on the server. A failed model call keeps the keyword refusal, so the
+check cannot make an answer worse when the model is unreachable.
+
+To set it by hand: expect `False`, `True`, `True` above. If that matches, set `RELEVANCE_CHECK_ENABLED=True` in
+`backend/.env.prod` and recreate the backend:
 
 ```bash
 . scripts/build_env.sh
