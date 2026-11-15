@@ -487,6 +487,50 @@ class HelpdeskApiTests(APITestCase):
         self.assertEqual(response.data["trace"]["semanticFallback"], "NO_CONCEPT_MATCH")
         self.assertFalse(retrieve_mock.called)
 
+    @override_settings(RELEVANCE_CHECK_ENABLED=True)
+    @patch("helpdesk.services.semantic_abstention.is_relevant", return_value=False)
+    @patch("helpdesk.api.views.parse_question_to_semantic_query")
+    @patch("helpdesk.api.views.retrieve_chunks_with_trace")
+    def test_a_requested_scope_does_not_switch_the_refusal_screen_off(self, retrieve_mock, parse_mock, relevant_mock):
+        """A vague question sent with a scope is judged as if asked without it; the check refuses it."""
+
+        def parsed(text, requested_scope=None):
+            return SimpleNamespace(
+                core_concept=UNKNOWN_CONCEPT_SENTINEL,
+                ambiguous_core_concept=False,
+                candidate_standards=list(requested_scope or []),
+                discovered_standards=[],
+                original_terms=["mandatory"],
+                confidence={"intent": 0.6, "concept": 0.45},
+                as_dict=lambda: {
+                    "intent": "unknown",
+                    "normativity": "unspecified",
+                    "coreConcept": UNKNOWN_CONCEPT_SENTINEL,
+                    "coreConcepts": [],
+                    "ambiguousCoreConcept": False,
+                    "candidateStandards": list(requested_scope or []),
+                    "originalTerms": ["mandatory"],
+                    "confidence": {"intent": 0.6, "concept": 0.45},
+                },
+            )
+
+        parse_mock.side_effect = parsed
+        with patch("helpdesk.services.llm_generator.english_search_query", return_value=None):
+            response = self.client.post(
+                reverse("answer-question"),
+                {"question": "Is this mandatory?", "standardsScope": ["NeTEx"]},
+                format="json",
+                HTTP_X_REQUEST_ID="req-semantic-scoped-screen-001",
+                **self.auth_headers(),
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data["abstained"])
+        self.assertEqual(response.data["trace"]["semanticFallback"], "NO_CONCEPT_MATCH")
+        self.assertFalse(retrieve_mock.called)
+        relevant_mock.assert_called_once_with("Is this mandatory?")
+        self.assertEqual([c.kwargs.get("requested_scope") for c in parse_mock.call_args_list], [["NeTEx"], None])
+
     @patch("helpdesk.services.llm_generator.english_search_query", return_value=None)
     @patch("helpdesk.api.views.parse_question_to_semantic_query")
     @patch("helpdesk.api.views.retrieve_chunks_with_trace")

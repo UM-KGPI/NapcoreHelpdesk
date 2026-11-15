@@ -167,12 +167,23 @@ def _parse_question(question: str, requested_scope: list[str] | None):
     from helpdesk.services.llm_generator import english_search_query
 
     english = english_search_query(question)
+    if not requested_scope:
+        semantic_query, parsed = _parse_without_scope(question, english)
+        return semantic_query, english, parsed
     semantic_query = parse_question_to_semantic_query(text=question, requested_scope=requested_scope)
-    if english and not requested_scope:
-        english_query = parse_question_to_semantic_query(text=english, requested_scope=requested_scope)
-        if _parse_strength(english_query) > _parse_strength(semantic_query):
-            return english_query, english, english
     return semantic_query, english, question
+
+
+def _parse_without_scope(question: str, english: str | None):
+    """(semantic query, the text it was parsed from) for the question as if asked without a scope: the question
+    as asked, or its English rendering when that finds more. The refusal screen judges a scoped question by
+    this parse, so a requested scope does not switch the screen off."""
+    semantic_query = parse_question_to_semantic_query(text=question, requested_scope=None)
+    if english:
+        english_query = parse_question_to_semantic_query(text=english, requested_scope=None)
+        if _parse_strength(english_query) > _parse_strength(semantic_query):
+            return english_query, english
+    return semantic_query, question
 
 
 def _parse_strength(semantic_query) -> tuple[int, bool]:
@@ -1420,6 +1431,7 @@ class QuestionAnswerView(APIView):
                 requested_scope=scope,
                 allow_abstain=allow_abstain,
                 question=parsed_question,
+                parse_without_scope=lambda: _parse_without_scope(question, english_question),
             )
         ) is not None:
             mode = QuestionEvent.MODE_ABSTAIN
@@ -2125,6 +2137,7 @@ class QuestionAnswerStreamView(APIView):
                 requested_scope=scope,
                 allow_abstain=allow_abstain,
                 question=parsed_question,
+                parse_without_scope=lambda: _parse_without_scope(question, english_question),
             )
         ) is not None:
             mode = QuestionEvent.MODE_ABSTAIN
