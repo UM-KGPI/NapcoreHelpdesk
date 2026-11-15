@@ -1,17 +1,21 @@
-# Plan: suggested questions when the helpdesk cannot answer
+# Plan: helping the user clarify a question the helpdesk cannot answer
 
 Written 2026-11-15 against 0.97.225, for the implementer. Related: the record `2026-11-14-refused-questions.md`
-(why questions are refused), the plan `2026-11-14-retrieval-misses.md` (why the answering passage is not found),
-and the clarifying-choice plan (PR #526, not merged), whose first step failed. Each claim is labelled
-**measured**, **believed** or **assumed**.
+(why questions are refused) and the plan `2026-11-14-retrieval-misses.md` (why the answering passage is not
+found). This is the one plan for helping the user clarify; it holds the record of the first means tried (a choice
+of scope, §8 C0). Each claim is labelled **measured**, **believed** or **assumed**.
 
 ## 1. The idea
 
-When the helpdesk refuses, the user gets a text that says so and nothing to do next. Many assistants and
-helpdesks offer a next step there: two or three better questions the user can click.
+When the helpdesk refuses, the user gets a text that says so and nothing to do next. Whatever the user types
+next is again a new, unrelated question. Two means of giving the user a next step:
 
-The idea: under a refusal, show up to three questions that are close to what the user asked and that the helpdesk
-can answer. A click asks that question.
+1. **A choice of scope** ("Do you mean NeTEx, SIRI or the EU legislation?"), the pick sent with the same question
+   as its scope. Tried first (C0, 2026-11-14) and failed: a scope switches off the keyword screen, and vague and
+   off-topic questions were then answered (§8 C0).
+2. **Suggested questions**: under a refusal, up to three questions that are close to what the user asked and that
+   the helpdesk can answer. A click asks that question as an ordinary one. Many assistants and helpdesks offer
+   this next step. Steps S0 to S3 below are about this means.
 
 ## 2. What is known
 
@@ -26,7 +30,7 @@ can answer. A click asks that question.
 - **Measured** (prod, 2026-11-15): "Kaj so to metapodatki?" was refused at the keyword screen. The helpdesk holds
   two sources that answer it in the sense a user of a National Access Point means (mobilityDCAT-AP, the MMTIS
   regulation), and the user had no way to know which words would get there.
-- **Measured** (C0 of the clarifying-choice plan): offering the user a scope to choose (NeTEx, SIRI, EU
+- **Measured** (C0, §8): offering the user a scope to choose (NeTEx, SIRI, EU
   legislation …) fails. A question sent with a scope skips the keyword screen and the second opinion, and 9 of the
   25 questions that must be refused were then answered.
 - **Measured** (code): the page already shows questions of other users ("Inspiring questions": the latest liked
@@ -132,7 +136,7 @@ marks these already). Not under every answer: there is no measure today that say
 
 - A conversation: sending earlier turns to the model. Grounding, the validator and the log rest on one
   self-contained question; that is kept.
-- A choice of scope (C0 failed, see §2). PR #526 holds that plan and its record; this plan replaces its idea.
+- A choice of scope: tried as C0 and failed; the record is §8 C0.
 - Suggestions written without passages, from the model's own knowledge of the standards.
 - Fixing the refusals themselves; that is the retrieval-misses plan. The two meet: every refusal that plan
   removes is one where no suggestion is needed.
@@ -159,3 +163,72 @@ refusals, and a few buttons: one to two days. S2 needs only the log and some wee
 ## 8. Results
 
 (Each step records its numbers here, dated.)
+
+### C0 (2026-11-14, against 0.97.221): a choice of scope — gate failed
+
+The first means. The idea: when a question cannot be answered well, offer a short choice of scope ("Do you mean
+NeTEx, SIRI or the EU legislation?") and answer the same question again with the pick as its `standardsScope`.
+Principles were a choice and not a conversation, one self-contained question again, never only a question back,
+and refusing stays safe. The tools are `measure_scope_options` (derive, ask) and the fitting scopes in
+`benchmarks/refused-questions-scopes.yaml`, both on this branch.
+
+**Why it looked worth it** (**measured**, prod 0.97.221, the 14 wrongly refused questions of the record, each asked
+once with the fitting scope I chose): 11 of 14 answered with the scope, 0 of 14 without. The 9 refused by the
+keyword rules were all answered; of the 5 refused by the model's verdict, 2. The answers cited the right kind of
+source (the regulation's articles and annexes for machine-readable formats, static data and DATEX in
+legislation). That was the best case: my own choice of scope, one run each, answers read from citations and first
+lines.
+
+**Gate C0** (fixed before the run): the fitting scope among at most three options for at least 80 % of the wrongly
+refused questions; with it, at least two thirds answered from the wanted source; no must-refuse question answered
+under any scope that it is not answered under today.
+
+| Gate criterion | Needed | Measured | |
+|---|---|---|---|
+| Fitting scope among at most three options (23 wrongly refused) | ≥ 80 % | 21 of 23 (91 %), controller model | met |
+| With the fitting scope, answered from the wanted source (≥ 2 of 3 runs) | ≥ 2/3 | 16 of 23 (70 %) on dev; on prod believed 15 of 23 (65 %) | met on dev only |
+| Must-refuse questions answered under a scope that are refused today | 0 | 9 of 25 (any scope); 4 of 25 under the scopes the controller would offer | not met |
+
+How it was measured (**measured** unless marked): dev stack serving main 0.97.221 (relevance check, vocabulary
+bridge and evidence gate off, as prod was then); each question sent with each offered scope, each fitting scope
+and none, 3 runs each (399 requests for the 23, 825 for the must-refuse set with all ten scope values). The
+fitting scopes are my judgement from the dev index; they agree with the gold file's `fitting_scope`.
+
+Ways of deriving the options, on the 23 (fitting scope among the first 1 / 2 / 3 options):
+
+| Way | @1 | @2 | @3 | Cost per question |
+|---|---|---|---|---|
+| `candidateStandards` of the semantic parse | 5 | 6 | 6 (17 get no option) | none |
+| the same plus the standards the ontology recognised | 7 | 8 | 8 | none |
+| standards of the unscoped search | 11 | 15 | 15 | one search, 2.1 s mean |
+| standards of a search over every source | 15 | 18 | 20 | 5.0 s mean, 11.9 s max |
+| controller model asked which scopes fit (one call) | 20 | 21 | 21 | 1.7 s mean, 4.4 s max |
+
+The controller's @3 was 21 of 23 in three calls; it missed the two static / dynamic data questions (it offered
+NeTEx, SIRI, Transmodel, not the legislation that defines the terms) and often spent an option on Transmodel, which
+has only 58 passages of its own scope, all shared with NeTEx, SIRI or OpRa.
+
+Answers with the fitting scope: 16 of 23 answered from the wanted source in 2 or 3 of 3 runs, the other 7 refused
+in all 3 (three elevator questions, bus ticket, MMTIS fare data, DATEX parking bay, UIC bit field: each a retrieval
+fault that a scope does not reach). Two of the 16 were partial (static / dynamic data from the Annex headings
+only). On prod the 10 questions that decide this criterion agreed with dev except "What is OpRa used for?"
+(refused 3 of 3 on prod), so 15 of 23 on prod, **believed** for the 13 not asked there. On the 34 b-questions of the
+gold file the controller named the fitting scope @3 for 33; answered from the wanted source 18 of 34 without a
+scope, 21 of 34 with it.
+
+**Why it failed.** A scoped question skips the keyword screen: `has_scope_hint` is true for any non-empty scope,
+so neither keyword rule fires and the relevance check is never asked. Vague and off-topic questions then reach
+retrieval and the answer model. Under some scope, 9 of the 25 must-refuse questions were answered: "Explain the
+data format." (8 scopes), "Is this mandatory?" (8), "What are the rules?" (6), "How does it work?" (5), "What
+should I do first?", "Can you help me?", the W3C/OGC ontology question, the NeTEx–GTFS comparison, "is croatian NAP
+good?". The answers did not state anything their passages do not support (**believed**, not read in full), but
+they are not answers either: "Can you help me?" under Transmodel explains how to open a GitHub issue. Under the
+controller's own options, 4 were answered. A plain scope selector, the fallback, has the same fault for all 9.
+
+**What I learned.**
+
+- The controller model can name the fitting source (21 of 23); naming it is not the problem.
+- A scope must not switch off the screen. Any API client that sends `standardsScope` gets these answers today.
+- Seven of the 23 stay refused with the right scope: those are retrieval faults (the retrieval-misses plan).
+- So the second means keeps the scope out of the request: a suggestion is a whole question sent unscoped, through
+  the screen, the search and the checks as any question.
