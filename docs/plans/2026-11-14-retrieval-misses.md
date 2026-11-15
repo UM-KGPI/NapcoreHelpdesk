@@ -489,12 +489,18 @@ Raw outputs are outside the repository. To repeat: `manage.py locate_answer_sour
 
 ### Q3 (2026-11-15, dev, 0.97.222): ordering
 
+**Verdict.** Step 2 (presence definitions in at most two of the four places) failed its gate and is reverted: one
+gold question more, two benchmark questions lost. Step 3 B (the model reads six blocks instead of four) passes every
+gate but one must-refuse run of nine answered with a text that itself declines; that one is for Andrej to judge. Gold
+found 29 → 33, benchmark 114–115 → 124, no question lost. Retrieval is not slower; the prompt is about 19 % longer.
+Other mechanisms not built (reasons at the end).
+
 #### Diagnosis (written before any change)
 
 All numbers **measured** on the branch after merging main (0.97.222), with no change, unless marked. Gold questions
 without scope, `locate_answer_sources --no-model` with the English renderings of Q1 fixed in a file; two runs each.
 
-**Before (step 0).** Gold found 29 and 29 of 57 (the same 29 both times). Benchmark found 114 of 141 (run 1).
+**Before (step 0).** Gold found 29 and 29 of 57 (the same 29 both times). Benchmark found 114 and 115 of 141 (q144 moves between runs).
 Retrieval benchmark on the dev index, graph mode (not comparable with `ci-baseline.json`, which is the CI index with
 hash vectors): hit@5 0.772, hit@10 0.886, MRR@10 0.569, the same as Q1. Retrieval time per question (locate): gold
 median 2.9 / 2.2 s, p90 5.4 / 4.1 s; benchmark median 2.1 s, p90 3.3 s.
@@ -583,8 +589,8 @@ places are not enough for both, and retrieval's passages are what a third group 
 What the answers through the API showed (read): c05 (elevator) and c17 (ticket delivery), refused 3 of 3 before,
 answered 3 of 3; c17 from `FulfilmentMethod`, the right element, c05 from `AccessFeatureEnumeration` (`lift`), close but
 not `LiftEquipment`. Of the answerable set, newly answered in ≥ 2 of 3: e01 OpRa (from the OpRa README: a gain), e05
-DATEX and SIRI (from the SIRI SX example that carries DATEX II content: a partial gain), e06 DATEX legislation (from
-MMTIS Art. 4, 5, the wanted source: a gain), e07 and k06 elevator (from `AccessFeatureEnumeration`, beside the point),
+DATEX and SIRI (from the SIRI SX example that carries DATEX II content: a partial gain), e06 DATEX legislation (cites
+MMTIS Art. 4, 5, the wanted source, but opens with "the evidence does not state": partial), e07 and k06 elevator (from `AccessFeatureEnumeration`, beside the point),
 k12 bus ticket (from ticketing equipment: beside the point), k13 static data (from `DataManagedObject`: beside the
 point). So about half the rise is answers that were refusals and are now beside the point.
 
@@ -592,3 +598,73 @@ Not tried: a different number of places (1 would have reached all four named cas
 first concept is the wrong one, a04 and c23; 3 would keep the element passage in some questions); reordering the
 presence passages (definition and element of the first concept first). Each would need its own full run, and both
 are fitted to what the numbers above show.
+
+#### Step 3, mechanism B: the model reads six blocks instead of four — passes, with one verdict flip to judge
+
+`LLM_MAX_EVIDENCE_CHUNKS` default 4 → 6 (commit 300e987), the web page's `retrievalTopK`, so the model reads every
+passage the view hands on. The setting also sets the minimum number of retrieved passages (`_min_evidence_results`),
+so below-threshold passages now fill up to 6. The dev settings file sets the value to 4 itself, so the measurements
+ran with `LLM_MAX_EVIDENCE_CHUNKS=6` in the environment on the code before the commit; **prod's settings file may set
+it too (I did not read it): the default change does nothing there until that line is changed or removed.** Before =
+the state after the revert of step 2, which is the step-0 code, so the step-0 numbers are the before. All
+**measured**.
+
+| Gate | before | 6 blocks | |
+|---|---|---|---|
+| 1. gold found (2 runs) | 29, 29 | 33, 33 | a15, a23, b05, b27 found 2 of 2; none lost: **pass** (+4, gate +3) |
+| 2. benchmark found (2 runs) | 114, 115 | 124, 124 | q013, q016, q053, q083, q117, q119, q137, q140, q143 found 2 of 2, q144 (spread before) 2 of 2; none lost: **pass** |
+| 3. retrieval benchmark (dev index, graph; hit@5 / hit@10 / MRR@10) | 0.772 / 0.886 / 0.569 | 0.779 / 0.886 / 0.569 | `run_retrieval_benchmark` never reads the setting; the difference is graph-candidate spread. CI's hash-vector run on the PR is the check against `ci-baseline.json`: pass if green |
+| 4. must-refuse, answered runs | 6 of 75 (m13 3, m19 3) | 4 of 75 (m05 1, m19 3) | **m05 answered once** (below); re-measured 6 more runs each: before 0 of 9, after 1 of 9 |
+| 5. presence questions (23 × 3) | 58 runs, 19 questions ≥ 2/3 | 66 runs, 22 questions | needed ones answered with their definitions; c03 keeps `DriverRef` (3 of 3) |
+| 6. answerable (23 × 3) | 30 runs, 8 questions ≥ 2/3 | 41 runs, 13 questions | newly answered, read below |
+| 7. retrieval median (locate) | gold 2.9 / 2.2 s, bench 2.1 / 1.7 s | gold 2.1 / 1.9 s, bench 1.9 / 1.7 s | not slower: pass |
+
+Time and cost. Prompt size on the 57 gold questions' evidence (built with `_build_messages`, no model call): median
+11,893 → 14,105 characters, p90 13,859 → 17,005, about 2,200 characters (19 %, some 550 tokens) more per question.
+Total answer time through the API, retrieved questions, median: must-refuse 6.2 → 5.1 s, answerable 6.4 → 7.1 s,
+presence 6.7 → 5.6 s; the dev stack had other load (the locate runs) during all of them, so I read this as no
+measurable change in answer time (**believed**), not as faster.
+
+The must-refuse flip: "What does NeTEx say about the colour of bus seats?" (m05) came back once of 9 runs as answered
+(mode rag) with the text "The evidence does not state a colour for bus seats …" and the presentation colour elements:
+the text declines, the verdict flag did not. Before, 0 of 9. By the letter of gate 4 this is one run more; I kept
+the commit because the answer text is itself a refusal and a single flip in 9 is within what the model's verdict does
+between runs (Q1 saw "How does it work?" answered 1 of 3 with nothing changed). **This is Andrej's call**; the revert
+is one commit.
+
+Read answers. Newly found gold, through the API (2 runs each): b27 charging stations now answered from
+`RechargingStation` in the recharging point schema (before: refused, the fare concepts only); b05 (German overview)
+now cites the OpRa README and explains the three standards (before: answered from four examples, "the evidence
+does not describe NeTEx"); a15 OpRa answered both before and after from the README (4th of 4 before, in that run);
+a23 (UIC bit field) still refused, and rightly: the passage now shown, `dayTypes_ServiceCalendar`, does not answer the
+choice. Presence questions: c05, c09, c17 now answered (c17 from `FulfilmentMethod`, right; c05 from
+`AccessFeatureEnumeration` `lift`, close, not `LiftEquipment`). Answerable set, newly answered in ≥ 2 of 3: e01 OpRa
+(README: a gain), k06 elevator (`AccessFeatureEnumeration`: near the point), k08 "Kaj so to metapodatki?" (GML metadata
+property types: beside the point), k13 and k14 static and dynamic data (`DataManagedObject`, the OpRa README: beside
+the point, the wanted source is the regulation, which is not searched without scope, Q2). Less often answered: k11 and
+e05 (1 of 3 → 0 of 3). So of 5 newly answered, 1 is a gain, 1 near the point, 3 beside the point; these 3 were refused
+before for lack of evidence and are now answered from evidence about something else.
+
+How much is fitted to the lists: nothing in the change looks at a question; the setting was chosen from the
+diagnosis (one cause for 8 to 9 questions) before any run, and no other value was tried. The gains are the
+diagnosis's group B plus b27, q053 (presence passages no longer fill all the places) and q137 (a below-threshold
+passage now topped up).
+
+#### Not tried, and what is left
+
+- **C, README below schema files** (b01, b02, q146, q147; b01 and q147 are the same question): the README's doc-type
+  adjustment (−0.10, and −0.05 more when the question gets the schema hint from "what is") still applies with semantic
+  vectors. A general change is possible (no doc-type penalty when similarity decides), but in the gold file it can
+  reach 2 questions, below the gate of 3, and it changes the CI benchmark's hash-vector ranking unless gated on
+  semantic vectors. Not built.
+- **D, two-standard OpRa questions** (b32 and 8 benchmark): the wanted passage is 12th to 23rd after scoring, behind
+  OpRa examples and imports; no reordering at the top reaches it.
+- **A with six places**: b26 and q063 are still lost, now because the 4 presence passages plus retrieval's 2 fill the
+  6 and the passage ranked 3rd is cut by the view (`[: max(top_k, len(presence))]`). A share for the presence passages
+  among 6 is the obvious next step and needs its own run.
+- E (Annex below articles, a16) and F (scope, Q2) unchanged.
+
+**Recommendation.** Ship six blocks only together with a check of prod's settings file for `LLM_MAX_EVIDENCE_CHUNKS`,
+and decide on the m05 flip. Expect more answers where the evidence is thin; about half of the newly answered
+questions here are beside the point, which is the same pattern #523 saw, and the scope decision (Q2) is what would
+give k13 and k14 their real source.
