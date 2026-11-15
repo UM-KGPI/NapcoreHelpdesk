@@ -109,8 +109,8 @@ questions:
     kind: everyday
     language: en
     fitting_scope: ["OpRa"]
-    expected_source_patterns: ["opra_lateDatedVehicleJourney_version"]
-    note: "OpRa's late dated vehicle journey indicator."
+    expected_source_patterns: ["opra_lateDatedVehicleJourney_version", "CancelledAndLateDatedVehicleJourneys"]
+    note: "OpRa's late dated vehicle journey indicator. OpRa's example CancelledAndLateDatedVehicleJourneys.xml answers it too: its LateDatedVehicleJourneyCount counts late journeys per journey pattern in delay intervals (added 2026-11-15)."
   - id: a12
     ref: k12
     question: "How to describe a bus ticket?"
