@@ -668,3 +668,79 @@ passage now topped up).
 and decide on the m05 flip. Expect more answers where the evidence is thin; about half of the newly answered
 questions here are beside the point, which is the same pattern #523 saw, and the scope decision (Q2) is what would
 give k13 and k14 their real source.
+
+### Q2 (2026-11-15, dev, 0.97.225): sources that never become candidates
+
+#### Diagnosis (written before any change)
+
+All numbers **measured** on 0.97.225 with `LLM_MAX_EVIDENCE_CHUNKS=6` set for every run (the dev settings file sets
+4) and the relevance check on, unless marked. Gold and benchmark: `locate_answer_sources --no-model`, the English
+renderings of Q1/Q3 fixed in a file, two runs each.
+
+**Step 0, the state before.** Gold found 33 and 33 of 57 (the same 33). Benchmark found 124 and 124 of 141. Dev
+retrieval benchmark (graph mode, dev index; not the CI index of `ci-baseline.json`): hit@5 0.772, hit@10 0.886,
+MRR@10 0.569. Retrieval per question (locate): gold median 2.3 / 1.9 s, p90 4.8 / 3.5 s; benchmark median 1.9 /
+2.0 s, p90 2.8 / 3.4 s. Through the API (3 runs, host server on main): must-refuse 4 of 75 runs answered (m05 once,
+m19 three times); answerable 40 of 69 runs, 13 questions in at least 2 of 3; 15 standards questions 24 of 30
+(q114, q137, q139 refused in both runs).
+
+**(a) Why each source is opt-in.** From the commits and PRs that made them so:
+
+| Source | Chunks (dev) | Recorded reason | Measured? |
+|---|---|---|---|
+| EU legislation (#184) | 735 | "unscoped it crowded out q137/q146" | yes: benchmark hit@10 0.878 with the acts in every search, 0.884 without (app scope, semantic vectors, 147 questions); the difference was q137 and q146 |
+| mobilityDCAT-AP (#218) | 235 | "so other answers do not change" | no; by analogy with the acts |
+| NAPCORE (#238) | 2,979 | "built like the EU legislation source" | no |
+| INSPIRE (#257) | 594 | "answers that do not name it are unchanged" | no for the unscoped search; measured inside a mixed scope: the specification crowded out the INSPIRE Directive's articles (0 of 5 → 5 of 5 in the top 5 after the fix) |
+| DATEX II (#254) | 2,476 + 1,228 shared with TN-ITS | opt-in like the others; chunks also tagged with a core standard stay unscoped | no; licence of the portal and model not stated, "to be clarified before deploying" |
+| TN-ITS (#255) | 1,228 (all also DATEX II) | opt-in like DATEX II | no; licence not stated |
+
+So the only measurement behind the rule is the legislation's, two benchmark questions; the belief that the
+others would crowd out the standards' text was never measured. The licence question of DATEX II and TN-ITS is a
+reason of another kind (whether to show them at all), not one of retrieval.
+
+**(b) What including them all costs today.** `_scope_query_filter(None)` and `_scope_matches(…, None)` let every
+source through, nothing else changed (a throwaway copy of main):
+
+| | before | all sources unscoped | |
+|---|---|---|---|
+| gold found (2 runs) | 33, 33 | 34, 34 | **a08, a17 found** 2 of 2; **b29 lost** 2 of 2 |
+| benchmark found (2 runs) | 124, 124 | 123, 123 | **q137 lost** 2 of 2 |
+| retrieval benchmark hit@5 / hit@10 / MRR@10 | 0.772 / 0.886 / 0.569 | 0.778 / 0.886 / 0.571 | hit@10 lost q146 (NAPCORE page, INSPIRE section and a NAPCORE deliverable in the top 5) and q007 (same top 5 as before: graph spread); gained q035, q084 (spread) |
+| retrieval median, gold / benchmark | 2.3, 1.9 / 1.9, 2.0 s | 2.4, 2.1 / 2.0, 1.5 s | no measurable change (other load) |
+
+The losses are the kind #184 recorded: an opt-in passage displaces the wanted one **from the pool of 30**. b29 ("How
+are operators linked to lines?", wanted the NeTEx line schema at vector rank 14 among the standards) is pushed to 31
+by an INSPIRE network section and a NAPCORE deliverable; q137 ("Can roadwork warnings be exchanged in real time?")
+loses the SIRI situation schema to NAPCORE documents and DATEX II portal and model pages, which are also about
+roadworks. q137 is the question #184 named. Gold questions with at least one opt-in passage among the six the model
+reads: 26 → 34 of 57.
+
+Of the 6 never-searched questions, the change reaches 2. a01, a13, a14 stay out of the pool: their wanted article
+is 65th, 1,460th and 1,448th by vector similarity among all sources (5th, 13th and 17th within the EU legislation).
+b16 ("What are metadata in NAP used for?") is not unscoped at all: the parser gives it the NAPCORE scope, so it is
+the scope decision for a question naming one opt-in source, which no unscoped mechanism reaches.
+
+**(c) How many questions need each source.** Gold, by `fitting_scope`: EU legislation 14 (asked without a scope
+that names it: a01, a13, a14; b16 under NAPCORE), mobilityDCAT-AP 3 (unscoped: a08, a17; b19 names it), DATEX II 2
+(both name it), NAPCORE, INSPIRE, TN-ITS 0. Benchmark: 1 (q092, the act, which the question names). The answerable
+set of `refused-questions.yaml`: k01, k13, k14 (the act), k08, e03 (mobilityDCAT-AP) unscoped; e02, e06, e04 name
+their source. Vector rank of the wanted chunk (**measured**, exact order by the query vector) within its own source,
+within all opt-in chunks together, and among all sources: a01 5 / 36 / 65, a13 13 / 969 / 1,460, a14 17 / 947 /
+1,448, a08 1 / 4 / 4, a17 4 / 12 / 13.
+
+**Mechanism chosen for step 2.** Not "all sources in one pool": that is what loses b29 and q137, at the pool. Instead
+the share the scoped path already gives an opt-in source next to a standard: for a question without scope, the
+nearest `RETRIEVAL_UNSCOPED_PLACES_PER_SOURCE` chunks of each opt-in source (the list `OPT_IN_SCOPES`, which is the
+scope definition, not names in a rule) join the candidates, **on top of** the pool of 30 and of the preselection cap,
+so the standards' candidates keep every place they have today; scoring then ranks all of them on the same terms. Six
+places per source, the number of passages the model reads, so any one source could in principle fill an answer;
+chosen before the full runs. One exact scan over the about 8,000 opt-in chunks ranks them (0.1–0.8 s under load,
+**measured** on three questions, to be measured idle). A chunk tagged with two opt-in sources (TN-ITS is also DATEX
+II) takes a place in each.
+
+What I expect (**believed**, from a probe of 9 questions with 6 and with 30 places, one run each): a08 and a17
+found, b29 kept (with the places taken out of the cap instead of on top of it, b29 was lost at preselection, as in
+Q1); a01 a candidate but scored 37th of 62; a13 and a14 not candidates (13th and 17th in their source). So gate 1 (3
+of the 6) is expected to fail at 2: the ones the unscoped search cannot reach are a question for the scope decision
+(b16, and a definition vocabulary for "static data", "machine-readable"), not for the candidate list.
