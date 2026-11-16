@@ -531,3 +531,183 @@ Verified (**measured**):
   equal and unchanged prompts replayed, 90 of 96 question runs needed no model call, and all 90 gave the recorded
   outcome. On a copy with one schema file removed, exactly the two questions that had read it were asked again,
   plus the moving ones: 13 model calls where a full run makes 213.
+
+### Step 1 (2026-11-16, dev copies `napcore_helpdesk_s1base` and `napcore_helpdesk_s1v`, 0.97.227)
+
+**Verdict: gate 1 is not met.** The cut does what design points 1 to 3 ask for every kind but one (pieces fit the
+embedder, nearly none cut inside a unit by the cutter's own count; but NAPCORE's PDF text is cut inside sentences
+far more often than 5 %, read by hand), the case is fixed (the passage with `LateDatedVehicleJourneyCount` is given
+in 3 of 3 runs) and retrieval is faster, but of the 7 questions with a better piece left out only 2 got it (gate: at
+least 4), files are lost and gained in about equal numbers, and the retrieval benchmark fell from 0.893 to 0.812
+hit@10. The 7-questions line cannot be repaired by a cut: 5 of the 7 better pieces are schema declarations, a
+README section and an example header that this cut leaves as they were; what decides them is which passages win the
+six places. So I stopped after stage 1 and the free dry replay: no answer was asked again, no example generated, no
+repair build. Everything stays off by default (`RETRIEVAL_PREPARED_INDEX`, the command writes only to a named
+copy). All figures **measured** unless marked.
+
+| gate 1 line | baseline | step 1 | met? |
+|---|---|---|---|
+| pieces longer than the embedder reads, per kind | 5–99 % (audit) | at most 0.01 % (XML examples: 13 of 128,207) | yes |
+| pieces cut inside a unit, per kind | 92 % of XML examples (audit) | cutter's count at most 3.7 % (DATEX II pages); read by hand, NAPCORE about a quarter (below) | **no** for NAPCORE |
+| the case: passage with the count element given | 0 of 3 | 3 of 3 (dry replay; the answer was not asked) | yes (passages) |
+| the 7 questions with a better piece left out | – | 2 better (b14, q059), 5 unchanged, 0 worse | **no** (needs 4) |
+| answers (answerable, must-refuse) | 44/69, 4/75 | not measured (stopped by the line above) | – |
+| files, gold as on main (57) | 39 | 39: lost a19, b05, b29; gained a16, b01, b02 | see below |
+| files, gold before step 0 (57) | 33 | 33: lost a19, b05, b29, b31; gained a16, b01, b02, b10 | see below |
+| files, benchmark (141) | 124 | 122: lost q013, q017, q019, q083, q121, q140; gained q015, q063, q146, q147 | see below |
+| examples | 129 generated, 94 first attempts of 141 | not measured | – |
+| retrieval median, warm gold run, both copies one after the other on a quiet stack | 1.80 s | 1.07 s | yes |
+| rows | 61,877 | 152,607 (2.47×; bound 154,692) | yes, barely |
+
+Not in gate 1 but measured: retrieval benchmark hit@10 / MRR@10 0.893 / 0.564 → 0.812 / 0.567; best piece given
+(the finer measure) gold 31 of 37 in both, benchmark 83 of 92 → 80 of 91; chunk table 1,598 → 2,760 MB, vector index
+484 → 1,193 MB (after `VACUUM FULL` and `REINDEX`, ivfflat lists 100 as on dev).
+
+**Diagnosis 1: where the text to cut comes from.** Checked by cutting each local source with today's cut and
+comparing with the stored chunks of every indexed file, as multisets of texts. Repository kinds come from the local
+checkouts (NeTEx, SIRI, OpRa as they are; TN-ITS from a clone at the indexed commit, made for R0; mobilityDCAT-AP
+from a clone at the indexed commit `1ae93b2`, because the local checkout is at another commit). The web-harvested
+kinds come from the snapshots committed in `docs/` (EU legislation `.xhtml`, the NAPCORE and DATEX II text
+snapshots, the DATEX II model JSON, the INSPIRE AsciiDoc and code-list JSON), read through each indexer's own
+record builder; nothing was harvested and no source refresh ran. Every file of every kind gives back exactly its
+indexed chunks (61,708 of 61,877 rows), except 6 TN-ITS schema files (169 rows), whose chunks were made before the
+XSD summary got enumeration values. Those 6 are left as they are and are the only part not covered. Whether
+harvested prose can be cut again from the stored chunks did not need an answer, since every harvested kind has a
+local copy.
+
+**Diagnosis 2: the dry cut, and the limit.** The limit was written down before any search result existed
+(at 01:17, after the first dry cut): 256 tokens, the embedder's own cut, as returned by `/count`. It is counted on exactly
+the embedded text (`passage: `, source path, heading, the piece's lead and place lines and body, with the two
+special tokens), and it is the same for every kind. It is not set lower because every token below 256 is text the
+embedder would have read, and the cut was already near the row bound. The XML summary is stored after the body and
+is not embedded; at 1,200 characters the embedder never reached it either (R0 step 0a). The first dry cut missed
+the inside-a-unit line for XML examples (6.2 %), the INSPIRE specification (11.9 %) and the READMEs (13.6 %). Long
+comments, tables and lists were being cut at any line or at words. I repaired this before building: such text is
+now cut at lines that end a sentence or start a new item first, then at sentence ends. The XML size estimate is
+also calibrated per file (the sum of line counts missed about 10 tokens a piece). The build used this cut.
+
+| kind | rows before | pieces | kept as is | tokens median / p90 / max | over 256 | inside a unit (cutter) | text check (upper bound) | near-empty left out | duplicates left out |
+|---|---|---|---|---|---|---|---|---|---|
+| XML examples | 43,193 | 128,207 | 0 | 198 / 223 / 262 | 0.01 % | 0.1 % | 2 % | 289 | 19,024 |
+| XSD declarations | 10,565 | 10,658 | 169 | 122 / 187 / 256 | 0 | 0.3 % | 21 % | 6 | 134 |
+| XML schema files | 14 | 31 | 0 | 175 / 245 / 252 | 0 | 0 | 0 | 0 | 5 |
+| NAPCORE | 2,979 | 6,081 | 0 | 240 / 254 / 256 | 0 | 0.1 % | 51 % | 0 | 6 |
+| DATEX II pages | 1,236 | 2,043 | 0 | 224 / 253 / 256 | 0 | 3.7 % | 45 % | 6 | 131 |
+| DATEX II model | 1,240 | 1,491 | 0 | 163 / 248 / 256 | 0 | 0 | 31 % | 8 | 0 |
+| EU legislation | 735 | 1,004 | 0 | 193 / 249 / 256 | 0 | 0.2 % | 16 % | 12 | 0 |
+| INSPIRE specification | 553 | 898 | 0 | 211 / 252 / 256 | 0 | 0.2 % | 42 % | 3 | 2 |
+| INSPIRE code lists | 41 | 50 | 0 | 156 / 243 / 255 | 0 | 0 | 20 % | 0 | 0 |
+| TN-ITS Turtle (guide, frame) | 905 | 1,389 | 0 | 224–235 / 248–253 / 256 | 0 | 0 | 20–27 % | 0 | 4 |
+| mobilityDCAT-AP HTML (guide, frame, object) | 216 | 273 | 0 | 201 / 248 / 256 | 0 | 0 | 38–92 % | 0 | 0 |
+| READMEs | 61 | 59 | 0 | 151 / 243 / 254 | 0 | 0 | 42 % | 1 | 0 |
+| NeTEx `.txt` examples | 123 | 226 | 0 | 254 / 256 / 256 | 0 | 0 | 8 % | 0 | 0 |
+| mobilityDCAT-AP `.ttl` examples | 16 | 28 | 0 | 229 / 248 / 253 | 0 | 0 | 54 % | 0 | 0 |
+
+"Inside a unit (cutter)" counts pieces the cutter itself had to cut below its smallest unit: inside a sentence, a
+line, a text node or a comment. The "text check" is the audit's test (a piece that starts in lower case or ends
+without a sentence end). It also counts every list item, table row and heading, so it is an upper bound. I read 20
+random prose pieces flagged by the text check. 13 end at a real unit (a list item, a table row, a heading line, a
+table of contents). 6 end inside a sentence, 5 of them NAPCORE PDF text where the wrapped next line starts with a
+capital or a digit, so the cutter's line rule took the break for a new unit. One more is unclear. Read that way,
+about a quarter of NAPCORE pieces (13 of the 20 sampled were NAPCORE, 6 of them inside a sentence) and a few
+percent of the other prose kinds end inside a sentence. So the line is **not met for NAPCORE** (**believed** at
+this size of sample). A rule that fits PDF text (a line break ends a unit only after a sentence end) would repair
+it. It is not built.
+
+The 19,024 duplicates are XML example pieces whose stored text equals one already kept: copies of the same example
+in two folders, and repeated frames. A file whose pieces are all copies of another file's now has no pieces of its
+own. The 289 near-empty XML pieces were pieces of end tags only. Leaving them out drops closing tags from the text
+read at answer time, so they are kept from now on (separate commit). The measured build still left them out.
+
+**Diagnosis 3: what ranks or counts pieces** (read in the code; the list of R0 step 0b checked again place by
+place). The rule I used: a limit meant for files counts files. Everything else is left as on main.
+
+- Rare-term limit (`RARE_TERM_MAX_CHUNKS`, 200, counted in rows): with about 3 times the pieces per example file a
+  term stops being rare much sooner. With the setting on it counts files, read in a stream and stopped at the
+  bound.
+- Graph alias bound (`GRAPH_ALIAS_MAX_CHUNKS`, 1,000 rows): an alias found in 40 to 50 example file names would pass
+  the bound and lose its candidates. With the setting on it counts files.
+- Element candidates (top 6 by quality): the places would go to pieces of one or two files. With the setting on it
+  takes one piece per file first.
+- `condition_example` and `asked_from_parts` (`values(...).distinct()`): the model's default ordering puts
+  `quality_score` and `chunk_id` into `SELECT DISTINCT`, so these rows were per chunk, not per file. This is a fault
+  on main already (**measured** by the generated SQL, read by a helper). With the setting on the ordering is cleared.
+- `examples_using_elements`, `shown_example_chunk`: a parent and its child in one piece get rarer, and the shown
+  piece is the opening of the object (about 600 characters). Left as is. The shown piece goes through
+  `_added_candidate`, which reads its unit around it when the setting is on.
+- Graph per-file scan (8 rows per file, by quality): quality is nearly flat inside a file, so the 8 are the file's
+  first pieces. Left as is (step 3 replaces this search).
+- `compute_chunk_quality` (word bands): an XML piece with its summary mostly stays in the 60–280 band. About 40 %
+  drop to the 20–59 band (−0.05; **measured** by the helper on R0's 600-character cut, not on this one). Left as is.
+- Per-file cap, vector pool (30 rows) and pre-selection (32): pieces of one file take several slots of the pool, so
+  fewer files reach scoring. **Believed** to be why the retrieval benchmark fell (0.893 → 0.812). Not changed here.
+  It is the same question as design point 5 (step 2).
+- `grounded_generator` (the answer without the model) shows the place line instead of XML. Not reached on dev (model
+  on). Left as is.
+- `_named_example_candidates` reads a non-empty example heading as Turtle types. XML pieces keep an empty heading, so
+  nothing changes.
+- `infer_doc_type` and `infer_scope` are computed per piece on its body, not on the lead and place lines, so the
+  heading path cannot make a guide piece read as "frame".
+
+**Diagnosis 4: reading large.** Each piece stores, in `structured_metadata["piece"]`, its unit (an XML document; a
+prose section; a schema declaration; a run of Turtle statements), its order in the file and where its body lies in
+its text. At answer time one query fetches up to 6 pieces on each side of every passage (same repository, path and
+unit), and the passage's text becomes the found piece plus the next and the previous piece in turn, while they fit
+1,200 characters, under the place line of the first piece taken. The chunk id, path and source of the passage do
+not change, so the citation points at the same file. Checked by hand on stored pieces of three kinds: an XML
+example (a fare usage parameter, grown with the next sibling element, 826 → 1,046 characters, document text in
+order), a NAPCORE PDF passage (grown with the paragraph before, 700 → 1,177) and a schema declaration cut in two
+(its two halves joined, 225 → 819). Time: 32 ms median, 38 ms p90 for six passages (50 random sets).
+
+**The case and the 7 questions** (read by hand, base against step 1, gold run 2 and benchmark). The late-journeys
+question gets a passage with `LateDatedVehicleJourneyCount` in 3 of 3 runs (dry replay, so passages only; the answer
+was not asked). Of the 7, b14 is better (the MMTIS annex passage now lists timetables, interchanges, hours,
+vehicles and their accessibility for a bus operator, where the baseline gave the cycle-network items). q059 is
+better (NeTEx_50's `TemplateServiceJourney` instead of its day types). a09, a15 (already the README overview), q057,
+q072 and q149 are unchanged: they are the same schema declarations or headers as before, or the better piece still
+loses its place.
+
+**Files lost and gained, read** (the rule of §5: a loss counts only if the passages no longer hold what the named
+file holds).
+
+- Gold, counted as lost: a19 (the SIRI situation-exchange example and the situation schema replaced by a DATEX II
+  TLS annex and an OpenLR class), b05 (the OpRa README replaced by OpRa and SIRI example openings), b29
+  (`LinePropertiesGroup` with `OperatorRef` replaced by an operator list and a TransXChange line).
+- Gold gained: a16 (the MMTIS amending annex), b02 (the SIRI README overview) are real. b01 is a gain only by file:
+  its README piece is the one on the use of AI in the repository.
+- Benchmark, not counted (another passage holds the answer): q013 and q017 (the OpRa examples show
+  `LateDatedVehicleJourneyCount` per journey pattern with its intervals, counts and percentages), q083 (the
+  ticketing-based passenger count example links counts to `netex:ScheduledStopPointRef`).
+- Benchmark, counted as lost: q019 (no declaration says which fields are required), q121 (no definition of a late
+  journey; a NeTEx planned-delay example instead), q140 (the connection-monitoring example is gone).
+- Benchmark gained: q015, q063, q146 are real; q147 is a gain only by file (the same README piece as b01).
+
+So, as the gate is written (losses read, gains counted): gold 3 lost against 3 gained, benchmark 3 against 4. That
+meets the line. If gains are read the same way as losses, gold is 3 lost against 2 gained, and it is not met.
+Every loss has the same explanation, as in R0: example pieces, now three times as many, take the places of schema
+declarations and READMEs. The old gold file shows the same picture side by side (33 → 33; a19, b05, b29, b31 lost,
+a16, b01, b02, b10 gained).
+
+**What the free replay says about stage 2.** With the setting on, the text of almost every passage changes, so
+almost nothing can be replayed. In the dry replay only 42 must-refuse runs and 2 example runs matched a recorded
+prompt. 234 question runs would have needed the model, about 300 calls (**believed**, from the baseline's 475 calls
+for 278 runs). None were made.
+
+**Spread of the baseline** (the free dry replay against its own copy): e01, e03 and m22 move as in step 0, and so do
+gen44 (all three runs) and gen33 (run 3).
+
+**Cost.** Baseline recorded once: 475 model calls (Haiku, as configured). Step 1: no model call. Build: one build,
+2 h 2 min of wall time in three parts. The embedder timed out twice (one request of 16 pieces took more than the
+120 s timeout) while the baseline's example benchmark and a gold run were using it. It did not restart: same start
+time, restart count 0, no OOM. The command skips files already cut, so it went on from where it stopped, and the
+third part ran with nothing else on the stack. Pieces whose embedded text equals an indexed chunk's kept their
+vector: at least 11,589, mostly schema declarations (the third part's count; the reports of the first two
+parts were lost when they stopped). `VACUUM FULL` and `REINDEX` took 5 minutes.
+
+**Believed, not verified.** That the retrieval benchmark fell because pieces of one file take several pool slots.
+That NAPCORE's share cut inside a sentence is about a quarter (20 pieces read). That "rows end near 130,000": they
+ended at 152,607. The 19,024 duplicate example pieces, left out as the plan says, are why it is not more.
+
+**For step 2 and later.** The files lost here and in R0 come from one cause: whole, labelled example pieces win
+places from declarations and READMEs. That is design point 5. The retrieval benchmark's fall has the same cause in
+the pool. The PDF line rule and the kept end tags would need the one repair build this step did not use.
