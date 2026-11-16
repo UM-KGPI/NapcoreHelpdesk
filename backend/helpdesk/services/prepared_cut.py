@@ -153,8 +153,9 @@ def place_head(lead: str, place: str) -> str:
 
 
 def near_empty(body: str) -> bool:
-    """A piece without an element and with fewer than MIN_WORDS words: a heading without text."""
-    if re.search(r"<[A-Za-z_]", body):
+    """A piece without markup and with fewer than MIN_WORDS words: a heading without text. A piece with markup
+    (also one of end tags only) is part of its document and is kept."""
+    if re.search(r"</?[A-Za-z_]", body):
         return False
     return len(_WORD.findall(body)) < MIN_WORDS
 

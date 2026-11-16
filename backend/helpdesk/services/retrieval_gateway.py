@@ -363,7 +363,13 @@ def _rare_lexemes(lexemes: list[str], scope: list[str] | None) -> list[str]:
         matches = filtered.extra(where=[TEXT_SEARCH_MATCH], params=[lexeme])
         if prepared_index():
             # A prepared index has more pieces per file: the limit counts files, as the chunks of the old cut did.
-            found = len(matches.values_list("repository_url", "source_path").distinct()[: RARE_TERM_MAX_CHUNKS + 1])
+            # Read in a stream and stopped at the bound: SELECT DISTINCT would read every match of a common term.
+            files: set[tuple[str, str]] = set()
+            for row in matches.values_list("repository_url", "source_path").iterator(chunk_size=500):
+                files.add(row)
+                if len(files) > RARE_TERM_MAX_CHUNKS:
+                    break
+            found = len(files)
         else:
             found = len(matches.values_list("id", flat=True)[: RARE_TERM_MAX_CHUNKS + 1])
         if 0 < found <= RARE_TERM_MAX_CHUNKS:

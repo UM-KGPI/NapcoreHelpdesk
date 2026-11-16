@@ -87,6 +87,7 @@ class NearEmptyTests(SimpleTestCase):
 
     def test_a_piece_with_an_element_is_never_near_empty(self):
         self.assertFalse(pc.near_empty("<Name>X</Name>"))
+        self.assertFalse(pc.near_empty("    </Exchanging>"))
 
 
 class XmlCutTests(SimpleTestCase):
