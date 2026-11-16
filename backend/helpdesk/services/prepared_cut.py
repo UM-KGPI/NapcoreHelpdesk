@@ -49,6 +49,12 @@ _SENTENCE_END = re.compile(r"(?<=[.!?;:])\s+(?=\S)")
 _WORD = re.compile(r"[^\W\d_]{2,}")
 _LINE_END_PUNCTUATION = re.compile(r"[.!?:;]\s*$")
 _NEXT_CHAR = re.compile(r"[ \t]*(\S?)")
+# A line that opens a list item, a numbered clause or a table-like row by its own form.
+_ITEM_START = re.compile(r"^\s*(?:[-*+•●▪◦–—]\s|\(?\d+[.)]\s|\(?[A-Za-z][.)]\s|[A-Z]{0,2}\d+(?:\.\d+)+\.?\s)")
+# Hard-wrapped text has lines up to a bounded width; lines of a web page can run to a whole paragraph.
+MIN_WRAP_WIDTH = 50
+MAX_WRAP_WIDTH = 200
+MIN_WRAP_LINES = 4
 
 
 # ------------------------------------------------------------------------------------------------ counting
@@ -173,17 +179,41 @@ def sentence_spans(text: str, start: int = 0, end: int | None = None) -> list[tu
     return [(s, e) for s, e in spans if text[s:e].strip()]
 
 
+def wrap_width(lengths: list[int]) -> int:
+    """The width text is wrapped at, if it is wrapped: the 90th percentile of its line lengths when there are
+    enough lines and that width is neither tiny nor a whole paragraph; else 0 (not wrapped text)."""
+    lengths = sorted(n for n in lengths if n)
+    if len(lengths) < MIN_WRAP_LINES:
+        return 0
+    width = lengths[min(len(lengths) - 1, int(len(lengths) * 0.9))]
+    return width if MIN_WRAP_WIDTH <= width <= MAX_WRAP_WIDTH else 0
+
+
+def line_continues(before: str, after: str, width: int = 0) -> bool:
+    """Whether the line break between two lines is only a wrap: the line before does not end a sentence, and the
+    next line starts in lower case, or (in text wrapped at width) the line before fills the width and the next line
+    is not a table row and does not start a list item or numbered clause by its own form."""
+    before, after = before.rstrip(), after.lstrip()
+    if not before or not after or _LINE_END_PUNCTUATION.search(before):
+        return False
+    if after[0].islower():
+        return True
+    if "|" in before or "|" in after or _ITEM_START.match(after):
+        return False
+    return bool(width) and len(before) >= 0.85 * width
+
+
 def line_spans(text: str) -> list[tuple[int, int]]:
-    """Spans of the lines of text that are units: a line that does not end a sentence and is followed by a line
-    in lower case continues into it (wrapped text); other line breaks (list items, table rows, a new sentence on
-    a new line) separate units."""
+    """Spans of the lines of text that are units: a line that only wraps into the next one (line_continues) is
+    joined to it; other line breaks (list items, table rows, a new sentence on a new line) separate units."""
+    width = wrap_width([len(line.strip()) for line in text.split("\n")])
     spans = []
     start = 0
     for match in re.finditer(r"\n", text):
-        before = text[start : match.start()].rstrip()
-        following = _NEXT_CHAR.match(text, match.end())
-        after = following.group(1) if following else ""
-        if before and (_LINE_END_PUNCTUATION.search(before) or not after.islower()):
+        before = text[start : match.start()]
+        stop = text.find("\n", match.end())
+        following = text[match.end() : stop if stop >= 0 else len(text)]
+        if before.strip() and not line_continues(before, following, width):
             spans.append((start, match.start()))
             start = match.end()
     spans.append((start, len(text)))
@@ -500,13 +530,14 @@ def paragraphs(text: str) -> list[str]:
 
 
 def joined_lines(lines: list[str]) -> list[str]:
-    """Lines as paragraphs, where a line that does not end a sentence and is followed by a line in lower case
-    (text wrapped at a fixed width, as in a PDF) continues the same paragraph."""
+    """Lines as paragraphs, where a line that only wraps into the next one (line_continues: text wrapped at a
+    fixed width, as in a PDF) continues the same paragraph."""
     blocks: list[str] = []
+    width = wrap_width([len(line.strip()) for line in lines])
     for line in lines:
         if not line.strip():
             continue
-        if blocks and not _LINE_END_PUNCTUATION.search(blocks[-1]) and line.lstrip()[:1].islower():
+        if blocks and line_continues(blocks[-1].split("\n")[-1], line, width):
             blocks[-1] = f"{blocks[-1]}\n{line}"
         else:
             blocks.append(line)
@@ -703,9 +734,11 @@ def snapshot_units(text: str, *, source_path: str, lead: str, title: str, min_se
     so heading lines stay in the text, as chunk_snapshot does), the path of headings as the place line, lines as
     blocks (wrapped lines joined). page_url(page) gives the per-block fields of a PDF page."""
     marker = re.compile(r"^\[page (\d+)\]$")
+    # One width for the whole document: a unit alone may have too few lines to show how the text is wrapped.
+    width = wrap_width([len(raw.strip()) for raw in text.splitlines() if not marker.match(raw.strip()) and not raw.startswith("#")])
     units: list[Unit] = []
     path: list[tuple[int, str]] = []
-    lines: list[tuple[str, int | None]] = []
+    lines: list[tuple[str, int | None, bool]] = []
     page: int | None = None
     place = ""
 
@@ -713,12 +746,14 @@ def snapshot_units(text: str, *, source_path: str, lead: str, title: str, min_se
         nonlocal place
         if lines:
             blocks, pages = [], []
-            for line, line_page in lines:
-                if blocks and not _LINE_END_PUNCTUATION.search(blocks[-1]) and line.lstrip()[:1].islower():
+            previous_heading = True
+            for line, line_page, is_heading in lines:
+                if blocks and not is_heading and not previous_heading and line_continues(blocks[-1].split("\n")[-1], line, width):
                     blocks[-1] = f"{blocks[-1]}\n{line}"
                 else:
                     blocks.append(line)
                     pages.append(line_page)
+                previous_heading = is_heading
             heading = (path[-1][1] if path else "") or title
             units.append(
                 Unit(f"{source_path}#{len(units)}", source_path, heading[:512], place_head(lead, place), blocks, "\n",
@@ -732,8 +767,9 @@ def snapshot_units(text: str, *, source_path: str, lead: str, title: str, min_se
             page = int(found.group(1))
             continue
         line = raw
-        if line.startswith("#"):
-            if sum(len(p) + 1 for p, _ in lines) >= min_section_chars:
+        is_heading = line.startswith("#")
+        if is_heading:
+            if sum(len(p) + 1 for p, _, _ in lines) >= min_section_chars:
                 flush()
             level = len(line) - len(line.lstrip("#"))
             name = line.lstrip("#").strip()[:200]
@@ -741,7 +777,7 @@ def snapshot_units(text: str, *, source_path: str, lead: str, title: str, min_se
             place = PLACE_SEPARATOR.join(h for _, h in path if h)
             line = name
         if line.strip():
-            lines.append((line, page))
+            lines.append((line, page, is_heading))
     flush()
     return units
 

@@ -189,6 +189,43 @@ class UnitTests(SimpleTestCase):
         self.assertEqual(units[0].blocks[0], "A")
         self.assertEqual(units[0].heading, "B")
 
+    def test_a_wrapped_line_before_a_capital_or_digit_is_not_a_unit_boundary(self):
+        # Eight lines wrapped at about 60 characters; the 3rd and 6th continue with a capital and a digit.
+        lines = ["The data provider must describe every service in the catalogue and",
+                 "keep the description up to date for the national access point and",
+                 "Transmodel based exchange formats for all of the modes that are",
+                 "in scope of the delegated regulation as published by the Commission",
+                 "and for every update of the data that is made available through the",
+                 "2024 version of the service interface that the provider operates.",
+                 "A new sentence starts here and it also fills the line up to the width of",
+                 "the text before it ends."]
+        text = "\n".join(lines)
+        units = pc.snapshot_units(text, source_path="p.pdf", lead="L", title="T", min_section_chars=10, fields={},
+                                  page_url=lambda page: {})
+        self.assertEqual(units[0].blocks, ["\n".join(lines[:6]), "\n".join(lines[6:])])
+
+    def test_lines_after_a_sentence_end_list_items_and_table_rows_still_separate(self):
+        lines = ["The data provider must describe every service in the catalogue and.",
+                 "A new sentence starts on a line of its own and it fills the width of the line",
+                 "- a list item that fills the width of the line and has no full stop at the end",
+                 "1. a numbered item that fills the width of the line and has no full stop at all",
+                 "Name | Package | Stereotype and a table row that fills the width of the line",
+                 "Road | Transport | featureType and a second row that fills the width of the line"]
+        self.assertEqual(pc.joined_lines(lines), lines)
+        self.assertEqual(len(pc.line_spans("\n".join(lines))), len(lines))
+
+    def test_short_lines_without_a_sentence_end_are_not_joined(self):
+        # A title, a key and a value are short lines: not wrapped text, so a capital starts a new unit.
+        lines = ["Status: Final draft", "Version: 1.0", "Date: January 29, 2025", "Legal disclaimer"] * 3
+        self.assertEqual(pc.joined_lines(lines), lines)
+
+    def test_a_heading_line_is_never_joined_to_the_text_around_it(self):
+        body = "A line of text that is wrapped at the width the document uses and carries on"
+        text = f"# A heading that fills the width of the line as wide as the text does here and so\n{body}\n{body}\n{body}\n{body}\n"
+        units = pc.snapshot_units(text, source_path="p.pdf", lead="L", title="T", min_section_chars=10, fields={},
+                                  page_url=lambda page: {})
+        self.assertEqual(units[0].blocks[0], "A heading that fills the width of the line as wide as the text does here and so")
+
     def test_inspire_codelist_and_datex_model_heads(self):
         units = pc.inspire_codelist_units([{"name": "XValue", "label": "X", "definition": "Kinds of X.", "description": "",
                                             "values": [{"id": "http://r/XValue/a", "label": "A", "definition": "first", "description": ""}]}])
