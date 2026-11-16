@@ -2052,7 +2052,7 @@ netex:GeneralOrganisation
 
 netex:GeneralSection
     a owl:Class ;
-    skos:definition "A resuable sequence of LINKS or POINTs. +v1.1."@en ;
+    skos:definition "A reusable sequence of LINKS or POINTs. +v1.1."@en ;
     skos:prefLabel "general section"@en ;
     skos:altLabel "generalsection"@en ;
     rdfs:comment "Extracted from: xsd/netex_framework/netex_genericFramework/netex_section_version.xsd"@en .
@@ -3129,7 +3129,7 @@ netex:NetworkFrameTopic
 
 netex:NetworkRestriction
     a owl:Class ;
-    skos:definition "A constraint on use of a network of INFRASTRUCTURE POINTs and INFRASTUCTURE LINKs."@en ;
+    skos:definition "A constraint on use of a network of INFRASTRUCTURE POINTs and INFRASTRUCTURE LINKs."@en ;
     skos:prefLabel "network restriction"@en ;
     skos:altLabel "networkrestriction"@en ;
     rdfs:comment "Extracted from: xsd/netex_part_1/part1_networkDescription/netex_networkRestriction_version.xsd"@en .
@@ -3456,7 +3456,7 @@ netex:PassengerAtStopTime
 
 netex:PassengerBeaconEquipment
     a owl:Class ;
-    skos:definition "Specialisation of PASSENGER EQUIPMENT for Beacons. For SSID or UUID always use PublicCode. Be aware that when using VEHICLE TYPE or VEHICLE PROFILE only the type of the beacon can be described. The information aboutn the relevent real beacon often can only be provided when the actual VEHICLE is known."@en ;
+    skos:definition "Specialisation of PASSENGER EQUIPMENT for beacons. For SSID or UUID always use PublicCode. Be aware that when using VEHICLE TYPE or VEHICLE PROFILE only the type of the beacon can be described. The information about the relevant real beacon often can only be provided when the actual VEHICLE is known."@en ;
     skos:prefLabel "passenger beacon equipment"@en ;
     skos:altLabel "passengerbeaconequipment"@en ;
     skos:altLabel "specialisation of passenger equipment for"@en ;
@@ -3571,8 +3571,9 @@ netex:PassengerSpot
 
 netex:PassengerSpotAllocation
     a owl:Class ;
-    skos:definition "Whether a specific TRANSPORT CUSTOMER is eligible for a FARE PRODUCT with a specific validity Parameter. This may be subject to a particular VALIDITY CONDITION. +v2.0"@en ;
-    skos:prefLabel "passenger spot allocation"@en ;
+    skos:definition "Current ALLOCATION of a LOCATABLE SPOT such as a passenger seat or on-board vehicle space to a customer between two STOP POINTs. +v2.0"@en ;
+    skos:prefLabel "current allocation of a locatable"@en ;
+    skos:altLabel "passenger spot allocation"@en ;
     skos:altLabel "passengerspotallocation"@en ;
     rdfs:comment "Extracted from: xsd/netex_part_3/part3_salesTransactions/netex_spotAllocation_version.xsd"@en .
 
@@ -4326,7 +4327,7 @@ netex:Rounding
 
 netex:RoundingStep
     a owl:Class ;
-    skos:definition "A rounding step to use to round a range of values. Any value larger than the step key and smaller tha the next step key should be rounded to this value."@en ;
+    skos:definition "A rounding step to use to round a range of values. Any value larger than the step key and smaller than the next step key should be rounded to this value."@en ;
     skos:prefLabel "rounding step"@en ;
     skos:altLabel "rounding step to use"@en ;
     skos:altLabel "roundingstep"@en ;
@@ -4857,7 +4858,7 @@ netex:SiteConnection
 
 netex:SiteElement
     a owl:Class ;
-    skos:definition "A physical PLACE to which passengers may go. May have ACCESSIBILITY ASSESMENT and other properties to describe it."@en ;
+    skos:definition "A physical PLACE to which passengers may go. May have ACCESSIBILITY ASSESSMENT and other properties to describe it."@en ;
     skos:prefLabel "site element"@en ;
     skos:altLabel "siteelement"@en ;
     rdfs:subClassOf netex:Place ;
@@ -5528,7 +5529,7 @@ netex:TrainComponentStopAssignment
 
 netex:TrainElement
     a owl:Class ;
-    skos:definition "According to Transmodel 6.2 This shoud really be called TRAIN ELEMENT TYPE and be abstract . Use as concrete element DEPRECATED - use more specific TRAILING ELEMENT TYPE or TRACTIVE ELEMENT TYPE subtypes, Shoul dbe renmaed and removed in V3.0"@en ;
+    skos:definition "According to Transmodel v6.2, this should really be called TRAIN ELEMENT TYPE and be abstract . Use as concrete element DEPRECATED. Instead, use more specific TRAILING ELEMENT TYPE or TRACTIVE ELEMENT TYPE subtypes. Note: should be renamed and removed in v3.0"@en ;
     skos:prefLabel "train element"@en ;
     skos:altLabel "trainelement"@en ;
     rdfs:subClassOf netex:DataManagedObject ;
@@ -5915,8 +5916,8 @@ netex:TypeOfLocatableSpot
 
 netex:TypeOfMachineReadability
     a owl:Class ;
-    skos:definition "A classification of MACHINE REDABILITY capabailities, used for example to indicate how a TRAVEL DOCUMENT may be read."@en ;
-    skos:prefLabel "classification of machine redability"@en ;
+    skos:definition "A classification of MACHINE READABILITY capabailities, used for example to indicate how a TRAVEL DOCUMENT may be read."@en ;
+    skos:prefLabel "classification of machine readability"@en ;
     skos:altLabel "type of machine readability"@en ;
     skos:altLabel "typeofmachinereadability"@en ;
     rdfs:subClassOf netex:TypeOfValue ;
@@ -6443,7 +6444,7 @@ netex:VehicleJourneyRunTime
 
 netex:VehicleJourneySpotAllocation
     a owl:Class ;
-    skos:definition "An identified person or organisation involved in a fare process. There may be a FARE CONTRACT between the VEHICLE JOURNEY SPOT ALLOCATION and the OPERATOR or the AUTHORITY ruling the consumption of services. +v2.0"@en ;
+    skos:definition "The set of current allocations of on-board LOCATABLE SPOTs (i.e., seats, vehicle berths, etc.) for a given NORMAL DATED VEHICLE JOURNEY. +v2.0"@en ;
     skos:prefLabel "vehicle journey spot allocation"@en ;
     skos:altLabel "vehiclejourneyspotallocation"@en ;
     rdfs:subClassOf netex:DataManagedObject ;
@@ -9092,14 +9093,14 @@ netex:prices_CappingRule
 
 netex:validityParameterAssignments_CappingRule
     a owl:ObjectProperty ;
-    skos:definition "VALIDITY PARAMETR ASSIGNMENTss for an element."@en ;
+    skos:definition "VALIDITY PARAMETER ASSIGNMENTs for an element."@en ;
     rdfs:domain netex:CappingRule ;
     rdfs:range netex:GenericParameterAssignment ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_fareProduct_version.xsd (containment-list)"@en .
 
 netex:validityParameterAssignments_CappingRule
     a owl:ObjectProperty ;
-    skos:definition "VALIDITY PARAMETR ASSIGNMENTss for an element."@en ;
+    skos:definition "VALIDITY PARAMETER ASSIGNMENTs for an element."@en ;
     rdfs:domain netex:CappingRule ;
     rdfs:range netex:GenericParameterAssignmentInContext ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_fareProduct_version.xsd (containment-list)"@en .
@@ -9436,14 +9437,14 @@ netex:members_CommonSection
 
 netex:proposedByServices
     a owl:ObjectProperty ;
-    skos:definition "Online servicies proposing this service,"@en ;
+    skos:definition "Online services proposing this service,"@en ;
     rdfs:domain netex:CommonVehicleService ;
     rdfs:range netex:OnlineService ;
     rdfs:comment "Extracted from: netex_part_5/part5_rc/netex_nm_mobilityService_version.xsd (containment-list)"@en .
 
 netex:parentRef_CompanionProfile
     a owl:ObjectProperty ;
-    skos:definition "Parent USER PROFILE or GROUP TICKET for which this specifes the member rules."@en ;
+    skos:definition "Parent USER PROFILE or GROUP TICKET for which this specifies the member rules."@en ;
     rdfs:domain netex:CompanionProfile ;
     rdfs:range netex:UsageParameter ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_usageParameterEligibility_version.xsd (reference)"@en .
@@ -9586,7 +9587,7 @@ netex:transportOrganisationRef_ConnectionEnd
 
 netex:vehicleMeetingPointRef_ConnectionEnd
     a owl:ObjectProperty ;
-    skos:definition "VEHICLE MEETING POINT at END OF CONENCTION. +V1.2.2. NB This is typed only to POINT to avoid forward dependency"@en ;
+    skos:definition "VEHICLE MEETING POINT at END OF CONNECTION. +v1.2.2. NB This is typed only to POINT to avoid forward dependency"@en ;
     rdfs:domain netex:ConnectionEnd ;
     rdfs:range netex:Point ;
     rdfs:comment "Extracted from: netex_part_1/part1_tacticalPlanning/netex_servicePattern_version.xsd (reference)"@en .
@@ -9775,7 +9776,7 @@ netex:customerAccountEntries
 
 netex:customerPurchasePackages_CustomerAccount
     a owl:ObjectProperty ;
-    skos:definition "CUSTOMER PURCHASE PACKAGES for CUSTOMER ACCOUT."@en ;
+    skos:definition "CUSTOMER PURCHASE PACKAGES for CUSTOMER ACCOUNT."@en ;
     rdfs:domain netex:CustomerAccount ;
     rdfs:range netex:CustomerPurchasePackage ;
     rdfs:comment "Extracted from: netex_part_3/part3_salesTransactions/netex_salesContract_version.xsd (containment-list)"@en .
@@ -10880,7 +10881,7 @@ netex:passengerAtStopTimes_Departure
 
 netex:presentation_DestinationDisplay
     a owl:ObjectProperty ;
-    skos:definition "Preferred presentation attributes to use when rendering destiation on maps, etc. +v1.1"@en ;
+    skos:definition "Preferred presentation attributes to use when rendering destination on maps, etc. +v1.1"@en ;
     rdfs:domain netex:DestinationDisplay ;
     rdfs:range netex:Presentation ;
     rdfs:comment "Extracted from: netex_part_1/part1_networkDescription/netex_line_version.xsd (containment)"@en .
@@ -11612,7 +11613,7 @@ netex:fareContractRef_FareContractEntry
 
 netex:typeOfFareContractEntryRef
     a owl:ObjectProperty ;
-    skos:definition "A classifiication of FARE CONTRACT ENTRYs."@en ;
+    skos:definition "A classification of FARE CONTRACT ENTRYs."@en ;
     rdfs:domain netex:FareContractEntry ;
     rdfs:range netex:TypeOfFareContractEntry ;
     rdfs:comment "Extracted from: netex_part_3/part3_salesTransactions/netex_salesContract_version.xsd (reference)"@en .
@@ -12015,14 +12016,14 @@ netex:validableElements_FareProduct
 
 netex:validityParameterAssignments_FareProduct
     a owl:ObjectProperty ;
-    skos:definition "VALIDITY PARAMETR ASSIGNMENTss for an element."@en ;
+    skos:definition "VALIDITY PARAMETER ASSIGNMENTs for an element."@en ;
     rdfs:domain netex:FareProduct ;
     rdfs:range netex:GenericParameterAssignment ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_fareProduct_version.xsd (containment-list)"@en .
 
 netex:validityParameterAssignments_FareProduct
     a owl:ObjectProperty ;
-    skos:definition "VALIDITY PARAMETR ASSIGNMENTss for an element."@en ;
+    skos:definition "VALIDITY PARAMETER ASSIGNMENTs for an element."@en ;
     rdfs:domain netex:FareProduct ;
     rdfs:range netex:GenericParameterAssignmentInContext ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_fareProduct_version.xsd (containment-list)"@en .
@@ -12205,14 +12206,14 @@ netex:timeStructureFactors_FareStructureElement
 
 netex:validityParameterAssignments_FareStructureElement
     a owl:ObjectProperty ;
-    skos:definition "VALIDITY PARAMETR ASSIGNMENTss for an element."@en ;
+    skos:definition "VALIDITY PARAMETER ASSIGNMENTs for an element."@en ;
     rdfs:domain netex:FareStructureElement ;
     rdfs:range netex:GenericParameterAssignment ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_fareStructureElement_version.xsd (containment-list)"@en .
 
 netex:validityParameterAssignments_FareStructureElement
     a owl:ObjectProperty ;
-    skos:definition "VALIDITY PARAMETR ASSIGNMENTss for an element."@en ;
+    skos:definition "VALIDITY PARAMETER ASSIGNMENTs for an element."@en ;
     rdfs:domain netex:FareStructureElement ;
     rdfs:range netex:GenericParameterAssignmentInContext ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_fareStructureElement_version.xsd (containment-list)"@en .
@@ -12245,14 +12246,14 @@ netex:validableElementRef_FareStructureElementInSequence
 
 netex:validityParameterAssignments_FareStructureElementInSequence
     a owl:ObjectProperty ;
-    skos:definition "VALIDITY PARAMETR ASSIGNMENTss for an element."@en ;
+    skos:definition "VALIDITY PARAMETER ASSIGNMENTs for an element."@en ;
     rdfs:domain netex:FareStructureElementInSequence ;
     rdfs:range netex:GenericParameterAssignment ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_fareStructureElement_version.xsd (containment-list)"@en .
 
 netex:validityParameterAssignments_FareStructureElementInSequence
     a owl:ObjectProperty ;
-    skos:definition "VALIDITY PARAMETR ASSIGNMENTss for an element."@en ;
+    skos:definition "VALIDITY PARAMETER ASSIGNMENTs for an element."@en ;
     rdfs:domain netex:FareStructureElementInSequence ;
     rdfs:range netex:GenericParameterAssignmentInContext ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_fareStructureElement_version.xsd (containment-list)"@en .
@@ -12631,7 +12632,7 @@ netex:garagePoints
 
 netex:operators
     a owl:ObjectProperty ;
-    skos:definition "OPERATORs assoicated with GARAGE."@en ;
+    skos:definition "OPERATORs associated with GARAGE."@en ;
     rdfs:domain netex:Garage ;
     rdfs:range netex:TransportOrganisation ;
     rdfs:comment "Extracted from: netex_part_1/part1_networkDescription/netex_vehicleAndCrewPoint_version.xsd (containment-list)"@en .
@@ -12645,14 +12646,14 @@ netex:linksOnSection
 
 netex:includes_GenericParameterAssignment
     a owl:ObjectProperty ;
-    skos:definition "Assignments Logically included in this group. Groups are combined acording to the Operator."@en ;
+    skos:definition "Assignments logically included in this group. Groups are combined according to the Operator."@en ;
     rdfs:domain netex:GenericParameterAssignment ;
     rdfs:range netex:GenericParameterAssignment ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_accessRightParameter_version.xsd (containment-list)"@en .
 
 netex:includes_GenericParameterAssignment
     a owl:ObjectProperty ;
-    skos:definition "Assignments Logically included in this group. Groups are combined acording to the Operator."@en ;
+    skos:definition "Assignments logically included in this group. Groups are combined according to the Operator."@en ;
     rdfs:domain netex:GenericParameterAssignment ;
     rdfs:range netex:GenericParameterAssignmentInContext ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_accessRightParameter_version.xsd (containment-list)"@en .
@@ -12743,7 +12744,7 @@ netex:memberTypeOfValueRef
 
 netex:purposeOfGroupingRef_GroupConstraintMember
     a owl:ObjectProperty ;
-    skos:definition "Reference to a PUPOSE OF GROUPING to which this member belongs. If given by context does not need to be specified."@en ;
+    skos:definition "Reference to a PURPOSE OF GROUPING to which this member belongs. If given by context, it does not need to be specified."@en ;
     rdfs:domain netex:GroupConstraintMember ;
     rdfs:range netex:PurposeOfGrouping ;
     rdfs:comment "Extracted from: netex_framework/netex_genericFramework/netex_grouping_version.xsd (reference)"@en .
@@ -15417,7 +15418,7 @@ netex:alternativeNames_ParkingTariff
 
 netex:appliesTo
     a owl:ObjectProperty ;
-    skos:definition "PaARKIMNGs to which this tariff applies"@en ;
+    skos:definition "PARKINGs to which this tariff applies."@en ;
     rdfs:domain netex:ParkingTariff ;
     rdfs:range netex:Parking ;
     rdfs:comment "Extracted from: netex_part_3/part3_parkingTariff/netex_parkingTariff_version.xsd (containment-list)"@en .
@@ -15473,7 +15474,7 @@ netex:timeStructureFactors_ParkingTariff
 
 netex:vehicleTypes_ParkingTariff
     a owl:ObjectProperty ;
-    skos:definition "Opnen specifcation of VEHICLE TYPEs + v1.1"@en ;
+    skos:definition "Open specification of VEHICLE TYPEs +v1.1"@en ;
     rdfs:domain netex:ParkingTariff ;
     rdfs:range netex:TransportType ;
     rdfs:comment "Extracted from: netex_part_3/part3_parkingTariff/netex_parkingTariff_version.xsd (containment-list)"@en .
@@ -16081,7 +16082,7 @@ netex:monthValidityOffsets
 
 netex:priceUnits
     a owl:ObjectProperty ;
-    skos:definition "Set of Rounding paraemeters."@en ;
+    skos:definition "Set of rounding parameters."@en ;
     rdfs:domain netex:PricingParameterSet ;
     rdfs:range netex:PriceUnit ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_calculationParameters_version.xsd (containment-list)"@en .
@@ -16094,7 +16095,7 @@ netex:pricingServices
 
 netex:roundings
     a owl:ObjectProperty ;
-    skos:definition "Set of Rounding paraemeters."@en ;
+    skos:definition "Set of rounding parameters."@en ;
     rdfs:domain netex:PricingParameterSet ;
     rdfs:range netex:Rounding ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_calculationParameters_version.xsd (containment-list)"@en .
@@ -16344,7 +16345,7 @@ netex:exchangableUntilIntervalRef
 
 netex:typesOfPaymentMethodRef
     a owl:ObjectProperty ;
-    skos:definition "Other PAYMENT METHODs allowd to pay fee or to make refund."@en ;
+    skos:definition "Other PAYMENT METHODs allowed to pay fee or to make refund."@en ;
     rdfs:domain netex:Reselling ;
     rdfs:range netex:TypeOfPaymentMethod ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_usageParameterAfterSales_version.xsd (containment-list)"@en .
@@ -16365,7 +16366,7 @@ netex:bookingArrangements_Reserving
 
 netex:parentRef_ResidentialQualification
     a owl:ObjectProperty ;
-    skos:definition "Parent USER PROFILE or GROUP TICKET for which this specifes the member rules."@en ;
+    skos:definition "Parent USER PROFILE or GROUP TICKET for which this specifies the member rules."@en ;
     rdfs:domain netex:ResidentialQualification ;
     rdfs:range netex:UsageParameter ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_usageParameterEligibility_version.xsd (reference)"@en .
@@ -17110,7 +17111,7 @@ netex:salesOfferPackageRef_SalesOfferPackageSubstitution
 
 netex:withSalesOfferPackageRef
     a owl:ObjectProperty ;
-    skos:definition "SALES OFFER PACKAGE that may be used to subsitute base SALES OFFER PACKAGE."@en ;
+    skos:definition "SALES OFFER PACKAGE that may be used to substitute base SALES OFFER PACKAGE."@en ;
     rdfs:domain netex:SalesOfferPackageSubstitution ;
     rdfs:range netex:SalesOfferPackage ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_salesOfferPackage_version.xsd (reference)"@en .
@@ -17155,7 +17156,7 @@ netex:typeOfPaymentMethodRef_SalesTransaction
 
 netex:customerPurchasePackages_SalesTransaction
     a owl:ObjectProperty ;
-    skos:definition "Customer Pucrhase PAckages ought by Salles Transaction"@en ;
+    skos:definition "Customer Purchase Packages bought by Sales Transaction"@en ;
     rdfs:domain netex:SalesTransaction ;
     rdfs:range netex:CustomerPurchasePackage ;
     rdfs:comment "Extracted from: netex_part_3/part3_salesTransactions/netex_salesTransaction_version.xsd (containment-list)"@en .
@@ -17183,7 +17184,7 @@ netex:travelDocuments_SalesTransaction
 
 netex:travelSpecifications_SalesTransaction
     a owl:ObjectProperty ;
-    skos:definition "Travel Specifcations bought by Salles Transaction"@en ;
+    skos:definition "Travel details bought by Sales Transaction such as validity, price, origin and destination."@en ;
     rdfs:domain netex:SalesTransaction ;
     rdfs:range netex:TravelSpecification ;
     rdfs:comment "Extracted from: netex_part_3/part3_salesTransactions/netex_salesTransaction_version.xsd (containment-list)"@en .
@@ -18841,7 +18842,7 @@ netex:retailingOrganizationRef
 
 netex:includes_SpecificParameterAssignment
     a owl:ObjectProperty ;
-    skos:definition "Assignments Logically included in this group. Groups are combined acording to the Operator."@en ;
+    skos:definition "Assignments logically included in this group. Groups are combined according to the Operator."@en ;
     rdfs:domain netex:SpecificParameterAssignment ;
     rdfs:range netex:SpecificParameterAssignment ;
     rdfs:comment "Extracted from: netex_part_3/part3_salesTransactions/netex_customerPurchasePackage_version.xsd (containment-list)"@en .
@@ -19965,7 +19966,7 @@ netex:containedIn
 
 netex:otherCountries
     a owl:ObjectProperty ;
-    skos:definition "For TOPOGRAPHIC PLACEs thats span borders, references to additional COUNTRY or COUNTRIEs that place lies in."@en ;
+    skos:definition "For TOPOGRAPHIC PLACEs that span borders, references to additional COUNTRY or COUNTRIEs that place lies in."@en ;
     rdfs:domain netex:TopographicPlace ;
     rdfs:range netex:Country ;
     rdfs:comment "Extracted from: netex_framework/netex_reusableComponents/netex_topographicPlace_version.xsd (containment-list)"@en .
@@ -20587,7 +20588,7 @@ netex:alternativeNames_TypeOfTravelDocument
 
 netex:typesOfMachineReadabilities
     a owl:ObjectProperty ;
-    skos:definition "Openended classiifcation of machine readable capabilties compatible with TRAVEL DOCUMENT."@en ;
+    skos:definition "Open-ended classifcation of machine readable capabilities compatible with TRAVEL DOCUMENT."@en ;
     rdfs:domain netex:TypeOfTravelDocument ;
     rdfs:range netex:TypeOfMachineReadability ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_typeOfTravelDocument_version.xsd (containment-list)"@en .
@@ -21191,7 +21192,7 @@ netex:vehicleModelProfileRef_VehicleModel
 
 netex:equipmentProfiles_VehicleModel
     a owl:ObjectProperty ;
-    skos:definition "Equipment profiles assoicated with model. +v1.2.2"@en ;
+    skos:definition "Equipment profiles associated with model. +v1.2.2"@en ;
     rdfs:domain netex:VehicleModel ;
     rdfs:range netex:VehicleEquipmentProfile ;
     rdfs:comment "Extracted from: netex_framework/netex_reusableComponents/netex_vehicleType_version.xsd (containment-list)"@en .
@@ -21715,7 +21716,7 @@ netex:chargingBasis
 
 netex:isAllowed_AccessRightParameterAssignment
     a owl:DatatypeProperty ;
-    skos:definition "Whether values are allowed ro forbiden. Defaullt is allowed."@en ;
+    skos:definition "Whether values are allowed or forbidden. Default is allowed."@en ;
     rdfs:domain netex:AccessRightParameterAssignment ;
     rdfs:range xsd:boolean ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_accessRightParameter_version.xsd"@en .
@@ -21736,7 +21737,7 @@ netex:limitationSetSelectionType
 
 netex:validityParameterAssignmentType
     a owl:DatatypeProperty ;
-    skos:definition "Comparison Operator for comparing Validity Erlements valeus. Defalut is EQ."@en ;
+    skos:definition "Comparison operator for comparing Validity element values. Default is EQ."@en ;
     rdfs:domain netex:AccessRightParameterAssignment ;
     rdfs:range xsd:NMTOKEN ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_accessRightParameter_version.xsd (XSD type: RelativeOperatorEnumeration)"@en .
@@ -21945,7 +21946,7 @@ netex:maximumNumberOfBerths
 
 netex:name_Accommodation
     a owl:DatatypeProperty ;
-    skos:definition "Name of Accomodation _v1.1"@en ;
+    skos:definition "Name of Accommodation +v1.1"@en ;
     rdfs:domain netex:Accommodation ;
     rdfs:range xsd:string ;
     rdfs:comment "Extracted from: netex_framework/netex_reusableComponents/netex_facility_version.xsd (XSD type: MultilingualString)"@en .
@@ -21972,7 +21973,7 @@ netex:accountingFactor_AccountableElement
 
 netex:accountingTime_AccountableElement
     a owl:DatatypeProperty ;
-    skos:definition "How long a time shoudl be used for the the ACCOUNTABLE ELEMENT."@en ;
+    skos:definition "How long a time should be used for the the ACCOUNTABLE ELEMENT."@en ;
     rdfs:domain netex:AccountableElement ;
     rdfs:range xsd:duration ;
     rdfs:comment "Extracted from: netex_part_2/part2_vehicleService/netex_duty_version.xsd"@en .
@@ -22035,7 +22036,7 @@ netex:driverFeeBasis
 
 netex:numberOFDrivers
     a owl:DatatypeProperty ;
-    skos:definition "Maximimum Number of drivers allwoed."@en ;
+    skos:definition "Maximum number of drivers allowed."@en ;
     rdfs:domain netex:AdditionalDriverOption ;
     rdfs:range xsd:nonNegativeInteger ;
     rdfs:comment "Extracted from: netex_part_5/part5_fm/netex_nm_usageParameterRental_version.xsd"@en .
@@ -22769,7 +22770,7 @@ netex:description_Cell
 
 netex:directionType_Cell
     a owl:DatatypeProperty ;
-    skos:definition "For fares for DISTANCE MATRIXE LEMENTs, DIRECTION in which price applies."@en ;
+    skos:definition "For fares for DISTANCE MATRIX ELEMENTs, DIRECTION to which price applies."@en ;
     rdfs:domain netex:Cell ;
     rdfs:range xsd:normalizedString ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_fareTable_version.xsd (XSD type: RelativeDirectionEnumeration)"@en .
@@ -23182,7 +23183,7 @@ netex:hasNotices
 
 netex:hasOperatorRestrictions
     a owl:DatatypeProperty ;
-    skos:definition "Restictions on which OPERATOR's services can be used."@en ;
+    skos:definition "Restrictions on which OPERATOR's services can be used."@en ;
     rdfs:domain netex:ConditionSummary ;
     rdfs:range xsd:normalizedString ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_fareConditionSummary_version.xsd (XSD type: OperatorRestrictionsEnumeration)"@en .
@@ -23210,21 +23211,21 @@ netex:hasReservationFee
 
 netex:hasRouteRestrictions
     a owl:DatatypeProperty ;
-    skos:definition "Whether there are restictions on which routes can be used."@en ;
+    skos:definition "Whether there are restrictions on which routes can be used."@en ;
     rdfs:domain netex:ConditionSummary ;
     rdfs:range xsd:boolean ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_fareConditionSummary_version.xsd"@en .
 
 netex:hasTravelTimeRestrictions
     a owl:DatatypeProperty ;
-    skos:definition "Whether there are restictions on which routes can be used."@en ;
+    skos:definition "Whether there are restrictions on travel durations."@en ;
     rdfs:domain netex:ConditionSummary ;
     rdfs:range xsd:boolean ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_fareConditionSummary_version.xsd"@en .
 
 netex:hasZoneRestrictions
     a owl:DatatypeProperty ;
-    skos:definition "Whether there are restictions on which zones can be used."@en ;
+    skos:definition "Whether there are restrictions on which zones can be used."@en ;
     rdfs:domain netex:ConditionSummary ;
     rdfs:range xsd:boolean ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_fareConditionSummary_version.xsd"@en .
@@ -23294,7 +23295,7 @@ netex:penaltyIfWithoutTicket
 
 netex:providesCard
     a owl:DatatypeProperty ;
-    skos:definition "Whether the product provdies a card with it."@en ;
+    skos:definition "Whether the product provides a card with it."@en ;
     rdfs:domain netex:ConditionSummary ;
     rdfs:range xsd:boolean ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_fareConditionSummary_version.xsd"@en .
@@ -23357,7 +23358,7 @@ netex:tariffBasis_ConditionSummary
 
 netex:trainRestrictions
     a owl:DatatypeProperty ;
-    skos:definition "Restictions on which trains can be used."@en ;
+    skos:definition "Restrictions on which trains can be used."@en ;
     rdfs:domain netex:ConditionSummary ;
     rdfs:range xsd:normalizedString ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_fareConditionSummary_version.xsd (XSD type: TrainRestrictionsEnumeration)"@en .
@@ -23945,7 +23946,7 @@ netex:date_DayTypeAssignment
 
 netex:isAvailable
     a owl:DatatypeProperty ;
-    skos:definition "Whether availabel on assigned day"@en ;
+    skos:definition "Whether available on assigned day"@en ;
     rdfs:domain netex:DayTypeAssignment ;
     rdfs:range xsd:boolean ;
     rdfs:comment "Extracted from: netex_framework/netex_reusableComponents/netex_serviceCalendar_version.xsd"@en .
@@ -23966,7 +23967,7 @@ netex:label_Deck
 
 netex:fareClass_DeckComponent
     a owl:DatatypeProperty ;
-    skos:definition "Edit care class for which capacity is specifyed. Default is any, i.e. capacity is for all classes."@en ;
+    skos:definition "Edit care class for which capacity is specified. Default is any, i.e. capacity is for all classes."@en ;
     rdfs:domain netex:DeckComponent ;
     rdfs:range xsd:NMTOKEN ;
     rdfs:comment "Extracted from: netex_framework/netex_reusableComponents/netex_deckPlan_version.xsd (XSD type: FareClassEnumeration)"@en .
@@ -24414,7 +24415,7 @@ netex:tiltAngle_DeckPathLink
 
 netex:tiltType_DeckPathLink
     a owl:DatatypeProperty ;
-    skos:definition "Coded value of the maximum tilt. See allowed va;ues. +v1.1"@en ;
+    skos:definition "Coded value of the maximum tilt. See allowed values. +v1.1"@en ;
     rdfs:domain netex:DeckPathLink ;
     rdfs:range xsd:NMTOKEN ;
     rdfs:comment "Extracted from: netex_framework/netex_reusableComponents/netex_deckPath_version.xsd (XSD type: TiltTypeEnumeration)"@en .
@@ -24904,21 +24905,21 @@ netex:distributionChannelType_DistributionAssignment
 
 netex:distributionRights_DistributionAssignment
     a owl:DatatypeProperty ;
-    skos:definition "Override the folloing rights allowed by channel."@en ;
+    skos:definition "Override the following rights allowed by channel."@en ;
     rdfs:domain netex:DistributionAssignment ;
     rdfs:range xsd:normalizedString ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_salesOfferPackage_version.xsd (XSD type: DistributionRightsListOfEnumerations)"@en .
 
 netex:finalCarrier
     a owl:DatatypeProperty ;
-    skos:definition "Whetehr final carrier has rights."@en ;
+    skos:definition "Whether final carrier has rights."@en ;
     rdfs:domain netex:DistributionAssignment ;
     rdfs:range xsd:boolean ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_salesOfferPackage_version.xsd"@en .
 
 netex:initialCarrier
     a owl:DatatypeProperty ;
-    skos:definition "Wehther initial carrer has rights."@en ;
+    skos:definition "Whether initial carrier has rights."@en ;
     rdfs:domain netex:DistributionAssignment ;
     rdfs:range xsd:boolean ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_salesOfferPackage_version.xsd"@en .
@@ -24953,7 +24954,7 @@ netex:restrictedToChannel
 
 netex:transitCarrier
     a owl:DatatypeProperty ;
-    skos:definition "Whther intremediate transit carrier has rights."@en ;
+    skos:definition "Whether intermediate transit carrier has rights."@en ;
     rdfs:domain netex:DistributionAssignment ;
     rdfs:range xsd:boolean ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_salesOfferPackage_version.xsd"@en .
@@ -24967,7 +24968,7 @@ netex:distributionChannelType_DistributionChannel
 
 netex:distributionRights_DistributionChannel
     a owl:DatatypeProperty ;
-    skos:definition "Defaut distribution Rigts allowed by DISTRIBUTION CHANNEL."@en ;
+    skos:definition "Default distribution rights allowed by DISTRIBUTION CHANNEL."@en ;
     rdfs:domain netex:DistributionChannel ;
     rdfs:range xsd:normalizedString ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_salesDistribution_version.xsd (XSD type: DistributionRightsListOfEnumerations)"@en .
@@ -24988,7 +24989,7 @@ netex:paymentMethods_DistributionChannel
 
 netex:requiresEmailAddress
     a owl:DatatypeProperty ;
-    skos:definition "Whether use of the channel requries the pruchaser to have an email address."@en ;
+    skos:definition "Whether use of the channel requires the pruchaser to have an e-mail address."@en ;
     rdfs:domain netex:DistributionChannel ;
     rdfs:range xsd:boolean ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_salesDistribution_version.xsd"@en .
@@ -25156,7 +25157,7 @@ netex:originConstraint
 
 netex:periodConstraint
     a owl:DatatypeProperty ;
-    skos:definition "Constraints on valdity period."@en ;
+    skos:definition "Constraints on validity period."@en ;
     rdfs:domain netex:EntitlementConstraint ;
     rdfs:range xsd:normalizedString ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_usageParameterEntitlement_version.xsd (XSD type: SamePeriodEnumeration)"@en .
@@ -25715,7 +25716,7 @@ netex:mode_FareFrame
 
 netex:abridgementRanking
     a owl:DatatypeProperty ;
-    skos:definition "Relative ranking for omitting this FARE POINT IN JOURNEY PATTERN when presenting an abridged verson of the series. 1=High.- omit first."@en ;
+    skos:definition "Relative ranking for omitting this FARE POINT IN JOURNEY PATTERN when presenting an abridged version of the series. 1=High - omit first."@en ;
     rdfs:domain netex:FarePointInPattern ;
     rdfs:range xsd:integer ;
     rdfs:comment "Extracted from: netex_part_1/part1_tacticalPlanning/netex_fareZone_version.xsd"@en .
@@ -26730,7 +26731,7 @@ netex:advertised_Interchange
 
 netex:connectionCertainty
     a owl:DatatypeProperty ;
-    skos:definition "Nature of gurantee to conenction."@en ;
+    skos:definition "Nature of guarantee to connection."@en ;
     rdfs:domain netex:Interchange ;
     rdfs:range xsd:NMTOKEN ;
     rdfs:comment "Extracted from: netex_part_2/part2_journeyTimes/netex_interchange_version.xsd (XSD type: ConnectionCertaintyEnumeration)"@en .
@@ -27143,7 +27144,7 @@ netex:layover
 
 netex:connectingStopPointName
     a owl:DatatypeProperty ;
-    skos:definition "Name of CONNETCING STOP POINT."@en ;
+    skos:definition "Name of CONNECTING STOP POINT."@en ;
     rdfs:domain netex:JourneyMeeting ;
     rdfs:range xsd:string ;
     rdfs:comment "Extracted from: netex_part_2/part2_journeyTimes/netex_interchange_version.xsd (XSD type: MultilingualString)"@en .
@@ -27696,7 +27697,7 @@ netex:maximumLimitPrice
 
 netex:maximumLimitPriceAsPercentage
     a owl:DatatypeProperty ;
-    skos:definition "Maxumum Limit as percentage of whole price."@en ;
+    skos:definition "Maximum Limit as percentage of whole price."@en ;
     rdfs:domain netex:LimitingRule ;
     rdfs:range xsd:decimal ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_calculationParameters_version.xsd"@en .
@@ -27717,7 +27718,7 @@ netex:maximumPriceAsMultiple
 
 netex:maximumPriceAsPercentage
     a owl:DatatypeProperty ;
-    skos:definition "Maxumum price as percentage of whole price."@en ;
+    skos:definition "Maximum price as percentage of whole price."@en ;
     rdfs:domain netex:LimitingRule ;
     rdfs:range xsd:decimal ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_calculationParameters_version.xsd"@en .
@@ -27752,7 +27753,7 @@ netex:minimumPriceAsMultiple
 
 netex:minimumPriceAsPercentage
     a owl:DatatypeProperty ;
-    skos:definition "Minumum price as percentage of whole price."@en ;
+    skos:definition "Minimum price as percentage of whole price."@en ;
     rdfs:domain netex:LimitingRule ;
     rdfs:range xsd:decimal ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_calculationParameters_version.xsd"@en .
@@ -28270,7 +28271,7 @@ netex:hasDoor_LuggageSpotEquipment
 
 netex:headroomForLuggage
     a owl:DatatypeProperty ;
-    skos:definition "Height avilable for LUGGAGE"@en ;
+    skos:definition "Height available for LUGGAGE"@en ;
     rdfs:domain netex:LuggageSpotEquipment ;
     rdfs:range xsd:decimal ;
     rdfs:comment "Extracted from: netex_framework/netex_reusableComponents/netex_spotEquipment_version.xsd (XSD type: LengthType)"@en .
@@ -28368,7 +28369,7 @@ netex:maximumSpeed_MobilityServiceConstraintZone
 
 netex:ruleApplicability
     a owl:DatatypeProperty ;
-    skos:definition "Applicability of rule inside (defaut) or outside of zone"@en ;
+    skos:definition "Applicability of rule inside (default) or outside of zone."@en ;
     rdfs:domain netex:MobilityServiceConstraintZone ;
     rdfs:range xsd:string ;
     rdfs:comment "Extracted from: netex_part_5/part5_nd/netex_nm_mobilityServiceConstraintZone_version.xsd (XSD type: ZoneRuleApplicabilityEnumeration)"@en .
@@ -28718,7 +28719,7 @@ netex:tiltAngle_OffSitePathLink
 
 netex:tiltType_OffSitePathLink
     a owl:DatatypeProperty ;
-    skos:definition "Coded value of the maximum tilt. See allowed va;ues. +v1.1"@en ;
+    skos:definition "Coded value of the maximum tilt. See allowed values. +v1.1"@en ;
     rdfs:domain netex:OffSitePathLink ;
     rdfs:range xsd:NMTOKEN ;
     rdfs:comment "Extracted from: netex_part_1/part1_ifopt/netex_ifopt_path_version.xsd (XSD type: TiltTypeEnumeration)"@en .
@@ -29152,7 +29153,7 @@ netex:totalCapacity_Parking
 
 netex:numberOfBaysWithRecharging
     a owl:DatatypeProperty ;
-    skos:definition "Total number of parking places supportig Electirc car recharging in PARKING AREA."@en ;
+    skos:definition "Total number of parking places supporting electric car recharging in PARKING AREA."@en ;
     rdfs:domain netex:ParkingArea ;
     rdfs:range xsd:nonNegativeInteger ;
     rdfs:comment "Extracted from: netex_part_1/part1_ifopt/netex_ifopt_parking_version.xsd"@en .
@@ -29278,7 +29279,7 @@ netex:numberOfSpaces_ParkingCapacity
 
 netex:numberOfSpacesWithRechargePoint
     a owl:DatatypeProperty ;
-    skos:definition "Number of parking places with eletric chargepoints."@en ;
+    skos:definition "Number of parking places with electric chargepoints."@en ;
     rdfs:domain netex:ParkingCapacity ;
     rdfs:range xsd:nonNegativeInteger ;
     rdfs:comment "Extracted from: netex_part_1/part1_ifopt/netex_ifopt_parking_version.xsd (XSD type: NumberOfVehicles)"@en .
@@ -29551,7 +29552,7 @@ netex:entranceToVehicle_PassengerBoardingPositionAssignment
 
 netex:isAllowed_PassengerBoardingPositionAssignment
     a owl:DatatypeProperty ;
-    skos:definition "Whether assigment permits or forbids any use of TRAIN COMPONENT at specifed stop. Default is true. +V2.0"@en ;
+    skos:definition "Whether assignment permits or forbids any use of TRAIN COMPONENT at specified stop. Default is true. +V2.0"@en ;
     rdfs:domain netex:PassengerBoardingPositionAssignment ;
     rdfs:range xsd:boolean ;
     rdfs:comment "Extracted from: netex_part_1/part1_tacticalPlanning/netex_stopAssignment_version.xsd"@en .
@@ -29572,7 +29573,7 @@ netex:bicycleRackCapacity
 
 netex:fareClass_PassengerCapacity
     a owl:DatatypeProperty ;
-    skos:definition "Fare class for which capacity is specifyed. Default is any, i.e. capacity is for all FARE CLASSes."@en ;
+    skos:definition "Fare class for which capacity is specified. Default is any, i.e. capacity is for all FARE CLASSes."@en ;
     rdfs:domain netex:PassengerCapacity ;
     rdfs:range xsd:NMTOKEN ;
     rdfs:comment "Extracted from: netex_framework/netex_reusableComponents/netex_vehicleType_version.xsd (XSD type: FareClassEnumeration)"@en .
@@ -30020,7 +30021,7 @@ netex:transition_PathLinkInSequence
 
 netex:paymentAppDownloadUrl
     a owl:DatatypeProperty ;
-    skos:definition "URL to downlaod app to pay."@en ;
+    skos:definition "URL to download app to pay."@en ;
     rdfs:domain netex:PaymentByMobile ;
     rdfs:range xsd:anyURI ;
     rdfs:comment "Extracted from: netex_part_1/part1_ifopt/netex_ifopt_parking_version.xsd"@en .
@@ -30048,7 +30049,7 @@ netex:supportPhoneNumber
 
 netex:maximumNumberOfFailToCheckOutEvents
     a owl:DatatypeProperty ;
-    skos:definition "Lmit on the number of fail-to-checkout events allowed before suspension. +v1.1"@en ;
+    skos:definition "Limit on the number of fail-to-checkout events allowed before suspension. +v1.1"@en ;
     rdfs:domain netex:PenaltyPolicy ;
     rdfs:range xsd:integer ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_usageParameterCharging_version.xsd"@en .
@@ -30216,7 +30217,7 @@ netex:distance_PointProjection
 
 netex:mustReturnToSameBay
     a owl:DatatypeProperty ;
-    skos:definition "Whether a VEICLE must be returned to same bay as it was was taken from."@en ;
+    skos:definition "Whether a VEHICLE must be returned to same bay as it was was taken from."@en ;
     rdfs:domain netex:PoolOfVehicles ;
     rdfs:range xsd:boolean ;
     rdfs:comment "Extracted from: netex_part_5/part5_nd/netex_nm_mobilityServiceConstraintZone_version.xsd"@en .
@@ -30467,7 +30468,7 @@ netex:name_PricingRule
 
 netex:url
     a owl:DatatypeProperty ;
-    skos:definition "URLor rule. with infor fmethod to use."@en ;
+    skos:definition "URL for information about pricing rules / methods to be applied."@en ;
     rdfs:domain netex:PricingRule ;
     rdfs:range xsd:anyURI ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_calculationParameters_version.xsd"@en .
@@ -31328,7 +31329,7 @@ netex:name_ResidentialQualification
 
 netex:residenceType
     a owl:DatatypeProperty ;
-    skos:definition "Classifcation of type of residence required, e.g. live, work, study."@en ;
+    skos:definition "Classification of type of residence required, e.g. live, work, study."@en ;
     rdfs:domain netex:ResidentialQualification ;
     rdfs:range xsd:normalizedString ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_usageParameterEligibility_version.xsd (XSD type: ResidenceTypeEnumeration)"@en .
@@ -31482,7 +31483,7 @@ netex:name_RollingStockInventory
 
 netex:rollingStockType
     a owl:DatatypeProperty ;
-    skos:definition "Fixed classication of ROLLING STOCK ITEM."@en ;
+    skos:definition "Fixed classification of ROLLING STOCK ITEM."@en ;
     rdfs:domain netex:RollingStockItem ;
     rdfs:range xsd:NMTOKEN ;
     rdfs:comment "Extracted from: netex_framework/netex_reusableComponents/netex_vehicle_version.xsd (XSD type: TrainElementTypeTypeEnumeration)"@en .
@@ -31769,7 +31770,7 @@ netex:callButtonAvailable
 
 netex:changeAvailable
     a owl:DatatypeProperty ;
-    skos:definition "Whether chaneg is available. +v1.1"@en ;
+    skos:definition "Whether change is available. +v1.1"@en ;
     rdfs:domain netex:SanitaryEquipment ;
     rdfs:range xsd:boolean ;
     rdfs:comment "Extracted from: netex_part_1/part1_ifopt/netex_ifopt_equipmentPassenger_version.xsd"@en .
@@ -31937,7 +31938,7 @@ netex:label_ScheduledStopPoint
 
 netex:nameSuffix_ScheduledStopPoint
     a owl:DatatypeProperty ;
-    skos:definition "Optiona l Suffix for Name of SCHEDULED STOP POINT."@en ;
+    skos:definition "Optional suffix for Name of SCHEDULED STOP POINT."@en ;
     rdfs:domain netex:ScheduledStopPoint ;
     rdfs:range xsd:string ;
     rdfs:comment "Extracted from: netex_part_1/part1_tacticalPlanning/netex_servicePattern_version.xsd (XSD type: MultilingualString)"@en .
@@ -32168,7 +32169,7 @@ netex:itinerary
 
 netex:routingType_SeriesConstraint
     a owl:DatatypeProperty ;
-    skos:definition "Whether this is a direct i.e. no changes requried point to point or indirect."@en ;
+    skos:definition "Whether this is a direct i.e. no changes required point to point or indirect."@en ;
     rdfs:domain netex:SeriesConstraint ;
     rdfs:range xsd:normalizedString ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_fareSeries_version.xsd (XSD type: RoutingTypeEnumeration)"@en .
@@ -32189,7 +32190,7 @@ netex:seriesType
 
 netex:symbolMarkingUsualRoute
     a owl:DatatypeProperty ;
-    skos:definition "Symbal to us eto mark normal route."@en ;
+    skos:definition "Symbol to use to mark normal route."@en ;
     rdfs:domain netex:SeriesConstraint ;
     rdfs:range xsd:normalizedString ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_fareSeries_version.xsd"@en .
@@ -32889,7 +32890,7 @@ netex:tiltAngle_SitePathLink
 
 netex:tiltType_SitePathLink
     a owl:DatatypeProperty ;
-    skos:definition "Coded value of the maximum tilt. See allowed va;ues. +v1.1"@en ;
+    skos:definition "Coded value of the maximum tilt. See allowed values. +v1.1"@en ;
     rdfs:domain netex:SitePathLink ;
     rdfs:range xsd:NMTOKEN ;
     rdfs:comment "Extracted from: netex_part_1/part1_ifopt/netex_ifopt_path_version.xsd (XSD type: TiltTypeEnumeration)"@en .
@@ -33729,7 +33730,7 @@ netex:subscriptionRenewalPolicy
 
 netex:subscriptionTermType
     a owl:DatatypeProperty ;
-    skos:definition "Type of susbcription term, e.g. fixed, variable, etc."@en ;
+    skos:definition "Type of subscription term, e.g. fixed, variable, etc."@en ;
     rdfs:domain netex:Subscribing ;
     rdfs:range xsd:normalizedString ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_usageParameterCharging_version.xsd (XSD type: SubscriptionTermTypeEnumeration)"@en .
@@ -33862,7 +33863,7 @@ netex:returnFareTwiceSingle
 
 netex:tariffBasis_Tariff
     a owl:DatatypeProperty ;
-    skos:definition "Classification of Tariff Butasis. Defaut is Route (Tap TSI)"@en ;
+    skos:definition "Classification of TariffBasis. Default is Route (Tap TSI)."@en ;
     rdfs:domain netex:Tariff ;
     rdfs:range xsd:normalizedString ;
     rdfs:comment "Extracted from: netex_part_3/part3_fares/netex_fareStructureElement_version.xsd (XSD type: TariffBasisEnumeration)"@en .
@@ -34632,7 +34633,7 @@ netex:entranceToVehicle_TrainStopAssignment
 
 netex:isAllowed_TrainStopAssignment
     a owl:DatatypeProperty ;
-    skos:definition "Whether assigment permits or forbids any use of TRAIN COMPONENT at specifed stop. Default is true. +V2.0"@en ;
+    skos:definition "Whether assignment permits or forbids any use of TRAIN COMPONENT at specified stop. Default is true. +V2.0"@en ;
     rdfs:domain netex:TrainStopAssignment ;
     rdfs:range xsd:boolean ;
     rdfs:comment "Extracted from: netex_part_1/part1_tacticalPlanning/netex_stopAssignment_version.xsd"@en .
@@ -35534,7 +35535,7 @@ netex:journeyDuration_VehicleJourney
 
 netex:seatAllocationMethod_VehicleJourneySpotAllocation
     a owl:DatatypeProperty ;
-    skos:definition "Method used to allocate seat. Defult is autoassigned"@en ;
+    skos:definition "Method used to allocate seat. Default is autoassigned."@en ;
     rdfs:domain netex:VehicleJourneySpotAllocation ;
     rdfs:range xsd:normalizedString ;
     rdfs:comment "Extracted from: netex_part_3/part3_salesTransactions/netex_spotAllocation_version.xsd (XSD type: SeatAllocationMethodEnumeration)"@en .
@@ -35687,7 +35688,7 @@ netex:drivingLicenceVerified
 
 netex:drivingStyle
     a owl:DatatypeProperty ;
-    skos:definition "Preferrred style of driving."@en ;
+    skos:definition "Preferred style of driving."@en ;
     rdfs:domain netex:VehiclePoolingDriverInfo ;
     rdfs:range xsd:normalizedString ;
     rdfs:comment "Extracted from: netex_part_5/part5_fm/netex_nm_individualTraveller_version.xsd (XSD type: DrivingStyleEnumeration)"@en .
@@ -35771,7 +35772,7 @@ netex:maximumRentalPeriod
 
 netex:minimumRentalPeriod
     a owl:DatatypeProperty ;
-    skos:definition "Minmum time period for rental;"@en ;
+    skos:definition "Minimum time period for rental;"@en ;
     rdfs:domain netex:VehicleRentalService ;
     rdfs:range xsd:duration ;
     rdfs:comment "Extracted from: netex_part_5/part5_rc/netex_nm_mobilityService_version.xsd"@en .
@@ -35827,7 +35828,7 @@ netex:maximumSharingPeriod
 
 netex:minimumSharingPeriod
     a owl:DatatypeProperty ;
-    skos:definition "Minmum time period for sharing."@en ;
+    skos:definition "Minimum time period for sharing."@en ;
     rdfs:domain netex:VehicleSharingService ;
     rdfs:range xsd:duration ;
     rdfs:comment "Extracted from: netex_part_5/part5_rc/netex_nm_mobilityService_version.xsd"@en .
@@ -36176,7 +36177,7 @@ netex:numberOfWheelchairAreas
 
 netex:wheelchairTurningCircle_WheelchairVehicleEquipment
     a owl:DatatypeProperty ;
-    skos:definition "Height of Access Area."@en ;
+    skos:definition "Diameter of the turning circle available for a wheelchair."@en ;
     rdfs:domain netex:WheelchairVehicleEquipment ;
     rdfs:range xsd:decimal ;
     rdfs:comment "Extracted from: netex_framework/netex_reusableComponents/netex_equipmentVehiclePassenger_version.xsd (XSD type: LengthType)"@en .
