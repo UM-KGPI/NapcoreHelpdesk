@@ -20,7 +20,7 @@ The cut is not used by default: see index_builder.ExampleCut and the recut_examp
 
 Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
 Crafted by: AI coding agents
-Created: 2026-11-15  |  Modified: 2026-11-15
+Created: 2026-11-15  |  Modified: 2026-11-16
 """
 
 from __future__ import annotations
@@ -155,47 +155,63 @@ def _cut_text(text: str, start: int, end: int, limit: int, out: list[list[int]])
         out.append([part, end])
 
 
+class CharMeasure:
+    """The size of a piece in characters (the cut of step R0)."""
+
+    def __init__(self, limit: int):
+        self.limit = limit
+
+    def fits(self, start: int, end: int) -> bool:
+        return end - start <= self.limit
+
+    def cut_text(self, text: str, start: int, end: int, out: list[list[int]]) -> None:
+        _cut_text(text, start, end, self.limit, out)
+
+
 def _closing_only(text: str, start: int, end: int) -> bool:
     """True when [start, end) holds nothing but whitespace and end tags."""
     return not _END_TAG.sub("", text[start:end]).strip()
 
 
-def _cut(text: str, node: _Element, start: int, limit: int, out: list[list[int]]) -> None:
-    """Append pieces covering [start, node.end) to out; start may lie before the node (its leading content)."""
-    if node.end - start <= limit:
+def _cut(text: str, node: _Element, start: int, measure, out: list[list[int]]) -> None:
+    """Append pieces covering [start, node.end) to out; start may lie before the node (its leading content).
+
+    measure says whether a span fits (fits(start, end)) and cuts text that is not an element (cut_text)."""
+    fits = measure.fits
+    if fits(start, node.end):
         out.append([start, node.end])
         return
     if not node.children:
-        _cut_text(text, start, node.end, limit, out)
+        measure.cut_text(text, start, node.end, out)
         return
     run = start  # where the piece being gathered begins
     taken = start  # how far the content has been given to a piece or to the run
     for child in node.children:
-        if child.end - run <= limit:
+        if fits(run, child.end):
             taken = child.end
             continue
-        if child.end - child.start > limit and child.head_end - run <= limit:
+        if not fits(child.start, child.end) and fits(run, child.head_end):
             # The element is cut into its children; what was gathered before it opens its first piece.
-            _cut(text, child, run, limit, out)
+            _cut(text, child, run, measure, out)
             run = taken = child.end
             continue
         if run < taken:
             out.append([run, taken])
             run = taken
-        if child.end - run <= limit:
+        if fits(run, child.end):
             taken = child.end
             continue
-        if child.end - child.start <= limit:
+        if fits(child.start, child.end):
             # What comes before the element (comments, text, the parent's start tag) does not fit with it.
-            _cut_text(text, run, child.start, limit, out)
+            measure.cut_text(text, run, child.start, out)
             run, taken = child.start, child.end
             continue
-        _cut(text, child, run, limit, out)
+        _cut(text, child, run, measure, out)
         run = taken = child.end
     if run == taken and out and out[-1][1] == run and _closing_only(text, run, node.end):
         out[-1][1] = node.end  # closing tags stay with the piece they close
         return
-    if node.end - run <= limit:
+    if fits(run, node.end):
         out.append([run, node.end])
         return
     if run < taken:
@@ -204,7 +220,7 @@ def _cut(text: str, node: _Element, start: int, limit: int, out: list[list[int]]
     if out and out[-1][1] == run and _closing_only(text, run, node.end):
         out[-1][1] = node.end
     else:
-        _cut_text(text, run, node.end, limit, out)
+        measure.cut_text(text, run, node.end, out)
 
 
 def _path_at(document: _Element, position: int) -> tuple[str, ...]:
@@ -230,7 +246,12 @@ def cut_xml_example(text: str, max_chars: int) -> list[XmlPiece]:
         raise ValueError("max_chars must be positive")
     document = parse_elements(text)
     spans: list[list[int]] = []
-    _cut(text, document, 0, max_chars, spans)
+    _cut(text, document, 0, CharMeasure(max_chars), spans)
+    return pieces_of(text, document, spans)
+
+
+def pieces_of(text: str, document: _Element, spans: list[list[int]]) -> list[XmlPiece]:
+    """The pieces of the spans of a cut, without the whitespace-only ones, each with its place."""
     pieces: list[XmlPiece] = []
     for start, end in spans:
         body = text[start:end]
@@ -249,9 +270,10 @@ def cut_xml_example(text: str, max_chars: int) -> list[XmlPiece]:
     return pieces
 
 
-def piece_spans(text: str, max_chars: int) -> list[tuple[int, int]]:
-    """The raw spans of the cut, whitespace-only ones included: they cover the document exactly, in order."""
+def piece_spans(text: str, max_chars: int = 0, measure=None) -> list[tuple[int, int]]:
+    """The raw spans of the cut, whitespace-only ones included: they cover the document exactly, in order.
+    The size is max_chars characters, or what measure says (see _cut)."""
     document = parse_elements(text)
     spans: list[list[int]] = []
-    _cut(text, document, 0, max_chars, spans)
+    _cut(text, document, 0, measure or CharMeasure(max_chars), spans)
     return [(s, e) for s, e in spans]

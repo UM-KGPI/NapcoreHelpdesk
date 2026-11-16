@@ -33,6 +33,7 @@ from django.db import connection, models, transaction
 from helpdesk.models import SourceChunk
 from helpdesk.services.embeddings import build_text_embeddings_batch
 from helpdesk.services.index_builder import build_chunk_embedding_text
+from helpdesk.services.prepared_cut import embedded_text
 
 BATCH_SIZE = 128
 VECTOR_INDEX = "sourcechunk_embedding_ivfflat_idx"
@@ -68,11 +69,12 @@ def fill_alternate_vectors(backend: str, log=lambda message: None) -> int:
             chunks = list(
                 SourceChunk.objects.select_for_update()
                 .filter(pk__in=pks, alternate_vector__isnull=True)
-                .only("pk", "text", "doc_type", "chunk_type", "heading", "standards_scope", "repository_url", "source_path")
+                .only("pk", "text", "doc_type", "chunk_type", "heading", "standards_scope", "repository_url", "source_path",
+                      "structured_metadata")
             )
             inputs = [
                 build_chunk_embedding_text(
-                    chunk_text=chunk.text,
+                    chunk_text=embedded_text(chunk.text, chunk.structured_metadata),
                     doc_type=chunk.doc_type,
                     chunk_type=chunk.chunk_type,
                     heading=chunk.heading,
