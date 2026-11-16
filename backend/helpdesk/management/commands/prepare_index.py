@@ -11,7 +11,9 @@ docs/ for EU legislation, NAPCORE, DATEX II and INSPIRE), checks that today's cu
 the indexed chunks (so only the cut changes, not the content; a file that differs is left as it is and
 counted), cuts it anew, leaves out near-empty pieces and exact duplicates, embeds the pieces whose embedded text
 is new (a piece whose embedded text equals an indexed chunk's keeps that vector) and replaces the file's chunks
-in one transaction. A file already cut this way is skipped, so a stopped run can be started again.
+in one transaction. A file already cut this way is skipped, so a stopped run can be started again. With --recut
+a file already cut is cut again with today's cut and replaced only when its pieces change (a repair of the cut
+applied to a copy built before it); --kinds limits it to the kinds the repair is for.
 
     python manage.py prepare_index --database napcore_helpdesk_copy \
         --checkout https://github.com/TransmodelEcosystem/NeTEx=/path/to/NeTEx ... [--dry-run] [--report out.json]
@@ -86,6 +88,10 @@ class Command(BaseCommand):
         parser.add_argument("--report", default="", help="Write the statistics per kind to this JSON file.")
         parser.add_argument("--kinds", default="", help="Only these kinds (comma-separated), for trials.")
         parser.add_argument("--max-files", type=int, default=0, help="Only this many files per kind, for trials.")
+        parser.add_argument(
+            "--recut", action="store_true",
+            help="Cut files already cut again with today's cut; a file whose pieces stay the same is left as it is.",
+        )
 
     # ------------------------------------------------------------------------------------------- jobs
 
@@ -269,16 +275,20 @@ class Command(BaseCommand):
             if not rows:
                 stats[kind]["no rows"] += 1
                 continue
-            if all((r["structured_metadata"] or {}).get(pc.META_KEY, {}).get("v") == pc.CUT_VERSION for r in rows):
+            already_cut = all((r["structured_metadata"] or {}).get(pc.META_KEY, {}).get("v") == pc.CUT_VERSION for r in rows)
+            if already_cut and not options["recut"]:
                 stats[kind]["already cut"] += 1
                 for r in rows:
                     seen[r["doc_type"]].add(r["text"])
                 continue
-            today = job.reproduce()
-            if today is None or collections.Counter(today) != collections.Counter(r["text"] for r in rows):
-                stats[kind]["not covered: source differs from the index"] += 1
-                stats[kind]["rows kept as they are"] += len(rows)
-                continue
+            # A file cut before was checked against its source then; its rows no longer hold the old cut to
+            # check against again.
+            if not already_cut:
+                today = job.reproduce()
+                if today is None or collections.Counter(today) != collections.Counter(r["text"] for r in rows):
+                    stats[kind]["not covered: source differs from the index"] += 1
+                    stats[kind]["rows kept as they are"] += len(rows)
+                    continue
             counter.clear()
             result = job.cut(counter)
             if result is None:
@@ -306,6 +316,13 @@ class Command(BaseCommand):
             stats[kind]["inside (text heuristic)"] += sum(_heuristic_inside(kind, p.body) for p in kept)
             stats[kind]["over the limit"] += sum(p.tokens > limit for p in kept)
             tokens[kind].extend(p.tokens for p in kept)
+            if already_cut:
+                if collections.Counter(p.text for p in kept) == collections.Counter(r["text"] for r in rows):
+                    stats[kind]["cut again, unchanged"] += 1
+                    continue
+                stats[kind]["cut again, changed"] += 1
+                stats[kind]["rows of changed files before"] += len(rows)
+                stats[kind]["rows of changed files after"] += len(kept)
             if dry:
                 if number % 50 == 0:
                     self.stdout.write(f"{number}/{len(jobs)} files, {time.monotonic() - started:.0f} s")

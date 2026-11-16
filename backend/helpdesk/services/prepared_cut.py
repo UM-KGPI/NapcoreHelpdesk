@@ -51,6 +51,9 @@ _LINE_END_PUNCTUATION = re.compile(r"[.!?:;]\s*$")
 _NEXT_CHAR = re.compile(r"[ \t]*(\S?)")
 # A line that opens a list item, a numbered clause or a table-like row by its own form.
 _ITEM_START = re.compile(r"^\s*(?:[-*+•●▪◦–—]\s|\(?\d+[.)]\s|\(?[A-Za-z][.)]\s|[A-Z]{0,2}\d+(?:\.\d+)+\.?\s)")
+# A line that goes on with prose starts with a word, a number or an opening bracket or quote; one that starts with
+# markup (<tag>, a table or block delimiter, an attribute line) is code or structure, not a wrapped sentence.
+_PROSE_START = re.compile(r"[^\W_]|[(\"'“‘]")
 # Hard-wrapped text has lines up to a bounded width; lines of a web page can run to a whole paragraph.
 MIN_WRAP_WIDTH = 50
 MAX_WRAP_WIDTH = 200
@@ -192,13 +195,13 @@ def wrap_width(lengths: list[int]) -> int:
 def line_continues(before: str, after: str, width: int = 0) -> bool:
     """Whether the line break between two lines is only a wrap: the line before does not end a sentence, and the
     next line starts in lower case, or (in text wrapped at width) the line before fills the width and the next line
-    is not a table row and does not start a list item or numbered clause by its own form."""
+    is not a table row, starts with prose and does not start a list item or numbered clause by its own form."""
     before, after = before.rstrip(), after.lstrip()
     if not before or not after or _LINE_END_PUNCTUATION.search(before):
         return False
     if after[0].islower():
         return True
-    if "|" in before or "|" in after or _ITEM_START.match(after):
+    if "|" in before or "|" in after or _ITEM_START.match(after) or not _PROSE_START.match(after):
         return False
     return bool(width) and len(before) >= 0.85 * width
 

@@ -214,6 +214,19 @@ class UnitTests(SimpleTestCase):
         self.assertEqual(pc.joined_lines(lines), lines)
         self.assertEqual(len(pc.line_spans("\n".join(lines))), len(lines))
 
+    def test_code_and_markup_lines_that_fill_the_width_are_not_joined(self):
+        # A long XML line in a code listing and a table delimiter fill the width the text is wrapped at; the next
+        # line starts with markup, so the break is not a wrap.
+        prose = "A line of text that is wrapped at the width the document uses and it carries on"
+        lines = [prose, prose, prose,
+                 "<se:Abstract>The fill is red and the outline is black and thin</se:Abstract>",
+                 "</se:Description>",
+                 "Network:Link is drawn as a line with a casing that is two pixels wide and black",
+                 "!===",
+                 "[cols=\"\",]"]
+        self.assertEqual(pc.joined_lines(lines), ["\n".join(lines[:3]), *lines[3:]])
+        self.assertEqual(len(pc.line_spans("\n".join(lines))), 6)
+
     def test_short_lines_without_a_sentence_end_are_not_joined(self):
         # A title, a key and a value are short lines: not wrapped text, so a capital starts a new unit.
         lines = ["Status: Final draft", "Version: 1.0", "Date: January 29, 2025", "Legal disclaimer"] * 3
