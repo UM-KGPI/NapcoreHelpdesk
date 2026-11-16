@@ -148,9 +148,6 @@ env = environ.Env(
     # The index is cut with the prepared cut (services/prepared_cut.py): passages are read with their unit around
     # them (services/read_large.py) and limits meant for files count files, not pieces. Off: as before.
     RETRIEVAL_PREPARED_INDEX=(bool, False),
-    # No kind of source (doc_type) takes all the passages while another kind has a candidate above the score limit
-    # (retrieval_gateway._share_places_among_kinds). Off: as before.
-    RETRIEVAL_KINDS_SHARE_PLACES=(bool, False),
     RETRIEVAL_SCORING_CANDIDATE_CAP=(int, 32),
     RETRIEVAL_GRAPH_PRESELECT_MULTIPLIER=(float, 2.0),
     RETRIEVAL_LEXICAL_PRESELECT_RESERVE=(int, 8),
@@ -484,7 +481,6 @@ GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS = env("GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS
 RETRIEVAL_DIVERSITY_ENABLED = env("RETRIEVAL_DIVERSITY_ENABLED")
 RETRIEVAL_MAX_SAME_SOURCE_PATH = env("RETRIEVAL_MAX_SAME_SOURCE_PATH")
 RETRIEVAL_PREPARED_INDEX = env("RETRIEVAL_PREPARED_INDEX")
-RETRIEVAL_KINDS_SHARE_PLACES = env("RETRIEVAL_KINDS_SHARE_PLACES")
 RETRIEVAL_SCORING_CANDIDATE_CAP = env("RETRIEVAL_SCORING_CANDIDATE_CAP")
 RETRIEVAL_GRAPH_PRESELECT_MULTIPLIER = env("RETRIEVAL_GRAPH_PRESELECT_MULTIPLIER")
 RETRIEVAL_LEXICAL_PRESELECT_RESERVE = env("RETRIEVAL_LEXICAL_PRESELECT_RESERVE")
