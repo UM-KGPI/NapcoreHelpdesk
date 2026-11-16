@@ -199,3 +199,109 @@ checked by the validator separately).
    one controller call to questions the keyword rules refuse, 26 of the 324 web questions in the log (8 %).
 2. Accept the generated NeTEx, SIRI and OpRa ontology files as citation sources (F1), as `transmodel.ttl` is.
 3. Whether to take on the retrieval faults of cause B (§3) as their own plan.
+
+## 7. Questions sent with a scope (2026-11-15, against 0.97.221): gate not met, code reverted
+
+**Verdict: the gate is not met, so the change is reverted on the branch** (commit kept in its history). The fix does
+what it was meant to: the five vague must-refuse questions that a scope let through are refused under every
+scope. It fails the gate on two counts: one must-refuse question was answered under a scope in 1 of 30 runs
+(a question the screen never sees, answered on main at the same rate), and one answerable Slovenian question
+was refused under its fitting scopes in all runs.
+
+### 7.1 Diagnosis
+
+Verified in the code and by calling `_parse_question` and `semantic_abstention_message` by hand (check enabled,
+model mocked to IRRELEVANT): "Is this mandatory?", "Explain the data format.", "What are the rules?", "Can you
+help me?", "What is the weather?" and "How do I describe a lift in a station?" are refused without a scope and
+answered with NeTEx or EU legislation as scope, and the check is not called (**measured**). The cause is as
+stated in the clarifying-choice record (§8): `has_scope_hint` is true for any non-empty scope, so neither keyword
+rule fires, and the check is only asked after a keyword refusal.
+
+It explains only part of the leaks C0 counted. Of the 25 must-refuse questions, 14 are refused by the keyword
+rules without a scope (**measured**); the scope bypass concerns those. Five of them were answered under a scope
+in C0 ("Can you help me?", "What should I do first?", "Explain the data format.", "What are the rules?", "Is this
+mandatory?", 67 runs). The other questions C0 saw answered under a scope ("How does it work?", the two GTFS
+comparisons, "is croatian NAP good?", "What is the formal W3C or OGC ontology for NeTEx concepts?") pass the
+keyword rules without a scope too, because they name a standard or a CamelCase term or match a concept; the
+screen never sees them with or without a scope, and their answers come from the answer model's verdict (R4)
+varying between runs.
+
+### 7.2 Design
+
+- Check on: a scoped question is judged by the parse of the question as if asked without the scope (the same
+  parse, English rendering included, an unscoped question gets). When the keyword rules would refuse that, the
+  check is asked; IRRELEVANT refuses with the "This helpdesk answers questions about …" message, RELEVANT and a
+  failed call answer within the scope. When the keyword rules let it through, nothing is asked.
+- Check off: unchanged, a scoped question is never refused by the keyword rules. Refusing it would refuse
+  "How do I describe a lift in a station?" with NeTEx, which is answered from LiftEquipment today; nothing
+  general separates it from "Is this mandatory?" without the model.
+- What the check is told: the question only, not the scope. Measured with the controller model as configured on
+  dev, 3 calls each, on the questions the keyword rules refuse:
+
+| Prompt | 14 must-refuse × 10 scopes: IRRELEVANT | 14 answerable × fitting scopes: RELEVANT |
+|---|---|---|
+| unchanged (scope not told) | 42 of 42 (the verdict does not depend on the scope) | 42 of 42 |
+| told "The user asked the question within this source: X." | 403 of 420 ("Explain the data format." accepted under DATEX II, NeTEx, OpRa, SIRI, TN-ITS 3 of 3, NAPCORE 1; "Is this mandatory?" under TN-ITS 1) | 54 of 54 |
+| the same plus "Naming a source does not make a vague question specific …" | 420 of 420 | 42 of 54 (rejects "Kaj so to metapodatki?", "How to model number of late journeys?", the static/dynamic data questions under the legislation) |
+
+  The model does see a vague question as specific when a source is named next to it; telling it the scope
+  lets "Explain the data format." through, and warning it against that rejects answerable questions. Not told.
+
+### 7.3 Gate results (dev, branch on a host server with `RELEVANCE_CHECK_ENABLED=True`, 3 runs each)
+
+| # | Criterion | Result | |
+|---|---|---|---|
+| 1 | Must-refuse, every scope: 0 answered that are refused without a scope | 1 question: "Is it ok to round ExpectedArrivalTime …" under EU legislation, 1 of 3 runs | not met |
+| 2 | 23 wrongly refused, fitting scope: not fewer than C0's 43 of 69 beyond spread | 41 of 69 (C0 43, main the same day 45); "Kaj so to metapodatki?" refused at the screen in all 9 scoped runs | not met |
+| 3 | Unscoped screen decisions unchanged | identical on all 235 questions (refused-questions, benchmark, probe set) for each model verdict | met |
+| 4 | Check off: scoped behaviour as designed | tests: answered, no parse and no call | met |
+| 5 | CI retrieval benchmark not below baseline; benchmark questions not newly refused | passed on the fix commit (baseline hit@10 0.483, MRR@10 0.266; graph-RAG 0.497, 0.281; gate passed against `ci-baseline.json`); the 149 benchmark entries have identical screen decisions (row 3) | met |
+| 6 | Cost | below | stated |
+
+**1. Must-refuse set** (825 requests, 25 questions × (10 scopes + none) × 3). The 14 questions the keyword rules
+refuse were refused at the screen in all 420 scoped runs; C0 answered 67 runs of five of them. Answered under a
+scope on the branch:
+
+| Question | C0 (main) | Branch | Judged against |
+|---|---|---|---|
+| How does it work? | none 1, Transmodel 1, EU legislation 3, mobilityDCAT-AP 2, NAPCORE 1, DATEX II 2 | none 1, NeTEx 2, SIRI 1, EU legislation 3, mobilityDCAT-AP 3, DATEX II 3 | unscoped (answered 1 of 3 without a scope) |
+| What does GTFS say about stop times? | none 3 | none 3, NeTEx 1 | unscoped (answered 3 of 3) |
+| What does NeTEx say about the colour of bus seats? | none 1 | NeTEx 1 | unscoped (names NeTEx: the NeTEx scope is its unscoped search) |
+| Is it ok to round ExpectedArrivalTime and ExpectedDepartureTime …? | — | EU legislation 1 | refused without a scope: fails criterion 1 |
+| Two GTFS comparisons, croatian NAP, W3C ontology | NeTEx 1, OpRa 1, Transmodel 1, Transmodel 2 | — | variance (none of these is seen by the screen) |
+
+The rounding question names two CamelCase elements, so the keyword rules let it through with and without a
+scope; the change does not touch its path. Asked 24 more times with the EU legislation scope: main answered 2 of
+24, the branch 2 of 24 (**measured**). Its answer says the evidence has no rounding rule, then describes the TEL
+TSI forecast message: a grounded non-answer from the answer model, as C0 read for the others.
+
+**2. The 23 wrongly refused questions.** With the first fitting scope: C0 43, main the same day 45, branch 41 of
+69. Spread: C0 and main the same day differ by 2; the per-pair binomial spread of the total is about 1.2 runs. The
+branch's deficit against the same-day main is 4: "Kaj so to metapodatki?" refused at the screen in 3 of 3 runs
+under mobilityDCAT-AP (and under EU legislation and NAPCORE), 1 run of variance. With the controller's first
+option: C0 37, main the same day 39, branch 35, the same question. Reading: the check judges "Kaj so to
+metapodatki?" RELEVANT in 13 of 20 calls, its English rendering "What is metadata?" in 0 of 20 (**measured**).
+`_ask` is cached per process, so one IRRELEVANT verdict refuses the question until the backend restarts
+(**believed**: all 9 scoped runs refused after the first calls, consistent with the cache; not traced). Without a
+scope the same verdict refuses it today with the check on; with a scope it newly refuses an answer main gives
+from mobilityDCAT-AP. The other answers that changed: "Kaj je vozni red avtobusa?" with NeTEx went from 2 to 3 of
+3, as on main the same day.
+
+**3. Unscoped behaviour.** `_parse_question` and `semantic_abstention_message` called as the answer view calls
+them, on main and the branch, for the 48 refused questions, the 149 benchmark entries and the 38 probe questions,
+with the model mocked to RELEVANT, IRRELEVANT and failing: same decisions and same questions put to the model,
+byte-identical output (**measured**).
+
+**6. Cost**, with the check on: every scoped question gets a second parse without the scope (0.37 s mean, 1.8 s
+max on dev, no model call); a scoped question the keyword rules would refuse also gets one controller call (1.1 s
+mean, 3.8 s max, cached per question). The chat page sends no scope, so today only API clients pay it. With
+the check off: nothing.
+
+### 7.4 What would be needed
+
+- The rounding question: an under-scope leak of the answer model's verdict (R4), present on main. No screen
+  reaches it; it belongs with the "the model's verdict" fault of §3.
+- "Kaj so to metapodatki?" + mobilityDCAT-AP: the check sees "what is metadata" as too vague, which it is
+  without the scope. The two prompt variants measured either let vague questions through under a scope or reject
+  this one.
+- The relevance check's cache keeps a wrong verdict for the life of the process; the same holds without a scope.

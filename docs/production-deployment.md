@@ -787,7 +787,10 @@ confirm it cites the SIRI repository. Only then switch on the daily refresh (7.3
 `RELEVANCE_CHECK_ENABLED` is off by default. When on, a question the keyword rules refuse (no standards concept
 matched, no standard and no artifact named) is put to the controller model, which answers RELEVANT or
 IRRELEVANT; RELEVANT answers it, a failed call keeps the keyword refusal. Questions the keyword rules let through
-are not asked about. Measured effect: `docs/plans/2026-11-14-refused-questions.md`. First prove the model call works from the server (it prints `None` when it does not):
+are not asked about. A question sent with a `standardsScope` (API clients; the chat page sends none) is neither
+refused by the keyword rules nor put to the check, with the check on or off, so "Is this mandatory?" with a
+scope reaches the answer model (a fix was measured and reverted, record §7). Measured effect:
+`docs/plans/2026-11-14-refused-questions.md`. First prove the model call works from the server (it prints `None` when it does not):
 
 ```bash
 $C exec -T backend python manage.py shell -c "
