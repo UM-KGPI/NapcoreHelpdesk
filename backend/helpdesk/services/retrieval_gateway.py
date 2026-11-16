@@ -1254,6 +1254,36 @@ def _ensure_source_coverage(
     return (leading + covering + rest)[:top_k]
 
 
+def _source_kind(candidate: dict) -> str:
+    return str(candidate.get("docType") or candidate.get("chunkType") or "").lower()
+
+
+def _share_places_among_kinds(selected: list[dict], candidates: list[dict], min_score: float, top_k: int) -> list[dict]:
+    """No kind of source takes all the places while another kind has a candidate above the score limit.
+
+    A kind is the doc_type of a passage (example, schema, readme, napcore, ...; for passages made at answer time
+    their own type). With pieces that fit the embedder an example file has about three times as many pieces as
+    before, and the six places could all go to examples while the schema declaration or README a question needs
+    stood just below them (plan 2026-11-15, design point 5). When every chosen passage is of one kind, the best
+    candidate of another kind that reaches min_score takes the last place. Candidates are in rank order.
+    """
+    if not selected or top_k <= 0:
+        return selected
+    kinds = {_source_kind(c) for c in selected}
+    if len(kinds) != 1:
+        return selected
+    (kind,) = kinds
+    chosen = {id(c) for c in selected}
+    other = next(
+        (c for c in candidates
+         if id(c) not in chosen and _source_kind(c) != kind and float(c.get("score") or 0.0) >= min_score),
+        None,
+    )
+    if other is None:
+        return selected
+    return (selected if len(selected) < top_k else selected[:-1]) + [other]
+
+
 def _concept_element_boost(doc_type: str, chunk_text: str, element_names: list[str]) -> float:
     """Prefer the chunk of a file that actually contains the asked element.
 
@@ -2728,6 +2758,9 @@ def _retrieve_chunks_once(
         probe("top_k", trimmed)
     trimmed = _ensure_element_coverage(trimmed, candidates, question_element_names, top_k)
     trimmed = _ensure_source_coverage(trimmed, candidates, _question_service_paths(question), top_k)
+    if getattr(settings, "RETRIEVAL_KINDS_SHARE_PLACES", False):
+        # After the coverage steps, so the chunks they put in keep their places.
+        trimmed = _share_places_among_kinds(trimmed, candidates, min_score, top_k)
     if probe is not None:
         probe("coverage", trimmed)
     # A question about a standard's legal status ("Is NeTEx mandatory in the EU?") gets the provisions that
