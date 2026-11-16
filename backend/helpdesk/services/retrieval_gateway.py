@@ -333,6 +333,11 @@ TEXT_SEARCH_MATCH = "to_tsvector('english'::regconfig, text) @@ to_tsquery('simp
 RARE_TERM_MAX_CHUNKS = 200
 
 
+def prepared_index() -> bool:
+    """settings.RETRIEVAL_PREPARED_INDEX: the index is cut with the prepared cut (see config/settings.py)."""
+    return bool(getattr(settings, "RETRIEVAL_PREPARED_INDEX", False))
+
+
 def _question_lexemes(question: str) -> list[str]:
     """The question's terms as the English text-search configuration stems them ("roadworks" -> "roadwork")."""
     with connection.cursor() as cursor:
@@ -356,7 +361,12 @@ def _rare_lexemes(lexemes: list[str], scope: list[str] | None) -> list[str]:
         if lexeme in STANDARD_NAME_LEXEMES:
             continue
         matches = filtered.extra(where=[TEXT_SEARCH_MATCH], params=[lexeme])
-        if 0 < len(matches.values_list("id", flat=True)[: RARE_TERM_MAX_CHUNKS + 1]) <= RARE_TERM_MAX_CHUNKS:
+        if prepared_index():
+            # A prepared index has more pieces per file: the limit counts files, as the chunks of the old cut did.
+            found = len(matches.values_list("repository_url", "source_path").distinct()[: RARE_TERM_MAX_CHUNKS + 1])
+        else:
+            found = len(matches.values_list("id", flat=True)[: RARE_TERM_MAX_CHUNKS + 1])
+        if 0 < found <= RARE_TERM_MAX_CHUNKS:
             rare.append(lexeme)
     return rare
 
@@ -554,8 +564,9 @@ def _linked_provision_candidates(standards: list[str], score: float, acts: list[
 
 
 def _added_candidate(chunk: SourceChunk, score: float) -> dict:
-    """A chunk added next to the ranked evidence, in the shape retrieval returns."""
-    return {
+    """A chunk added next to the ranked evidence, in the shape retrieval returns (with its unit around it when the
+    index is prepared, as the ranked evidence)."""
+    candidate = {
         "text": chunk.text,
         "score": score,
         "repositoryUrl": chunk.repository_url,
@@ -571,6 +582,11 @@ def _added_candidate(chunk: SourceChunk, score: float) -> dict:
         "structuredMetadata": chunk.structured_metadata or {},
         "retrievalEventId": f"re-{uuid4().hex[:8]}",
     }
+    if prepared_index():
+        from helpdesk.services.read_large import read_large
+
+        candidate = read_large([candidate])[0][0]
+    return candidate
 
 
 # (repository, tags) -> ((id, source_path, label, heading, quality_score) rows of the example chunks using all the
@@ -1141,11 +1157,15 @@ def _element_candidate_ids(name: str, per_element: int) -> tuple[int, ...]:
     if cached is not None and cached[1] > now:
         return cached[0]
     tag_match = Q(text__contains=f"<{name} ") | Q(text__contains=f"<{name}>") | Q(text__contains=f"<{name}/")
-    ids = tuple(
-        SourceChunk.objects.filter(tag_match, doc_type__in=("example", "schema"))
-        .order_by("-quality_score", "id")
-        .values_list("id", flat=True)[:per_element]
-    )
+    rows = SourceChunk.objects.filter(tag_match, doc_type__in=("example", "schema"))
+    if prepared_index():
+        # One piece per file first (its best), so the places go to as many files as with the old cut.
+        best = rows.order_by("repository_url", "source_path", "-quality_score", "id").distinct("repository_url", "source_path")
+        ids = tuple(
+            i for _, i in sorted((-q, i) for i, q in best.values_list("id", "quality_score"))[:per_element]
+        )
+    else:
+        ids = tuple(rows.order_by("-quality_score", "id").values_list("id", flat=True)[:per_element])
     _ELEMENT_CANDIDATE_CACHE[key] = (ids, now + _ELEMENT_CANDIDATE_TTL_SECONDS)
     return ids
 
@@ -1627,7 +1647,14 @@ def _alias_matches(alias: str, scope: list[str] | None, base_queryset) -> tuple[
     cached = _ALIAS_MATCH_CACHE.get(key)
     if cached is not None and cached[1] > now:
         return cached[0]
-    if max_chunks > 0:
+    if max_chunks > 0 and prepared_index():
+        # A prepared index has more pieces per file: the bound counts files, as the chunks of the old cut did.
+        files = (
+            base_queryset.filter(models.Q(source_path__icontains=alias) | models.Q(label__icontains=alias))
+            .order_by().values_list("repository_url", "source_path").distinct()[: max_chunks + 1]
+        )
+        matches = None if len(files) > max_chunks else tuple(_alias_rows(alias, base_queryset, None))
+    elif max_chunks > 0:
         rows = _alias_rows(alias, base_queryset, max_chunks + 1)
         matches = None if len(rows) > max_chunks else tuple(rows)
     else:
@@ -1907,6 +1934,12 @@ def _retrieve_chunks_with_trace_untimed(
         if (probe := _retrieval_probe.get()) is not None:
             probe("merged", chunks)
     result = _with_scope_coverage(english or question, chunks, trace, arguments)
+    if prepared_index():
+        from helpdesk.services.read_large import read_large
+
+        started = time.perf_counter()
+        grown_chunks, grown = read_large(result[0])
+        result = (grown_chunks, {**result[1], "readLarge": {"grown": grown, "ms": round((time.perf_counter() - started) * 1000)}})
     if (probe := _retrieval_probe.get()) is not None:
         probe("returned", result[0])
     return result

@@ -841,6 +841,15 @@ def has_tag(name: str):
     return Q(text__contains=f"<{name}>") | Q(text__contains=f"<{name} ") | Q(text__contains=f"<{name}\n") | Q(text__contains=f"<{name}/>")
 
 
+def _files(rows):
+    """rows (a values() query of file fields) made distinct per file: the model's default ordering otherwise adds
+    quality_score and chunk_id to SELECT DISTINCT, so the rows are per chunk. Only with a prepared index (more
+    pieces per file, settings.RETRIEVAL_PREPARED_INDEX); else as before."""
+    from django.conf import settings
+
+    return rows.order_by() if getattr(settings, "RETRIEVAL_PREPARED_INDEX", False) else rows
+
+
 _PART = re.compile(
     r"\b(?:with|having|has|have|containing|including|that\s+has)\s+(?:an?|one|some|any|several)\s+"
     r"([A-Za-z][\w-]*(?:\s+(?!and\b|or\b|in\b|for\b|with\b|of\b)[a-z][\w-]*)?)",
@@ -1374,7 +1383,7 @@ def condition_example(element: str, asked: str = "") -> dict | None:
     if cached is not None and cached[1] > time.monotonic():
         return cached[0]
     base = SourceChunk.objects.filter(repository_url__icontains="netex", source_path__startswith="examples/")
-    rows = list(base.filter(has_tag(element)).values("source_path", "repository_url").distinct()[:MAX_CONDITION_FILES])
+    rows = list(_files(base.filter(has_tag(element)).values("source_path", "repository_url")).distinct()[:MAX_CONDITION_FILES])
     parser = etree.XMLParser(resolve_entities=False, load_dtd=False, no_network=True, huge_tree=False, remove_blank_text=True, remove_comments=True)
     local = lambda tag: etree.QName(tag).localname if isinstance(tag, str) else ""  # noqa: E731
     checkout_root = Path(getattr(settings, "SOURCE_CHECKOUT_DIR", "/app/repos"))
@@ -1619,7 +1628,7 @@ def asked_from_parts(question: str) -> tuple[str, list[frozenset[str]]]:
             condition = None
             for name in sorted(names):
                 condition = has_tag(name) if condition is None else condition | has_tag(name)
-            for row in base.filter(condition).values("source_path", "repository_url").distinct()[:2000]:
+            for row in _files(base.filter(condition).values("source_path", "repository_url")).distinct()[:2000]:
                 paths[row["source_path"]] += 1
                 repositories[row["source_path"]] = row["repository_url"]
         local = lambda tag: etree.QName(tag).localname if isinstance(tag, str) else ""  # noqa: E731
