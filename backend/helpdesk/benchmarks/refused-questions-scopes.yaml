@@ -1,0 +1,100 @@
+version: "1.0"
+description: >
+  The fitting scope(s) for each answerable question of refused-questions.yaml: the value(s) of standardsScope
+  whose indexed sources answer it, judged by looking for the answering passage in the dev index (2026-11-14).
+  `fit` lists every scope that fits, the best first; `sources` are parts of the source path (or repository URL)
+  of the passages that answer, used to tell an answer from the wanted source from one beside the point; `note`
+  says what answers and any doubt. Used by measure_scope_options (plan 2026-11-14-clarifying-choice, C0).
+questions:
+  - id: k01
+    fit: [EU legislation]
+    sources: ["02017R1926", "32024R0490", "02010L0040", "32023L2661"]
+    note: MMTIS Art. 4 and 5 name the formats (NeTEx, SIRI, DATEX II ...) that count as machine-readable; no act in the index defines the term itself.
+  - id: k02
+    fit: [OpRa]
+    sources: ["DelayedAndCancelled", "opra_lateDatedVehicleJourney"]
+    note: OpRa example DelayedAndCancelledJourneysWithEvents.xml and the late-journey indicator schema.
+  - id: k03
+    fit: [NeTEx, DATEX II]
+    sources: ["parking", "Parking"]
+    note: NeTEx netex_ifopt_parking_version.xsd; DATEX II Parking.* classes. Transmodel's PARKING is not among the indexed source chunks (the Transmodel scope holds 58 chunks shared with the other standards).
+  - id: k04
+    fit: [NeTEx]
+    sources: ["equipmentAccess", "LiftEquipment"]
+    note: LiftEquipment in netex_ifopt_equipmentAccess_version.xsd. SIRI facility monitoring gives a lift's status, not its description.
+  - id: k05
+    fit: [NeTEx]
+    sources: ["equipmentAccess", "EscalatorEquipment"]
+    note: EscalatorEquipment in netex_ifopt_equipmentAccess_version.xsd.
+  - id: k06
+    fit: [NeTEx]
+    sources: ["equipmentAccess", "LiftEquipment"]
+    note: LiftEquipment (elevator is the American word).
+  - id: k07
+    fit: [NeTEx, SIRI]
+    sources: ["vehicleType", "siri_journey", "Capacity"]
+    note: SeatingCapacity in netex_vehicleType_version.xsd and siri_journey.xsd (PassengerCapacity).
+  - id: k08
+    fit: [mobilityDCAT-AP, EU legislation, NAPCORE]
+    sources: ["mobilityDCAT-AP", "02017R1926", "32024R0490", "napcore.eu/metadata", "napcore.eu"]
+    note: mobilityDCAT-AP (the metadata profile), MMTIS Art. 2(14) defines metadata, napcore.eu/metadata explains it. Three scopes fit.
+  - id: k09
+    fit: [NeTEx]
+    sources: ["timetable", "Timetable"]
+    note: TimetableFrame in netex_timetableFrame_version.xsd, examples/functions/timetable.
+  - id: k10
+    fit: [NeTEx]
+    sources: ["timetable", "Timetable"]
+    note: as k09.
+  - id: k11
+    fit: [OpRa]
+    sources: ["opra_lateDatedVehicleJourney", "DelayedAndCancelled"]
+    note: the late-journey indicator of OpRa.
+  - id: k12
+    fit: [NeTEx]
+    sources: ["typeOfTravelDocument", "travelDocument", "fareProduct", "salesTransaction", "fares"]
+    note: NeTEx fare products and travel documents. Ticketing equipment (netex_ifopt_equipmentTicketing) is beside the point.
+  - id: k13
+    fit: [EU legislation]
+    sources: ["02017R1926-20240304#art_2", "32024R0490#art_1", "02017R1926-20240304#anx"]
+    note: MMTIS Art. 2(4) defines static travel and traffic data, the Annex lists them.
+  - id: k14
+    fit: [EU legislation]
+    sources: ["02017R1926-20240304#art_2", "32024R0490#art_1", "02017R1926-20240304#anx"]
+    note: MMTIS Art. 2(3) defines dynamic travel and traffic data.
+  - id: e01
+    fit: [OpRa]
+    sources: ["TransmodelEcosystem/OpRa README.md"]
+    note: the OpRa README overview. A schema fragment does not say what OpRa is for; judged by reading.
+  - id: e02
+    fit: [EU legislation]
+    sources: ["#anx_1"]
+    note: MMTIS Annex 1.1-1.3 (and the 2024 amendment's Annex) list the fare data per level of service.
+  - id: e03
+    fit: [mobilityDCAT-AP]
+    sources: ["mobilityDCAT-AP"]
+    note: distributions in mobilityDCAT-AP (src/index.html, properties-for-distribution.html).
+  - id: e04
+    fit: [DATEX II]
+    sources: ["datex", "Parking"]
+    note: DATEX II v3.7 Parking classes; the location association was not found by text search, so answerable in part only.
+  - id: e05
+    fit: [SIRI, DATEX II]
+    sources: ["datex", "DATEX", "situation", "Situation"]
+    note: SIRI SX embeds DATEX II situation records (SIRI's xsd/datex2 copy and SX examples); DATEX II docs describe the same records.
+  - id: e06
+    fit: [EU legislation]
+    sources: ["02017R1926-20240304#art_4", "02017R1926-20240304#art_5", "32024R0490", "32026R0253"]
+    note: MMTIS Art. 4(2) and 5(2) name DATEX II.
+  - id: e07
+    fit: [NeTEx]
+    sources: ["equipmentAccess", "LiftEquipment"]
+    note: as k06.
+  - id: e08
+    fit: [NeTEx]
+    sources: ["equipmentAccess", "LiftEquipment"]
+    note: as k06.
+  - id: p01
+    fit: [NeTEx]
+    sources: ["serviceCalendar", "UicOperatingPeriod", "dayType", "DayType", "calendar"]
+    note: UicOperatingPeriod and OperatingDay in netex_serviceCalendar_version.xsd.
