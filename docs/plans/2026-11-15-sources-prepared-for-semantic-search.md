@@ -1221,3 +1221,51 @@ median, gold warm, not above `s3` by more than 0.1 s, `s3` timed again in the sa
 tests pass and a gold run with it off reproduces `s3`'s files. Stage 2 only if 1–5 are met: answers and examples not
 lower than `s3-a` by more than step 0's spreads; changed answers read by kind, no kind worse on balance; m13, e05
 and gen42 reported.
+
+**What was built** (df8c34a, reverted in 1e11378): `services/chunk_concepts.py`, the command `label_chunk_concepts`,
+the setting `RETRIEVAL_CONCEPT_LABELS` (off) and 15 unit tests (labels by kind, nearest classes in scope, the
+candidate query against the exact order, the setting off and on in the gateway). On the copy: labels written in 358 s,
+no embedding; 111,662 of 152,741 pieces (73 %) carry at least one class: XML example pieces 102,500 of 128,207,
+declarations 5,224 of 10,858, NAPCORE 1,496 of 6,211, DATEX II 811 of 3,538, guides 1,012 of 1,647, legislation 305
+of 1,004, INSPIRE 282 of 948 (`labels-report.json`); 2,365 classes are used, a class on 8 pieces at the median and
+21,733 at most (`FareStructureElement`). GIN index `x_concepts_gin` 1.2 MB, built in 1.5 s. The labels were written as
+an update of every row, which left the table spread out: with the setting off the warm gold run on the copy took
+1.14 s against 0.71 s on `s2v` in the same hour (`diag.py A`). `VACUUM FULL` and a reindex (heap 214 MB against
+203 MB on `s2v`) brought it back (`s4-off` below); every run below is after that. An indexer that writes the labels
+with the piece would not have this cost (**believed**).
+
+**Verdict: not met** (lines 3 and 4). Stage 2 was not run; no model was called in step 3.
+
+| gate line (fixed before the runs) | `s3` (reference) | `s4` (setting on) | met? |
+|---|---|---|---|
+| 1. concept benchmark, app order, hit@3 (model off on both) | 20/26 (`s2v`) | 20/26 (`s4v`, setting on) | yes (the change does not touch `presence_concepts`) |
+| 2. non-English gold questions, files found (15) | 11 | 11, the same ones | yes |
+| 3. gold files | 41/57 | 42/57 (a19 gained) | yes |
+| 3. benchmark files | 121/141 | 118/141 (lost q063, q109, q117, q122; gained q140) | **no** |
+| 3. retrieval benchmark hit@10 / MRR@10 (the measure `s3` counted) | 0.873 / 0.587 | 0.873 / 0.587 | yes |
+| 4. retrieval median, gold warm | 1.16 s; `s3-time4` (same copy and settings, this round) 1.31 s | 1.44 s (+0.13 s on the same round) | **no** |
+| 5. setting off: tests; a gold run reproduces `s3`'s files | – | 1,146 tests, 6 fail, all among the 7 that failed before step 3 under the same environment (step 2b); `s4-off` finds `s3`'s 41 files exactly, 1.33 s | yes |
+
+- *The four benchmark losses*, read on the passage lists (file names; I did not read the passage text, so **believed**):
+  q063 (frequency timetables) loses `NeTEx_50_JourneyFrequencyGroup.xml` to `NeTEx_01_simple_line.xml`; q109 (SIRI
+  roadworks) loses `exx_situationExchange_road.xml` to a request example and two SIRI schemas; q117 (connection
+  monitoring) loses `exc_connectionMonitoringFeeder_response.xml` to the control action schema; q122 (delay types)
+  loses `opra_delayClassification_version.xsd` to the DATEX II schema. In each the newcomer carries a class near the
+  question by meaning but not the one the question asks for. q140 gains the connection monitoring example.
+- *Time.* The candidates by meaning cost 60 ms median per pass on the warm gold questions (0 ms before, because 37
+  of 57 questions had no specific concept and did not search at all); the rest of the 0.13 s is the second pass and
+  the scoring of the larger pool (**believed**, from `diag-A-on.json`, not split further).
+- *The graph variant of the retrieval benchmark*, not a gate measure: hit@10 0.873 → 0.886, MRR@10 0.584 → 0.583.
+
+**Carried faults of step 2c** (m13, e05, gen42): not measured, stage 2 was not reached.
+
+**Verified and believed.** Verified: the label counts (the command's report and SQL on the copy); every stage 1
+number (runs `s3-time4`, `s4-off`, `s4` and the compare in `s4-work/cmp-s3-s4.txt`); that `s4-off` gives `s3`'s gold
+files; the concept benchmark on both copies; the test failures against step 2b's list. Believed: that the four losses
+are real losses (file names only); the split of the added time; that the slow copy came from the update alone.
+Assumed: that the benchmark file has no non-English question (a scan of the texts for non-English words and letters
+found none; it has no language field).
+
+**Not checked.** Stage 2 (answers, examples). Other values of the two numbers chosen before the runs (20 nearest,
+5 question classes) or candidates restricted to schema and example pieces as before: not tried, by the rule. The copy
+`napcore_helpdesk_s4v` keeps the labels and `x_concepts_gin`; `napcore_helpdesk_s2v` is unchanged.
