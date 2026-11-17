@@ -1056,3 +1056,107 @@ has 0.8.3).
 **Cost.** No model call. Builds: hnsw on the column 7 min 38 s, hnsw `halfvec` 47 s, ivfflat 7–9 s each, the
 column's ivfflat rebuilt (15 s). Trials 1–6 min each. Runs: `s3` 24 min, three gold runs of 8 min. The copy s2v now
 holds the step 2 index (ivfflat 100 lists on the column, as before) and `x_ivf_half384`; nothing else changed.
+
+### Step 2c: answers and examples on the exact index (2026-11-17, copies `napcore_helpdesk_s1base` and `napcore_helpdesk_s2v`, branch at 5007c0f)
+
+Stage 2 of the yardstick, which steps 1 and 2 never reached: the 23 answerable and 25 must-refuse questions and the
+example benchmark, 3 runs each, on the baseline copy with every setting off (`base-a`, the app as on main) and on
+the step 2 copy with the exact index (`s3-a`: `RETRIEVAL_PREPARED_INDEX=True`, `VECTOR_INDEX_DIMENSIONS=384`,
+`VECTOR_INDEX_HALF_PRECISION=True`, `VECTOR_INDEX_PROBES=100`, the settings of `s3`). `s3-a` replays `base-a`'s
+recorded calls wherever the request is the same. The two runs ran one after the other, not side by side. The gate was
+fixed before the runs; no setting was tuned and no code changed. Runs, logs and scripts:
+`.claude/skills/measure-on-copy/runs/base-a`, `s3-a`, `base-a-noise` and `s3a-work/`. The recorded baseline answers
+are in `runs/base-a/record.jsonl.gz` (every request and reply). All figures **measured** unless marked.
+
+**Verdict: not met.** Answers on the answerable set rose clearly (41 → 49 of 69) and the late-journeys case is fixed
+in the answers (the count element given in 3 of 3 runs, answered 3 of 3). But one must-refuse question is now
+answered every time, one example run fell back to a standard file, and the one changed question that names a
+standard got worse.
+
+| gate line (fixed before the runs) | `base-a` | `s3-a` | spread used (step 0, §10 A, table) | met? |
+|---|---|---|---|---|
+| answerable answered | 41/69 | 49/69 (+8) | 7 of 69 | yes (better beyond the spread) |
+| must-refuse answered | 4/75 | 6/75 (+2) | 2 of 75, or a new question answered twice or more | **no**: +2, and m13 is answered 3 of 3 (0 in `base-a`) |
+| examples generated | 132/141 | 131/141 (−1) | 1 (did not move in step 0: any difference is real) | **no** |
+| examples first attempts | 99/141 | 94/141 (−5) | 6 of 141 | yes (within the spread) |
+| examples unlinked | 0/141 | 1/141 | 2 | yes |
+| reading: no kind worse on balance | – | – | – | **no**: by standard 0 better / 0 equal / 1 worse |
+| count | 466 calls made | 321 made, 168 replayed | – | reported; no call failed, none retried by the tool |
+
+**Count.** `base-a` made 466 calls: 412 to Haiku, 54 to Sonnet (all naming the language of a question,
+`_classify_question_language_with_llm`, the model kept for that on 2026-11-15; no other call went to a model other
+than Haiku). By site: example generator 173, answer 125, relevance check 84, English rendering 14, controller 12,
+fixed texts 4. `s3-a` made 321 calls, all Haiku (answer 130, example generator 191), and replayed 168 (114 Haiku,
+54 Sonnet). No call returned an error. The app's own second attempts (the answer validator's retry, the example
+generator's further attempts) are model calls and are counted in these numbers. The dry replay before `s3-a`
+left 233 question runs not run; `base-a` had made 405 calls on those runs, which was the ceiling I checked against
+the 650 limit. Wall time: `base-a` 28 min, the dry replay 7 min, `s3-a` 29 min, the dry replay of the baseline on
+its own copy (`base-a-noise`) 7 min.
+
+**Which changes are the index's.** The dry replay of `base-a` on its own copy (`base-a-noise`, free) has the prompt
+move only for e01, e03, e04 and m22. None of these is among the ten questions whose answered count moved, so all
+ten changes come with the new index (**verified** by that replay). On the new index every question that reaches
+retrieval got other passages (the pieces are new), so 233 of 278 question runs ran; the 45 replayed (42 must-refuse, 1 answerable, 2
+examples) are **believed** to be questions refused before retrieval (not checked one by one).
+
+**Reading.** I read every question run of the ten questions whose answered count moved (30 runs), against the gold
+patterns of `answer-source-questions.yaml` (passages that match one are marked in `s3a-work/read-changed.md`) and the
+`expect` of `refused-questions.yaml`. The kinds were fixed before reading: non-English k08–k10; example request k02;
+regulation k01, k13, k14, e02, e06; by standard e01, e04, e05, e07; explanation the other answerable questions;
+must-refuse on its own line.
+
+| kind | changed questions | better / equal / worse |
+|---|---|---|
+| regulation | e02, e06, k14 | 1 / 2 / 0 |
+| example request | k02 | 1 / 0 / 0 |
+| explanation | k06, k11, k12 | 2 / 1 / 0 |
+| by standard | e05 | 0 / 0 / 1 |
+| non-English | none moved | – |
+| must-refuse | m05, m13 | 1 / 0 / 1 |
+
+- e02 (fare data under MMTIS), 0 → 3, better: the new passages hold the Annex point 1.2 of 2017/1926 and of
+  2024/490 (gold), and every run answers with the basic common standard fares (fare network data, standard fare
+  structures). The baseline had Articles 1, 2, 6 and 9 and refused.
+- k11 (number of late journeys), 0 → 3, better: `DelayedAndCancelledJourneysWithEvents.xml` with
+  `LateDatedVehicleJourneyCount` and its duration intervals replaces `CancelledAndLateDatedVehicleJourneys.xml`'s
+  opening; the answers name the count element. The baseline answered with `JourneyLayover`.
+- k02 (example of observed delays), 2 → 3, better: the OpRa pieces now start at the element path, and the answers
+  build the `LateDatedVehicleJourneyEntry` with `DelayDuration` and `TriggeredBy`; `ResponseLateDatedVehicleJourneys.xml`
+  is among the passages.
+- k12 (bus ticket), 2 → 3, better: a second Bristol fare example (line fare, stage) replaces a rail fare example, and
+  run 1 answers from it. Neither run has the gold file (Arriva).
+- e05 (DATEX and SIRI connected), 1 → 0, worse: the baseline's two `siri_exm_SX` examples (gold: the SIRI
+  situation example with the embedded DATEX II `d2:` record) are gone; the new passages are a DATEX II TLS annex
+  section, the OpenLR line attributes class and unrelated SIRI examples. The baseline's one answer used the
+  embedded record; now all three runs refuse.
+- e06 (legislation that includes DATEX II), 0 → 3, equal: both sides get Articles 4 and 5 of 2017/1926 (gold) and
+  both answers say the evidence names no act that "includes" DATEX II while quoting Art. 4(2) and 5(2). The variant's
+  answers are counted as answered; their content is the baseline's.
+- k06 (elevator in a station), 3 → 2, and k14 (dynamic data), 3 → 2, equal: the same files on both sides, no gold
+  passage on either; one run each refused where the baseline answered beside the point (`AccessFeatureEnumeration`'s
+  `lift`; `DynamicDistanceMatrixElement`).
+- m05 (colour of bus seats), 1 → 0, better: the seating plan schema (`PassengerSpotGroup`) comes in and all three
+  runs refuse.
+- m13 ("How does it work?"), 0 → 3, worse: two Bristol fare examples (`FX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-(mixed)`
+  and `-pass-(Z2Z)`) come in, whose pieces describe how m-tickets are activated, and every run answers the empty
+  question about m-tickets. That is the step 0 rule's "new question answered twice or more".
+
+**Examples.** Eight of 47 questions moved; I read the runs whose measure moved. gen42 run 2 (a line departing
+Monday 17:00) was generated in `base-a` and is a standard file in `s3-a` (attempts 0, `NeTEx_01_simple_line.xml` and
+a calendar example now among the passages): the generated count's −1. I did not open the standard example shown, so
+that it lacks the asked departure is **believed** (the generator chose a standard file because one matched, not
+because it holds the values). gen34 run 3 (ferry Koper–Piran) has an unlinked `ScheduledStopPoint` (+1 unlinked,
+within the spread). First attempts fell for gen03, gen14 (2 → 0), gen16, gen22, gen31 and rose for gen36: −5, within
+the spread of 6. Every example question got other passages (132 of 141 runs ran).
+
+**What it means (believed, not tested).** The index helps where the right passage was just outside the six places
+(e02, k11, k02): the exact search and the cut bring it in. It also brings in more example pieces that read as
+prose about tickets and transfers, which a vague question can now match (m13), and it lets near-miss pieces from
+DATEX II documentation push out SIRI examples (e05). Both failures are about what wins the six places, not about the
+index's recall, which step 2b showed to be exact.
+
+**Not checked.** The 223 question runs that ran and kept their answered/refused outcome were not read (the rule reads
+the changed ones). The answers' citations and wording against gold, beyond the ten questions. Whether m13 and e05
+move with another sample of the relevance check (each was run 3 times with the same replayed verdicts). The
+stage 1 measures were not run again (they are `s3`'s, same copy and settings). Retrieval time of the API answers
+(0.83 s against 1.33 s) is cold on both sides and not a gate.
