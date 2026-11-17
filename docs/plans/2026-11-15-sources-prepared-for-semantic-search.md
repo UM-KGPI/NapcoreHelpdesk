@@ -1160,3 +1160,64 @@ the changed ones). The answers' citations and wording against gold, beyond the t
 move with another sample of the relevance check (each was run 3 times with the same replayed verdicts). The
 stage 1 measures were not run again (they are `s3`'s, same copy and settings). Retrieval time of the API answers
 (0.83 s against 1.33 s) is cold on both sides and not a gate.
+
+### Step 3: concepts on the pieces and concepts by meaning (2026-11-17, copy `napcore_helpdesk_s4v`, a copy of `napcore_helpdesk_s2v`, branch at bb29e32)
+
+Design point 6, first and second part. The gate was fixed before any code (below, "Gate 3 as counted"). Scripts,
+logs and counts: `.claude/skills/measure-on-copy/runs/s4-work/`. No model was called for the diagnosis or the
+labels. All figures **measured** unless marked.
+
+**Diagnosis (written before the code).**
+
+- *How concepts reach retrieval today* (read in `retrieval_gateway._retrieve_chunks_once`). The question's concepts
+  are the classes whose label words occur in it (`extract_graph_concepts`, with plurals and short prefixes), the
+  vocabulary bridge's terms (a model call, `bridged_question_concepts`) and the property terms; GraphDB expands them
+  one hop. They are used five ways: (1) the graph candidates, `_graph_concept_candidates`, which search the paths and
+  labels of schema and example pieces for every alias of the expanded concepts, and the text when that finds too few;
+  (2) the element candidates, pieces whose text opens an element the question names; (3) a score bonus for pieces
+  whose text, matched against every label at query time, names a question concept; (4) the definitions from GraphDB;
+  (5) the example files from GraphDB. The concept vectors (3,104 classes, 384 numbers) are used only by
+  `presence_concepts` ("does the standard have X") and the concept benchmark.
+- *Time.* On the copy, warm (second of two passes over the 57 gold questions, model and bridge off,
+  `diag.py A`): measured retrieval 0.44 s median, 0.72 s mean; the label-word search of paths takes 0 ms median
+  (37 of 57 questions have no specific concept) and 109 ms mean; the vector query 244 ms mean and the rare-term
+  search 230 ms mean are the larger parts. So on the copy the search of paths is not the slowest part. The prod
+  measurement the plan cites came before the per-alias cache of 0.97.149 (**believed**, from the dates).
+- *What it brings* (`s3`, passes of locate). The graph candidates hold a file the question names in 6 of the 41 gold
+  questions found and 89 of the 121 benchmark questions found; in none of them are they the only stage that holds it.
+- *Share of pieces that would carry a label, and from what* (a random 3,000 pieces, `diag.py B`; the full build is
+  below). XML example pieces: 79 % name a class of their standard in an element opened in the body. Schema
+  declarations: 13 % by the declared name. Prose: label words occur in most pieces (86–100 %, about 6 classes a
+  piece), but only 20–28 % of NAPCORE, DATEX II, legislation and INSPIRE pieces keep one when a class must also be
+  among the 20 classes nearest to the piece by meaning (its stored vector against the concept vectors).
+- *A question's concepts, by words against by meaning* (concept benchmark, hit@3, on the reference copy, model off so
+  the three non-English questions are searched as asked): label words 7 of 26, meaning on the whole question 11,
+  meaning on the question's subject 18, the app's order (`presence_concepts`) 20. The 23 of 26 of the plan needs the
+  English renderings of c04, c18 and c25 (model calls); with the model off it is 20 on both sides.
+- *Verdict.* The design point can work as written: three quarters of the pieces can carry a class without a new
+  embedding, and meaning finds a question's classes far more often than label words. The time it can save is small
+  on the copy.
+
+**Choices made before measuring** (no variant was tried after seeing a number):
+
+- Labels in `structured_metadata["concepts"]`, written by `label_chunk_concepts` (no migration; a GIN index on that
+  key built by hand on the copy, `x_concepts_gin`, as the vector index of step 2b). XML example piece: the classes of
+  its standard named by the elements opened in its body (not the line of place, not the summary after the body).
+  Schema declaration: its declared name when that is a class; any other piece and a declaration besides its name:
+  the classes whose label occurs in it and that are among its 20 nearest classes by meaning. Each class brings its
+  aligned Transmodel class.
+- At the question (`RETRIEVAL_CONCEPT_LABELS`, off by default): the 5 classes nearest to the question's subject by
+  meaning, among those that concern the standards of the scope (all standards when the scope names none), with the
+  classes that implement them; the pieces of every kind in scope that carry one, nearest to the question first, at
+  most 2 a file and as many as the graph candidate cap, take the place of `_graph_concept_candidates`. Without the
+  embedder or the concept index, the label-word search runs as before. Everything else (element candidates, score
+  bonus, definitions, examples) is unchanged.
+
+**Gate 3 as counted** (fixed before the runs): stage 1 `s4` against `s3`, no model call: (1) concept benchmark not
+lower than the reference measured the same way; (2) the 15 non-English gold questions (a08–a10, b02, b05, b06, b13,
+b14, b17, b21, b23–b26, b34; the benchmark file has none): files found not lower than `s3` (11 of 15); (3) gold,
+benchmark, retrieval benchmark hit@10 and MRR not lower than `s3` (step 0's spread for these is 0); (4) retrieval
+median, gold warm, not above `s3` by more than 0.1 s, `s3` timed again in the same round; (5) setting off: existing
+tests pass and a gold run with it off reproduces `s3`'s files. Stage 2 only if 1–5 are met: answers and examples not
+lower than `s3-a` by more than step 0's spreads; changed answers read by kind, no kind worse on balance; m13, e05
+and gen42 reported.
