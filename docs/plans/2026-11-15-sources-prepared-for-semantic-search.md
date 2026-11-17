@@ -1351,3 +1351,61 @@ with the rows, since a file already cut is not checked again).
 **Not checked.** Stage 2 (answers, examples). The XML examples, NeTEx, SIRI and OpRa on the copy (not re-cut). The
 cherry-pick stays on the branch: lines 1 and 3 hold. `napcore_helpdesk_s5v` holds the re-cut;
 `napcore_helpdesk_s2v` is unchanged and `napcore_helpdesk_s4v` is as step 3 left it.
+
+### Step 2d: answers and examples after the sentence-end cut (2026-11-17, copy `napcore_helpdesk_s5v`, branch at 260ba74)
+
+Stage 2 on the re-cut copy (`s5-a`), with the settings of `s3-a` (`RETRIEVAL_PREPARED_INDEX=True`,
+`VECTOR_INDEX_DIMENSIONS=384`, `VECTOR_INDEX_HALF_PRECISION=True`, `VECTOR_INDEX_PROBES=100`), the same sets and 3 runs
+each, replaying `s3-a`'s record (it saves more than `base-a`'s: the dry replay against it left 22 question runs, on
+which `s3-a` had made 30 calls; against `base-a`'s record those runs would also have been the only ones, but every other
+run would have been compared with the old index). The gate was fixed before the runs; nothing was tuned and no code
+changed. Runs and scripts: `.claude/skills/measure-on-copy/runs/s5-a-dry`, `s5-a` and `s5a-work/`. All figures
+**measured** unless marked.
+
+**Verdict: met.** Not one question changed its answered count against `s3-a`; the carried faults are as they were.
+
+| gate line (fixed before the runs) | `base-a` | `s3-a` | `s5-a` | met? |
+|---|---|---|---|---|
+| answerable answered, against `s3-a` (spread 7) | 41/69 | 49/69 | 49/69 | yes (same) |
+| must-refuse answered, against `s3-a` (spread 2) | 4/75 | 6/75 | 6/75 | yes (same) |
+| examples generated, against `s3-a` (spread 1) | 132/141 | 131/141 | 131/141 | yes (same) |
+| examples first attempts, against `s3-a` (spread 6) | 99/141 | 94/141 | 94/141 | yes (same) |
+| examples unlinked, against `s3-a` (spread 2) | 0/141 | 1/141 | 1/141 | yes (same) |
+| answerable answered, better than `base-a` beyond the spread | 41/69 | – | 49/69 (+8, spread 7) | yes |
+| reading: no kind worse on balance against `s3-a` | – | – | no question moved | yes |
+
+**Count.** 24 question runs ran (the dry replay listed 22; e04 runs 2 and 3 ran too, and e04 also moves on the
+reference's own copy) and made 26 calls, all Haiku, all the answer itself
+(`_generate_answer_text`); no call to Sonnet was made and none failed. 457 calls were replayed (403 Haiku, 54 Sonnet:
+the language naming recorded in `base-a`). The 188 example runs were replayed or needed no model: the example
+generator got the same prompts on the re-cut copy. Wall time: the dry replay 7 min, `s5-a` 7.5 min.
+
+**What ran, and whether it is the re-cut** (per run, both passage lists compared by file and piece,
+`s5a-work/perq.txt`, `same-files-diff.txt`). All 24 runs kept their outcome (answered or refused), so the step 2c rule
+reads none of them. What moved in their passages:
+
+- Re-cut kinds: m04 (NAPCORE: Annex C out, M5.2 and the partners page in; refused on both sides), m25 (DATEX II pages:
+  two profile and levels pages swapped for two others; refused on both), e05 (the same DATEX II annex section, a new
+  piece id with the same text; refused on both), e06 (the DATEX II user guide page out, together with a DATEX II
+  model class; answered on both).
+- Not re-cut: e01, e03, m22 (OpRa, NeTEx and SIRI files; all three also move on the reference's own copy, `base-a-noise`)
+  and e04 (the same pieces; moves on the reference's own copy).
+
+**Carried faults.**
+
+- m13 ("How does it work?"): answered 3 of 3, as in `s3-a` (replayed: the same passages and prompt). Still open.
+- e05 (DATEX and SIRI connected): refused 3 of 3, as in `s3-a`; the passages are the same pieces of text. Still open.
+- gen42 run 2: still a standard file (replayed), runs 1 and 3 generated. Still open.
+- b17 ("Kaj so metapodatki v NAP?", lost in `s5`): it is a gold question, not in the answer sets, so stage 2 does
+  not ask it. The nearest question there, k08 ("Kaj so to metapodatki?"), was replayed on all three runs (the same
+  prompt as `s3-a`), answered 2 of 3 as before. How b17 itself is answered on `s5v` was not measured.
+
+**Verified and believed.** Verified: the counts (the tool's result and a recount from both records by question,
+`perq.txt`); that no question's answered count moved; the calls by model and site (`count-s5-a.txt`, and the guard
+saw only Haiku calls live). Believed: that the moves of e01, e03, e04 and m22 are not the re-cut's (they touch no
+re-cut kind and move on the reference's own copy).
+
+**Not checked.** The wording of the 24 answers that ran (the outcome held, and the rule reads only moved questions).
+b17 asked through the app. Another sample of the relevance check (replayed verdicts, as in step 2c). The re-cut
+leaves the step 2c failures as they were: against `base-a`, must-refuse (+2, m13) and examples generated (−1, gen42)
+are still on the wrong side, which this gate does not cover.
