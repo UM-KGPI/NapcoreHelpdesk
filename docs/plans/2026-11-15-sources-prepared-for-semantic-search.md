@@ -911,6 +911,13 @@ median of the warm gold run ≤ 2.05 s in a stage 1 run; (3) index size and buil
 with the setting off. No model was called. Scripts, logs and caches: `.claude/skills/measure-on-copy/runs/s3-work/`.
 All figures **measured** unless marked.
 
+**Verdict: all four lines are met.** The vector index misses near pieces because the questions lie far from
+every piece, not because of the filter, the build or duplicates; no approximate index setting fixes that. An
+ivfflat index on the 384 numbers the embedder fills, in half precision, read whole (100 of 100 lists), keeps every
+exact piece of the 367 calls at 0.08–0.13 s a query (120 MB, built in 8.5 s), and the gold retrieval median falls to
+1.16 s. With the exact index, none of a19, q019, q121, q013, q017, q083 comes back: those losses are not the
+index's. The retrieval benchmark recovers to 0.873 (base 0.893, s2ref 0.846).
+
 **Diagnosis.**
 
 - *The column.* `embedding_vector` is `vector(1536)`; the embedder fills the first 384 numbers. Counted on all
@@ -956,3 +963,96 @@ question do not hold its nearest pieces (**believed**: this is the reading that 
 near-identical blocks make it worse for pieces (the zero-recall pieces as queries are in such blocks, **believed**
 from their kind, not counted) but are not what fails the questions: a01's nearest pieces are NAPCORE text,
 schemas and regulations, none in the big list.
+**The trials.** Recall as in step 2: the share of the exact nearest 25–100 pieces (the full column, full scan, the
+app's scope filter) that the index query keeps (`LIMIT` twice the pool, then the pool by exact distance); all 367
+calls; index query time warm, on the same machine in one night. "Full scan off" is `SET LOCAL enable_seqscan = off`
+in the query's transaction; without it Postgres plans a full scan from about half the lists.
+
+| index (built by hand on the copy) | setting | mean recall | lowest | calls < 0.9 | index query median / p90 | size, build |
+|---|---|---|---|---|---|---|
+| ivfflat 100 lists on the column (step 2) | 20 / 40 probes | 0.862 / 0.943 | 0.07 / 0.38 | 145 / 63 | 0.11 / 0.24 s | 1,194 MB, 15 s |
+| same | 100 probes, full scan off | 1.000 | 1.00 | 0 | 0.94 / 1.03 s | same |
+| none: exact scan on the 384 numbers | full scan | 1.000 | 1.00 | 0 | 0.89 / 0.98 s | – |
+| hnsw m 16, ef_construction 64 on the column | ef_search 100 / 100 + iterative / 400 + iterative | 0.476 / 0.566 / 0.662 | 0.00 | 257 / 240 / 252 | 0.06 / 0.08 / 0.14 s | 1,193 MB, 7 min 38 s |
+| hnsw m 16, ef_construction 64, `halfvec` 384 | ef_search 100 / 400 / 1,000, iterative | 0.459 / 0.573 / 0.715 | 0.00 | 321 / 289 / 208 | 0.03 / 0.02 / 0.04 s | 170 MB, 47 s |
+| ivfflat 100 lists, `vector` 384 | 40 / 60 / 100 probes, full scan off | 0.973 / 0.994 / 1.000 | 0.37 / 0.57 / 1.00 | 20 / 2 / 0 | 0.05 / 0.08 / 0.14 s | 239 MB, 7 s |
+| ivfflat 100 lists, `halfvec` 384 | 40 / 60 / 100 probes, full scan off | 0.915 / 0.968 / 1.000 | 0.37 / 0.44 / 1.00 | 112 / 46 / 0 | 0.04 / 0.06 / 0.10–0.13 s | 120 MB, 8.5 s |
+| same, through the app's own `_nearest_ids_by_index` | the settings below | 1.000 | 1.00 | 0 | 0.08 / 0.10 s | – |
+
+What the table says: no approximate setting reaches the line, because of where the questions lie (above); what
+reaches it is reading every list, and that is fast only when the index holds the 384 numbers and not the
+1,536. With all lists probed the ivfflat index is in effect an exact scan of a compact copy of the vectors (120 MB
+instead of 1.2 GB); the lists only keep the option of probing fewer. The ivfflat lists on the 384 numbers are as
+uneven as on the column (not counted again; they do not matter when all are read). I dropped HNSW: its failure
+is not a build fault, so a better build cannot repair it.
+
+**The definition chosen.**
+
+```sql
+SET maintenance_work_mem = '256MB'; SET max_parallel_maintenance_workers = 0;
+CREATE INDEX x_ivf_half384 ON helpdesk_sourcechunk
+  USING ivfflat ((subvector(embedding_vector, 1, 384)::halfvec(384)) halfvec_cosine_ops) WITH (lists = 100);
+```
+
+with `VECTOR_INDEX_DIMENSIONS=384`, `VECTOR_INDEX_HALF_PRECISION=True`, `VECTOR_INDEX_PROBES=100` (068f7e7). The
+code: with `VECTOR_INDEX_DIMENSIONS` above 0 the nearest-row query orders by the same expression as the index and
+turns the full scan off for that one transaction (a full scan of the expression reads every whole vector, 0.9 s);
+the pool is still ranked on the full column after it. Off by default: then the query is the one of today (unit
+tests check the SQL and that the result equals the exact scan's, with and without half precision). Half precision
+changes the order only inside the margin of twice the pool, which the exact ranking after it absorbs: 0 of 367
+calls lost a piece (**verified** for these calls, **believed** in general). No migration: the index is built by
+hand on the copy; whether step 5 adds it as a migration is open.
+
+Build cost: 8.5 s and an `ANALYZE` of 7 s on this copy, no spill and no parallel workers; ivfflat's build holds a
+sample of the vectors for its k-means in memory (**believed** a few MB at 100 lists, from how pgvector builds, not
+measured); it reads the 1.2 GB of vectors once. Room: 120 MB on disk beside the existing 1,194 MB index, which the
+setting no longer uses and which can go once the setting is on (**not done**: the copy keeps both). At query time
+the whole 120 MB is read per query; with `shared_buffers` 128 MB here it comes from the file cache.
+
+**Verdict per gate line.**
+
+| gate line (fixed before the trials) | result | met? |
+|---|---|---|
+| 1. mean recall ≥ 0.99, no call under 0.9 (367 calls, exact reference on the copy) | 1.000, lowest 1.00 (trial script and the app's own query) | yes |
+| 2. retrieval median, warm gold, ≤ 2.05 s | `s3` 1.16 s; in the same round `base-time3` 1.77 s, `s2ref-time3` (setting off, 20 probes) 1.09 s; `s2ref-off40` (setting off, 40 probes) 1.37 s | yes |
+| 3. index size and build time | 120 MB, 8.5 s + `ANALYZE` 7 s, 256 MB maintenance memory, no spill, no parallel workers | reported |
+| 4. nothing changes with the setting off | unit tests of the query (SQL and result); a gold run with the setting off and 40 probes (`s2ref-off40`) gives `s2ref`'s 41 files exactly; the backend test suite (1,131 tests, models off): 7 fail, and the same 7 fail on the tree before the change (cd409fe) under the same environment (relevance check, request body and alias-query tests; **believed** to read settings that my models-off overrides of the local `.env` change); none is in the vector search | yes |
+
+The machine was not slower tonight: `base-time3` (1.77 s) is close to `base`'s first run (1.75 s). The step 2 run
+`s2ref` used 40 probes: the same copy with 20 probes (`s2ref-time3`) finds 38 gold files and loses b05, b24, b29,
+and with 40 (`s2ref-off40`) it finds `s2ref`'s 41 (**verified** by the two runs; step 2's record did not say which
+probes its runs used).
+
+**Stage 1 with the exact index (`s3`, copy s2v, 068f7e7, no model call).** What is left once the index is exact:
+
+| measure | base | s2ref (40 probes) | s3 (exact) |
+|---|---|---|---|
+| gold files | 39/57 | 41/57 | 41/57 (same files as s2ref) |
+| best piece given, gold | 31/37 | 34/39 | 34/39 |
+| benchmark files | 124/141 | 122/141 | 121/141 (q140 lost against s2ref) |
+| best piece given, benchmark | 83/92 | 79/91 | 76/88 |
+| retrieval benchmark hit@10 / MRR@10 | 0.893 / 0.564 | 0.846 / 0.571 | 0.873 / 0.587 |
+| retrieval median, gold warm | 1.75 s | 1.34 s | 1.16 s |
+
+- Of a19, q019, q121, q013, q017 and q083, **none is found** at file level with the exact index. So these losses
+  are not the index's: they come after the vector search (the six places, the score limit, the coverage step), as
+  step 2's diagnosis of each said.
+- q140 is lost again (it was back in `s2ref`, where step 2 found it held the sixth place narrowly); not read.
+- Retrieval benchmark against `s2ref`: 6 questions gain hit@10 (q001, q007, q019, q041, q121, q129: 6 of the 10
+  that `s2ref` had lost against base), 2 lose it (q049, q146). Against `base`: lost q017, q049, q056, q082, q088;
+  gained q077, q137. The index explains most of the retrieval benchmark's fall since step 1, not all of it.
+- The best-piece counts are over fewer rated questions (88 against 91), so they are not comparable as they stand.
+
+**Verified and believed.** Verified: the column's width and zeros (counted on every row); duplicates (counted);
+what the largest list holds (its rows listed); that the filter and the build are not the HNSW cause (runs above);
+the contrast between pieces and questions as queries; every recall and time in the tables; that the app's own
+query uses the new index and keeps every exact piece (`EXPLAIN` and the 367 calls); that the setting off leaves the
+gold run as it was. Believed, not tested separately: that the questions' place in the space is also why ivfflat
+needs nearly all lists; that half precision never loses a piece the margin cannot absorb; ivfflat's build memory.
+Not checked: the benchmark files lost and gained against `s2ref` question by question; q140 and the retrieval
+benchmark's two new losses; the answers (stage 2 was not run); prod's pgvector version (`halfvec` needs 0.7, the copy
+has 0.8.3).
+
+**Cost.** No model call. Builds: hnsw on the column 7 min 38 s, hnsw `halfvec` 47 s, ivfflat 7–9 s each, the
+column's ivfflat rebuilt (15 s). Trials 1–6 min each. Runs: `s3` 24 min, three gold runs of 8 min. The copy s2v now
+holds the step 2 index (ivfflat 100 lists on the column, as before) and `x_ivf_half384`; nothing else changed.
