@@ -1269,3 +1269,85 @@ found none; it has no language field).
 **Not checked.** Stage 2 (answers, examples). Other values of the two numbers chosen before the runs (20 nearest,
 5 question classes) or candidates restricted to schema and example pieces as before: not tried, by the rule. The copy
 `napcore_helpdesk_s4v` keeps the labels and `x_concepts_gin`; `napcore_helpdesk_s2v` is unchanged.
+
+### Step 1 repair: pieces close at sentence ends (2026-11-17, copy `napcore_helpdesk_s5v`, a copy of `napcore_helpdesk_s2v`, branch at 11f742f)
+
+The repair (0f0aa16 on `fix/prepared-cut-sentence-ends`, cherry-picked as 11f742f): when a piece has to close, it
+ends at the latest boundary where a sentence ends, a list item starts or two paragraphs meet, as long as it keeps
+75 % of the limit; otherwise where the limit falls, as before. XML examples do not go through `pack_unit` and are
+not touched. Cut tests and retrieval tests: 110 run, all pass. The gate was fixed before the re-cut was applied.
+Scripts, logs and counts: `.claude/skills/measure-on-copy/runs/s5-work/` (dry counts of the repair branch:
+`runs/cut-work/`). No model was called.
+
+**Applied.** `prepare_index --recut` on the copy, over every harvested kind and the two repository sources whose
+prose goes through `pack_unit` and had no checkout at the indexed commit before: mobilityDCAT-AP (`1ae93b2`) and
+TN-ITS (`5e68a9b`), both fetched at those commits into a scratch directory (no existing checkout touched). A dry run
+on the copy first; the write gave the same counts as the dry run for every kind. NeTEx, SIRI and OpRa were not re-cut:
+their prose (XSD, Markdown, `.txt`) gave the same pieces before and after on the local checkouts (`cut-work/repo-cmp-*`).
+Written in 7 min 42 s, 3,675 pieces embedded; then `VACUUM FULL` (7 min), `REINDEX` (54 s, `x_ivf_half384`
+rebuilt with the table) and `ANALYZE`; heap 218 → 203 MB, as on `s2v`.
+
+| kind | rows before | dry run on the copy (cut-work, harvested) | applied | files changed |
+|---|---|---|---|---|
+| NAPCORE | 6,211 | 6,341 | 6,341 | 81 of 119 |
+| DATEX II pages | 2,047 | 2,059 | 2,059 | 68 of 197 |
+| EU legislation | 1,004 | 1,007 | 1,007 | 4 of 7 |
+| INSPIRE specification | 898 | 899 | 899 | 1 of 1 |
+| DATEX II model, INSPIRE code lists | 1,491, 50 | unchanged | unchanged | 0 |
+| mobilityDCAT-AP frame `.html` | 53 | – (dry on the copy: 54) | 54 | 1 of 3 |
+| mobilityDCAT-AP `.ttl` examples | 28 | – (28) | 28 | 1 of 2 (pieces moved, same count) |
+| TN-ITS frame `.ttl` | 70 | – (71) | 71 | 1 of 1 |
+| TN-ITS guide `.ttl` | 1,319 | – (1,321) | 1,321 | 9 of 35 |
+| mobilityDCAT-AP guide `.html`, READMEs, TN-ITS schema and XML | 219, 6, 226, 106 | – | unchanged | 0 |
+| all rows | 152,741 | | 152,891 | |
+
+The mobilityDCAT-AP comparison in `cut-work/` (11 HTML files changed) was made on the local checkout at another
+commit; at the indexed commit one frame file changes. TN-ITS Turtle was not in the dry counts of the repair branch;
+the dry run on the copy showed it changing, so it was applied too.
+
+**Verdict: not met** (line 4). Lines 1, 3 and 5 are met; line 2 is under the line at its point value but not settled.
+
+| gate line (fixed before the re-cut) | reference | `s5` | met? |
+|---|---|---|---|
+| 1. pieces per kind equal the dry run's; none over 256 tokens; rows ≤ 154,692 | dry run | equal for every kind; 0 over in the command's count and in a recount from the stored rows; 152,891 rows | yes |
+| 2. NAPCORE pieces cut inside a sentence, under 5 % | dry reading 3 of 40 flagged | second sample 6 of 40; pooled 9 of 80 flagged = 3.4 % of all pieces (1.9–6.1 %) | point yes, **not settled** |
+| 3. index recall on the captured calls, exact reference recomputed on the copy | – | 367 calls, mean 1.000, lowest 1.00 (the app's own query, and the `x_ivf_half384` query with sequential scan off) | yes |
+| 4. gold files | 41/57 (`s3`) | 40/57, lost b17 | **no** |
+| 4. benchmark files | 121/141 | 121/141, same questions | yes |
+| 4. retrieval benchmark hit@10 / MRR@10 | 0.873 / 0.587 | 0.873 / 0.587, no question changed | yes |
+| 5. retrieval median, gold warm, against the reference timed in the same round | `s3-time5` 1.13 s | 0.95 s | yes |
+
+- *Line 2.* The second sample: 40 of the 1,903 flagged NAPCORE pieces not in the dry reading, drawn from the copy,
+  `random.seed(23)` over the pool sorted by file and order (`s5-work/napcore-read-40b.txt`, readings in
+  `napcore-readings-40b.txt`). Read by the rule of step 2: 6 end inside a sentence (#16, #20, #25, #27, #33, #37), 1
+  unclear (#18, a sentence the source text itself breaks before a heading), 3 split a table row between columns.
+  #20 is the M3.4 footer case left from step 2. #33 is new: "described in Chapter" | "1.2. As highlighted", where the
+  chapter number reads as a numbered item, so the repair's preference chose that boundary. Pooled 9 of 80 (10 with
+  #18: 3.8 %, 2.1–6.6 %). With 80 pieces the 95 % interval still reaches past 5 %, so 80 do not settle the line; about
+  200 more read pieces would be needed if the point stays where it is.
+- *b17 lost* ("Kaj so metapodatki v NAP?", gold file `napcore.eu/metadata`). The page is a re-cut kind: its last two
+  pieces moved (boundary between pieces 3 and 4), its opening piece is unchanged. In the Slovenian pass the page falls
+  from place 3 to 9 in the pool behind re-cut pieces of M2.11, Annex B and D5.1.1, and the English pass, which now
+  carries the question, keeps other NAPCORE files. So the loss touches the re-cut kinds (**believed**, from the
+  passage lists and ranks, not from the pieces' scores).
+- *Every other question whose passages changed* (`s5-work/changed-questions.txt`; found or not, unchanged):
+  touching re-cut kinds: a19, a20 (DATEX II), b10 (INSPIRE), b11, b16, b18 (NAPCORE, EU legislation), q092 (NAPCORE
+  M5.4 in for a NeTEx schema). Not touching them: a15 and a17 (move between two runs on the reference itself), b01,
+  b02, b33, q031, q104, q125, q136, q138, q144, q147 (SIRI, NeTEx and OpRa files only). The same kind of moves for
+  b01 and b33 appeared on `s4v` with no change of content after its `VACUUM FULL` (`s4-off` against `s3`), so I take
+  them for ties broken by the new physical order of the table (**believed**).
+- *Time.* The re-cut copy was faster than the reference in the same round (0.95 s against 1.13 s); the reference was
+  timed first, so part of that may be the order (**believed**, not repeated).
+
+**Verified and believed.** Verified: the applied counts against the dry run (both reports); the harvested dry counts
+against `cut-work/recut-dry-harvested.json` (identical); that the copy's NAPCORE pieces equal the dry cut's
+(multiset of bodies); the token recount (embedder's `/count` on the stored rows: the only row over 256 is a TN-ITS
+schema row of the old cut, one of the 169 left as they are since step 1); index recall; every stage 1 number
+(`s3-time5`, `s5`, `cmp-s3-s5.txt`). Believed: the second reading (one reader, by hand); why b17 was lost; that the
+SIRI and NeTEx moves come from the table order. Assumed: that the mobilityDCAT-AP and TN-ITS clones at the indexed
+commits are the sources that were indexed (the commit is the one stored on the rows; the files were not compared
+with the rows, since a file already cut is not checked again).
+
+**Not checked.** Stage 2 (answers, examples). The XML examples, NeTEx, SIRI and OpRa on the copy (not re-cut). The
+cherry-pick stays on the branch: lines 1 and 3 hold. `napcore_helpdesk_s5v` holds the re-cut;
+`napcore_helpdesk_s2v` is unchanged and `napcore_helpdesk_s4v` is as step 3 left it.
