@@ -24,7 +24,7 @@ on the command line.
 
 Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
 Crafted by: AI coding agents
-Created: 2026-11-16  |  Modified: 2026-11-16
+Created: 2026-11-16  |  Modified: 2026-11-17
 """
 
 from __future__ import annotations
@@ -58,6 +58,11 @@ _PROSE_START = re.compile(r"[^\W_]|[(\"'“‘]")
 MIN_WRAP_WIDTH = 50
 MAX_WRAP_WIDTH = 200
 MIN_WRAP_LINES = 4
+# When a piece is closed, it may end at an earlier boundary where a sentence ends or an item starts, as long as it
+# keeps this share of the limit. A quarter of the limit (64 of 256 tokens) is about two ordinary sentences, enough
+# to reach the last sentence end of running prose; text with no sentence end that near (tables, unpunctuated lists)
+# keeps its cut, since going further back would only add pieces without ending one at a sentence.
+MIN_PIECE_SHARE = 0.75
 
 
 # ------------------------------------------------------------------------------------------------ counting
@@ -320,16 +325,41 @@ def pack_unit(unit: Unit, counter: TokenCounter) -> list[Piece]:
         parts.append(blocks[current_block][current_start:current_end])
         return unit.joiner.join(parts)
 
+    # Blocks joined by a blank line are paragraphs, so a boundary between two blocks is one between units; blocks
+    # joined by a line break are lines (a PDF page), whose boundaries may fall inside a sentence.
+    paragraph_blocks = "\n\n" in unit.joiner
+
+    def ends_unit(before: list[int], after: list[int]) -> bool:
+        """Whether the boundary between two atoms lies between units of the text: not inside a sentence, and it
+        separates paragraphs, or the text before ends a sentence, or the text after starts a list item or numbered
+        clause."""
+        if after[3] == 2:
+            return False
+        if after[3] == 0 and paragraph_blocks:
+            return True
+        return bool(_LINE_END_PUNCTUATION.search(blocks[before[0]][before[1] : before[2]].rstrip())
+                    or _ITEM_START.match(blocks[after[0]][after[1] : after[2]]))
+
+    def estimate_of(group: list[list[int]]) -> int:
+        return base + sum(a[4] for a in group) + max(0, len(group) - 1)
+
     groups: list[list[list[int]]] = []
     current: list[list[int]] = []
-    estimate = base
     for atom in atoms:
-        cost = atom[4] + (1 if current else 0)
-        if current and estimate + cost > limit:
-            groups.append(current)
-            current, estimate, cost = [], base, atom[4]
+        if current and estimate_of(current) + atom[4] + 1 > limit:
+            # Close the piece at the latest boundary between units that keeps MIN_PIECE_SHARE of the limit and
+            # leaves room for this atom after the part carried over; without one, where the limit falls (today's cut).
+            stop = len(current)
+            if not ends_unit(current[-1], atom):
+                for k in range(len(current) - 1, 0, -1):
+                    if estimate_of(current[:k]) < MIN_PIECE_SHARE * limit:
+                        break
+                    if ends_unit(current[k - 1], current[k]) and estimate_of(current[k:]) + atom[4] + 1 <= limit:
+                        stop = k
+                        break
+            groups.append(current[:stop])
+            current = current[stop:]
         current.append(atom)
-        estimate += cost
     groups.append(current)
 
     while True:
@@ -344,7 +374,11 @@ def pack_unit(unit: Unit, counter: TokenCounter) -> list[Piece]:
             best, best_score, running = 1, None, 0
             for k in range(1, len(group)):
                 running += group[k - 1][4]
-                score = (group[k][3], abs(running - total / 2))
+                # A boundary between units is preferred when both parts keep the share the packing allows a
+                # piece to give up (1 - MIN_PIECE_SHARE of the group); a cut inside a sentence comes last.
+                balanced = min(running, total - running) >= (1 - MIN_PIECE_SHARE) * total
+                preferred = balanced and ends_unit(group[k - 1], group[k])
+                score = (group[k][3] == 2, not preferred, group[k][3], abs(running - total / 2))
                 if best_score is None or score < best_score:
                     best, best_score = k, score
             groups[i : i + 1] = [group[:best], group[best:]]

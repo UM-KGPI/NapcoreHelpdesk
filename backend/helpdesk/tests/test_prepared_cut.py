@@ -70,6 +70,41 @@ class PackUnitTests(SimpleTestCase):
         self.assertEqual([p.fields["page"] for p in pieces], [0, 1, 2, 3])
         self.assertTrue(all(p.fields["q"] == 1 for p in pieces))
 
+    @staticmethod
+    def _lines(ends: set[int], count: int = 7) -> list[str]:
+        """Lines of six words; those numbered in ends close a sentence."""
+        return [" ".join(f"w{i}{j}" for j in range(6)) + ("." if i in ends else "") for i in range(count)]
+
+    def test_a_piece_closes_at_a_sentence_end_within_the_share(self):
+        # Limit 40 falls after the fifth line (inside a sentence); the fourth line ends a sentence and keeps
+        # 31 of 40 (at least MIN_PIECE_SHARE), so the piece ends there.
+        lines = self._lines({3})
+        pieces = pc.pack_unit(pc.Unit("u", "d", "", "", lines, "\n"), counter(40))
+        self.assertEqual(pieces[0].body, "\n".join(lines[:4]))
+        self.assertEqual("\n".join(p.body for p in pieces), "\n".join(lines))
+
+    def test_a_piece_keeps_its_cut_without_a_sentence_end_within_the_share(self):
+        # The only sentence end is after the third line, below the share: the piece ends where the limit falls.
+        lines = self._lines({2})
+        pieces = pc.pack_unit(pc.Unit("u", "d", "", "", lines, "\n"), counter(40))
+        self.assertEqual(pieces[0].body, "\n".join(lines[:5]))
+
+    def test_a_piece_closes_before_a_list_item(self):
+        lines = self._lines(set())
+        lines[4] = "- " + lines[4]
+        pieces = pc.pack_unit(pc.Unit("u", "d", "", "", lines, "\n"), counter(40))
+        self.assertEqual(pieces[0].body, "\n".join(lines[:4]))
+
+    def test_the_over_limit_split_prefers_a_sentence_end(self):
+        # The estimate counts one token a line break, the counter two: six lines fit by estimate and are over by
+        # count, so the group is split; the split takes the sentence end after the second line, not the middle.
+        def newline_count(texts, kind="passage"):
+            return [3 + len(re.findall(r"\w+", t)) + 2 * t.count("\n") for t in texts], 45
+
+        lines = [" ".join(f"w{i}{j}" for j in range(5)) + ("." if i == 1 else "") for i in range(6)]
+        pieces = pc.pack_unit(pc.Unit("u", "d", "", "", lines, "\n"), pc.TokenCounter(newline_count, 45))
+        self.assertEqual([p.body for p in pieces], ["\n".join(lines[:2]), "\n".join(lines[2:])])
+
     def test_metadata_points_at_the_body(self):
         piece = pc.Piece("p", "h", "Lead\nPlace\n\n", "Body text.", "p#0", tail="\n\nsummary")
         meta = piece.metadata(7)
