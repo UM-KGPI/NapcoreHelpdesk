@@ -93,7 +93,6 @@ from helpdesk.services.relation_paths import (
     relation_paths_for_question,
     supporting_subclass_chunks,
 )
-from helpdesk.services import chunk_concepts as concept_labels
 from helpdesk.services.schema_overlap import format_overlap_chunk, overlap_for_schemas
 from helpdesk.services.service_abbreviations import expand_abbreviations, services_in_question
 from helpdesk.services.vocabulary_bridge import bridged_question_concepts
@@ -2446,34 +2445,7 @@ def _retrieve_chunks_once(
     # their aliases (e.g. "netex", "when") match thousands of documents and flood
     # the candidate pool with irrelevant chunks before specific concepts get a slot.
     specific_expanded_concepts = expanded_concepts - _GENERIC_GRAPH_CONCEPTS
-    # RETRIEVAL_CONCEPT_LABELS: for every question, the pieces that carry the classes nearest to it by meaning
-    # (services/chunk_concepts.py) instead of the search of paths and labels by label words below. Without the
-    # embedder or the concept index no class is found, and the label-word search runs as before.
-    concepts_by_meaning: set[str] = set()
-    if graph_rag_enabled and concept_labels.enabled():
-        concepts_by_meaning = concept_labels.question_concepts(question, scope)
-        if probe is not None:
-            probe("concepts_by_meaning", sorted(concepts_by_meaning))
-    if concepts_by_meaning:
-        if not isinstance(chunk_iterable, list):
-            chunk_iterable = list(chunk_iterable)
-            existing_ids = {chunk.id for chunk in chunk_iterable}
-        graph_chunks = concept_labels.labelled_candidates(
-            concepts_by_meaning,
-            query_embedding,
-            scope,
-            limit=graph_expansion_max_candidates,
-            per_file=int(getattr(settings, "GRAPH_CANDIDATES_PER_FILE", 2)),
-        )
-        if probe is not None:
-            probe("graph_candidates", graph_chunks)
-        for graph_chunk in graph_chunks:
-            if graph_chunk.id not in existing_ids:
-                chunk_iterable.append(graph_chunk)
-                existing_ids.add(graph_chunk.id)
-                graph_candidates_added += 1
-                graph_candidate_ids.append(int(graph_chunk.id))
-    elif graph_rag_enabled and specific_expanded_concepts:
+    if graph_rag_enabled and specific_expanded_concepts:
         if not isinstance(chunk_iterable, list):
             chunk_iterable = list(chunk_iterable)
             existing_ids = {chunk.id for chunk in chunk_iterable}
