@@ -1357,8 +1357,8 @@ cherry-pick stays on the branch: lines 1 and 3 hold. `napcore_helpdesk_s5v` hold
 Stage 2 on the re-cut copy (`s5-a`), with the settings of `s3-a` (`RETRIEVAL_PREPARED_INDEX=True`,
 `VECTOR_INDEX_DIMENSIONS=384`, `VECTOR_INDEX_HALF_PRECISION=True`, `VECTOR_INDEX_PROBES=100`), the same sets and 3 runs
 each, replaying `s3-a`'s record (it saves more than `base-a`'s: the dry replay against it left 22 question runs, on
-which `s3-a` had made 30 calls; against `base-a`'s record those runs would also have been the only ones, but every other
-run would have been compared with the old index). The gate was fixed before the runs; nothing was tuned and no code
+which `s3-a` had made 30 calls; against `base-a`'s record about 233 runs would have run again, as in step 2c, since
+the pieces differ from the old index: **believed**, no dry replay against `base-a` was made). The gate was fixed before the runs; nothing was tuned and no code
 changed. Runs and scripts: `.claude/skills/measure-on-copy/runs/s5-a-dry`, `s5-a` and `s5a-work/`. All figures
 **measured** unless marked.
 
