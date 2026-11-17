@@ -418,6 +418,34 @@ def _lexical_recall_candidates(question: str, limit: int, scope: list[str] | Non
 VECTOR_INDEX_MARGIN = 2
 
 
+def _vector_index_dimensions() -> int:
+    """How many leading numbers of embedding_vector the nearest-row search reads (VECTOR_INDEX_DIMENSIONS); 0: all.
+
+    The column holds 1,536 numbers and the embedder fills the first 384, the rest are zero (counted on the step 2
+    copy, docs/plans/2026-11-15-sources-prepared-for-semantic-search.md, step 2b), so the cosine distance on the
+    filled numbers is the same. An index on that expression is a quarter of the size and can be read whole.
+    """
+    try:
+        filled = int(getattr(settings, "VECTOR_INDEX_DIMENSIONS", 0) or 0)
+    except (TypeError, ValueError):
+        return 0
+    return filled if 0 < filled < 1536 else 0
+
+
+def _filled_numbers_distance(query_embedding: list[float], filled: int):
+    """The cosine distance on the first `filled` numbers, written exactly as the index expression on the copy:
+    subvector(embedding_vector, 1, N)::vector(N), or ::halfvec(N) with VECTOR_INDEX_HALF_PRECISION. The number
+    is an int from the settings, so it is written into the expression (a type modifier cannot be a parameter)."""
+    from django.db.models.expressions import RawSQL
+
+    kind = "halfvec" if getattr(settings, "VECTOR_INDEX_HALF_PRECISION", False) else "vector"
+    query = "[" + ",".join(repr(float(x)) for x in list(query_embedding)[:filled]) + "]"
+    return RawSQL(
+        f"subvector(embedding_vector, 1, {filled})::{kind}({filled}) <=> %s::{kind}({filled})",
+        [query],
+    )
+
+
 def _nearest_ids_by_index(filtered, query_embedding: list[float], limit: int) -> list[int] | None:
     """The ids of the rows nearest to the query by the vector index (ivfflat); None when the index search is switched off (VECTOR_INDEX_SEARCH) or fails, and the exact scan is used.
 
@@ -434,17 +462,23 @@ def _nearest_ids_by_index(filtered, query_embedding: list[float], limit: int) ->
     from django.db import DatabaseError, transaction
 
     probes = int(getattr(settings, "VECTOR_INDEX_PROBES", 20))
+    filled = _vector_index_dimensions()
     try:
         with transaction.atomic():
             with connection.cursor() as cursor:
                 cursor.execute("SET LOCAL ivfflat.probes = %s", [probes])
                 cursor.execute("SET LOCAL ivfflat.iterative_scan = 'relaxed_order'")
+                if filled:
+                    # A full scan of the expression reads every whole vector (the column is stored out of line):
+                    # never cheaper than the index on the filled numbers, even with every list probed.
+                    cursor.execute("SET LOCAL enable_seqscan = off")
             # embedding_vector is NOT NULL: every row has a vector, so none is left out here.
-            ids = list(
-                filtered.order_by(CosineDistance("embedding_vector", query_embedding)).values_list("id", flat=True)[
-                    : limit * VECTOR_INDEX_MARGIN
-                ]
+            distance = (
+                _filled_numbers_distance(query_embedding, filled)
+                if filled
+                else CosineDistance("embedding_vector", query_embedding)
             )
+            ids = list(filtered.order_by(distance).values_list("id", flat=True)[: limit * VECTOR_INDEX_MARGIN])
     except DatabaseError as exc:  # an older pgvector without iterative scans, or no index: exact scan
         logger.info("vector index search unavailable, exact scan: %s", exc)
         return None
