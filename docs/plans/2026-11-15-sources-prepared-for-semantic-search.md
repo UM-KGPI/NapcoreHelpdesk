@@ -901,3 +901,58 @@ s1base and s1v are unchanged.
 lists probed). That an index on the 384 filled numbers would make exact search cheap. That q083's passages still
 hold the link to stop points. That TN-ITS Turtle and the mobilityDCAT-AP HTML are unchanged by the line repair.
 That a share per kind would bring back q019 and q121; nothing here shows it.
+
+### Step 2b: the index (2026-11-17, dev copy `napcore_helpdesk_s2v`, branch at a92b10c)
+
+The vector index of step 2 kept 0.943 of the exact nearest pieces at 40 probes and failed gate line 1. Before any
+fix I looked for the cause. The gate for a fix was fixed before the trials: on the same 367 captured retrieval calls,
+against the exact reference on the copy as it stands, (1) mean recall ≥ 0.99 and no call under 0.9; (2) retrieval
+median of the warm gold run ≤ 2.05 s in a stage 1 run; (3) index size and build time reported; (4) nothing changes
+with the setting off. No model was called. Scripts, logs and caches: `.claude/skills/measure-on-copy/runs/s3-work/`.
+All figures **measured** unless marked.
+
+**Diagnosis.**
+
+- *The column.* `embedding_vector` is `vector(1536)`; the embedder fills the first 384 numbers. Counted on all
+  152,741 rows: no row has a number other than zero beyond the 384th, every row's first 384 have norm 1.0 (to 1e-8),
+  no row is all zero. `alternate_vector` is set for 169 rows only (TN-ITS schema pieces, full width, the hash
+  vectors kept for rollback); retrieval never reads it. The rows carry no embedding model field. So the cosine
+  distance on the first 384 numbers is the distance on the column.
+- *Storage.* Each vector is 6,148 bytes, stored out of line (storage `external`, not compressed): the table is
+  203 MB, its TOAST 1,195 MB. Any exact scan reads the 1.2 GB of whole vectors, and so does the ivfflat index on
+  the column when every list is probed (1,194 MB). This is why the exact search costs about 0.9–1.0 s a query
+  whatever form it takes (table below).
+- *Duplicates.* Exact duplicates of `embedding_vector`: 26 groups, 58 rows, 32 redundant rows, largest group 4
+  (NeTEx fare examples whose texts differ after the first 256 tokens). Not a cause.
+- *Near-identical vectors.* The ivfflat list that holds 14 % of the rows (20,958 rows) is NeTEx example pieces only,
+  all from two files, `examples/standards/tap_tsi/B1_NRT/Netex_tap_tsi_B1-1080-full.xml` (25,237 pieces in all) and
+  `Netex_tap_tsi_B1-1080.xml` (4,328): repeated `FareStructureElement` blocks whose pieces begin with the same element
+  path. Within that list the median distance from a piece to its nearest other piece is 0.0002, and every sampled
+  piece has 200 others within 0.02 (40 sampled). Elsewhere it is 0.0031, with a median of 52 within 0.02. By kind,
+  the whole list is `example` (0 of other kinds). These two files are 19 % of the table (29,565 rows); for the open
+  decision on leaving such pieces out of the index, that is the count. Nothing was deleted.
+- *Where the questions lie.* For the 367 captured calls the nearest piece is at distance 0.119 (median; p10 0.096,
+  p90 0.144) and the last of the 25–100 wanted at 0.150, a band 0.027 wide. For 60 sampled pieces used as queries the
+  nearest other piece is at 0.0016 (median). The questions lie about 75 times farther from the pieces than the pieces
+  from each other, and their 30 nearest sit in a thin shell at nearly equal distance.
+
+**Why HNSW failed.** I rebuilt the m 16, ef_construction 64 index on the column as step 2 had (7 min 38 s, spilled
+after 39,022 rows, 1,193 MB) and tested each candidate:
+
+| candidate | test | result | holds? |
+|---|---|---|---|
+| the scope filter applied after the index scan | same calls without the filter, against an exact reference without the filter | ef_search 100: 0.476 with the filter, 0.386 without; ef_search 400 with iterative scan: 0.662 with, 0.633 without | **no**: without the filter it is no better |
+| the iterative scan off | `hnsw.iterative_scan = relaxed_order` | 0.476 → 0.566 at ef_search 100 (the short results go: 58 → 0) | a small part only |
+| a build spilled to disk or under a full `/dev/shm` | HNSW on the 384 numbers as `halfvec`, built wholly in memory (47 s, 170 MB, no spill notice) | 0.459 / 0.573 / 0.715 at ef_search 100 / 400 / 1,000 | **no**: as bad in memory |
+| duplicates | count | 32 redundant rows | **no** |
+| the reference and the index query not reading the same rows or operator | both `<=>`, the same filter SQL; a01 by hand: exact scan and index on the same query | at ef_search 1,000 the planner chose a full scan (exact, 30 of 30); with the full scan off, the index returned distances 0.203–0.215 and 0 of the 30 unfiltered nearest (0.167–0.195), 17 of the filtered | **no**, but step 2's by-hand check set the filtered index result against the unfiltered exact 30 (**believed**, from the distances); the unfiltered index result has none of them either, so the miss is real |
+| the graph cannot reach the wanted rows | each of a01's 30 nearest, searched by its own vector | 28 of 30 found; 260 of 300 random rows found by their own vector (38 of the 40 missed are examples) | **no**: the rows are reachable |
+| the questions lie away from the pieces | 60 stored piece vectors as queries on the in-memory HNSW, top 30 | 0.908 at ef_search 100, 0.962 at 400 (questions: 0.459, 0.573) | **yes** |
+
+So HNSW finds the near pieces of a piece but not of a question: the questions lie in a thin shell far from every
+piece (**verified** by the contrast above, on the same index), and the greedy walk stops in a region whose pieces
+are only slightly farther. The same fact explains why ivfflat needs nearly every list: the lists nearest to the
+question do not hold its nearest pieces (**believed**: this is the reading that fits both, not a separate test). The
+near-identical blocks make it worse for pieces (the zero-recall pieces as queries are in such blocks, **believed**
+from their kind, not counted) but are not what fails the questions: a01's nearest pieces are NAPCORE text,
+schemas and regulations, none in the big list.
