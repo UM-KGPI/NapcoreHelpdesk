@@ -17,6 +17,9 @@ on:
       - 'backend/helpdesk/services/semantic_graph.py'
       - 'backend/helpdesk/services/embeddings.py'
       - 'backend/helpdesk/services/index_builder.py'
+      - 'backend/helpdesk/services/prepared_cut.py'
+      - 'backend/helpdesk/services/prepared_index.py'
+      - 'backend/helpdesk/services/read_large.py'
       - 'backend/helpdesk/index_profiles/**'
       - 'backend/helpdesk/benchmarks/**'
       - 'backend/helpdesk/management/commands/run_retrieval_benchmark.py'
@@ -43,6 +46,8 @@ jobs:
       GRAPH_RAG_ENABLED: "False"
       LLM_ENABLED: "False"
       CONTROLLER_LLM_ENABLED: "False"
+      # The index is built with the prepared cut (.github/actions/benchmark-index): read it as such.
+      RETRIEVAL_PREPARED_INDEX: "True"
       POSTGRES_DB: napcore_helpdesk
       POSTGRES_USER: napcore
       POSTGRES_PASSWORD: napcore
