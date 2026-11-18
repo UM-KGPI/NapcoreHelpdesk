@@ -1553,3 +1553,11 @@ branch runs there with the settings on (**believed**, from steps 1 and 2; not me
 
 **Ways back, if wanted.** `prepare_index --database napcore_helpdesk --cut-version 0` with the same checkouts
 (about 1.5 hours of embedding, shown on one kind), or the backup `napcore_helpdesk_s6pre`.
+
+**Decisions after the step (2026-11-18).**
+
+- The two lines not met are accepted. The 19 pieces over 256 tokens (the longest 262) stay as a known fault of the
+  cut of XML examples; the timing line is read as an effect of the order of the runs.
+- CI stays on the old cut, which is what prod runs, until prod is re-indexed in step 6. The two CI commits
+  (560963f, c62944f) are reverted, so the baseline is again 0.483 / 0.497 hit@10. The table above stays as the
+  record of what the prepared cut gives with hash vectors; what CI measures after step 6 is decided there.
