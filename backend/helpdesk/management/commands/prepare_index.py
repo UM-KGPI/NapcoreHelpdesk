@@ -291,7 +291,7 @@ class Command(BaseCommand):
                 if target == pc.CUT_VERSION:
                     for r in rows:
                         seen.add(r["doc_type"], r["text"], pi.SeenPieces.file_key(job.repository_url, r["source_path"]))
-                files_report[file_name] = {"before": len(rows), "after": len(rows), "status": "at the version"}
+                files_report[file_name] = {"kind": kind, "before": len(rows), "after": len(rows), "status": "at the version"}
                 continue
             # A file of the cut of before is checked against its source: only the cut may change, not the content.
             if current == pi.OLD_CUT:
@@ -299,7 +299,7 @@ class Command(BaseCommand):
                 if today is None or collections.Counter(today) != collections.Counter(r["text"] for r in rows):
                     stats[kind]["not covered: source differs from the index"] += 1
                     stats[kind]["rows kept as they are"] += len(rows)
-                    files_report[file_name] = {"before": len(rows), "after": len(rows), "status": "source differs"}
+                    files_report[file_name] = {"kind": kind, "before": len(rows), "after": len(rows), "status": "source differs"}
                     continue
             if target == pc.CUT_VERSION:
                 result = self._prepared(job, rows, counter, seen, stats[kind], tokens[kind], limit, recut=current == target)
@@ -308,14 +308,14 @@ class Command(BaseCommand):
             if result is None:
                 stats[kind]["not covered: cannot be cut by structure"] += 1
                 stats[kind]["rows kept as they are"] += len(rows)
-                files_report[file_name] = {"before": len(rows), "after": len(rows), "status": "cannot be cut"}
+                files_report[file_name] = {"kind": kind, "before": len(rows), "after": len(rows), "status": "cannot be cut"}
                 continue
             if result == "unchanged":
-                files_report[file_name] = {"before": len(rows), "after": len(rows), "status": "cut again, unchanged"}
+                files_report[file_name] = {"kind": kind, "before": len(rows), "after": len(rows), "status": "cut again, unchanged"}
                 continue
             write, new_rows = result
             stats[kind]["new rows"] += new_rows
-            files_report[file_name] = {"before": len(rows), "after": new_rows, "status": "dry" if dry else "written"}
+            files_report[file_name] = {"kind": kind, "before": len(rows), "after": new_rows, "status": "dry" if dry else "written"}
             if dry:
                 if number % 50 == 0:
                     self.stdout.write(f"{number}/{len(jobs)} files, {time.monotonic() - started:.0f} s")
