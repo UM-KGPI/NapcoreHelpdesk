@@ -1562,170 +1562,169 @@ branch runs there with the settings on (**believed**, from steps 1 and 2; not me
   (560963f, c62944f) are reverted, so the baseline is again 0.483 / 0.497 hit@10. The table above stays as the
   record of what the prepared cut gives with hash vectors; what CI measures after step 6 is decided there.
 
-### Step 6, preparation: the order of the switch (2026-11-18, copies `napcore_helpdesk_s7a`, `napcore_helpdesk_s7m`, `napcore_helpdesk_s7x`, main at 09fd59a, 0.97.231) — PARTIAL
+### Step 6, preparation: the order of the switch (2026-11-18, copies `napcore_helpdesk_s7a`, `napcore_helpdesk_s7m`, `napcore_helpdesk_s7l`, main at 09fd59a, 0.97.231)
 
-**This record is partial.** The machine had to be closed at 11:15 the same day, so the work stopped at a clean
-point at 11:05. Measured: the file-level numbers of the states listed below; the composition of the half re-cut
-copy; the build of the index; that a stopped re-cut leaves no file mixed and goes on (three times). Not measured:
-every gate time (the runs overlapped), the full re-cut rate on an idle machine, the refresh collision as a run,
-the states at prod's per-file limit of 2 (below). No model was called. Scripts, logs and notes:
-`.claude/skills/measure-on-copy/runs/s7-work/`. Figures **measured** unless marked.
+I measured on dev copies which order prod can be switched in without its answers getting worse on the way. Stage 1
+only, no model call. Scripts, logs and runs: `.claude/skills/measure-on-copy/runs/s7-work/` (notes in `notes.md`),
+runs `s7-*`. Figures are **measured** unless marked.
 
-**The question.** Prod's re-cut is believed to take about 12 hours, during which prod serves from an index that is
-partly of the old cut and partly of the new. Four states were to be measured against `base` (old cut, every
-setting off) and `s6` (dev after the full re-cut, all four settings on): (a) the old cut with the index of step 2b
-and the three vector settings (`VECTOR_INDEX_DIMENSIONS=384`, `VECTOR_INDEX_HALF_PRECISION=True`,
-`VECTOR_INDEX_PROBES=100`); (b) the old cut with all four (also `RETRIEVAL_PREPARED_INDEX=True`); (c) a half
-re-cut index with all four; (d) a half re-cut index with everything off (what prod would serve if the settings
-were switched only at the end). The line, fixed before the runs: against `base`, gold found not lower by more than
-1, benchmark found not lower by more than 1, retrieval benchmark hit@10 not lower by more than 0.02, warm
-retrieval median not more than 0.3 s above `base` timed in the same round.
+**Verdict.**
+- No in-place order meets the line I fixed before the runs.
+- The half re-cut index with all four settings on, (c), loses 2 benchmark questions at per-file limit 1 and 3 at
+  limit 2 (the line allows 1).
+- With the settings off, (d) loses more: gold −3 or −4, hit@10 −0.041 or −0.047.
+- So I recommend a different order: build the new index beside the live database, measure it there, and swap the
+  two index tables in one transaction. Users then see only today's prod and the end state.
+- The swap was rehearsed on dev copies (below): the transfer takes 111 s in one transaction without blocking a reader, leaves the index tables equal to the re-cut dev index and every other table as it was, and the search keeps every exact nearest piece (recall 1.000). Its stage 1 run against `s6` was still running when this was committed.
+- The end state at prod's limit 2 against today's prod at limit 2 was not measured on dev. It is measured on prod
+  before the swap, which is done only if it meets the line. At limit 1 the end state (`s6`) was 3 benchmark
+  questions under `base`, which points to that line being in doubt (**believed**).
 
-**Verdict: not reached; one state measured as failing.** (d), the half re-cut index with every setting off (what
-prod would serve during the re-cut if the settings were switched only at the end), fails the line: retrieval
-benchmark hit@10 0.852 against `base`'s 0.893 (−0.041, the line is −0.02). This number is not affected by the
-overlap (the retrieval benchmark runs without GraphDB and the vector search is deterministic). So "settings at the
-end" is ruled out. (c), the same copy with all four settings on, has no number yet: its gold, benchmark and
-retrieval benchmark runs were still running at the stop, so whether the order "settings first, then the re-cut"
-keeps every state within the line is **not known**. What is
-measured points one way and is labelled as such: switching the vector settings, and all four, on the old cut does
-not lose a file (gold), and the index of step 2b reads every exact nearest piece on the old cut. Whether a half
-re-cut index read with all four on (c) stays within the line is **not known**; that (c) is harmless stays a
-belief. The counts of (a) and (b) are gold only, under load (below).
-
-(d) against `base` on the retrieval benchmark: lost q047, q056, q075, q081, q083, q121, q122, q124, q130; gained
-q077, q086, q137. Against `s6` (the full re-cut, 0.873): lost q047, q075, q081, q083, q121, q122, q124, q130;
-gained q017, q049, q082, q086, q088. So the half state with the old search is worse than both ends (**measured**);
-why (the old index at 20 probes on a mixed table, or the old reading of the new pieces) was not separated.
-
-| state | copy | run | gold found (vs base 39) | benchmark found (vs base 124) | rbench hit@10 (vs base 0.893) | index recall, 367 calls | gold time | meets the line? |
-|---|---|---|---|---|---|---|---|---|
-| today's prod: old cut, every setting off | s7a | `s7-p0` | 39/57, the same questions as `base` (both gold runs) | 124/141, the same questions as `base` | 0.893 (MRR 0.564), as `base` | – | not a gate time (re-cut running beside it) | reference |
-| (a) old cut, index + three vector settings | s7a | `s7-a` (stopped after gold run 1) | 39/57, the same questions as `base` | not measured | not measured | 1.000, lowest 1.00, every call on the index | not measured (runs overlapped) | gold yes; rest open |
-| (b) old cut, all four | s7a | `s7-b` (gold run 1), `s7-b-x` (bench, rbench) | 40/57: `base`'s 39 and a12 | not measured (stopped at 10:54) | Rnot measured (stopped at 10:54) | not measured (same index and query as (a)) | not measured (runs overlapped) | gold yes; rest open |
-| (c) half re-cut, all four | s7m | `s7-c`, `s7-c-x` | not measured (stopped at 10:54) | not measured (stopped at 10:54) | Rnot measured (stopped at 10:54) | not measured (stopped at 10:54) | not measured (runs overlapped) | **open** |
-| (d) half re-cut, every setting off | s7m | `s7-d`, `s7-d-x` | not measured (stopped at 10:54) | not measured (stopped at 10:54) | Rnot measured (stopped at 10:54) | not measured | not measured (runs overlapped) | **open** |
-| end state for reference (dev after the re-cut, step 5) | dev | `s6` | 40/57 | 121/141 | 0.873 | 1.000 | 1.20 s (step 5) | – |
-
-Against `s6`, (a) and (b) have `base`'s files: they lose a16, b01, b02 and keep a19, b17, as `base` does; (b) also
-has a12, which neither `base` nor `s6` has.
-
-How the numbers were taken: stage 1 only, no model call. The per-file limit was 1 in every run (dev's
-`backend/.env`, as in `base` and `s6`); prod runs with 2 (read on prod 2026-11-18). So none of these numbers is at
-prod's setting, and the runs at 2 (scripted in `round.sh`) were not reached. From 10:19 the runs of (a)–(d) ran in
-parallel with each other and with the recall script, to get counts before the stop; GraphDB then timed out on
-some graph queries (gold run 1: (a) 1 query, (b) 8; `s7-p0`, `base` and `s6` 0), which can change a question's
-passages, so the counts of (a) and (b) are **measured under load** and should be taken again alone. `s7-p0` ran
-alone except for the re-cut beside it (no GraphDB timeout): its counts are clean, its times are not. The gold
-times of these runs (3.4–5.1 s medians) are not gate times.
+**Conditions.**
+- Each counted run ran alone, one after another, with 0 GraphDB timeouts.
+- Docker Desktop's memory was raised from 4 to 8 GB at about 13:30 by Andrej's decision. Runs before that do not
+  count: from 12:42 the Docker machine was out of memory (28 MB available, swap full) and GraphDB queries timed out.
+- Between 13:23 and 16:20, MemAvailable in the machine was 3.1–3.7 GB and memory pressure 0.00 before and after
+  every run.
+- Times are compared only within that round. The per-file limit (`RETRIEVAL_MAX_SAME_SOURCE_PATH`) is 1 in dev's
+  `backend/.env` (as `base` and `s6` ran) and 2 on prod. Every state was measured at both, each against a
+  reference of today's prod at the same limit.
+- The line, fixed in the brief before the runs: against the reference, gold not lower by more than 1, benchmark
+  not lower by more than 1, retrieval benchmark hit@10 not lower by more than 0.02, warm gold retrieval median not
+  more than 0.3 s higher.
 
 **The copies.**
+- `s7a`: dev's index before step 5 (`s6pre`, 61,877 rows, the old cut as prod has it), with the index of step 2b
+  built by `vector_index` (14.7 s, 49 MB).
+- `s7m`: the same, then `prepare_index --cut-version 1` in the command's own order. Its dry run was identical per
+  file to step 5's rehearsal: 0 of 1,458 files differ, and 6 TN-ITS schema files are "source differs".
+- I stopped the `s7m` run at 10:18, between two file writes. At that point:
+  - 109,545 rows, 67,878 of them new cut; 0 files with rows of both cuts.
+  - Re-cut: TN-ITS, the NeTEx READMEs, and 234 of 298 NeTEx example files.
+  - Still old: 64 NeTEx example files, every NeTEx schema, SIRI, OpRa, mobilityDCAT-AP, and every harvested kind.
+  - 33 % of the old rows replaced; new-cut rows are 62 % of the table. This is the state of the first hours on
+    prod.
+- The run stopped three times: two embedder timeouts and one kill. Each time 0 files were mixed, and the same
+  command went on from the next file.
 
-- `s7a`: a copy of `napcore_helpdesk_s6pre` (dev's index before step 5's re-cut, 61,877 rows, the old cut as prod
-  has it), with the index of step 2b built by `vector_index`: 14.7 s with `ANALYZE`, 49 MB (on the re-cut table of
-  step 2b it is 120 MB).
-- `s7m`: the same copy and index, then `prepare_index --cut-version 1` in the command's own order (the order prod
-  would see: repositories by URL, files by path, then the harvested documents). A dry run first (163 s): per file
-  identical to step 5's rehearsal dry run (0 of 1,458 files differ), 6 TN-ITS schema files "source differs" (169
-  rows kept as they are), as on dev. Asked to stop after 291 files written (through
-  `examples/standards/tap_tsi/B1_NRT/Netex_tap_tsi_B1-1080-full.xml`, 49 % of the old rows); stopped at 10:18 by
-  hand before that, for the time limit, between two file writes.
-- At the stop: 109,545 rows, 67,878 of the new cut; 0 files with rows of both cuts. Re-cut: TN-ITS (all but the 6
-  files that differ), the NeTEx READMEs, 234 of the 298 NeTEx example files (66,300 rows). Still of the old cut:
-  64 NeTEx example files (23,538 rows), every NeTEx schema (7,625), SIRI, OpRa, mobilityDCAT-AP, and every
-  harvested kind (EU legislation, NAPCORE, DATEX II, INSPIRE). Old rows replaced: 20,210 of 61,877 (33 %); rows of
-  the new cut: 62 % of the table. So the copy is about a third of the way in old rows and well past half in new rows;
-  it is the state of the first hours on prod, when the long NeTEx example files are re-cut and everything else is
-  still old.
+**Limit 1.** The reference is `s7-p0r`: old cut, settings off. It equals `base` question for question.
 
-**Stopped and started again.** The run stopped on an embedder timeout twice (08:48:48 after 70 files, 09:36:52
-after 188; the embedder was shared with stage 1 runs and a test) and was stopped by hand once. Each time: 0 files
-with rows of both cuts, and the same command (with the files still to go as `--stop-after`) went on from the next
-file. Rate on this machine: about 20 pieces a second in the first minutes, about 10 a second later with other work
-on the embedder (the embedder container at 1.31 of 1.5 GiB, up to 1,039 % CPU); not a measure of prod's rate. The
-process held 0.57 GB at the start and about 0.65 GB at 68,000 rows.
+| state | run | gold | benchmark | hit@10 / MRR@10 | gold median | line |
+|---|---|---|---|---|---|---|
+| today's prod | `s7-p0r` | 39 | 124 | 0.893 / 0.564 | 1.02 s | reference |
+| (a) old cut, index + 3 vector settings | `s7-a2` | 39 (=) | 124 (=) | 0.893 / 0.564 | 0.83 s | met |
+| (b) old cut, all four | `s7-b2` | 40 (+a12) | 124 (= ; −q137 +q063) | 0.893 / 0.568 | 0.98 s | met |
+| (c) half re-cut, all four | `s7-c` | 39 (=) | **122 (−2)** | 0.893 / 0.559 | 1.16 s | **not met** (benchmark) |
+| (d) half re-cut, all off | `s7-d` | **36 (−3)** | 122 (−2) | **0.852 (−0.041)** / 0.551 | 0.73 s | **not met** |
+| end state (dev, step 5) | `s6` | 40 | 121 | 0.873 / 0.587 | – | (benchmark −3 against `base`) |
+| end state by the swap | `s7-swap` | running |  |  |  | pending |
 
-**Index recall** (`trial2.py` of step 5, the 367 captured retrieval calls of step 2b, against the exact nearest
-rows of each copy as it stands): on `s7a` with the index of step 2b as the app reads it (half precision, 100 probes,
-full scan off): mean 1.000, lowest 1.00, 0 calls under 0.9, every call planned on the index; index query median
-0.385 s, p90 0.565 s, under load (not a gate time; 0.08–0.13 s in step 2b alone). On `s7m` (state (c)): not measured (the exact reference was still being computed at the stop).
-The old index at prod's 20 probes on `s7a` and `s7m` (today's prod and state (d)) was not reached; step 2's
-correction measured about 0.88 on the fully re-cut table.
+The closing reference run `s7-p0r-end`: gold 39, the same questions, gold median 0.69 s. The reference ran faster at the end of the round (1.02 s at the start); against the closing reference (c) is +0.47 s and (b) +0.29 s, so the time line is not decided by this round.
 
-**What the re-cut needs on prod (read in the code; marked where verified otherwise).**
+**Limit 2.** The reference is `s7-p0-L2`: gold 39, benchmark 122, hit@10 0.886 / MRR 0.556, gold median 0.65 s.
 
-- Repository files come from the checkouts named by `--checkout URL=PATH`; `prepare_index` matches the URL to the
-  stored `repository_url` exactly after removing a trailing `/` (no other normalisation, read in the code). On
-  prod the refresh keeps them at `SOURCE_CHECKOUT_DIR/<name>` = `/app/repos/NeTEx`, `SIRI`, `OpRa`,
-  `mobilityDCAT-AP`, `TN-ITS` (volume `source-repos`, mounted in the backend and the worker; read on prod
-  2026-11-18). A repository not named is left as it is, silently; the end check finds it.
-- Harvested documents come only from the snapshots under `docs/` (`docs/regulations`, `docs/napcore/text`,
-  `docs/datex`, `docs/inspire`), mounted read only at `/app/docs` from the deployed repository. The network
-  fetches of the harvesters (`_get`, `urlopen`) are only in their fetch functions, which `prepare_index` does not
-  call (read in the code; not tried with the network cut).
-- A file of the old cut is first checked against its source: if today's old cut of the file does not give exactly
-  its rows, the file is left as it is and counted "source differs". So a checkout at another commit than the rows
-  cannot corrupt a file; it only leaves it old. Prod's NeTEx, SIRI and mobilityDCAT-AP checkouts are at commits
-  dev does not have (11d40b5, d0b2fb3, 6ef08d7, read on prod 2026-11-18; not objects in dev's checkouts), so prod's
-  dry run decides how many files are covered; on dev it was all but 6.
-- The embedder: every new piece, 16 to a request, `EMBEDDING_SERVICE_TIMEOUT_SECONDS` (default 120) each; one
-  failed request stops the run with an error and the same command goes on (above).
+| state | run | gold | benchmark | hit@10 | gold median | line |
+|---|---|---|---|---|---|---|
+| (a) | `s7-a-L2` | 39 / 38 (−a15 in gold run 2) | 122 (=) | 0.886 (=) | 0.83 s | met |
+| (b) | `s7-b-L2` | 39 / 40 (+a12) | **120 (−2)**: −q124 −q137 | 0.886 (=) | 0.70 s | **not met** (benchmark) |
+| (c) | `s7-c-L2` | 38 (−1: a15 in gold run 2; 39 in run 1) | **119 (−3)**: −q063 −q137 −q143 | 0.893 (+0.007) | 0.75 s | **not met** (benchmark) |
+| (d) | `s7-d-L2` | **35 (−4)** | **120 (−2)**: −q063 −q121 −q143 +q140 | **0.839 (−0.047)** | 0.72 s | **not met** |
+| end state | – | not measured on dev | | | | measured on prod before the swap |
 
-**The nightly refresh beside the re-cut (read in the code; the run that was to show it failed, below).**
+**What (c) loses, read.**
+- **q137** (roadwork warnings in real time): the SIRI example `exx_situationExchange_road.xml` is given in `base`
+  and `s6`. In (c) its place goes to `siri_all_functionalServices.xsd` (twice) and a NeTEx example.
+- **q144** (NeTEx and Transmodel): the NeTEx `README.md` is given in `base` and `s6`. In (c) NeTEx schema files
+  take its place.
+- These are losses of the mixed state itself: SIRI is still old cut, the NeTEx README already new, the NeTEx
+  schemas still old.
+- (d) against `base` on the retrieval benchmark: lost q047, q056, q075, q081, q083, q121, q122, q124, q130; gained
+  q077, q086, q137.
 
-- The refresh (`refresh_all_sources`, 03:30 UTC on prod, `SOURCE_REFRESH_ENABLED` True, read on prod) moves each
-  checkout to the remote head (`fetch --depth 1`, `reset --hard`, `clean -fdx`) and runs `index_repository`
-  incremental with prune. It takes a non-blocking `flock` on `/app/repos/.refresh.lock` and skips when another
-  refresh holds it; the editor's harvest takes the same lock. `prepare_index` takes no lock.
-- The collision: the prune deletes every row of the repository whose chunk id the refresh did not see in its pass,
-  and for an unchanged file it records the ids the file had when it was visited. Rows the re-cut writes into that
-  repository between the visit and the prune are therefore deleted, and the file is left without rows; the next
-  refresh skips it (its hash is unchanged), so it stays without rows until `prepare_index` visits it again (it
-  treats an indexed file without rows as a job). A changed file is cut by the refresh with the cut its rows have,
-  so it does not mix cuts; a moved checkout makes the re-cut leave the file old ("source differs").
-- The way to keep them apart without editing `.env.prod`: run the re-cut under the same lock (`flock -n
-  /app/repos/.refresh.lock python manage.py prepare_index …`); the refresh then logs "skipped" and comes back by
-  itself when the re-cut ends. `flock` is in the image (`/usr/bin/flock` in dev's backend container). That the lock
-  holds across containers on one host is **believed** (one kernel, one file of a named volume), not tried.
-- The test (`collision.py`, copy `s7x`): the refresh of OpRa run with the re-cut of OpRa between its pass and its
-  prune. It failed on an embedder timeout inside the re-cut (the embedder was shared); `s7x`'s OpRa is now partly
-  re-cut (550 rows, 61 new), so a rerun needs a fresh copy. **Not verified by a run.**
+**Index recall.**
+- On `s7a` with the index of step 2b as the app reads it: 1.000, lowest 1.00, on all 367 captured calls, every
+  call planned on the index (morning, under load, so the time is not a gate time).
+- On `s7l` after the swap: 1.000 on the 206 gold and benchmark questions (`recall_check.py`, limit 50), every search planned on the index; the index search median was 0.64 s right after the transfer, against 0.08–0.13 s in step 2b on an index built on the finished table (believed: the index built on the old rows and filled by the transfer; not yet compared).
+- **Believed from the code** that the index stays exact while the re-cut inserts rows into it: a new row goes into
+  the list of its nearest centroid, and the app reads all 100 lists. The dropped run on the finished `s7m` would
+  have shown it. The swap rehearsal shows it for an index built on the old cut and then filled by the transfer.
 
-**A load of vectors from dev (assessed, not built).** `prepare_index` already keeps an old row's vector when a
-piece's embedded text equals the row's (11,600 of 133,192 pieces on dev); a load would widen that lookup to vectors
-computed on dev. It needs: an export on dev of (SHA-256 of the exact embedding input, the 384 numbers) for every
-row, produced by cutting the same files as `prepare_index` does and pairing each piece with its stored vector (the
-input is not stored with the row); a file of about 130,000 × 1.6 kB ≈ 200 MB moved to prod by a workflow or
-copy; and an option `--vectors FILE` for `vectors_for` to look there before calling the embedder. The share it
-covers is the share of pieces whose source file is byte-identical on both sides, and that can be counted before
-anything is built by comparing `IndexedSourceFile.content_hash` per (repository, path) of prod with dev's. What is
-known: TN-ITS and OpRa are at the same commits on both (read on prod); the harvested kinds come from `docs/` of
-the deployed commit (identical if prod runs the commit dev's snapshots are from); NeTEx (88 % of the rows after the
-re-cut) is at 11d40b5 on prod, a commit dev's checkout (v2.0 at 5d2e569) does not have, and prod's refresh created 6 and
-updated 12 NeTEx chunks on 2026-11-18 alone, so NeTEx's share is unknown from here and could be anything from most
-files to few. What could go wrong: a vector of dev filed under the wrong key would put a wrong piece in the
-search with nothing to show it (the key must be the full embedding input, not the text); the embedder on prod could
-differ from dev's (model files, version, threads), which a check of a few hundred pieces embedded on both sides
-shows (cosine distance ≈ 0); and the new code path has to be tested and shipped first, which costs more than a night
-of embedding if NeTEx's share is small. Raising the embedder's CPUs for the night (prod's host has 40 CPUs, idle;
-the embedder runs with 4) is the cheaper lever and is Andrej's option in the guidance.
+**The swap rehearsal.** `swap.sh`: "live" = `napcore_helpdesk_s7l`, a fresh copy of `s6pre` (the old cut); "built beside" = the dev
+database `napcore_helpdesk` after step 5's re-cut, read only through `pg_dump --data-only` of the two index tables
+(8 s, 1.26 GB). The step 2b index was built on live first (8.6 s). The transfer, in one transaction (`DELETE` of both
+tables, `COPY` of the dump, both sequences set): 111 s (the `DELETE` 4.2 s, the `COPY` of the chunk table 106 s). A
+reader counting the rows every second during it saw 61,877 rows in all 87 reads (0.22–0.50 s each, including
+`docker exec`) and 152,912 right after the commit: no read was blocked. After it: both index tables equal to the
+dev database (152,912 rows and 1,458 files; one hash over ids, chunk ids, text and vector of every row), every other
+table with the same row count as before, a marker row written to another table before the transfer still there,
+the sequences past the largest id; `VACUUM (ANALYZE)` 25 s. Stage 1 on it at limit 1 against `s6`: still running at
+the commit.
 
-**Believed, not verified.** That a run at 11d40b5 covers most NeTEx files (prod's dry run shows it). That the lock
-holds across containers. That `up -d --no-deps backend celery-worker` does not recreate `db` after an edit of
-`.env.prod`. That prod's rate is about 3.4 pieces a second at 2 CPUs and higher at 4.
+**What the swap touches** (read in the models and the code; checked on the catalog of `s7a`).
+- `prepare_index` writes only `helpdesk_sourcechunk`: per file, a delete and a bulk create in one transaction. It
+  reads `helpdesk_indexedsourcefile`. `vector_index` creates one index and runs `ANALYZE`.
+- No foreign key points at `helpdesk_sourcechunk` or `helpdesk_indexedsourcefile` (0 rows in `pg_constraint`),
+  and there is no trigger, view or materialized view on them. Their ids come from their own sequences.
+- `chunk_id` is kept as text in the question logs (`helpdesk_retrievalevent`, `helpdesk_answerevidencelink`).
+  After a swap, as after any re-index, those ids of past questions point at rows that are gone; nothing answers
+  from them (**believed**, from reading the code).
+- Row ids are cached in-process for up to an hour (example use, element candidates, alias matches). The restart
+  that switches the settings clears them. The redis cache holds only translated fixed texts.
+- `helpdesk_indexedsourcefile` is swapped together with the rows, so that its hashes belong to them.
 
-**Not done (to resume).** In the order they matter: (1) stage 1 of (c) and (d) on `s7m` as it stands (the copy is kept at the stop),
-alone, at the per-file limit 1 and 2, with `s7-p0` at 2 as the reference: `round.sh` holds the commands (runs
-`s7-c`, `s7-d`, `s7-*-L2`); (2) (a) and (b) again alone (their counts were taken under load); (3) one timing round,
-gold only, of today's prod and every state, nothing else running; (4) recall of the old index at 20 probes on
-`s7m` (state (d)) and of the index of step 2b on `s7m` if it is missing above; (5) the collision as a run, on a
-fresh copy (`collision.py`); (6) the rest of the re-cut on `s7m` to time it (`recut-half-resume.sh` without
-`--stop-after` runs to the end) and the end checks of the guidance on it. The commands, the copies and their state
-are in `runs/s7-work/notes.md`. Until (1) is done, the order of the switch is not established and the prod guidance
-is a draft that must not be run.
+**The nightly refresh between the copy and the swap** (read in the code; not shown by a run).
+- A refresh on live after the copy changes rows and stored hashes that the swap then replaces with the copy's.
+- The next refresh re-indexes those files, because their stored hash no longer matches the checkout:
+  `index_repository` skips a file only when its hash matches. So one day's changes are lost for a day and come
+  back by themselves.
+- A refresh that moves the checkouts while the copy is being re-cut makes the moved files "source differs" on the
+  copy. They stay of the old cut until `prepare_index` visits them again.
+- Holding the refresh for the whole window avoids both. The refresh and the editor's harvest take a non-blocking
+  `flock` on `/app/repos/.refresh.lock` and skip when it is held; a one-off container can hold it.
+- That the lock holds across containers is **believed** (one kernel, one file of a named volume), not tried.
+- On the live database, in place, a refresh would be worse: its prune deletes every row of a repository whose id
+  it did not see during its pass, so new rows written by a re-cut beside it are deleted (read in the code). The
+  run on a copy that was to show this failed on an embedder timeout, and I did not repeat it (dropped, below).
 
-**Decisions for Andrej.** Which way prod is re-cut (a night of embedding, with or without more embedder CPUs, or a
-load built first); when; whether the four settings go on before the re-cut (the order this record points to, if the
-missing lines hold) or after; whether the nightly refresh is held off by the lock (no `.env.prod` edit) or by
-switching it off; `INDEX_CUT_VERSION=1` after the re-cut (so that a source with no rows yet is cut the new way); a
-`VACUUM FULL` and dropping the old 1 GB vector index afterwards; the per-file limit (prod 2, dev 1).
+**What the re-cut needs on prod** (read in the code).
+- Repository files come from the checkouts named by `--checkout URL=PATH`, matched exactly to the stored
+  `repository_url`; on prod these are `/app/repos/<name>`.
+- Harvested documents come only from the snapshots under `docs/`, mounted read only at `/app/docs`. Their network
+  fetches are not called by the re-cut.
+- A file whose source differs from its rows is left as it is.
+- Prod's NeTEx, SIRI and mobilityDCAT-AP checkouts are at commits dev does not have (11d40b5, d0b2fb3, 6ef08d7, read
+  on prod), so prod's own dry run decides the coverage.
+
+**A load of vectors from dev** (assessed, not built).
+- It would need three things: an export of (hash of the exact embedding input, vector), a file of about 200 MB,
+  and a lookup option in `vectors_for` before the embedder is called.
+- The share it covers is the share of byte-identical source files, which can be counted from `content_hash` on
+  both sides. NeTEx is 88 % of the rows and sits at another commit on prod, so the share is unknown.
+- What could go wrong: a vector filed under the wrong key would be silent; a different embedder would give
+  different vectors; and it is new code.
+- Building beside with a second, larger embedder on prod's idle CPUs gets the same result without new code.
+
+**Not done, and why.** On Andrej's remark that the prod host runs all day while this laptop may be closed, the long
+runs moved to prod. The following were dropped on dev:
+- the rest of the re-cut on `s7m` with its timing and end checks;
+- stage 1 of the finished copy at limits 1 and 2;
+- recall on `s7m`;
+- the embedder's rate at two thread counts (it is the first step on prod);
+- the refresh collision as a run (the code reading stands).
+
+**Believed, not verified.**
+- That the lock holds across containers.
+- That `up -d --no-deps` recreates only the named services.
+- That a one-off container started with `compose run` resolves by its name on the project network.
+- Prod's embedding rate.
+- That the end state at limit 2 meets the line (prod measures it).
+
+**Decisions for Andrej.**
+- The primary order (swap) or the in-place one, whose cost is measured above.
+- The thread count of the second embedder (from its timed rate).
+- Holding the refresh by the lock.
+- `INDEX_CUT_VERSION=1` after the swap.
+- Dropping the copy and the old 1 GB vector index; a `VACUUM FULL`.
+- The per-file limit (prod 2, dev 1).
+- Whether a prod end state that misses the benchmark line by a little is acceptable: the guidance stops there and
+  asks.
