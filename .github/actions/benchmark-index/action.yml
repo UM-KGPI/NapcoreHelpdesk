@@ -1,11 +1,9 @@
 name: Benchmark index
 description: >-
   Clone the standards repositories at pinned commits, migrate the database and
-  build the retrieval index with the deterministic hash embedding and the prepared
-  cut (INDEX_CUT_VERSION=1; the embedder runs only to count tokens with its own
-  tokenizer). The pinned commits, the cut and the committed baseline
-  (backend/helpdesk/benchmarks/ci-baseline.json) belong together: change one,
-  then regenerate the baseline.
+  build the retrieval index with the deterministic hash embedding. The pinned
+  commits and the committed baseline (backend/helpdesk/benchmarks/ci-baseline.json)
+  belong together: change a commit, then regenerate the baseline.
 
 runs:
   using: composite
@@ -45,28 +43,6 @@ runs:
         echo "PostgreSQL did not become ready in time" >&2
         exit 1
 
-    # The prepared cut sizes pieces by the embedder's own token count (/count); vectors stay hash vectors.
-    - name: Cache the embedder's model
-      uses: actions/cache@v4
-      with:
-        path: ${{ runner.temp }}/embedder-models
-        key: embedder-model-intfloat-multilingual-e5-small-onnx
-
-    - name: Start the embedder for token counts
-      shell: bash
-      working-directory: backend
-      env:
-        EMBEDDER_MODEL_DIR: ${{ runner.temp }}/embedder-models
-      run: |
-        nohup python -m helpdesk.embedding_service > "$RUNNER_TEMP/embedder.log" 2>&1 &
-        for i in $(seq 1 150); do
-          if curl -sf http://localhost:8090/health >/dev/null; then exit 0; fi
-          sleep 2
-        done
-        cat "$RUNNER_TEMP/embedder.log" >&2
-        echo "The embedder did not start in time" >&2
-        exit 1
-
     - name: Apply migrations
       shell: bash
       working-directory: backend
@@ -75,9 +51,6 @@ runs:
     - name: Build retrieval index
       shell: bash
       working-directory: backend
-      env:
-        INDEX_CUT_VERSION: "1"
-        EMBEDDING_SERVICE_URL: http://localhost:8090
       run: |
         set -euo pipefail
         for spec in "NeTEx TransmodelEcosystem/NeTEx netex" "SIRI TransmodelEcosystem/SIRI siri" "OpRa TransmodelEcosystem/OpRa opra"; do
