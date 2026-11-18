@@ -1779,3 +1779,87 @@ runs moved to prod. The following were dropped on dev:
 - The per-file limit (prod 2, dev 1).
 - Whether a prod end state that misses the benchmark line by a little is acceptable: the guidance stops there and
   asks.
+
+### Step 6: prod (2026-11-18, the live database and its copy `napcore_helpdesk_recut` on prod, 0.97.231)
+
+I re-cut a copy of prod's database on prod, measured it against live, decided, and swapped the two index tables.
+All times UTC. Figures are **read on prod** unless marked.
+
+**Verdict.**
+- The line fixed before the copy's numbers is met only with the per-file limit changed from 2 to 1. At prod's
+  limit 2 the copy (`new`) did not meet it (hit@10 0.8523).
+- At limit 1 the copy (`new-l1`) meets every line, but it is still 2 questions under today's prod on hit@10 (130
+  against 132) and 3 under today's prod at limit 1 (`ref-l1`). The limit alone also helps the old cut a little.
+- Answers with model calls were not measured on prod's copy, only on dev (dev has run at limit 1 throughout).
+- I decided to swap with the per-file limit 1 (five settings), keeping the old index (variant A). The swap is done.
+
+**The copy (phases 1 and 2).**
+- Live dumped (165 MB) and restored as `napcore_helpdesk_recut`. The restore first failed on the old index build
+  (it needs 65 MB, prod's `maintenance_work_mem` is 64MB); rerun with `PGOPTIONS='-c maintenance_work_mem=512MB'`.
+- A second embedder container for the re-cut: 17.9 pieces a second at 8 threads, 23.6 at 16.
+- Dry run: 1,464 files, rows 61,883 → 152,926, 0 "source differs".
+- Re-cut 15:12:58 → 16:52:14 (1 h 39 min), on its first attempt. The copy: 152,926 rows, all of the new cut, 0
+  files with both cuts. The new index built in 34 s, 120 MB.
+
+**Stage 1 on prod** (no model calls; 0 graph timeouts in all four runs). Gold is of 57, two runs; benchmark of 141;
+hit@10 of 149.
+
+| state | run | gold | benchmark | hit@10 | MRR@10 | recall (206 calls) | index search median |
+|---|---|---|---|---|---|---|---|
+| live, per-file limit 2 | `ref` | 36 / 37 | 122 | 0.8859 (132) | 0.5603 | 0.9993 (old index, 20 probes) | 0.322 s |
+| copy, four settings, limit 2 | `new` | 38 / 38 | 121 | **0.8523 (127)** | 0.5735 | 1.0000 | 0.130 s |
+| live, limit 1 | `ref-l1` | 37 / 37 | 123 | 0.8926 (133) | 0.5690 | 0.9995 | 0.249 s |
+| copy, four settings, limit 1 | `new-l1` | 40 / 40 | 123 | 0.8725 (130) | 0.5871 | 1.0000 | 0.133 s |
+
+- The line, fixed before the copy's numbers: gold ≥ 36, benchmark ≥ 121, hit@10 ≥ 0.866, recall 1.000 with the plan
+  using the filled-numbers index, 0 graph timeouts.
+- `new` at limit 2 did not meet it. Lost from the top 10 against `ref`: q017, q049, q082, q088, q090, q110; gained
+  q137. The cause, as read from the top-5 lists: example XML files, two per path, push the expected schema or
+  documentation sources out.
+- The limit-1 measurement was proposed after seeing that miss, and run as its own measurement, once per state.
+- `new-l1` meets every line. Against `ref-l1` it loses q017, q049, q056, q082, q088 and gains q077, q137. Against
+  `ref` the same five are lost; gained q007, q077, q137.
+- Gold found in `ref-l1` only: b17; in `new-l1` only: a16, a18, b01, b02.
+- Benchmark in `ref-l1` only: q013, q019, q121; in `new-l1` only: q015, q063, q147.
+
+**Decision.** I decided to swap with the per-file limit 1 (five settings), keeping the old index (variant A). The
+limit change is visible to users: at most one passage per source file among an answer's sources.
+
+**The swap (phase 4).**
+- The refresh held by a lock container from 21:43:26 (the lock confirmed held from the worker).
+- Live's two index tables dumped as the way back (163 MB, done 21:44:58).
+- The new index built on live on the old rows: 11.1 s, 49 MB (done 21:45:44).
+- Transfer of `helpdesk_sourcechunk` and `helpdesk_indexedsourcefile` in one transaction: started 21:45:58,
+  committed 21:56:39, about 10.7 min including the dump of the copy's two tables, against 8 s + 111 s on dev. The
+  dump's own seconds were not logged. **Believed**: the `COPY` of the vectors waited on WAL sync.
+- Five settings appended to `.env.prod` (none was present before): `RETRIEVAL_PREPARED_INDEX=True`,
+  `VECTOR_INDEX_DIMENSIONS=384`, `VECTOR_INDEX_HALF_PRECISION=True`, `VECTOR_INDEX_PROBES=100`,
+  `RETRIEVAL_MAX_SAME_SOURCE_PATH=1`.
+- `backend` and `celery-worker` recreated 21:56:46–21:57:04, health ready by 21:57:32; no other container
+  restarted. So live served the new rows with the old settings for under a minute.
+- After: settings read `[True, 384, True, 100, 1]`; live 152,926 rows, all of the new cut, 1,464 files, equal to the
+  copy; 0 files with both cuts; vacuum done 22:02:08; the refresh lock released.
+- **Checked from my laptop** at 22:05: health ok (0.97.231, database and broker ok); three test questions answered
+  and validated with 4, 6 and 4 sources, no source file twice.
+- The late-journeys question cited two schema files and two example files before the swap (21:39) and four example
+  files after it: the same pattern as the lost benchmark questions.
+
+**Not as planned.**
+- Recall on live: 0.9999 twice with the unchanged check (one benchmark call of 206 at 0.98, at 22:10 and 22:14,
+  after the vacuum), then 1.0000 in a third run at 22:15–22:18 with a copy of the check that also prints details.
+  No rows changed in between. The cause is not established; the shortfall is intermittent. With 100 lists and 100
+  probes the search scans every list, so I believe the build order is not the cause (**not checked**).
+- The health line's build reference reads `dev` since the restart: the manual `up -d` did not pass
+  `SERVICE_BUILD_REF`, which a deploy passes. Images were not rebuilt (same creation times). The next deploy sets it
+  back.
+- The transfer took about five times dev's time.
+
+**Open after the step.**
+- The first nightly refresh (03:30) on the new rows: check that it ran and left 0 files with both cuts. Prod's
+  `INDEX_CUT_VERSION` is still 0, so this is the check that matters; setting it to 1 is undecided.
+- The next deploy recreates `db` once (`.env.prod` is shared): a few seconds without the database.
+- Kept on prod until I decide: the copy database, the dumps, the saved `.env.prod`, the old index (variant A).
+- The recall reading above.
+- Example files outranking schema and documentation on explanation and mapping questions (q017, q049, q056, q082,
+  q088) is the fault this step leaves.
+- The CI baseline stays on the old cut for now.
