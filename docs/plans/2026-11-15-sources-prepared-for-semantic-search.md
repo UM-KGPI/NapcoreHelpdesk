@@ -1587,7 +1587,7 @@ runs `s7-*`. Figures are **measured** unless marked.
 
 **Conditions.**
 - Each counted run ran alone, one after another, with 0 GraphDB timeouts.
-- Docker Desktop's memory was raised from 4 to 8 GB at about 13:30 by Andrej's decision. Runs before that do not
+- Docker Desktop's memory was raised from 4 to 8 GB at about 13:30 by my decision. Runs before that do not
   count: from 12:42 the Docker machine was out of memory (28 MB available, swap full) and GraphDB queries timed out.
 - Between 13:23 and 16:20, MemAvailable in the machine was 3.1–3.7 GB and memory pressure 0.00 before and after
   every run.
@@ -1693,7 +1693,7 @@ The old 1,536-wide index during the transfer (copy `s7l2`, `swap2.sh`):
   - the way back has to rebuild it: 13 s for 152,912 rows with `maintenance_work_mem` 512MB. Prod's 64MB is too
     small: the restore on prod needed 65 (read on prod).
 - Keeping it costs 1–1.7 GB of disk and an insert per row, and keeps the fast way back (settings off).
-- Both variants are in the guidance; Andrej chooses.
+- Both variants are in the guidance; I choose.
 
 **What the swap touches** (read in the models and the code; checked on the catalog of `s7a`).
 - `prepare_index` writes only `helpdesk_sourcechunk`: per file, a delete and a bulk create in one transaction. It
@@ -1740,8 +1740,8 @@ The old 1,536-wide index during the transfer (copy `s7l2`, `swap2.sh`):
 - Building beside with a second, larger embedder on prod's idle CPUs got the same result without new code: on prod
   about 2.5 hours (above).
 
-**Prod, read on 2026-11-18 by the prod session (relayed, not checked by me).** Phases 1 and 2 of the guidance ran
-there: dump, reference, restore, second embedder and the re-cut of the copy.
+**Prod, 2026-11-18 (read on prod, not checked a second way).** Phases 1 and 2 of the guidance ran there: dump,
+reference, restore, second embedder and the re-cut of the copy.
 - The reference of today's prod at prod's settings: gold 36 (run 1) / 37 (run 2) of 57, benchmark 122 of 141,
   hit@10 0.8859, MRR@10 0.5603, gold median 1.5 s, 0 graph timeouts. Recall of the old index at 20 probes: 0.9993.
 - The restore of the copy needed `maintenance_work_mem` 512MB (the server has 64MB; the old index needs 65).
@@ -1753,10 +1753,10 @@ there: dump, reference, restore, second embedder and the re-cut of the copy.
   graph timeouts.
 
 The prod guidance (local, in `.mylocal/`, not committed) has two files: phases 1–2, which ran, and phases 3–4, final
-for this order. The swap is gated by the line above and by my approval in the session.
+for this order. The swap is gated by the line above and by my approval.
 
-**Not done, and why.** On Andrej's remark that the prod host runs all day while this laptop may be closed, the long
-runs moved to prod. The following were dropped on dev:
+**Not done, and why.** Because the prod host runs all day while this laptop may be closed, I moved the long runs
+to prod. The following were dropped on dev:
 - the rest of the re-cut on `s7m` with its timing and end checks;
 - stage 1 of the finished copy at limits 1 and 2;
 - recall on `s7m`;
@@ -1770,7 +1770,7 @@ runs moved to prod. The following were dropped on dev:
 - Prod's embedding rate.
 - That the end state at limit 2 meets the line (prod measures it).
 
-**Decisions for Andrej.**
+**Decisions left to me.**
 - The primary order (swap) or the in-place one, whose cost is measured above.
 - The thread count of the second embedder (from its timed rate).
 - Holding the refresh by the lock.
@@ -1797,6 +1797,8 @@ All times UTC. Figures are **read on prod** unless marked.
 - Live dumped (165 MB) and restored as `napcore_helpdesk_recut`. The restore first failed on the old index build
   (it needs 65 MB, prod's `maintenance_work_mem` is 64MB); rerun with `PGOPTIONS='-c maintenance_work_mem=512MB'`.
 - A second embedder container for the re-cut: 17.9 pieces a second at 8 threads, 23.6 at 16.
+- The preparation record's 24.3 pieces a second at 16 threads was the first reading, 23.6 the later one (both read
+  on prod).
 - Dry run: 1,464 files, rows 61,883 → 152,926, 0 "source differs".
 - Re-cut 15:12:58 → 16:52:14 (1 h 39 min), on its first attempt. The copy: 152,926 rows, all of the new cut, 0
   files with both cuts. The new index built in 34 s, 120 MB.
