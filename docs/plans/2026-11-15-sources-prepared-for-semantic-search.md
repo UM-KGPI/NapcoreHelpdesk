@@ -1562,7 +1562,7 @@ branch runs there with the settings on (**believed**, from steps 1 and 2; not me
   (560963f, c62944f) are reverted, so the baseline is again 0.483 / 0.497 hit@10. The table above stays as the
   record of what the prepared cut gives with hash vectors; what CI measures after step 6 is decided there.
 
-### Step 6, preparation: the order of the switch (2026-11-18, copies `napcore_helpdesk_s7a`, `napcore_helpdesk_s7m`, `napcore_helpdesk_s7l`, main at 09fd59a, 0.97.231)
+### Step 6, preparation: the order of the switch (2026-11-18, copies `napcore_helpdesk_s7a`, `_s7m`, `_s7l`, `_s7l2`, `_s7r`, main at 09fd59a, 0.97.231)
 
 I measured on dev copies which order prod can be switched in without its answers getting worse on the way. Stage 1
 only, no model call. Scripts, logs and runs: `.claude/skills/measure-on-copy/runs/s7-work/` (notes in `notes.md`),
@@ -1575,7 +1575,12 @@ runs `s7-*`. Figures are **measured** unless marked.
 - With the settings off, (d) loses more: gold −3 or −4, hit@10 −0.041 or −0.047.
 - So I recommend a different order: build the new index beside the live database, measure it there, and swap the
   two index tables in one transaction. Users then see only today's prod and the end state.
-- The swap was rehearsed on dev copies (below): the transfer takes 111 s in one transaction without blocking a reader, leaves the index tables equal to the re-cut dev index and every other table as it was, and the search keeps every exact nearest piece (recall 1.000). Its stage 1 run against `s6` was still running when this was committed.
+- The swap was rehearsed on dev copies (below) and meets every check:
+  - the transfer takes 107–111 s in one transaction and never blocks a reader;
+  - the index tables come out equal to the re-cut dev index, and every other table stays as it was;
+  - the search keeps every exact nearest piece (recall 1.000), and its time is within 0.022 s of an index built
+    beside;
+  - stage 1 on the swapped copy is exactly `s6`.
 - The end state at prod's limit 2 against today's prod at limit 2 was not measured on dev. It is measured on prod
   before the swap, which is done only if it meets the line. At limit 1 the end state (`s6`) was 3 benchmark
   questions under `base`, which points to that line being in doubt (**believed**).
@@ -1617,7 +1622,7 @@ runs `s7-*`. Figures are **measured** unless marked.
 | (c) half re-cut, all four | `s7-c` | 39 (=) | **122 (−2)** | 0.893 / 0.559 | 1.16 s | **not met** (benchmark) |
 | (d) half re-cut, all off | `s7-d` | **36 (−3)** | 122 (−2) | **0.852 (−0.041)** / 0.551 | 0.73 s | **not met** |
 | end state (dev, step 5) | `s6` | 40 | 121 | 0.873 / 0.587 | – | (benchmark −3 against `base`) |
-| end state by the swap | `s7-swap` | running |  |  |  | pending |
+| end state by the swap | `s7-swap` | 40 | 121 | 0.873 / 0.587 | 0.84 s (outside the round) | = `s6`, the same questions |
 
 The closing reference run `s7-p0r-end`: gold 39, the same questions, gold median 0.69 s. The reference ran faster at the end of the round (1.02 s at the start); against the closing reference (c) is +0.47 s and (b) +0.29 s, so the time line is not decided by this round.
 
@@ -1644,7 +1649,26 @@ The closing reference run `s7-p0r-end`: gold 39, the same questions, gold median
 **Index recall.**
 - On `s7a` with the index of step 2b as the app reads it: 1.000, lowest 1.00, on all 367 captured calls, every
   call planned on the index (morning, under load, so the time is not a gate time).
-- On `s7l` after the swap: 1.000 on the 206 gold and benchmark questions (`recall_check.py`, limit 50), every search planned on the index; the index search median was 0.64 s right after the transfer, against 0.08–0.13 s in step 2b on an index built on the finished table (believed: the index built on the old rows and filled by the transfer; not yet compared).
+- On `s7l` after the swap: 1.000 on the 206 gold and benchmark questions (`recall_check.py`, limit 50), every
+  search planned on the index.
+- The app's index search right after the transfer took a median of 0.64 s. I believed the cause was the index built
+  on the old rows and filled by the transfer, and tested it by other routes (`swap2.sh`, each alone, all at recall
+  1.000):
+
+| index on the swapped copy | search median |
+|---|---|
+| as rehearsed (built before the transfer, then `VACUUM ANALYZE`), 80 min later | 0.109 s |
+| after another plain `VACUUM`, no rebuild | 0.107 s |
+| dropped and built after the transfer (17 s, 120 MB) | 0.111 s |
+| variant without the old 1,536-wide index (below) | 0.105 s |
+| built beside: a fresh copy of the re-cut dev database, its indexes rebuilt | 0.089 s |
+
+- So the belief was wrong. The order of the build makes no difference once warm, and 0 dead tuples were left.
+- The 0.64 s was the first pass on a cold cache (**believed**: the only difference is the time).
+- The gate fixed for this, the swapped copy's search median within 0.1 s of the built-beside copy's, is met in
+  every variant (+0.016 to +0.022 s).
+- Sizes: the new index is 168 MB when built before the transfer and 120 MB when built after. The old index grows
+  from about 1 GB to 1,679 MB when the transfer fills it.
 - **Believed from the code** that the index stays exact while the re-cut inserts rows into it: a new row goes into
   the list of its nearest centroid, and the app reads all 100 lists. The dropped run on the finished `s7m` would
   have shown it. The swap rehearsal shows it for an index built on the old cut and then filled by the transfer.
@@ -1657,8 +1681,19 @@ reader counting the rows every second during it saw 61,877 rows in all 87 reads 
 `docker exec`) and 152,912 right after the commit: no read was blocked. After it: both index tables equal to the
 dev database (152,912 rows and 1,458 files; one hash over ids, chunk ids, text and vector of every row), every other
 table with the same row count as before, a marker row written to another table before the transfer still there,
-the sequences past the largest id; `VACUUM (ANALYZE)` 25 s. Stage 1 on it at limit 1 against `s6`: still running at
-the commit.
+the sequences past the largest id; `VACUUM (ANALYZE)` 25 s. Stage 1 on it at limit 1 with all four settings on:
+gold 40, benchmark 121, hit@10 0.873 / MRR 0.587, the same questions as `s6` (0 graph timeouts).
+
+The old 1,536-wide index during the transfer (copy `s7l2`, `swap2.sh`):
+- Its 152,912 inserts cost about 4 s of the transaction: 111 s with it, 107 s with it dropped first.
+- The app with `VECTOR_INDEX_DIMENSIONS=384` no longer reads it.
+- Dropping it before the transfer is therefore possible, at a price:
+  - the `DROP` takes an exclusive lock (1 s on dev);
+  - until the settings are on, the old search runs without an index, as an exact scan;
+  - the way back has to rebuild it: 13 s for 152,912 rows with `maintenance_work_mem` 512MB. Prod's 64MB is too
+    small: the restore on prod needed 65 (read on prod).
+- Keeping it costs 1–1.7 GB of disk and an insert per row, and keeps the fast way back (settings off).
+- Both variants are in the guidance; Andrej chooses.
 
 **What the swap touches** (read in the models and the code; checked on the catalog of `s7a`).
 - `prepare_index` writes only `helpdesk_sourcechunk`: per file, a delete and a bulk create in one transaction. It
@@ -1702,7 +1737,23 @@ the commit.
   both sides. NeTEx is 88 % of the rows and sits at another commit on prod, so the share is unknown.
 - What could go wrong: a vector filed under the wrong key would be silent; a different embedder would give
   different vectors; and it is new code.
-- Building beside with a second, larger embedder on prod's idle CPUs gets the same result without new code.
+- Building beside with a second, larger embedder on prod's idle CPUs got the same result without new code: on prod
+  about 2.5 hours (above).
+
+**Prod, read on 2026-11-18 by the prod session (relayed, not checked by me).** Phases 1 and 2 of the guidance ran
+there: dump, reference, restore, second embedder and the re-cut of the copy.
+- The reference of today's prod at prod's settings: gold 36 (run 1) / 37 (run 2) of 57, benchmark 122 of 141,
+  hit@10 0.8859, MRR@10 0.5603, gold median 1.5 s, 0 graph timeouts. Recall of the old index at 20 probes: 0.9993.
+- The restore of the copy needed `maintenance_work_mem` 512MB (the server has 64MB; the old index needs 65).
+- The second embedder ran 24.3 pieces a second at 16 threads.
+- The dry run gave 1,464 files, rows 61,883 → 152,926, 0 "source differs".
+- The re-cut started at 15:13 UTC and was at 117,000 of about 139,000 embeddings at 16:35 UTC, on its first attempt.
+- The line for the swap, fixed before the copy's numbers existed: the finished copy must show gold (run 2) not under
+  36, benchmark not under 121, hit@10 not under 0.866, recall 1.000 with the plan on the filled-numbers index, and 0
+  graph timeouts.
+
+The prod guidance (local, in `.mylocal/`, not committed) has two files: phases 1–2, which ran, and phases 3–4, final
+for this order. The swap is gated by the line above and by my approval in the session.
 
 **Not done, and why.** On Andrej's remark that the prod host runs all day while this laptop may be closed, the long
 runs moved to prod. The following were dropped on dev:
