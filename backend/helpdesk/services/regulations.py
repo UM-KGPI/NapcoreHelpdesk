@@ -314,6 +314,19 @@ def index_act(act: Act) -> tuple[str, int]:
     if indexed and indexed.content_hash == content_hash:
         return "unchanged", SourceChunk.objects.filter(repository_url=act.url).count()
 
+    from helpdesk.services import prepared_cut, prepared_index
+
+    prepared = prepared_index.harvested_document(
+        act.url, "regulation", lambda: prepared_cut.act_units(act), commit_sha=act.celex, standards_scope=[SCOPE]
+    )
+    if prepared is not None:
+        IndexedSourceFile.objects.update_or_create(
+            repository_url=act.url,
+            source_path=act.path.name,
+            defaults={"commit_sha": act.celex, "content_hash": content_hash},
+        )
+        return "indexed", prepared
+
     records = _chunk_records(act, select_sections(act, parse_act(content)))
     mark_embedding()
     embeddings = build_text_embeddings_batch(

@@ -329,11 +329,23 @@ def _embed(texts: list[str]) -> list[list[float]]:
     return vectors
 
 
-def _index_file(repository_url: str, path: Path, records: list[dict], commit: str) -> tuple[str, int]:
+def _index_file(repository_url: str, path: Path, records: list[dict], commit: str, units=None) -> tuple[str, int]:
+    """units(): the document's units of the prepared cut, used when the document is of that cut."""
     content_hash = build_content_hash(f"parser {PARSER_VERSION}\n{path.read_text(encoding='utf-8')}")
     indexed = IndexedSourceFile.objects.filter(repository_url=repository_url, source_path=path.name).first()
     if indexed and indexed.content_hash == content_hash:
         return "unchanged", SourceChunk.objects.filter(repository_url=repository_url).count()
+    if units is not None:
+        from helpdesk.services import prepared_index
+
+        prepared = prepared_index.harvested_document(repository_url, DOC_TYPE, units, commit_sha=commit, standards_scope=[SCOPE])
+        if prepared is not None:
+            IndexedSourceFile.objects.update_or_create(
+                repository_url=repository_url,
+                source_path=path.name,
+                defaults={"commit_sha": commit, "content_hash": content_hash},
+            )
+            return "indexed", prepared
     embeddings = _embed(
         [
             build_chunk_embedding_text(
@@ -377,10 +389,17 @@ def read_codelists(path: Path = CODELISTS_PATH) -> list[dict]:
 
 def index_inspire(spec_path: Path = SPEC_PATH, codelists_path: Path = CODELISTS_PATH) -> dict[str, tuple[str, int]]:
     """Index the specification and the code lists whose files changed: {"spec": (status, chunks), …}."""
-    spec_records_ = spec_records(spec_path.read_text(encoding="utf-8"))
-    results = {"spec": _index_file(spec_url(), spec_path, spec_records_, SPEC_TAG)}
+    from helpdesk.services import prepared_cut
+
+    spec_text = spec_path.read_text(encoding="utf-8")
+    codelists = read_codelists(codelists_path)
+    results = {
+        "spec": _index_file(spec_url(), spec_path, spec_records(spec_text), SPEC_TAG,
+                            lambda: prepared_cut.inspire_spec_units(spec_text))
+    }
     results["codelists"] = _index_file(
-        REGISTRY_URL, codelists_path, codelist_records(read_codelists(codelists_path)), "inspire-registry"
+        REGISTRY_URL, codelists_path, codelist_records(codelists), "inspire-registry",
+        lambda: prepared_cut.inspire_codelist_units(codelists),
     )
     return results
 

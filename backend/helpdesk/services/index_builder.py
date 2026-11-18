@@ -1489,6 +1489,73 @@ def _record_metric(
     )
 
 
+def old_cut_chunks(
+    raw_text: str,
+    suffix: str,
+    relative_path: str,
+    repo_url: str,
+    chunk_size: int = 1200,
+    chunk_overlap: int = 200,
+) -> tuple[list[dict], list[str]]:
+    """The cut of before (version 0) of one repository file: its chunk records and their embedding inputs."""
+    structured = split_structured(
+        raw_text,
+        suffix,
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap,
+        source_name=relative_path,
+    )
+    xsd_metadata = extract_xsd_structured_metadata(raw_text) if suffix.lower() == ".xsd" else {}
+    chunk_records: list[dict] = []
+    embedding_inputs: list[str] = []
+    for index, (chunk_text, chunk_type, heading) in enumerate(structured):
+        chunk_id = build_chunk_id(repo_url, relative_path, index, chunk_text)
+        standards_scope = infer_scope(relative_path, chunk_text, repo_url)
+        doc_type = infer_doc_type(
+            source_path=relative_path,
+            chunk_type=chunk_type,
+            heading=heading,
+            chunk_text=chunk_text,
+        )
+        enriched_chunk_text = chunk_text
+        if relative_path.lower().endswith(".xml") and doc_type == "example":
+            enriched_chunk_text = enrich_xml_example_text(
+                chunk_text=chunk_text,
+                source_path=relative_path,
+            )
+        chunk_records.append(
+            {
+                "chunk_id": chunk_id,
+                "chunk_text": enriched_chunk_text,
+                "chunk_type": chunk_type,
+                "heading": heading,
+                "standards_scope": standards_scope,
+                "doc_type": doc_type,
+                "structured_metadata": xsd_metadata.get(heading, {}),
+                "quality_score": compute_chunk_quality(
+                    source_path=relative_path,
+                    chunk_text=enriched_chunk_text,
+                    chunk_type=chunk_type,
+                    heading=heading,
+                    doc_type=doc_type,
+                    standards_scope=standards_scope,
+                ),
+            }
+        )
+        embedding_inputs.append(
+            build_chunk_embedding_text(
+                chunk_text=enriched_chunk_text,
+                doc_type=doc_type,
+                chunk_type=chunk_type,
+                heading=heading,
+                standards_scope=standards_scope,
+                repository_url=repo_url,
+                source_path=relative_path,
+            )
+        )
+    return chunk_records, embedding_inputs
+
+
 def index_repository(
     repo_url: str,
     repo_path: Path,
@@ -1527,6 +1594,8 @@ def index_repository(
         files = iter_source_files(repo_path, include_exts)
         commit_sha = current_commit_sha(repo_path)
         seen_chunk_ids: set[str] = set()
+        # The cut of each file is the one its rows have (services/prepared_index.py); set up at the first changed file.
+        prepared = repository_version = counter = seen = None
 
         for file_path in files:
             stats.scanned_files += 1
@@ -1564,70 +1633,43 @@ def index_repository(
                     stats.skipped_files += 1
                     continue
 
-            structured = split_structured(
-                raw_text,
-                file_path.suffix,
-                chunk_size=chunk_size,
-                chunk_overlap=chunk_overlap,
-                source_name=relative_path,
-            )
-            xsd_metadata = (
-                extract_xsd_structured_metadata(raw_text)
-                if file_path.suffix.lower() == ".xsd"
-                else {}
-            )
-            if not structured:
-                stats.skipped_files += 1
-                continue
+            if prepared is None:
+                from helpdesk.services import prepared_index
 
-            # Track per-file chunk IDs so stale chunks for changed files can be removed.
-            chunk_records: list[dict] = []
-            embedding_inputs: list[str] = []
-            for index, (chunk_text, chunk_type, heading) in enumerate(structured):
-                chunk_id = build_chunk_id(repo_url, relative_path, index, chunk_text)
-                standards_scope = infer_scope(relative_path, chunk_text, repo_url)
-                doc_type = infer_doc_type(
-                    source_path=relative_path,
-                    chunk_type=chunk_type,
-                    heading=heading,
-                    chunk_text=chunk_text,
-                )
-                enriched_chunk_text = chunk_text
-                if relative_path.lower().endswith(".xml") and doc_type == "example":
-                    enriched_chunk_text = enrich_xml_example_text(
-                        chunk_text=chunk_text,
-                        source_path=relative_path,
-                    )
-                chunk_records.append(
-                    {
-                        "chunk_id": chunk_id,
-                        "chunk_text": enriched_chunk_text,
-                        "chunk_type": chunk_type,
-                        "heading": heading,
-                        "standards_scope": standards_scope,
-                        "doc_type": doc_type,
-                        "structured_metadata": xsd_metadata.get(heading, {}),
-                        "quality_score": compute_chunk_quality(
-                            source_path=relative_path,
-                            chunk_text=enriched_chunk_text,
-                            chunk_type=chunk_type,
-                            heading=heading,
-                            doc_type=doc_type,
-                            standards_scope=standards_scope,
-                        ),
-                    }
-                )
-                embedding_inputs.append(
-                    build_chunk_embedding_text(
-                        chunk_text=enriched_chunk_text,
-                        doc_type=doc_type,
-                        chunk_type=chunk_type,
-                        heading=heading,
-                        standards_scope=standards_scope,
+                prepared = prepared_index
+                # A new file takes the cut most of the repository's rows have (INDEX_CUT_VERSION when it has none).
+                repository_version = prepared.group_version(SourceChunk.objects.filter(repository_url=repo_url))
+            file_version = prepared.rows_version(
+                SourceChunk.objects.filter(repository_url=repo_url, source_path=relative_path)
+            )
+            if (repository_version if file_version is None else file_version) == prepared.pc.CUT_VERSION:
+                if counter is None:
+                    counter, seen = prepared.pc.TokenCounter(), prepared.SeenPieces(load=True)
+                old_count = SourceChunk.objects.filter(repository_url=repo_url, source_path=relative_path).count()
+                rows = prepared.index_repository_file(repo_url, relative_path, raw_text, commit_sha, counter=counter, seen=seen)
+                if rows is not None:
+                    seen_chunk_ids.update(row.chunk_id for row in rows)
+                    stats.created_chunks += len(rows)
+                    stats.deleted_chunks += old_count
+                    IndexedSourceFile.objects.update_or_create(
                         repository_url=repo_url,
                         source_path=relative_path,
+                        defaults={
+                            "commit_sha": commit_sha,
+                            "content_hash": content_hash,
+                            "schema_references": (
+                                extract_schema_references(raw_text) if file_path.suffix.lower() == ".xsd" else {}
+                            ),
+                        },
                     )
-                )
+                    continue
+
+            chunk_records, embedding_inputs = old_cut_chunks(
+                raw_text, file_path.suffix, relative_path, repo_url, chunk_size=chunk_size, chunk_overlap=chunk_overlap
+            )
+            if not chunk_records:
+                stats.skipped_files += 1
+                continue
 
             chunk_embeddings = build_text_embeddings_batch(embedding_inputs)
             file_chunk_ids: set[str] = set()

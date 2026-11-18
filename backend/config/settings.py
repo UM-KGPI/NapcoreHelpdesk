@@ -148,6 +148,7 @@ env = environ.Env(
     # The index is cut with the prepared cut (services/prepared_cut.py): passages are read with their unit around
     # them (services/read_large.py) and limits meant for files count files, not pieces. Off: as before.
     RETRIEVAL_PREPARED_INDEX=(bool, False),
+    INDEX_CUT_VERSION=(int, 0),
     RETRIEVAL_SCORING_CANDIDATE_CAP=(int, 32),
     RETRIEVAL_GRAPH_PRESELECT_MULTIPLIER=(float, 2.0),
     RETRIEVAL_LEXICAL_PRESELECT_RESERVE=(int, 8),
@@ -483,6 +484,10 @@ GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS = env("GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS
 RETRIEVAL_DIVERSITY_ENABLED = env("RETRIEVAL_DIVERSITY_ENABLED")
 RETRIEVAL_MAX_SAME_SOURCE_PATH = env("RETRIEVAL_MAX_SAME_SOURCE_PATH")
 RETRIEVAL_PREPARED_INDEX = env("RETRIEVAL_PREPARED_INDEX")
+# The cut a file gets when neither it nor its repository (or kind of harvested document) has rows yet: 0 the cut
+# of before, 1 the prepared cut. A file with rows keeps their cut on every refresh (services/prepared_index.py);
+# the command prepare_index --cut-version changes it. 0 by default, so an index built before stays as it is.
+INDEX_CUT_VERSION = env("INDEX_CUT_VERSION")
 RETRIEVAL_SCORING_CANDIDATE_CAP = env("RETRIEVAL_SCORING_CANDIDATE_CAP")
 RETRIEVAL_GRAPH_PRESELECT_MULTIPLIER = env("RETRIEVAL_GRAPH_PRESELECT_MULTIPLIER")
 RETRIEVAL_LEXICAL_PRESELECT_RESERVE = env("RETRIEVAL_LEXICAL_PRESELECT_RESERVE")

@@ -350,11 +350,25 @@ def _embed(texts: list[str]) -> list[list[float]]:
     return vectors
 
 
-def _index_records(repository_url: str, file_name: str, content: str, records: list[dict]) -> tuple[str, int]:
+def _index_records(repository_url: str, file_name: str, content: str, records: list[dict], units=None) -> tuple[str, int]:
+    """units(): the document's units of the prepared cut, used when the document is of that cut."""
     content_hash = build_content_hash(f"parser {PARSER_VERSION}\n{content}")
     indexed = IndexedSourceFile.objects.filter(repository_url=repository_url, source_path=file_name).first()
     if indexed and indexed.content_hash == content_hash:
         return "unchanged", SourceChunk.objects.filter(repository_url=repository_url).count()
+    if units is not None:
+        from helpdesk.services import prepared_index
+
+        prepared = prepared_index.harvested_document(
+            repository_url, DOC_TYPE, units, commit_sha=f"v{VERSION}", standards_scope=[SCOPE]
+        )
+        if prepared is not None:
+            IndexedSourceFile.objects.update_or_create(
+                repository_url=repository_url,
+                source_path=file_name,
+                defaults={"commit_sha": f"v{VERSION}", "content_hash": content_hash},
+            )
+            return "indexed", prepared
     embeddings = _embed(
         [
             build_chunk_embedding_text(
@@ -396,7 +410,12 @@ def index_datex(model_path: Path = MODEL_PATH, pages_dir: Path = PAGES_DIR, repo
     """Index the model and every page whose file changed; remove pages no longer present."""
     counts = {"indexed": 0, "unchanged": 0, "removed": 0, "chunks": 0}
     content = model_path.read_text(encoding="utf-8")
-    status, chunks = _index_records(MODEL_PAGE_URL, model_path.name, content, model_records(json.loads(content)))
+    from helpdesk.services import prepared_cut
+
+    model = json.loads(content)
+    status, chunks = _index_records(
+        MODEL_PAGE_URL, model_path.name, content, model_records(model), lambda: prepared_cut.datex_model_units(model)
+    )
     counts[status] += 1
     counts["chunks"] += chunks
     present = {MODEL_PAGE_URL}
@@ -404,7 +423,8 @@ def index_datex(model_path: Path = MODEL_PATH, pages_dir: Path = PAGES_DIR, repo
         snapshot = read_snapshot(path)
         present.add(snapshot.url)
         status, chunks = _index_records(
-            snapshot.url, path.name, path.read_text(encoding="utf-8"), page_records(snapshot)
+            snapshot.url, path.name, path.read_text(encoding="utf-8"), page_records(snapshot),
+            lambda snapshot=snapshot: prepared_cut.datex_page_units(snapshot),
         )
         counts[status] += 1
         counts["chunks"] += chunks
