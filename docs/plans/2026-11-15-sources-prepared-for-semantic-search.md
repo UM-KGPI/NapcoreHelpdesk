@@ -1431,3 +1431,125 @@ re-cut kind and move on the reference's own copy).
 b17 asked through the app. Another sample of the relevance check (replayed verdicts, as in step 2c). The re-cut
 leaves the step 2c failures as they were: against `base-a`, must-refuse (+2, m13) and examples generated (−1, gen42)
 are still on the wrong side, which this gate does not cover.
+
+### Step 5: the indexer and the dev index (2026-11-18, dev database `napcore_helpdesk`, rehearsal copy `napcore_helpdesk_s6r`, branch at c62944f)
+
+The cut of step 1 with its repairs, the index of step 2b and the re-index command went into the code, the dev
+index was brought to the state measured on `napcore_helpdesk_s5v`, and gate 5 as reworded on 2026-11-18 was
+measured on it. Scripts, logs and reports: `.claude/skills/measure-on-copy/runs/s6-work/`; runs `s6`, `s6-a`,
+`s6-a-dry`, `s5-time6`, `s6-time6b`, `s5-time6b`, `s6-s1base-defaults`. All figures **measured** unless marked.
+
+**Verdict: met on every line but two.** Files, the index, answers, examples, the case and the command are as on
+the copy. Not met as written: (1) "no piece over 256 tokens": 19 XML example pieces are over (at most 262), as on
+the copy (13 in step 1's count); (2) warm retrieval in the round as fixed (copy first) is 0.13 s above the copy;
+in the round run the other way it is 0.12 s below, so it is the order, not the index (**believed**, two rounds).
+The two lines are my decision.
+
+| gate 5 line | `napcore_helpdesk_s5v` (the copy) | dev after the re-index | met? |
+|---|---|---|---|
+| pieces per kind | 152,891 rows | 152,912 rows; every kind equal but XML examples +19 and DATEX II pages +2 (below) | explained, not by a changed source: by code after the copy was built |
+| no piece over 256 tokens | 13 XML example pieces over (step 1) | 19 XML example pieces over, at most 262; every other kind at most 256 | **no** (as the copy) |
+| index recall, 367 captured calls | 1.000 | 1.000, lowest 1.00, every call planned on the index (`recall-dev.txt`) | yes |
+| gold files | 40/57 (`s5`) | 40/57, the same questions | yes (≥ 39) |
+| benchmark files | 121/141 | 121/141, the same questions | yes (≥ 120) |
+| retrieval benchmark hit@10 / MRR@10 | 0.873 / 0.587 | 0.873 / 0.587 | yes (≥ 0.873) |
+| answerable answered (`s6-a` against `s5-a`, replayed) | 49/69 | 49/69 | yes |
+| must-refuse answered | 6/75 | 6/75 | yes |
+| examples generated / first attempts / unlinked | 131 / 94 / 1 of 141 | 131 / 94 / 1 of 141 | yes |
+| the late-journeys case (k11), answered and term given | 3 of 3 | 3 of 3 | yes |
+| warm retrieval, gold median, same round | round 1 (copy first): 1.07 s; round 2 (dev first): 1.20 s | round 1: 1.20 s; round 2: 1.08 s | **no** in round 1 (+0.13), yes in round 2 (−0.12) |
+| the command stops and starts again | – | rehearsal: stopped after 3 documents, started again, the same rows as the copy; dev: stopped by an embedder timeout, started again, 0 files with mixed rows, the same counts as the dry run | yes |
+| tests of the cut for every kind | – | `test_prepared_index.py` (21 tests) beside `test_prepared_cut.py` | yes |
+| the way back is the same command with the old version | – | rehearsal, EU legislation: `--cut-version 0` gave back the dev rows exactly (735 rows, same chunk ids and texts) | yes |
+
+No question changed its answered count against `s5-a`; 18 question runs ran (e01, e03, e04, e06, k02, m22; e01, e03,
+e04 and m22 move on the reference's own copy too) and every one kept its outcome.
+
+**Diagnosis (before code), each claim checked by hand on stored rows** (`verify_a.txt`).
+
+- *Where the cut is stored.* Each row of the prepared cut has `structured_metadata["piece"]["v"] = 1`; a row of the
+  cut of before has no such key. On `s5v` every file's rows have one version (0 files mixed); OpRa's rows are of
+  version 1 there and 0 on `s1base`. So the version is already stored with each file; no migration is needed.
+- *Old pieces stay until the new ones are embedded.* `prepare_index` embedded a file's pieces first and replaced
+  its rows in one transaction afterwards. Checked on dev itself: the run that stopped on an embedder timeout left 0
+  files with rows of two versions.
+- *A stopped run resumes.* A file already of the version is skipped. Checked on the rehearsal (below).
+- *What the nightly refresh does.* `refresh_all_sources` runs `index_repository` incremental with prune; a file
+  whose content hash equals its `IndexedSourceFile` row is skipped (62 of 62 OpRa files on `s5v`). A changed file was
+  cut with the cut of before, so before this step a refresh would have turned changed files back to the old cut,
+  file by file; it never re-cut everything. On dev `SOURCE_REFRESH_ENABLED` is not set in the worker (default off)
+  and the beat container crash-loops on a missing module, so no refresh ran.
+- *Shared code.* The old indexer never called the prepared cut, and `prepare_index` never ran inside the indexer;
+  the prepared cut does reuse parsing helpers of `index_builder` (HTML blocks, Turtle statements, the XSD summary).
+  Today's shared cut reproduces the stored pieces of `s5v`: 62 of 62 OpRa files and 10 of 10 NAPCORE snapshots.
+- *Sources.* Dev's 61,877 rows are identical to `s1base`'s (chunk ids and text hash), last written 2026-11-13, and
+  the `IndexedSourceFile` hashes are identical: nothing was refreshed since the copies were made.
+
+**What was built.** b3d5c0d: `services/prepared_index.py`; `index_repository` and the four harvesters cut a changed
+file with the version its rows have; a new file takes the version most rows of its repository (or kind) have, and
+`INDEX_CUT_VERSION` (0) when there are none; the cut of before is `old_cut_chunks`, the code `index_repository`
+ran inline. d65031f, 6261d3c: `prepare_index --cut-version 1|0` (the re-index and the way back), `--stop-after`,
+`--files-report`; a file whose pieces were all copies (no rows) is still a job, so the way back gives it its rows
+again; tests. a578141: `vector_index`, which builds the index of step 2b from the same settings as the query and
+refuses without them or on pgvector older than 0.7. 560963f, c62944f: CI (below).
+
+**Prod stays as it is when this is merged** (**verified** for the points marked, **believed** for the rest). No
+migration (none on the branch; the migration drift check passes). `INDEX_CUT_VERSION` 0, `RETRIEVAL_PREPARED_INDEX`
+and `VECTOR_INDEX_DIMENSIONS` off by default; prod has no row of the prepared cut, so every file keeps the cut of
+before on every refresh (test `test_an_index_of_before_stays_one`). The re-index and the index are commands that
+run only by hand and only on the database named on the command line. Verified: the backend suite (1,156 tests,
+models off): 6 fail, the same 6 that fail on d7e4127 under the same environment (relevance check, request body);
+a gold run on the old-cut copy `s1base` with default settings (`s6-s1base-defaults`) finds `base`'s 39 files and 31
+best pieces. **Believed**: the extra queries a refresh now makes (the version of a changed file) cost
+milliseconds.
+
+**Rehearsal on `napcore_helpdesk_s6r`** (a fresh copy of dev, 171 s).
+
+- Dry run of every kind, 213 s: per kind the copy's counts but XML examples 128,226 (copy 128,207) and DATEX II
+  pages 2,061 (2,059) (`cmp-s6r-dry-s5v.txt`). XML: 19 pieces of end tags only, which step 1's build left out and the
+  cut keeps since fceff23 (as step 1 recorded; checked file by file in `extra-pieces.txt`). DATEX II: one page
+  (`rtti-962/drd-15…/d2rsp/`) had no rows on the copy, all its pieces copies of another page's in step 1's build; the
+  repair re-cut changed that page, and the old command could not visit a document without rows, so 2 of its
+  pieces are not copies any more (**believed** from the pieces' texts, `datex-page-diff.txt`).
+- Stopped and started: EU legislation, `--stop-after 3`, then the same command: 1,007 rows whose texts, kinds and
+  order equal the copy's (one hash over all of them).
+- Rate: 13–15 pieces a second with other work on the embedder (DATEX II pages 2,013 in 153 s). Projected for dev
+  (about 140,000 to embed): about 3 hours.
+- The way back: `--cut-version 0` on EU legislation gave back dev's 735 rows exactly (chunk ids and texts).
+
+**The dev run.** Backup `napcore_helpdesk_s6pre` first (61,877 rows, the same hash as dev). No query was writing to
+the table and no refresh is scheduled (above). The run took 17 min, stopped on an embedder timeout while my local
+CI build used the embedder, and was started again: 88 min, 121,592 pieces embedded at 23 a second, 11,600
+vectors kept. Rows 61,877 → 152,912, per file equal to the dry run of the rehearsal (0 files differ). Then
+`VACUUM FULL` (8 min 26 s), `REINDEX` (66 s), `ANALYZE`, and `vector_index` (14 s, 120 MB). Table 205 MB, with
+TOAST and indexes 2,887 MB.
+
+**CI.** The benchmark index is now built with the prepared cut (hash vectors; the embedder runs only to count
+tokens) and read with `RETRIEVAL_PREPARED_INDEX`. Old and new, CI runs 44204496420 and 44212998383, 149 questions:
+
+| mode | hit@10 old → new | MRR@10 old → new | hit@5 old → new |
+|---|---|---|---|
+| baseline | 0.483 → 0.383 | 0.266 → 0.220 | 0.436 → 0.342 |
+| graph | 0.497 → 0.403 | 0.281 → 0.235 | 0.456 → 0.362 |
+
+The baseline is the new run's; the allowed drop stays 0.03. The run after it, same inputs, gave 0.396 / 0.416: the
+CI measure moves about 0.013 between runs. **Believed**: hash vectors of small pieces carry fewer words each, so
+this measure punishes the cut that the semantic measures do not (dev: 0.873 on the semantic retrieval benchmark).
+
+**Model calls.** Stage 1: none. Stage 2: the dry replay left 17 question runs, 23 Haiku calls in `s5-a`; the run made
+23 calls, all Haiku, all the answer itself; 462 replayed (408 Haiku, 54 Sonnet language naming recorded earlier).
+No Sonnet call was made.
+
+**Believed, not verified.** That the order explains the timing line. That the DATEX II page is explained as above.
+That the CI drop is the hash vectors'. That the 19 pieces over 256 have the cause of step 1's 13 (not read).
+
+**Not checked.** The wording of the 23 answers that ran (their outcome held). Prod's pgvector version (step 6).
+Whether running the harvesters for real (a new snapshot) on dev keeps the cut: tested with a test act, not on dev.
+
+**What the running dev app sees now.** It runs main's code with the settings off: the new pieces without their unit
+around them, and the vector search on the full column at 20 probes, which on this table keeps about 88 % of the
+nearest pieces (step 2's correction). So dev answers are expected to be worse than on main's index until this
+branch runs there with the settings on (**believed**, from steps 1 and 2; not measured on dev).
+
+**Ways back, if wanted.** `prepare_index --database napcore_helpdesk --cut-version 0` with the same checkouts
+(about 1.5 hours of embedding, shown on one kind), or the backup `napcore_helpdesk_s6pre`.
