@@ -170,6 +170,28 @@ model reads per question stated, and not more than a quarter above step 3.
 **Gate 5:** the numbers of steps 1 to 4 hold on the real dev index; the command can be stopped and started again;
 tests of the cut for every kind; the way back is the same command with the old version.
 
+**Gate 5, reworded on 2026-11-18, before the step starts.** No gate from 1 to 4 was met as written, so "the
+numbers of steps 1 to 4" names nothing. Step 5 would ship what was measured on the copy `napcore_helpdesk_s5v`:
+the cut of step 1 with its repairs and the index of step 2b, without step 3 (reverted) and without step 4 (not
+built). The gate is that the real dev index gives the numbers of that copy (§10, steps 2b to 2d):
+
+- pieces: the count per kind of source equals the copy's, or each difference is explained by a changed source;
+  no piece over 256 tokens;
+- the index: the exact nearest pieces on every captured retrieval call (recall 1.000);
+- files found, with the spread of step 0: gold not under 39 of 57, benchmark not under 120 of 141, retrieval
+  benchmark hit@10 not under 0.873;
+- answers and examples, with recorded calls replayed wherever the prompt is the same: answerable questions
+  answered, must-refuse questions answered, examples generated, first attempts and unlinked examples not worse
+  than run `s5-a` beyond the spreads of step 0; the late-journeys case answered in 3 of 3 runs;
+- warm retrieval time not more than 0.1 s above the copy's, timed in the same round;
+- as before: the command can be stopped and started again; tests of the cut for every kind; the way back is the
+  same command with the old version.
+
+Two lines of the copy are worse than the baseline and are carried, not judged by this gate: must-refuse
+questions answered in 6 of 75 runs (baseline 4) and examples generated 131 of 141 (baseline 132). Whether step 5
+starts with them carried is my decision, taken before it starts. Before step 6, prod's pgvector version is
+checked: the index of step 2b needs 0.7 or later.
+
 ### Step 6. Prod (one night, or a load)
 
 About 130,000 pieces at prod's 3.4 pieces a second are about 11 hours (**believed**, by division): longer than a
@@ -531,3 +553,1011 @@ Verified (**measured**):
   equal and unchanged prompts replayed, 90 of 96 question runs needed no model call, and all 90 gave the recorded
   outcome. On a copy with one schema file removed, exactly the two questions that had read it were asked again,
   plus the moving ones: 13 model calls where a full run makes 213.
+
+### Step 1 (2026-11-16, dev copies `napcore_helpdesk_s1base` and `napcore_helpdesk_s1v`, 0.97.227)
+
+**Verdict: gate 1 is not met.** The cut does what design points 1 to 3 ask for every kind but one (pieces fit the
+embedder, nearly none cut inside a unit by the cutter's own count; but NAPCORE's PDF text is cut inside sentences
+far more often than 5 %, read by hand), the case is fixed (the passage with `LateDatedVehicleJourneyCount` is given
+in 3 of 3 runs) and retrieval is faster, but of the 7 questions with a better piece left out only 2 got it (gate: at
+least 4), files are lost and gained in about equal numbers, and the retrieval benchmark fell from 0.893 to 0.812
+hit@10. The 7-questions line cannot be repaired by a cut: 5 of the 7 better pieces are schema declarations, a
+README section and an example header that this cut leaves as they were; what decides them is which passages win the
+six places. So I stopped after stage 1 and the free dry replay: no answer was asked again, no example generated, no
+repair build. Everything stays off by default (`RETRIEVAL_PREPARED_INDEX`, the command writes only to a named
+copy). All figures **measured** unless marked.
+
+| gate 1 line | baseline | step 1 | met? |
+|---|---|---|---|
+| pieces longer than the embedder reads, per kind | 5–99 % (audit) | at most 0.01 % (XML examples: 13 of 128,207) | yes |
+| pieces cut inside a unit, per kind | 92 % of XML examples (audit) | cutter's count at most 3.7 % (DATEX II pages); read by hand, NAPCORE about a quarter (below) | **no** for NAPCORE |
+| the case: passage with the count element given | 0 of 3 | 3 of 3 (dry replay; the answer was not asked) | yes (passages) |
+| the 7 questions with a better piece left out | – | 2 better (b14, q059), 5 unchanged, 0 worse | **no** (needs 4) |
+| answers (answerable, must-refuse) | 44/69, 4/75 | not measured (stopped by the line above) | – |
+| files, gold as on main (57) | 39 | 39: lost a19, b05, b29; gained a16, b01, b02 | see below |
+| files, gold before step 0 (57) | 33 | 33: lost a19, b05, b29, b31; gained a16, b01, b02, b10 | see below |
+| files, benchmark (141) | 124 | 122: lost q013, q017, q019, q083, q121, q140; gained q015, q063, q146, q147 | see below |
+| examples | 129 generated, 94 first attempts of 141 | not measured | – |
+| retrieval median, warm gold run, both copies one after the other on a quiet stack | 1.80 s | 1.07 s | yes |
+| rows | 61,877 | 152,607 (2.47×; bound 154,692) | yes, barely |
+
+Not in gate 1 but measured: retrieval benchmark hit@10 / MRR@10 0.893 / 0.564 → 0.812 / 0.567; best piece given
+(the finer measure) gold 31 of 37 in both, benchmark 83 of 92 → 80 of 91; chunk table 1,598 → 2,760 MB, vector index
+484 → 1,193 MB (after `VACUUM FULL` and `REINDEX`, ivfflat lists 100 as on dev).
+
+**Diagnosis 1: where the text to cut comes from.** Checked by cutting each local source with today's cut and
+comparing with the stored chunks of every indexed file, as multisets of texts. Repository kinds come from the local
+checkouts (NeTEx, SIRI, OpRa as they are; TN-ITS from a clone at the indexed commit, made for R0; mobilityDCAT-AP
+from a clone at the indexed commit `1ae93b2`, because the local checkout is at another commit). The web-harvested
+kinds come from the snapshots committed in `docs/` (EU legislation `.xhtml`, the NAPCORE and DATEX II text
+snapshots, the DATEX II model JSON, the INSPIRE AsciiDoc and code-list JSON), read through each indexer's own
+record builder; nothing was harvested and no source refresh ran. Every file of every kind gives back exactly its
+indexed chunks (61,708 of 61,877 rows), except 6 TN-ITS schema files (169 rows), whose chunks were made before the
+XSD summary got enumeration values. Those 6 are left as they are and are the only part not covered. Whether
+harvested prose can be cut again from the stored chunks did not need an answer, since every harvested kind has a
+local copy.
+
+**Diagnosis 2: the dry cut, and the limit.** The limit was written down before any search result existed
+(at 01:17, after the first dry cut): 256 tokens, the embedder's own cut, as returned by `/count`. It is counted on exactly
+the embedded text (`passage: `, source path, heading, the piece's lead and place lines and body, with the two
+special tokens), and it is the same for every kind. It is not set lower because every token below 256 is text the
+embedder would have read, and the cut was already near the row bound. The XML summary is stored after the body and
+is not embedded; at 1,200 characters the embedder never reached it either (R0 step 0a). The first dry cut missed
+the inside-a-unit line for XML examples (6.2 %), the INSPIRE specification (11.9 %) and the READMEs (13.6 %). Long
+comments, tables and lists were being cut at any line or at words. I repaired this before building: such text is
+now cut at lines that end a sentence or start a new item first, then at sentence ends. The XML size estimate is
+also calibrated per file (the sum of line counts missed about 10 tokens a piece). The build used this cut.
+
+| kind | rows before | pieces | kept as is | tokens median / p90 / max | over 256 | inside a unit (cutter) | text check (upper bound) | near-empty left out | duplicates left out |
+|---|---|---|---|---|---|---|---|---|---|
+| XML examples | 43,193 | 128,207 | 0 | 198 / 223 / 262 | 0.01 % | 0.1 % | 2 % | 289 | 19,024 |
+| XSD declarations | 10,565 | 10,658 | 169 | 122 / 187 / 256 | 0 | 0.3 % | 21 % | 6 | 134 |
+| XML schema files | 14 | 31 | 0 | 175 / 245 / 252 | 0 | 0 | 0 | 0 | 5 |
+| NAPCORE | 2,979 | 6,081 | 0 | 240 / 254 / 256 | 0 | 0.1 % | 51 % | 0 | 6 |
+| DATEX II pages | 1,236 | 2,043 | 0 | 224 / 253 / 256 | 0 | 3.7 % | 45 % | 6 | 131 |
+| DATEX II model | 1,240 | 1,491 | 0 | 163 / 248 / 256 | 0 | 0 | 31 % | 8 | 0 |
+| EU legislation | 735 | 1,004 | 0 | 193 / 249 / 256 | 0 | 0.2 % | 16 % | 12 | 0 |
+| INSPIRE specification | 553 | 898 | 0 | 211 / 252 / 256 | 0 | 0.2 % | 42 % | 3 | 2 |
+| INSPIRE code lists | 41 | 50 | 0 | 156 / 243 / 255 | 0 | 0 | 20 % | 0 | 0 |
+| TN-ITS Turtle (guide, frame) | 905 | 1,389 | 0 | 224–235 / 248–253 / 256 | 0 | 0 | 20–27 % | 0 | 4 |
+| mobilityDCAT-AP HTML (guide, frame, object) | 216 | 273 | 0 | 201 / 248 / 256 | 0 | 0 | 38–92 % | 0 | 0 |
+| READMEs | 61 | 59 | 0 | 151 / 243 / 254 | 0 | 0 | 42 % | 1 | 0 |
+| NeTEx `.txt` examples | 123 | 226 | 0 | 254 / 256 / 256 | 0 | 0 | 8 % | 0 | 0 |
+| mobilityDCAT-AP `.ttl` examples | 16 | 28 | 0 | 229 / 248 / 253 | 0 | 0 | 54 % | 0 | 0 |
+
+"Inside a unit (cutter)" counts pieces the cutter itself had to cut below its smallest unit: inside a sentence, a
+line, a text node or a comment. The "text check" is the audit's test (a piece that starts in lower case or ends
+without a sentence end). It also counts every list item, table row and heading, so it is an upper bound. I read 20
+random prose pieces flagged by the text check. 13 end at a real unit (a list item, a table row, a heading line, a
+table of contents). 6 end inside a sentence, 5 of them NAPCORE PDF text where the wrapped next line starts with a
+capital or a digit, so the cutter's line rule took the break for a new unit. One more is unclear. Read that way,
+about a quarter of NAPCORE pieces (13 of the 20 sampled were NAPCORE, 6 of them inside a sentence) and a few
+percent of the other prose kinds end inside a sentence. So the line is **not met for NAPCORE** (**believed** at
+this size of sample). A rule that fits PDF text (a line break ends a unit only after a sentence end) would repair
+it. It is not built.
+
+The 19,024 duplicates are XML example pieces whose stored text equals one already kept: copies of the same example
+in two folders, and repeated frames. A file whose pieces are all copies of another file's now has no pieces of its
+own. The 289 near-empty XML pieces were pieces of end tags only. Leaving them out drops closing tags from the text
+read at answer time, so they are kept from now on (separate commit). The measured build still left them out.
+
+**Diagnosis 3: what ranks or counts pieces** (read in the code; the list of R0 step 0b checked again place by
+place). The rule I used: a limit meant for files counts files. Everything else is left as on main.
+
+- Rare-term limit (`RARE_TERM_MAX_CHUNKS`, 200, counted in rows): with about 3 times the pieces per example file a
+  term stops being rare much sooner. With the setting on it counts files, read in a stream and stopped at the
+  bound.
+- Graph alias bound (`GRAPH_ALIAS_MAX_CHUNKS`, 1,000 rows): an alias found in 40 to 50 example file names would pass
+  the bound and lose its candidates. With the setting on it counts files.
+- Element candidates (top 6 by quality): the places would go to pieces of one or two files. With the setting on it
+  takes one piece per file first.
+- `condition_example` and `asked_from_parts` (`values(...).distinct()`): the model's default ordering puts
+  `quality_score` and `chunk_id` into `SELECT DISTINCT`, so these rows were per chunk, not per file. This is a fault
+  on main already (**measured** by the generated SQL, read by a helper). With the setting on the ordering is cleared.
+- `examples_using_elements`, `shown_example_chunk`: a parent and its child in one piece get rarer, and the shown
+  piece is the opening of the object (about 600 characters). Left as is. The shown piece goes through
+  `_added_candidate`, which reads its unit around it when the setting is on.
+- Graph per-file scan (8 rows per file, by quality): quality is nearly flat inside a file, so the 8 are the file's
+  first pieces. Left as is (step 3 replaces this search).
+- `compute_chunk_quality` (word bands): an XML piece with its summary mostly stays in the 60–280 band. About 40 %
+  drop to the 20–59 band (−0.05; **measured** by the helper on R0's 600-character cut, not on this one). Left as is.
+- Per-file cap, vector pool (30 rows) and pre-selection (32): pieces of one file take several slots of the pool, so
+  fewer files reach scoring. **Believed** to be why the retrieval benchmark fell (0.893 → 0.812). Not changed here.
+  It is the same question as design point 5 (step 2).
+- `grounded_generator` (the answer without the model) shows the place line instead of XML. Not reached on dev (model
+  on). Left as is.
+- `_named_example_candidates` reads a non-empty example heading as Turtle types. XML pieces keep an empty heading, so
+  nothing changes.
+- `infer_doc_type` and `infer_scope` are computed per piece on its body, not on the lead and place lines, so the
+  heading path cannot make a guide piece read as "frame".
+
+**Diagnosis 4: reading large.** Each piece stores, in `structured_metadata["piece"]`, its unit (an XML document; a
+prose section; a schema declaration; a run of Turtle statements), its order in the file and where its body lies in
+its text. At answer time one query fetches up to 6 pieces on each side of every passage (same repository, path and
+unit), and the passage's text becomes the found piece plus the next and the previous piece in turn, while they fit
+1,200 characters, under the place line of the first piece taken. The chunk id, path and source of the passage do
+not change, so the citation points at the same file. Checked by hand on stored pieces of three kinds: an XML
+example (a fare usage parameter, grown with the next sibling element, 826 → 1,046 characters, document text in
+order), a NAPCORE PDF passage (grown with the paragraph before, 700 → 1,177) and a schema declaration cut in two
+(its two halves joined, 225 → 819). Time: 32 ms median, 38 ms p90 for six passages (50 random sets).
+
+**The case and the 7 questions** (read by hand, base against step 1, gold run 2 and benchmark). The late-journeys
+question gets a passage with `LateDatedVehicleJourneyCount` in 3 of 3 runs (dry replay, so passages only; the answer
+was not asked). Of the 7, b14 is better (the MMTIS annex passage now lists timetables, interchanges, hours,
+vehicles and their accessibility for a bus operator, where the baseline gave the cycle-network items). q059 is
+better (NeTEx_50's `TemplateServiceJourney` instead of its day types). a09, a15 (already the README overview), q057,
+q072 and q149 are unchanged: they are the same schema declarations or headers as before, or the better piece still
+loses its place.
+
+**Files lost and gained, read** (the rule of §5: a loss counts only if the passages no longer hold what the named
+file holds).
+
+- Gold, counted as lost: a19 (the SIRI situation-exchange example and the situation schema replaced by a DATEX II
+  TLS annex and an OpenLR class), b05 (the OpRa README replaced by OpRa and SIRI example openings), b29
+  (`LinePropertiesGroup` with `OperatorRef` replaced by an operator list and a TransXChange line).
+- Gold gained: a16 (the MMTIS amending annex), b02 (the SIRI README overview) are real. b01 is a gain only by file:
+  its README piece is the one on the use of AI in the repository.
+- Benchmark, not counted (another passage holds the answer): q013 and q017 (the OpRa examples show
+  `LateDatedVehicleJourneyCount` per journey pattern with its intervals, counts and percentages), q083 (the
+  ticketing-based passenger count example links counts to `netex:ScheduledStopPointRef`).
+- Benchmark, counted as lost: q019 (no declaration says which fields are required), q121 (no definition of a late
+  journey; a NeTEx planned-delay example instead), q140 (the connection-monitoring example is gone).
+- Benchmark gained: q015, q063, q146 are real; q147 is a gain only by file (the same README piece as b01).
+
+So, as the gate is written (losses read, gains counted): gold 3 lost against 3 gained, benchmark 3 against 4. That
+meets the line. If gains are read the same way as losses, gold is 3 lost against 2 gained, and it is not met.
+Every loss has the same explanation, as in R0: example pieces, now three times as many, take the places of schema
+declarations and READMEs. The old gold file shows the same picture side by side (33 → 33; a19, b05, b29, b31 lost,
+a16, b01, b02, b10 gained).
+
+**What the free replay says about stage 2.** With the setting on, the text of almost every passage changes, so
+almost nothing can be replayed. In the dry replay only 42 must-refuse runs and 2 example runs matched a recorded
+prompt. 234 question runs would have needed the model, about 300 calls (**believed**, from the baseline's 475 calls
+for 278 runs). None were made.
+
+**Spread of the baseline** (the free dry replay against its own copy): e01, e03 and m22 move as in step 0, and so do
+gen44 (all three runs) and gen33 (run 3).
+
+**Cost.** Baseline recorded once: 475 model calls (Haiku, as configured). Step 1: no model call. Build: one build,
+2 h 2 min of wall time in three parts. The embedder timed out twice (one request of 16 pieces took more than the
+120 s timeout) while the baseline's example benchmark and a gold run were using it. It did not restart: same start
+time, restart count 0, no OOM. The command skips files already cut, so it went on from where it stopped, and the
+third part ran with nothing else on the stack. Pieces whose embedded text equals an indexed chunk's kept their
+vector: at least 11,589, mostly schema declarations (the third part's count; the reports of the first two
+parts were lost when they stopped). `VACUUM FULL` and `REINDEX` took 5 minutes.
+
+**Believed, not verified.** That the retrieval benchmark fell because pieces of one file take several pool slots.
+That NAPCORE's share cut inside a sentence is about a quarter (20 pieces read). That "rows end near 130,000": they
+ended at 152,607. The 19,024 duplicate example pieces, left out as the plan says, are why it is not more.
+
+*Correction (2026-11-17, from step 2).* The belief that the retrieval benchmark fell because pieces of one file take
+several pool slots is mostly wrong. **Measured**: on this copy the vector index (ivfflat, 100 lists, 20 probes) keeps
+on average 88 % of the exact 30 nearest pieces (367 retrieval calls of the gold, benchmark and retrieval benchmark
+runs; for some questions 17 %), where on the baseline copy it kept all of them. With every vector search exact (50
+probes, which Postgres plans as a full scan) the same copy gives 0.873 hit@10 instead of 0.812; with 40 probes, 94 %
+of the nearest pieces, 0.846 (step 2's copy). So most of the fall, 0.06 of 0.081, was the index missing near pieces
+on a table 2.5 times larger. What is left, 0.02 with exact search, is the share example pieces take of the first
+places (below, step 2).
+
+**For step 2 and later.** The files lost here and in R0 come from one cause: whole, labelled example pieces win
+places from declarations and READMEs. That is design point 5. The retrieval benchmark's fall has the same cause in
+the pool. The PDF line rule and the kept end tags would need the one repair build this step did not use.
+
+### Step 2 (2026-11-16/17, dev copy `napcore_helpdesk_s2v`, a copy of `napcore_helpdesk_s1v`, branch at 7a152e2 and c58d8ca)
+
+**Verdict: gate 2 is not met, and no model was called.** Of the stage 1 lines fixed before the runs, retrieval time,
+rows, tokens and files lost against gained are met; the index line, the NAPCORE reading, the step 1 losses, the
+7 questions and the reading of changed passages are not. So stage 2 (answers, examples) was not run. The six places
+shared among kinds (design point 5) brought back one file of the six step 1 lost (q013); I reverted it (342a0d6),
+because the rule as the plan states it rarely applies: six places held by one kind happen in 19 of 198 questions,
+and the files are lost where examples hold four or five of the six. Two findings matter more than the rule: the
+vector index misses near pieces on the larger table and no setting I tried fixes that within the time gate (A), and
+the PDF line repair halves NAPCORE's cut sentences but does not bring them under 5 % (B). All figures **measured**
+unless marked.
+
+| gate line (fixed before the runs) | baseline (`base`) | reference (`s2ref`) | step 2 (`s2`) | met? |
+|---|---|---|---|---|
+| 1. index: recall of the exact top 30 ≥ 0.99, no question under 0.9 | 1.00 (15 gold questions, given) | 0.943, lowest 0.38, 63 of 367 calls under 0.9 (ivfflat 100 lists, 40 probes) | same index | **no** |
+| 2. retrieval median, warm gold run, ≤ base + 0.3 s | 1.75 s; again at 00:34: 2.38 s | 1.34 s; again: 2.09 s | 1.98 s; again: 2.07 s | yes (below base in both rounds) |
+| 3a. rows ≤ 154,692 | 61,877 | 152,741 | 152,741 | yes |
+| 3b. pieces over 256 tokens, per kind | – | 0 in every re-cut kind (embedder's counter) | same | yes |
+| 3c. NAPCORE pieces cut inside a unit, read by hand | – | about 6.6 % (9 of 60 flagged pieces; 44 % flagged) | same | **no** |
+| 4. step 1's counted losses back: a19, b05, b29, q019, q121, q140 | – | b05, b29, q140 back; a19, q019, q121 still lost | same as s2ref (q013 back too) | **no** |
+| 5. files: no unexplained loss, not more lost than gained | gold 39, bench 124 | gold 41 (−a19, +a16 b01 b02), bench 122 (−q013 q017 q019 q083 q121, +q015 q063 q147) | gold 41, bench 123 (q013 back) | yes for files; retrieval benchmark 0.846 against 0.893, not explained question by question |
+| 6. the 7 questions: ≥ 4 better, none worse | – | 2 better (b14, q059), 5 unchanged: the same pieces as step 1 | same; a15 and q072 changed, read equal | **no** |
+| 7. changed passages s2ref → s2, read | – | – | 8 better, 9 equal, 1 worse (a18) of 18 | **no** (one worse) |
+| stage 2: answers, examples | 44/69, 4/75 (step 0) | not run | not run | not measured |
+
+Retrieval benchmark hit@10 / MRR@10: base 0.893 / 0.564, step 1 0.812 / 0.567, s2ref 0.846 / 0.571, s2 0.846 / 0.571.
+Best piece given: gold 31 of 37 → 34 of 39 → 35 of 40; benchmark 83 of 92 → 79 of 91 → 80 of 93.
+
+**A. The index (diagnosis first).** Measured with every retrieval call the stage 1 runs make (75 gold passes, 143
+benchmark passes with the app's scopes and graph concepts in the query vector; 149 retrieval benchmark calls without
+scope): the query vectors were captured, and for each call the exact nearest pieces in its scope (index scans off)
+were compared with what the app's index query keeps (`ORDER BY` distance `LIMIT` twice the pool, then the pool by
+distance). Scripts and tables: `.claude/skills/measure-on-copy/runs/s2-work/`.
+
+- It is the index, not the scope filter or the iterative scan: with the iterative scan off the result is the same
+  (0.883); with every list probed it is 1.00. Calls with a small scope (OpRa, EU legislation, mobilityDCAT-AP, and
+  after the re-cut DATEX II and SIRI) are planned by Postgres as a full scan and are always exact; the misses are in
+  the unscoped and NeTEx searches.
+- The step 1 run with 50 probes (`step1-probes50`) did not use the index: from 50 probes of 100 lists Postgres plans
+  a parallel full scan (read in `EXPLAIN ANALYZE`, 0.9–1.1 s a query). Its 100 % recall and its 2.19 s are the exact
+  search's.
+- The lists are uneven: of 300 sampled rows, the largest list holds 20,960 rows (14 % of the table) on s1v and 4,193
+  on s1base. The given `recall.py` reads only the gold file (the benchmark YAML's first list is `target_k`), so its
+  15-question sample had no benchmark question.
+- **Believed**: the question vectors (`query:`) lie away from the clusters of passage vectors, and the nearest 30
+  sit in a narrow band of distance (a01: 0.167 to 0.195), so any approximate index needs to look at a large part of
+  the table.
+
+| index (built on the copy) | setting | mean recall | lowest | calls < 0.9 | index query median / p90 |
+|---|---|---|---|---|---|
+| ivfflat 100 lists (migration 0009) | 20 probes (the app today) | 0.883 | 0.17 | 137 | 0.14 / 0.22 s |
+| same | 30 probes | 0.937 | 0.37 | 72 | 0.36 / 0.48 s |
+| same | 40 probes | 0.966 | 0.37 | 33 | 0.33 / 0.53 s |
+| same | 50 or 100 probes | 1.000 | 1.00 | 0 | 1.03 / 1.17 s (full scan) |
+| ivfflat 400 lists (build time not recorded) | 20 probes | 0.819 | 0.00 | 163 | 0.04 / 0.16 s |
+| same | 40 probes | 1.000 | 1.00 | 0 | 0.98 / 1.07 s (full scan) |
+| hnsw m 16, ef_construction 64 (7 min 54 s, 1,192 MB) | ef_search 64 / 100 / 200 | 0.56 / 0.59 / 0.62 | 0.00 | 230–250 | 0.08–0.10 / 0.20–0.23 s |
+| hnsw m 32, ef_construction 128 (22 min 13 s, 1,192 MB) | ef_search 100 / 200 / 400 | 0.74 / 0.77 / 0.83 | 0.00 | 118–168 | 0.13–0.20 / 0.26–0.41 s |
+| exact search by hand (a01, `LIMIT 60`) | 2 workers; 4 or 6 asked (3 started) | 1.00 | – | – | 0.91–1.06 s; 0.79–0.81 s |
+
+The hnsw builds ran with `maintenance_work_mem` 256 MB for the session and no parallel workers: the first try with
+the default 2 workers failed at once ("could not resize shared memory segment … No space left on device", the
+container's `/dev/shm`), and the graph stopped fitting the memory after 39,022 rows, so the builds went on on disk.
+Nothing else failed. Even at ef_search 1,000 the m 16 index returned none of a01's exact 30 (distances 0.203–0.213).
+
+No index definition or setting reached the line within the time gate. I chose ivfflat with 100 lists and 40 probes
+(`VECTOR_INDEX_PROBES=40`, no new index, no code): after the re-cut 0.943 of the nearest pieces, lowest 0.38, at
+0.24 s median per index query. For step 5 this is open, not decided: the exact search costs about 0.9 s a query
+here; an index on the 384 numbers the embedder fills (the column holds 1,536, the rest zero) might make the exact
+search cheap enough (**not measured**). No code for another kind of index is on the branch.
+
+**B. The PDF line repair applied.** `prepare_index --recut` (7a152e2) cuts files already cut again and replaces only
+those whose pieces change. Before writing I ran it dry over every harvested kind: the repair as committed (a0eef30)
+changed the INSPIRE specification too, and badly: its width test joined long XML lines of the style listings and
+AsciiDoc table and block lines to the next line, and the cutter then cut 69 of 902 pieces inside a line (7.7 %,
+against 2 before). I repaired that in the same commit: a line continues only into one that starts as prose (a word,
+a number, an opening bracket or quote). With that, the repair changes 51 of 119 NAPCORE files (6,081 → 6,211
+pieces) and 7 of 197 DATEX II pages (2,043 → 2,047); EU legislation, INSPIRE (specification and code lists) and the
+DATEX II model are unchanged. Repository prose (Markdown, NeTEx `.txt` examples, XSD) gives the same pieces before and
+after on the local checkouts (estimated token counts; TN-ITS Turtle and the mobilityDCAT-AP HTML not checked, no
+checkout at the indexed commit). Written: 152,607 → 152,741 rows, 3,309 NAPCORE vectors kept, 2 min 35 s; then
+`VACUUM FULL` (24 min 49 s under a busy machine) and the ivfflat index rebuilt (14 s, 1,194 MB).
+
+Real token counts (embedder's counter): no piece over 256 in any re-cut kind; NAPCORE median 237, p90 254; cut inside
+a unit by the cutter's count NAPCORE 0.1 %, DATEX II pages 3.8 %. Read by hand (20, then 40 more because the 20 gave
+2), NAPCORE pieces flagged by the text check (2,733 of 6,211):
+
+- 20 (seed 7): 1 ends inside a sentence (a page footer splits it), 1 inside a file name; 3 split a table row between
+  its columns, 1 unclear; the rest end at a heading, list item, footer, sentence end or table end.
+- 40 (seed 8): 5 end inside a sentence (two of them at a page break or inside the footer sentence), 1 inside a
+  wrapped list item, 1 inside a URL; 5 split a table row; 1 unclear.
+
+So 9 of 60 flagged pieces end inside a sentence, item or URL, about 6.6 % of all NAPCORE pieces (**believed**, 60
+read), 12 % if table rows split between columns count too. Step 1 read about a quarter. The line is not met. What is
+left is mostly page furniture (running headers and footers break sentences) and PDF tables, which the text snapshots
+do not mark as tables.
+
+**Reference run `s2ref`** (part C off: the run used the tree at 7a152e2, which has no part C). Against `base`:
+
+- Gold 39 → 41: a16, b01, b02 gained (as in step 1), a19 lost. b05 and b29 are back.
+- Benchmark 124 → 122: q015, q063, q147 gained; q013, q017, q019, q083, q121 lost. q140 is back.
+- Retrieval benchmark: 10 questions lose hit@10 (q001, q007, q017, q019, q041, q056, q082, q088, q121, q129; 9 of
+  them hit@20 too), 3 gain it (q077, q137, q146). Top-5 places held by example `.xml` files: 277 in base, 433 here;
+  schema `.xsd` 415 → 266. I did not read these 10 one by one.
+
+**C. The six places shared among kinds.** Diagnosis on `s2ref`'s settings, every gold and benchmark question run as
+`locate_answer_sources` runs it, with the probe keeping the candidates after the per-file cap, the six after the cut
+and the final six, with their kind (`doc_type`; for passages made at answer time their own type such as
+ontology-definition and xsd-definition, which I count as kinds of their own):
+
+- Questions whose six are all one kind while another kind has a candidate above the score limit (0.62): 19 of 198
+  (7 gold, 12 benchmark), examples in 11, schema declarations in 4, ontology relations 2, DATEX II 1, guide 1.
+- Questions that lose their file at the choice of the six: 17 in this run (16 at the cut, q083 at the coverage
+  step). In 5 of them the six are all examples (a12, q013, q070, q078, q133); in the others examples hold four or
+  five places and one or two go to a README, a schema declaration or a definition. The wanted file stands 4th to
+  19th after the per-file cap. In a12, q070 and q133 the wanted file is an example itself, so a rule about kinds
+  cannot help them.
+- Checked by hand with the probe: q013's six are all OpRa examples; its file, `opra_lateDatedVehicleJourney_version.xsd`,
+  is 11th after the cap with score 0.934, and it is the first candidate of another kind, so the rule gives it the
+  sixth place. q019's six are five examples and the README; its file (a schema declaration with score 1.0) is 7th,
+  and the rule does not apply.
+
+The rule (c58d8ca, behind `RETRIEVAL_KINDS_SHARE_PLACES`, off): when every chosen passage is of one kind and a
+candidate of another kind reaches the score limit, the best such candidate takes the last place. It runs after the
+two coverage steps, so what they put in keeps its place. Five unit tests.
+
+`s2` against `s2ref`: files gold 41 = 41, benchmark 122 → 123 (q013 back), nothing lost; the retrieval benchmark
+did not move (its 20 places are rarely one kind). The passages of 18 questions changed, so all 18 were read, not a
+random 20 (a15, a17, q104 and q144 also move between two runs of the same index):
+
+- a15 equal (one OpRa schema declaration for another; the README stays); a17 equal (no passage answers, before or
+  after); a18 **worse** (a DATEX II parking-arrangement enumeration replaced by OpenLR's location name); a23 better
+  (the UIC operating period with `ValidDayBits` comes in); b19 equal (dataset series replaced by the README overview).
+- q013 better (the `DelayGroup` declaration replaces a fleet-dimensions example); q020 better (the cancelled-journey
+  entry with `operationalEvents` replaces a passenger-count example); q062 equal; q066 better (a `Line` example
+  replaces an aggregate schema header); q072 equal (README for the same header); q076 better (the OpRa delayed and
+  cancelled journeys example beside the NeTEx relations); q078 better (the NeTEx journey declaration replaces an
+  example header); q080 better (the planned service intensity example); q102 equal (the stop monitoring schema for
+  a subscription example; request and response stay); q104 equal; q105 better (an estimated timetable example
+  with `EstimatedCall`); q133 equal; q144 equal.
+
+Diagnoses asked for:
+
+- q017: lost at the score limit. Its file's pieces stand last of 23 scored candidates: similarity is rescaled between
+  the lowest and the highest in each question's pool, and in a pool of OpRa example pieces the schema declaration
+  is the lowest. Not counted as lost: the examples given show `LateDatedVehicleJourneyCount` with its intervals.
+- a19: never a candidate. Its nearest wanted piece is 49th by exact distance in the SIRI and DATEX II scope, the pool
+  holds 30, and no rare term finds it. Counted as lost: the six hold no link between SIRI and DATEX II.
+- q083: in the six after the cut (4th and 6th), then pushed out by the element coverage step, which puts in two
+  example pieces showing the asked elements from outside the six and cuts to six. Not counted (**believed**, as step
+  1 read: the ticketing-based passenger count example links counts to `netex:ScheduledStopPointRef`).
+- q140: back in `s2ref`; the element coverage step puts two pieces in front of it but it keeps the sixth place.
+- q019 and q121 still count as lost: no declaration of the required fields (q019); no definition of a late journey,
+  though the OpRa example of delayed journeys is given (q121).
+
+None of these is fixed: each is a threshold or a step of its own, not the rule of this step.
+
+**Why I reverted part C.** As fixed before the runs, a failed part is reverted. The rule did what it says, cheaply,
+and did not lose a file, but it moves one of the six counted losses and one read passage set got worse. What the
+diagnosis shows instead (**believed**, not tried): the losses come from examples taking four or five places, and
+from the rescaling of scores inside a pool full of example pieces (q017). A share per kind (for example, at most
+half the places for one kind when other kinds have candidates above the limit) would be the next variant; it is a
+threshold chosen after seeing the data, so it needs its own run.
+
+**Times.** The two rounds of gold runs differ by 0.6–0.7 s for the same code and copy (`s2ref` 1.34 s at 22:44,
+`s2ref-time` 2.09 s at 00:09): the machine got slower during the night (load 4–13; the Docker VM used up to 11
+cores during the `VACUUM FULL`). So I timed the baseline copy again in the second round (`base-time`, 2.38 s). In
+the same round the rule costs nothing (2.09 s off, 2.07 s on).
+
+**Cost.** No model call. Runs: `s2ref`, `s2` (25 min each), gold timing runs `s2ref-time`, `s2-time`,
+`base-time`; the diagnosis of part C (20 min); recall trials 6 min each. Builds: hnsw 8 and 22 min, ivfflat 100
+lists 14 s; re-cut 2 min 35 s; `VACUUM FULL` 25 min. The embedder container
+restarted once by itself at 21:36 UTC (restart count 1, not marked out of memory), after the re-cut had finished; I
+did not restart anything. Copies: `napcore_helpdesk_s2v` (152,741 rows, ivfflat 100 lists) is step 2's record;
+s1base and s1v are unchanged.
+
+**Believed, not verified.** That the query vectors lie away from the passage clusters (why every index needs so many
+lists probed). That an index on the 384 filled numbers would make exact search cheap. That q083's passages still
+hold the link to stop points. That TN-ITS Turtle and the mobilityDCAT-AP HTML are unchanged by the line repair.
+That a share per kind would bring back q019 and q121; nothing here shows it.
+
+### Step 2b: the index (2026-11-17, dev copy `napcore_helpdesk_s2v`, branch at a92b10c)
+
+The vector index of step 2 kept 0.943 of the exact nearest pieces at 40 probes and failed gate line 1. Before any
+fix I looked for the cause. The gate for a fix was fixed before the trials: on the same 367 captured retrieval calls,
+against the exact reference on the copy as it stands, (1) mean recall ≥ 0.99 and no call under 0.9; (2) retrieval
+median of the warm gold run ≤ 2.05 s in a stage 1 run; (3) index size and build time reported; (4) nothing changes
+with the setting off. No model was called. Scripts, logs and caches: `.claude/skills/measure-on-copy/runs/s3-work/`.
+All figures **measured** unless marked.
+
+**Verdict: all four lines are met.** The vector index misses near pieces because the questions lie far from
+every piece, not because of the filter, the build or duplicates; no approximate index setting fixes that. An
+ivfflat index on the 384 numbers the embedder fills, in half precision, read whole (100 of 100 lists), keeps every
+exact piece of the 367 calls at 0.08–0.13 s a query (120 MB, built in 8.5 s), and the gold retrieval median falls to
+1.16 s. With the exact index, none of a19, q019, q121, q013, q017, q083 comes back: those losses are not the
+index's. The retrieval benchmark recovers to 0.873 (base 0.893, s2ref 0.846).
+
+**Diagnosis.**
+
+- *The column.* `embedding_vector` is `vector(1536)`; the embedder fills the first 384 numbers. Counted on all
+  152,741 rows: no row has a number other than zero beyond the 384th, every row's first 384 have norm 1.0 (to 1e-8),
+  no row is all zero. `alternate_vector` is set for 169 rows only (TN-ITS schema pieces, full width, the hash
+  vectors kept for rollback); retrieval never reads it. The rows carry no embedding model field. So the cosine
+  distance on the first 384 numbers is the distance on the column.
+- *Storage.* Each vector is 6,148 bytes, stored out of line (storage `external`, not compressed): the table is
+  203 MB, its TOAST 1,195 MB. Any exact scan reads the 1.2 GB of whole vectors, and so does the ivfflat index on
+  the column when every list is probed (1,194 MB). This is why the exact search costs about 0.9–1.0 s a query
+  whatever form it takes (table below).
+- *Duplicates.* Exact duplicates of `embedding_vector`: 26 groups, 58 rows, 32 redundant rows, largest group 4
+  (NeTEx fare examples whose texts differ after the first 256 tokens). Not a cause.
+- *Near-identical vectors.* The ivfflat list that holds 14 % of the rows (20,958 rows) is NeTEx example pieces only,
+  all from two files, `examples/standards/tap_tsi/B1_NRT/Netex_tap_tsi_B1-1080-full.xml` (25,237 pieces in all) and
+  `Netex_tap_tsi_B1-1080.xml` (4,328): repeated `FareStructureElement` blocks whose pieces begin with the same element
+  path. Within that list the median distance from a piece to its nearest other piece is 0.0002, and every sampled
+  piece has 200 others within 0.02 (40 sampled). Elsewhere it is 0.0031, with a median of 52 within 0.02. By kind,
+  the whole list is `example` (0 of other kinds). These two files are 19 % of the table (29,565 rows); for the open
+  decision on leaving such pieces out of the index, that is the count. Nothing was deleted.
+- *Where the questions lie.* For the 367 captured calls the nearest piece is at distance 0.119 (median; p10 0.096,
+  p90 0.144) and the last of the 25–100 wanted at 0.150, a band 0.027 wide. For 60 sampled pieces used as queries the
+  nearest other piece is at 0.0016 (median). The questions lie about 75 times farther from the pieces than the pieces
+  from each other, and their 30 nearest sit in a thin shell at nearly equal distance.
+
+**Why HNSW failed.** I rebuilt the m 16, ef_construction 64 index on the column as step 2 had (7 min 38 s, spilled
+after 39,022 rows, 1,193 MB) and tested each candidate:
+
+| candidate | test | result | holds? |
+|---|---|---|---|
+| the scope filter applied after the index scan | same calls without the filter, against an exact reference without the filter | ef_search 100: 0.476 with the filter, 0.386 without; ef_search 400 with iterative scan: 0.662 with, 0.633 without | **no**: without the filter it is no better |
+| the iterative scan off | `hnsw.iterative_scan = relaxed_order` | 0.476 → 0.566 at ef_search 100 (the short results go: 58 → 0) | a small part only |
+| a build spilled to disk or under a full `/dev/shm` | HNSW on the 384 numbers as `halfvec`, built wholly in memory (47 s, 170 MB, no spill notice) | 0.459 / 0.573 / 0.715 at ef_search 100 / 400 / 1,000 | **no**: as bad in memory |
+| duplicates | count | 32 redundant rows | **no** |
+| the reference and the index query not reading the same rows or operator | both `<=>`, the same filter SQL; a01 by hand: exact scan and index on the same query | at ef_search 1,000 the planner chose a full scan (exact, 30 of 30); with the full scan off, the index returned distances 0.203–0.215 and 0 of the 30 unfiltered nearest (0.167–0.195), 17 of the filtered | **no**, but step 2's by-hand check set the filtered index result against the unfiltered exact 30 (**believed**, from the distances); the unfiltered index result has none of them either, so the miss is real |
+| the graph cannot reach the wanted rows | each of a01's 30 nearest, searched by its own vector | 28 of 30 found; 260 of 300 random rows found by their own vector (38 of the 40 missed are examples) | **no**: the rows are reachable |
+| the questions lie away from the pieces | 60 stored piece vectors as queries on the in-memory HNSW, top 30 | 0.908 at ef_search 100, 0.962 at 400 (questions: 0.459, 0.573) | **yes** |
+
+So HNSW finds the near pieces of a piece but not of a question: the questions lie in a thin shell far from every
+piece (**verified** by the contrast above, on the same index), and the greedy walk stops in a region whose pieces
+are only slightly farther. The same fact explains why ivfflat needs nearly every list: the lists nearest to the
+question do not hold its nearest pieces (**believed**: this is the reading that fits both, not a separate test). The
+near-identical blocks make it worse for pieces (the zero-recall pieces as queries are in such blocks, **believed**
+from their kind, not counted) but are not what fails the questions: a01's nearest pieces are NAPCORE text,
+schemas and regulations, none in the big list.
+**The trials.** Recall as in step 2: the share of the exact nearest 25–100 pieces (the full column, full scan, the
+app's scope filter) that the index query keeps (`LIMIT` twice the pool, then the pool by exact distance); all 367
+calls; index query time warm, on the same machine in one night. "Full scan off" is `SET LOCAL enable_seqscan = off`
+in the query's transaction; without it Postgres plans a full scan from about half the lists.
+
+| index (built by hand on the copy) | setting | mean recall | lowest | calls < 0.9 | index query median / p90 | size, build |
+|---|---|---|---|---|---|---|
+| ivfflat 100 lists on the column (step 2) | 20 / 40 probes | 0.862 / 0.943 | 0.07 / 0.38 | 145 / 63 | 0.11 / 0.24 s | 1,194 MB, 15 s |
+| same | 100 probes, full scan off | 1.000 | 1.00 | 0 | 0.94 / 1.03 s | same |
+| none: exact scan on the 384 numbers | full scan | 1.000 | 1.00 | 0 | 0.89 / 0.98 s | – |
+| hnsw m 16, ef_construction 64 on the column | ef_search 100 / 100 + iterative / 400 + iterative | 0.476 / 0.566 / 0.662 | 0.00 | 257 / 240 / 252 | 0.06 / 0.08 / 0.14 s | 1,193 MB, 7 min 38 s |
+| hnsw m 16, ef_construction 64, `halfvec` 384 | ef_search 100 / 400 / 1,000, iterative | 0.459 / 0.573 / 0.715 | 0.00 | 321 / 289 / 208 | 0.03 / 0.02 / 0.04 s | 170 MB, 47 s |
+| ivfflat 100 lists, `vector` 384 | 40 / 60 / 100 probes, full scan off | 0.973 / 0.994 / 1.000 | 0.37 / 0.57 / 1.00 | 20 / 2 / 0 | 0.05 / 0.08 / 0.14 s | 239 MB, 7 s |
+| ivfflat 100 lists, `halfvec` 384 | 40 / 60 / 100 probes, full scan off | 0.915 / 0.968 / 1.000 | 0.37 / 0.44 / 1.00 | 112 / 46 / 0 | 0.04 / 0.06 / 0.10–0.13 s | 120 MB, 8.5 s |
+| same, through the app's own `_nearest_ids_by_index` | the settings below | 1.000 | 1.00 | 0 | 0.08 / 0.10 s | – |
+
+What the table says: no approximate setting reaches the line, because of where the questions lie (above); what
+reaches it is reading every list, and that is fast only when the index holds the 384 numbers and not the
+1,536. With all lists probed the ivfflat index is in effect an exact scan of a compact copy of the vectors (120 MB
+instead of 1.2 GB); the lists only keep the option of probing fewer. The ivfflat lists on the 384 numbers are as
+uneven as on the column (not counted again; they do not matter when all are read). I dropped HNSW: its failure
+is not a build fault, so a better build cannot repair it.
+
+**The definition chosen.**
+
+```sql
+SET maintenance_work_mem = '256MB'; SET max_parallel_maintenance_workers = 0;
+CREATE INDEX x_ivf_half384 ON helpdesk_sourcechunk
+  USING ivfflat ((subvector(embedding_vector, 1, 384)::halfvec(384)) halfvec_cosine_ops) WITH (lists = 100);
+```
+
+with `VECTOR_INDEX_DIMENSIONS=384`, `VECTOR_INDEX_HALF_PRECISION=True`, `VECTOR_INDEX_PROBES=100` (068f7e7). The
+code: with `VECTOR_INDEX_DIMENSIONS` above 0 the nearest-row query orders by the same expression as the index and
+turns the full scan off for that one transaction (a full scan of the expression reads every whole vector, 0.9 s);
+the pool is still ranked on the full column after it. Off by default: then the query is the one of today (unit
+tests check the SQL and that the result equals the exact scan's, with and without half precision). Half precision
+changes the order only inside the margin of twice the pool, which the exact ranking after it absorbs: 0 of 367
+calls lost a piece (**verified** for these calls, **believed** in general). No migration: the index is built by
+hand on the copy; whether step 5 adds it as a migration is open.
+
+Build cost: 8.5 s and an `ANALYZE` of 7 s on this copy, no spill and no parallel workers; ivfflat's build holds a
+sample of the vectors for its k-means in memory (**believed** a few MB at 100 lists, from how pgvector builds, not
+measured); it reads the 1.2 GB of vectors once. Room: 120 MB on disk beside the existing 1,194 MB index, which the
+setting no longer uses and which can go once the setting is on (**not done**: the copy keeps both). At query time
+the whole 120 MB is read per query; with `shared_buffers` 128 MB here it comes from the file cache.
+
+**Verdict per gate line.**
+
+| gate line (fixed before the trials) | result | met? |
+|---|---|---|
+| 1. mean recall ≥ 0.99, no call under 0.9 (367 calls, exact reference on the copy) | 1.000, lowest 1.00 (trial script and the app's own query) | yes |
+| 2. retrieval median, warm gold, ≤ 2.05 s | `s3` 1.16 s; in the same round `base-time3` 1.77 s, `s2ref-time3` (setting off, 20 probes) 1.09 s; `s2ref-off40` (setting off, 40 probes) 1.37 s | yes |
+| 3. index size and build time | 120 MB, 8.5 s + `ANALYZE` 7 s, 256 MB maintenance memory, no spill, no parallel workers | reported |
+| 4. nothing changes with the setting off | unit tests of the query (SQL and result); a gold run with the setting off and 40 probes (`s2ref-off40`) gives `s2ref`'s 41 files exactly; the backend test suite (1,131 tests, models off): 7 fail, and the same 7 fail on the tree before the change (cd409fe) under the same environment (relevance check, request body and alias-query tests; **believed** to read settings that my models-off overrides of the local `.env` change); none is in the vector search | yes |
+
+The machine was not slower tonight: `base-time3` (1.77 s) is close to `base`'s first run (1.75 s). The step 2 run
+`s2ref` used 40 probes: the same copy with 20 probes (`s2ref-time3`) finds 38 gold files and loses b05, b24, b29,
+and with 40 (`s2ref-off40`) it finds `s2ref`'s 41 (**verified** by the two runs; step 2's record did not say which
+probes its runs used).
+
+**Stage 1 with the exact index (`s3`, copy s2v, 068f7e7, no model call).** What is left once the index is exact:
+
+| measure | base | s2ref (40 probes) | s3 (exact) |
+|---|---|---|---|
+| gold files | 39/57 | 41/57 | 41/57 (same files as s2ref) |
+| best piece given, gold | 31/37 | 34/39 | 34/39 |
+| benchmark files | 124/141 | 122/141 | 121/141 (q140 lost against s2ref) |
+| best piece given, benchmark | 83/92 | 79/91 | 76/88 |
+| retrieval benchmark hit@10 / MRR@10 | 0.893 / 0.564 | 0.846 / 0.571 | 0.873 / 0.587 |
+| retrieval median, gold warm | 1.75 s | 1.34 s | 1.16 s |
+
+- Of a19, q019, q121, q013, q017 and q083, **none is found** at file level with the exact index. So these losses
+  are not the index's: they come after the vector search (the six places, the score limit, the coverage step), as
+  step 2's diagnosis of each said.
+- q140 is lost again (it was back in `s2ref`, where step 2 found it held the sixth place narrowly); not read.
+- Retrieval benchmark against `s2ref`: 6 questions gain hit@10 (q001, q007, q019, q041, q121, q129: 6 of the 10
+  that `s2ref` had lost against base), 2 lose it (q049, q146). Against `base`: lost q017, q049, q056, q082, q088;
+  gained q077, q137. The index explains most of the retrieval benchmark's fall since step 1, not all of it.
+- The best-piece counts are over fewer rated questions (88 against 91), so they are not comparable as they stand.
+
+**Verified and believed.** Verified: the column's width and zeros (counted on every row); duplicates (counted);
+what the largest list holds (its rows listed); that the filter and the build are not the HNSW cause (runs above);
+the contrast between pieces and questions as queries; every recall and time in the tables; that the app's own
+query uses the new index and keeps every exact piece (`EXPLAIN` and the 367 calls); that the setting off leaves the
+gold run as it was. Believed, not tested separately: that the questions' place in the space is also why ivfflat
+needs nearly all lists; that half precision never loses a piece the margin cannot absorb; ivfflat's build memory.
+Not checked: the benchmark files lost and gained against `s2ref` question by question; q140 and the retrieval
+benchmark's two new losses; the answers (stage 2 was not run); prod's pgvector version (`halfvec` needs 0.7, the copy
+has 0.8.3).
+
+**Cost.** No model call. Builds: hnsw on the column 7 min 38 s, hnsw `halfvec` 47 s, ivfflat 7–9 s each, the
+column's ivfflat rebuilt (15 s). Trials 1–6 min each. Runs: `s3` 24 min, three gold runs of 8 min. The copy s2v now
+holds the step 2 index (ivfflat 100 lists on the column, as before) and `x_ivf_half384`; nothing else changed.
+
+### Step 2c: answers and examples on the exact index (2026-11-17, copies `napcore_helpdesk_s1base` and `napcore_helpdesk_s2v`, branch at 5007c0f)
+
+Stage 2 of the yardstick, which steps 1 and 2 never reached: the 23 answerable and 25 must-refuse questions and the
+example benchmark, 3 runs each, on the baseline copy with every setting off (`base-a`, the app as on main) and on
+the step 2 copy with the exact index (`s3-a`: `RETRIEVAL_PREPARED_INDEX=True`, `VECTOR_INDEX_DIMENSIONS=384`,
+`VECTOR_INDEX_HALF_PRECISION=True`, `VECTOR_INDEX_PROBES=100`, the settings of `s3`). `s3-a` replays `base-a`'s
+recorded calls wherever the request is the same. The two runs ran one after the other, not side by side. The gate was
+fixed before the runs; no setting was tuned and no code changed. Runs, logs and scripts:
+`.claude/skills/measure-on-copy/runs/base-a`, `s3-a`, `base-a-noise` and `s3a-work/`. The recorded baseline answers
+are in `runs/base-a/record.jsonl.gz` (every request and reply). All figures **measured** unless marked.
+
+**Verdict: not met.** Answers on the answerable set rose clearly (41 → 49 of 69) and the late-journeys case is fixed
+in the answers (the count element given in 3 of 3 runs, answered 3 of 3). But one must-refuse question is now
+answered every time, one example run fell back to a standard file, and the one changed question that names a
+standard got worse.
+
+| gate line (fixed before the runs) | `base-a` | `s3-a` | spread used (step 0, §10 A, table) | met? |
+|---|---|---|---|---|
+| answerable answered | 41/69 | 49/69 (+8) | 7 of 69 | yes (better beyond the spread) |
+| must-refuse answered | 4/75 | 6/75 (+2) | 2 of 75, or a new question answered twice or more | **no**: +2, and m13 is answered 3 of 3 (0 in `base-a`) |
+| examples generated | 132/141 | 131/141 (−1) | 1 (did not move in step 0: any difference is real) | **no** |
+| examples first attempts | 99/141 | 94/141 (−5) | 6 of 141 | yes (within the spread) |
+| examples unlinked | 0/141 | 1/141 | 2 | yes |
+| reading: no kind worse on balance | – | – | – | **no**: by standard 0 better / 0 equal / 1 worse |
+| count | 466 calls made | 321 made, 168 replayed | – | reported; no call failed, none retried by the tool |
+
+**Count.** `base-a` made 466 calls: 412 to Haiku, 54 to Sonnet (all naming the language of a question,
+`_classify_question_language_with_llm`, the model kept for that on 2026-11-15; no other call went to a model other
+than Haiku). By site: example generator 173, answer 125, relevance check 84, English rendering 14, controller 12,
+fixed texts 4. `s3-a` made 321 calls, all Haiku (answer 130, example generator 191), and replayed 168 (114 Haiku,
+54 Sonnet). No call returned an error. The app's own second attempts (the answer validator's retry, the example
+generator's further attempts) are model calls and are counted in these numbers. The dry replay before `s3-a`
+left 233 question runs not run; `base-a` had made 405 calls on those runs, which was the ceiling I checked against
+the 650 limit. Wall time: `base-a` 28 min, the dry replay 7 min, `s3-a` 29 min, the dry replay of the baseline on
+its own copy (`base-a-noise`) 7 min.
+
+**Which changes are the index's.** The dry replay of `base-a` on its own copy (`base-a-noise`, free) has the prompt
+move only for e01, e03, e04 and m22. None of these is among the ten questions whose answered count moved, so all
+ten changes come with the new index (**verified** by that replay). On the new index every question that reaches
+retrieval got other passages (the pieces are new), so 233 of 278 question runs ran; the 45 replayed (42 must-refuse, 1 answerable, 2
+examples) are **believed** to be questions refused before retrieval (not checked one by one).
+
+**Reading.** I read every question run of the ten questions whose answered count moved (30 runs), against the gold
+patterns of `answer-source-questions.yaml` (passages that match one are marked in `s3a-work/read-changed.md`) and the
+`expect` of `refused-questions.yaml`. The kinds were fixed before reading: non-English k08–k10; example request k02;
+regulation k01, k13, k14, e02, e06; by standard e01, e04, e05, e07; explanation the other answerable questions;
+must-refuse on its own line.
+
+| kind | changed questions | better / equal / worse |
+|---|---|---|
+| regulation | e02, e06, k14 | 1 / 2 / 0 |
+| example request | k02 | 1 / 0 / 0 |
+| explanation | k06, k11, k12 | 2 / 1 / 0 |
+| by standard | e05 | 0 / 0 / 1 |
+| non-English | none moved | – |
+| must-refuse | m05, m13 | 1 / 0 / 1 |
+
+- e02 (fare data under MMTIS), 0 → 3, better: the new passages hold the Annex point 1.2 of 2017/1926 and of
+  2024/490 (gold), and every run answers with the basic common standard fares (fare network data, standard fare
+  structures). The baseline had Articles 1, 2, 6 and 9 and refused.
+- k11 (number of late journeys), 0 → 3, better: `DelayedAndCancelledJourneysWithEvents.xml` with
+  `LateDatedVehicleJourneyCount` and its duration intervals replaces `CancelledAndLateDatedVehicleJourneys.xml`'s
+  opening; the answers name the count element. The baseline answered with `JourneyLayover`.
+- k02 (example of observed delays), 2 → 3, better: the OpRa pieces now start at the element path, and the answers
+  build the `LateDatedVehicleJourneyEntry` with `DelayDuration` and `TriggeredBy`; `ResponseLateDatedVehicleJourneys.xml`
+  is among the passages.
+- k12 (bus ticket), 2 → 3, better: a second Bristol fare example (line fare, stage) replaces a rail fare example, and
+  run 1 answers from it. Neither run has the gold file (Arriva).
+- e05 (DATEX and SIRI connected), 1 → 0, worse: the baseline's two `siri_exm_SX` examples (gold: the SIRI
+  situation example with the embedded DATEX II `d2:` record) are gone; the new passages are a DATEX II TLS annex
+  section, the OpenLR line attributes class and unrelated SIRI examples. The baseline's one answer used the
+  embedded record; now all three runs refuse.
+- e06 (legislation that includes DATEX II), 0 → 3, equal: both sides get Articles 4 and 5 of 2017/1926 (gold) and
+  both answers say the evidence names no act that "includes" DATEX II while quoting Art. 4(2) and 5(2). The variant's
+  answers are counted as answered; their content is the baseline's.
+- k06 (elevator in a station), 3 → 2, and k14 (dynamic data), 3 → 2, equal: the same files on both sides, no gold
+  passage on either; one run each refused where the baseline answered beside the point (`AccessFeatureEnumeration`'s
+  `lift`; `DynamicDistanceMatrixElement`).
+- m05 (colour of bus seats), 1 → 0, better: the seating plan schema (`PassengerSpotGroup`) comes in and all three
+  runs refuse.
+- m13 ("How does it work?"), 0 → 3, worse: two Bristol fare examples (`FX-PI-01_UK_FBRI_NETWORK-FARE_WOE-Bristol-(mixed)`
+  and `-pass-(Z2Z)`) come in, whose pieces describe how m-tickets are activated, and every run answers the empty
+  question about m-tickets. That is the step 0 rule's "new question answered twice or more".
+
+**Examples.** Eight of 47 questions moved; I read the runs whose measure moved. gen42 run 2 (a line departing
+Monday 17:00) was generated in `base-a` and is a standard file in `s3-a` (attempts 0, `NeTEx_01_simple_line.xml` and
+a calendar example now among the passages): the generated count's −1. I did not open the standard example shown, so
+that it lacks the asked departure is **believed** (the generator chose a standard file because one matched, not
+because it holds the values). gen34 run 3 (ferry Koper–Piran) has an unlinked `ScheduledStopPoint` (+1 unlinked,
+within the spread). First attempts fell for gen03, gen14 (2 → 0), gen16, gen22, gen31 and rose for gen36: −5, within
+the spread of 6. Every example question got other passages (132 of 141 runs ran).
+
+**What it means (believed, not tested).** The index helps where the right passage was just outside the six places
+(e02, k11, k02): the exact search and the cut bring it in. It also brings in more example pieces that read as
+prose about tickets and transfers, which a vague question can now match (m13), and it lets near-miss pieces from
+DATEX II documentation push out SIRI examples (e05). Both failures are about what wins the six places, not about the
+index's recall, which step 2b showed to be exact.
+
+**Not checked.** The 223 question runs that ran and kept their answered/refused outcome were not read (the rule reads
+the changed ones). The answers' citations and wording against gold, beyond the ten questions. Whether m13 and e05
+move with another sample of the relevance check (each was run 3 times with the same replayed verdicts). The
+stage 1 measures were not run again (they are `s3`'s, same copy and settings). Retrieval time of the API answers
+(0.83 s against 1.33 s) is cold on both sides and not a gate.
+
+### Step 3: concepts on the pieces and concepts by meaning (2026-11-17, copy `napcore_helpdesk_s4v`, a copy of `napcore_helpdesk_s2v`, branch at bb29e32)
+
+Design point 6, first and second part. The gate was fixed before any code (below, "Gate 3 as counted"). Scripts,
+logs and counts: `.claude/skills/measure-on-copy/runs/s4-work/`. No model was called for the diagnosis or the
+labels. All figures **measured** unless marked.
+
+**Diagnosis (written before the code).**
+
+- *How concepts reach retrieval today* (read in `retrieval_gateway._retrieve_chunks_once`). The question's concepts
+  are the classes whose label words occur in it (`extract_graph_concepts`, with plurals and short prefixes), the
+  vocabulary bridge's terms (a model call, `bridged_question_concepts`) and the property terms; GraphDB expands them
+  one hop. They are used five ways: (1) the graph candidates, `_graph_concept_candidates`, which search the paths and
+  labels of schema and example pieces for every alias of the expanded concepts, and the text when that finds too few;
+  (2) the element candidates, pieces whose text opens an element the question names; (3) a score bonus for pieces
+  whose text, matched against every label at query time, names a question concept; (4) the definitions from GraphDB;
+  (5) the example files from GraphDB. The concept vectors (3,104 classes, 384 numbers) are used only by
+  `presence_concepts` ("does the standard have X") and the concept benchmark.
+- *Time.* On the copy, warm (second of two passes over the 57 gold questions, model and bridge off,
+  `diag.py A`): measured retrieval 0.44 s median, 0.72 s mean; the label-word search of paths takes 0 ms median
+  (37 of 57 questions have no specific concept) and 109 ms mean; the vector query 244 ms mean and the rare-term
+  search 230 ms mean are the larger parts. So on the copy the search of paths is not the slowest part. The prod
+  measurement the plan cites came before the per-alias cache of 0.97.149 (**believed**, from the dates).
+- *What it brings* (`s3`, passes of locate). The graph candidates hold a file the question names in 6 of the 41 gold
+  questions found and 89 of the 121 benchmark questions found; in none of them are they the only stage that holds it.
+- *Share of pieces that would carry a label, and from what* (a random 3,000 pieces, `diag.py B`; the full build is
+  below). XML example pieces: 79 % name a class of their standard in an element opened in the body. Schema
+  declarations: 13 % by the declared name. Prose: label words occur in most pieces (86–100 %, about 6 classes a
+  piece), but only 20–28 % of NAPCORE, DATEX II, legislation and INSPIRE pieces keep one when a class must also be
+  among the 20 classes nearest to the piece by meaning (its stored vector against the concept vectors).
+- *A question's concepts, by words against by meaning* (concept benchmark, hit@3, on the reference copy, model off so
+  the three non-English questions are searched as asked): label words 7 of 26, meaning on the whole question 11,
+  meaning on the question's subject 18, the app's order (`presence_concepts`) 20. The 23 of 26 of the plan needs the
+  English renderings of c04, c18 and c25 (model calls); with the model off it is 20 on both sides.
+- *Verdict.* The design point can work as written: three quarters of the pieces can carry a class without a new
+  embedding, and meaning finds a question's classes far more often than label words. The time it can save is small
+  on the copy.
+
+**Choices made before measuring** (no variant was tried after seeing a number):
+
+- Labels in `structured_metadata["concepts"]`, written by `label_chunk_concepts` (no migration; a GIN index on that
+  key built by hand on the copy, `x_concepts_gin`, as the vector index of step 2b). XML example piece: the classes of
+  its standard named by the elements opened in its body (not the line of place, not the summary after the body).
+  Schema declaration: its declared name when that is a class; any other piece and a declaration besides its name:
+  the classes whose label occurs in it and that are among its 20 nearest classes by meaning. Each class brings its
+  aligned Transmodel class.
+- At the question (`RETRIEVAL_CONCEPT_LABELS`, off by default): the 5 classes nearest to the question's subject by
+  meaning, among those that concern the standards of the scope (all standards when the scope names none), with the
+  classes that implement them; the pieces of every kind in scope that carry one, nearest to the question first, at
+  most 2 a file and as many as the graph candidate cap, take the place of `_graph_concept_candidates`. Without the
+  embedder or the concept index, the label-word search runs as before. Everything else (element candidates, score
+  bonus, definitions, examples) is unchanged.
+
+**Gate 3 as counted** (fixed before the runs): stage 1 `s4` against `s3`, no model call: (1) concept benchmark not
+lower than the reference measured the same way; (2) the 15 non-English gold questions (a08–a10, b02, b05, b06, b13,
+b14, b17, b21, b23–b26, b34; the benchmark file has none): files found not lower than `s3` (11 of 15); (3) gold,
+benchmark, retrieval benchmark hit@10 and MRR not lower than `s3` (step 0's spread for these is 0); (4) retrieval
+median, gold warm, not above `s3` by more than 0.1 s, `s3` timed again in the same round; (5) setting off: existing
+tests pass and a gold run with it off reproduces `s3`'s files. Stage 2 only if 1–5 are met: answers and examples not
+lower than `s3-a` by more than step 0's spreads; changed answers read by kind, no kind worse on balance; m13, e05
+and gen42 reported.
+
+**What was built** (df8c34a, reverted in 1e11378): `services/chunk_concepts.py`, the command `label_chunk_concepts`,
+the setting `RETRIEVAL_CONCEPT_LABELS` (off) and 15 unit tests (labels by kind, nearest classes in scope, the
+candidate query against the exact order, the setting off and on in the gateway). On the copy: labels written in 358 s,
+no embedding; 111,662 of 152,741 pieces (73 %) carry at least one class: XML example pieces 102,500 of 128,207,
+declarations 5,224 of 10,858, NAPCORE 1,496 of 6,211, DATEX II 811 of 3,538, guides 1,012 of 1,647, legislation 305
+of 1,004, INSPIRE 282 of 948 (`labels-report.json`); 2,365 classes are used, a class on 8 pieces at the median and
+21,733 at most (`FareStructureElement`). GIN index `x_concepts_gin` 1.2 MB, built in 1.5 s. The labels were written as
+an update of every row, which left the table spread out: with the setting off the warm gold run on the copy took
+1.14 s against 0.71 s on `s2v` in the same hour (`diag.py A`). `VACUUM FULL` and a reindex (heap 214 MB against
+203 MB on `s2v`) brought it back (`s4-off` below); every run below is after that. An indexer that writes the labels
+with the piece would not have this cost (**believed**).
+
+**Verdict: not met** (lines 3 and 4). Stage 2 was not run; no model was called in step 3.
+
+| gate line (fixed before the runs) | `s3` (reference) | `s4` (setting on) | met? |
+|---|---|---|---|
+| 1. concept benchmark, app order, hit@3 (model off on both) | 20/26 (`s2v`) | 20/26 (`s4v`, setting on) | yes (the change does not touch `presence_concepts`) |
+| 2. non-English gold questions, files found (15) | 11 | 11, the same ones | yes |
+| 3. gold files | 41/57 | 42/57 (a19 gained) | yes |
+| 3. benchmark files | 121/141 | 118/141 (lost q063, q109, q117, q122; gained q140) | **no** |
+| 3. retrieval benchmark hit@10 / MRR@10 (the measure `s3` counted) | 0.873 / 0.587 | 0.873 / 0.587 | yes |
+| 4. retrieval median, gold warm | 1.16 s; `s3-time4` (same copy and settings, this round) 1.31 s | 1.44 s (+0.13 s on the same round) | **no** |
+| 5. setting off: tests; a gold run reproduces `s3`'s files | – | 1,146 tests, 6 fail, all among the 7 that failed before step 3 under the same environment (step 2b); `s4-off` finds `s3`'s 41 files exactly, 1.33 s | yes |
+
+- *The four benchmark losses*, read on the passage lists (file names; I did not read the passage text, so **believed**):
+  q063 (frequency timetables) loses `NeTEx_50_JourneyFrequencyGroup.xml` to `NeTEx_01_simple_line.xml`; q109 (SIRI
+  roadworks) loses `exx_situationExchange_road.xml` to a request example and two SIRI schemas; q117 (connection
+  monitoring) loses `exc_connectionMonitoringFeeder_response.xml` to the control action schema; q122 (delay types)
+  loses `opra_delayClassification_version.xsd` to the DATEX II schema. In each the newcomer carries a class near the
+  question by meaning but not the one the question asks for. q140 gains the connection monitoring example.
+- *Time.* The candidates by meaning cost 60 ms median per pass on the warm gold questions (0 ms before, because 37
+  of 57 questions had no specific concept and did not search at all); the rest of the 0.13 s is the second pass and
+  the scoring of the larger pool (**believed**, from `diag-A-on.json`, not split further).
+- *The graph variant of the retrieval benchmark*, not a gate measure: hit@10 0.873 → 0.886, MRR@10 0.584 → 0.583.
+
+**Carried faults of step 2c** (m13, e05, gen42): not measured, stage 2 was not reached.
+
+**Verified and believed.** Verified: the label counts (the command's report and SQL on the copy); every stage 1
+number (runs `s3-time4`, `s4-off`, `s4` and the compare in `s4-work/cmp-s3-s4.txt`); that `s4-off` gives `s3`'s gold
+files; the concept benchmark on both copies; the test failures against step 2b's list. Believed: that the four losses
+are real losses (file names only); the split of the added time; that the slow copy came from the update alone.
+Assumed: that the benchmark file has no non-English question (a scan of the texts for non-English words and letters
+found none; it has no language field).
+
+**Not checked.** Stage 2 (answers, examples). Other values of the two numbers chosen before the runs (20 nearest,
+5 question classes) or candidates restricted to schema and example pieces as before: not tried, by the rule. The copy
+`napcore_helpdesk_s4v` keeps the labels and `x_concepts_gin`; `napcore_helpdesk_s2v` is unchanged.
+
+### Step 1 repair: pieces close at sentence ends (2026-11-17, copy `napcore_helpdesk_s5v`, a copy of `napcore_helpdesk_s2v`, branch at 11f742f)
+
+The repair (0f0aa16 on `fix/prepared-cut-sentence-ends`, cherry-picked as 11f742f): when a piece has to close, it
+ends at the latest boundary where a sentence ends, a list item starts or two paragraphs meet, as long as it keeps
+75 % of the limit; otherwise where the limit falls, as before. XML examples do not go through `pack_unit` and are
+not touched. Cut tests and retrieval tests: 110 run, all pass. The gate was fixed before the re-cut was applied.
+Scripts, logs and counts: `.claude/skills/measure-on-copy/runs/s5-work/` (dry counts of the repair branch:
+`runs/cut-work/`). No model was called.
+
+**Applied.** `prepare_index --recut` on the copy, over every harvested kind and the two repository sources whose
+prose goes through `pack_unit` and had no checkout at the indexed commit before: mobilityDCAT-AP (`1ae93b2`) and
+TN-ITS (`5e68a9b`), both fetched at those commits into a scratch directory (no existing checkout touched). A dry run
+on the copy first; the write gave the same counts as the dry run for every kind. NeTEx, SIRI and OpRa were not re-cut:
+their prose (XSD, Markdown, `.txt`) gave the same pieces before and after on the local checkouts (`cut-work/repo-cmp-*`).
+Written in 7 min 42 s, 3,675 pieces embedded; then `VACUUM FULL` (7 min), `REINDEX` (54 s, `x_ivf_half384`
+rebuilt with the table) and `ANALYZE`; heap 218 → 203 MB, as on `s2v`.
+
+| kind | rows before | dry run on the copy (cut-work, harvested) | applied | files changed |
+|---|---|---|---|---|
+| NAPCORE | 6,211 | 6,341 | 6,341 | 81 of 119 |
+| DATEX II pages | 2,047 | 2,059 | 2,059 | 68 of 197 |
+| EU legislation | 1,004 | 1,007 | 1,007 | 4 of 7 |
+| INSPIRE specification | 898 | 899 | 899 | 1 of 1 |
+| DATEX II model, INSPIRE code lists | 1,491, 50 | unchanged | unchanged | 0 |
+| mobilityDCAT-AP frame `.html` | 53 | – (dry on the copy: 54) | 54 | 1 of 3 |
+| mobilityDCAT-AP `.ttl` examples | 28 | – (28) | 28 | 1 of 2 (pieces moved, same count) |
+| TN-ITS frame `.ttl` | 70 | – (71) | 71 | 1 of 1 |
+| TN-ITS guide `.ttl` | 1,319 | – (1,321) | 1,321 | 9 of 35 |
+| mobilityDCAT-AP guide `.html`, READMEs, TN-ITS schema and XML | 219, 6, 226, 106 | – | unchanged | 0 |
+| all rows | 152,741 | | 152,891 | |
+
+The mobilityDCAT-AP comparison in `cut-work/` (11 HTML files changed) was made on the local checkout at another
+commit; at the indexed commit one frame file changes. TN-ITS Turtle was not in the dry counts of the repair branch;
+the dry run on the copy showed it changing, so it was applied too.
+
+**Verdict: not met** (line 4). Lines 1, 3 and 5 are met; line 2 is under the line at its point value but not settled.
+
+| gate line (fixed before the re-cut) | reference | `s5` | met? |
+|---|---|---|---|
+| 1. pieces per kind equal the dry run's; none over 256 tokens; rows ≤ 154,692 | dry run | equal for every kind; 0 over in the command's count and in a recount from the stored rows; 152,891 rows | yes |
+| 2. NAPCORE pieces cut inside a sentence, under 5 % | dry reading 3 of 40 flagged | second sample 6 of 40; pooled 9 of 80 flagged = 3.4 % of all pieces (1.9–6.1 %) | point yes, **not settled** |
+| 3. index recall on the captured calls, exact reference recomputed on the copy | – | 367 calls, mean 1.000, lowest 1.00 (the app's own query, and the `x_ivf_half384` query with sequential scan off) | yes |
+| 4. gold files | 41/57 (`s3`) | 40/57, lost b17 | **no** |
+| 4. benchmark files | 121/141 | 121/141, same questions | yes |
+| 4. retrieval benchmark hit@10 / MRR@10 | 0.873 / 0.587 | 0.873 / 0.587, no question changed | yes |
+| 5. retrieval median, gold warm, against the reference timed in the same round | `s3-time5` 1.13 s | 0.95 s | yes |
+
+- *Line 2.* The second sample: 40 of the 1,903 flagged NAPCORE pieces not in the dry reading, drawn from the copy,
+  `random.seed(23)` over the pool sorted by file and order (`s5-work/napcore-read-40b.txt`, readings in
+  `napcore-readings-40b.txt`). Read by the rule of step 2: 6 end inside a sentence (#16, #20, #25, #27, #33, #37), 1
+  unclear (#18, a sentence the source text itself breaks before a heading), 3 split a table row between columns.
+  #20 is the M3.4 footer case left from step 2. #33 is new: "described in Chapter" | "1.2. As highlighted", where the
+  chapter number reads as a numbered item, so the repair's preference chose that boundary. Pooled 9 of 80 (10 with
+  #18: 3.8 %, 2.1–6.6 %). With 80 pieces the 95 % interval still reaches past 5 %, so 80 do not settle the line; about
+  200 more read pieces would be needed if the point stays where it is.
+- *b17 lost* ("Kaj so metapodatki v NAP?", gold file `napcore.eu/metadata`). The page is a re-cut kind: its last two
+  pieces moved (boundary between pieces 3 and 4), its opening piece is unchanged. In the Slovenian pass the page falls
+  from place 3 to 9 in the pool behind re-cut pieces of M2.11, Annex B and D5.1.1, and the English pass, which now
+  carries the question, keeps other NAPCORE files. So the loss touches the re-cut kinds (**believed**, from the
+  passage lists and ranks, not from the pieces' scores).
+- *Every other question whose passages changed* (`s5-work/changed-questions.txt`; found or not, unchanged):
+  touching re-cut kinds: a19, a20 (DATEX II), b10 (INSPIRE), b11, b16, b18 (NAPCORE, EU legislation), q092 (NAPCORE
+  M5.4 in for a NeTEx schema). Not touching them: a15 and a17 (move between two runs on the reference itself), b01,
+  b02, b33, q031, q104, q125, q136, q138, q144, q147 (SIRI, NeTEx and OpRa files only). The same kind of moves for
+  b01 and b33 appeared on `s4v` with no change of content after its `VACUUM FULL` (`s4-off` against `s3`), so I take
+  them for ties broken by the new physical order of the table (**believed**).
+- *Time.* The re-cut copy was faster than the reference in the same round (0.95 s against 1.13 s); the reference was
+  timed first, so part of that may be the order (**believed**, not repeated).
+
+**Verified and believed.** Verified: the applied counts against the dry run (both reports); the harvested dry counts
+against `cut-work/recut-dry-harvested.json` (identical); that the copy's NAPCORE pieces equal the dry cut's
+(multiset of bodies); the token recount (embedder's `/count` on the stored rows: the only row over 256 is a TN-ITS
+schema row of the old cut, one of the 169 left as they are since step 1); index recall; every stage 1 number
+(`s3-time5`, `s5`, `cmp-s3-s5.txt`). Believed: the second reading (one reader, by hand); why b17 was lost; that the
+SIRI and NeTEx moves come from the table order. Assumed: that the mobilityDCAT-AP and TN-ITS clones at the indexed
+commits are the sources that were indexed (the commit is the one stored on the rows; the files were not compared
+with the rows, since a file already cut is not checked again).
+
+**Not checked.** Stage 2 (answers, examples). The XML examples, NeTEx, SIRI and OpRa on the copy (not re-cut). The
+cherry-pick stays on the branch: lines 1 and 3 hold. `napcore_helpdesk_s5v` holds the re-cut;
+`napcore_helpdesk_s2v` is unchanged and `napcore_helpdesk_s4v` is as step 3 left it.
+
+### Step 2d: answers and examples after the sentence-end cut (2026-11-17, copy `napcore_helpdesk_s5v`, branch at 260ba74)
+
+Stage 2 on the re-cut copy (`s5-a`), with the settings of `s3-a` (`RETRIEVAL_PREPARED_INDEX=True`,
+`VECTOR_INDEX_DIMENSIONS=384`, `VECTOR_INDEX_HALF_PRECISION=True`, `VECTOR_INDEX_PROBES=100`), the same sets and 3 runs
+each, replaying `s3-a`'s record (it saves more than `base-a`'s: the dry replay against it left 22 question runs, on
+which `s3-a` had made 30 calls; against `base-a`'s record about 233 runs would have run again, as in step 2c, since
+the pieces differ from the old index: **believed**, no dry replay against `base-a` was made). The gate was fixed before the runs; nothing was tuned and no code
+changed. Runs and scripts: `.claude/skills/measure-on-copy/runs/s5-a-dry`, `s5-a` and `s5a-work/`. All figures
+**measured** unless marked.
+
+**Verdict: met.** Not one question changed its answered count against `s3-a`; the carried faults are as they were.
+
+| gate line (fixed before the runs) | `base-a` | `s3-a` | `s5-a` | met? |
+|---|---|---|---|---|
+| answerable answered, against `s3-a` (spread 7) | 41/69 | 49/69 | 49/69 | yes (same) |
+| must-refuse answered, against `s3-a` (spread 2) | 4/75 | 6/75 | 6/75 | yes (same) |
+| examples generated, against `s3-a` (spread 1) | 132/141 | 131/141 | 131/141 | yes (same) |
+| examples first attempts, against `s3-a` (spread 6) | 99/141 | 94/141 | 94/141 | yes (same) |
+| examples unlinked, against `s3-a` (spread 2) | 0/141 | 1/141 | 1/141 | yes (same) |
+| answerable answered, better than `base-a` beyond the spread | 41/69 | – | 49/69 (+8, spread 7) | yes |
+| reading: no kind worse on balance against `s3-a` | – | – | no question moved | yes |
+
+**Count.** 24 question runs ran (the dry replay listed 22; e04 runs 2 and 3 ran too, and e04 also moves on the
+reference's own copy) and made 26 calls, all Haiku, all the answer itself
+(`_generate_answer_text`); no call to Sonnet was made and none failed. 457 calls were replayed (403 Haiku, 54 Sonnet:
+the language naming recorded in `base-a`). The 188 example runs were replayed or needed no model: the example
+generator got the same prompts on the re-cut copy. Wall time: the dry replay 7 min, `s5-a` 7.5 min.
+
+**What ran, and whether it is the re-cut** (per run, both passage lists compared by file and piece,
+`s5a-work/perq.txt`, `same-files-diff.txt`). All 24 runs kept their outcome (answered or refused), so the step 2c rule
+reads none of them. What moved in their passages:
+
+- Re-cut kinds: m04 (NAPCORE: Annex C out, M5.2 and the partners page in; refused on both sides), m25 (DATEX II pages:
+  two profile and levels pages swapped for two others; refused on both), e05 (the same DATEX II annex section, a new
+  piece id with the same text; refused on both), e06 (the DATEX II user guide page out, together with a DATEX II
+  model class; answered on both).
+- Not re-cut: e01, e03, m22 (OpRa, NeTEx and SIRI files; all three also move on the reference's own copy, `base-a-noise`)
+  and e04 (the same pieces; moves on the reference's own copy).
+
+**Carried faults.**
+
+- m13 ("How does it work?"): answered 3 of 3, as in `s3-a` (replayed: the same passages and prompt). Still open.
+- e05 (DATEX and SIRI connected): refused 3 of 3, as in `s3-a`; the passages are the same pieces of text. Still open.
+- gen42 run 2: still a standard file (replayed), runs 1 and 3 generated. Still open.
+- b17 ("Kaj so metapodatki v NAP?", lost in `s5`): it is a gold question, not in the answer sets, so stage 2 does
+  not ask it. The nearest question there, k08 ("Kaj so to metapodatki?"), was replayed on all three runs (the same
+  prompt as `s3-a`), answered 2 of 3 as before. How b17 itself is answered on `s5v` was not measured.
+
+**Verified and believed.** Verified: the counts (the tool's result and a recount from both records by question,
+`perq.txt`); that no question's answered count moved; the calls by model and site (`count-s5-a.txt`, and the guard
+saw only Haiku calls live). Believed: that the moves of e01, e03, e04 and m22 are not the re-cut's (they touch no
+re-cut kind and move on the reference's own copy).
+
+**Not checked.** The wording of the 24 answers that ran (the outcome held, and the rule reads only moved questions).
+b17 asked through the app. Another sample of the relevance check (replayed verdicts, as in step 2c). The re-cut
+leaves the step 2c failures as they were: against `base-a`, must-refuse (+2, m13) and examples generated (−1, gen42)
+are still on the wrong side, which this gate does not cover.
+
+### Step 5: the indexer and the dev index (2026-11-18, dev database `napcore_helpdesk`, rehearsal copy `napcore_helpdesk_s6r`, branch at c62944f)
+
+The cut of step 1 with its repairs, the index of step 2b and the re-index command went into the code, the dev
+index was brought to the state measured on `napcore_helpdesk_s5v`, and gate 5 as reworded on 2026-11-18 was
+measured on it. Scripts, logs and reports: `.claude/skills/measure-on-copy/runs/s6-work/`; runs `s6`, `s6-a`,
+`s6-a-dry`, `s5-time6`, `s6-time6b`, `s5-time6b`, `s6-s1base-defaults`. All figures **measured** unless marked.
+
+**Verdict: met on every line but two.** Files, the index, answers, examples, the case and the command are as on
+the copy. Not met as written: (1) "no piece over 256 tokens": 19 XML example pieces are over (at most 262), as on
+the copy (13 in step 1's count); (2) warm retrieval in the round as fixed (copy first) is 0.13 s above the copy;
+in the round run the other way it is 0.12 s below, so it is the order, not the index (**believed**, two rounds).
+The two lines are my decision.
+
+| gate 5 line | `napcore_helpdesk_s5v` (the copy) | dev after the re-index | met? |
+|---|---|---|---|
+| pieces per kind | 152,891 rows | 152,912 rows; every kind equal but XML examples +19 and DATEX II pages +2 (below) | explained, not by a changed source: by code after the copy was built |
+| no piece over 256 tokens | 13 XML example pieces over (step 1) | 19 XML example pieces over, at most 262; every other kind at most 256 | **no** (as the copy) |
+| index recall, 367 captured calls | 1.000 | 1.000, lowest 1.00, every call planned on the index (`recall-dev.txt`) | yes |
+| gold files | 40/57 (`s5`) | 40/57, the same questions | yes (≥ 39) |
+| benchmark files | 121/141 | 121/141, the same questions | yes (≥ 120) |
+| retrieval benchmark hit@10 / MRR@10 | 0.873 / 0.587 | 0.873 / 0.587 | yes (≥ 0.873) |
+| answerable answered (`s6-a` against `s5-a`, replayed) | 49/69 | 49/69 | yes |
+| must-refuse answered | 6/75 | 6/75 | yes |
+| examples generated / first attempts / unlinked | 131 / 94 / 1 of 141 | 131 / 94 / 1 of 141 | yes |
+| the late-journeys case (k11), answered and term given | 3 of 3 | 3 of 3 | yes |
+| warm retrieval, gold median, same round | round 1 (copy first): 1.07 s; round 2 (dev first): 1.20 s | round 1: 1.20 s; round 2: 1.08 s | **no** in round 1 (+0.13), yes in round 2 (−0.12) |
+| the command stops and starts again | – | rehearsal: stopped after 3 documents, started again, the same rows as the copy; dev: stopped by an embedder timeout, started again, 0 files with mixed rows, the same counts as the dry run | yes |
+| tests of the cut for every kind | – | `test_prepared_index.py` (21 tests) beside `test_prepared_cut.py` | yes |
+| the way back is the same command with the old version | – | rehearsal, EU legislation: `--cut-version 0` gave back the dev rows exactly (735 rows, same chunk ids and texts) | yes |
+
+No question changed its answered count against `s5-a`; 18 question runs ran (e01, e03, e04, e06, k02, m22; e01, e03,
+e04 and m22 move on the reference's own copy too) and every one kept its outcome.
+
+**Diagnosis (before code), each claim checked by hand on stored rows** (`verify_a.txt`).
+
+- *Where the cut is stored.* Each row of the prepared cut has `structured_metadata["piece"]["v"] = 1`; a row of the
+  cut of before has no such key. On `s5v` every file's rows have one version (0 files mixed); OpRa's rows are of
+  version 1 there and 0 on `s1base`. So the version is already stored with each file; no migration is needed.
+- *Old pieces stay until the new ones are embedded.* `prepare_index` embedded a file's pieces first and replaced
+  its rows in one transaction afterwards. Checked on dev itself: the run that stopped on an embedder timeout left 0
+  files with rows of two versions.
+- *A stopped run resumes.* A file already of the version is skipped. Checked on the rehearsal (below).
+- *What the nightly refresh does.* `refresh_all_sources` runs `index_repository` incremental with prune; a file
+  whose content hash equals its `IndexedSourceFile` row is skipped (62 of 62 OpRa files on `s5v`). A changed file was
+  cut with the cut of before, so before this step a refresh would have turned changed files back to the old cut,
+  file by file; it never re-cut everything. On dev `SOURCE_REFRESH_ENABLED` is not set in the worker (default off)
+  and the beat container crash-loops on a missing module, so no refresh ran.
+- *Shared code.* The old indexer never called the prepared cut, and `prepare_index` never ran inside the indexer;
+  the prepared cut does reuse parsing helpers of `index_builder` (HTML blocks, Turtle statements, the XSD summary).
+  Today's shared cut reproduces the stored pieces of `s5v`: 62 of 62 OpRa files and 10 of 10 NAPCORE snapshots.
+- *Sources.* Dev's 61,877 rows are identical to `s1base`'s (chunk ids and text hash), last written 2026-11-13, and
+  the `IndexedSourceFile` hashes are identical: nothing was refreshed since the copies were made.
+
+**What was built.** b3d5c0d: `services/prepared_index.py`; `index_repository` and the four harvesters cut a changed
+file with the version its rows have; a new file takes the version most rows of its repository (or kind) have, and
+`INDEX_CUT_VERSION` (0) when there are none; the cut of before is `old_cut_chunks`, the code `index_repository`
+ran inline. d65031f, 6261d3c: `prepare_index --cut-version 1|0` (the re-index and the way back), `--stop-after`,
+`--files-report`; a file whose pieces were all copies (no rows) is still a job, so the way back gives it its rows
+again; tests. a578141: `vector_index`, which builds the index of step 2b from the same settings as the query and
+refuses without them or on pgvector older than 0.7. 560963f, c62944f: CI (below).
+
+**Prod stays as it is when this is merged** (**verified** for the points marked, **believed** for the rest). No
+migration (none on the branch; the migration drift check passes). `INDEX_CUT_VERSION` 0, `RETRIEVAL_PREPARED_INDEX`
+and `VECTOR_INDEX_DIMENSIONS` off by default; prod has no row of the prepared cut, so every file keeps the cut of
+before on every refresh (test `test_an_index_of_before_stays_one`). The re-index and the index are commands that
+run only by hand and only on the database named on the command line. Verified: the backend suite (1,156 tests,
+models off): 6 fail, the same 6 that fail on d7e4127 under the same environment (relevance check, request body);
+a gold run on the old-cut copy `s1base` with default settings (`s6-s1base-defaults`) finds `base`'s 39 files and 31
+best pieces. **Believed**: the extra queries a refresh now makes (the version of a changed file) cost
+milliseconds.
+
+**Rehearsal on `napcore_helpdesk_s6r`** (a fresh copy of dev, 171 s).
+
+- Dry run of every kind, 213 s: per kind the copy's counts but XML examples 128,226 (copy 128,207) and DATEX II
+  pages 2,061 (2,059) (`cmp-s6r-dry-s5v.txt`). XML: 19 pieces of end tags only, which step 1's build left out and the
+  cut keeps since fceff23 (as step 1 recorded; checked file by file in `extra-pieces.txt`). DATEX II: one page
+  (`rtti-962/drd-15…/d2rsp/`) had no rows on the copy, all its pieces copies of another page's in step 1's build; the
+  repair re-cut changed that page, and the old command could not visit a document without rows, so 2 of its
+  pieces are not copies any more (**believed** from the pieces' texts, `datex-page-diff.txt`).
+- Stopped and started: EU legislation, `--stop-after 3`, then the same command: 1,007 rows whose texts, kinds and
+  order equal the copy's (one hash over all of them).
+- Rate: 13–15 pieces a second with other work on the embedder (DATEX II pages 2,013 in 153 s). Projected for dev
+  (about 140,000 to embed): about 3 hours.
+- The way back: `--cut-version 0` on EU legislation gave back dev's 735 rows exactly (chunk ids and texts).
+
+**The dev run.** Backup `napcore_helpdesk_s6pre` first (61,877 rows, the same hash as dev). No query was writing to
+the table and no refresh is scheduled (above). The run took 17 min, stopped on an embedder timeout while my local
+CI build used the embedder, and was started again: 88 min, 121,592 pieces embedded at 23 a second, 11,600
+vectors kept. Rows 61,877 → 152,912, per file equal to the dry run of the rehearsal (0 files differ). Then
+`VACUUM FULL` (8 min 26 s), `REINDEX` (66 s), `ANALYZE`, and `vector_index` (14 s, 120 MB). Table 205 MB, with
+TOAST and indexes 2,887 MB.
+
+**CI.** The benchmark index is now built with the prepared cut (hash vectors; the embedder runs only to count
+tokens) and read with `RETRIEVAL_PREPARED_INDEX`. Old and new, CI runs 44204496420 and 44212998383, 149 questions:
+
+| mode | hit@10 old → new | MRR@10 old → new | hit@5 old → new |
+|---|---|---|---|
+| baseline | 0.483 → 0.383 | 0.266 → 0.220 | 0.436 → 0.342 |
+| graph | 0.497 → 0.403 | 0.281 → 0.235 | 0.456 → 0.362 |
+
+The baseline is the new run's; the allowed drop stays 0.03. The run after it, same inputs, gave 0.396 / 0.416: the
+CI measure moves about 0.013 between runs. **Believed**: hash vectors of small pieces carry fewer words each, so
+this measure punishes the cut that the semantic measures do not (dev: 0.873 on the semantic retrieval benchmark).
+
+**Model calls.** Stage 1: none. Stage 2: the dry replay left 17 question runs, 23 Haiku calls in `s5-a`; the run made
+23 calls, all Haiku, all the answer itself; 462 replayed (408 Haiku, 54 Sonnet language naming recorded earlier).
+No Sonnet call was made.
+
+**Believed, not verified.** That the order explains the timing line. That the DATEX II page is explained as above.
+That the CI drop is the hash vectors'. That the 19 pieces over 256 have the cause of step 1's 13 (not read).
+
+**Not checked.** The wording of the 23 answers that ran (their outcome held). Prod's pgvector version (step 6).
+Whether running the harvesters for real (a new snapshot) on dev keeps the cut: tested with a test act, not on dev.
+
+**What the running dev app sees now.** It runs main's code with the settings off: the new pieces without their unit
+around them, and the vector search on the full column at 20 probes, which on this table keeps about 88 % of the
+nearest pieces (step 2's correction). So dev answers are expected to be worse than on main's index until this
+branch runs there with the settings on (**believed**, from steps 1 and 2; not measured on dev).
+
+**Ways back, if wanted.** `prepare_index --database napcore_helpdesk --cut-version 0` with the same checkouts
+(about 1.5 hours of embedding, shown on one kind), or the backup `napcore_helpdesk_s6pre`.
+
+**Decisions after the step (2026-11-18).**
+
+- The two lines not met are accepted. The 19 pieces over 256 tokens (the longest 262) stay as a known fault of the
+  cut of XML examples; the timing line is read as an effect of the order of the runs.
+- CI stays on the old cut, which is what prod runs, until prod is re-indexed in step 6. The two CI commits
+  (560963f, c62944f) are reverted, so the baseline is again 0.483 / 0.497 hit@10. The table above stays as the
+  record of what the prepared cut gives with hash vectors; what CI measures after step 6 is decided there.

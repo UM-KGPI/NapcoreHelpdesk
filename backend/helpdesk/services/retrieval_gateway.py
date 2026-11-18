@@ -333,6 +333,11 @@ TEXT_SEARCH_MATCH = "to_tsvector('english'::regconfig, text) @@ to_tsquery('simp
 RARE_TERM_MAX_CHUNKS = 200
 
 
+def prepared_index() -> bool:
+    """settings.RETRIEVAL_PREPARED_INDEX: the index is cut with the prepared cut (see config/settings.py)."""
+    return bool(getattr(settings, "RETRIEVAL_PREPARED_INDEX", False))
+
+
 def _question_lexemes(question: str) -> list[str]:
     """The question's terms as the English text-search configuration stems them ("roadworks" -> "roadwork")."""
     with connection.cursor() as cursor:
@@ -356,7 +361,18 @@ def _rare_lexemes(lexemes: list[str], scope: list[str] | None) -> list[str]:
         if lexeme in STANDARD_NAME_LEXEMES:
             continue
         matches = filtered.extra(where=[TEXT_SEARCH_MATCH], params=[lexeme])
-        if 0 < len(matches.values_list("id", flat=True)[: RARE_TERM_MAX_CHUNKS + 1]) <= RARE_TERM_MAX_CHUNKS:
+        if prepared_index():
+            # A prepared index has more pieces per file: the limit counts files, as the chunks of the old cut did.
+            # Read in a stream and stopped at the bound: SELECT DISTINCT would read every match of a common term.
+            files: set[tuple[str, str]] = set()
+            for row in matches.values_list("repository_url", "source_path").iterator(chunk_size=500):
+                files.add(row)
+                if len(files) > RARE_TERM_MAX_CHUNKS:
+                    break
+            found = len(files)
+        else:
+            found = len(matches.values_list("id", flat=True)[: RARE_TERM_MAX_CHUNKS + 1])
+        if 0 < found <= RARE_TERM_MAX_CHUNKS:
             rare.append(lexeme)
     return rare
 
@@ -402,6 +418,34 @@ def _lexical_recall_candidates(question: str, limit: int, scope: list[str] | Non
 VECTOR_INDEX_MARGIN = 2
 
 
+def _vector_index_dimensions() -> int:
+    """How many leading numbers of embedding_vector the nearest-row search reads (VECTOR_INDEX_DIMENSIONS); 0: all.
+
+    The column holds 1,536 numbers and the embedder fills the first 384, the rest are zero (counted on the step 2
+    copy, docs/plans/2026-11-15-sources-prepared-for-semantic-search.md, step 2b), so the cosine distance on the
+    filled numbers is the same. An index on that expression is a quarter of the size and can be read whole.
+    """
+    try:
+        filled = int(getattr(settings, "VECTOR_INDEX_DIMENSIONS", 0) or 0)
+    except (TypeError, ValueError):
+        return 0
+    return filled if 0 < filled < 1536 else 0
+
+
+def _filled_numbers_distance(query_embedding: list[float], filled: int):
+    """The cosine distance on the first `filled` numbers, written exactly as the index expression on the copy:
+    subvector(embedding_vector, 1, N)::vector(N), or ::halfvec(N) with VECTOR_INDEX_HALF_PRECISION. The number
+    is an int from the settings, so it is written into the expression (a type modifier cannot be a parameter)."""
+    from django.db.models.expressions import RawSQL
+
+    kind = "halfvec" if getattr(settings, "VECTOR_INDEX_HALF_PRECISION", False) else "vector"
+    query = "[" + ",".join(repr(float(x)) for x in list(query_embedding)[:filled]) + "]"
+    return RawSQL(
+        f"subvector(embedding_vector, 1, {filled})::{kind}({filled}) <=> %s::{kind}({filled})",
+        [query],
+    )
+
+
 def _nearest_ids_by_index(filtered, query_embedding: list[float], limit: int) -> list[int] | None:
     """The ids of the rows nearest to the query by the vector index (ivfflat); None when the index search is switched off (VECTOR_INDEX_SEARCH) or fails, and the exact scan is used.
 
@@ -418,17 +462,23 @@ def _nearest_ids_by_index(filtered, query_embedding: list[float], limit: int) ->
     from django.db import DatabaseError, transaction
 
     probes = int(getattr(settings, "VECTOR_INDEX_PROBES", 20))
+    filled = _vector_index_dimensions()
     try:
         with transaction.atomic():
             with connection.cursor() as cursor:
                 cursor.execute("SET LOCAL ivfflat.probes = %s", [probes])
                 cursor.execute("SET LOCAL ivfflat.iterative_scan = 'relaxed_order'")
+                if filled:
+                    # A full scan of the expression reads every whole vector (the column is stored out of line):
+                    # never cheaper than the index on the filled numbers, even with every list probed.
+                    cursor.execute("SET LOCAL enable_seqscan = off")
             # embedding_vector is NOT NULL: every row has a vector, so none is left out here.
-            ids = list(
-                filtered.order_by(CosineDistance("embedding_vector", query_embedding)).values_list("id", flat=True)[
-                    : limit * VECTOR_INDEX_MARGIN
-                ]
+            distance = (
+                _filled_numbers_distance(query_embedding, filled)
+                if filled
+                else CosineDistance("embedding_vector", query_embedding)
             )
+            ids = list(filtered.order_by(distance).values_list("id", flat=True)[: limit * VECTOR_INDEX_MARGIN])
     except DatabaseError as exc:  # an older pgvector without iterative scans, or no index: exact scan
         logger.info("vector index search unavailable, exact scan: %s", exc)
         return None
@@ -554,8 +604,9 @@ def _linked_provision_candidates(standards: list[str], score: float, acts: list[
 
 
 def _added_candidate(chunk: SourceChunk, score: float) -> dict:
-    """A chunk added next to the ranked evidence, in the shape retrieval returns."""
-    return {
+    """A chunk added next to the ranked evidence, in the shape retrieval returns (with its unit around it when the
+    index is prepared, as the ranked evidence)."""
+    candidate = {
         "text": chunk.text,
         "score": score,
         "repositoryUrl": chunk.repository_url,
@@ -571,6 +622,11 @@ def _added_candidate(chunk: SourceChunk, score: float) -> dict:
         "structuredMetadata": chunk.structured_metadata or {},
         "retrievalEventId": f"re-{uuid4().hex[:8]}",
     }
+    if prepared_index():
+        from helpdesk.services.read_large import read_large
+
+        candidate = read_large([candidate])[0][0]
+    return candidate
 
 
 # (repository, tags) -> ((id, source_path, label, heading, quality_score) rows of the example chunks using all the
@@ -1141,11 +1197,15 @@ def _element_candidate_ids(name: str, per_element: int) -> tuple[int, ...]:
     if cached is not None and cached[1] > now:
         return cached[0]
     tag_match = Q(text__contains=f"<{name} ") | Q(text__contains=f"<{name}>") | Q(text__contains=f"<{name}/")
-    ids = tuple(
-        SourceChunk.objects.filter(tag_match, doc_type__in=("example", "schema"))
-        .order_by("-quality_score", "id")
-        .values_list("id", flat=True)[:per_element]
-    )
+    rows = SourceChunk.objects.filter(tag_match, doc_type__in=("example", "schema"))
+    if prepared_index():
+        # One piece per file first (its best), so the places go to as many files as with the old cut.
+        best = rows.order_by("repository_url", "source_path", "-quality_score", "id").distinct("repository_url", "source_path")
+        ids = tuple(
+            i for _, i in sorted((-q, i) for i, q in best.values_list("id", "quality_score"))[:per_element]
+        )
+    else:
+        ids = tuple(rows.order_by("-quality_score", "id").values_list("id", flat=True)[:per_element])
     _ELEMENT_CANDIDATE_CACHE[key] = (ids, now + _ELEMENT_CANDIDATE_TTL_SECONDS)
     return ids
 
@@ -1627,7 +1687,14 @@ def _alias_matches(alias: str, scope: list[str] | None, base_queryset) -> tuple[
     cached = _ALIAS_MATCH_CACHE.get(key)
     if cached is not None and cached[1] > now:
         return cached[0]
-    if max_chunks > 0:
+    if max_chunks > 0 and prepared_index():
+        # A prepared index has more pieces per file: the bound counts files, as the chunks of the old cut did.
+        files = (
+            base_queryset.filter(models.Q(source_path__icontains=alias) | models.Q(label__icontains=alias))
+            .order_by().values_list("repository_url", "source_path").distinct()[: max_chunks + 1]
+        )
+        matches = None if len(files) > max_chunks else tuple(_alias_rows(alias, base_queryset, None))
+    elif max_chunks > 0:
         rows = _alias_rows(alias, base_queryset, max_chunks + 1)
         matches = None if len(rows) > max_chunks else tuple(rows)
     else:
@@ -1907,6 +1974,12 @@ def _retrieve_chunks_with_trace_untimed(
         if (probe := _retrieval_probe.get()) is not None:
             probe("merged", chunks)
     result = _with_scope_coverage(english or question, chunks, trace, arguments)
+    if prepared_index():
+        from helpdesk.services.read_large import read_large
+
+        started = time.perf_counter()
+        grown_chunks, grown = read_large(result[0])
+        result = (grown_chunks, {**result[1], "readLarge": {"grown": grown, "ms": round((time.perf_counter() - started) * 1000)}})
     if (probe := _retrieval_probe.get()) is not None:
         probe("returned", result[0])
     return result

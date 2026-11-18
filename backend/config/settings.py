@@ -145,12 +145,18 @@ env = environ.Env(
     GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS=(int, 36),
     RETRIEVAL_DIVERSITY_ENABLED=(bool, True),
     RETRIEVAL_MAX_SAME_SOURCE_PATH=(int, 2),
+    # The index is cut with the prepared cut (services/prepared_cut.py): passages are read with their unit around
+    # them (services/read_large.py) and limits meant for files count files, not pieces. Off: as before.
+    RETRIEVAL_PREPARED_INDEX=(bool, False),
+    INDEX_CUT_VERSION=(int, 0),
     RETRIEVAL_SCORING_CANDIDATE_CAP=(int, 32),
     RETRIEVAL_GRAPH_PRESELECT_MULTIPLIER=(float, 2.0),
     RETRIEVAL_LEXICAL_PRESELECT_RESERVE=(int, 8),
     RETRIEVAL_LEXICAL_POOL_SIZE=(int, 8),
     VECTOR_INDEX_SEARCH=(bool, True),
     VECTOR_INDEX_PROBES=(int, 20),
+    VECTOR_INDEX_DIMENSIONS=(int, 0),
+    VECTOR_INDEX_HALF_PRECISION=(bool, False),
     GRAPH_ALIAS_MAX_CHUNKS=(int, 1000),
     GRAPH_CANDIDATE_SCAN_LIMIT=(int, 400),
     GRAPH_CANDIDATES_PER_FILE=(int, 2),
@@ -477,6 +483,11 @@ GRAPH_EXPANSION_MAX_CONCEPTS = env("GRAPH_EXPANSION_MAX_CONCEPTS")
 GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS = env("GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS")
 RETRIEVAL_DIVERSITY_ENABLED = env("RETRIEVAL_DIVERSITY_ENABLED")
 RETRIEVAL_MAX_SAME_SOURCE_PATH = env("RETRIEVAL_MAX_SAME_SOURCE_PATH")
+RETRIEVAL_PREPARED_INDEX = env("RETRIEVAL_PREPARED_INDEX")
+# The cut a file gets when neither it nor its repository (or kind of harvested document) has rows yet: 0 the cut
+# of before, 1 the prepared cut. A file with rows keeps their cut on every refresh (services/prepared_index.py);
+# the command prepare_index --cut-version changes it. 0 by default, so an index built before stays as it is.
+INDEX_CUT_VERSION = env("INDEX_CUT_VERSION")
 RETRIEVAL_SCORING_CANDIDATE_CAP = env("RETRIEVAL_SCORING_CANDIDATE_CAP")
 RETRIEVAL_GRAPH_PRESELECT_MULTIPLIER = env("RETRIEVAL_GRAPH_PRESELECT_MULTIPLIER")
 RETRIEVAL_LEXICAL_PRESELECT_RESERVE = env("RETRIEVAL_LEXICAL_PRESELECT_RESERVE")
@@ -486,6 +497,11 @@ RETRIEVAL_LEXICAL_POOL_SIZE = env("RETRIEVAL_LEXICAL_POOL_SIZE")
 # Vector search through the ivfflat index (retrieval_gateway._nearest_ids_by_index); False: the exact scan.
 VECTOR_INDEX_SEARCH = env("VECTOR_INDEX_SEARCH")
 VECTOR_INDEX_PROBES = env("VECTOR_INDEX_PROBES")
+# Off (0) by default. N > 0: the nearest rows are searched on the first N numbers of embedding_vector (the ones the
+# embedder fills), through an index built by hand on that expression, halfvec with VECTOR_INDEX_HALF_PRECISION;
+# the index and the probes go together (docs/plans/2026-11-15-sources-prepared-for-semantic-search.md, step 2b).
+VECTOR_INDEX_DIMENSIONS = env("VECTOR_INDEX_DIMENSIONS")
+VECTOR_INDEX_HALF_PRECISION = env("VECTOR_INDEX_HALF_PRECISION")
 # Graph candidates (retrieval_gateway._graph_concept_candidates): a concept alias whose path/label matches more
 # schema/example chunks of the scope than GRAPH_ALIAS_MAX_CHUNKS is too generic to find candidates ("fare" matched
 # 10,078 NeTEx chunks, all ranked in Python to keep 8); 0 turns the bound off. GRAPH_CANDIDATE_SCAN_LIMIT caps the

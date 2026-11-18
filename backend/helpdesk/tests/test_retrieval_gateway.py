@@ -764,6 +764,40 @@ class VectorIndexSearchTests(TestCase):
         with patch.object(retrieval_gateway.connection, "cursor", side_effect=DatabaseError("no iterative scans")):
             self.assertIsNone(retrieval_gateway._nearest_ids_by_index(SourceChunk.objects.all(), self._vector(1.0), 25))
 
+    def _nearest_sql(self, **flags) -> str:
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        with CaptureQueriesContext(connection) as queries:
+            self._result(VECTOR_INDEX_SEARCH=True, **flags)
+        return " | ".join(q["sql"] for q in queries.captured_queries)
+
+    def test_whole_column_and_no_seqscan_setting_when_the_filled_numbers_setting_is_off(self):
+        sql = self._nearest_sql()
+        self.assertNotIn("subvector", sql)
+        self.assertNotIn("enable_seqscan", sql)
+
+    def test_filled_numbers_search_gives_the_exact_result(self):
+        exact = self._result(VECTOR_INDEX_SEARCH=False)
+        self.assertEqual(self._result(VECTOR_INDEX_SEARCH=True, VECTOR_INDEX_DIMENSIONS=384), exact)
+        self.assertEqual(
+            self._result(VECTOR_INDEX_SEARCH=True, VECTOR_INDEX_DIMENSIONS=384, VECTOR_INDEX_HALF_PRECISION=True), exact
+        )
+
+    def test_filled_numbers_query_is_written_as_the_index_expression(self):
+        sql = self._nearest_sql(VECTOR_INDEX_DIMENSIONS=384)
+        self.assertIn("subvector(embedding_vector, 1, 384)::vector(384) <=>", sql)
+        self.assertIn("enable_seqscan", sql)
+        half = self._nearest_sql(VECTOR_INDEX_DIMENSIONS=384, VECTOR_INDEX_HALF_PRECISION=True)
+        self.assertIn("subvector(embedding_vector, 1, 384)::halfvec(384) <=>", half)
+
+    def test_filled_numbers_setting_outside_the_column_is_off(self):
+        from helpdesk.services import retrieval_gateway
+
+        for value, expected in ((0, 0), (384, 384), (1536, 0), (-1, 0), ("x", 0), (None, 0)):
+            with override_settings(VECTOR_INDEX_DIMENSIONS=value):
+                self.assertEqual(retrieval_gateway._vector_index_dimensions(), expected, value)
+
 
 @override_settings(GRAPH_ALIAS_MAX_CHUNKS=3, GRAPH_CANDIDATE_SCAN_LIMIT=400)
 class GraphCandidateAliasBoundTests(TestCase):

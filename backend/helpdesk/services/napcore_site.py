@@ -363,6 +363,20 @@ def index_site(text_dir: Path = TEXT_DIR, report=None) -> dict[str, int]:
             counts["unchanged"] += 1
             counts["chunks"] += SourceChunk.objects.filter(repository_url=snapshot.url).count()
             continue
+        from helpdesk.services import prepared_cut, prepared_index
+
+        prepared = prepared_index.harvested_document(
+            snapshot.url, DOC_TYPE, lambda: prepared_cut.napcore_units(snapshot), commit_sha="napcore.eu", standards_scope=[SCOPE]
+        )
+        if prepared is not None:
+            IndexedSourceFile.objects.update_or_create(
+                repository_url=snapshot.url,
+                source_path=path.name,
+                defaults={"commit_sha": "napcore.eu", "content_hash": content_hash},
+            )
+            counts["indexed"] += 1
+            counts["chunks"] += prepared
+            continue
         records = chunk_records(snapshot)
         embeddings = _embed(
             [
