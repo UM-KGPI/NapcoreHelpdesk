@@ -170,6 +170,28 @@ model reads per question stated, and not more than a quarter above step 3.
 **Gate 5:** the numbers of steps 1 to 4 hold on the real dev index; the command can be stopped and started again;
 tests of the cut for every kind; the way back is the same command with the old version.
 
+**Gate 5, reworded on 2026-11-18, before the step starts.** No gate from 1 to 4 was met as written, so "the
+numbers of steps 1 to 4" names nothing. Step 5 would ship what was measured on the copy `napcore_helpdesk_s5v`:
+the cut of step 1 with its repairs and the index of step 2b, without step 3 (reverted) and without step 4 (not
+built). The gate is that the real dev index gives the numbers of that copy (§10, steps 2b to 2d):
+
+- pieces: the count per kind of source equals the copy's, or each difference is explained by a changed source;
+  no piece over 256 tokens;
+- the index: the exact nearest pieces on every captured retrieval call (recall 1.000);
+- files found, with the spread of step 0: gold not under 39 of 57, benchmark not under 120 of 141, retrieval
+  benchmark hit@10 not under 0.873;
+- answers and examples, with recorded calls replayed wherever the prompt is the same: answerable questions
+  answered, must-refuse questions answered, examples generated, first attempts and unlinked examples not worse
+  than run `s5-a` beyond the spreads of step 0; the late-journeys case answered in 3 of 3 runs;
+- warm retrieval time not more than 0.1 s above the copy's, timed in the same round;
+- as before: the command can be stopped and started again; tests of the cut for every kind; the way back is the
+  same command with the old version.
+
+Two lines of the copy are worse than the baseline and are carried, not judged by this gate: must-refuse
+questions answered in 6 of 75 runs (baseline 4) and examples generated 131 of 141 (baseline 132). Whether step 5
+starts with them carried is my decision, taken before it starts. Before step 6, prod's pgvector version is
+checked: the index of step 2b needs 0.7 or later.
+
 ### Step 6. Prod (one night, or a load)
 
 About 130,000 pieces at prod's 3.4 pieces a second are about 11 hours (**believed**, by division): longer than a
