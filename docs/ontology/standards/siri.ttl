@@ -124,10 +124,10 @@ siri:AccessNotAllowedError
 
 siri:AccommodationFacility
     a owl:Class ;
-    skos:definition "Classification of Accomodation Facility type - Tpeg pti23."@en ;
+    skos:definition "Classification of Accommodation Facility type - Tpeg pti23."@en ;
     skos:prefLabel "accommodation facility"@en ;
     skos:altLabel "accommodationfacility"@en ;
-    skos:altLabel "classification of accomodation facility type"@en ;
+    skos:altLabel "classification of accommodation facility type"@en ;
     rdfs:comment "Extracted from: xsd/siri_model/siri_facilities.xsd"@en .
 
 siri:ActualArrivalTime
@@ -618,7 +618,7 @@ siri:DataReadyNotification
 
 siri:DataReceivedAcknowledgement
     a owl:Class ;
-    skos:definition "Response from Consumer to Producer to acknowledge that data hase been received. Used as optioanl extra step if reliable delivery is needed. Answers a ServiceDelivery."@en ;
+    skos:definition "Response from Consumer to Producer to acknowledge that data hase been received. Used as optional extra step if reliable delivery is needed. Answers a ServiceDelivery."@en ;
     skos:prefLabel "data received acknowledgement"@en ;
     skos:altLabel "datareceivedacknowledgement"@en ;
     rdfs:subClassOf siri:AbstractResponse ;
@@ -798,7 +798,7 @@ siri:ErrorCondition
 
 siri:ErrorConditionElement
     a owl:Class ;
-    skos:definition "Element fror an error condition  (for use in WSDL.)"@en ;
+    skos:definition "Element fror an error condition (for use in WSDL.)"@en ;
     skos:prefLabel "element fror an error condition"@en ;
     skos:altLabel "error condition element"@en ;
     skos:altLabel "errorconditionelement"@en ;
@@ -890,7 +890,7 @@ siri:EstimatedVehicleJourney
 
 siri:ExpectedArrivalTime
     a owl:Class ;
-    skos:definition "Estimated time of arriival of VEHICLE at stop ."@en ;
+    skos:definition "Estimated time of arriival of VEHICLE at stop."@en ;
     skos:prefLabel "estimated time of arriival of"@en ;
     skos:altLabel "expected arrival time"@en ;
     skos:altLabel "expectedarrivaltime"@en ;
@@ -959,8 +959,8 @@ siri:ExtraInterchange
 
 siri:FacilityChangeElement
     a owl:Class ;
-    skos:definition "A change to the availaibility of EQUIPMENT. Basic structure defined in the first 1.0 SIRI XSd."@en ;
-    skos:prefLabel "change to the availaibility"@en ;
+    skos:definition "A change to the availability of EQUIPMENT. Basic structure defined in the first 1.0 SIRI XSd."@en ;
+    skos:prefLabel "change to the availability"@en ;
     skos:altLabel "facility change element"@en ;
     skos:altLabel "facilitychangeelement"@en ;
     rdfs:comment "Extracted from: xsd/siri_model/siri_facility.xsd"@en .
@@ -1082,7 +1082,7 @@ siri:FareClasses
 
 siri:FeederItem
     a owl:Class ;
-    skos:definition "Fedder/Fetcher SERVICE JOURNEY INTERCHANGE  Activity."@en ;
+    skos:definition "Fedder/Fetcher SERVICE JOURNEY INTERCHANGE Activity."@en ;
     skos:prefLabel "feeder item"@en ;
     skos:altLabel "feederitem"@en ;
     rdfs:comment "Extracted from: xsd/siri_connectionTimetable_service.xsd"@en .
@@ -1248,7 +1248,7 @@ siri:IncludeTrainFormations
 
 siri:IncludeTranslations
     a owl:Class ;
-    skos:definition "Whether additional translations of text names are to be included in elements. If 'false', then only one element should be returned.  Default is 'false'. Where multiple values are returned The first element returned will be used as the default value."@en ;
+    skos:definition "Whether additional translations of text names are to be included in elements. If 'false', then only one element should be returned. Default is 'false'. Where multiple values are returned The first element returned will be used as the default value."@en ;
     skos:prefLabel "include translations"@en ;
     skos:altLabel "includetranslations"@en ;
     skos:altLabel "whether additional translations of text"@en ;
@@ -1757,7 +1757,7 @@ siri:ReservedSpaceFacility
 
 siri:ResponseStatus
     a owl:Class ;
-    skos:definition "Contains infromation about the processing of a an individual service subscription - either success info or an error condition. (VDV Acknowledgement)."@en ;
+    skos:definition "Contains information about the processing of a an individual service subscription - either success info or an error condition. (VDV Acknowledgement)."@en ;
     skos:prefLabel "response status"@en ;
     skos:altLabel "responsestatus"@en ;
     rdfs:comment "Extracted from: xsd/siri/siri_common_services.xsd"@en .
@@ -1880,7 +1880,7 @@ siri:Severity
 
 siri:Siri
     a owl:Class ;
-    skos:definition "Service Interface for Real-time  Operation."@en ;
+    skos:definition "Service Interface for Real-time Operation."@en ;
     skos:prefLabel "siri"@en ;
     rdfs:comment "Extracted from: xsd/siriSg.xsd"@en .
 
@@ -1930,7 +1930,7 @@ siri:SituationExchangeRequest
 
 siri:SituationExchangeServiceCapabilities
     a owl:Class ;
-    skos:definition "Capabilities of Situation Exchange Service.  Answers a SituationExchangeCapabilitiesRequest."@en ;
+    skos:definition "Capabilities of Situation Exchange Service. Answers a SituationExchangeCapabilitiesRequest."@en ;
     skos:prefLabel "capabilities of situation exchange service"@en ;
     skos:altLabel "situation exchange service capabilities"@en ;
     skos:altLabel "situationexchangeservicecapabilities"@en ;
@@ -2060,7 +2060,7 @@ siri:StopPointName
 
 siri:StopPointsDelivery
     a owl:Class ;
-    skos:definition "Returns basic details about the  STOP POINTs/places covered by a service. Answers a StopPointsRequest."@en ;
+    skos:definition "Returns basic details about the STOP POINTs/places covered by a service. Answers a StopPointsRequest."@en ;
     skos:prefLabel "stop points delivery"@en ;
     skos:altLabel "stoppointsdelivery"@en ;
     rdfs:subClassOf siri:AbstractDiscoveryDelivery ;
@@ -2213,7 +2213,7 @@ siri:TicketingFacility
 
 siri:TimetabledFeederArrival
     a owl:Class ;
-    skos:definition "A feeder arrival at the arrival SCHEDUELD STOP POINT of the CONNECTION link ."@en ;
+    skos:definition "A feeder arrival at the arrival SCHEDUELD STOP POINT of the CONNECTION link."@en ;
     skos:prefLabel "feeder arrival at the"@en ;
     skos:altLabel "timetabled feeder arrival"@en ;
     skos:altLabel "timetabledfeederarrival"@en ;
@@ -2357,7 +2357,7 @@ siri:ValueSet
 
 siri:VehicleAtStop
     a owl:Class ;
-    skos:definition "Whether VEHICLE is currently at stop.  Default is false (xml  default added from SIRI 2.0)"@en ;
+    skos:definition "Whether VEHICLE is currently at stop. Default is false (xml default added from SIRI 2.0)"@en ;
     skos:prefLabel "vehicle at stop"@en ;
     skos:altLabel "vehicleatstop"@en ;
     skos:altLabel "whether vehicle is currently at"@en ;
