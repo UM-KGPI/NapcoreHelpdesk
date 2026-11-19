@@ -338,11 +338,17 @@ Then load the ontology graphs. The command is a dry run until `--apply` is given
 
 ```bash
 docker compose -f docker-compose.prod.yml exec -T backend \
-  python manage.py load_graphdb_ontologies            # prints the plan only
+  python manage.py load_graphdb_ontologies --replace  # dry run: prints the plan only
 
 docker compose -f docker-compose.prod.yml exec -T -e GRAPHDB_TIMEOUT_SECONDS=1800 backend \
   python manage.py load_graphdb_ontologies --apply --replace
 ```
+
+The dry run prints the plan that `--apply` would execute (it is built by the same code): each graph with the
+file it is loaded from, that file's size and triple count (counted locally with `rdflib`, which the backend image
+installs, so it takes several seconds), whether the graph is replaced or appended to,
+the triples GraphDB holds in it now (one query; "current count unavailable" if GraphDB cannot answer), and, with
+`--replace`, each retired graph that would be deleted. Read it before approving `--apply`.
 
 The long timeout is for this command only: the compose default of 30 seconds is meant for answering
 questions, not for replacing a large graph. Do not add `--include-artifact-rules` unless the
@@ -737,8 +743,8 @@ real question. Roll back by deploying the previous commit through GitHub, never 
 
 ### 12.2 Ontology graphs
 
-Run the two commands from 7.1, then repeat the count query. The expected triples are those of the
-committed files; compute them on any machine with rdflib:
+Run the dry run from 7.1 first and read its plan, then the `--apply` command, then repeat the count query. The expected triples are those of the
+committed files. The dry run from 7.1 prints them; to compute one by hand, on any machine with rdflib:
 
 ```python
 import rdflib
