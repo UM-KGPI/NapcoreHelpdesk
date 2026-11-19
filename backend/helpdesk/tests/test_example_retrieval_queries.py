@@ -49,10 +49,8 @@ class FallbackQueryTests(SimpleTestCase):
         self.assertIn('IF(?matchType = "direct_example", 1, IF(?matchType = "template_realization", 2, 3))', fallback)
 
     def test_every_query_parses_as_sparql(self):
-        try:
-            from rdflib.plugins.sparql import prepareQuery
-        except ImportError:  # rdflib is an offline tooling dependency, not in requirements.txt
-            self.skipTest("rdflib is not installed")
+        from rdflib.plugins.sparql import prepareQuery
+
         sent, _ = self._sent_queries([None, None])
         for query in sent:
             prepareQuery(query)

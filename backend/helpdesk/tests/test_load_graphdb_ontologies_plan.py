@@ -46,6 +46,7 @@ def _counts(mapping):
 
 
 def _run(*args, ontology_dir=None, counts=None, triples=2, **settings_kw):
+    """Run the dry run with the local triple count mocked (the one test below counts for real)."""
     out = StringIO()
     with patch.dict("os.environ", {"NAPCORE_ONTOLOGY_DIR": ontology_dir or _ontology_dir()}), override_settings(
         **{**GRAPHDB_ON, **settings_kw}
@@ -66,16 +67,22 @@ class PlanTests(SimpleTestCase):
         self.assertIn("2 triples;", out)  # the count of the file
         self.assertIn("Dry-run only", out)
 
+    def test_the_plan_counts_the_triples_of_the_files_for_real(self):
+        out = StringIO()
+        with patch.dict("os.environ", {"NAPCORE_ONTOLOGY_DIR": _ontology_dir()}), override_settings(
+            **GRAPHDB_ON
+        ), patch.object(command, "execute_sparql_query", return_value=None):
+            call_command("load_graphdb_ontologies", stdout=out)
+
+        self.assertIn("bytes, 2 triples;", out.getvalue())
+        self.assertNotIn("not counted", out.getvalue())
+
     def test_without_rdflib_the_plan_gives_the_file_size_and_says_triples_were_not_counted(self):
         out, _ = _run(triples=None)
 
         self.assertIn("bytes, triples not counted (rdflib not installed)", out)
 
     def test_triples_are_counted_from_the_file_itself(self):
-        try:
-            import rdflib  # noqa: F401
-        except ImportError:  # an offline tooling dependency, not in requirements.txt
-            self.skipTest("rdflib is not installed")
         path = Path(_ontology_dir()) / "standards" / "netex.ttl"
 
         self.assertEqual(command.count_turtle_triples(path), 2)

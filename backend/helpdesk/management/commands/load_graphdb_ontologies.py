@@ -12,7 +12,8 @@ from helpdesk.services.ontology_registry import record_ontology_asset_versions
 
 
 def count_turtle_triples(path) -> int | None:
-    """Triples in a Turtle file, parsed locally; None when rdflib (an offline tooling dependency) is missing."""
+    """Triples in a Turtle file, parsed locally; None when rdflib is missing (it is in requirements.txt, but a
+    developer environment installed before that may lack it, and the plan is still useful without counts)."""
     try:
         import rdflib
     except ImportError:
