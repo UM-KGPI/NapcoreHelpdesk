@@ -1934,3 +1934,95 @@ All times UTC. Figures are **read on prod** unless marked.
 - The recall reading above.
 - The CI baseline is still on the old cut.
 - The six TN-ITS schema files on dev.
+
+### Preselection by file (2026-11-19, dev database `napcore_helpdesk` and copy `napcore_helpdesk_s6pre`, read only, main at ac92c23)
+
+I diagnosed why the prepared cut loses five questions, tried one remedy for the larger cause on a grid fixed before
+the first run, and the remedy failed its gate on every variant. The code is not merged; this entry is the record.
+All runs on dev with models off and GraphDB on, the per-file limit 1, hit@10 of the 149 benchmark questions
+(identical in baseline and graph mode in every run); MRR@10 is graph mode. Every run: 62 GraphDB calls, the known
+7 HTTP 400, 0 timeouts; the Docker VM had 3.9–4.0 GB available before and after each.
+
+**The diagnosis of the morning, in brief** (measured).
+- Old cut (`_s6pre`, old settings) 133; prepared cut (dev, the five settings) 130. Lost q017, q049, q056, q082,
+  q088; gained q077, q137. Prod shows the same five (step 6 entry).
+- Two hybrid databases (the old cut with the prepared example rows, and the prepared cut with the old example rows)
+  put the whole difference on the prepared example rows. Example files are cut into about three times as many pieces
+  as before.
+- (a) Preselection for scoring (`RETRIEVAL_SCORING_CANDIDATE_CAP`, 32) keeps rows by similarity. The 32 rows covered
+  20–28 files on the old cut and 8–18 on the prepared cut. After the per-file limit the final list is short (mean
+  15.4 → 12.4 entries; lists under 10 entries: 20 → 37 questions), and the expected schema file is cut or last. This
+  accounts for q017, q049, q056 and q088.
+- (b) Example pieces are about 0.005 more similar to the questions than before, and schema pieces are unchanged.
+  This accounts for q082. Not the subject of this step.
+- A probe of the remedy (in-process, keep only each file's most similar row before preselection) gave 131 on the
+  prepared cut. I ran it again today: 0 rank changes.
+
+**Why the probe lost four questions** (measured with the gateway's own trace, `retrieve_chunks_with_trace` with
+its probe, reference against probe, on the same question).
+- The belief was that each of the four loses because a file's second piece no longer reaches scoring. That holds
+  for one of them, q122. The reference scores two pieces of the expected file that match the question's words
+  (similarity 0.8405 and 0.838, lexical rank 0.985 and 1.0); the better one is 7th after the per-file limit. The
+  probe admits only the file's most similar piece (0.841, lexical rank 0), which is 24th.
+- q077 and q090: the same piece of the expected file is scored in both. The probe admits 31 files instead of 12–14,
+  and files the row count had kept out now rank above it: 3 of them for q077 (9th → 12th), 7 for q090 (9th → 15th).
+- q147: the reference scored 15 pieces of the expected README (15 of 32 slots); its best piece is the same in both.
+  The probe admits 10 SIRI schema files the reference never scored, and the README falls from 10th to 20th.
+- A second effect, through the vector range. The scaled vector score is computed over the scored rows, from the
+  lowest to the highest similarity. The lexical reserve admits rows of the lexical recall pool that have no stored
+  similarity; their computed similarity is low (0.74–0.80). Admitting by file brings in more of them, and the low
+  end drops (q049 0.849 → 0.774, q147 0.792 → 0.740) (measured). I re-scored the probe's lists with the reference's
+  range, changing only the scaled part: q049 1st → 10th, q056 4th → 10th, q147 20th → 11th. So much of the probe's
+  gain on q049 and q056, and of its loss on q147, comes through the range (**believed**: the re-scoring is
+  arithmetic on lists the other range did not build, not a run).
+
+**The design.**
+- Preselection chooses files by their best piece's similarity and admits up to K pieces of each chosen file until
+  the budget is used. The budget counts rows (32, as now) or files (32 files). A file is the source path, as for the
+  per-file limit. The lexical reserve (at most a quarter of the slots) keeps the same per-file limit. Ties: lexical
+  rank, quality, then the lower id. Nothing names a kind of document, a standard, a path or a question.
+- Behind `RETRIEVAL_PRESELECT_PIECES_PER_FILE` (0 = by row, as before) and `RETRIEVAL_PRESELECT_BUDGET` (`rows` or
+  `files`), declared and documented like their neighbours. 10 unit tests (the files chosen by their best piece, K,
+  both budgets, a file with fewer than K pieces, ties, the reserve, and the setting off equal to the preselection by
+  row on a constructed pool). They passed run as CI runs them, without a `.env` and with models off.
+- Fixed before the first run: the grid K ∈ {1, 2} × budget in rows or files, four variants; no change to the vector
+  scaling. The range moves because more low-similarity rows are admitted, which comes with admitting files. Changing
+  the scaling is a separate tuning, and the re-scoring above shows it cuts both ways.
+- Selection rule: among variants that pass the gate, the highest hit@10 on the prepared cut, then MRR@10, then the
+  fewest lost.
+
+**The grid** (prepared cut, one run each, measured; reference `p545/after2`: 130, MRR@10 0.6001).
+
+| variant | hit@10 | MRR@10 | of the five in the top 10 | lost (rank before → after) | gained |
+|---|---|---|---|---|---|
+| K 1, budget in rows | 131 | 0.5988 | 4 (q082 16th) | q077 9→12, q090 9→14, q122 7→none, q147 10→19 | q017, q049, q056, q068, q088 |
+| K 1, budget in files | 131 | 0.5988 | 4 | the same | the same |
+| K 2, budget in rows | 129 | 0.6024 | 2 (q017 11th, q082 17th, q088 20th) | q077 9→11, q090 9→13, q147 10→15 | q049 11→9, q056 11→9 |
+| K 2, budget in files | 132 | 0.6221 | 4 (q082 16th) | q077 9→12, q090 9→15, q147 10→20 | q017 12→10, q049 11→1, q056 11→3, q068 none→4, q088 none→9 |
+
+- K 1 in rows and in files are the same mechanism (one row per file), as I said before the runs: 0 rank changes.
+- K 2 keeps q122 (6th), as the diagnosis predicted. q077, q090 and q147 are lost in every variant: their losses come
+  from new competing files and the range, which K does not change.
+
+**The gate** (fixed before the runs; all lines must hold for the selected variant).
+- Line 2, at most 1 question of the reference's top 10 lost: **not met by any variant** (4, 4, 3, 3).
+- K 2 in rows also fails line 1 (2 of 5 in the top 10, at least 3 needed) and line 3 (129, at least 131 needed).
+- K 2 in files meets line 1 (4 of 5) and line 3 (132; MRR@10 0.6221, not lower than 0.6001 − 0.005) on its one run.
+- No variant passes, so none is selected. The runs the rule makes for the selected variant were not made: the
+  second prepared run, the old cut (line 4), the answer-source questions (line 5), timing (line 6), the final list
+  length (line 7) and CI (line 8).
+- **Decision**: the gate failed, and a failed gate is the result. I reverted the code. The grid is not extended,
+  no gate line is loosened, and the row cap is not raised instead.
+
+**Believed, not checked.**
+- That the K 2 budget in files would hold line 4 (the old cut) and line 6 (time); it scores up to 64 rows instead
+  of 32. Not measured. In its run the benchmark's median retrieval time was 340 ms against 307 ms for K 1, but
+  in a different hour from the reference, so this is no gate reading.
+- That prod's `RETRIEVAL_SCORING_CANDIDATE_CAP` is the default 32 (not read on prod).
+
+**Open.**
+- (b), the higher similarity of example pieces, and q082 with it (16th at best here).
+- The row cap: raising it was probed in the morning (96: prepared 132, old cut 132) and stays outside this step.
+- Answers with model calls were not measured.
+- The vector range follows whatever low-similarity rows enter scoring. It is a lever of its own: it explains part
+  of this step's gains and of its losses.
