@@ -22,6 +22,7 @@ import time
 from functools import lru_cache
 from pathlib import Path
 from typing import Iterable
+from urllib.error import HTTPError, URLError
 
 from django.utils import timezone
 
@@ -72,31 +73,66 @@ def iri_to_concept_id(iri: str) -> str | None:
     return None
 
 
-def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
+_STARTUP_WAIT_DEFAULT_SECONDS = 120
+_STARTUP_BACKOFF_FIRST_SECONDS = 1.0
+_STARTUP_BACKOFF_MAX_SECONDS = 10.0
+
+
+def _is_startup_failure(exc: BaseException) -> bool:
+    """True for a failure that GraphDB shows while it is still starting.
+
+    Connection refused, name not yet resolvable, a timeout, a dropped connection
+    and an HTTP 5xx. Other HTTP answers (401, 404, ...) will not mend by waiting.
+    """
+    if isinstance(exc, HTTPError):
+        return exc.code >= 500
+    return isinstance(exc, (URLError, TimeoutError, ConnectionError))
+
+
+def _load_ontology_from_graphdb(endpoint_url: str, wait_seconds: float = 0) -> dict | None:
     """Load concept aliases from a live GraphDB SPARQL endpoint.
 
     Returns an ontology dict with namespaces/concepts keys, or None if
-    GraphDB is unreachable or returns no concept data.
+    GraphDB is unreachable or returns no concept data. While GraphDB shows
+    start-up failures (see _is_startup_failure) a request is repeated with a
+    growing pause until `wait_seconds` have passed since this load began.
     """
     import json as _json
     from urllib.parse import quote_plus
     from urllib.request import Request, urlopen
 
     _iri_to_concept_id = iri_to_concept_id
+    deadline = time.monotonic() + max(0, wait_seconds)
 
     def _sparql_get(sparql: str) -> list[dict]:
         url = f"{endpoint_url.rstrip('/')}?query={quote_plus(sparql)}"
         req = Request(url, headers={"Accept": "application/sparql-results+json"})
-        try:
-            with urlopen(req, timeout=60) as resp:
-                data = _json.loads(resp.read())
-                return [
-                    {k: v.get("value", "") for k, v in b.items()}
-                    for b in data.get("results", {}).get("bindings", [])
-                ]
-        except Exception as exc:
-            logger.warning("GraphDB ontology load failed: %s", exc)
-            return []
+        pause = _STARTUP_BACKOFF_FIRST_SECONDS
+        retry = 0
+        while True:
+            try:
+                with urlopen(req, timeout=60) as resp:
+                    data = _json.loads(resp.read())
+                    return [
+                        {k: v.get("value", "") for k, v in b.items()}
+                        for b in data.get("results", {}).get("bindings", [])
+                    ]
+            except Exception as exc:
+                remaining = deadline - time.monotonic()
+                if not _is_startup_failure(exc) or remaining <= 0:
+                    logger.warning("GraphDB ontology load failed: %s", exc)
+                    return []
+                pause = min(pause, remaining)
+                retry += 1
+                logger.warning(
+                    "GraphDB ontology load failed: %s; retry %d in %.1f s (waiting up to %d s more)",
+                    exc,
+                    retry,
+                    pause,
+                    remaining,
+                )
+                time.sleep(pause)
+                pause = min(pause * 2, _STARTUP_BACKOFF_MAX_SECONDS)
 
     # Labels for standard-specific concepts (netex, opra, siri, transmodel)
     labels_rows = _sparql_get(
@@ -204,8 +240,19 @@ def _load_ontology_from_graphdb(endpoint_url: str) -> dict | None:
     return {"namespaces": namespaces, "concepts": concepts}
 
 
-def _load_ontology() -> dict:
+def _startup_wait_seconds() -> float:
+    from django.conf import settings
+
+    return float(getattr(settings, "GRAPHDB_STARTUP_WAIT_SECONDS", _STARTUP_WAIT_DEFAULT_SECONDS))
+
+
+def _load_ontology(wait_seconds: float | None = None) -> dict:
     """Load standards ontology exclusively from GraphDB.
+
+    `wait_seconds` bounds how long a refused or not-yet-ready GraphDB is waited
+    for (default: the GRAPHDB_STARTUP_WAIT_SECONDS setting); a re-read in a
+    running process passes 0 so a request is never held up. After the bound the
+    load fails exactly as it does without waiting.
 
     Returns dict with keys: namespaces, concepts, relationships.
     Raises RuntimeError when GraphDB is not configured or contains no concept
@@ -221,7 +268,9 @@ def _load_ontology() -> dict:
             "GRAPHDB_SPARQL_ENDPOINT is required. Local glossary-file fallback is disabled."
         )
 
-    graphdb_result = _load_ontology_from_graphdb(endpoint)
+    if wait_seconds is None:
+        wait_seconds = _startup_wait_seconds()
+    graphdb_result = _load_ontology_from_graphdb(endpoint, wait_seconds)
     if graphdb_result and graphdb_result.get("concepts"):
         logger.info(
             "Loaded standards ontology from GraphDB: %d concepts",
@@ -537,7 +586,7 @@ def reload_ontology_if_updated() -> bool:
         if latest is None or latest <= _ONTOLOGY_READ_AT:
             return False
         read_at = timezone.now()
-        ontology = _load_ontology()
+        ontology = _load_ontology(wait_seconds=0)
         aliases = _build_concept_aliases_from_ontology(ontology)
         if not aliases:
             return False

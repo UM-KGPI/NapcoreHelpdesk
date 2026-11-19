@@ -134,6 +134,7 @@ Note:
   - `GRAPHDB_SPARQL_ENDPOINT`
   - `GRAPHDB_REPOSITORY`
   - `GRAPHDB_TIMEOUT_SECONDS`
+  - `GRAPHDB_STARTUP_WAIT_SECONDS` (default 120): how long a process that starts while GraphDB is still coming up (connection refused, name not yet resolvable, timeout, HTTP 5xx) keeps retrying the ontology load, with a pause of 1 s growing to 10 s, before it fails as before; `0` means do not wait. Not used when GraphDB is disabled, and a re-read in a running process never waits.
 - When GraphDB is enabled and reachable, parsing can:
   - anchor a term to the concepts it is aligned to (for example its Transmodel class) via SPARQL;
   - discover the standards whose concepts align to that concept.
