@@ -1865,3 +1865,72 @@ limit change is visible to users: at most one passage per source file among an a
 - Example files outranking schema and documentation on explanation and mapping questions (q017, q049, q056, q082,
   q088) is the fault this step leaves.
 - The CI baseline stays on the old cut for now.
+
+### After step 6: clean-up and the first nightly refresh (2026-11-18 and 2026-11-19, prod 0.97.232)
+
+I shipped the step 6 record, removed the ways back and read the first nightly refresh on the new rows.
+All times UTC. Figures are **read on prod** unless marked.
+
+**Shipping the record.**
+- The step 6 records were merged (#551) and 0.97.232 deployed on 2026-11-18 at about 22:31. The deploy recreated
+  `db` once, as expected.
+- **Checked from my laptop**: health ok on 0.97.232 with a proper build reference again; the late-journeys question
+  asked twice gave the same four example-file sources as right after the swap.
+
+**Clean-up** (2026-11-18 23:20–23:31, my decision).
+- Dropped: the copy database `napcore_helpdesk_recut` (3.7 GB), the old index `sourcechunk_embedding_ivfflat_idx`
+  (2.2 GB, with `DROP INDEX CONCURRENTLY`), and the three dump files (the full dump of live from before the swap, the
+  dump of live's two index tables, the transfer's input). No `step6-*` container is left.
+- After: database 2.9 GB (5.1 GB before), 261 GB free; settings `[True, 384, True, 100, 1]`; 152,926 rows, all of the
+  new cut; health ok.
+- The ways back to the old cut are gone; only a re-index rebuilds it. This closes "kept on prod until I decide" of the
+  step 6 entry, except the saved pre-swap settings file and the markers, logs and measurement outputs in the working
+  folder, which remain.
+
+**Recall on live** (206 calls each; the check reads only).
+- 2026-11-18 about 22:02 (during the vacuum): 0.9999, one benchmark call at 0.98. At 22:10 and 22:14: 0.9999, the
+  same single call at 0.98.
+- 22:15–22:18 (the copy of the check that prints details): 1.0000. 23:31 (after the old index was dropped): 1.0000.
+  2026-11-19 about 06:50: 1.0000.
+- So three readings at 0.9999 and three at 1.0000; none under 1.0 since 22:15. The cause is not established: the
+  detail run had no call under 1.0, so it found nothing to analyse.
+
+**The first nightly refresh on the new rows** (2026-11-19 03:30).
+- It ran and succeeded in 17.3 s. All five repository sources (NeTEx, SIRI, OpRa, mobilityDCAT-AP, TN-ITS) were
+  scanned and every file skipped as unchanged; 0 rows created, updated or deleted.
+- After it: 152,926 rows, all of the new cut, 0 without a vector, 0 files with both cuts; the five settings identical
+  in backend and worker; `INDEX_CUT_VERSION` 0.
+- What it does not show: no file changed overnight, so the refresh has not yet cut a changed file on prod.
+- By the code (`services/prepared_index.py`): a file is cut again with the cut its rows have, a new file takes the cut
+  of most rows of its repository, and `INDEX_CUT_VERSION` applies only to a repository or kind with no rows. Read in
+  the code, **not yet seen on prod**.
+- This corrects the step 6 open point that calls the refresh check "the check that matters" for `INDEX_CUT_VERSION`
+  0: with the rule above, the setting matters only when a new source is added.
+
+**Two figures I checked.**
+- File records: `helpdesk_indexedsourcefile` has 1,463 rows. The 1,464 in the step 6 record is the dry run's count of
+  files to cut, found only in the dry run's log. No file record was created, updated or removed after the morning
+  refresh of 2026-11-18, and there are no duplicates. The two numbers count different things; which file makes the
+  difference of one was **not looked up**.
+- On dev, 169 rows are of the old cut: the schema pieces of six XSD files of TN-ITS, indexed 2026-11-05
+  (**measured** on dev). No file mixes cuts. **Believed, not checked** in the code: the dev re-cut skipped them
+  because the TN-ITS checkout was not passed to the command. On prod all TN-ITS rows are of the new cut.
+
+**A restart that was not the index's doing** (2026-11-19 08:05).
+- All containers on the prod host restarted: a package upgrade on the host upgraded Docker (docker-ce 29.10.0,
+  containerd) and the daemon was stopped and started. No host reboot, no deploy; the containers are those of the
+  2026-11-18 deploy.
+- Outage about 75 s by container start times (08:05:25 to about 08:06:40); the web logs were not read.
+- Backend, worker and beat failed twice at start: `helpdesk/services/semantic_graph.py` loads the ontology from
+  GraphDB at import, and GraphDB was not yet listening. Docker restarted them and they ran. No error mentions rows,
+  vectors or the index.
+- After it: 152,926 rows of the new cut. **Checked from my laptop** at 08:45: health ok.
+- Open, outside this plan: the start-up should wait for GraphDB.
+
+**Open now** (the current list; the step 6 list above stays as it was).
+- The refresh cutting a changed file on prod: look at the two counts the morning after an upstream source changes.
+- Example files outranking schema and documentation on explanation and mapping questions (q017, q049, q056, q082,
+  q088, and the late-journeys answer).
+- The recall reading above.
+- The CI baseline is still on the old cut.
+- The six TN-ITS schema files on dev.
