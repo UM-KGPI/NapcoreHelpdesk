@@ -289,6 +289,18 @@ class GraphDbClientTests(TestCase):
         self.assertNotIn("https://napcore.eu/graph/alignments/transmodel", graph_uris)
         self.assertFalse(any("/artifact-rules/" in uri for uri in graph_uris))
 
+    def test_no_graph_the_queries_name_is_a_retired_graph(self):
+        from helpdesk.services import graphdb_client
+        from helpdesk.services.ontology_evidence import DEFINITION_GRAPHS
+
+        named = {
+            *DEFINITION_GRAPHS,
+            *graphdb_client.TRANSMODEL_REFERENCE_GRAPHS,
+            *(uri for uris in graphdb_client.STANDARD_GRAPH_SCOPE.values() for uri in uris),
+            *(uri for _file, uri in graphdb_client.STANDARD_ARTIFACT_RULE_SPECS.values()),
+        }
+        self.assertEqual(named & set(graphdb_client.RETIRED_GRAPH_URIS), set())
+
     def test_load_default_ontology_graphs_deletes_retired_graphs_on_replace(self):
         with (
             patch("helpdesk.services.graphdb_client.upload_named_graph_turtle") as upload_mock,
@@ -303,7 +315,7 @@ class GraphDbClientTests(TestCase):
                 replace=True,
             )
 
-        self.assertEqual(delete_mock.call_count, 10)
+        self.assertEqual(delete_mock.call_count, 14)
         deleted_graph_uris = {call.kwargs["graph_uri"] for call in delete_mock.call_args_list}
         self.assertEqual(
             deleted_graph_uris,
@@ -318,9 +330,13 @@ class GraphDbClientTests(TestCase):
                 "urn:graph:nits-opra-align",
                 "urn:graph:nits-siri-align",
                 "urn:graph:nits-transmodel-align",
+                "urn:graph:netex",
+                "urn:graph:opra",
+                "urn:graph:siri",
+                "urn:graph:transmodel",
             },
         )
-        retired_results = results[-10:]
+        retired_results = results[-14:]
         self.assertTrue(all(item["retired"] for item in retired_results))
         self.assertEqual({item["graphUri"] for item in retired_results}, deleted_graph_uris)
 

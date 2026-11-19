@@ -89,13 +89,25 @@ def _is_startup_failure(exc: BaseException) -> bool:
     return isinstance(exc, (URLError, TimeoutError, ConnectionError))
 
 
+class OntologyQueryError(RuntimeError):
+    """One of the ontology load's SPARQL queries failed (an error, not an empty result)."""
+
+    def __init__(self, query_name: str, cause: BaseException):
+        super().__init__(f"ontology query '{query_name}' failed: {cause}")
+        self.query_name = query_name
+        self.cause = cause
+
+
 def _load_ontology_from_graphdb(endpoint_url: str, wait_seconds: float = 0) -> dict | None:
     """Load concept aliases from a live GraphDB SPARQL endpoint.
 
     Returns an ontology dict with namespaces/concepts keys, or None if
-    GraphDB is unreachable or returns no concept data. While GraphDB shows
-    start-up failures (see _is_startup_failure) a request is repeated with a
-    growing pause until `wait_seconds` have passed since this load began.
+    GraphDB returns no concept data. While GraphDB shows start-up failures
+    (see _is_startup_failure) a request is repeated with a growing pause until
+    `wait_seconds` have passed since this load began. A query that still fails
+    after that raises OntologyQueryError naming it: an ontology missing the
+    rows of one query (relations, subclasses) must not be used as if complete.
+    A query that succeeds with no rows is not a failure.
     """
     import json as _json
     from urllib.parse import quote_plus
@@ -104,7 +116,7 @@ def _load_ontology_from_graphdb(endpoint_url: str, wait_seconds: float = 0) -> d
     _iri_to_concept_id = iri_to_concept_id
     deadline = time.monotonic() + max(0, wait_seconds)
 
-    def _sparql_get(sparql: str) -> list[dict]:
+    def _sparql_get(query_name: str, sparql: str) -> list[dict]:
         url = f"{endpoint_url.rstrip('/')}?query={quote_plus(sparql)}"
         req = Request(url, headers={"Accept": "application/sparql-results+json"})
         pause = _STARTUP_BACKOFF_FIRST_SECONDS
@@ -120,12 +132,13 @@ def _load_ontology_from_graphdb(endpoint_url: str, wait_seconds: float = 0) -> d
             except Exception as exc:
                 remaining = deadline - time.monotonic()
                 if not _is_startup_failure(exc) or remaining <= 0:
-                    logger.warning("GraphDB ontology load failed: %s", exc)
-                    return []
+                    logger.error("GraphDB ontology load: query '%s' failed: %s", query_name, exc)
+                    raise OntologyQueryError(query_name, exc) from exc
                 pause = min(pause, remaining)
                 retry += 1
                 logger.warning(
-                    "GraphDB ontology load failed: %s; retry %d in %.1f s (waiting up to %d s more)",
+                    "GraphDB ontology load: query '%s' failed: %s; retry %d in %.1f s (waiting up to %d s more)",
+                    query_name,
                     exc,
                     retry,
                     pause,
@@ -136,6 +149,7 @@ def _load_ontology_from_graphdb(endpoint_url: str, wait_seconds: float = 0) -> d
 
     # Labels for standard-specific concepts (netex, opra, siri, transmodel)
     labels_rows = _sparql_get(
+        "labels",
         "SELECT ?concept ?label WHERE {"
         " ?concept <http://www.w3.org/2004/02/skos/core#prefLabel>|"
         "<http://www.w3.org/2004/02/skos/core#altLabel>|"
@@ -149,6 +163,7 @@ def _load_ontology_from_graphdb(endpoint_url: str, wait_seconds: float = 0) -> d
 
     # skos:related links declared directly in standards ontologies (e.g. SIRI ~99 links)
     skos_related_rows = _sparql_get(
+        "skos:related",
         "SELECT DISTINCT ?concept ?related WHERE {"
         " ?concept <http://www.w3.org/2004/02/skos/core#related> ?related ."
         " FILTER(!CONTAINS(STR(?concept), 'www.w3.org'))"
@@ -160,6 +175,7 @@ def _load_ontology_from_graphdb(endpoint_url: str, wait_seconds: float = 0) -> d
 
     # owl:ObjectProperty domain→range links (e.g. OpRa hasTrip, hasLeg, departFrom, …)
     object_property_rows = _sparql_get(
+        "object properties",
         "SELECT DISTINCT ?concept ?related WHERE {"
         " ?prop a <http://www.w3.org/2002/07/owl#ObjectProperty> ;"
         "       <http://www.w3.org/2000/01/rdf-schema#domain> ?concept ;"
@@ -178,6 +194,7 @@ def _load_ontology_from_graphdb(endpoint_url: str, wait_seconds: float = 0) -> d
     # Kept directed (class -> subclass, see "narrower" below): followed upward,
     # every class reaches framework roots like netex:DataManagedObject.
     subclass_rows = _sparql_get(
+        "subclasses",
         "SELECT DISTINCT ?concept ?related WHERE {"
         " ?concept <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?related ."
         " FILTER(!CONTAINS(STR(?concept), 'www.w3.org'))"
@@ -270,7 +287,12 @@ def _load_ontology(wait_seconds: float | None = None) -> dict:
 
     if wait_seconds is None:
         wait_seconds = _startup_wait_seconds()
-    graphdb_result = _load_ontology_from_graphdb(endpoint, wait_seconds)
+    try:
+        graphdb_result = _load_ontology_from_graphdb(endpoint, wait_seconds)
+    except OntologyQueryError as exc:
+        raise RuntimeError(
+            f"Failed to load standards ontology from GraphDB endpoint: {endpoint}: {exc}"
+        ) from exc
     if graphdb_result and graphdb_result.get("concepts"):
         logger.info(
             "Loaded standards ontology from GraphDB: %d concepts",
@@ -600,8 +622,8 @@ def reload_ontology_if_updated() -> bool:
         _ONTOLOGY_READ_AT = read_at
         logger.info("Re-read the standards ontology after an ontology load: %d concepts", len(aliases))
         return True
-    except Exception:  # keep answering with the labels already read
-        logger.warning("Re-reading the standards ontology failed", exc_info=True)
+    except Exception:  # keep answering with the ontology already read, never replace it with a partial one
+        logger.error("Re-reading the standards ontology failed; keeping the one already read", exc_info=True)
         return False
     finally:
         _ontology_reload_lock.release()

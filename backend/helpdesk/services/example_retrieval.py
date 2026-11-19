@@ -147,7 +147,9 @@ def retrieve_concept_examples_with_fallback(
         if exact_examples:
             return exact_examples
 
-        # No exact matches - use semantic reasoning for fallback
+        # No exact matches - use semantic reasoning for fallback.
+        # SPARQL has no CASE expression (that is SQL): GraphDB answered HTTP 400 to every call of this query
+        # until the ORDER BY below was written with IF.
         concept_uris = " ".join(
             [f"<{_ensure_uri(cid)}>" for cid in sorted(concept_ids)]
         )
@@ -197,11 +199,7 @@ def retrieve_concept_examples_with_fallback(
                    dct:source ?source .
         }}
         ORDER BY
-          CASE ?matchType
-            WHEN "direct_example" THEN 1
-            WHEN "template_realization" THEN 2
-            ELSE 3
-          END
+          IF(?matchType = "direct_example", 1, IF(?matchType = "template_realization", 2, 3))
           ?concept ?example
         LIMIT 20
         """
