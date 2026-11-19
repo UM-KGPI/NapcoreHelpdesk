@@ -2106,7 +2106,7 @@ def _retrieve_chunks_once(
     retrieval_scoring_candidate_cap = max(12, int(getattr(settings, "RETRIEVAL_SCORING_CANDIDATE_CAP", 40)))
     graph_preselect_multiplier = max(1, int(getattr(settings, "RETRIEVAL_GRAPH_PRESELECT_MULTIPLIER", 2)))
     lexical_preselect_reserve = max(0, int(getattr(settings, "RETRIEVAL_LEXICAL_PRESELECT_RESERVE", 8)))
-    source_path_cap = max(1, int(getattr(settings, "RETRIEVAL_MAX_SAME_SOURCE_PATH", 2)))
+    source_path_cap = max(1, int(getattr(settings, "RETRIEVAL_MAX_SAME_SOURCE_PATH", 1)))
     mmr_lambda = float(getattr(settings, "RETRIEVAL_MMR_LAMBDA", 0.92))
     mmr_lambda = max(0.0, min(1.0, mmr_lambda))
     retrieval_diversity_enabled = bool(getattr(settings, "RETRIEVAL_DIVERSITY_ENABLED", True))
