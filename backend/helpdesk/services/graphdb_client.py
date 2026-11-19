@@ -138,6 +138,14 @@ RETIRED_GRAPH_URIS = [
     "urn:graph:nits-opra-align",
     "urn:graph:nits-siri-align",
     "urn:graph:nits-transmodel-align",
+    # Older loads of the four standards themselves under urn:graph:* names. No query names them; the queries
+    # without a graph restriction (the ontology load in semantic_graph, the example queries, the connector's
+    # anchor query) read every named graph and so also read these stale copies. The current content is in
+    # standards/{netex,opra,siri,transmodel}.
+    "urn:graph:netex",
+    "urn:graph:opra",
+    "urn:graph:siri",
+    "urn:graph:transmodel",
 ]
 
 # Transmodel is the conceptual reference for NeTEx, SIRI and OpRa, so its
