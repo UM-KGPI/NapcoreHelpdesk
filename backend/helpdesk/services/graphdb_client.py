@@ -518,18 +518,18 @@ def upload_named_graph_turtle(
     }
 
 
-def load_default_ontology_graphs(
+def plan_default_ontology_graphs(
     *,
-    endpoint: str,
-    repository: str,
-    timeout_seconds: int = 20,
-    username: str = "",
-    password: str = "",
     replace: bool = True,
     include_artifact_rules: bool = False,
     artifact_rule_standards: set[str] | None = None,
-) -> list[dict]:
-    """Load core + standards + alignment ontologies into named graphs in GraphDB.
+) -> dict:
+    """What load_default_ontology_graphs does, as data, without touching GraphDB.
+
+    Returns {"graphs": [...], "retired": [...]}. Each graph entry has ontologyKey, filePath (a Path),
+    graphUri, replace and fileExists; "retired" lists the graph URIs a replace load deletes (empty
+    without replace). The load executes exactly this plan, and the dry run of load_graphdb_ontologies
+    prints it, so the two cannot drift apart.
 
     Artifact-derived rules are intentionally opt-in because they should only be
     active for standard-specific, normative constraint reasoning.
@@ -582,36 +582,73 @@ def load_default_ontology_graphs(
             file_rel_path, graph_uri = STANDARD_ARTIFACT_RULE_SPECS[standard]
             graph_specs.append((f"{standard}-artifact-rules-v1.0", ontology_dir / file_rel_path, graph_uri))
 
+    return {
+        "graphs": [
+            {
+                "ontologyKey": ontology_key,
+                "filePath": file_path,
+                "graphUri": graph_uri,
+                "replace": replace,
+                "fileExists": file_path.exists(),
+            }
+            for ontology_key, file_path, graph_uri in graph_specs
+        ],
+        "retired": list(RETIRED_GRAPH_URIS) if replace else [],
+    }
+
+
+def load_default_ontology_graphs(
+    *,
+    endpoint: str,
+    repository: str,
+    timeout_seconds: int = 20,
+    username: str = "",
+    password: str = "",
+    replace: bool = True,
+    include_artifact_rules: bool = False,
+    artifact_rule_standards: set[str] | None = None,
+) -> list[dict]:
+    """Load core + standards + alignment ontologies into named graphs in GraphDB.
+
+    Executes the plan of plan_default_ontology_graphs.
+    """
+
+    plan = plan_default_ontology_graphs(
+        replace=replace,
+        include_artifact_rules=include_artifact_rules,
+        artifact_rule_standards=artifact_rule_standards,
+    )
+
     results: list[dict] = []
-    for ontology_key, file_path, graph_uri in graph_specs:
+    for entry in plan["graphs"]:
+        file_path = entry["filePath"]
         if not file_path.exists():
             raise FileNotFoundError(f"Ontology file not found: {file_path}")
         content = file_path.read_text(encoding="utf-8")
         result = upload_named_graph_turtle(
             endpoint=endpoint,
             repository=repository,
-            graph_uri=graph_uri,
+            graph_uri=entry["graphUri"],
             turtle_content=content,
             username=username,
             password=password,
             timeout_seconds=timeout_seconds,
-            replace=replace,
+            replace=entry["replace"],
         )
         result["filePath"] = str(file_path)
-        result["ontologyKey"] = ontology_key
+        result["ontologyKey"] = entry["ontologyKey"]
         results.append(result)
 
-    if replace:
-        for graph_uri in RETIRED_GRAPH_URIS:
-            delete_named_graph(
-                endpoint=endpoint,
-                repository=repository,
-                graph_uri=graph_uri,
-                username=username,
-                password=password,
-                timeout_seconds=timeout_seconds,
-            )
-            results.append({"graphUri": graph_uri, "retired": True})
+    for graph_uri in plan["retired"]:
+        delete_named_graph(
+            endpoint=endpoint,
+            repository=repository,
+            graph_uri=graph_uri,
+            username=username,
+            password=password,
+            timeout_seconds=timeout_seconds,
+        )
+        results.append({"graphUri": graph_uri, "retired": True})
 
     return results
 
