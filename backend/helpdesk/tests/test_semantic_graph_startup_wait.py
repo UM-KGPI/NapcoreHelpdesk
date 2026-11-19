@@ -172,3 +172,106 @@ class OntologyStartupWaitTests(SimpleTestCase):
         self.assertEqual(run.opener.call_count, 4)  # labels, related, object properties, subclasses
         self.assertEqual(run.sleeps, [])
         self.assertEqual(run.warnings, [])
+
+
+RELATED = "https://netex.org.uk/netex/2.0#Network"
+
+
+def _answer_except(failing_marker, failure):
+    """A GraphDB that answers every ontology query but the one whose text holds `failing_marker`."""
+
+    def urlopen(request, timeout=None):
+        if failing_marker in request.full_url:
+            raise failure(request)
+        if "prefLabel" in request.full_url:
+            return _Response(
+                [
+                    {"concept": {"value": CONCEPT}, "label": {"value": "Line"}},
+                    {"concept": {"value": RELATED}, "label": {"value": "Network"}},
+                ]
+            )
+        if "subClassOf" in request.full_url:
+            return _Response([{"concept": {"value": CONCEPT}, "related": {"value": RELATED}}])
+        return _Response([])
+
+    return urlopen
+
+
+def _http_400(request):
+    return HTTPError(request.full_url, 400, "Bad Request", {}, None)
+
+
+class OntologyPartialLoadTests(SimpleTestCase):
+    """A later query of the ontology load that errors must not give a silently partial ontology."""
+
+    # What tells each later query apart in the request URL (the query text is URL-encoded).
+    LATER_QUERIES = {
+        "skos:related": "core%23related",
+        "object properties": "ObjectProperty",
+        "subclasses": "subClassOf",
+    }
+
+    def test_a_later_query_error_at_start_up_fails_naming_the_query(self):
+        for name, marker in self.LATER_QUERIES.items():
+            with self.subTest(query=name), _patched(_answer_except(marker, _http_400)):
+                with self.assertRaises(RuntimeError) as raised:
+                    semantic_graph._load_ontology()
+                self.assertIn(f"'{name}'", str(raised.exception))
+
+    def test_a_later_query_failing_while_starting_is_waited_for_then_fails(self):
+        def refuse(request):
+            return URLError(ConnectionRefusedError(111, "Connection refused"))
+
+        with _patched(_answer_except("subClassOf", refuse), wait=30) as run:
+            with self.assertRaises(RuntimeError) as raised:
+                semantic_graph._load_ontology()
+
+        self.assertIn("'subclasses'", str(raised.exception))
+        self.assertGreater(len(run.sleeps), 0)
+        self.assertLessEqual(sum(run.sleeps), 30)
+
+    def test_the_first_query_error_still_fails_and_is_named(self):
+        with _patched(_answer_except("prefLabel", _http_400)):
+            with self.assertRaises(RuntimeError) as raised:
+                semantic_graph._load_ontology()
+        self.assertIn("'labels'", str(raised.exception))
+        self.assertIn(ENDPOINT, str(raised.exception))
+
+    def test_a_later_query_with_no_rows_is_not_a_failure(self):
+        with _patched(_answer) as run:  # related, object properties and subclasses all succeed empty
+            result = semantic_graph._load_ontology()
+
+        self.assertEqual(list(result["concepts"]), ["netex:Line"])
+        self.assertEqual(result["concepts"]["netex:Line"]["narrower"], [])
+        self.assertEqual(run.opener.call_count, 4)
+
+    def test_all_queries_answering_builds_the_whole_ontology(self):
+        with _patched(_answer_except("no-such-marker", _http_400)):
+            result = semantic_graph._load_ontology()
+
+        self.assertEqual(set(result["concepts"]), {"netex:Line", "netex:Network"})
+        self.assertEqual(result["concepts"]["netex:Network"]["narrower"], ["netex:Line"])
+
+    def test_a_re_read_with_a_failing_later_query_keeps_the_ontology_it_has(self):
+        import datetime as dt
+
+        read_at = dt.datetime(2026, 11, 6, 9, 0, tzinfo=dt.timezone.utc)
+        live_aliases = {"netex:Line": {"line"}}
+        live_relations = {"netex:Line": {"netex:Network"}}
+        aggregate = patch(
+            "helpdesk.models.OntologyAssetVersion.objects.aggregate",
+            return_value={"latest": read_at + dt.timedelta(hours=1)},
+        )
+        with aggregate, patch.object(semantic_graph, "GRAPH_CONCEPT_ALIASES", live_aliases), patch.object(
+            semantic_graph, "GRAPH_RELATIONS", live_relations
+        ), patch.object(semantic_graph, "_ONTOLOGY_READ_AT", read_at), patch.object(
+            semantic_graph, "_last_ontology_check", -10_000.0  # long ago on the fake clock of _patched
+        ), _patched(_answer_except("subClassOf", _http_400)), patch.object(semantic_graph.logger, "error") as error:
+            reloaded = semantic_graph.reload_ontology_if_updated()
+            read_at_after = semantic_graph._ONTOLOGY_READ_AT
+
+        self.assertFalse(reloaded)
+        self.assertEqual(live_aliases, {"netex:Line": {"line"}})
+        self.assertEqual(live_relations, {"netex:Line": {"netex:Network"}})
+        self.assertEqual(read_at_after, read_at)  # it will be tried again after the next load
+        self.assertTrue(error.called)
