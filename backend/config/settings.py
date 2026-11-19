@@ -151,6 +151,9 @@ env = environ.Env(
     RETRIEVAL_PREPARED_INDEX=(bool, False),
     INDEX_CUT_VERSION=(int, 0),
     RETRIEVAL_SCORING_CANDIDATE_CAP=(int, 32),
+    RETRIEVAL_PRESELECT_PIECES_PER_FILE=(int, 2),
+    RETRIEVAL_PRESELECT_BUDGET=(str, "files"),
+    RETRIEVAL_PRESELECT_ROW_RANGE=(bool, False),
     RETRIEVAL_GRAPH_PRESELECT_MULTIPLIER=(float, 2.0),
     RETRIEVAL_LEXICAL_PRESELECT_RESERVE=(int, 8),
     RETRIEVAL_LEXICAL_POOL_SIZE=(int, 8),
@@ -491,6 +494,14 @@ RETRIEVAL_PREPARED_INDEX = env("RETRIEVAL_PREPARED_INDEX")
 # the command prepare_index --cut-version changes it. 0 by default, so an index built before stays as it is.
 INDEX_CUT_VERSION = env("INDEX_CUT_VERSION")
 RETRIEVAL_SCORING_CANDIDATE_CAP = env("RETRIEVAL_SCORING_CANDIDATE_CAP")
+# Preselection for scoring by file (retrieval_gateway._preselect_base_ids_by_file): files by their best piece's
+# similarity, up to this many pieces of each; 0: by row, as before. The budget of RETRIEVAL_SCORING_CANDIDATE_CAP
+# then counts "rows" or "files" (RETRIEVAL_PRESELECT_BUDGET).
+RETRIEVAL_PRESELECT_PIECES_PER_FILE = env("RETRIEVAL_PRESELECT_PIECES_PER_FILE")
+RETRIEVAL_PRESELECT_BUDGET = env("RETRIEVAL_PRESELECT_BUDGET")
+# With the preselection by file: the vector score is scaled over the rows the preselection by row would keep (today's
+# range), not over the rows scored. False: over the rows scored.
+RETRIEVAL_PRESELECT_ROW_RANGE = env("RETRIEVAL_PRESELECT_ROW_RANGE")
 RETRIEVAL_GRAPH_PRESELECT_MULTIPLIER = env("RETRIEVAL_GRAPH_PRESELECT_MULTIPLIER")
 RETRIEVAL_LEXICAL_PRESELECT_RESERVE = env("RETRIEVAL_LEXICAL_PRESELECT_RESERVE")
 # Text-search matches added to the vector-ranked candidate pool when vectors are semantic

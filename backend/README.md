@@ -157,6 +157,9 @@ Use feature flags in `backend/.env` for progressive rollout:
   - `GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS`
   - `RETRIEVAL_DIVERSITY_ENABLED`
   - `RETRIEVAL_MAX_SAME_SOURCE_PATH`
+  - `RETRIEVAL_PRESELECT_PIECES_PER_FILE` (preselection for scoring by file: files by their best piece, up to this many pieces of each; default 2; 0 = by row, as before)
+  - `RETRIEVAL_PRESELECT_BUDGET` (`rows` or `files`: what the preselection budget, `RETRIEVAL_SCORING_CANDIDATE_CAP`, counts when preselecting by file; default `files`)
+  - `RETRIEVAL_PRESELECT_ROW_RANGE` (when preselecting by file: scale the vector score over the rows the preselection by row would keep, today's range; default False)
   - `RETRIEVAL_MMR_LAMBDA`
   - `RETRIEVAL_KEYWORD_TRAP_PENALTY`
 

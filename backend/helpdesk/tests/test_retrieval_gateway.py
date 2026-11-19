@@ -1070,3 +1070,172 @@ class ComposeExampleEvidenceTests(SimpleTestCase):
 
         self.assertEqual([c["chunkId"] for c in composed][:2], ["own", "deck"])
         self.assertEqual(len(composed), 6)
+
+
+class PreselectByFileTests(SimpleTestCase):
+    """_preselect_base_ids_by_file: files by their best piece's similarity, up to K pieces each, in a budget of
+    rows or files; the lexical reserve keeps the same per-file limit."""
+
+    @staticmethod
+    def _pool(spec):
+        """spec: (id, path, similarity[, lexical rank]) in any order."""
+        from types import SimpleNamespace
+
+        return [
+            SimpleNamespace(id=row[0], source_path=row[1], vector_similarity=row[2],
+                            lexical_rank=row[3] if len(row) > 3 else 0.0, quality_score=0.5)
+            for row in spec
+        ]
+
+    def _select(self, pool, budget, per_file, count_files, reserve=0):
+        from helpdesk.services.retrieval_gateway import _preselect_base_ids_by_file
+
+        return _preselect_base_ids_by_file(pool, budget, reserve, per_file, count_files)
+
+    def test_files_are_chosen_by_their_best_piece(self):
+        # a.xml has the two most similar pieces; by row both slots would go to it.
+        pool = self._pool([(1, "a.xml", 0.95), (2, "a.xml", 0.94), (3, "b.xsd", 0.90), (4, "c.md", 0.80),
+                           (5, "b.xsd", 0.70)])
+        self.assertEqual(self._select(pool, budget=2, per_file=1, count_files=False), {1, 3})
+        self.assertEqual(self._select(pool, budget=2, per_file=1, count_files=True), {1, 3})
+
+    def test_at_most_k_pieces_of_a_file(self):
+        pool = self._pool([(i, "a.xml", 0.99 - i / 100) for i in range(1, 7)] + [(10, "b.xsd", 0.5)])
+        self.assertEqual(self._select(pool, budget=4, per_file=2, count_files=False), {1, 2, 10})
+        self.assertEqual(self._select(pool, budget=4, per_file=2, count_files=True), {1, 2, 10})
+
+    def test_budget_in_rows(self):
+        pool = self._pool([(i * 10 + j, f"f{i}.xml", 0.99 - i / 100 - j / 1000) for i in range(6) for j in range(3)])
+        selected = self._select(pool, budget=5, per_file=2, count_files=False)
+        self.assertEqual(selected, {0, 1, 10, 11, 20})  # the third file gets the one row left
+
+    def test_budget_in_files(self):
+        pool = self._pool([(i * 10 + j, f"f{i}.xml", 0.99 - i / 100 - j / 1000) for i in range(6) for j in range(3)])
+        selected = self._select(pool, budget=3, per_file=2, count_files=True)
+        self.assertEqual(selected, {0, 1, 10, 11, 20, 21})
+
+    def test_a_file_with_fewer_than_k_pieces(self):
+        pool = self._pool([(1, "a.xml", 0.9), (2, "b.xsd", 0.8), (3, "b.xsd", 0.7), (4, "c.md", 0.6)])
+        self.assertEqual(self._select(pool, budget=3, per_file=3, count_files=True), {1, 2, 3, 4})
+        self.assertEqual(self._select(pool, budget=3, per_file=3, count_files=False), {1, 2, 3})
+
+    def test_ties_are_broken_deterministically(self):
+        # Same similarity: the better lexical rank first, then the lower id; the input order does not matter.
+        spec = [(7, "x.xml", 0.8, 0.1), (3, "y.xml", 0.8, 0.1), (9, "z.xml", 0.8, 0.5)]
+        for order in (spec, list(reversed(spec))):
+            self.assertEqual(self._select(self._pool(order), budget=2, per_file=1, count_files=True), {9, 3})
+
+    def test_lexical_reserve_keeps_the_per_file_limit(self):
+        # 8 slots, a quarter (2) for lexical leaders: 6 files by similarity, then the best lexical rows of files
+        # not chosen yet; a second piece of a chosen file is skipped with K=1.
+        pool = self._pool([(i, f"f{i}.xml", 0.9 - i / 100, 0.0) for i in range(1, 9)]
+                          + [(20, "f1.xml", 0.5, 1.0), (21, "g.xml", 0.4, 0.9), (22, "h.xml", 0.3, 0.8)])
+        self.assertEqual(self._select(pool, budget=8, per_file=1, count_files=False, reserve=8),
+                         {1, 2, 3, 4, 5, 6, 21, 22})
+
+    def test_rows_without_a_path_are_files_of_their_own(self):
+        pool = self._pool([(1, "", 0.9), (2, "", 0.8), (3, "a.xml", 0.7)])
+        self.assertEqual(self._select(pool, budget=3, per_file=1, count_files=True), {1, 2, 3})
+
+
+class PreselectSwitchTests(TestCase):
+    """RETRIEVAL_PRESELECT_PIECES_PER_FILE: 0 keeps the preselection by row; the gateway's preselected
+    candidates are then exactly _preselect_base_ids on the same pool."""
+
+    def setUp(self):
+        from helpdesk.models import SourceChunk
+        from helpdesk.services.embeddings import build_text_embedding
+
+        rows = [("big.xml", 0.95 - i / 100, 0.1) for i in range(12)]  # one file in 12 pieces, the most similar
+        rows += [(f"other{i}.xsd", 0.80 - i / 100, 0.3 - i / 100) for i in range(8)]
+        self.pool = []
+        for idx, (path, similarity, lexical) in enumerate(rows):
+            text = f"Stop place passage {idx}."
+            chunk = SourceChunk.objects.create(
+                repository_url="https://github.com/TransmodelEcosystem/NeTEx", commit_sha="abc",
+                source_path=path, chunk_id=f"pre-{idx}", label=f"pre-{idx}", text=text,
+                standards_scope=["NeTEx"], quality_score=0.5, doc_type="schema",
+                embedding_vector=build_text_embedding(text),
+            )
+            chunk.vector_similarity = similarity
+            chunk.lexical_rank = lexical
+            self.pool.append(chunk)
+
+    def _preselected(self):
+        from helpdesk.services import retrieval_gateway
+
+        seen = {}
+
+        def probe(stage, items):
+            if stage == "preselected":
+                seen["ids"] = {int(chunk.id) for chunk in items}
+
+        with patch.object(retrieval_gateway, "_postgres_hybrid_candidates", return_value=list(self.pool)), \
+                patch.object(retrieval_gateway, "_path_hint_candidates", return_value=[]), \
+                retrieval_gateway.retrieval_probe(probe):
+            retrieval_gateway.retrieve_chunks_with_trace(
+                question="stop place", top_k=5, min_score=0.0, scope=["NeTEx"], graph_rag_enabled=False
+            )
+        return seen["ids"]
+
+    @override_settings(RETRIEVAL_SCORING_CANDIDATE_CAP=12, RETRIEVAL_LEXICAL_PRESELECT_RESERVE=8,
+                       RETRIEVAL_PRESELECT_PIECES_PER_FILE=0)
+    def test_off_is_the_preselection_by_row(self):
+        from helpdesk.services import retrieval_gateway
+
+        ordered = sorted(self.pool, key=lambda c: (c.vector_similarity, c.lexical_rank, c.quality_score), reverse=True)
+        expected = retrieval_gateway._preselect_base_ids(ordered, 12, 8)
+        with patch.object(retrieval_gateway, "_preselect_base_ids_by_file") as by_file:
+            self.assertEqual(self._preselected(), expected)
+        by_file.assert_not_called()
+        self.assertEqual(len({c.source_path for c in self.pool if c.id in expected}), 4)  # 9 pieces of big.xml
+
+    @override_settings(RETRIEVAL_SCORING_CANDIDATE_CAP=12, RETRIEVAL_LEXICAL_PRESELECT_RESERVE=8,
+                       RETRIEVAL_PRESELECT_PIECES_PER_FILE=1, RETRIEVAL_PRESELECT_BUDGET="rows")
+    def test_on_counts_files(self):
+        selected = self._preselected()
+        self.assertEqual(len(selected), 9)  # every file once: 9 files in the pool, 12 slots
+        self.assertEqual(len({c.source_path for c in self.pool if c.id in selected}), 9)
+
+
+class PreselectRowRangeTests(PreselectSwitchTests):
+    """RETRIEVAL_PRESELECT_ROW_RANGE: with the preselection by file, the vector score is scaled over the rows the
+    preselection by row would keep, so a row scored in both gets the same score as by row."""
+
+    def _scores(self):
+        from helpdesk.services import retrieval_gateway
+
+        seen = {}
+
+        def probe(stage, items):
+            if stage == "scored":
+                seen["scores"] = {item["chunkId"]: item["_rankScore"] for item in items if isinstance(item, dict)}
+
+        with patch.object(retrieval_gateway, "_postgres_hybrid_candidates", return_value=list(self.pool)), \
+                patch.object(retrieval_gateway, "_path_hint_candidates", return_value=[]), \
+                patch.object(retrieval_gateway, "_lexical_recall_candidates", return_value=[]), \
+                patch.object(retrieval_gateway, "question_rare_lexemes", return_value=[]), \
+                patch.object(retrieval_gateway, "build_text_embedding", return_value=[1.0] + [0.0] * 1535), \
+                retrieval_gateway.retrieval_probe(probe):
+            retrieval_gateway.retrieve_chunks_with_trace(
+                question="stop place", top_k=5, min_score=0.0, scope=["NeTEx"], graph_rag_enabled=False
+            )
+        return seen["scores"]
+
+    def _run(self, per_file, row_range):
+        with override_settings(EMBEDDING_BACKEND="semantic", RETRIEVAL_SCORING_CANDIDATE_CAP=12,
+                               RETRIEVAL_LEXICAL_PRESELECT_RESERVE=8, RETRIEVAL_PRESELECT_PIECES_PER_FILE=per_file,
+                               RETRIEVAL_PRESELECT_BUDGET="rows", RETRIEVAL_PRESELECT_ROW_RANGE=row_range):
+            return self._scores()
+
+    def test_row_range_gives_the_scores_of_the_preselection_by_row(self):
+        by_row = self._run(0, False)
+        by_file_row_range = self._run(1, True)
+        by_file = self._run(1, False)
+        shared = set(by_row) & set(by_file_row_range)
+        self.assertTrue(shared)
+        for chunk_id in shared:
+            self.assertAlmostEqual(by_row[chunk_id], by_file_row_range[chunk_id], places=9)
+        # Without it the range is that of the rows scored: by file it reaches lower, and the shared rows move.
+        self.assertTrue(any(abs(by_row[c] - by_file[c]) > 1e-6 for c in set(by_row) & set(by_file)))
+        self.assertNotEqual(set(by_file_row_range), set(by_row))  # the rows scored are those chosen by file

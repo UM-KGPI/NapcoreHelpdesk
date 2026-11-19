@@ -1871,6 +1871,67 @@ def _preselect_base_ids(vector_ranked: list, base_limit: int, lexical_reserve: i
     return selected
 
 
+def _preselect_base_ids_by_file(
+    vector_ranked: list, base_limit: int, lexical_reserve: int, per_file: int, count_files: bool
+) -> set[int]:
+    """Pick candidates for full scoring by file: files in the order of their best piece's similarity, up to
+    `per_file` pieces of each, until `base_limit` is used. The budget counts rows, or with `count_files` files.
+
+    _preselect_base_ids counts rows: a file cut into many pieces filled several of the slots, so the candidates
+    covered few files and, after the per-file limit, the final list was short. A file is its source path, as for
+    RETRIEVAL_MAX_SAME_SOURCE_PATH. As there, the last slots (at most a quarter) go to the strongest lexical
+    matches not chosen yet, here with the same per-file limit. Ties: lexical rank, quality, then the lower id.
+    """
+    if base_limit <= 0:
+        return set()
+    per_file = max(1, per_file)
+    ordered = sorted(
+        vector_ranked,
+        key=lambda chunk: (
+            -float(getattr(chunk, "vector_similarity", 0.0) or 0.0),
+            -float(getattr(chunk, "lexical_rank", 0.0) or 0.0),
+            -float(getattr(chunk, "quality_score", 0.0) or 0.0),
+            int(chunk.id),
+        ),
+    )
+    def file_of(chunk) -> str:  # a row without a path is a file of its own, as the per-file limit leaves it alone
+        return str(getattr(chunk, "source_path", "") or "") or f"#{int(chunk.id)}"
+
+    pieces: dict[str, list] = {}
+    for chunk in ordered:
+        pieces.setdefault(file_of(chunk), []).append(chunk)
+
+    reserve = min(base_limit // 4, lexical_reserve)
+    selected: set[int] = set()
+    admitted: dict[str, int] = {}
+    used = 0
+    for path, file_pieces in pieces.items():  # dicts keep insertion order: files by their best piece
+        if used >= base_limit - reserve:
+            break
+        take = file_pieces[:per_file]
+        if not count_files:
+            take = take[: base_limit - reserve - used]
+        selected.update(int(chunk.id) for chunk in take)
+        admitted[path] = len(take)
+        used += 1 if count_files else len(take)
+
+    lexical_leaders = sorted(
+        (chunk for chunk in ordered if int(chunk.id) not in selected),
+        key=lambda chunk: -float(getattr(chunk, "lexical_rank", 0.0) or 0.0),
+    )
+    used = 0
+    for chunk in lexical_leaders:
+        if used >= reserve:
+            break
+        path = file_of(chunk)
+        if admitted.get(path, 0) >= per_file:
+            continue
+        selected.add(int(chunk.id))
+        used += 1 if (not count_files or path not in admitted) else 0
+        admitted[path] = admitted.get(path, 0) + 1
+    return selected
+
+
 def _question_standard_hints(question: str) -> set[str]:
     """Extract standards explicitly referenced in the user question."""
     lower_question = question.lower()
@@ -2106,6 +2167,9 @@ def _retrieve_chunks_once(
     retrieval_scoring_candidate_cap = max(12, int(getattr(settings, "RETRIEVAL_SCORING_CANDIDATE_CAP", 40)))
     graph_preselect_multiplier = max(1, int(getattr(settings, "RETRIEVAL_GRAPH_PRESELECT_MULTIPLIER", 2)))
     lexical_preselect_reserve = max(0, int(getattr(settings, "RETRIEVAL_LEXICAL_PRESELECT_RESERVE", 8)))
+    preselect_per_file = max(0, int(getattr(settings, "RETRIEVAL_PRESELECT_PIECES_PER_FILE", 2) or 0))
+    preselect_count_files = str(getattr(settings, "RETRIEVAL_PRESELECT_BUDGET", "files") or "files").lower() == "files"
+    preselect_row_range = bool(getattr(settings, "RETRIEVAL_PRESELECT_ROW_RANGE", False))
     source_path_cap = max(1, int(getattr(settings, "RETRIEVAL_MAX_SAME_SOURCE_PATH", 1)))
     mmr_lambda = float(getattr(settings, "RETRIEVAL_MMR_LAMBDA", 0.92))
     mmr_lambda = max(0.0, min(1.0, mmr_lambda))
@@ -2471,6 +2535,8 @@ def _retrieve_chunks_once(
         probe("pool", chunk_iterable)
     stage_start = time.perf_counter()
     selected_graph_ids: set[int] = set()
+    # The rows the vector score is scaled over; None: the rows scored (see RETRIEVAL_PRESELECT_ROW_RANGE).
+    range_chunks: list | None = None
     if len(chunk_iterable) > retrieval_scoring_candidate_cap:
         graph_preselect_limit = min(
             len(graph_candidate_ids),
@@ -2500,7 +2566,20 @@ def _retrieve_chunks_once(
         )
 
         base_limit = max(0, retrieval_scoring_candidate_cap - len(selected_graph_ids) - len(definition_ids))
-        selected_base_ids = _preselect_base_ids(base_candidates, base_limit, lexical_preselect_reserve)
+        if preselect_per_file:
+            selected_base_ids = _preselect_base_ids_by_file(
+                base_candidates, base_limit, lexical_preselect_reserve, preselect_per_file, preselect_count_files
+            )
+            if preselect_row_range:
+                # The range the preselection by row would scale over: its rows, from the same pool.
+                by_row = _preselect_base_ids(base_candidates, base_limit, lexical_preselect_reserve)
+                range_chunks = [
+                    chunk
+                    for chunk in chunk_iterable
+                    if int(chunk.id) in by_row or int(chunk.id) in selected_graph_ids or int(chunk.id) in definition_ids
+                ]
+        else:
+            selected_base_ids = _preselect_base_ids(base_candidates, base_limit, lexical_preselect_reserve)
 
         chunk_iterable = [
             chunk
@@ -2522,7 +2601,7 @@ def _retrieve_chunks_once(
     vector_range = None
     if semantic_enabled():
         raw_vectors = []
-        for chunk in chunk_iterable:
+        for chunk in chunk_iterable if range_chunks is None else range_chunks:
             similarity = getattr(chunk, "vector_similarity", None)
             if similarity is None and chunk.embedding_vector is not None and len(chunk.embedding_vector):
                 similarity = cosine_similarity(query_embedding, chunk.embedding_vector)
@@ -2879,6 +2958,9 @@ def _retrieve_chunks_once(
         "semanticAlignmentScore": round(sum(vector_scores_trimmed) / len(vector_scores_trimmed), 4) if vector_scores_trimmed else 0.0,
         "retrievalSourcePathCap": source_path_cap,
         "retrievalScoringCandidateCap": retrieval_scoring_candidate_cap,
+        "retrievalPreselectPiecesPerFile": preselect_per_file,
+        "retrievalPreselectBudget": "files" if preselect_count_files else "rows",
+        "retrievalPreselectRowRange": bool(preselect_per_file and preselect_row_range),
         "retrievalGraphPreselectMultiplier": graph_preselect_multiplier,
         "retrievalGraphPreselected": len(selected_graph_ids),
         "retrievalDiversityEnabled": retrieval_diversity_enabled,
