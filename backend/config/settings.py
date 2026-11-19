@@ -144,7 +144,7 @@ env = environ.Env(
     GRAPH_EXPANSION_MAX_CONCEPTS=(int, 56),
     GRAPH_EXPANSION_MAX_CANDIDATE_CHUNKS=(int, 36),
     RETRIEVAL_DIVERSITY_ENABLED=(bool, True),
-    RETRIEVAL_MAX_SAME_SOURCE_PATH=(int, 2),
+    RETRIEVAL_MAX_SAME_SOURCE_PATH=(int, 1),
     # The index is cut with the prepared cut (services/prepared_cut.py): passages are read with their unit around
     # them (services/read_large.py) and limits meant for files count files, not pieces. Off: as before.
     RETRIEVAL_PREPARED_INDEX=(bool, False),
