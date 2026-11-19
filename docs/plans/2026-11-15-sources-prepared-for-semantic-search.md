@@ -2026,3 +2026,89 @@ its probe, reference against probe, on the same question).
 - Answers with model calls were not measured.
 - The vector range follows whatever low-similarity rows enter scoring. It is a lever of its own: it explains part
   of this step's gains and of its losses.
+
+### Preselection by file, second step (2026-11-19, dev database `napcore_helpdesk` and copy `napcore_helpdesk_s6pre`, read only, main at 3eac565)
+
+The first step on this idea failed its gate (entry above), and that record stands. I set a second gate after it,
+with two variants. One of them (two pieces per file, the budget in files) was picked after seeing the first step's
+numbers. So only runs made for this step count, every number below is fresh, and a failure here would have ended the
+idea. All runs on dev with models off and GraphDB on, the per-file limit 1, hit@10 of the 149 benchmark questions
+(identical in baseline and graph mode in every run); MRR@10 is graph mode. Every benchmark run: 62 GraphDB calls,
+the known 7 HTTP 400 (a malformed fallback query, fixed separately and not part of this comparison), 0 timeouts; the
+Docker VM had 3.9–4.0 GB available before and after each.
+
+**The grid** (fixed with the gate, before the runs).
+- V1: two pieces per file, the budget counted in files: the first step's "K 2, budget in files", unchanged.
+- V2: the same selection, with the vector score scaled over today's range. Within the same call the gateway also
+  computes the rows the preselection by row would keep (the same pool, the same graph and definition rows). It takes
+  the lowest and highest similarity over those rows, with the same rule per row as today. The rows scored are V1's;
+  the scale is today's, not clipped. So a row less similar than today's lowest gets a vector part below 0, on today's
+  scale extended.
+- Why that isolates the range: with today's selection this definition gives today's range by construction. So V1
+  against V2 is the range effect, and V2 against the reference is the selection effect. Nothing in it names a kind of
+  document, a standard, an element or a question. It is behind its own setting, `RETRIEVAL_PRESELECT_ROW_RANGE`.
+- Selection rule: among variants that pass the gate, the highest hit@10 on the prepared cut (both runs agreeing),
+  then MRR@10, then V2.
+
+**The runs** (measured; reference `p545/after2`, which today's code path reproduced in this step with 0 rank
+changes, run from the branch with the setting at 0).
+
+| run | hit@10 | MRR@10 | q017 / q049 / q056 / q082 / q088 | q077 / q090 / q147 |
+|---|---|---|---|---|
+| reference | 130 | 0.6001 | 12 / 11 / 11 / – / – | 9 / 9 / 10 |
+| V1, run 1 and run 2 (identical, 0 rank changes) | 132 | 0.6221 | 10 / 1 / 3 / 16 / 9 | 12 / 15 / 20 |
+| V2, run 1 and run 2 (identical, 0 rank changes) | 132 | 0.6082 | 10 / 9 / 9 / 18 / 12 | 11 / 16 / 10 |
+
+- V1 against the reference: lost from the top 10 q077 (9th → 12th), q090 (9th → 15th), q147 (10th → 20th); gained
+  q017 (12th → 10th), q049 (11th → 1st), q056 (11th → 3rd), q068 (none → 4th), q088 (none → 9th). V1 reproduces
+  the first step's run of the same variant with 0 rank changes.
+- V2 against the reference: lost q077 (9th → 11th) and q090 (9th → 16th); gained q017 (12th → 10th), q049 (11th →
+  9th), q056 (11th → 9th), q068 (none → 7th).
+- **Range or selection** (measured, V1 against V2 on the same selection). Choosing by file carries the hit@10 gain:
+  V2 alone is at 132, with q017, q049 and q056 in the top 10 and q068 gained. The wider range of V1 carries most of
+  the MRR gain (0.6082 → 0.6221) and the top ranks of q049 (9th → 1st) and q056 (9th → 3rd). It brings q088 into the
+  top 10 (12th → 9th) and costs q147 (10th → 20th). This confirms what the first step's re-scoring suggested about
+  q049, q056 and q147, now by runs.
+- Selected: **V1**. It ties V2 on hit@10 (132 in both runs of each) and has the higher MRR@10.
+
+**The gate** (fixed before the runs; all lines for the selected variant).
+1. hit@10 at least 132 in both runs, MRR@10 not below 0.6001: **met** (132 and 132; 0.6221).
+2. q077, q090 and q147 each at rank 20 or better, and at most one question of the reference's top 10 below rank 20:
+   **met** (12th, 15th, 20th; none below 20). q147 is exactly at the line.
+3. At least 3 of q017, q049, q056, q082, q088 in the top 10: **met** (4: q017, q049, q056, q088; q082 16th).
+4. Old cut (`_s6pre`, old settings) not under 132: **met** (134; against this morning's 133 q068 gained, none lost).
+5. Answer-source questions (stage 1, no model call; 0 model calls counted) not under 40 of 57 in either run: **met**
+   (40 and 40, the same set). Against this morning's 40 on the prepared cut: b22 and b26 found only now, b01 and
+   b16 only then.
+6. Median retrieval time per question not more than 0.3 s above the reference made in the same hour: **met**. Graph
+   mode: 304 ms against 293 ms, 90th percentile 6.36 s against 6.15 s; baseline mode 306 ms against 298 ms. The pair
+   was run back to back, 14:35–14:47 local time, after another task on the dev stack had finished. Timings from the
+   grid runs are not used: that task ran a benchmark on dev during them.
+7. Questions with fewer than 10 final entries do not rise: **met** (38 → 1; mean final list length 12.7 → 19.4;
+   rows scored per question 32.0 → 40.1 on average; all 149 questions traced, both sides counted the same way).
+8. CI green, including the retrieval benchmark against the existing baseline with no baseline or threshold change:
+   **met** on PR #563 (measured there). The retrieval benchmark ran with the new defaults on CI's old-cut hash index
+   and passed against the unchanged baseline. hit@10 rose: 0.517 → 0.537 (baseline mode), 0.517 → 0.544 (graph).
+   MRR@10 fell within the allowed 0.03: 0.270 → 0.261 and 0.284 → 0.272. I changed no baseline and no threshold.
+   The other CI checks passed too.
+
+**What changed.** `retrieval_gateway._preselect_base_ids_by_file`, used at the preselection for scoring when
+`RETRIEVAL_PRESELECT_PIECES_PER_FILE` is above 0. New settings: `RETRIEVAL_PRESELECT_PIECES_PER_FILE` (default 2;
+0 restores the preselection by row without a deploy), `RETRIEVAL_PRESELECT_BUDGET` (default `files`) and
+`RETRIEVAL_PRESELECT_ROW_RANGE` (default False, V2 when True). They are declared and documented like their
+neighbours. 11 unit tests: files by their best piece, K, both budgets, a file with fewer than K pieces, ties, the
+reserve, rows without a path, the setting off equal to the preselection by row on a constructed pool, and V2's range
+giving the scores of the preselection by row. The full backend suite passed, run as CI runs it, without a `.env`
+and with models off (1,204 tests, 9 skipped).
+
+**Believed, not checked.**
+- That prod behaves like dev here. Prod has the same cut and settings (step 6 entry), and its
+  `RETRIEVAL_SCORING_CANDIDATE_CAP` is believed to be the default 32 (not read on prod).
+- That answers improve with longer source lists. Answers with model calls were not measured. Lists now have up to
+  20 entries where they had 12.7 on average, so an answer is given more passages.
+
+**Open.**
+- (b), the higher similarity of example pieces, and q082 with it (16th).
+- q147 sits at rank 20, at the edge of line 2.
+- The row cap stays as it is.
+- The answers with model calls, and prod after a deploy.
