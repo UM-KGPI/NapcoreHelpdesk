@@ -1,0 +1,10 @@
+Running benchmark: 3 questions, top_k=5
+  mode: both (baseline + graph-RAG)
+
+=== Benchmark summary ===
+Questions run: 3
+Baseline  hit@10=1.000 mrr@10=0.208 latency=0.0ms
+Graph-RAG hit@10=1.000 mrr@10=0.375 latency=0.0ms
+Delta     hit@10=+0.000 mrr@10=+0.167 latency_overhead=+0ms
+          improved=0 regressed=0
+Report written: <TMP>/report.json
