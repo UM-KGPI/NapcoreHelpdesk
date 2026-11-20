@@ -98,7 +98,9 @@ class PlanTests(SimpleTestCase):
 
         self.assertIn("append to graph=https://napcore.eu/graph/standards/netex", out)
         self.assertNotIn("delete graph=", out)
-        self.assertIn("none (only --replace deletes them)", out)
+        self.assertIn("listed and deleted only with --replace", out)
+        for graph in RETIRED_GRAPH_URIS:
+            self.assertIn(f"graph={graph} (current count unavailable) not deleted in append mode", out)
 
     def test_current_triple_counts_from_graphdb_are_shown_when_the_query_answers(self):
         out, query = _run("--replace", counts=_counts({STANDARD_GRAPHS[1]: 27130, RETIRED_GRAPH_URIS[0]: 5}))

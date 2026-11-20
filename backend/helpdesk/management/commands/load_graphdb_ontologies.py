@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from helpdesk.services.graphdb_client import (
+    RETIRED_GRAPH_URIS,
     execute_sparql_query,
     load_default_ontology_graphs,
     plan_default_ontology_graphs,
@@ -110,7 +111,13 @@ class Command(BaseCommand):
                 now = f"{counts.get(graph_uri, 0)} triples now" if counts is not None else "current count unavailable"
                 self.stdout.write(f"  delete graph={graph_uri} ({now})")
         else:
-            self.stdout.write("retired graphs to delete: none (only --replace deletes them)")
+            self.stdout.write(
+                "retired graphs are listed and deleted only with --replace; "
+                "this plan appends, so none is deleted (every deploy deletes them anyway, see retire_graphdb_graphs):"
+            )
+            for graph_uri in RETIRED_GRAPH_URIS:
+                now = f"{counts.get(graph_uri, 0)} triples now" if counts is not None else "current count unavailable"
+                self.stdout.write(f"  graph={graph_uri} ({now}) not deleted in append mode")
 
     def handle(self, *args, **options):
         apply_changes = bool(options.get("apply"))
