@@ -338,7 +338,7 @@ Then load the ontology graphs. The command is a dry run until `--apply` is given
 
 ```bash
 docker compose -f docker-compose.prod.yml exec -T backend \
-  python manage.py load_graphdb_ontologies --replace  # dry run: prints the plan only
+  python manage.py load_graphdb_ontologies --replace  # dry run: prints the plan only, with --replace
 
 docker compose -f docker-compose.prod.yml exec -T -e GRAPHDB_TIMEOUT_SECONDS=1800 backend \
   python manage.py load_graphdb_ontologies --apply --replace
@@ -348,7 +348,10 @@ The dry run prints the plan that `--apply` would execute (it is built by the sam
 file it is loaded from, that file's size and triple count (counted locally with `rdflib`, which the backend image
 installs, so it takes several seconds), whether the graph is replaced or appended to,
 the triples GraphDB holds in it now (one query; "current count unavailable" if GraphDB cannot answer), and, with
-`--replace`, each retired graph that would be deleted. Read it before approving `--apply`.
+`--replace`, each retired graph that would be deleted. Read it before approving `--apply`. The dry run lists the
+graphs to delete only when it is given `--replace`; without it the plan says so and shows the retired graphs as
+"not deleted in append mode". Loading itself is quick: the last three loads (dev and prod, 2026-11-19) took 13 to
+17 seconds. Do not re-run a command that seems to hang; read its output and the GraphDB log first.
 
 The long timeout is for this command only: the compose default of 30 seconds is meant for answering
 questions, not for replacing a large graph. Do not add `--include-artifact-rules` unless the
@@ -451,6 +454,13 @@ executes `scripts/deploy.sh`, which:
 - Restarts the services (`up -d --remove-orphans`). The backend container applies migrations before it starts serving
 - Waits until `/api/v1/health/ready` answers (the backend can reach its database), then confirms migrations (`manage.py migrate --noinput`)
 - Switches the maintenance page off again. This also happens if the deploy fails or is cancelled, so the site is never left in maintenance
+- Deletes the GraphDB graphs on the retired list (`RETIRED_GRAPH_URIS` in `backend/helpdesk/services/graphdb_client.py`) with
+  `manage.py retire_graphdb_graphs`, on every deploy, and fails the deploy if NITS statements are left. The deploy log shows it
+  as its own section: one line per graph deleted with its triple count, then a `RETIRE-GRAPHS:` summary line. If graphs
+  with triples were deleted, the script restarts `backend` and `celery-worker` so that they read GraphDB again.
+  **Adding a graph to the retired list in a pull request therefore deletes that graph at the next deploy.** Take the
+  GraphDB backup of 12.0 before such a deploy; the deploy script takes none. `retire_graphdb_graphs --dry-run` prints
+  what it would delete and deletes nothing.
 - Prunes dangling images
 
 ---
@@ -739,11 +749,13 @@ Note whether the graph list includes `artifact-rules/*` graphs; stage 12.2 leave
 Run **Actions, Deploy to Production** (section 9). Check that the workflow is green, that
 `http://localhost:8000/api/v1/health/live` (from inside the backend container, as `deploy.sh` does)
 reports the new version and a build reference that matches `git rev-parse --short HEAD`, and ask one
-real question. Roll back by deploying the previous commit through GitHub, never by editing the server.
+real question. Read the "Retiring removed GraphDB graphs" section of the log: every deploy deletes the graphs on the
+retired list, so if the release added graphs to that list they are gone after this step (take the 12.0 backup before
+such a deploy). The `RETIRE-GRAPHS:` line gives how many graphs and triples it deleted. Roll back by deploying the previous commit through GitHub, never by editing the server.
 
 ### 12.2 Ontology graphs
 
-Run the dry run from 7.1 first and read its plan, then the `--apply` command, then repeat the count query. The expected triples are those of the
+Run the dry run from 7.1 first (with `--replace`: only then does it list the graphs it would delete) and read its plan, then the `--apply` command, then repeat the count query. The expected triples are those of the
 committed files. The dry run from 7.1 prints them; to compute one by hand, on any machine with rdflib:
 
 ```python
@@ -751,9 +763,9 @@ import rdflib
 g = rdflib.Graph(); g.parse("docs/ontology/standards/netex.ttl", format="turtle"); print(len(g))
 ```
 
-The NeTEx figure (27,129 for the file committed in #147, generated from upstream `dc6f162` with the class
-hierarchy of #95) equals the count GraphDB reports for it. Do this at a quiet time and do not re-run a command
-that seems to hang: read its output and the GraphDB log first. The backup from 12.0 restores the previous state.
+The NeTEx figure (27,130 for the file regenerated in #545; it was 27,129 for the file committed in #147, generated
+from upstream `dc6f162` with the class hierarchy of #95) equals the count GraphDB reports for it. Do this at a quiet time. The last three loads (dev and prod, 2026-11-19) took 13 to 17 seconds; do not re-run a
+command that seems to hang: read its output and the GraphDB log first. The backup from 12.0 restores the previous state.
 
 Then restart the backend and the worker. They read the concepts and labels from GraphDB once, when a process
 starts, so until they restart they keep answering with the graphs loaded before:

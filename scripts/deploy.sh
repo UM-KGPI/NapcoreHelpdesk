@@ -100,7 +100,8 @@ ${COMPOSE} build --pull
 # failed deploy never leaves the site stuck in maintenance.
 MAINTENANCE_FLAG="${REPO_DIR}/maintenance/on"
 mkdir -p "$(dirname "${MAINTENANCE_FLAG}")"
-trap 'rm -f "${MAINTENANCE_FLAG}"' EXIT
+RETIRE_LOG="$(mktemp)"
+trap 'rm -f "${MAINTENANCE_FLAG}" "${RETIRE_LOG}"' EXIT
 echo "==> Maintenance page on"
 touch "${MAINTENANCE_FLAG}"
 
@@ -123,13 +124,30 @@ ${COMPOSE} exec -T backend python manage.py warm_retrieval || echo "WARNING: ret
 echo "==> Maintenance page off"
 rm -f "${MAINTENANCE_FLAG}"
 
-# EU legislation (issue #91) is indexed from docs/regulations/, which the pull above updates. Acts whose
-# file and parser are unchanged are skipped, so this is quick on most deploys. Runs with the site up.
+# Every deploy deletes the graphs on the retired list (RETIRED_GRAPH_URIS in graphdb_client.py), so adding a graph
+# to that list in a pull request deletes it at the next deploy (docs/production-deployment.md, sections 9 and 12.1).
 # The NITS upper ontology was removed on 2026-10-20 (#83); prod must hold none of its data. This deletes the
 # retired graphs (a no-op once they are gone) and fails the deploy if any NITS statement is left in GraphDB.
+# The command prints each graph it deletes with its triple count and a summary line starting RETIRE-GRAPHS:. Its
+# output is shown here in full (tee) and is also read below. The backend and the worker read the concepts and labels
+# from GraphDB once, when they start, and have already started by now, so when graphs with triples were deleted
+# they are restarted right here. This is before the detached indexing job below on purpose: that job runs inside
+# the backend container and a restart would kill it. The Celery check at the end then covers the restarted state.
+# A failed retire step fails the deploy (pipefail).
 echo "==> Retiring removed GraphDB graphs (NITS)"
-${COMPOSE} exec -T backend python manage.py retire_graphdb_graphs
+${COMPOSE} exec -T backend python manage.py retire_graphdb_graphs | tee "${RETIRE_LOG}"
+echo "==> Retire step done"
+if grep -Eq '^RETIRE-GRAPHS: deleted [1-9][0-9]* graphs' "${RETIRE_LOG}"; then
+  echo "==> Graphs with triples were deleted: restarting backend and celery-worker so that they read GraphDB again"
+  ${COMPOSE} restart backend celery-worker
+  timeout 90 bash -c "until ${COMPOSE} exec -T backend curl -sf http://localhost:8000/api/v1/health/ready; do sleep 3; done"
+elif grep -q '^RETIRE-GRAPHS: .*count unavailable' "${RETIRE_LOG}"; then
+  echo "WARNING: the retire step could not count the triples, so it is not known whether graphs were deleted." >&2
+  echo "WARNING: if they were, restart backend and celery-worker by hand (docs/production-deployment.md, section 12.2)." >&2
+fi
 
+# EU legislation (issue #91) is indexed from docs/regulations/, which the pull above updates. Acts whose
+# file and parser are unchanged are skipped, so this is quick on most deploys. Runs with the site up.
 echo "==> Indexing EU legislation"
 ${COMPOSE} exec -T backend python manage.py index_regulations
 
