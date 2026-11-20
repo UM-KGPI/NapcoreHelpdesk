@@ -86,6 +86,12 @@ from helpdesk.services.netex_example_generator import (
 from helpdesk.services.concept_presence import presence_evidence, question_kind
 from helpdesk.services import request_timing
 from helpdesk.services.schema_structure import definition_chunk, schema_structure_for
+from helpdesk.services.answer_retrieval_defaults import (
+    ANSWER_MAX_CITATIONS,
+    ANSWER_RETRIEVAL_MIN_SCORE,
+    ANSWER_RETRIEVAL_TOP_K,
+    answer_min_evidence_results,
+)
 from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 from helpdesk.services.retrieval_event_logger import log_retrieval_events
 from helpdesk.services.rule_engine import evaluate_semantic_rules
@@ -185,9 +191,8 @@ def _parse_strength(semantic_query) -> tuple[int, bool]:
 
 
 def _min_evidence_results() -> int:
-    """As many evidence blocks as the answer prompt shows, so a lone chunk above the score threshold
-    does not leave the answer with one block (see retrieve_chunks_with_trace)."""
-    return max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 6)))
+    """The min_results the answer endpoints pass to retrieval (answer_retrieval_defaults)."""
+    return answer_min_evidence_results()
 
 
 # Words that make a question about law or obligation: only then is the "Legal context" line relevant.
@@ -1283,9 +1288,9 @@ class QuestionAnswerView(APIView):
         controller_profile = data.get("controllerProfile", generation_profile)
         allow_abstain = options.get("allowAbstain", True)
         faq_min_confidence = options.get("faqMinConfidence", 0.85)
-        max_citations = options.get("maxCitations", 5)
-        retrieval_top_k = options.get("retrievalTopK", 6)
-        retrieval_min_score = options.get("retrievalMinScore", 0.62)
+        max_citations = options.get("maxCitations", ANSWER_MAX_CITATIONS)
+        retrieval_top_k = options.get("retrievalTopK", ANSWER_RETRIEVAL_TOP_K)
+        retrieval_min_score = options.get("retrievalMinScore", ANSWER_RETRIEVAL_MIN_SCORE)
 
         mode = QuestionEvent.MODE_RAG
         confidence = 0.0
@@ -1980,9 +1985,9 @@ class QuestionAnswerStreamView(APIView):
         controller_profile = data.get("controllerProfile", generation_profile)
         allow_abstain = options.get("allowAbstain", True)
         faq_min_confidence = options.get("faqMinConfidence", 0.85)
-        max_citations = options.get("maxCitations", 5)
-        retrieval_top_k = options.get("retrievalTopK", 6)
-        retrieval_min_score = options.get("retrievalMinScore", 0.62)
+        max_citations = options.get("maxCitations", ANSWER_MAX_CITATIONS)
+        retrieval_top_k = options.get("retrievalTopK", ANSWER_RETRIEVAL_TOP_K)
+        retrieval_min_score = options.get("retrievalMinScore", ANSWER_RETRIEVAL_MIN_SCORE)
 
         mode = QuestionEvent.MODE_RAG
         confidence = 0.0

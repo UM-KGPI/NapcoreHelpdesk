@@ -9,10 +9,37 @@ import yaml
 from django.core.management.base import BaseCommand, CommandError
 
 from helpdesk.management.commands.benchmark_utils import DEFAULT_QUESTIONS_PATH
+from helpdesk.services import semantic_graph
+from helpdesk.services.answer_retrieval_defaults import (
+    ANSWER_RETRIEVAL_MIN_SCORE,
+    ANSWER_RETRIEVAL_TOP_K,
+    answer_min_evidence_results,
+)
 from helpdesk.services.question_parsing import parse_question_to_semantic_query, select_effective_scope
 from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 
 GATED_METRICS = ("hit_at_10", "mrr_at_10")
+
+# Every line the command prints about the conditions or the ontology starts with one of these, so a log can
+# be searched for them.
+INFO_PREFIX = "BENCH-CONDITIONS:"
+WARNING_PREFIX = "BENCH-WARNING:"
+DEFAULT_TOP_K = 20
+
+
+def ontology_state() -> dict:
+    """How many concepts the process holds in its alias table (what question concept extraction and the
+    passage boost read), and, when none, why."""
+    concepts = len(semantic_graph.GRAPH_CONCEPT_ALIASES)
+    reason = None
+    if concepts == 0:
+        if semantic_graph.SKIP_GRAPHDB_IMPORT:
+            reason = "NAPCORE_SKIP_GRAPHDB_IMPORT is set, so the ontology load returns an empty table"
+        elif not semantic_graph._env_truthy("GRAPHDB_ENABLED", default=False):
+            reason = "GRAPHDB_ENABLED is off, so the ontology load returns an empty table"
+        else:
+            reason = "GraphDB returned no concepts with labels"
+    return {"ontology_concepts": concepts, "ontology_empty": concepts == 0, "ontology_empty_reason": reason}
 
 
 def _hit_at_k(
@@ -53,21 +80,47 @@ def _run_question(
     top_k: int,
     graph_rag_enabled: bool,
     scope: list[str] | None,
+    app_conditions: dict | None = None,
 ) -> dict:
+    """app_conditions (min_score, min_results) switches to the answer endpoint's retrieval call: k is top_k
+    for every question, whatever the question's own threshold, and only the first k passages count."""
     expected_patterns: list[str] = question_dict.get("expected_source_patterns") or []
     min_hits: int = question_dict.get("min_hits", 1)
     q_threshold: int = question_dict.get("top_k_threshold", top_k)
     effective_k = max(top_k, q_threshold)
 
     start = time.time()
-    chunks, trace = retrieve_chunks_with_trace(
-        question=question_dict["question"],
-        top_k=effective_k,
-        min_score=0.0,
-        scope=scope,
-        graph_rag_enabled=graph_rag_enabled,
-    )
+    if app_conditions is None:
+        chunks, trace = retrieve_chunks_with_trace(
+            question=question_dict["question"],
+            top_k=effective_k,
+            min_score=0.0,
+            scope=scope,
+            graph_rag_enabled=graph_rag_enabled,
+        )
+    else:
+        chunks, trace = retrieve_chunks_with_trace(
+            question=question_dict["question"],
+            top_k=top_k,
+            min_score=app_conditions["min_score"],
+            scope=scope,
+            graph_rag_enabled=graph_rag_enabled,
+            min_results=app_conditions["min_results"],
+        )
+        chunks = chunks[:top_k]
     latency_ms = round((time.time() - start) * 1000, 1)
+
+    if app_conditions is not None:
+        return {
+            "hit_at_5": _hit_at_k(chunks, expected_patterns, 5, min_hits),
+            f"hit_at_{top_k}": _hit_at_k(chunks, expected_patterns, top_k, min_hits),
+            f"mrr_at_{top_k}": _mrr_at_k(chunks, expected_patterns, top_k),
+            "passages": len(chunks),
+            "latency_ms": latency_ms,
+            f"top_{top_k}_paths": [str(c.get("sourcePath") or "") for c in chunks],
+            "graph_expansion_source": trace.get("graphExpansionSource", "none"),
+            "graph_candidates_added": trace.get("graphCandidatesAdded", 0),
+        }
 
     return {
         "hit_at_5": _hit_at_k(chunks, expected_patterns, 5, min_hits),
@@ -131,8 +184,11 @@ class Command(BaseCommand):
         parser.add_argument(
             "--top-k",
             type=int,
-            default=20,
-            help="Default top-k for retrieval (per-question threshold can override).",
+            default=None,
+            help=(
+                f"Default top-k for retrieval (default {DEFAULT_TOP_K}; the per-question threshold can "
+                "raise it). Not accepted with --app-conditions, which uses the answer endpoint's k."
+            ),
         )
         parser.add_argument(
             "--scope",
@@ -147,6 +203,26 @@ class Command(BaseCommand):
                 "Search with the scope the answer endpoints choose for each question (question "
                 "parsing plus the ambiguity cut) instead of no scope. With GraphDB disabled the "
                 "scope comes from named standards and in-memory concepts only."
+            ),
+        )
+        parser.add_argument(
+            "--app-conditions",
+            action="store_true",
+            help=(
+                "Measure what the answer endpoint serves: a fixed k for every question (the endpoint's "
+                "retrievalTopK), its minimum score and its min_results, read from the same constants and "
+                "settings the endpoint reads. Reports hit@5, hit@k and MRR@k, and how many questions end "
+                "with fewer than k passages and with none. Refuses an empty ontology in graph mode unless "
+                "--acknowledge-empty-ontology-is-not-the-app is given. Cannot be combined with "
+                "--gate-against (the baseline is measured at the benchmark's own k)."
+            ),
+        )
+        parser.add_argument(
+            "--acknowledge-empty-ontology-is-not-the-app",
+            action="store_true",
+            help=(
+                "With --app-conditions: run graph mode although the ontology holds no concepts. The numbers "
+                "are then not the application's, and the report says so."
             ),
         )
         parser.add_argument(
@@ -194,7 +270,13 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         input_path = Path(options["input"]).expanduser().resolve()
         output_path = Path(options["output"]).expanduser().resolve()
-        top_k: int = options["top_k"]
+        app_conditions: bool = bool(options.get("app_conditions"))
+        acknowledged_empty: bool = bool(options.get("acknowledge_empty_ontology_is_not_the_app"))
+        if app_conditions and options["top_k"] is not None:
+            raise CommandError("--top-k cannot be combined with --app-conditions: k is the answer endpoint's.")
+        if acknowledged_empty and not app_conditions:
+            raise CommandError("--acknowledge-empty-ontology-is-not-the-app only applies with --app-conditions.")
+        top_k: int = ANSWER_RETRIEVAL_TOP_K if app_conditions else (DEFAULT_TOP_K if options["top_k"] is None else options["top_k"])
         scope: list[str] | None = options.get("scope") or None
         app_scope: bool = bool(options.get("app_scope"))
         filter_tags: list[str] | None = options.get("tags") or None
@@ -210,6 +292,46 @@ class Command(BaseCommand):
 
         if app_scope and scope:
             raise CommandError("--app-scope and --scope cannot be combined.")
+
+        if app_conditions and gate_path is not None:
+            raise CommandError(
+                "--gate-against cannot be combined with --app-conditions: the reference is measured at the "
+                "benchmark's own k and has no figure for the endpoint's."
+            )
+
+        # Conditions of this run, written into the report and printed first.
+        retrieval_args = (
+            {"min_score": ANSWER_RETRIEVAL_MIN_SCORE, "min_results": answer_min_evidence_results()}
+            if app_conditions
+            else None
+        )
+        graph_requested = not baseline_only
+        ontology = ontology_state()
+        warnings: list[str] = []
+        if graph_requested and ontology["ontology_empty"]:
+            warnings.append(
+                f"{WARNING_PREFIX} graph mode ran without ontology concepts: {ontology['ontology_empty_reason']}. "
+                "Question concepts and the passage boost are missing, so these graph figures are not the "
+                "application's."
+            )
+        if app_conditions and warnings and not acknowledged_empty:
+            raise CommandError(
+                warnings[0] + " --app-conditions measures the application's path and refuses to run this "
+                "way; load the ontology (GraphDB reachable, NAPCORE_SKIP_GRAPHDB_IMPORT unset), "
+                "or pass --acknowledge-empty-ontology-is-not-the-app."
+            )
+        conditions = {
+            "mode": "app-conditions" if app_conditions else "benchmark",
+            "fixed_k": top_k if app_conditions else None,
+            "k_floor": None if app_conditions else top_k,
+            "min_score": retrieval_args["min_score"] if app_conditions else 0.0,
+            "min_results": retrieval_args["min_results"] if app_conditions else 0,
+            "scope_mode": "app" if app_scope else ("explicit" if scope else "none"),
+            "graph_requested": graph_requested,
+            "empty_ontology_acknowledged": acknowledged_empty,
+            **ontology,
+            "warnings": warnings,
+        }
 
         if not input_path.exists():
             raise CommandError(f"Benchmark question file not found: {input_path}")
@@ -242,6 +364,23 @@ class Command(BaseCommand):
         else:
             self.stdout.write("  mode: both (baseline + graph-RAG)")
 
+        self.stdout.write(
+            f"{INFO_PREFIX} mode={conditions['mode']} "
+            + (
+                f"fixed_k={top_k}"
+                if app_conditions
+                else f"k=max({top_k}, the question's own threshold)"
+            )
+            + f" min_score={conditions['min_score']} min_results={conditions['min_results']} "
+            f"scope={conditions['scope_mode']} ontology_concepts={ontology['ontology_concepts']}"
+        )
+        for warning in warnings:
+            self.stdout.write(self.style.WARNING(warning))
+
+        # The metric the per-question lines and the improved/regressed counts use: hit@10 in the benchmark's
+        # own mode, hit@k in the endpoint's.
+        hit_k = top_k if app_conditions else 10
+        hit_key, mrr_key = f"hit_at_{hit_k}", f"mrr_at_{hit_k}"
         per_question_results = []
 
         for idx, q in enumerate(questions, start=1):
@@ -277,12 +416,13 @@ class Command(BaseCommand):
                     top_k=top_k,
                     graph_rag_enabled=False,
                     scope=question_scope,
+                    app_conditions=retrieval_args,
                 )
                 result_entry["baseline"] = baseline
                 if not quiet:
                     self.stdout.write(
-                        f"    baseline: hit@10={baseline['hit_at_10']} "
-                        f"mrr@10={baseline['mrr_at_10']:.3f} "
+                        f"    baseline: hit@{hit_k}={baseline[hit_key]} "
+                        f"mrr@{hit_k}={baseline[mrr_key]:.3f} "
                         f"latency={baseline['latency_ms']}ms"
                     )
 
@@ -292,12 +432,13 @@ class Command(BaseCommand):
                     top_k=top_k,
                     graph_rag_enabled=True,
                     scope=question_scope,
+                    app_conditions=retrieval_args,
                 )
                 result_entry["graph"] = graph
                 if not quiet:
                     self.stdout.write(
-                        f"    graph:    hit@10={graph['hit_at_10']} "
-                        f"mrr@10={graph['mrr_at_10']:.3f} "
+                        f"    graph:    hit@{hit_k}={graph[hit_key]} "
+                        f"mrr@{hit_k}={graph[mrr_key]:.3f} "
                         f"latency={graph['latency_ms']}ms "
                         f"expansion={graph['graph_expansion_source']}"
                     )
@@ -309,6 +450,16 @@ class Command(BaseCommand):
             mode_results = [r[mode_key] for r in per_question_results if mode_key in r]
             if not mode_results:
                 return {}
+            if app_conditions:
+                return {
+                    "hit_at_5": round(_aggregate(mode_results, "hit_at_5"), 4),
+                    hit_key: round(_aggregate(mode_results, hit_key), 4),
+                    mrr_key: round(_aggregate(mode_results, mrr_key), 4),
+                    f"hit_count_at_{hit_k}": sum(1 for r in mode_results if r[hit_key]),
+                    f"questions_with_fewer_than_{hit_k}_passages": sum(1 for r in mode_results if r["passages"] < hit_k),
+                    "questions_with_no_passages": sum(1 for r in mode_results if r["passages"] == 0),
+                    "mean_latency_ms": round(_aggregate(mode_results, "latency_ms"), 1),
+                }
             return {
                 "hit_at_5": round(_aggregate(mode_results, "hit_at_5"), 4),
                 "hit_at_10": round(_aggregate(mode_results, "hit_at_10"), 4),
@@ -333,20 +484,20 @@ class Command(BaseCommand):
                 for r in per_question_results
                 if "baseline" in r
                 and "graph" in r
-                and r["graph"]["hit_at_10"]
-                and not r["baseline"]["hit_at_10"]
+                and r["graph"][hit_key]
+                and not r["baseline"][hit_key]
             )
             questions_regressed = sum(
                 1
                 for r in per_question_results
                 if "baseline" in r
                 and "graph" in r
-                and r["baseline"]["hit_at_10"]
-                and not r["graph"]["hit_at_10"]
+                and r["baseline"][hit_key]
+                and not r["graph"][hit_key]
             )
             aggregate["delta"] = {
-                "hit_at_10_delta": round(g["hit_at_10"] - b["hit_at_10"], 4),
-                "mrr_at_10_delta": round(g["mrr_at_10"] - b["mrr_at_10"], 4),
+                f"{hit_key}_delta": round(g[hit_key] - b[hit_key], 4),
+                f"{mrr_key}_delta": round(g[mrr_key] - b[mrr_key], 4),
                 "latency_overhead_ms": round(g["mean_latency_ms"] - b["mean_latency_ms"], 1),
                 "questions_improved_by_graph": questions_improved,
                 "questions_regressed_by_graph": questions_regressed,
@@ -360,6 +511,7 @@ class Command(BaseCommand):
             "total_questions": len(questions),
             "aggregate": aggregate,
             "questions": per_question_results,
+            "conditions": conditions,
         }
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -371,28 +523,40 @@ class Command(BaseCommand):
         if "baseline" in aggregate:
             b = aggregate["baseline"]
             self.stdout.write(
-                f"Baseline  hit@10={b['hit_at_10']:.3f} "
-                f"mrr@10={b['mrr_at_10']:.3f} "
+                f"Baseline  hit@{hit_k}={b[hit_key]:.3f} "
+                f"mrr@{hit_k}={b[mrr_key]:.3f} "
                 f"latency={b['mean_latency_ms']}ms"
             )
         if "graph" in aggregate:
             g = aggregate["graph"]
             self.stdout.write(
-                f"Graph-RAG hit@10={g['hit_at_10']:.3f} "
-                f"mrr@10={g['mrr_at_10']:.3f} "
+                f"Graph-RAG hit@{hit_k}={g[hit_key]:.3f} "
+                f"mrr@{hit_k}={g[mrr_key]:.3f} "
                 f"latency={g['mean_latency_ms']}ms"
             )
+        if app_conditions:
+            for mode_name in ("baseline", "graph"):
+                if mode_name in aggregate:
+                    a = aggregate[mode_name]
+                    self.stdout.write(
+                        f"{INFO_PREFIX} {mode_name} hit@5={a['hit_at_5']:.3f} "
+                        f"hit_count@{hit_k}={a[f'hit_count_at_{hit_k}']} of {len(questions)} "
+                        f"fewer_than_{hit_k}_passages={a[f'questions_with_fewer_than_{hit_k}_passages']} "
+                        f"no_passages={a['questions_with_no_passages']}"
+                    )
         if "delta" in aggregate:
             d = aggregate["delta"]
             self.stdout.write(
-                f"Delta     hit@10={d['hit_at_10_delta']:+.3f} "
-                f"mrr@10={d['mrr_at_10_delta']:+.3f} "
+                f"Delta     hit@{hit_k}={d[f'{hit_key}_delta']:+.3f} "
+                f"mrr@{hit_k}={d[f'{mrr_key}_delta']:+.3f} "
                 f"latency_overhead={d['latency_overhead_ms']:+.0f}ms"
             )
             self.stdout.write(
                 f"          improved={d['questions_improved_by_graph']} "
                 f"regressed={d['questions_regressed_by_graph']}"
             )
+        for warning in warnings:
+            self.stdout.write(self.style.WARNING(warning))
         self.stdout.write(f"Report written: {output_path}")
 
         if gate_path is not None:

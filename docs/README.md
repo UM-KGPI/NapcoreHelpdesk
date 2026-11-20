@@ -14,3 +14,4 @@ This public repository keeps only essential documentation.
 8. [Semantic store](semantic-store.md)
 9. [LLM usage](llm-usage.md)
 10. [Ontology enrichment](ontology-enrichment.md)
+11. [Retrieval benchmark](retrieval-benchmark.md)

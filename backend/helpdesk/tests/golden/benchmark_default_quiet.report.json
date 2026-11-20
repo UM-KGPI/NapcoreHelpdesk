@@ -1,0 +1,153 @@
+{
+  "benchmark_input": "<TMP>/questions.yaml",
+  "top_k": 5,
+  "scope": null,
+  "app_scope": false,
+  "total_questions": 3,
+  "aggregate": {
+    "baseline": {
+      "hit_at_5": 0.6667,
+      "hit_at_10": 1.0,
+      "hit_at_20": 1.0,
+      "mrr_at_10": 0.2083,
+      "mrr_at_20": 0.2083,
+      "mean_latency_ms": 0.0
+    },
+    "graph": {
+      "hit_at_5": 0.6667,
+      "hit_at_10": 1.0,
+      "hit_at_20": 1.0,
+      "mrr_at_10": 0.375,
+      "mrr_at_20": 0.375,
+      "mean_latency_ms": 0.0
+    },
+    "delta": {
+      "hit_at_10_delta": 0.0,
+      "mrr_at_10_delta": 0.1667,
+      "latency_overhead_ms": 0.0,
+      "questions_improved_by_graph": 0,
+      "questions_regressed_by_graph": 0
+    }
+  },
+  "questions": [
+    {
+      "id": "f001",
+      "question": "first question",
+      "intent": "explanation",
+      "tags": [
+        "a"
+      ],
+      "expected_source_patterns": [
+        "wanted"
+      ],
+      "min_hits": 1,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.5,
+        "mrr_at_20": 0.5,
+        "latency_ms": 0.0,
+        "top_5_paths": [
+          "x/a.xml",
+          "x/wanted.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 1.0,
+        "mrr_at_20": 1.0,
+        "latency_ms": 0.0,
+        "top_5_paths": [
+          "x/wanted.xml",
+          "x/a.xml"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 2
+      }
+    },
+    {
+      "id": "f002",
+      "question": "second question",
+      "intent": "example",
+      "tags": [
+        "b"
+      ],
+      "expected_source_patterns": [
+        "wanted",
+        "other"
+      ],
+      "min_hits": 2,
+      "baseline": {
+        "hit_at_5": false,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.125,
+        "mrr_at_20": 0.125,
+        "latency_ms": 0.0,
+        "top_5_paths": [
+          "x/f0.xml",
+          "x/f1.xml",
+          "x/f2.xml",
+          "x/f3.xml",
+          "x/f4.xml"
+        ],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": false,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.125,
+        "mrr_at_20": 0.125,
+        "latency_ms": 0.0,
+        "top_5_paths": [
+          "x/f0.xml",
+          "x/f1.xml",
+          "x/f2.xml",
+          "x/f3.xml",
+          "x/f4.xml"
+        ],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 2
+      }
+    },
+    {
+      "id": "f003",
+      "question": "third question",
+      "intent": "abstention",
+      "tags": [
+        "c"
+      ],
+      "expected_source_patterns": [],
+      "min_hits": 0,
+      "baseline": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 0.0,
+        "top_5_paths": [],
+        "graph_expansion_source": "none",
+        "graph_candidates_added": 0
+      },
+      "graph": {
+        "hit_at_5": true,
+        "hit_at_10": true,
+        "hit_at_20": true,
+        "mrr_at_10": 0.0,
+        "mrr_at_20": 0.0,
+        "latency_ms": 0.0,
+        "top_5_paths": [],
+        "graph_expansion_source": "memory",
+        "graph_candidates_added": 2
+      }
+    }
+  ]
+}
