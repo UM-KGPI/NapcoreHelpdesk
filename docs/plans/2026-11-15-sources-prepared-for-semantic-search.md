@@ -2112,3 +2112,117 @@ and with models off (1,204 tests, 9 skipped).
 - q147 sits at rank 20, at the edge of line 2.
 - The row cap stays as it is.
 - The answers with model calls, and prod after a deploy.
+
+### The application's path, and no concept boost from a stop word or a loose label match (2026-11-20/21, dev database `napcore_helpdesk` and copy `napcore_helpdesk_s6pre`, read only, main at cad6550)
+
+**What I found on 2026-11-20 and had not recorded** (measured; files in `.claude/skills/measure-on-copy/runs/x1/`
+and `runs/y1/`, which agree with the figures below).
+- Every benchmark run until then ran with the ontology's concept table empty: the measuring environment set
+  `NAPCORE_SKIP_GRAPHDB_IMPORT`, so question concepts and the concept boost were missing. It judged the top 10 of
+  20 passages. The application has 4,616 concepts and serves 6 passages (k 6, minimum score 0.62, `min_results` 6).
+- The four conditions, prepared cut, graph mode: ontology empty, 20 passages: hit@10 132; ontology loaded, 20
+  passages: hit@10 136; ontology empty, 6 passages: hit@6 124; ontology loaded, 6 passages: hit@6 129.
+- Six runs of the live choices on the application's path (ontology loaded, hit@6 of 149, MRR@6, right source
+  first): prod's configuration today 129, 0.680, 91 first; preselection by row 129, 0.684; per-file limit 2: 127,
+  0.673; both old (by row, limit 2) 129, 0.696; the old cut with today's settings 133, 0.650, 82 first; the old cut
+  with all old settings 130, 0.657. Reading: the per-file limit 1 is confirmed; preselection by file is neutral on
+  this path; the re-cut is a trade: the right source first more often (91 against 82), four fewer questions among
+  the 6 (129 against 133).
+- The DATEX II Accident miss ("How do I describe a road accident with a closed lane in DATEX II, and which classes
+  and attributes carry the location and the lane restriction?"): the class definition is row 8 of the vector pool;
+  with no concepts it ranks 7th, one place outside the 6; with concepts it ranks 13th. Seven passages get +0.20 for
+  naming a concept the question "names" through ordinary words: "with" (transmodel:with), "classes ...
+  attributes" (transmodel:CLASS_ATTRIBUTE), "location" (netex:Location, transmodel:LOCATION).
+
+**Correction of a count.** The day's tally (`ordinary.py`) gave 44 stop-word matches in the 149 questions. It
+counted one alias per concept, the shortest, and so missed the alias "is for". Counting every alias that matches
+(`runs/z1/cls.py`), there are 52 stop-word matches (for 20, with 10, between 9, is for 8, from 3, when 2) in 38
+questions. The other two counts stand: 156 one-word matches not rare in the scope, 19 loose matches.
+
+**Diagnosis per class of match** (measured; in-process counterfactuals on main's code, no tracked code edited,
+`runs/z1/cfhooks.py`; the command's `--app-conditions --app-scope` with the ontology loaded; reference 129, MRR@6
+0.6799, reproduced). A concept counts in a class when every alias it matched is of that class. Two forms: A, the
+concept gives no boost, no graph expansion and no graph candidates, but keeps its definitions and element lookups;
+B, the concept is removed entirely.
+
+| class suppressed | form A | form B |
+|---|---|---|
+| stop word (alias with no text-search term) | 130, 0.6796; q146 gained (– → 6) | 130, 0.6799; q146 gained (– → 5) |
+| loose (several-word label reached only through plurals or prefixed words) | 129, 0.6772; none gained or lost | 128, 0.6704; q049 lost (1st → –) |
+| common (one-word alias not rare in the scope) | 132, 0.6819 | 132, 0.6956 |
+
+- Stop words: suppressing them helps by one question in both forms. Loose: neutral in A, harmful in B (the
+  definitions of a loosely named class matter for q049). I chose form A.
+- Every common match in the 149 questions is the concept's own name (opra 66, siri 25, journey, vehicle, stop,
+  timing, location ...). The grid exempted own names before any number existed, so V3 (V2 plus common matches that
+  are not the concept's own name) suppresses exactly what V2 suppresses on every question measured. I did not run it;
+  by the selection rule it could not be chosen.
+- How the code knows each class at run time (read): a stop word is an alias whose `to_tsvector('english', ...)` is
+  empty (one query per question for aliases not yet seen, then cached); a loose match is one that only
+  `_alias_matches_question` makes, not `_alias_matches_text`; a common match is a one-word alias whose term is not
+  among the question's rare terms, which the gateway already computes.
+
+**The grid** (fixed before the runs; branch code; setting by environment). V1: stop-word matches give no boost.
+V2: V1 and loose matches. V3: dropped, see above. Selection: among variants that pass the gate, the highest hit@6,
+then MRR@6, then the variant that suppresses less.
+
+| run | hit@6 | MRR@6 | right source first | fewer than 6 | Accident (ranked) | (a) / (b) / (d) |
+|---|---|---|---|---|---|---|
+| reference (main), two runs | 129, 129 | 0.6799, 0.6799 | 91 | 15 | 13th | 1 / 3 / 1 |
+| V1 | 130 | 0.6802 | 90 | 15 | 13th | 1 / 3 / 4 |
+| V2, run 1 and run 2 | 130, 130 | 0.6805, 0.6802 | 90 | 15 | 12th | 1 / 1 / 4 |
+
+- V1 against the reference: q146 gained (– → 4th); none lost; q052 1st → 2nd, q119 4th → 2nd, q144 5th → 4th.
+- V2 against the reference: the same, and q122 5th → 4th; q146 at 4th and 5th in the two runs.
+- Selected: **V2**. V1 fails gate line 4: the Accident class stays 13th.
+- Every benchmark run: 348–364 GraphDB calls, 0 failures, 0 timeouts; the Docker VM had 3.81–3.91 GB available
+  before and after each.
+
+**The gate** (fixed before the runs; all lines for V2).
+1. hit@6 not under 129: **met** (130 and 130).
+2. MRR@6 not under 0.6746: **met** (0.6805 and 0.6802).
+3. At most 1 question lost that the reference finds first, at most 2 lost from the 6: **met** (none lost; q052
+   moves from 1st to 2nd).
+4. The Accident class better than 13th, and (a), (b), (d) keep it in their 6: **met** (12th; 1st, 1st, 4th).
+5. Old cut (`_s6pre`, old index settings, per-file limit 1) not under 132: **met** (135, MRR@6 0.6566; against the
+   morning's 133: q122 and q133 gained, none lost).
+6. Answer-source questions (stage 1, no model; ontology loaded) not under the same-hour reference: **met**. The
+   reference with today's code finds 38 of 57 in both its runs; V2 finds 38 and 38 (b33 found only with V2, b16
+   only with the reference). The stored 40 of 57 was measured with the ontology empty and is not comparable.
+7. Median retrieval time not more than 0.2 s above the same-hour reference: **met** (graph mode 829 ms against
+   830 ms; baseline mode 339 ms against 333 ms).
+8. CI green, including the retrieval benchmark against the unchanged baseline: **met** on PR #572 (measured there;
+   1,266 backend tests, the 5 database-backed new ones among them). CI's figures did not move: hit@10 0.537
+   (baseline mode) and 0.544 (graph), MRR@10 0.261 and 0.272, the same as recorded for PR #563. CI runs with the
+   ontology empty, so no concept is extracted there. I changed no baseline and no threshold.
+
+**What changed.** `semantic_graph.question_alias_matches` reports how each alias of a concept matched a question.
+`retrieval_gateway.no_boost_question_concepts` picks the concepts whose every match is of a suppressed kind. They
+are left out of the concepts used for the boost, graph expansion and graph candidates. New setting
+`RETRIEVAL_CONCEPT_NO_BOOST_MATCHES` (default `stop,loose`; empty restores the previous behaviour without a
+deploy), declared and documented like its neighbours. The trace has `noBoostConceptIds`. 12 unit tests: a
+stop-word-only concept gives no boost; a concept also matched on a distinctive alias keeps it; a stop phrase of
+several words; loose matches; without PostgreSQL no alias counts as a stop word; the setting; the setting off
+reproduces today's path; scope handling; fixed order. The 1,027 backend tests that need no database, these 7
+among them, passed locally, run without a `.env` and with models off. The 5 database-backed tests run only on CI.
+
+**Believed, not checked.**
+- That prod behaves like dev here. Prod has the same cut, settings and ontology (step 6 entry); not measured on prod.
+- That answers improve. Answers with model calls were not measured.
+- That q052's move from 1st to 2nd is a near tie at the top: it moves in every counterfactual.
+
+**Open.**
+- The common class, own names (not part of this step; for a possible separate step with its own gate). Measured as
+  a counterfactual on main's code:
+  - Form A: hit@6 132, MRR@6 0.6819, 90 first. Gained q070 (– → 6), q083 (– → 6), q133 (– → 5), q140 (– →
+    6); lost q143 (6th → –).
+  - Form B: 132, 0.6956, 92 first. Gained q070 (– → 6), q076 (– → 1), q083 (– → 4), q140 (– → 4); lost q080
+    (5th → –); 19 rank changes.
+  - Accident, form A: 13th → 8th, still outside the 6; variant (c) 11th → 5th; (a), (b), (d) unchanged.
+  - It covers 156 matches in 111 questions.
+  - At run time it is a one-word alias, matched as written, not a stop word, whose term is not among the question's
+    rare terms in the scope. Own name: the alias words written together equal the concept id's local name. The rare
+    terms never include the standards' names (an existing list in the code), so those names always fall here.
+  - The hooks are kept in `runs/z1/` (`cfhooks.py`, `bench_cf.py`, `tf_cf.py`).
+- The Accident class is still outside the 6 (12th).
+- The answers with model calls, and prod after a deploy.
