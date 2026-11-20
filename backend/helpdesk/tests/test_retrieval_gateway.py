@@ -1239,3 +1239,146 @@ class PreselectRowRangeTests(PreselectSwitchTests):
         # Without it the range is that of the rows scored: by file it reaches lower, and the shared rows move.
         self.assertTrue(any(abs(by_row[c] - by_file[c]) > 1e-6 for c in set(by_row) & set(by_file)))
         self.assertNotEqual(set(by_file_row_range), set(by_row))  # the rows scored are those chosen by file
+
+
+def _stop_word_lexemes(aliases):
+    """_alias_lexemes as PostgreSQL's English configuration answers for these aliases: "with" is a stop word."""
+    return {alias: (() if alias in {"with", "is for"} else (alias.split()[0],)) for alias in aliases}
+
+
+class NoBoostConceptKindsTests(SimpleTestCase):
+    """RETRIEVAL_CONCEPT_NO_BOOST_MATCHES: which question concepts give no concept boost."""
+
+    def _no_boost(self, aliases, question, kinds):
+        from helpdesk.services import retrieval_gateway, semantic_graph
+
+        with patch.object(semantic_graph, "GRAPH_CONCEPT_ALIASES", aliases), \
+                patch.object(retrieval_gateway, "_alias_lexemes", side_effect=_stop_word_lexemes):
+            found = semantic_graph.extract_graph_concepts(question, word_variants=True)
+            return found, retrieval_gateway.no_boost_question_concepts(question, found, frozenset(kinds))
+
+    def test_a_concept_matched_only_on_a_stop_word_gives_no_boost(self):
+        found, no_boost = self._no_boost(
+            {"transmodel:with": {"with"}, "netex:Lane": {"lane"}}, "An accident with a closed lane", {"stop"}
+        )
+        self.assertEqual(found, {"transmodel:with", "netex:Lane"})
+        self.assertEqual(no_boost, {"transmodel:with"})
+
+    def test_a_concept_also_matched_on_a_distinctive_alias_keeps_it(self):
+        _found, no_boost = self._no_boost({"transmodel:with": {"with", "lane"}}, "An accident with a closed lane", {"stop"})
+        self.assertEqual(no_boost, set())
+
+    def test_a_stop_phrase_of_several_words_is_a_stop_match(self):
+        _found, no_boost = self._no_boost({"transmodel:isFor": {"is for"}}, "What is for sale?", {"stop"})
+        self.assertEqual(no_boost, {"transmodel:isFor"})
+
+    def test_a_label_reached_only_through_plurals_is_loose(self):
+        aliases = {"transmodel:CLASS_ATTRIBUTE": {"class attribute"}}
+        question = "Which classes and attributes carry the location?"
+        self.assertEqual(self._no_boost(aliases, question, {"stop"})[1], set())
+        self.assertEqual(self._no_boost(aliases, question, {"stop", "loose"})[1], {"transmodel:CLASS_ATTRIBUTE"})
+        # The same label written as it is: not loose.
+        self.assertEqual(self._no_boost(aliases, "Which class attribute is it?", {"stop", "loose"})[1], set())
+
+    def test_without_postgresql_no_alias_is_known_as_a_stop_word(self):
+        from helpdesk.services import retrieval_gateway, semantic_graph
+
+        with patch.object(semantic_graph, "GRAPH_CONCEPT_ALIASES", {"transmodel:with": {"with"}}), \
+                patch.object(retrieval_gateway.connection, "vendor", "sqlite"):
+            self.assertEqual(
+                retrieval_gateway.no_boost_question_concepts("lane with", {"transmodel:with"}, frozenset({"stop"})), set()
+            )
+
+    def test_the_setting(self):
+        from helpdesk.services.retrieval_gateway import concept_no_boost_kinds
+
+        for value, expected in (("", set()), ("stop", {"stop"}), (" Stop , loose ", {"stop", "loose"}), ("stop,other", {"stop"})):
+            with override_settings(RETRIEVAL_CONCEPT_NO_BOOST_MATCHES=value):
+                self.assertEqual(concept_no_boost_kinds(), frozenset(expected))
+
+    def test_alias_matches_are_reported_in_a_fixed_order(self):
+        from helpdesk.services import semantic_graph
+
+        aliases = {"netex:Lane": {"lane", "lanes"}, "transmodel:with": {"with"}}
+        with patch.object(semantic_graph, "GRAPH_CONCEPT_ALIASES", aliases):
+            first = semantic_graph.question_alias_matches("lanes with a lane", ["transmodel:with", "netex:Lane"])
+            second = semantic_graph.question_alias_matches("lanes with a lane", ["netex:Lane", "transmodel:with"])
+        self.assertEqual(list(first.items()), list(second.items()))
+        self.assertEqual(first, {"netex:Lane": [("lane", True), ("lanes", True)], "transmodel:with": [("with", True)]})
+
+
+class NoBoostConceptPathTests(TestCase):
+    """The setting in the gateway's own call: the concept boost a passage gets, with the setting off and on."""
+
+    QUESTION = "How is an accident described with a closed lane?"
+    ALIASES = {"transmodel:with": {"with"}, "netex:Accident": {"accident"}, "tnits:Among": {"with"}}
+
+    def setUp(self):
+        from helpdesk.models import SourceChunk
+
+        self.pool = []
+        for idx, (path, text) in enumerate((
+            ("with.xsd", "A road closed with a barrier."),
+            ("accident.xsd", "An accident on the road."),
+            ("other.xsd", "Other passage about roads."),
+        )):
+            chunk = SourceChunk.objects.create(
+                repository_url="https://github.com/TransmodelEcosystem/NeTEx", commit_sha="abc", source_path=path,
+                chunk_id=f"nb-{idx}", label=path, text=text, standards_scope=["NeTEx"], quality_score=0.5,
+                doc_type="schema", embedding_vector=[1.0] + [0.0] * 1535,
+            )
+            chunk.vector_similarity = 0.9 - idx / 100
+            chunk.lexical_rank = 0.1
+            self.pool.append(chunk)
+
+    def _run(self, setting, question=QUESTION, scope=("NeTEx",)):
+        from helpdesk.services import retrieval_gateway, semantic_graph
+
+        seen = {}
+
+        def probe(stage, items):
+            if stage == "scored":
+                seen["graph"] = {i["chunkId"]: round(i["_graphContribution"], 6) for i in items if isinstance(i, dict)}
+
+        with override_settings(RETRIEVAL_CONCEPT_NO_BOOST_MATCHES=setting, GRAPHDB_ENABLED=False), \
+                patch.object(semantic_graph, "GRAPH_CONCEPT_ALIASES", self.ALIASES), \
+                patch.object(retrieval_gateway, "_alias_lexemes", side_effect=_stop_word_lexemes), \
+                patch.object(retrieval_gateway, "_postgres_hybrid_candidates", return_value=list(self.pool)), \
+                patch.object(retrieval_gateway, "_path_hint_candidates", return_value=[]), \
+                patch.object(retrieval_gateway, "_lexical_recall_candidates", return_value=[]), \
+                patch.object(retrieval_gateway, "question_rare_lexemes", return_value=[]), \
+                patch.object(retrieval_gateway, "build_text_embedding", return_value=[1.0] + [0.0] * 1535), \
+                retrieval_gateway.retrieval_probe(probe):
+            chunks, trace = retrieval_gateway.retrieve_chunks_with_trace(
+                question=question, top_k=3, min_score=0.0, scope=list(scope), graph_rag_enabled=True
+            )
+        return [c["chunkId"] for c in chunks], seen["graph"], trace
+
+    def test_off_boosts_the_stop_word_concept_as_before(self):
+        from helpdesk.services import retrieval_gateway
+
+        with patch.object(retrieval_gateway, "no_boost_question_concepts") as no_boost:
+            _ids, graph, trace = self._run("")
+        no_boost.assert_not_called()
+        self.assertAlmostEqual(graph["nb-0"], 0.20)
+        self.assertAlmostEqual(graph["nb-1"], 0.20)
+        self.assertEqual(trace["noBoostConceptIds"], [])
+
+    def test_on_the_stop_word_concept_gives_no_boost_and_the_distinctive_one_keeps_it(self):
+        _ids, graph, trace = self._run("stop")
+        self.assertAlmostEqual(graph["nb-0"], 0.0)
+        self.assertAlmostEqual(graph["nb-1"], 0.20)
+        self.assertEqual(trace["noBoostConceptIds"], ["transmodel:with"])
+
+    def test_a_question_without_such_a_concept_is_served_as_before(self):
+        question = "How is an accident described on a closed road?"
+        self.assertEqual(self._run("", question)[:2], self._run("stop,loose", question)[:2])
+
+    def test_scope_handling_is_unchanged(self):
+        # An opt-in source's concept is extracted only when the scope names the source, with the setting as without.
+        self.assertEqual(self._run("stop")[2]["noBoostConceptIds"], ["transmodel:with"])
+        self.assertEqual(self._run("stop", scope=("NeTEx", "TN-ITS"))[2]["noBoostConceptIds"], ["tnits:Among", "transmodel:with"])
+        self.assertEqual(self._run("", scope=("NeTEx", "TN-ITS"))[2]["noBoostConceptIds"], [])
+
+    def test_repeated_calls_give_the_same_order(self):
+        self.assertEqual(self._run("stop")[:2], self._run("stop")[:2])

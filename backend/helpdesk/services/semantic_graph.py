@@ -652,6 +652,26 @@ def extract_graph_concepts(text: str, *, word_variants: bool = False, scope: lis
     return concepts
 
 
+def question_alias_matches(text: str, concept_ids: Iterable[str]) -> dict[str, list[tuple[str, bool]]]:
+    """How each concept's labels match a user's question, as extract_graph_concepts(word_variants=True) matches
+    them: {concept: [(alias, as_written)]}, as_written False when the alias matched only through the question's
+    word variants (_alias_matches_question). Concepts and aliases in sorted order; concepts with no match left out."""
+    normalized_text = _normalize_for_matching(text)
+    aliases_by_concept = GRAPH_CONCEPT_ALIASES or _FALLBACK_GRAPH_CONCEPT_ALIASES
+    matches: dict[str, list[tuple[str, bool]]] = {}
+    for concept_id in sorted(set(concept_ids)):
+        loose = _is_class_concept(concept_id)
+        found = []
+        for alias in sorted(aliases_by_concept.get(concept_id) or ()):
+            if _alias_matches_text(alias, normalized_text):
+                found.append((alias, True))
+            elif loose and _alias_matches_question(alias, normalized_text):
+                found.append((alias, False))
+        if found:
+            matches[concept_id] = found
+    return matches
+
+
 # Chunk texts' concepts, for ranking: a question's retrieval passes score largely the same chunks, and
 # matching every label against a chunk took ~40 ms (4.5 s per example question, local 2026-11-08). An entry
 # holds the alias table it was made from, the reload count and the extractor, and is used only while all three
