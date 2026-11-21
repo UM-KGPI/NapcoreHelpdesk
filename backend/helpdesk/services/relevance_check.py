@@ -6,7 +6,6 @@ failure returns None so the caller falls back to those keyword rules and the que
 
 from __future__ import annotations
 
-from functools import lru_cache
 import json
 import logging
 import re
@@ -25,24 +24,36 @@ _CAMEL_CASE_TERM = re.compile(r"\b[A-Z][a-z]+[A-Z][A-Za-z]+\b")
 _IRRELEVANT = re.compile(r"\birrelevant\b", re.IGNORECASE)
 _RELEVANT = re.compile(r"\brelevant\b", re.IGNORECASE)
 
-_PROMPT = """You screen questions for a helpdesk about European public-transport data standards:
-- NeTEx: static data (timetables, networks, lines, stops, fares, accessibility, vehicles and operators).
-- SIRI: real-time data exchange (vehicle monitoring, estimated and production timetables, stop monitoring, connection monitoring, facility monitoring such as lifts and escalators, situation exchange such as disruptions and roadworks, general messages).
-- OpRa (Operational Raw Data): a format for exchanging historical operational data (offer, demand, capacity, efficiency, passenger counts, delays and cancellations).
-- Transmodel: the reference model behind them.
-- mobilityDCAT-AP (also DCAT-AP): the metadata profile for describing datasets on National Access Points (NAPs).
-- DATEX II: road traffic and travel information (situations such as roadworks and accidents, traffic data, variable message signs, parking, energy infrastructure and charging points, traffic management and regulations, location referencing), also TN-ITS road attribute updates.
-- EU legislation on transport data: the MMTIS Delegated Regulation (EU) 2017/1926 and its 2024 amendment, the ITS Directive 2010/40/EU and its 2023 amendment, and the TEL TSI (which travel and traffic data must be made available, through National Access Points and in which standards, and the terms these acts define).
-- INSPIRE: the EU spatial data rules (Directive 2007/2/EC, Regulation 1089/2010) that MMTIS requires for the spatial network, in particular the Transport Networks theme (road, rail, water, air and cable networks).
-- NAPCORE: the EU coordination platform of the National Access Points and National Bodies (its working groups, deliverables, data quality frameworks, compliance assessment and the EU legislation the NAPs implement).
+# What the index holds, per source (written 2026-11-21 from the indexed files: the schema file topics of NeTEx,
+# SIRI and OpRa, the specification pages of mobilityDCAT-AP, the DATEX II documentation and profiles, the TN-ITS code
+# lists, the acts in the EU legislation source and the terms they define, the INSPIRE Transport Networks
+# specification, the NAPCORE deliverables and pages). Keep it in step with the sources and with
+# semantic_abstention.NOT_RELEVANT_MESSAGE, which names the same sources to the user.
+_COVERAGE = """- NeTEx (XML schemas and example files): public-transport network and timetable data: stop places, quays, entrances, station equipment such as lifts, escalators and ticket machines, accessibility, parking, points of interest; networks, lines, routes, journey patterns, timetables, service and vehicle journeys, calendars and day types, vehicle and crew scheduling, vehicle types, seating and capacity, deck plans; fares, fare zones, fare products, prices, tickets and travel documents, sales; vehicle sharing, flexible and on-demand services; organisations, operators, responsibilities, versions.
+- SIRI (XML schemas and example files): real-time data exchange: vehicle monitoring and positions, estimated and production timetables, stop monitoring and departures, connection monitoring, facility monitoring (lifts, escalators), situation exchange (disruptions, incidents, roadworks), general messages, control actions, subscriptions and discovery.
+- OpRa (Operational Raw Data; XML schemas and example files): historical operational data: passenger counts (on-board devices, ticketing, external), vehicle occupancy, capacity, fleet and service dimensions, service intensity, late and cancelled journeys, delay classification, statistics.
+- Transmodel: the reference data model and the concepts behind NeTEx, SIRI and OpRa.
+- mobilityDCAT-AP (also DCAT-AP; the specification and its examples): the metadata that describes datasets on National Access Points: catalogues, catalogue records, datasets, dataset series, distributions and formats, licences and rights, publishers and other agents, quality annotations and assessments, controlled vocabularies, mandatory, recommended and optional properties, validation.
+- DATEX II (its documentation, recommended profiles and schemas): road traffic and travel information: situations (roadworks, accidents, obstructions, weather on the road), traffic data, variable message signs, parking and truck parking, energy infrastructure and charging and refuelling points, traffic management and regulations, location referencing, data exchange; the profiles for the RTTI, SRTI and MMTIS data types.
+- TN-ITS (code lists, schemas and examples): updates of road attributes for digital maps: speed limits, road signs, restrictions by vehicle type, road features.
+- EU legislation: the MMTIS Delegated Regulation (EU) 2017/1926 and its 2024 amendment, the ITS Directive 2010/40/EU and its 2023 amendment, the TEL TSI (Regulation (EU) 2026/253), the INSPIRE Directive 2007/2/EC and Regulation (EU) No 1089/2010: which travel and traffic data must be made available, by whom (authorities, transport operators, infrastructure managers, other data holders), through National Access Points, in which standards and formats, with which metadata, updates, quality and conditions of reuse, and the terms these acts define (static, dynamic and historic data, metadata, data holder, data user, national access point, machine-readable format, interoperability, spatial data and others).
+- INSPIRE (the Transport Networks data specification): road, rail, water, air and cable networks as spatial data, their data quality, metadata and code lists.
+- NAPCORE (its deliverables and web pages): National Access Points and National Bodies: NAP architectures and metadata, data availability, data quality frameworks, data validation, compliance assessment and self-declarations, access node identifiers, the mapping of data standards, and the delegated regulations the NAPs implement (MMTIS, RTTI, SRTI, safe and secure truck parking)."""
 
-Decide whether the question can be answered from the documentation of those standards, the legislation and NAPCORE's material.
-- "relevant": it is about transport data, concepts, messages, modelling or legal requirements that these sources cover, even if phrased briefly or in another language.
-- "irrelevant": it is about something else (general knowledge, other software, other standards such as GTFS or OpenStreetMap) or it is too vague to tell what is being asked.
+_PROMPT = (
+    """You screen questions for a helpdesk about European transport data. It answers only from these sources:
+"""
+    + _COVERAGE
+    + """
+
+Decide whether the question asks about a subject these sources cover.
+- "relevant": its subject is one of those above, or another subject of transport data, its exchange, description, quality or legal requirements that such documents describe; also when it has only two or three words, names no standard, or is in another language.
+- "irrelevant": its subject is something else (general knowledge, travel information itself such as a departure time or a ticket price, other software, other standards such as GTFS or OpenStreetMap), or it has no subject at all (it only greets or thanks, or asks for help without saying with what).
 
 Question: {question}
 
 Answer with exactly one word: RELEVANT or IRRELEVANT."""
+)
 
 
 def has_artifact_term(question: str) -> bool:
@@ -72,14 +83,18 @@ def _verdict(content: str) -> bool:
     raise ValueError("reply is neither RELEVANT nor IRRELEVANT")
 
 
-@lru_cache(maxsize=512)
 def _ask(question: str) -> bool:
+    # Not cached: a verdict kept per process repeated a minority IRRELEVANT for every later asker until the
+    # backend restarted. Without thinking (Claude) or at temperature 0 (the other gateways) the verdict is as
+    # stable as the endpoint allows; Claude takes no temperature.
     if _uses_anthropic():
         payload = anthropic_controller_call(
             messages=[{"role": "user", "content": _PROMPT.format(question=question)}],
             max_tokens=controller_max_tokens(8),
             timeout_seconds=int(getattr(settings, "RELEVANCE_CHECK_TIMEOUT_SECONDS", 10)),
             json_answer=False,
+            # Claude takes "disabled" only at effort high or below.
+            thinking="disabled" if settings.CONTROLLER_LLM_ANTHROPIC_EFFORT in ("low", "medium", "high") else "adaptive",
         )
         return _verdict(payload["choices"][0]["message"]["content"])
 
