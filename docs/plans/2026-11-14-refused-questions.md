@@ -422,3 +422,28 @@ Details:
 - Part 3 brings opt-in passages to these questions (8 of 13 with the source of the answering passage; 12 of 13
   answered, each with opt-in passages in its evidence), but also lets a question with no real subject be answered
   from them, and costs about 1 s of retrieval.
+
+## 9. The verdict not kept and asked without thinking, prompt unchanged (2026-11-21, step S1): gate met
+
+The two parts of §8 that do not depend on the wording, measured alone with today's prompt: the check's verdict is no
+longer cached per process, the check runs without thinking on Claude (Haiku takes no temperature; "disabled" only up
+to effort high, so above that thinking stays on; the other gateways already ask at temperature 0), and
+`FIXED_TEXT_TRANSLATION_TIMEOUT_SECONDS` defaults to 4 instead of 3 (deploy moves an old 3 to 4). The check called
+directly on the 66 questions of the diagnosis set, 3 runs, 0.97.249 plus this change.
+
+| | Must hold | Result | |
+|---|---|---|---|
+| Answerable wrongly refused, the 32 | not more than 5 in any run | 3, 3, 4 (today: 6 questions refused at least once, 13 of 96 calls) | met |
+| Must-refuse let through, the 34 | none in any run | 0, 0, 0 | met |
+| Questions with an unstable verdict | at most 1 | 1 ("Dataset licence?", refused 1 of 3) | met |
+| A repeat of the same question is asked again | unit test and one direct check | test with the model mocked; direct: two calls for two asks, both without thinking | met |
+| The check's median time | at most 0.3 s above today's 0.775 s | 0.841 s (mean 0.857, max 1.40) | met |
+| CI | green, Retrieval Benchmark present and green on the code commit | green on 3a6e352 | met |
+
+Refused in every run: "What is metadata?", "Which data are mandatory?" and a prod question on validating data, the
+same three that today's prompt refuses every run (§8 diagnosis). "Kaj so to metapodatki?" and "Delayed journeys
+example?", refused in some runs today, were accepted 3 of 3. So the change takes away the variance; the refusals that
+are left come from the wording (**measured**). 200 Haiku calls (198 + 2 for the direct check).
+
+Believed, not measured: that thinking off, not chance, made "Kaj so to metapodatki?" stable (3 runs). This branch
+also carries the record of §8 (PR #588).
