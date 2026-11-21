@@ -65,35 +65,6 @@ def _keyword_rule_message(*, semantic_query, effective_scope, requested_scope) -
     return None
 
 
-def _goes_to_relevance_check(keyword_message: str | None, effective_scope, question: str | None) -> bool:
-    return bool(
-        keyword_message is not None
-        and question is not None
-        and relevance_check_enabled()
-        and not effective_scope
-        and not has_artifact_term(question)
-    )
-
-
-def reaches_relevance_check(
-    *, semantic_query, effective_scope, requested_scope, allow_abstain: bool, question: str | None = None
-) -> bool:
-    """Whether semantic_abstention_message puts this question to the relevance check. No model call.
-
-    A question it put there and did not refuse got through by the check's RELEVANT alone: it names no
-    standard and matched no standards concept, so a search of the core standards alone misses the sources
-    that answer many of them (the acts, mobilityDCAT-AP, NAPCORE's material: 13 of 32 such questions measured
-    on 2026-11-21 had their answer only there). The answer views search every source for it.
-    """
-
-    if not allow_abstain:
-        return False
-    message = _keyword_rule_message(
-        semantic_query=semantic_query, effective_scope=effective_scope, requested_scope=requested_scope
-    )
-    return _goes_to_relevance_check(message, effective_scope, question)
-
-
 def semantic_abstention_message(
     *, semantic_query, effective_scope, requested_scope, allow_abstain: bool, question: str | None = None
 ) -> str | None:
@@ -114,7 +85,9 @@ def semantic_abstention_message(
     message = _keyword_rule_message(
         semantic_query=semantic_query, effective_scope=effective_scope, requested_scope=requested_scope
     )
-    if not _goes_to_relevance_check(message, effective_scope, question):
+    if message is None or question is None or not relevance_check_enabled():
+        return message
+    if effective_scope or has_artifact_term(question):
         return message
     verdict = is_relevant(question)
     if verdict is True:

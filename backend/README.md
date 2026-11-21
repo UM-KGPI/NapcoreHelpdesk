@@ -166,7 +166,7 @@ Use feature flags in `backend/.env` for progressive rollout:
 
 - Wave 1 evidence and policy controls:
   - `SEMANTIC_LOW_CONFIDENCE_THRESHOLD`
-  - `RELEVANCE_CHECK_ENABLED` (asks the controller LLM, for a question the keyword rules refuse, whether it is about the sources; RELEVANT answers it, searched in every source including the opt-in ones, and the keyword refusal stands when off or when the call fails; the verdict is not cached)
+  - `RELEVANCE_CHECK_ENABLED` (asks the controller LLM, for a question the keyword rules refuse, whether it is about the sources; RELEVANT answers it, and the keyword refusal stands when off or when the call fails)
   - `RELEVANCE_CHECK_TIMEOUT_SECONDS`
   - `EVIDENCE_GATE_ENABLED`
   - `EVIDENCE_GATE_MIN_ALIGNMENT`
