@@ -12,6 +12,7 @@ Created: 2026-03-29  |  Modified: 2026-06-28
 
 from __future__ import annotations
 
+import collections
 import contextvars
 import json
 from collections import OrderedDict
@@ -19,6 +20,7 @@ from concurrent.futures import ThreadPoolExecutor
 import logging
 import re
 import ssl
+import unicodedata
 from collections.abc import Generator
 from urllib import error, request
 
@@ -2937,6 +2939,69 @@ def _rendering_text_stream(messages: list[dict]) -> Generator[str, None, str | N
             raise LLMGenerationError(f"Rendering request failed: {exc}") from exc
 
 
+# Letters of a foreign script in a translated piece (plan 2026-11-21, step 2 part 2): "s特定imi" in a Slovenian
+# answer. A script is known by the first word of a letter's Unicode name (LATIN, CYRILLIC, CJK, GREEK, HIRAGANA, ...),
+# for the characters whose name says they are a letter, an ideograph or a syllable.
+# The translation's own scripts are those holding at least FOREIGN_SCRIPT_MIN_SHARE of its letters; a piece's letters
+# of any other script that its English piece does not hold are foreign. Code spans and links are not read.
+FOREIGN_SCRIPT_MIN_SHARE = 0.1
+
+
+def _letter_scripts(text: str) -> collections.Counter:
+    plain = _CODE_SPAN.sub(" ", _URL.sub(" ", _PLACEHOLDER.sub(" ", text)))
+    counts: collections.Counter = collections.Counter()
+    for char in plain:
+        if not char.isalpha():
+            continue
+        name = unicodedata.name(char, "")
+        # A letter's name gives its script before the kind of character: "LATIN SMALL LETTER A", "CYRILLIC CAPITAL
+        # LETTER IE", "CJK UNIFIED IDEOGRAPH-7279", "HANGUL SYLLABLE GA". Other characters that count as letters
+        # ("º", MASCULINE ORDINAL INDICATOR) name no script and are not read.
+        if re.search(r" (?:LETTER|IDEOGRAPH|SYLLABLE)\b", name):
+            counts[name.split(" ", 1)[0]] += 1
+    return counts
+
+
+def _foreign_scripts(piece: str, english_piece: str, translation: list[str]) -> list[str]:
+    """Scripts of the piece's letters that the translation does not use and its English piece does not hold."""
+    total: collections.Counter = collections.Counter()
+    for text in translation:
+        total.update(_letter_scripts(text))
+    letters = sum(total.values()) or 1
+    own = {script for script, count in total.items() if count >= FOREIGN_SCRIPT_MIN_SHARE * letters}
+    english = set(_letter_scripts(english_piece))
+    return sorted(script for script in _letter_scripts(piece) if script not in own and script not in english)
+
+
+def _foreign_letter_count(piece: str, scripts: list[str]) -> int:
+    counts = _letter_scripts(piece)
+    return sum(counts[script] for script in scripts)
+
+
+def _retranslated_piece(instruction: str, english_piece: str, scripts: list[str]) -> str | None:
+    """The piece translated once more, alone; None when the call fails or returns no line."""
+    system = (
+        f"{instruction}\nAn earlier reply mixed letters of another script ({', '.join(scripts)}) into this line; "
+        "write it in the script of the language."
+    )
+    messages = [{"role": "system", "content": system}, {"role": "user", "content": f"1| {english_piece}"}]
+    try:
+        reply = "".join(_consumed_text(_rendering_text_stream(messages)))
+    except LLMGenerationError as exc:
+        logger.warning("Translating a piece once more failed: %s", exc)
+        return None
+    return _numbered_lines(reply).get(1)
+
+
+def _consumed_text(generator: Generator) -> list[str]:
+    parts: list[str] = []
+    while True:
+        try:
+            parts.append(next(generator))
+        except StopIteration:
+            return parts
+
+
 def _rendered_answer(
     answer: str, language: str, question: str, english_question: str | None, stream: bool
 ) -> Generator[tuple[str, str], None, tuple[str, dict]]:
@@ -2960,6 +3025,23 @@ def _rendered_answer(
     numbered = "\n".join(f"{i}| {p['text']}" for i, p in enumerate(pieces, start=1))
     instruction = _rendering_instruction(language, question)
     candidates: list[tuple[str, bool, int]] = []
+    record["foreignScript"] = []
+
+    def checked(number: int, text: str, translation: list[str]) -> str:
+        """The piece, translated once more alone when it holds letters of a foreign script; the better attempt."""
+        if not 1 <= number <= len(pieces):
+            return text
+        english_piece = pieces[number - 1]["text"]
+        scripts = _foreign_scripts(text, english_piece, translation)
+        if not scripts:
+            return text
+        again = _retranslated_piece(instruction, english_piece, scripts)
+        left = _foreign_scripts(again, english_piece, translation) if again is not None else scripts
+        better = again if again is not None and _foreign_letter_count(again, scripts + left) < _foreign_letter_count(text, scripts) else text
+        record["foreignScript"].append(
+            {"piece": number, "scripts": scripts, "retranslated": again is not None, "fixed": better is again and not left}
+        )
+        return better
     for attempt in range(1, RENDERING_ATTEMPTS + 1):
         record["attempts"] = attempt
         system = instruction
@@ -2968,6 +3050,7 @@ def _rendered_answer(
         messages = [{"role": "system", "content": system}, {"role": "user", "content": numbered}]
         parts: list[str] = []
         shown = 0  # pieces already sent to the user, in order
+        sent: dict[int, str] = {}  # the text sent for each piece shown, after the script check
         try:
             call = _rendering_text_stream(messages)
             while True:
@@ -2982,7 +3065,9 @@ def _rendered_answer(
                     lines = _numbered_lines(complete)
                     while shown + 1 in lines:
                         piece = pieces[shown]
-                        yield ("token", _unmasked(piece["before"] + _with_marks(lines[shown + 1], piece["marks"]), blocks))
+                        so_far = [sent[n] for n in sorted(sent)] + [lines[shown + 1]]
+                        sent[shown + 1] = checked(shown + 1, lines[shown + 1], so_far)
+                        yield ("token", _unmasked(piece["before"] + _with_marks(sent[shown + 1], piece["marks"]), blocks))
                         shown += 1
         except LLMGenerationError as exc:
             logger.warning("Answer rendering in %s failed (attempt %d): %s", language, attempt, exc)
@@ -2990,6 +3075,8 @@ def _rendered_answer(
             continue
         lines = _numbered_lines("".join(parts))
         record["piecesReturned"] = len(lines)
+        whole = [sent.get(n, lines[n]) for n in sorted(lines)]
+        lines = {n: sent[n] if n in sent else checked(n, line, whole) for n, line in lines.items()}
         text, by_paragraph = _assembled(pieces, tail, lines)
         if stream and attempt == 1 and not by_paragraph:
             # The last line has no line break after it; the text after the last piece (a code block) comes last.

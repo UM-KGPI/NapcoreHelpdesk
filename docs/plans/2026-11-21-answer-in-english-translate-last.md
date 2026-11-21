@@ -697,3 +697,59 @@ Time on the same 5 questions: 4.6 s median (10 runs), main 4.8 s (5 runs).
 - That the dev passages equal prod's (same ids).
 - That the German wording I used asks what prod was asked.
 - That the borderline labels are read as I read them; one decides the supported-removed line.
+
+## 13. Record: letters of a foreign script in a translation, 2026-11-21
+
+**This step passed its gate.** A translated piece that holds letters of a foreign script is translated once more,
+that piece alone. This branch starts from main, not from the section 12 branch, because that step failed.
+
+### Why (measured)
+
+A Slovenian translation on prod held a word with two Chinese characters inside it ("s特定imi elementi"). On dev, a
+Slovenian word held three Cyrillic letters. Nothing checked this.
+
+### The rule as built
+
+- When the pieces come back, I check each one; while streaming, I check each piece before it is shown.
+- The translation's own scripts are the ones that hold at least a tenth of the letters of the pieces so far.
+- A piece's letters of any other script, which its English piece does not hold either, are foreign. A quoted text or a
+  name in another script that the English piece holds passes.
+- A letter's script is the first word of its Unicode name ("LATIN SMALL LETTER A", "CYRILLIC SMALL LETTER IE", "CJK
+  UNIFIED IDEOGRAPH-7279"). Only characters whose name says letter, ideograph or syllable are read. Code spans and links
+  are not read.
+- A flagged piece is translated once more, alone, with the reason named. The attempt with fewer foreign letters is
+  served, and the trace records the piece, its scripts and whether the fault went away.
+- There is no list of languages or characters.
+- A wrong accent inside the same script (seen once: a Slovak-style accent on a Slovenian word) is out of scope.
+
+One change came from the replay, before the capture. The first version read the first word of the name for every
+letter. It flagged 9 Portuguese pieces for "º" in "artigo 3.º", whose Unicode name ("MASCULINE ORDINAL INDICATOR")
+names no script. I then read only characters whose name says letter, ideograph or syllable.
+
+### Gate (measured)
+
+| | Must hold | Main | Measured | |
+|---|---|---|---|---|
+| Served translations in the capture holding a flagged piece | none | | 0 of 18 (every served piece checked again) | pass |
+| Flagged pieces in stored translations, read | each a real fault, at most 1 false flag | | 2 of 670 pieces, both real; 0 false | pass |
+| Extra model call in a run with no flagged piece | none; median calls unchanged at 4 | 4 | none; 4 | pass |
+| Marks equal the checked marks | every run | | 18 of 18 | pass |
+| Median time | not above main in the same hour | 13.4 s on 5 questions | 10.6 s on the same 5 | pass |
+| CI | green, benchmark started by hand | | see the PR | |
+
+- The two stored flags: the prod word with Chinese characters, and a Slovenian word with three Cyrillic letters from
+  the step 1 re-run. The replay covered 176 translations from all of today's captures and prod responses 0.97.246 to
+  0.97.250.
+- In the capture (the 19 non-English questions once) one piece was flagged live: a Slovenian word with a Cyrillic
+  "е". Its second translation was clean and was served.
+
+### Model calls
+
+96 in all: Haiku 76, the classifier model 20 (the existing language naming). 20 of the 96 were main's code on 5
+questions.
+
+### Believed, not measured
+
+- That a tenth of the letters is the right line for languages written in more than one script (none of them were in
+  the capture).
+- That one more call per flagged piece stays rare (1 run of 19 here).
