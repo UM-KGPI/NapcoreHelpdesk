@@ -2226,3 +2226,97 @@ among them, passed locally, run without a `.env` and with models off. The 5 data
   - The hooks are kept in `runs/z1/` (`cfhooks.py`, `bench_cf.py`, `tf_cf.py`).
 - The Accident class is still outside the 6 (12th).
 - The answers with model calls, and prod after a deploy.
+
+### No concept boost from a concept's own name as a common word (2026-11-21, dev database `napcore_helpdesk` and copy `napcore_helpdesk_s6pre`, read only, on the step above at 6ab0bf3)
+
+This is the second step of "no concept boost from ordinary words", the open item of the entry above. Files are in
+`.claude/skills/measure-on-copy/runs/w1/`. Every run took the application's path (`--app-conditions --app-scope`,
+4,616 concepts reported, 6 passages, graph mode, 149 questions), with no model call and GraphDB SELECT only. Every
+benchmark run made 311–352 GraphDB calls with 0 failures. The Docker VM had 3.81–3.89 GB available before and after
+each run.
+
+**The kind.** "common": a one-word alias that is the concept's own name (the alias written together equals the
+local name of the concept id, lowercased) and whose term is not among the question's rare terms. Examples in the
+data: journey, vehicle, stop, location, opra, siri. The standards' names are never rare terms (an existing list in
+the code), so they always fall here. As with stop and loose, a concept that also matches through another alias
+keeps its boost. The rare terms are computed only with semantic vectors. Without them no match is common.
+
+**Diagnosis** (measured, on the step 1 code, before any code of this step).
+- Size. 156 matches in 111 of the 149 questions. In all 111 the concept is suppressed by this kind alone. No concept
+  falls in only through a mix of common and stop or loose aliases. In 25 questions every extracted concept is
+  suppressed. The most frequent: opra:Opra 66, siri:Siri 25, netex:Journey and transmodel:JOURNEY 16 each,
+  netex:Vehicle and transmodel:VEHICLE 9 each, transmodel:stop 5. Many opra:Opra and siri:Siri cases are already
+  dropped as identity concepts, so the effective count is lower (believed, not counted).
+- At run time (checked by hand, calling the functions on three stored questions and the Accident question). A rare
+  own name keeps its boost: "line" is rare in q070, so netex:Line keeps it. A two-word label such as "vehicle
+  journey" keeps it. In the Accident question both location concepts fall in the kind. The code's selection equals
+  the classification of the diagnosis on all 156 questions, for stop+loose, stop+loose+common, common alone, and
+  with the rare terms unknown: 0 differences.
+- Counterfactual on top of stop+loose (in-process hooks, no tracked code edited). Reference (step 1 code, default):
+  130, MRR@6 0.6802.
+
+| counterfactual | hit@6 | MRR@6 | right source first | fewer than 6 | gained | lost |
+|---|---|---|---|---|---|---|
+| common, form A (no boost; definitions kept) | 132 | 0.6808 | 89 | 15 | q070, q083, q140 | q143 |
+| common, form B (concept removed), stop and loose in A | 133 | 0.7010 | 92 | 17 | q070, q076, q083, q140 | q080 |
+
+- Additivity (it was believed, now measured). It is roughly additive, not exactly. On main, common alone gained q070,
+  q083, q133 and q140. On top of stop+loose it gains the same three without q133. q146, gained by stop, stays. 129
+  became 130 and then 132.
+
+**The grid** (fixed before the runs). W1: common in form A, like stop and loose. W2: common in form B, stop and loose
+in form A. W2 used a measuring-only kind, `common-drop`, since removed. Selection: among variants that pass every
+gate line, the higher hit@6, then MRR@6, a tie to W1.
+
+| run | hit@6 | MRR@6 | right source first | fewer than 6 | median (graph) |
+|---|---|---|---|---|---|
+| reference (step 1 code), three runs | 130, 130, 130 | 0.6802 ×3 | 90 | 15 | 750, 722, 739 ms |
+| W1 run 1 / run 2 | 132, 132 | 0.6805, 0.6808 | 89 | 15 | 679, 701 ms |
+| W2 | 133 | 0.7010 | 92 | 17 | 670 ms |
+
+- W1 against the reference: gained q070 (– → 2nd), q083 (– → 6th), q140 (– → 6th); lost q143 (6th → –); moved q058
+  1st → 3rd, q052 2nd → 3rd, q064 4th → 3rd, q079 2nd → 3rd, q124 6th → 2nd. In run 1 also q146 5th → 6th; run 2
+  has q146 at 5th as the reference does. The two W1 runs differ only there.
+- W2 against the reference: gained q070, q076 (– → 1st), q083, q140; lost q080 (5th → –); four questions leave
+  1st (q059 → 2nd, q086 → 2nd, q089 → 3rd, q090 → 3rd); 19 rank changes. It fails gate line 3.
+- Selected: **W1**. W2 has the higher hit@6, but it does not pass line 3.
+
+**The gate** (fixed before the runs; all lines for W1).
+1. hit@6 not under 131 in both runs: **met** (132 and 132).
+2. MRR@6 not under the same-hour reference (0.6802): **met** (0.6805 and 0.6808). The margin is small.
+3. At most 2 questions lost from 1st, at most 2 lost from the 6: **met** (q058 1st → 3rd; q143 out of the 6).
+4. Accident question: the class row in the top 10 of the ranked stage, and (a), (b), (d) keep it in the 6:
+   **met**. The class row went from 12th to 7th. It is still outside the 6. (a) 1st, (b) 1st, (d) 4th. (c) went
+   from 10th to 6th in the ranked stage and is still not in the final 6. (e1) 3rd and (e2) 2nd, unchanged.
+   Measured with the final code and its default.
+5. Old cut (`_s6pre`, old index settings) not under 132: **met, at the line** (132). The step 1 code on the old cut
+   gives 135 (MRR@6 0.6572), so on the old cut this kind costs three questions, q070, q122 and q133, and MRR@6
+   falls to 0.6440. Nothing was gained there. The old cut is not what dev and prod run.
+6. Answer-source questions (stage 1, no model, ontology loaded) not under the same-hour reference: **met** (38 of
+   57 in both runs, against 38 and 38; the same questions found).
+7. Median time not more than 0.2 s above the reference: **met**. Run back to back, it was 679 ms against 750 ms and
+   701 ms against 739 ms. Fewer concepts go to graph expansion, so W1 is faster.
+8. CI green on the PR with the benchmark baseline file untouched: see the PR.
+
+**What changed.** A third kind, `common`, in `retrieval_gateway.no_boost_question_concepts`, which now takes the
+question's rare terms. `semantic_graph.alias_is_concept_name` tells whether a one-word alias is the concept's own
+name. The default of `RETRIEVAL_CONCEPT_NO_BOOST_MATCHES` is `stop,loose,common`. An empty value or `stop,loose`
+restores earlier behaviour without a deploy. `.env.example`, `backend/README.md` and the settings comment are
+updated. 11 new tests. 8 need no database: the kind, a rare own name, the rare terms unknown, a one-word alias that
+is not the own name, a distinctive second alias, a mix with stop, the own-name test, the setting. 3 run in the
+gateway's call: the kind on, the kind off, and no effect without semantic vectors. The 1,035 backend tests that
+need no database passed locally, without a `.env` and with models off. The 3 database-backed tests run only on CI.
+
+**Believed, not checked.**
+- A question's top 6 can depend on the questions run before it in the same benchmark. In the hook run, the top 6
+  of q048 changed although nothing in q048 was suppressed. W1 differs from the hook run in 8 questions' top 6.
+  The reference was identical in all three runs.
+- That prod behaves like dev. Answers with model calls were not measured.
+- That questions about a standard as a whole ("What is SIRI?") keep what they need. The concept loses its boost,
+  but its definitions stay. I did not look at those questions one by one.
+
+**Open.**
+- W2 (form B for this kind) has the higher hit@6 and MRR@6 (133, 0.7010), but four questions leave 1st. A variant
+  between the two was not part of the grid.
+- The Accident class is still outside the 6 (7th in the ranked stage).
+- The old cut loses three questions with this kind.
