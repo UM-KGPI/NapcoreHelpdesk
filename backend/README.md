@@ -160,6 +160,7 @@ Use feature flags in `backend/.env` for progressive rollout:
   - `RETRIEVAL_PRESELECT_PIECES_PER_FILE` (preselection for scoring by file: files by their best piece, up to this many pieces of each; default 2; 0 = by row, as before)
   - `RETRIEVAL_PRESELECT_BUDGET` (`rows` or `files`: what the preselection budget, `RETRIEVAL_SCORING_CANDIDATE_CAP`, counts when preselecting by file; default `files`)
   - `RETRIEVAL_PRESELECT_ROW_RANGE` (when preselecting by file: scale the vector score over the rows the preselection by row would keep, today's range; default False)
+  - `RETRIEVAL_CONCEPT_NO_BOOST_MATCHES` (kinds of match, comma separated, through which a question concept gives no concept boost, no graph expansion and no graph candidates, though it still adds its definitions and element lookups: `stop`, an alias that is a text-search stop word such as "with"; `loose`, a label of several words reached only through plurals or prefixed words; default `stop,loose`; empty = every match gives a boost, as before)
   - `RETRIEVAL_MMR_LAMBDA`
   - `RETRIEVAL_KEYWORD_TRAP_PENALTY`
 

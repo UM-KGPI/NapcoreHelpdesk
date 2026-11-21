@@ -106,6 +106,7 @@ from helpdesk.services.semantic_graph import (
     extract_graph_concepts,
     extract_text_concepts_cached,
     get_concept_canonical_terms,
+    question_alias_matches,
 )
 
 try:
@@ -381,6 +382,54 @@ def _is_standard_identity_concept(concept_id: str) -> bool:
     """A concept that stands for a whole standard: "siri:Siri", "opra:Opra"."""
     prefix, _, local = concept_id.partition(":")
     return bool(local) and local.lower() == prefix.lower()
+
+
+# Kinds of match through which a question concept gives no concept boost (RETRIEVAL_CONCEPT_NO_BOOST_MATCHES):
+# "stop", an alias that holds no text-search term (the English configuration's stop words: "with", "for",
+# "is for"); "loose", a label of several words reached only through the question's plurals or words without a
+# short prefix, not as written. A concept that also matches another alias keeps its boost.
+CONCEPT_NO_BOOST_MATCH_KINDS = ("stop", "loose")
+_ALIAS_LEXEMES: dict[str, tuple[str, ...]] = {}
+
+
+def concept_no_boost_kinds() -> frozenset[str]:
+    """settings.RETRIEVAL_CONCEPT_NO_BOOST_MATCHES as a set of known kinds; empty: every match gives a boost."""
+    value = str(getattr(settings, "RETRIEVAL_CONCEPT_NO_BOOST_MATCHES", "") or "")
+    return frozenset(kind for kind in (part.strip().lower() for part in value.split(",")) if kind in CONCEPT_NO_BOOST_MATCH_KINDS)
+
+
+def _alias_lexemes(aliases: set[str]) -> dict[str, tuple[str, ...]]:
+    """Each alias's terms as the English text-search configuration reads it, empty for a stop word; one query for
+    the aliases not seen before. Empty without PostgreSQL (no alias is then known as a stop word)."""
+    if connection.vendor != "postgresql":
+        return {}
+    missing = sorted(alias for alias in aliases if alias not in _ALIAS_LEXEMES)
+    if missing:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT alias, tsvector_to_array(to_tsvector('english'::regconfig, alias)) FROM unnest(%s::text[]) AS alias",
+                [missing],
+            )
+            for alias, lexemes in cursor.fetchall():
+                _ALIAS_LEXEMES[alias] = tuple(lexemes or ())
+    return {alias: _ALIAS_LEXEMES[alias] for alias in aliases if alias in _ALIAS_LEXEMES}
+
+
+def no_boost_question_concepts(question: str, concepts: set[str], kinds: frozenset[str]) -> set[str]:
+    """The concepts, of those extracted from the question, whose every alias match in it is of one of `kinds`."""
+    if not kinds or not concepts:
+        return set()
+    matches = question_alias_matches(question, concepts)
+    lexemes = _alias_lexemes({alias for found in matches.values() for alias, as_written in found if as_written}) if "stop" in kinds else {}
+
+    def kind(alias: str, as_written: bool) -> str | None:
+        if not as_written:
+            return "loose"
+        if alias in lexemes and not lexemes[alias]:
+            return "stop"
+        return None
+
+    return {concept for concept, found in matches.items() if all(kind(alias, as_written) in kinds for alias, as_written in found)}
 
 
 def question_rare_lexemes(question: str, scope: list[str] | None) -> list[str]:
@@ -2209,6 +2258,7 @@ def _retrieve_chunks_once(
         extract_graph_concepts(question, word_variants=True, scope=scope) if graph_rag_enabled else set()
     )
     _record_stage("conceptExtractMs", stage_start)
+    matched_concepts = set(question_concepts)
     bridged_concepts: set[str] = set()
     if graph_rag_enabled:
         stage_start = time.perf_counter()
@@ -2243,6 +2293,16 @@ def _retrieve_chunks_once(
     # expansion and the graph score they reordered the source's own passages: for "How is a road feature
     # update encoded in a TN-ITS dataset?" the examples overtook the schemas the question is about.
     graph_question_concepts = concepts_in_scope(question_concepts, None)
+    # A concept the question names only through a stop word or a loose variant of a label (see
+    # CONCEPT_NO_BOOST_MATCH_KINDS) is treated the same way: it adds its definitions and element lookups, but no
+    # concept boost, no graph expansion and no graph candidates.
+    no_boost_concepts: set[str] = set()
+    no_boost_kinds = concept_no_boost_kinds() if graph_rag_enabled else frozenset()
+    if no_boost_kinds:
+        stage_start = time.perf_counter()
+        no_boost_concepts = no_boost_question_concepts(question, matched_concepts & question_concepts, no_boost_kinds)
+        graph_question_concepts -= no_boost_concepts
+        _record_stage("noBoostConceptMs", stage_start)
 
     graph_expansion_source = "none"
     if graph_rag_enabled and graph_question_concepts:
@@ -2942,6 +3002,7 @@ def _retrieve_chunks_once(
         "graphExpansionSource": graph_expansion_source,
         "graphConceptIds": sorted(expanded_concepts) if graph_rag_enabled else [],
         "bridgedConceptIds": sorted(bridged_concepts),
+        "noBoostConceptIds": sorted(no_boost_concepts),
         "propertyConceptIds": sorted(property_concepts),
         "schemaOverlapAdded": schema_overlap_added,
         "graphConceptCap": graph_expansion_max_concepts if graph_rag_enabled else 0,
