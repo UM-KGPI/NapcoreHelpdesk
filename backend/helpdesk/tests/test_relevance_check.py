@@ -98,6 +98,27 @@ class ClaudePathTests(SimpleTestCase):
         self.assertEqual(call.call_count, 2)
 
 
+class PromptTests(SimpleTestCase):
+    def test_the_prompt_names_every_source_the_index_holds(self):
+        from helpdesk.services.retrieval_gateway import ALL_SOURCE_SCOPES
+
+        for scope in ALL_SOURCE_SCOPES:
+            self.assertIn(f"\n- {scope}", "\n" + relevance_check._COVERAGE, scope)
+
+    def test_the_prompt_covers_what_the_refusal_names(self):
+        from helpdesk.services.semantic_abstention import NOT_RELEVANT_MESSAGE
+
+        for name in ("NeTEx", "SIRI", "OpRa", "Transmodel", "DATEX II", "TN-ITS", "mobilityDCAT-AP", "MMTIS",
+                     "ITS Directive", "TEL TSI", "INSPIRE", "NAPCORE", "National Access Points", "National Bodies"):
+            self.assertIn(name, NOT_RELEVANT_MESSAGE, name)
+            self.assertIn(name, relevance_check._PROMPT, name)
+
+    def test_only_a_question_without_a_named_subject_counts_as_vague(self):
+        self.assertNotIn("too vague", relevance_check._PROMPT)
+        self.assertIn("no subject of its own", relevance_check._PROMPT)
+        self.assertEqual(relevance_check._PROMPT.count("{question}"), 1)
+
+
 class ArtifactTermTests(SimpleTestCase):
     def test_camel_case_terms_name_an_artifact(self):
         self.assertTrue(has_artifact_term("What is ServiceJourneyPattern?"))

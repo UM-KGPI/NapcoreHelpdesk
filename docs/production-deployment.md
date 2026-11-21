@@ -807,7 +807,9 @@ matched, no standard and no artifact named) is put to the controller model, whic
 IRRELEVANT; RELEVANT answers it, a failed call keeps the keyword refusal. Questions the keyword rules let through
 are not asked about. The verdict is not cached: each such question is asked again (one Haiku call, under a second),
 so a wrong verdict does not stay until the backend restarts. On Claude the call runs without thinking (Claude takes
-no temperature; the other gateways get temperature 0). A question sent with a `standardsScope` (API clients; the chat page sends none) is neither
+no temperature; the other gateways get temperature 0). A question the check lets through names no standard, so it
+is searched in every source, the opt-in ones (EU legislation, mobilityDCAT-AP, NAPCORE, INSPIRE, DATEX II, TN-ITS)
+included, each with its own share of candidates; every other question is searched as before. A question sent with a `standardsScope` (API clients; the chat page sends none) is neither
 refused by the keyword rules nor put to the check, with the check on or off, so "Is this mandatory?" with a
 scope reaches the answer model (a fix was measured and reverted, record §7). Measured effect:
 `docs/plans/2026-11-14-refused-questions.md`. First prove the model call works from the server (it prints `None` when it does not):
