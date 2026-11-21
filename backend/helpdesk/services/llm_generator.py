@@ -548,145 +548,152 @@ def _validate_citation_grounding(answer: str, chunks: list[dict], inflected: boo
     - If the sentence contains ONLY weak terms: at least one weak term must
       appear in the cited chunk.
 
-    Raises LLMGenerationError if a citation cannot be grounded.
+    Raises LLMGenerationError at the first sentence that fails (_sentence_grounding_error).
     """
     # Split on sentence boundaries; keep trailing punctuation with its sentence.
     # `)` is deliberately not a boundary: splitting after a parenthetical like
     # "(e.g., a station)" orphans the rest of the sentence from its subject and
     # produces fragments that fail grounding checks spuriously.
     sentences = re.split(r"(?<=[.!?])\s+", answer.replace("\n", " "))
-
     for sentence in sentences:
-        found_citations = CITATION_PATTERN.findall(sentence)
-        if not found_citations:
-            continue
+        reason = _sentence_grounding_error(sentence, chunks, inflected)
+        if reason:
+            raise LLMGenerationError(reason)
 
-        clean = CITATION_PATTERN.sub("", sentence)
-        if not re.search(r"[^\W\d_]", clean):
-            continue  # A citation on its own ("[E3].") supports the sentence before it.
 
-        # Check if sentence contains code blocks (```) or XML tags - these are more lenient
-        is_code_block = "```" in sentence or ("<" in sentence and ">" in sentence)
+def _sentence_grounding_error(sentence: str, chunks: list[dict], inflected: bool = False) -> str | None:
+    """Why one sentence's citations are not grounded in their blocks, or None (see _validate_citation_grounding)."""
+    found_citations = CITATION_PATTERN.findall(sentence)
+    if not found_citations:
+        return None
 
-        # CRITICAL: For code blocks (XML/code examples), skip strict grounding validation
-        # XML with specific values (e.g., <DepartureTime>09:54:00</DepartureTime>) should not fail
-        # just because the exact value isn't in the evidence. The element name is sufficient proof.
-        if is_code_block and found_citations:
-            logger.debug(f"Accepting code block citation without strict grounding: {sentence[:100]}")
-            continue  # Skip to next sentence - code blocks are inherently technical
+    clean = CITATION_PATTERN.sub("", sentence)
+    if not re.search(r"[^\W\d_]", clean):
+        return None  # A citation on its own ("[E3].") supports the sentence before it.
 
-        cited_chunks = [chunks[int(c) - 1] for c in found_citations if 0 < int(c) <= len(chunks)]
-        if cited_chunks and all(_is_prose_chunk(chunk) for chunk in cited_chunks):
-            # "The cited text in [E3] does not describe Transmodel." says what a block does not cover; it has
-            # nothing of its own to ground, as for standards evidence below.
-            if _is_evidence_scope_statement(sentence):
+    # Check if sentence contains code blocks (```) or XML tags - these are more lenient
+    is_code_block = "```" in sentence or ("<" in sentence and ">" in sentence)
+
+    # CRITICAL: For code blocks (XML/code examples), skip strict grounding validation
+    # XML with specific values (e.g., <DepartureTime>09:54:00</DepartureTime>) should not fail
+    # just because the exact value isn't in the evidence. The element name is sufficient proof.
+    if is_code_block and found_citations:
+        logger.debug(f"Accepting code block citation without strict grounding: {sentence[:100]}")
+        return None  # Skip to next sentence - code blocks are inherently technical
+
+    cited_chunks = [chunks[int(c) - 1] for c in found_citations if 0 < int(c) <= len(chunks)]
+    if cited_chunks and all(_is_prose_chunk(chunk) for chunk in cited_chunks):
+        # "The cited text in [E3] does not describe Transmodel." says what a block does not cover; it has
+        # nothing of its own to ground, as for standards evidence below.
+        if _is_evidence_scope_statement(sentence):
+            return None
+        # Each citation is checked against its own text only: a quote that ends in `." [E1]` is no
+        # sentence boundary for the split above, so one "sentence" can carry an act's quote [E1] and a
+        # NAPCORE page's quote [E2], and the whole of it matches neither block.
+        segments = _citation_segments(sentence)
+        for position, (citation_str, chunk) in enumerate(zip(found_citations, cited_chunks)):
+            own = CITATION_PATTERN.sub("", segments[position][1]) if position < len(segments) else ""
+            if _regulation_citation_grounded(own if _has_words(own) else clean, chunk):
                 continue
-            # Each citation is checked against its own text only: a quote that ends in `." [E1]` is no
-            # sentence boundary for the split above, so one "sentence" can carry an act's quote [E1] and a
-            # NAPCORE page's quote [E2], and the whole of it matches neither block.
-            segments = _citation_segments(sentence)
-            for position, (citation_str, chunk) in enumerate(zip(found_citations, cited_chunks)):
-                own = CITATION_PATTERN.sub("", segments[position][1]) if position < len(segments) else ""
-                if _regulation_citation_grounded(own if _has_words(own) else clean, chunk):
-                    continue
-                if _is_napcore_chunk(chunk):
-                    raise LLMGenerationError(
-                        f"Citation [E{citation_str}] does not ground the claim: '{sentence[:150].strip()}'. "
-                        f"The cited block [E{citation_str}] is the NAPCORE document "
-                        f"'{str(chunk.get('heading') or chunk.get('sourcePath', 'unknown'))[:80]}': quote its wording "
-                        "verbatim, or cite the block that states it."
-                    )
-                # Say which provision the block is: told only "name the article", the model repeated a
-                # paragraph number as the article number.
-                provision = str(chunk.get("heading") or chunk.get("sourcePath", "unknown")).split(" — ")[0]
-                raise LLMGenerationError(
+            if _is_napcore_chunk(chunk):
+                return (
                     f"Citation [E{citation_str}] does not ground the claim: '{sentence[:150].strip()}'. "
-                    f"The cited block [E{citation_str}] is {provision}: name that article with its own number "
-                    "(a numbered paragraph inside it is not an article number), quote the provision verbatim, "
-                    "or cite the block that states it."
+                    f"The cited block [E{citation_str}] is the NAPCORE document "
+                    f"'{str(chunk.get('heading') or chunk.get('sourcePath', 'unknown'))[:80]}': quote its wording "
+                    "verbatim, or cite the block that states it."
                 )
-            continue
+            # Say which provision the block is: told only "name the article", the model repeated a
+            # paragraph number as the article number.
+            provision = str(chunk.get("heading") or chunk.get("sourcePath", "unknown")).split(" — ")[0]
+            return (
+                f"Citation [E{citation_str}] does not ground the claim: '{sentence[:150].strip()}'. "
+                f"The cited block [E{citation_str}] is {provision}: name that article with its own number "
+                "(a numbered paragraph inside it is not an article number), quote the provision verbatim, "
+                "or cite the block that states it."
+            )
+        return None
 
-        strong_terms, weak_terms = _classify_terms(clean)
+    strong_terms, weak_terms = _classify_terms(clean)
 
-        # Extract ubiquitous terms that were filtered out (we still want to check these)
-        ubiquitous_terms = []
-        for term in clean.split():
-            term_clean = term.strip('.,!?;:').lower()
-            if term_clean in _UBIQUITOUS_TERMS and len(term_clean) >= 4:
-                ubiquitous_terms.append(term_clean)
+    # Extract ubiquitous terms that were filtered out (we still want to check these)
+    ubiquitous_terms = []
+    for term in clean.split():
+        term_clean = term.strip('.,!?;:').lower()
+        if term_clean in _UBIQUITOUS_TERMS and len(term_clean) >= 4:
+            ubiquitous_terms.append(term_clean)
 
-        # CRITICAL: Cited sentences MUST have specific technical content (strong or weak terms),
-        # unless the sentence only describes what the evidence covers.
-        if not strong_terms and not weak_terms:
-            if _is_evidence_scope_statement(sentence):
-                continue
-            if _quotation_found(sentence, cited_chunks):
-                continue  # 'The block states that "Many NeTEx concepts are taken directly from Transmodel" [E3].'
-            if _plain_sentence_grounded(sentence, cited_chunks):
-                continue  # "A journey pattern is an ordered list of scheduled stop points ... [E1]."
-            if found_citations:  # Has citations but NO specific terms = potential hallucination
-                # No citations, no terms, not code = hallucination
-                raise LLMGenerationError(
-                    f"Citation [E{found_citations[0]}] without specific technical content: "
-                    f"'{sentence[:120].strip()}'. "
-                    "Cited claims must reference specific file names, IDs, or concepts from evidence, "
-                    "not generic language like 'follow the specification' or 'validate with examples'."
-                )
-            else:
-                continue  # No citations, no terms - skip
+    # CRITICAL: Cited sentences MUST have specific technical content (strong or weak terms),
+    # unless the sentence only describes what the evidence covers.
+    if not strong_terms and not weak_terms:
+        if _is_evidence_scope_statement(sentence):
+            return None
+        if _quotation_found(sentence, cited_chunks):
+            return None  # 'The block states that "Many NeTEx concepts are taken directly from Transmodel" [E3].'
+        if _plain_sentence_grounded(sentence, cited_chunks):
+            return None  # "A journey pattern is an ordered list of scheduled stop points ... [E1]."
+        if found_citations:  # Has citations but NO specific terms = potential hallucination
+            # No citations, no terms, not code = hallucination
+            return (
+                f"Citation [E{found_citations[0]}] without specific technical content: "
+                f"'{sentence[:120].strip()}'. "
+                "Cited claims must reference specific file names, IDs, or concepts from evidence, "
+                "not generic language like 'follow the specification' or 'validate with examples'."
+            )
+        else:
+            return None  # No citations, no terms - skip
 
-        for citation_str, segment in _citation_segments(sentence):
-            idx = int(citation_str) - 1
-            if idx < 0 or idx >= len(chunks):
-                continue  # Range already rejected by _validate_citations_to_chunks
-            if _is_evidence_scope_statement(segment):
-                continue  # "EstimatedCall: the evidence contains no formal definition [E1]" names what is absent.
-            segment_strong, segment_weak = _classify_terms(segment)
-            if segment_strong or segment_weak:
-                strong_terms, weak_terms = segment_strong, segment_weak
-            elif _is_evidence_scope_statement(sentence):
-                continue  # "The evidence blocks [E1] through [E4] cover only ...": nothing of its own to check.
-            else:
-                strong_terms, weak_terms = _classify_terms(clean)
+    for citation_str, segment in _citation_segments(sentence):
+        idx = int(citation_str) - 1
+        if idx < 0 or idx >= len(chunks):
+            continue  # Range already rejected by _validate_citations_to_chunks
+        if _is_evidence_scope_statement(segment):
+            continue  # "EstimatedCall: the evidence contains no formal definition [E1]" names what is absent.
+        segment_strong, segment_weak = _classify_terms(segment)
+        if segment_strong or segment_weak:
+            strong_terms, weak_terms = segment_strong, segment_weak
+        elif _is_evidence_scope_statement(sentence):
+            continue  # "The evidence blocks [E1] through [E4] cover only ...": nothing of its own to check.
+        else:
+            strong_terms, weak_terms = _classify_terms(clean)
 
-            chunk = chunks[idx]
-            # "_", "-" and spaces compare equal: "TAP TSI" names the source path tap_tsi.
-            haystack = _comparable(str(chunk.get("text", "")) + " " + str(chunk.get("sourcePath", "")))
+        chunk = chunks[idx]
+        # "_", "-" and spaces compare equal: "TAP TSI" names the source path tap_tsi.
+        haystack = _comparable(str(chunk.get("text", "")) + " " + str(chunk.get("sourcePath", "")))
 
-            if strong_terms:
-                # Strong terms present: require at least one strong match.
-                # A weak-only match is not accepted — it would allow hallucinated
-                # file names/IDs to pass because a generic term like "NeTEx" matches.
-                grounded = any(_comparable(term) in haystack for term in strong_terms)
-                if not grounded:
-                    logger.debug(
-                        f"Citation [E{citation_str}] grounding check FAILED: strong terms {strong_terms} not found in chunk source '{chunk.get('sourcePath', 'unknown')}'"
-                    )
-            elif weak_terms:
-                grounded = any(_term_in_block(term, haystack, inflected) for term in weak_terms)
-                if not grounded:
-                    logger.debug(
-                        f"Citation [E{citation_str}] grounding check FAILED: weak terms {weak_terms} not found in chunk source '{chunk.get('sourcePath', 'unknown')}'"
-                    )
-            else:
-                # No strong or weak terms; check ubiquitous terms (these are more lenient)
-                # Ubiquitous terms appear everywhere, so we just require at least one match
-                grounded = any(_comparable(term) in haystack for term in ubiquitous_terms)
-                if not grounded:
-                    logger.debug(
-                        f"Citation [E{citation_str}] grounding check FAILED: ubiquitous terms {ubiquitous_terms} not found in chunk source '{chunk.get('sourcePath', 'unknown')}'"
-                    )
-
+        if strong_terms:
+            # Strong terms present: require at least one strong match.
+            # A weak-only match is not accepted — it would allow hallucinated
+            # file names/IDs to pass because a generic term like "NeTEx" matches.
+            grounded = any(_comparable(term) in haystack for term in strong_terms)
             if not grounded:
-                all_checked_terms = strong_terms + weak_terms + ubiquitous_terms
-                raise LLMGenerationError(
-                    f"Citation [E{citation_str}] does not ground the claim: "
-                    f"'{sentence[:150].strip()}'. "
-                    f"Cited chunk source: '{chunk.get('sourcePath', 'unknown')}'. "
-                    f"Terms checked: {all_checked_terms[:4]}. "
-                    "The LLM may have cited the wrong evidence block or hallucinated content."
+                logger.debug(
+                    f"Citation [E{citation_str}] grounding check FAILED: strong terms {strong_terms} not found in chunk source '{chunk.get('sourcePath', 'unknown')}'"
                 )
+        elif weak_terms:
+            grounded = any(_term_in_block(term, haystack, inflected) for term in weak_terms)
+            if not grounded:
+                logger.debug(
+                    f"Citation [E{citation_str}] grounding check FAILED: weak terms {weak_terms} not found in chunk source '{chunk.get('sourcePath', 'unknown')}'"
+                )
+        else:
+            # No strong or weak terms; check ubiquitous terms (these are more lenient)
+            # Ubiquitous terms appear everywhere, so we just require at least one match
+            grounded = any(_comparable(term) in haystack for term in ubiquitous_terms)
+            if not grounded:
+                logger.debug(
+                    f"Citation [E{citation_str}] grounding check FAILED: ubiquitous terms {ubiquitous_terms} not found in chunk source '{chunk.get('sourcePath', 'unknown')}'"
+                )
+
+        if not grounded:
+            all_checked_terms = strong_terms + weak_terms + ubiquitous_terms
+            return (
+                f"Citation [E{citation_str}] does not ground the claim: "
+                f"'{sentence[:150].strip()}'. "
+                f"Cited chunk source: '{chunk.get('sourcePath', 'unknown')}'. "
+                f"Terms checked: {all_checked_terms[:4]}. "
+                "The LLM may have cited the wrong evidence block or hallucinated content."
+            )
+    return None
 
 
 # Element names start with a capital (StopPlace, LiftEquipment); a backticked value such as `indoors` or `true`
@@ -768,30 +775,38 @@ def _validate_no_unsupported_element_purpose_claims(answer: str, chunks: list[di
     sentences = re.split(r"(?<=[.!?])\s+", prose_only.replace("\n", " "))
 
     for sentence in sentences:
-        if not _has_purpose_claim(sentence):
-            continue
+        reason = _sentence_purpose_error(sentence, chunks)
+        if reason:
+            raise LLMGenerationError(reason)
 
-        element_names = _XML_ELEMENT_MENTION_PATTERN.findall(sentence)
-        if not element_names:
-            continue
 
-        found_citations = CITATION_PATTERN.findall(sentence)
-        if not found_citations:
-            continue  # Uncited purpose claims are caught by other validators.
+def _sentence_purpose_error(sentence: str, chunks: list[dict]) -> str | None:
+    """Why one sentence's purpose claim is not grounded (see _validate_no_unsupported_element_purpose_claims), or None."""
+    if not _has_purpose_claim(sentence):
+        return None
 
-        ungrounded = [
-            name for name in element_names if not _element_has_definition_in_evidence(name, chunks)
-        ]
+    element_names = _XML_ELEMENT_MENTION_PATTERN.findall(sentence)
+    if not element_names:
+        return None
 
-        if ungrounded:
-            raise LLMGenerationError(
-                f"Sentence attributes a purpose/meaning to element(s) {ungrounded} "
-                f"but no evidence block defines them (only non-definitional evidence, "
-                f"e.g. an example file, is available): "
-                f"'{sentence[:150].strip()}'. "
-                "An element's name is not its definition — do not infer what an element "
-                "means or is used for unless some evidence block actually defines it."
-            )
+    found_citations = CITATION_PATTERN.findall(sentence)
+    if not found_citations:
+        return None  # Uncited purpose claims are caught by other validators.
+
+    ungrounded = [
+        name for name in element_names if not _element_has_definition_in_evidence(name, chunks)
+    ]
+
+    if ungrounded:
+        return (
+            f"Sentence attributes a purpose/meaning to element(s) {ungrounded} "
+            f"but no evidence block defines them (only non-definitional evidence, "
+            f"e.g. an example file, is available): "
+            f"'{sentence[:150].strip()}'. "
+            "An element's name is not its definition — do not infer what an element "
+            "means or is used for unless some evidence block actually defines it."
+        )
+    return None
 
 
 _RAW_FILENAME_PATTERN = re.compile(
@@ -2178,14 +2193,392 @@ def _validate_generated_answer(answer: str, chunks: list[dict], inflected: bool 
     logger.info("[VALIDATE] All validators PASSED")
 
 
+# --- A verdict per sentence (plan 2026-11-21, step 2) ---
+#
+# The checks that judge one sentence (citation grounding, element purpose) give every cited sentence its own
+# verdict instead of rejecting the whole draft at the first failure. A failed sentence is removed with its marks;
+# the rest is served. The checks that judge the whole answer (language, citation range, raw file names,
+# specificity, the example output) still reject the draft. The draft is written again only when too little
+# remains (_too_little_remains), once, with the removed sentences as feedback.
+
+# Part of the answer that could not be confirmed was left out: shown after an answer whose second draft lost
+# sentences, in the question's language (fixed_text_language).
+PARTLY_CONFIRMED_NOTE = "Part of this answer could not be confirmed in the sources and was left out."
+# Share of the cited sentences of a draft that must pass for what remains to answer the question.
+SENTENCE_CHECK_MIN_KEPT_SHARE = 0.5
+
+
+def _sentence_check_enabled() -> bool:
+    return bool(getattr(settings, "ANSWER_CHECK_BY_SENTENCE_ENABLED", True))
+
+
+def _sentence_spans(answer: str) -> list[tuple[int, int]]:
+    """(start, end) of each sentence the check judges, in the answer's own offsets.
+
+    Cut after . ! ? and white space, as _validate_citation_grounding cuts, but never inside a parenthesis:
+    "(e.g. a station)" or "(z. B. ...)" stays in its sentence. A parenthesis does not run over a line break.
+    """
+    spans: list[tuple[int, int]] = []
+    start = depth = 0
+    index, length = 0, len(answer)
+    while index < length:
+        char = answer[index]
+        if char == "\n":
+            depth = 0
+        if char == "(":
+            depth += 1
+        elif char == ")":
+            depth = max(0, depth - 1)
+        elif char.isspace() and index and answer[index - 1] in ".!?" and not depth:
+            spans.append((start, index))
+            while index < length and answer[index].isspace():
+                index += 1
+            start = index
+            continue
+        index += 1
+    spans.append((start, length))
+    return [(s, e) for s, e in spans if e > s]
+
+
+def _sentence_verdicts(answer: str, chunks: list[dict], inflected: bool = False) -> list[dict]:
+    """A verdict for every cited sentence: {"start", "end", "sentence", "citations", "passages", "reason"}.
+
+    reason is None for a sentence that passes. passages are the ids of the blocks the sentence cites, the ones it
+    was judged against. The same draft always gives the same verdicts.
+    """
+    verdicts: list[dict] = []
+    for start, end in _sentence_spans(answer):
+        sentence = answer[start:end].replace("\n", " ")
+        cited = list(dict.fromkeys(CITATION_PATTERN.findall(sentence)))
+        if not cited:
+            continue
+        # The purpose check reads prose only, as _validate_no_unsupported_element_purpose_claims does.
+        prose = FENCED_CODE_BLOCK_PATTERN.sub(" ", answer[start:end]).replace("\n", " ")
+        reason = _sentence_grounding_error(sentence, chunks, inflected) or _sentence_purpose_error(prose, chunks)
+        passages = [
+            str(chunks[int(c) - 1].get("chunkId") or chunks[int(c) - 1].get("sourcePath") or "")
+            for c in cited
+            if 0 < int(c) <= len(chunks)
+        ]
+        verdicts.append(
+            {
+                "start": start,
+                "end": end,
+                "sentence": sentence.strip(),
+                "citations": [f"E{c}" for c in cited],
+                "passages": passages,
+                "reason": reason,
+                "hasWords": _has_words(CITATION_PATTERN.sub("", sentence)),
+            }
+        )
+    # A mark standing alone ("[E3].") supports the sentence before it and goes with it.
+    for previous, verdict in zip(verdicts, verdicts[1:]):
+        if previous["reason"] and not verdict["hasWords"] and not answer[previous["end"] : verdict["start"]].strip():
+            verdict["reason"] = "the sentence before it was removed"
+    return verdicts
+
+
+_LINE_WITHOUT_CONTENT = re.compile(r"^[\s>#*_\-+•.,;:!?()\[\]|0-9]*$")
+_HEADING_LINE = re.compile(r"^\s*(#{1,6})\s+\S")
+_LABEL_LINE = re.compile(r"^\s*(?:[-*+]\s+)?(?:\*\*[^*]+\*\*\s*:?|[^.!?]*:)\s*$")
+
+
+def _without_sentences(answer: str, verdicts: list[dict]) -> str:
+    """The answer without the failed sentences, their marks with them.
+
+    Fenced code is never cut. A line, list item or heading left without content is removed, and so is a heading or
+    label line ("**Elements:**", "Key points:") whose content was all removed.
+    """
+    removed = [(v["start"], v["end"]) for v in verdicts if v["reason"]]
+    if not removed:
+        return answer
+    code = [(m.start(), m.end()) for m in FENCED_CODE_BLOCK_PATTERN.finditer(answer)]
+    drop = [False] * len(answer)
+    for start, end in removed:
+        while end < len(answer) and answer[end] in " \t":
+            end += 1  # the space before the next sentence on the line goes too
+        for index in range(start, end):
+            if answer[index] != "\n" and not any(cs <= index < ce for cs, ce in code):
+                drop[index] = True
+    lines: list[tuple[str, bool]] = []  # (text left, a sentence was removed from it)
+    position = 0
+    for raw in answer.split("\n"):
+        start, end = position, position + len(raw)
+        lines.append(("".join(answer[i] for i in range(start, end) if not drop[i]), any(drop[start:end])))
+        position = end + 1
+    kept: list[tuple[str, bool]] = []
+    for text, was_touched in lines:
+        if was_touched:
+            text = re.sub(r"(?<=\S)[ \t]{2,}", " ", text).rstrip()
+            text = re.sub(r"[ \t]+([,.;:)])", r"\1", text)
+            if _LINE_WITHOUT_CONTENT.match(CITATION_PATTERN.sub("", text)):
+                kept.append(("", True))
+                continue
+        kept.append((text, was_touched))
+    # A heading or label whose content was all removed: the next line with text is another heading or label of the
+    # same or a higher level, or there is none, and a line was removed in between.
+    def level(text: str) -> int | None:
+        heading = _HEADING_LINE.match(text)
+        if heading:
+            return len(heading.group(1))
+        return 7 if _LABEL_LINE.match(text) and not _LINE_WITHOUT_CONTENT.match(text) else None
+
+    changed = True
+    while changed:
+        changed = False
+        for index, (text, _) in enumerate(kept):
+            own = level(text)
+            if own is None:
+                continue
+            emptied, following = False, None
+            for later_text, later_touched in kept[index + 1 :]:
+                if later_text.strip():
+                    following = later_text
+                    break
+                emptied = emptied or later_touched
+            if not emptied:
+                continue
+            following_level = level(following) if following is not None else 0
+            if following is None or (following_level is not None and following_level <= own):
+                kept[index] = ("", True)
+                changed = True
+    text = "\n".join(line for line, _ in kept)
+    return re.sub(r"\n{3,}", "\n\n", text).strip()
+
+
+def _too_little_remains(verdicts: list[dict]) -> bool:
+    """Whether what remains no longer answers the question: no cited sentence passed, or fewer than
+    SENTENCE_CHECK_MIN_KEPT_SHARE of the cited sentences did."""
+    judged = [v for v in verdicts if v["hasWords"]]
+    if not judged:
+        return False
+    kept = sum(1 for v in judged if not v["reason"])
+    return kept == 0 or kept < SENTENCE_CHECK_MIN_KEPT_SHARE * len(judged)
+
+
+def _checked_draft(
+    answer: str,
+    chunks: list[dict],
+    inflected: bool,
+    question: str,
+    target_language: str | None,
+    example_fragment: str = "",
+    example_check: bool = False,
+) -> dict:
+    """One draft checked sentence by sentence: {"answer": what passed, "verdicts", "whole": the reason a check of the
+    whole answer failed or None, "tooLittle"}.
+
+    The language is checked on the draft; the citation range, raw file names, specificity and (example_check) the
+    example output on what remains after the failed sentences are removed, since that is what would be served.
+    """
+    try:
+        _validate_answer_language(answer=answer, question=question, target_language=target_language)
+    except LLMGenerationError as exc:
+        return {"answer": answer, "verdicts": [], "whole": str(exc), "tooLittle": False}
+    verdicts = _sentence_verdicts(answer, chunks, inflected)
+    kept = _without_sentences(answer, verdicts)
+    whole = None
+    try:
+        _validate_citations_to_chunks(answer=kept, chunks=chunks)
+        _validate_no_raw_filenames(answer=kept, chunks=chunks)
+        _validate_answer_has_specificity(answer=kept)
+        if example_check:
+            _validate_grounded_example_output(
+                question=question, answer=kept, chunks=chunks, shown_fragment=example_fragment
+            )
+    except LLMGenerationError as exc:
+        whole = str(exc)
+    return {"answer": kept, "verdicts": verdicts, "whole": whole, "tooLittle": _too_little_remains(verdicts)}
+
+
+def _servable(checked: dict) -> bool:
+    """Whether a checked draft may be served: its whole-answer checks passed, and a cited sentence is left unless
+    none was removed (a draft without citations is served as before)."""
+    if checked["whole"]:
+        return False
+    judged = [v for v in checked["verdicts"] if v["hasWords"]]
+    removed = any(v["reason"] for v in checked["verdicts"])
+    return not removed or any(not v["reason"] for v in judged)
+
+
+def _needs_rewrite(checked: dict) -> bool:
+    return bool(checked["whole"]) or checked["tooLittle"]
+
+
+def _rewrite_reason(checked: dict) -> str:
+    if checked["whole"]:
+        return checked["whole"]
+    judged = [v for v in checked["verdicts"] if v["hasWords"]]
+    failed = sum(1 for v in judged if v["reason"])
+    return (
+        f"{failed} of {len(judged)} cited sentences could not be confirmed in the blocks they cite and were removed; "
+        "what remains does not answer the question."
+    )
+
+
+def _sentence_check_record(attempt: int, checked: dict) -> dict:
+    judged = [v for v in checked["verdicts"] if v["hasWords"]]
+    return {
+        "attempt": attempt,
+        "citedSentences": len(judged),
+        "kept": sum(1 for v in judged if not v["reason"]),
+        "removed": _removed_record(checked["verdicts"]),
+        "wholeAnswerFailure": (checked["whole"] or None) and checked["whole"][:300],
+        "tooLittle": checked["tooLittle"],
+    }
+
+
+def _fixed_text_question(question: str, prompt_question: str, target_language: str | None, render_language: str | None):
+    """The english_question argument fixed_text_language.in_question_language needs: None for an English question."""
+    if render_language:
+        return prompt_question
+    return question if _not_english(target_language) else None
+
+
+def _partly_confirmed_note(
+    question: str, prompt_question: str, target_language: str | None, render_language: str | None
+) -> str:
+    from helpdesk.services.fixed_text_language import in_question_language
+
+    english_question = _fixed_text_question(question, prompt_question, target_language, render_language)
+    return f"*{in_question_language(PARTLY_CONFIRMED_NOTE, question=question, english_question=english_question)}*"
+
+
+def _refused_by_sentence_check(
+    chunks: list[dict],
+    question: str,
+    prompt_question: str,
+    target_language: str | None,
+    render_language: str | None,
+    *,
+    with_example: bool,
+    rejected_answer: str | None,
+    rejection_reason: str | None,
+    record: dict | None,
+) -> dict:
+    """No draft kept a confirmed sentence: the refusal for insufficient evidence (next to an example: no text, the
+    example stands alone). Nothing that failed the check is served."""
+    if with_example:
+        answer = ""
+    else:
+        from helpdesk.services.fixed_text_language import in_question_language
+        from helpdesk.services.semantic_abstention import INSUFFICIENT_EVIDENCE_MESSAGE
+
+        english_question = _fixed_text_question(question, prompt_question, target_language, render_language)
+        answer = in_question_language(INSUFFICIENT_EVIDENCE_MESSAGE, question=question, english_question=english_question)
+    return {
+        "answer": answer,
+        "rendering": None,
+        "confidence": 0.0,
+        "review_required": True,
+        "answer_validated": True,
+        "evidence_answers_question": True if with_example else False,
+        "provider": settings.LLM_PROVIDER,
+        "model": settings.LLM_MODEL,
+        "rejected_answer": rejected_answer,
+        "rejection_reason": rejection_reason,
+        "sentence_check": record,
+    }
+
+
+def _answer_checked_by_sentence(
+    *,
+    draft,
+    messages: list[dict],
+    chunks: list[dict],
+    inflected: bool,
+    question: str,
+    target_language: str | None,
+    example_fragment: str,
+    example_check: bool,
+    with_example: bool,
+    legislation: bool,
+) -> Generator[tuple[str, str], None, dict]:
+    """The answer of the sentence check: the first draft, and one rewrite only when it needs one.
+
+    draft(messages, first) returns a post-processed draft. Yields ("status", "retrying") before a rewrite. Returns
+    {"answer", "rejected_answer", "rejection_reason", "record", "note", "refused", "empty"}: "note" when sentences
+    of the served draft were removed after the rewrite (a visible note follows), "refused" when no draft has a
+    confirmed sentence left (the refusal for insufficient evidence is served), "empty" when an example's text has
+    nothing to add. Nothing that failed a check is in "answer".
+    """
+    record: dict = {"drafts": [], "outcome": None}
+    result = {"rejected_answer": None, "rejection_reason": None, "record": record, "note": False, "refused": False, "empty": False}
+
+    def check(text: str) -> dict:
+        return _checked_draft(
+            text, chunks, inflected, question, target_language, example_fragment=example_fragment, example_check=example_check
+        )
+
+    try:
+        first_text = draft(messages, True)
+    except LLMGenerationError as exc:
+        first_text, first = "", {"answer": "", "verdicts": [], "whole": str(exc), "tooLittle": False}
+    else:
+        if with_example and not first_text.strip():
+            return {**result, "answer": "", "empty": True}
+        first = check(first_text)
+        record["drafts"].append(_sentence_check_record(1, first))
+        if not _needs_rewrite(first):
+            record["outcome"] = "served" if all(not v["reason"] for v in first["verdicts"]) else "served, sentences removed"
+            return {**result, "answer": first["answer"]}
+    result["rejected_answer"] = first_text
+    result["rejection_reason"] = _rewrite_reason(first)
+    retry_messages = (
+        _append_feedback_message(
+            messages=messages,
+            rejected_answer=first_text,
+            error_msg=result["rejection_reason"],
+            legislation=legislation,
+            removed=_removed_record(first["verdicts"]),
+        )
+        if first_text
+        else messages
+    )
+    yield ("status", "retrying")
+    second_text = draft(retry_messages, False)
+    if with_example and not second_text.strip():
+        return {**result, "answer": "", "empty": True}
+    second = check(second_text)
+    record["drafts"].append(_sentence_check_record(2, second))
+    if _servable(second):
+        chosen = second
+    elif first_text and _servable(first):
+        chosen = first  # the rewrite kept nothing that passed; the first draft's confirmed sentences stand
+    else:
+        record["outcome"] = "refused"
+        result["rejection_reason"] = f"{result['rejection_reason']} | retry: {_rewrite_reason(second)}"[:500]
+        return {**result, "answer": "", "refused": True}
+    removed_any = any(v["reason"] for v in chosen["verdicts"])
+    record["outcome"] = ("first draft" if chosen is first else "rewrite") + (" with note" if removed_any else "")
+    return {**result, "answer": chosen["answer"], "note": removed_any}
+
+
+def _removed_record(verdicts: list[dict]) -> list[dict]:
+    """For the trace: each removed sentence, why, and the ids of the blocks it was judged against."""
+    return [
+        {"sentence": v["sentence"][:300], "reason": v["reason"][:300], "citations": v["citations"], "passages": v["passages"]}
+        for v in verdicts
+        if v["reason"]
+    ]
+
+
 def _append_feedback_message(
-    messages: list[dict], rejected_answer: str, error_msg: str, legislation: bool = False
+    messages: list[dict],
+    rejected_answer: str,
+    error_msg: str,
+    legislation: bool = False,
+    removed: list[dict] | None = None,
 ) -> list[dict]:
     """Return a new messages list with a feedback turn appended for retry.
 
     With EU legislation or NAPCORE documents in the evidence the fix asks for articles, documents and quotes,
-    not XML elements (#91).
+    not XML elements (#91). `removed` (the sentence check's removed sentences) are listed with their reasons.
     """
+    reason = error_msg[:250]
+    if removed:
+        listed = "\n".join(f"- {r['sentence'][:200]} (why: {r['reason'][:150]})" for r in removed[:8])
+        reason = f"{reason}\nRemoved sentences (cite the block that states each claim, or leave the claim out):\n{listed}"
     # Add specific guidance if the error is about file names
     file_name_hint = ""
     if "file name" in error_msg.lower() or "raw file" in error_msg.lower():
@@ -2225,7 +2618,7 @@ def _append_feedback_message(
                 "role": "user",
                 "content": (
                     f"Your previous answer was REJECTED.\nRejected answer: {rejected_answer[:400]}\n"
-                    f"Reason: {error_msg[:250]}\n\n"
+                    f"Reason: {reason}\n\n"
                     "REQUIRED FIX — Your new answer MUST:\n"
                     "1. For EU legislation blocks, name the article or annex point in each cited sentence and "
                     "quote the provision verbatim (in English, as in the evidence); for NAPCORE documents, name "
@@ -2241,7 +2634,7 @@ def _append_feedback_message(
     feedback = (
         f"Your previous answer was REJECTED. It did not meet requirements.\n"
         f"Rejected answer: {rejected_answer[:400]}\n"
-        f"Reason: {error_msg[:250]}\n\n"
+        f"Reason: {reason}\n\n"
         "REQUIRED FIX — Your new answer MUST:\n"
         "1. Include SPECIFIC XML ELEMENT NAMES from the evidence (e.g., <DepartureTime>, <Journey>, <Call>)\n"
         "2. Cite EXACTLY which evidence block contains each element\n"
@@ -2641,88 +3034,141 @@ def generate_answer_llm(
     rejected_answer: str | None = None
     rejection_reason: str | None = None
     answer_validated = True
-
-    # First attempt: generation and validation run separately so the rejected
-    # answer text (not just the validator's error) is available for retry feedback.
-    answer: str | None = None
+    sentence_check: dict | None = None
+    partly_confirmed = refused = False
     signals: dict = {}
-    try:
-        answer = _generate_answer_text(
-            chunks=chunks,
-            messages=messages,
-            request_targets=request_targets,
-            signals=signals,
-            thinking=settings.LLM_ANTHROPIC_FIRST_ANSWER_THINKING,
-        )
-        if (example_elements or structure_element) and not answer.strip():
-            return _nothing_to_add(chunks)
-        _validate_answer_language(answer=answer, question=prompt_question, target_language=target_language)
-        _validate_generated_answer(answer=answer, chunks=chunks, inflected=_not_english(target_language))
-    except LLMGenerationError as first_error:
-        rejected_answer = answer or ""
-        rejection_reason = str(first_error)
-        logger.warning(
-            "LLM first attempt rejected by validator; retrying with feedback. Reason: %s",
-            rejection_reason[:200],
-            extra={"question": question[:120]},
-        )
-        # Second attempt with explicit correction feedback. If generation itself
-        # failed (no answer produced), feedback about a rejected answer does not
-        # apply — retry the original prompt instead.
-        if rejected_answer:
-            retry_messages = _append_feedback_message(
-                messages=messages,
-                rejected_answer=rejected_answer,
-                error_msg=rejection_reason,
-                legislation=_has_prose_evidence(chunks, max_chunks),
+    if _sentence_check_enabled():
+        def draft(active_messages: list[dict], first: bool) -> str:
+            return _generate_answer_text(
+                chunks=chunks,
+                messages=active_messages,
+                request_targets=request_targets,
+                signals=signals,
+                **({"thinking": settings.LLM_ANTHROPIC_FIRST_ANSWER_THINKING} if first else {}),
             )
-        else:
-            retry_messages = messages
+
         try:
-            answer = _generate_answer_text(
-                chunks=chunks, messages=retry_messages, request_targets=request_targets, signals=signals
+            outcome = _consumed(
+                _answer_checked_by_sentence(
+                    draft=draft,
+                    messages=messages,
+                    chunks=chunks,
+                    inflected=_not_english(target_language),
+                    question=prompt_question,
+                    target_language=target_language,
+                    example_fragment=example_fragment,
+                    example_check=False,  # checked below for every answer, as before
+                    with_example=bool(example_elements or structure_element),
+                    legislation=_has_prose_evidence(chunks, max_chunks),
+                )
             )
         except Exception as fatal_error:
-            # Even the second attempt failed. This is a critical issue.
-            # Return an honest error message instead of letting exception propagate to fallback.
-            logger.error(
-                "FATAL: Both LLM attempts failed. Cannot generate answer. Exception: %s",
-                str(fatal_error)[:200],
-                extra={"question": question[:120]},
-                exc_info=True,
-            )
-            answer = (
-                "I was unable to generate a proper answer due to technical issues with the LLM. "
-                "The evidence retrieval worked, but the answer generation failed. "
-                "Please try again or contact support."
-            )
-            confidence = 0.0
-            # Return immediately to prevent fallback to generic boilerplate
+            logger.error("FATAL: both LLM attempts failed: %s", str(fatal_error)[:200], exc_info=True)
             return {
-                "answer": answer,
-                "confidence": confidence,
+                "answer": (
+                    "I was unable to generate a proper answer due to technical issues with the LLM. "
+                    "The evidence retrieval worked, but the answer generation failed. "
+                    "Please try again or contact support."
+                ),
+                "confidence": 0.0,
                 "review_required": True,
                 "provider": settings.LLM_PROVIDER,
                 "model": (request_targets[0]["model"]),
-                "rejected_answer": rejected_answer,
-                "rejection_reason": rejection_reason,
+                "rejected_answer": None,
+                "rejection_reason": str(fatal_error)[:500],
             }
-        if (example_elements or structure_element) and not answer.strip():
+        if outcome["empty"]:
             return _nothing_to_add(chunks)
+        answer = outcome["answer"]
+        rejected_answer, rejection_reason = outcome["rejected_answer"], outcome["rejection_reason"]
+        sentence_check, partly_confirmed, refused = outcome["record"], outcome["note"], outcome["refused"]
+        if refused:
+            return _refused_by_sentence_check(
+                chunks, question, prompt_question, target_language, render_language,
+                with_example=bool(example_elements or structure_element),
+                rejected_answer=rejected_answer, rejection_reason=rejection_reason, record=sentence_check,
+            )
+    else:
+        # First attempt: generation and validation run separately so the rejected
+        # answer text (not just the validator's error) is available for retry feedback.
+        answer: str | None = None
         try:
+            answer = _generate_answer_text(
+                chunks=chunks,
+                messages=messages,
+                request_targets=request_targets,
+                signals=signals,
+                thinking=settings.LLM_ANTHROPIC_FIRST_ANSWER_THINKING,
+            )
+            if (example_elements or structure_element) and not answer.strip():
+                return _nothing_to_add(chunks)
             _validate_answer_language(answer=answer, question=prompt_question, target_language=target_language)
             _validate_generated_answer(answer=answer, chunks=chunks, inflected=_not_english(target_language))
-        except LLMGenerationError as retry_error:
-            # Retry failed validation too, but it did produce an answer. Keep it
-            # as-is rather than paying for a third generation call — the feedback
-            # was the best guidance we could provide.
+        except LLMGenerationError as first_error:
+            rejected_answer = answer or ""
+            rejection_reason = str(first_error)
             logger.warning(
-                "LLM retry failed validation too; using the retry answer as-is, marked for review. Reason: %s",
-                str(retry_error)[:200],
+                "LLM first attempt rejected by validator; retrying with feedback. Reason: %s",
+                rejection_reason[:200],
                 extra={"question": question[:120]},
             )
-            rejection_reason = f"{rejection_reason} | retry also failed: {retry_error}"[:500]
-            answer_validated = False
+            # Second attempt with explicit correction feedback. If generation itself
+            # failed (no answer produced), feedback about a rejected answer does not
+            # apply — retry the original prompt instead.
+            if rejected_answer:
+                retry_messages = _append_feedback_message(
+                    messages=messages,
+                    rejected_answer=rejected_answer,
+                    error_msg=rejection_reason,
+                    legislation=_has_prose_evidence(chunks, max_chunks),
+                )
+            else:
+                retry_messages = messages
+            try:
+                answer = _generate_answer_text(
+                    chunks=chunks, messages=retry_messages, request_targets=request_targets, signals=signals
+                )
+            except Exception as fatal_error:
+                # Even the second attempt failed. This is a critical issue.
+                # Return an honest error message instead of letting exception propagate to fallback.
+                logger.error(
+                    "FATAL: Both LLM attempts failed. Cannot generate answer. Exception: %s",
+                    str(fatal_error)[:200],
+                    extra={"question": question[:120]},
+                    exc_info=True,
+                )
+                answer = (
+                    "I was unable to generate a proper answer due to technical issues with the LLM. "
+                    "The evidence retrieval worked, but the answer generation failed. "
+                    "Please try again or contact support."
+                )
+                confidence = 0.0
+                # Return immediately to prevent fallback to generic boilerplate
+                return {
+                    "answer": answer,
+                    "confidence": confidence,
+                    "review_required": True,
+                    "provider": settings.LLM_PROVIDER,
+                    "model": (request_targets[0]["model"]),
+                    "rejected_answer": rejected_answer,
+                    "rejection_reason": rejection_reason,
+                }
+            if (example_elements or structure_element) and not answer.strip():
+                return _nothing_to_add(chunks)
+            try:
+                _validate_answer_language(answer=answer, question=prompt_question, target_language=target_language)
+                _validate_generated_answer(answer=answer, chunks=chunks, inflected=_not_english(target_language))
+            except LLMGenerationError as retry_error:
+                # Retry failed validation too, but it did produce an answer. Keep it
+                # as-is rather than paying for a third generation call — the feedback
+                # was the best guidance we could provide.
+                logger.warning(
+                    "LLM retry failed validation too; using the retry answer as-is, marked for review. Reason: %s",
+                    str(retry_error)[:200],
+                    extra={"question": question[:120]},
+                )
+                rejection_reason = f"{rejection_reason} | retry also failed: {retry_error}"[:500]
+                answer_validated = False
 
     _validate_grounded_example_output(question=prompt_question, answer=answer, chunks=chunks, shown_fragment=example_fragment)
 
@@ -2768,18 +3214,21 @@ def generate_answer_llm(
         answer, rendering = _consumed(
             _rendered_answer(answer, render_language, question, prompt_question, stream=False)
         )
+    if partly_confirmed:
+        answer = f"{answer}\n\n{_partly_confirmed_note(question, prompt_question, target_language, render_language)}"
 
     return {
         "answer": answer,
         "rendering": rendering,
         "confidence": confidence,
-        "review_required": confidence < 0.82 or not answer_validated,
+        "review_required": confidence < 0.82 or not answer_validated or partly_confirmed,
         "answer_validated": answer_validated,
         "evidence_answers_question": signals.get("evidence_answers_question"),
         "provider": settings.LLM_PROVIDER,
         "model": (request_targets[0]["model"]),
         "rejected_answer": rejected_answer,
         "rejection_reason": rejection_reason,
+        "sentence_check": sentence_check,
     }
 
 
@@ -2989,74 +3438,124 @@ def stream_answer_llm(
     rejection_reason: str | None = None
     answer_validated = True
     evidence_answers_question: bool | None = None
-    try:
-        full_answer = _collect_stream(messages, thinking=settings.LLM_ANTHROPIC_FIRST_ANSWER_THINKING)
+    sentence_check: dict | None = None
+    partly_confirmed = False
+    if _sentence_check_enabled():
+        signal: dict = {}
 
-        logger.info(f"[STREAM_LLM_RAW] Raw response (first 250 chars): {full_answer[:250]}")
-        evidence_answers_question = _evidence_answers_question(full_answer)
-        full_answer = _unwrap_json_answer(full_answer)
-        if (example_elements or structure_element) and not full_answer.strip():
-            yield ("done", _nothing_to_add(chunks))
-            return
+        def draft(active_messages: list[dict], first: bool) -> str:
+            text = _collect_stream(
+                active_messages, **({"thinking": settings.LLM_ANTHROPIC_FIRST_ANSWER_THINKING} if first else {})
+            )
+            logger.info(f"[STREAM_LLM_RAW] Raw response, attempt {1 if first else 2} (first 250 chars): {text[:250]}")
+            signal["evidence_answers_question"] = _evidence_answers_question(text)
+            text = _unwrap_json_answer(text)
+            if not text.strip():
+                return text
+            text = _strip_json_suffix(text)
+            text = _strip_raw_filenames(text, chunks)
+            text = _strip_stray_list_markers(text)
+            text = _strip_non_evidence_markup(text)
+            return _complete_xml_snippets(text)
 
-        # Strip hallucinated file names; evidence file names are preserved.
-        full_answer = _strip_json_suffix(full_answer)
-        full_answer = _strip_raw_filenames(full_answer, chunks)
-        full_answer = _strip_stray_list_markers(full_answer)
-        full_answer = _strip_non_evidence_markup(full_answer)
-        full_answer = _complete_xml_snippets(full_answer)
-        _validate_answer_language(answer=full_answer, question=prompt_question, target_language=effective_language)
-        _validate_generated_answer(answer=full_answer, chunks=chunks, inflected=_not_english(effective_language))
-        _validate_grounded_example_output(question=prompt_question, answer=full_answer, chunks=chunks, shown_fragment=example_fragment)
-    except LLMGenerationError as first_error:
-        rejected_answer = full_answer if "full_answer" in dir() else ""
-        rejection_reason = str(first_error)
-        logger.warning(
-            "Stream first attempt rejected; retrying with feedback. Reason: %s",
-            rejection_reason[:200],
-            extra={"question": question[:120]},
-        )
-        retry_messages = _append_feedback_message(
+        outcome = yield from _answer_checked_by_sentence(
+            draft=draft,
             messages=messages,
-            rejected_answer=rejected_answer,
-            error_msg=rejection_reason,
+            chunks=chunks,
+            inflected=_not_english(effective_language),
+            question=prompt_question,
+            target_language=effective_language,
+            example_fragment=example_fragment,
+            example_check=True,
+            with_example=bool(example_elements or structure_element),
             legislation=_has_prose_evidence(chunks, max_chunks),
         )
-        # The retry is a second full LLM call with nothing sent meanwhile; tell the
-        # caller so the client connection does not sit silent through both calls.
-        yield ("status", "retrying")
-        full_answer = _collect_stream(retry_messages)
-
-        logger.info(f"[STREAM_RETRY_RAW] Retry response (first 250 chars): {full_answer[:250]}")
-        evidence_answers_question = _evidence_answers_question(full_answer)
-        full_answer = _unwrap_json_answer(full_answer)
-        if (example_elements or structure_element) and not full_answer.strip():
+        if outcome["empty"]:
             yield ("done", _nothing_to_add(chunks))
             return
-
-        # Strip hallucinated file names; evidence file names are preserved.
-        full_answer = _strip_json_suffix(full_answer)
-        full_answer = _strip_raw_filenames(full_answer, chunks)
-        full_answer = _strip_stray_list_markers(full_answer)
-        full_answer = _strip_non_evidence_markup(full_answer)
-        full_answer = _complete_xml_snippets(full_answer)
+        evidence_answers_question = signal.get("evidence_answers_question")
+        full_answer = outcome["answer"]
+        rejected_answer, rejection_reason = outcome["rejected_answer"], outcome["rejection_reason"]
+        sentence_check, partly_confirmed = outcome["record"], outcome["note"]
+        if outcome["refused"]:
+            refusal = _refused_by_sentence_check(
+                chunks, question, prompt_question, effective_language, render_language,
+                with_example=bool(example_elements or structure_element),
+                rejected_answer=rejected_answer, rejection_reason=rejection_reason, record=sentence_check,
+            )
+            if refusal["answer"]:
+                yield ("token", refusal["answer"])
+            yield ("done", refusal)
+            return
+    else:
         try:
+            full_answer = _collect_stream(messages, thinking=settings.LLM_ANTHROPIC_FIRST_ANSWER_THINKING)
+
+            logger.info(f"[STREAM_LLM_RAW] Raw response (first 250 chars): {full_answer[:250]}")
+            evidence_answers_question = _evidence_answers_question(full_answer)
+            full_answer = _unwrap_json_answer(full_answer)
+            if (example_elements or structure_element) and not full_answer.strip():
+                yield ("done", _nothing_to_add(chunks))
+                return
+
+            # Strip hallucinated file names; evidence file names are preserved.
+            full_answer = _strip_json_suffix(full_answer)
+            full_answer = _strip_raw_filenames(full_answer, chunks)
+            full_answer = _strip_stray_list_markers(full_answer)
+            full_answer = _strip_non_evidence_markup(full_answer)
+            full_answer = _complete_xml_snippets(full_answer)
             _validate_answer_language(answer=full_answer, question=prompt_question, target_language=effective_language)
             _validate_generated_answer(answer=full_answer, chunks=chunks, inflected=_not_english(effective_language))
             _validate_grounded_example_output(question=prompt_question, answer=full_answer, chunks=chunks, shown_fragment=example_fragment)
-        except LLMGenerationError as retry_error:
-            # Retry failed validation too. A real, on-topic answer that fails a strict
-            # grounding heuristic is still far more useful than the generic
-            # non-LLM deterministic template views.py falls back to if this
-            # propagates - use the retry's answer as-is rather than raising.
+        except LLMGenerationError as first_error:
+            rejected_answer = full_answer if "full_answer" in dir() else ""
+            rejection_reason = str(first_error)
             logger.warning(
-                "Stream retry failed validation too; using raw retry answer instead of "
-                "falling back to the deterministic template, marked for review. Reason: %s",
-                str(retry_error)[:200],
+                "Stream first attempt rejected; retrying with feedback. Reason: %s",
+                rejection_reason[:200],
                 extra={"question": question[:120]},
             )
-            rejection_reason = f"{rejection_reason} | retry also failed: {retry_error}"[:500]
-            answer_validated = False
+            retry_messages = _append_feedback_message(
+                messages=messages,
+                rejected_answer=rejected_answer,
+                error_msg=rejection_reason,
+                legislation=_has_prose_evidence(chunks, max_chunks),
+            )
+            # The retry is a second full LLM call with nothing sent meanwhile; tell the
+            # caller so the client connection does not sit silent through both calls.
+            yield ("status", "retrying")
+            full_answer = _collect_stream(retry_messages)
+
+            logger.info(f"[STREAM_RETRY_RAW] Retry response (first 250 chars): {full_answer[:250]}")
+            evidence_answers_question = _evidence_answers_question(full_answer)
+            full_answer = _unwrap_json_answer(full_answer)
+            if (example_elements or structure_element) and not full_answer.strip():
+                yield ("done", _nothing_to_add(chunks))
+                return
+
+            # Strip hallucinated file names; evidence file names are preserved.
+            full_answer = _strip_json_suffix(full_answer)
+            full_answer = _strip_raw_filenames(full_answer, chunks)
+            full_answer = _strip_stray_list_markers(full_answer)
+            full_answer = _strip_non_evidence_markup(full_answer)
+            full_answer = _complete_xml_snippets(full_answer)
+            try:
+                _validate_answer_language(answer=full_answer, question=prompt_question, target_language=effective_language)
+                _validate_generated_answer(answer=full_answer, chunks=chunks, inflected=_not_english(effective_language))
+                _validate_grounded_example_output(question=prompt_question, answer=full_answer, chunks=chunks, shown_fragment=example_fragment)
+            except LLMGenerationError as retry_error:
+                # Retry failed validation too. A real, on-topic answer that fails a strict
+                # grounding heuristic is still far more useful than the generic
+                # non-LLM deterministic template views.py falls back to if this
+                # propagates - use the retry's answer as-is rather than raising.
+                logger.warning(
+                    "Stream retry failed validation too; using raw retry answer instead of "
+                    "falling back to the deterministic template, marked for review. Reason: %s",
+                    str(retry_error)[:200],
+                    extra={"question": question[:120]},
+                )
+                rejection_reason = f"{rejection_reason} | retry also failed: {retry_error}"[:500]
+                answer_validated = False
 
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
     confidence = min(0.94, max(0.60, float(top_score)))
@@ -3077,6 +3576,10 @@ def stream_answer_llm(
         chunk_size = 24
         for start in range(0, len(full_answer), chunk_size):
             yield ("token", full_answer[start : start + chunk_size])
+    if partly_confirmed:
+        note = f"\n\n{_partly_confirmed_note(question, prompt_question, effective_language, render_language)}"
+        yield ("token", note)
+        full_answer += note
 
     yield (
         "done",
@@ -3084,12 +3587,13 @@ def stream_answer_llm(
             "answer": full_answer,
             "rendering": rendering,
             "confidence": confidence,
-            "review_required": confidence < 0.82 or not answer_validated,
+            "review_required": confidence < 0.82 or not answer_validated or partly_confirmed,
             "answer_validated": answer_validated,
             "evidence_answers_question": evidence_answers_question,
             "provider": settings.LLM_PROVIDER,
             "model": settings.LLM_MODEL,
             "rejected_answer": rejected_answer,
             "rejection_reason": rejection_reason,
+            "sentence_check": sentence_check,
         },
     )

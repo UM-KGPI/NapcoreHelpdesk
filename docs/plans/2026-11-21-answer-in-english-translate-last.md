@@ -436,3 +436,115 @@ the detector's list, so the translation's "Croatian" was used.
 - Lists of different blocks in one sentence lose their attribution inside the sentence; cutting pieces at ";"
   would keep it, at the cost of shorter pieces.
 - The fixed refusal text waits 3 s for its rendering; a slow call shows the English refusal.
+
+## 9. Record: step 2, a verdict per sentence, 2026-11-21
+
+**Step 2 passed its gate. The behaviour is on by default; `ANSWER_CHECK_BY_SENTENCE_ENABLED=False` gives the old
+whole-draft check (a restart, no deploy).** Code in the commit before this record.
+
+### Diagnosis, before any model call
+
+Which checks judge one sentence (read in the code; **measured** by replay):
+
+- Per sentence, now a verdict each: citation grounding and element purpose. Both already judged every sentence on its
+  own; only the first failure was raised. I split each into a function for one sentence. The replay of 126 stored
+  English drafts gives 126 identical verdicts, and "some sentence fails" equals today's rejection on all of them.
+- Whole answer, still reject the draft: the language (on the draft), and on what remains after removal the citation
+  range, raw file names, specificity and the example output. Range and file names are repaired before the check, so
+  they hardly ever fire. I found no better general rule for these.
+- The sentence cut no longer goes inside a parenthesis. On the 104 English first drafts this changes no verdict.
+- One bug found on the way and fixed before measuring: the purpose check must take out fenced code before line
+  breaks are joined, or it reads the XML tags of a quoted block as claims.
+
+Labels (**measured**, one reading each): every cited sentence of the 104 English first drafts in the two captures
+(the first capture's English questions, the step 1 third run's non-English questions and English control), 515
+sentences. Questions split once at random (seed 20261121) into a half for deciding rules (24 questions) and a half for
+the gate (25). Four readers labelled all sentences without seeing the verdicts; I read every sentence the check
+removes myself. Supported 500, unsupported 15; borderline 19 and 11. We disagreed on 2: a sentence about the lift
+class that also cites the definition of the lift call class. I count it unsupported, as in the first diagnosis.
+
+Replay with today's rules, per sentence (**measured**):
+
+| | Rules half | Gate half |
+|---|---|---|
+| Supported sentences removed | 17 of 255 | 3 of 245 (1.2 %) |
+| Unsupported sentences today's rules reject, removed | 1 of 1 | 3 of 3 |
+| Unsupported sentences accepted, today and new | 7 and 7 | 4 and 4 |
+| First drafts left with too little | 2 | 0 (1 whole-answer failure) |
+
+The rule for "what remains no longer answers the question", fixed on the rules half before the capture: the answer is
+written again, once, when a check of the whole answer fails on what remains, or no cited sentence passed, or fewer
+than half of the cited sentences passed. Reason: when most of what the model cited is gone, the answer it composed is
+gone (in the rules half, a road question lost the two classes it asked for); while half or more stands, the bulk
+stands (every other case lost 1 of 3 to 7 sentences and still read as a full answer). It counts sentences only.
+After the rewrite the second draft's confirmed sentences are served, else the first draft's, with a note; with none,
+the refusal for insufficient evidence (next to an example, no text). A first draft served after removal gets no note:
+its served text passed, and the trace keeps the removals.
+
+### Capture
+
+Dev, in process, one question at a time, every run rolled back. The 40 questions of the first capture twice (80 runs),
+14:44 to 14:52 CET. Today's code (0.97.248) on 5 of them at 14:43 to 14:44.
+
+### Gate (measured unless marked)
+
+| | Must hold | Today | Measured | |
+|---|---|---|---|---|
+| Runs with a second draft | at most 10 % | 27 of 79; 9 of 36 | 0 of 80 (today's code in the same hour: 2 of 5) | pass |
+| Answers served with text that failed the check | none | 14 of 78; 1 of 36 | 0 of 80 (served English text re-checked with the old whole-draft check) | pass |
+| Supported sentences removed | at most 10 % | | gate half 3 of 245 (replay); capture 3 of 381 cited sentences | pass |
+| Unsupported sentences today's check rejects, all removed | all | 9 of 9 | 3 of 3 (gate half, replay); 2 of 2 in the capture | pass |
+| Unsupported sentences accepted | not more than today | | 4, today 4 (gate half) | pass |
+| Served answers, read against the question | each answers or says what is missing | | yes; 1 thin, 2 with a fault (below) | pass, see below |
+| Questions where the two runs differ on a second draft | at most 4 of 40 | 11 of 40 | 0 of 40 | pass |
+| Non-English answers translated as before | marks equal the checked marks after removal | | 18 of 18 translated, marks equal, no English fallback | pass |
+| Median answer time | not above today's code | | 8.35 s against 8.8 s on the same 5 questions; all 80 runs 4.5 s | pass |
+| Retrieval and example benchmarks | unchanged | | retrieval code not touched; example path below | pass |
+| CI | green, Retrieval Benchmark present and green | | see the PR | |
+
+The capture removed 5 sentences in 5 runs; no run was written again and no note was shown. I read the 5 answers:
+
+- A lift question (run 1): the sentence on the lift class itself was removed, because it also cites the definition of
+  the lift call class. What remains names "two classes" and then gives only the call class. It still answers in
+  part and says what the evidence lacks, but it became thin. In run 2 the same sentence went, and the schema block
+  still gave the lift class.
+- A question on passenger spots: the cut after "i.e." outside a parenthesis left a broken half sentence ("... are the
+  PASSENGER SPOTs, i.e.") in the served text. The answer still answers.
+- A Slovenian timetable question: a citation mark written after a full stop starts the next sentence for the check, so
+  one "sentence" ran over two paragraphs. Removing it took a supported SIRI sentence, the closing sentence on what the
+  evidence lacks and the mark of the paragraph before. The answer still answers.
+- A GTFS-RT question: a supported sentence on what the blocks do not mention went; the sentence before says the same.
+- The other lift run: nothing lost.
+
+The other 75 answers were served as the model wrote them, every sentence passing, as today's first drafts that pass
+(not read one by one in this step, **believed** unchanged in kind).
+
+Example path: the generated example is made before the answer text and is not touched by this code; fenced code is
+never cut by removal. The example question in the set kept its valid generated XML in both runs (**measured**). The
+example benchmark itself was not run (its generated examples do not pass through the changed code: read in the code).
+
+### Model calls
+
+177 in all: Haiku 157, the classifier model 20 (the existing language naming, as the app uses it). 162 in the 80 runs,
+15 in the 5 runs of today's code.
+
+### Tests
+
+The model is mocked in every test. The tests without a database ran on my machine with no `.env` and every endpoint
+pointed nowhere: the generator, translation, citation, language and thinking tests, 156 in all. One earlier run of
+`test_api` and `test_anthropic_chat` used a temporary test database on the local Postgres (Django's own, created and
+dropped by the runner); after that I blocked the database, and the tests that need one ran only on CI.
+
+### Believed, not measured
+
+- That the 75 unchanged answers read as before.
+- That prod behaves as dev; prod has other questions and longer answers.
+- That one reader per sentence labels well enough; 30 labels are borderline.
+
+### Open (seen after the numbers, not added)
+
+- A sentence that cites a block that does not hold its claim next to blocks that do: drop the wrong mark instead of
+  the sentence (the lift answer).
+- Do not cut after "i.e." or "e.g." outside a parenthesis either.
+- Cut at a blank line, and keep a mark written after a full stop with the sentence before it.
+- Numbers and file types as terms (cause C3 of the diagnosis) stay a separate variant.

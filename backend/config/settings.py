@@ -59,6 +59,7 @@ env = environ.Env(
     TRANSMODEL_HTML_BASE_URL=(str, "https://kgpi.fgpa.um.si/napcore-helpdesk/transmodel"),
     SEARCH_TRANSLATION_ENABLED=(bool, True),
     ANSWER_TRANSLATE_LAST_ENABLED=(bool, True),
+    ANSWER_CHECK_BY_SENTENCE_ENABLED=(bool, True),
     FIXED_TEXT_TRANSLATION_TIMEOUT_SECONDS=(float, 3.0),
     CACHE_URL=(str, ""),
     LLM_ENABLED=(bool, False),
@@ -472,6 +473,10 @@ SEARCH_TRANSLATION_ENABLED = env("SEARCH_TRANSLATION_ENABLED")
 # answer is translated into the question's language last, with the citation marks put back by code
 # (llm_generator, plan 2026-11-21). The language is named once per question. False: the answer is written in the question's language, as before.
 ANSWER_TRANSLATE_LAST_ENABLED = env("ANSWER_TRANSLATE_LAST_ENABLED")
+# The answer check gives every cited sentence its own verdict: a failed sentence is removed and the rest served; the
+# answer is written again (once) only when too little remains (llm_generator, plan 2026-11-21 step 2). False: the
+# whole draft is rejected at the first failed sentence and written again, as before.
+ANSWER_CHECK_BY_SENTENCE_ENABLED = env("ANSWER_CHECK_BY_SENTENCE_ENABLED")
 # How long a refusal waits for its fixed text in the question's language (services/fixed_text_language.py)
 # the first time per language; afterwards the rendering comes from the cache. 0: refusals stay in English.
 FIXED_TEXT_TRANSLATION_TIMEOUT_SECONDS = env("FIXED_TEXT_TRANSLATION_TIMEOUT_SECONDS")

@@ -54,6 +54,18 @@ English answer is served with a note. The question's language is named once per 
 the word detector is unsure, else the detector). `ANSWER_TRANSLATE_LAST_ENABLED=False`
 turns this off: the answer is then written in the question's language, as before (a restart, no deploy).
 
+The answer check gives every cited sentence its own verdict (citation grounding and element purpose; a sentence is
+not cut inside a parenthesis). A sentence that fails is removed with its citation marks, and a line, list item or
+heading left empty goes with it; the rest is served. Checks of the whole answer (language, citation range, raw file
+names, specificity, the example output) still reject the draft. The model writes the answer again, once, only when
+a whole-answer check fails or too little remains: no cited sentence, or fewer than half of them, passed. The
+removed sentences are its feedback. After that rewrite the confirmed sentences are served with a short note that
+part of the answer could not be confirmed (in the question's language), or the refusal for insufficient evidence
+when none is left; text that failed the check is never served. The trace (`llmSentenceCheck`) lists each removed
+sentence with its reason and the ids of the passages it was judged against. `ANSWER_CHECK_BY_SENTENCE_ENABLED=False`
+gives the old behaviour: the whole draft is rejected at the first failed sentence and written again, and a second
+failure is served marked not validated (a restart, no deploy).
+
 ## Versioning
 - Single source of truth: repository-root `VERSION` file.
 - Frontend display uses `VITE_APP_VERSION` when provided, otherwise uses the root `VERSION` file at build time.

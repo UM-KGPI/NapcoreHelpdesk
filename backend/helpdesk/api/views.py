@@ -1746,9 +1746,12 @@ class QuestionAnswerView(APIView):
             # A question not in English: the checked English answer and how its rendering into the question's
             # language went (llm_generator._rendered_answer); None when no rendering was made.
             "llmAnswerRendering": (generated.get("rendering") if isinstance(locals().get("generated"), dict) else None),
+            # The sentence check per draft (llm_generator._answer_checked_by_sentence): each removed sentence with its
+            # reason and the ids of the passages it was judged against; None when the check ran on the whole draft.
+            "llmSentenceCheck": (generated.get("sentence_check") if isinstance(locals().get("generated"), dict) else None),
             "presenceEvidence": [c.get("sourcePath") for c in presence],
             # False when the answer was served although its retry failed validation too (it is then marked
-            # for review); None when no LLM answer was generated.
+            # for review; only with ANSWER_CHECK_BY_SENTENCE_ENABLED=False); None when no LLM answer was generated.
             "llmAnswerValidated": (generated.get("answer_validated") if isinstance(locals().get("generated"), dict) else None),
             "generatedExample": generated_example,
             "schemaStructure": schema_structure,
@@ -2455,9 +2458,12 @@ class QuestionAnswerStreamView(APIView):
             # A question not in English: the checked English answer and how its rendering into the question's
             # language went (llm_generator._rendered_answer); None when no rendering was made.
             "llmAnswerRendering": (generated.get("rendering") if isinstance(locals().get("generated"), dict) else None),
+            # The sentence check per draft (llm_generator._answer_checked_by_sentence): each removed sentence with its
+            # reason and the ids of the passages it was judged against; None when the check ran on the whole draft.
+            "llmSentenceCheck": (generated.get("sentence_check") if isinstance(locals().get("generated"), dict) else None),
             "presenceEvidence": [c.get("sourcePath") for c in presence],
             # False when the answer was served although its retry failed validation too (it is then marked
-            # for review); None when no LLM answer was generated.
+            # for review; only with ANSWER_CHECK_BY_SENTENCE_ENABLED=False); None when no LLM answer was generated.
             "llmAnswerValidated": (generated.get("answer_validated") if isinstance(locals().get("generated"), dict) else None),
             "generatedExample": generated_example,
             "schemaStructure": schema_structure,

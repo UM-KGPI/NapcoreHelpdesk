@@ -1,5 +1,6 @@
-"""An answer whose retry also failed validation is served (e7dbeb4, d1950a9) but marked: review required,
-confidence capped at 0.80, answer_validated False. A validated answer is unchanged."""
+"""With the whole-draft check (ANSWER_CHECK_BY_SENTENCE_ENABLED=False), an answer whose retry also failed validation
+is served (e7dbeb4, d1950a9) but marked: review required, confidence capped at 0.80, answer_validated False. A
+validated answer is unchanged. The sentence check is tested in test_sentence_check.py."""
 
 from __future__ import annotations
 
@@ -24,7 +25,8 @@ CHUNKS = [
         "score": 0.93,
     }
 ]
-SETTINGS = {"LLM_ENABLED": True, "LLM_PROVIDER": "openai-compatible", "LLM_API_BASE_URL": "https://llm.example.test", "LLM_STREAMING": True}
+SETTINGS = {"LLM_ENABLED": True, "LLM_PROVIDER": "openai-compatible", "LLM_API_BASE_URL": "https://llm.example.test", "LLM_STREAMING": True,
+            "ANSWER_CHECK_BY_SENTENCE_ENABLED": False}
 QUESTION = "What is a Dataset in mobilityDCAT-AP?"
 
 
