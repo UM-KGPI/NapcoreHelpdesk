@@ -1312,6 +1312,7 @@ class NoBoostConceptPathTests(TestCase):
 
     QUESTION = "How is an accident described with a closed lane?"
     ALIASES = {"transmodel:with": {"with"}, "netex:Accident": {"accident"}, "tnits:Among": {"with"}}
+    RARE: tuple[str, ...] = ()  # what question_rare_lexemes returns
 
     def setUp(self):
         from helpdesk.models import SourceChunk
@@ -1346,7 +1347,7 @@ class NoBoostConceptPathTests(TestCase):
                 patch.object(retrieval_gateway, "_postgres_hybrid_candidates", return_value=list(self.pool)), \
                 patch.object(retrieval_gateway, "_path_hint_candidates", return_value=[]), \
                 patch.object(retrieval_gateway, "_lexical_recall_candidates", return_value=[]), \
-                patch.object(retrieval_gateway, "question_rare_lexemes", return_value=[]), \
+                patch.object(retrieval_gateway, "question_rare_lexemes", return_value=list(self.RARE)), \
                 patch.object(retrieval_gateway, "build_text_embedding", return_value=[1.0] + [0.0] * 1535), \
                 retrieval_gateway.retrieval_probe(probe):
             chunks, trace = retrieval_gateway.retrieve_chunks_with_trace(
@@ -1382,3 +1383,128 @@ class NoBoostConceptPathTests(TestCase):
 
     def test_repeated_calls_give_the_same_order(self):
         self.assertEqual(self._run("stop")[:2], self._run("stop")[:2])
+
+
+def _lower_word_lexemes(aliases):
+    """_alias_lexemes with each word as its own term, lowercased; "with" a stop word."""
+    return {alias: (() if alias in {"with", "is for"} else tuple(alias.lower().split())) for alias in aliases}
+
+
+class NoBoostCommonOwnNameTests(SimpleTestCase):
+    """The "common" kind: a one-word alias that is the concept's own name and not one of the question's rare terms."""
+
+    def _no_boost(self, aliases, question, kinds, rare):
+        from helpdesk.services import retrieval_gateway, semantic_graph
+
+        with patch.object(semantic_graph, "GRAPH_CONCEPT_ALIASES", aliases), \
+                patch.object(retrieval_gateway, "_alias_lexemes", side_effect=_lower_word_lexemes):
+            found = semantic_graph.extract_graph_concepts(question, word_variants=True)
+            return found, retrieval_gateway.no_boost_question_concepts(question, found, frozenset(kinds), rare)
+
+    ALIASES = {
+        "netex:Journey": {"journey"},
+        "transmodel:JOURNEY": {"JOURNEY"},
+        "netex:VehicleJourney": {"vehicle journey"},
+        "netex:Lane": {"lane"},
+    }
+
+    def test_the_own_name_as_a_common_word_gives_no_boost(self):
+        found, no_boost = self._no_boost(self.ALIASES, "How is a vehicle journey cancelled?", {"common"}, ["cancel"])
+        self.assertEqual(found, {"netex:Journey", "transmodel:JOURNEY", "netex:VehicleJourney"})
+        self.assertEqual(no_boost, {"netex:Journey", "transmodel:JOURNEY"})
+
+    def test_the_own_name_that_is_a_rare_term_keeps_its_boost(self):
+        _found, no_boost = self._no_boost(self.ALIASES, "Which lane is closed?", {"common"}, ["lane"])
+        self.assertEqual(no_boost, set())
+
+    def test_without_the_rare_terms_no_match_is_common(self):
+        _found, no_boost = self._no_boost(self.ALIASES, "How is a vehicle journey cancelled?", {"stop", "loose", "common"}, None)
+        self.assertEqual(no_boost, set())
+
+    def test_a_one_word_alias_other_than_the_own_name_is_not_common(self):
+        aliases = {"netex:ServiceJourney": {"journey"}}
+        _found, no_boost = self._no_boost(aliases, "How is a journey cancelled?", {"common"}, ["cancel"])
+        self.assertEqual(no_boost, set())
+
+    def test_a_concept_also_matched_on_a_distinctive_alias_keeps_it(self):
+        aliases = {"netex:Journey": {"journey", "vehicle journey"}}
+        _found, no_boost = self._no_boost(aliases, "How is a vehicle journey cancelled?", {"common"}, ["cancel"])
+        self.assertEqual(no_boost, set())
+
+    def test_a_concept_matched_through_common_and_stop_aliases_only_gives_no_boost(self):
+        aliases = {"transmodel:with": {"with"}, "netex:Journey": {"journey", "with"}}
+        question = "A journey with a closed lane"
+        self.assertEqual(self._no_boost(aliases, question, {"stop"}, ["lane"])[1], {"transmodel:with"})
+        self.assertEqual(self._no_boost(aliases, question, {"stop", "common"}, ["lane"])[1], {"transmodel:with", "netex:Journey"})
+
+    def test_the_own_name(self):
+        from helpdesk.services.semantic_graph import alias_is_concept_name
+
+        self.assertTrue(alias_is_concept_name("netex:Journey", "journey"))
+        self.assertTrue(alias_is_concept_name("transmodel:JOURNEY", "JOURNEY"))
+        self.assertTrue(alias_is_concept_name("opra:Opra", "opra"))
+        self.assertFalse(alias_is_concept_name("netex:VehicleJourney", "journey"))
+        self.assertFalse(alias_is_concept_name("transmodel:CLASS_ATTRIBUTE", "CLASS ATTRIBUTE"))
+        self.assertFalse(alias_is_concept_name("netex:", "journey"))
+
+    def test_the_setting_knows_the_kind(self):
+        from helpdesk.services.retrieval_gateway import concept_no_boost_kinds
+
+        with override_settings(RETRIEVAL_CONCEPT_NO_BOOST_MATCHES="stop,loose,common"):
+            self.assertEqual(concept_no_boost_kinds(), frozenset({"stop", "loose", "common"}))
+
+
+class NoBoostCommonOwnNamePathTests(NoBoostConceptPathTests):
+    """The "common" kind in the gateway's own call: it needs the question's rare terms, known only with semantic
+    vectors."""
+
+    ALIASES = {"netex:Accident": {"accident"}, "netex:Lane": {"lane"}}
+    RARE = ("lane",)
+
+    def setUp(self):
+        from helpdesk.models import SourceChunk
+
+        self.pool = []
+        for idx, (path, text) in enumerate((
+            ("accident.xsd", "An accident on the road."),
+            ("lane.xsd", "A closed lane on the road."),
+            ("other.xsd", "Other passage about roads."),
+        )):
+            chunk = SourceChunk.objects.create(
+                repository_url="https://github.com/TransmodelEcosystem/NeTEx", commit_sha="abc", source_path=path,
+                chunk_id=f"nc-{idx}", label=path, text=text, standards_scope=["NeTEx"], quality_score=0.5,
+                doc_type="schema", embedding_vector=[1.0] + [0.0] * 1535,
+            )
+            chunk.vector_similarity = 0.9 - idx / 100
+            chunk.lexical_rank = 0.1
+            self.pool.append(chunk)
+
+    def _run_semantic(self, setting):
+        from helpdesk.services import retrieval_gateway
+
+        with patch.object(retrieval_gateway, "semantic_enabled", return_value=True):
+            _ids, graph, trace = self._run(setting)
+        return graph, trace
+
+    def test_the_own_name_not_rare_gives_no_boost_and_the_rare_one_keeps_it(self):
+        graph, trace = self._run_semantic("stop,loose,common")
+        self.assertAlmostEqual(graph["nc-0"], 0.0)
+        self.assertGreater(graph["nc-1"], 0.0)
+        self.assertEqual(trace["noBoostConceptIds"], ["netex:Accident"])
+
+    def test_without_the_kind_both_keep_their_boost(self):
+        graph, trace = self._run_semantic("stop,loose")
+        self.assertGreater(graph["nc-0"], 0.0)
+        self.assertGreater(graph["nc-1"], 0.0)
+        self.assertEqual(trace["noBoostConceptIds"], [])
+
+    def test_without_semantic_vectors_the_kind_does_nothing(self):
+        _ids, _graph, trace = self._run("stop,loose,common")
+        self.assertEqual(trace["noBoostConceptIds"], [])
+
+    # The inherited tests are about the stop kind on their own aliases and pool.
+    test_off_boosts_the_stop_word_concept_as_before = None
+    test_on_the_stop_word_concept_gives_no_boost_and_the_distinctive_one_keeps_it = None
+    test_scope_handling_is_unchanged = None
+    test_a_question_without_such_a_concept_is_served_as_before = None
+    test_repeated_calls_give_the_same_order = None

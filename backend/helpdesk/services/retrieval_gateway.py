@@ -101,6 +101,7 @@ from helpdesk.services.semantic_graph import (
     CONCEPT_TO_TRANSMODEL,
     GRAPH_CONCEPT_ALIASES,
     TRANSMODEL_TO_CONCEPTS,
+    alias_is_concept_name,
     concepts_in_scope,
     expand_graph_concepts_with_distance,
     extract_graph_concepts,
@@ -387,8 +388,10 @@ def _is_standard_identity_concept(concept_id: str) -> bool:
 # Kinds of match through which a question concept gives no concept boost (RETRIEVAL_CONCEPT_NO_BOOST_MATCHES):
 # "stop", an alias that holds no text-search term (the English configuration's stop words: "with", "for",
 # "is for"); "loose", a label of several words reached only through the question's plurals or words without a
-# short prefix, not as written. A concept that also matches another alias keeps its boost.
-CONCEPT_NO_BOOST_MATCH_KINDS = ("stop", "loose")
+# short prefix, not as written; "common", a one-word alias that is the concept's own name ("journey" for
+# netex:Journey, "opra" for opra:Opra) and whose term is not among the question's rare terms. A concept that also
+# matches another alias keeps its boost.
+CONCEPT_NO_BOOST_MATCH_KINDS = ("stop", "loose", "common")
 _ALIAS_LEXEMES: dict[str, tuple[str, ...]] = {}
 
 
@@ -415,21 +418,39 @@ def _alias_lexemes(aliases: set[str]) -> dict[str, tuple[str, ...]]:
     return {alias: _ALIAS_LEXEMES[alias] for alias in aliases if alias in _ALIAS_LEXEMES}
 
 
-def no_boost_question_concepts(question: str, concepts: set[str], kinds: frozenset[str]) -> set[str]:
-    """The concepts, of those extracted from the question, whose every alias match in it is of one of `kinds`."""
+def no_boost_question_concepts(
+    question: str, concepts: set[str], kinds: frozenset[str], rare_lexemes: list[str] | None = None
+) -> set[str]:
+    """The concepts, of those extracted from the question, whose every alias match in it is of one of `kinds`.
+    "common" needs the question's rare terms (question_rare_lexemes); with rare_lexemes None no match is common."""
     if not kinds or not concepts:
         return set()
+    common = "common" in kinds and rare_lexemes is not None
+    rare = set(rare_lexemes or ())
     matches = question_alias_matches(question, concepts)
-    lexemes = _alias_lexemes({alias for found in matches.values() for alias, as_written in found if as_written}) if "stop" in kinds else {}
+    lexemes = (
+        _alias_lexemes({alias for found in matches.values() for alias, as_written in found if as_written})
+        if "stop" in kinds or common
+        else {}
+    )
 
-    def kind(alias: str, as_written: bool) -> str | None:
+    def kind(concept: str, alias: str, as_written: bool) -> str | None:
         if not as_written:
             return "loose"
-        if alias in lexemes and not lexemes[alias]:
+        if alias not in lexemes:
+            return None
+        terms = lexemes[alias]
+        if not terms:
             return "stop"
+        if common and len(terms) == 1 and terms[0] not in rare and alias_is_concept_name(concept, alias):
+            return "common"
         return None
 
-    return {concept for concept, found in matches.items() if all(kind(alias, as_written) in kinds for alias, as_written in found)}
+    return {
+        concept
+        for concept, found in matches.items()
+        if all(kind(concept, alias, as_written) in kinds for alias, as_written in found)
+    }
 
 
 def question_rare_lexemes(question: str, scope: list[str] | None) -> list[str]:
@@ -2272,9 +2293,11 @@ def _retrieve_chunks_once(
         question_concepts |= property_concepts
         _record_stage("propertyTermsMs", stage_start)
     rare_lexemes: list[str] = []
+    rare_lexemes_known = False
     if semantic_enabled():
         stage_start = time.perf_counter()
         rare_lexemes = question_rare_lexemes(question, scope)
+        rare_lexemes_known = True
         # "Does SIRI define roadworks?" parses to the concept siri:Siri. In a search scoped to SIRI alone it
         # names nothing more specific (with NeTEx and OpRa in scope it does tell them apart), yet its graph neighbours (ServiceDelivery, VehicleMonitoringDelivery) were
         # boosted over the RoadWorks definitions. It is dropped when the question has a topic of its own (a
@@ -2293,14 +2316,16 @@ def _retrieve_chunks_once(
     # expansion and the graph score they reordered the source's own passages: for "How is a road feature
     # update encoded in a TN-ITS dataset?" the examples overtook the schemas the question is about.
     graph_question_concepts = concepts_in_scope(question_concepts, None)
-    # A concept the question names only through a stop word or a loose variant of a label (see
-    # CONCEPT_NO_BOOST_MATCH_KINDS) is treated the same way: it adds its definitions and element lookups, but no
-    # concept boost, no graph expansion and no graph candidates.
+    # A concept the question names only through a stop word, a loose variant of a label or its own name as a
+    # common word (see CONCEPT_NO_BOOST_MATCH_KINDS) is treated the same way: it adds its definitions and element
+    # lookups, but no concept boost, no graph expansion and no graph candidates.
     no_boost_concepts: set[str] = set()
     no_boost_kinds = concept_no_boost_kinds() if graph_rag_enabled else frozenset()
     if no_boost_kinds:
         stage_start = time.perf_counter()
-        no_boost_concepts = no_boost_question_concepts(question, matched_concepts & question_concepts, no_boost_kinds)
+        no_boost_concepts = no_boost_question_concepts(
+            question, matched_concepts & question_concepts, no_boost_kinds, rare_lexemes if rare_lexemes_known else None
+        )
         graph_question_concepts -= no_boost_concepts
         _record_stage("noBoostConceptMs", stage_start)
 

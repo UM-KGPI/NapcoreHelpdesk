@@ -157,7 +157,7 @@ env = environ.Env(
     RETRIEVAL_GRAPH_PRESELECT_MULTIPLIER=(float, 2.0),
     RETRIEVAL_LEXICAL_PRESELECT_RESERVE=(int, 8),
     RETRIEVAL_LEXICAL_POOL_SIZE=(int, 8),
-    RETRIEVAL_CONCEPT_NO_BOOST_MATCHES=(str, "stop,loose"),
+    RETRIEVAL_CONCEPT_NO_BOOST_MATCHES=(str, "stop,loose,common"),
     VECTOR_INDEX_SEARCH=(bool, True),
     VECTOR_INDEX_PROBES=(int, 20),
     VECTOR_INDEX_DIMENSIONS=(int, 0),
@@ -510,8 +510,9 @@ RETRIEVAL_LEXICAL_PRESELECT_RESERVE = env("RETRIEVAL_LEXICAL_PRESELECT_RESERVE")
 RETRIEVAL_LEXICAL_POOL_SIZE = env("RETRIEVAL_LEXICAL_POOL_SIZE")
 # Kinds of match through which a question concept gives no concept boost, no graph expansion and no graph
 # candidates (retrieval_gateway.CONCEPT_NO_BOOST_MATCH_KINDS), comma separated: "stop" (an alias that is a
-# text-search stop word), "loose" (a label of several words reached only through plurals or prefixed words).
-# Default "stop,loose"; empty: every match gives a boost, as before.
+# text-search stop word), "loose" (a label of several words reached only through plurals or prefixed words),
+# "common" (a one-word alias that is the concept's own name and not one of the question's rare terms; only with
+# semantic vectors, where the rare terms are known). Default "stop,loose,common"; empty: every match gives a boost.
 RETRIEVAL_CONCEPT_NO_BOOST_MATCHES = env("RETRIEVAL_CONCEPT_NO_BOOST_MATCHES")
 # Vector search through the ivfflat index (retrieval_gateway._nearest_ids_by_index); False: the exact scan.
 VECTOR_INDEX_SEARCH = env("VECTOR_INDEX_SEARCH")
