@@ -188,8 +188,6 @@ OPT_IN_SCOPES = ("EU legislation", "mobilityDCAT-AP", "NAPCORE", "INSPIRE", "DAT
 # A chunk that also belongs to one of these is never opt-in: SIRI's copy of the DATEX II situation schema
 # (scope DATEX II and SIRI) stays in the unscoped search, as it was before DATEX II became a source.
 CORE_SCOPES = ("NeTEx", "SIRI", "OpRa", "Transmodel")
-# Every source: what a question the relevance check let through is searched in (api.views._search_scope).
-ALL_SOURCE_SCOPES = CORE_SCOPES + OPT_IN_SCOPES
 
 
 def _scope_query_filter(scope: list[str] | None):

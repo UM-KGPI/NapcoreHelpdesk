@@ -126,13 +126,8 @@ def _build_prompt(question: str, requested_scope: list[str], semantic_query: dic
 HTTP_PROVIDERS = {"openai-compatible", anthropic_chat.PROVIDER}
 
 
-def anthropic_controller_call(
-    *, messages: list[dict], max_tokens: int, timeout_seconds: float, json_answer: bool, thinking: str = "adaptive"
-) -> dict:
-    """One controller-endpoint call to Claude (routing, vocabulary bridge, relevance check).
-
-    thinking="disabled" answers without thinking (the relevance check's one-word verdict).
-    """
+def anthropic_controller_call(*, messages: list[dict], max_tokens: int, timeout_seconds: float, json_answer: bool) -> dict:
+    """One controller-endpoint call to Claude (routing, vocabulary bridge, relevance check)."""
 
     return anthropic_chat.chat_completion(
         api_key=settings.ANTHROPIC_API_KEY,
@@ -142,7 +137,6 @@ def anthropic_controller_call(
         timeout_seconds=timeout_seconds,
         effort=settings.CONTROLLER_LLM_ANTHROPIC_EFFORT,
         json_answer=json_answer,
-        thinking=thinking,
     )
 
 

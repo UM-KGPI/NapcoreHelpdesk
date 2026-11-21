@@ -227,7 +227,7 @@ def _rendered_or_text(text: str, language: str) -> str:
         return cached
     if _cache_get(_failed_key(key)):
         return text
-    wait = float(getattr(settings, "FIXED_TEXT_TRANSLATION_TIMEOUT_SECONDS", 4.0))
+    wait = float(getattr(settings, "FIXED_TEXT_TRANSLATION_TIMEOUT_SECONDS", 3.0))
     if wait <= 0:
         return text
     with _IN_FLIGHT_LOCK:

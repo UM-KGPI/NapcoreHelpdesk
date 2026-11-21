@@ -9,7 +9,6 @@ from helpdesk.services.semantic_abstention import (
     LOW_CONFIDENCE_MESSAGE,
     NO_CONCEPT_MESSAGE,
     NOT_RELEVANT_MESSAGE,
-    reaches_relevance_check,
     semantic_abstention_message,
 )
 
@@ -114,44 +113,3 @@ class RelevanceCheckHybridTests(SimpleTestCase):
     def test_disabled_check_leaves_the_keyword_rules_in_charge(self, ask):
         self.assertEqual(_decide(_query(), question="What is the weather?"), NO_CONCEPT_MESSAGE)
         ask.assert_not_called()
-
-
-def _reaches(query, *, scope=(), requested=None, allow=True, question=None):
-    return reaches_relevance_check(
-        semantic_query=query, effective_scope=list(scope), requested_scope=requested, allow_abstain=allow, question=question
-    )
-
-
-@override_settings(RELEVANCE_CHECK_ENABLED=True)
-class ReachesRelevanceCheckTests(SimpleTestCase):
-    """The views search every source for a question that reached the check and was not refused."""
-
-    @patch("helpdesk.services.semantic_abstention.is_relevant")
-    def test_it_makes_no_model_call(self, ask):
-        self.assertTrue(_reaches(_query(), question="What is metadata?"))
-        ask.assert_not_called()
-
-    def test_the_same_questions_as_the_check(self):
-        self.assertFalse(_reaches(_query(), scope=["SIRI"], question="What is SIRI?"))
-        self.assertFalse(_reaches(_query(terms=("ServiceJourneyPattern",)), question="What is ServiceJourneyPattern?"))
-        answered = _query(concept="transmodel:TIMETABLE_FRAME", confidence=0.95, discovered=["NeTEx"])
-        self.assertFalse(_reaches(answered, question="Any timetable from Slovenia?"))
-        self.assertFalse(_reaches(_query(), allow=False, question="What is metadata?"))
-        self.assertFalse(_reaches(_query(), question=None))
-        low = _query(concept="transmodel:FARE", confidence=0.45, discovered=[])
-        self.assertTrue(_reaches(low, question="fares"))
-
-    @override_settings(RELEVANCE_CHECK_ENABLED=False)
-    def test_not_with_the_check_off(self):
-        self.assertFalse(_reaches(_query(), question="What is metadata?"))
-
-    @patch("helpdesk.services.semantic_abstention.is_relevant", return_value=True)
-    def test_it_agrees_with_the_check(self, ask):
-        for query, scope, question in (
-            (_query(), (), "What is metadata?"),
-            (_query(), ["SIRI"], "What is SIRI?"),
-            (_query(concept="transmodel:TIMETABLE_FRAME", confidence=0.95, discovered=["NeTEx"]), (), "Any timetable?"),
-        ):
-            ask.reset_mock()
-            _decide(query, scope=scope, question=question)
-            self.assertEqual(ask.called, _reaches(query, scope=scope, question=question), question)

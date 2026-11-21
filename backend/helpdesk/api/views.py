@@ -72,11 +72,7 @@ from helpdesk.services.question_parsing import (
     parse_question_to_semantic_query,
     select_effective_scope,
 )
-from helpdesk.services.semantic_abstention import (
-    INSUFFICIENT_EVIDENCE_MESSAGE,
-    reaches_relevance_check,
-    semantic_abstention_message,
-)
+from helpdesk.services.semantic_abstention import INSUFFICIENT_EVIDENCE_MESSAGE, semantic_abstention_message
 from helpdesk.services.index_builder import index_repository
 from helpdesk.services.netex_example_generator import (
     example_element_names,
@@ -96,7 +92,7 @@ from helpdesk.services.answer_retrieval_defaults import (
     ANSWER_RETRIEVAL_TOP_K,
     answer_min_evidence_results,
 )
-from helpdesk.services.retrieval_gateway import ALL_SOURCE_SCOPES, retrieve_chunks_with_trace
+from helpdesk.services.retrieval_gateway import retrieve_chunks_with_trace
 from helpdesk.services.retrieval_event_logger import log_retrieval_events
 from helpdesk.services.rule_engine import evaluate_semantic_rules
 from helpdesk.services.runtime_requirements import ensure_graph_runtime_ready
@@ -855,22 +851,6 @@ def _classify_partial_evidence(
     }
 
 
-def _search_scope(semantic_query, effective_scope, requested_scope, allow_abstain, parsed_question) -> list[str]:
-    """The scope retrieval searches: the question's own, or every source for a question only the relevance check let
-    through (it names no standard, so the opt-in sources would otherwise never be searched for it; each gets its own
-    share of candidates in retrieval). The answer itself keeps the question's scope."""
-
-    if not effective_scope and reaches_relevance_check(
-        semantic_query=semantic_query,
-        effective_scope=effective_scope,
-        requested_scope=requested_scope,
-        allow_abstain=allow_abstain,
-        question=parsed_question,
-    ):
-        return list(ALL_SOURCE_SCOPES)
-    return effective_scope
-
-
 def _evaluate_evidence_gate(*, chunks: list[dict], graph_trace: dict, effective_scope: list[str]) -> dict:
     """Apply generic grounding checks before generation.
 
@@ -1459,12 +1439,11 @@ class QuestionAnswerView(APIView):
         else:
             # 2) RAG fallback: retrieve evidence, generate, then run policy gate.
             graph_rag_enabled = _resolve_graph_rag_enabled(options)
-            search_scope = _search_scope(semantic_query, effective_scope, scope, allow_abstain, parsed_question)
             chunks, graph_trace = retrieve_chunks_with_trace(
                 question=question,
                 top_k=retrieval_top_k,
                 min_score=retrieval_min_score,
-                scope=search_scope,
+                scope=effective_scope,
                 graph_rag_enabled=graph_rag_enabled,
                 min_results=_min_evidence_results(),
                 english_question=english_question,
@@ -1478,7 +1457,7 @@ class QuestionAnswerView(APIView):
                     question=question,
                     top_k=retrieval_top_k,
                     min_score=relaxed_min_score,
-                    scope=search_scope,
+                    scope=effective_scope,
                     graph_rag_enabled=graph_rag_enabled,
                     min_results=_min_evidence_results(),
                     english_question=english_question,
@@ -2170,13 +2149,12 @@ class QuestionAnswerStreamView(APIView):
             citations = []
         else:
             graph_rag_enabled = _resolve_graph_rag_enabled(options)
-            search_scope = _search_scope(semantic_query, effective_scope, scope, allow_abstain, parsed_question)
             yield self._status("retrieving")
             chunks, graph_trace = retrieve_chunks_with_trace(
                 question=question,
                 top_k=retrieval_top_k,
                 min_score=retrieval_min_score,
-                scope=search_scope,
+                scope=effective_scope,
                 graph_rag_enabled=graph_rag_enabled,
                 min_results=_min_evidence_results(),
                 english_question=english_question,
@@ -2188,7 +2166,7 @@ class QuestionAnswerStreamView(APIView):
                     question=question,
                     top_k=retrieval_top_k,
                     min_score=relaxed_min_score,
-                    scope=search_scope,
+                    scope=effective_scope,
                     graph_rag_enabled=graph_rag_enabled,
                     min_results=_min_evidence_results(),
                     english_question=english_question,

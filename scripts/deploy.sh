@@ -66,9 +66,6 @@ ensure_settings() {
 MOVED_DEFAULTS=(
   # The answer model reads six evidence blocks, not four (docs/plans/2026-11-14-retrieval-misses.md, Q3).
   "LLM_MAX_EVIDENCE_CHUNKS=4=6"
-  # A refusal waits 4 s for its rendering, not 3 (docs/plans/2026-11-14-refused-questions.md, 2026-11-21 record).
-  "FIXED_TEXT_TRANSLATION_TIMEOUT_SECONDS=3=4"
-  "FIXED_TEXT_TRANSLATION_TIMEOUT_SECONDS=3.0=4"
 )
 move_defaults() {
   local line key rest old new updated

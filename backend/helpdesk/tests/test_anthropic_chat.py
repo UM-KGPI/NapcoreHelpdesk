@@ -265,7 +265,6 @@ class ControllerTests(SimpleTestCase):
         self.assertEqual(kwargs["model"], "claude-haiku-5-5")
         self.assertEqual(kwargs["effort"], "low")
         self.assertEqual(kwargs["max_tokens"], 96 + 500)
-        self.assertEqual(kwargs["thinking"], "adaptive")
 
 
 class HealthProbeTests(SimpleTestCase):
