@@ -14,7 +14,9 @@ from helpdesk.services.transmodel_alignment import (
     load_curation,
     plan_alignment,
     render_report,
+    render_suggestions_report,
     render_turtle,
+    suggest_transmodel_candidates,
     transmodel_to_camel,
 )
 
@@ -213,3 +215,72 @@ class ServiceOperationFilterTests(SimpleTestCase):
         )
         self.assertEqual([row.standard_class for row in plan.rows], ["PublicationDelivery"])
         self.assertEqual(plan.service_operations, [])
+
+
+class SuggestionTests(SimpleTestCase):
+    TM_CLASSES = {
+        "STOP_PLACE": TM_STOP_PLACE,
+        "QUAY": TM_QUAY,
+        "SCHEDULED_STOP_POINT": TM_SCHEDULED_STOP_POINT,
+        "OPERATOR": "A company providing public transport services.",
+        "stop": TM_QUAY,  # glossary term, not a model class: never suggested
+    }
+
+    def test_ranks_the_known_best_match_first(self):
+        # A standard class whose name the matcher misses but whose definition is TM QUAY's.
+        suggestions = suggest_transmodel_candidates(
+            standard="siri",
+            unmatched_classes={"PlatformArea": NETEX_QUAY},
+            tm_classes=self.TM_CLASSES,
+        )
+        self.assertEqual(len(suggestions.classes), 1)
+        candidates = suggestions.classes[0].candidates
+        self.assertEqual(candidates[0].tm_class, "QUAY")
+        status, standard_coverage, tm_coverage = definition_status(NETEX_QUAY, TM_QUAY)
+        self.assertEqual((candidates[0].standard_coverage, candidates[0].tm_coverage), (standard_coverage, tm_coverage))
+        self.assertEqual(
+            candidates[0].score, round(2 * standard_coverage * tm_coverage / (standard_coverage + tm_coverage), 2)
+        )
+        self.assertGreater(candidates[0].score, candidates[1].score)
+        self.assertNotIn("stop", [candidate.tm_class for candidate in candidates])
+
+    def test_keeps_top_n_with_deterministic_ties_and_orders_classes_by_best_score(self):
+        tm_classes = {"B_CLASS": "red green blue", "A_CLASS": "red green blue", "C_CLASS": "red"}
+        suggestions = suggest_transmodel_candidates(
+            standard="siri",
+            unmatched_classes={"Weak": "red yellow orange purple", "Strong": "red green blue"},
+            tm_classes=tm_classes,
+            top_n=2,
+        )
+        self.assertEqual([item.standard_class for item in suggestions.classes], ["Strong", "Weak"])
+        self.assertEqual([candidate.tm_class for candidate in suggestions.classes[0].candidates], ["A_CLASS", "B_CLASS"])
+
+    def test_classes_without_any_overlap_or_definition_are_unscored(self):
+        suggestions = suggest_transmodel_candidates(
+            standard="opra",
+            unmatched_classes={"Empty": "", "Unrelated": "zebra xylophone"},
+            tm_classes=self.TM_CLASSES,
+        )
+        self.assertEqual(suggestions.classes, [])
+        self.assertEqual(suggestions.unscored, ["Empty", "Unrelated"])
+
+    def test_report_cites_scores_and_suggestions_never_reach_the_turtle(self):
+        standard_classes = {"StopPlace": NETEX_STOP_PLACE, "PlatformArea": NETEX_QUAY, "Empty": ""}
+        plan = plan_alignment(standard="siri", standard_classes=standard_classes, tm_classes=self.TM_CLASSES)
+        turtle_before = render_turtle(plan, generated_on=date(2026, 10, 20))
+
+        suggestions = suggest_transmodel_candidates(
+            standard="siri",
+            unmatched_classes={name: standard_classes[name] for name in plan.unmatched},
+            tm_classes=self.TM_CLASSES,
+        )
+        report = render_suggestions_report([suggestions], generated_on=date(2026, 10, 20))
+        best = suggestions.classes[0].candidates[0]
+        self.assertIn("not alignment links", report)
+        self.assertIn("| SIRI | 2 | 1 | 1 |", report)
+        self.assertIn("| PlatformArea | ", report)
+        self.assertIn(f"| 1 | QUAY | {best.score:.2f} |", report)
+        self.assertIn("Empty", report)
+
+        self.assertEqual(render_turtle(plan, generated_on=date(2026, 10, 20)), turtle_before)
+        self.assertNotIn("PlatformArea", turtle_before)

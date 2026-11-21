@@ -5,8 +5,10 @@ Reads docs/ontology/standards/{transmodel,netex,siri,opra}.ttl, links each
 standard class to the Transmodel class of the same name, applies the manual
 corrections in alignments/transmodel-alignment-curation.csv, and writes:
 
-- alignments/transmodel-<standard>-align.ttl  (skos:exactMatch + definition status)
-- alignments/transmodel-alignment-report.md   (differing definitions, unmatched classes)
+- alignments/transmodel-<standard>-align.ttl      (skos:exactMatch + definition status)
+- alignments/transmodel-alignment-report.md       (differing definitions, unmatched classes)
+- alignments/transmodel-alignment-suggestions.md  (candidate matches for unmatched classes, for
+                                                    review only; never written to the .ttl files)
 
 Never touches GraphDB; load the graphs with load_graphdb_ontologies afterwards.
 
@@ -18,7 +20,7 @@ Requires rdflib (offline tooling dependency, not needed at runtime).
 
 Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
 Crafted by: AI coding agents
-Created: 2026-10-17  |  Modified: 2026-10-17
+Created: 2026-10-17  |  Modified: 2026-10-20
 """
 
 from __future__ import annotations
@@ -34,7 +36,9 @@ from helpdesk.services.transmodel_alignment import (
     load_curation,
     plan_alignment,
     render_report,
+    render_suggestions_report,
     render_turtle,
+    suggest_transmodel_candidates,
 )
 
 _ONTOLOGY_DIR = Path(__file__).resolve().parents[4] / "docs" / "ontology"
@@ -75,7 +79,10 @@ class Command(BaseCommand):
         parser.add_argument(
             "--dry-run",
             action="store_true",
-            help="Print the summary (and the classes treated as service-operation types) without writing files.",
+            help=(
+                "Print the summary (and the classes treated as service-operation types) without writing "
+                "files. Skips the candidate suggestions, which take longer to compute."
+            ),
         )
 
     def handle(self, *args, **options):
@@ -100,6 +107,7 @@ class Command(BaseCommand):
             raise CommandError(str(exc)) from exc
 
         plans = []
+        suggestion_plans = []
         for standard in standards:
             standard_path = standards_dir / f"{standard}.ttl"
             if not standard_path.exists():
@@ -135,7 +143,20 @@ class Command(BaseCommand):
                 out_path.write_text(render_turtle(plan), encoding="utf-8")
                 self.stdout.write(f"  wrote {out_path}")
 
+                suggestions = suggest_transmodel_candidates(
+                    standard=standard,
+                    unmatched_classes={name: standard_classes[name] for name in plan.unmatched},
+                    tm_classes=tm_classes,
+                )
+                suggestion_plans.append(suggestions)
+                self.stdout.write(
+                    f"  suggestions for {len(suggestions.classes)} of {len(plan.unmatched)} unmatched classes"
+                )
+
         if not options["dry_run"]:
             report_path = alignments_dir / "transmodel-alignment-report.md"
             report_path.write_text(render_report(plans), encoding="utf-8")
             self.stdout.write(f"wrote {report_path}")
+            suggestions_path = alignments_dir / "transmodel-alignment-suggestions.md"
+            suggestions_path.write_text(render_suggestions_report(suggestion_plans), encoding="utf-8")
+            self.stdout.write(f"wrote {suggestions_path}")
