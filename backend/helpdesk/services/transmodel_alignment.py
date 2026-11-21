@@ -6,12 +6,18 @@ its concepts. This module pairs each standard class with the Transmodel class
 of the same name (STOP_PLACE -> StopPlace), compares their definitions, and
 renders the result as a SKOS alignment graph plus a review report.
 
+Classes without a name match are split into service-operation types (XSD
+request/response envelopes, out of scope for conceptual alignment) and real
+unmatched classes; for the latter, suggest_transmodel_candidates ranks possible
+Transmodel matches by definition overlap for human review. Suggestions are
+never written into the alignment graph.
+
 Pure functions only (no RDF library): parsing the TTL files happens in the
 build_transmodel_alignment management command.
 
 Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
 Crafted by: AI coding agents
-Created: 2026-10-17  |  Modified: 2026-10-17
+Created: 2026-10-17  |  Modified: 2026-10-20
 """
 
 from __future__ import annotations
@@ -64,6 +70,13 @@ STATUS_DESCRIPTIONS = {
     "missing": "one of the two definitions is empty",
 }
 
+# XSD service-operation envelopes (SIRI/OpRa request, response, delivery, ...) and
+# abstract base types. Transmodel is a conceptual model and has no counterpart for
+# them, so they are reported apart instead of inflating the unmatched count.
+SERVICE_OPERATION_PATTERN = re.compile(r"(?:Request|Response|Delivery|Discovery|Subscription|Error)$|^Abstract")
+
+SUGGESTIONS_PER_CLASS = 3
+
 
 @dataclass
 class AlignmentRow:
@@ -84,11 +97,40 @@ class AlignmentPlan:
     standard: str
     rows: list[AlignmentRow] = field(default_factory=list)
     unmatched: list[str] = field(default_factory=list)
+    service_operations: list[str] = field(default_factory=list)
     collisions: dict[str, list[str]] = field(default_factory=dict)
+
+
+@dataclass
+class CandidateSuggestion:
+    tm_class: str
+    score: float
+    standard_coverage: float
+    tm_coverage: float
+    tm_definition: str
+
+
+@dataclass
+class ClassSuggestions:
+    standard_class: str
+    standard_definition: str
+    candidates: list[CandidateSuggestion]
+
+
+@dataclass
+class SuggestionPlan:
+    standard: str
+    classes: list[ClassSuggestions] = field(default_factory=list)
+    # No definition, or no word shared with any Transmodel definition.
+    unscored: list[str] = field(default_factory=list)
 
 
 def is_model_class(tm_local_name: str) -> bool:
     return bool(_MODEL_CLASS.match(tm_local_name)) and not tm_local_name.endswith(_EXCLUDED_SUFFIXES)
+
+
+def is_service_operation_type(standard_class: str) -> bool:
+    return bool(SERVICE_OPERATION_PATTERN.search(standard_class))
 
 
 def transmodel_to_camel(tm_local_name: str) -> str:
@@ -189,7 +231,10 @@ def plan_alignment(
                 tm_class = ""
 
         if not tm_class:
-            plan.unmatched.append(standard_class)
+            if is_service_operation_type(standard_class):
+                plan.service_operations.append(standard_class)
+            else:
+                plan.unmatched.append(standard_class)
             continue
 
         tm_definition = tm_classes[tm_class]
@@ -208,6 +253,57 @@ def plan_alignment(
                 note=note,
             )
         )
+    return plan
+
+
+def suggest_transmodel_candidates(
+    *,
+    standard: str,
+    unmatched_classes: dict[str, str],
+    tm_classes: dict[str, str],
+    top_n: int = SUGGESTIONS_PER_CLASS,
+) -> SuggestionPlan:
+    """Rank Transmodel classes as possible matches for standard classes the names missed.
+
+    Scores every Transmodel model class with definition_status, the comparison the
+    report already uses for matched pairs. Score is the harmonic mean of its two
+    coverages, so a candidate has to share words in both directions. Classes are
+    ordered by their best candidate. The result is for human review only.
+    """
+    plan = SuggestionPlan(standard=standard)
+    targets = {name: definition for name, definition in tm_classes.items() if is_model_class(name)}
+
+    for standard_class in sorted(unmatched_classes):
+        standard_definition = unmatched_classes[standard_class]
+        candidates: list[CandidateSuggestion] = []
+        if _words(clean_definition(standard_definition)):
+            for tm_class, tm_definition in targets.items():
+                status, standard_coverage, tm_coverage = definition_status(standard_definition, tm_definition)
+                if status == "missing" or not standard_coverage or not tm_coverage:
+                    continue
+                score = round(2 * standard_coverage * tm_coverage / (standard_coverage + tm_coverage), 2)
+                candidates.append(
+                    CandidateSuggestion(
+                        tm_class=tm_class,
+                        score=score,
+                        standard_coverage=standard_coverage,
+                        tm_coverage=tm_coverage,
+                        tm_definition=clean_definition(tm_definition),
+                    )
+                )
+        if not candidates:
+            plan.unscored.append(standard_class)
+            continue
+        candidates.sort(key=lambda candidate: (-candidate.score, candidate.tm_class))
+        plan.classes.append(
+            ClassSuggestions(
+                standard_class=standard_class,
+                standard_definition=clean_definition(standard_definition),
+                candidates=candidates[:top_n],
+            )
+        )
+
+    plan.classes.sort(key=lambda item: (-item.candidates[0].score, item.standard_class))
     return plan
 
 
@@ -282,14 +378,23 @@ def render_report(plans: list[AlignmentPlan], *, generated_on: date | None = Non
         "",
     ]
     out += [f"- **{key}**: {value}" for key, value in STATUS_DESCRIPTIONS.items()]
-    out += ["", "## Summary", "", "| Standard | Classes | Aligned | equivalent | extends | differs | missing | Unmatched |",
-            "|---|---|---|---|---|---|---|---|"]
+    out += [
+        "",
+        "Service-operation types (class names ending in Request, Response, Delivery, Discovery,",
+        "Subscription or Error, or starting with Abstract) are XSD message envelopes and abstract",
+        "base types with no conceptual counterpart in Transmodel. They are listed separately and not",
+        "counted as unmatched.",
+    ]
+    out += ["", "## Summary", "",
+            "| Standard | Classes | Aligned | equivalent | extends | differs | missing | Unmatched | Service-operation types |",
+            "|---|---|---|---|---|---|---|---|---|"]
     for plan in plans:
         counts = {key: sum(1 for row in plan.rows if row.status == key) for key in STATUS_DESCRIPTIONS}
-        total = len(plan.rows) + len(plan.unmatched)
+        total = len(plan.rows) + len(plan.unmatched) + len(plan.service_operations)
         out.append(
             f"| {STANDARD_LABELS[plan.standard]} | {total} | {len(plan.rows)} | {counts['equivalent']} | "
-            f"{counts['extends']} | {counts['differs']} | {counts['missing']} | {len(plan.unmatched)} |"
+            f"{counts['extends']} | {counts['differs']} | {counts['missing']} | {len(plan.unmatched)} | "
+            f"{len(plan.service_operations)} |"
         )
 
     for plan in plans:
@@ -314,5 +419,72 @@ def render_report(plans: list[AlignmentPlan], *, generated_on: date | None = Non
             out += [f"- {', '.join(names)}" for names in plan.collisions.values()]
         out += ["", f"### {label}: classes without a Transmodel match ({len(plan.unmatched)})", ""]
         out.append(", ".join(plan.unmatched) if plan.unmatched else "None.")
+        out += [
+            "",
+            f"### {label}: service-operation types, out of scope for conceptual alignment "
+            f"({len(plan.service_operations)})",
+            "",
+        ]
+        out.append(", ".join(plan.service_operations) if plan.service_operations else "None.")
+    out.append("")
+    return "\n".join(out)
+
+
+def render_suggestions_report(plans: list[SuggestionPlan], *, generated_on: date | None = None) -> str:
+    today = (generated_on or date.today()).isoformat()
+    out = [
+        "# Transmodel alignment suggestions",
+        "",
+        f"Generated by `python manage.py build_transmodel_alignment` on {today}.",
+        "",
+        "**Suggestions for human review, not alignment links.** Nothing in this file is written to the",
+        "`transmodel-*-align.ttl` graphs. To accept a suggestion, add a row",
+        "`<standard>,<standard class>,<TRANSMODEL_CLASS>,add,<note>` to `transmodel-alignment-curation.csv`",
+        "and regenerate.",
+        "",
+        "For each class without a Transmodel name match (service-operation types excluded, see",
+        f"`transmodel-alignment-report.md`), the {SUGGESTIONS_PER_CLASS} Transmodel classes whose definitions",
+        "share the most words with it. **Score** is the harmonic mean of the two coverages from the",
+        "report's definition comparison: the share of the standard's words found in the Transmodel",
+        "definition (std cov) and the share of the Transmodel core words found in the standard's (TM cov).",
+        "This is a word-overlap heuristic, not a semantic judgement; short definitions reach high scores on",
+        "common words, so many suggestions will be wrong. Classes are sorted by their best score.",
+        "",
+        "## Summary",
+        "",
+        "| Standard | Classes without a match | With suggestions | No candidate |",
+        "|---|---|---|---|",
+    ]
+    for plan in plans:
+        out.append(
+            f"| {STANDARD_LABELS[plan.standard]} | {len(plan.classes) + len(plan.unscored)} | "
+            f"{len(plan.classes)} | {len(plan.unscored)} |"
+        )
+
+    for plan in plans:
+        label = STANDARD_LABELS[plan.standard]
+        out += [
+            "",
+            f"## {label} ({len(plan.classes)} classes)",
+            "",
+            f"| {label} class | {label} definition | # | Transmodel class | Score | std cov | TM cov | Transmodel definition |",
+            "|---|---|---|---|---|---|---|---|",
+        ]
+        for item in plan.classes:
+            for rank, candidate in enumerate(item.candidates, start=1):
+                first = rank == 1
+                out.append(
+                    f"| {item.standard_class if first else ''} | {_md(item.standard_definition, 160) if first else ''} | "
+                    f"{rank} | {candidate.tm_class} | {candidate.score:.2f} | {candidate.standard_coverage:.2f} | "
+                    f"{candidate.tm_coverage:.2f} | {_md(candidate.tm_definition, 160)} |"
+                )
+        if plan.unscored:
+            out += [
+                "",
+                f"### {label}: no candidate, empty definition or no word shared with any Transmodel "
+                f"definition ({len(plan.unscored)})",
+                "",
+            ]
+            out.append(", ".join(plan.unscored))
     out.append("")
     return "\n".join(out)
