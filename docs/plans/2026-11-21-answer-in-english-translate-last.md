@@ -548,3 +548,152 @@ dropped by the runner); after that I blocked the database, and the tests that ne
 - Do not cut after "i.e." or "e.g." outside a parenthesis either.
 - Cut at a blank line, and keep a mark written after a full stop with the sentence before it.
 - Numbers and file types as terms (cause C3 of the diagnosis) stay a separate variant.
+
+## 10. Record: step 2 follow-up, the cut and plain sentences, 2026-11-21
+
+**The follow-up failed its gate on one line: the new rules accept 153 wrong-passage probes, main 151. The code is
+reverted.** It stays in the history (commit 33508b7) for a re-run. The new capture was not run, since a fixed line
+had already failed by replay. No model call was made.
+
+### Why (prod 0.97.249, measured on 8 runs of 4 questions)
+
+Step 2 removed 8 of 47 cited sentences in 5 runs. I read all 8 against their passages: all 8 are supported (one
+borderline: "a vehicle journey" read from journey ids). Three Slovenian-question sentences and three others were
+removed as "without specific technical content": circular route, five stops, 15 minutes per leg, journeys from stop A,
+all in the cited timetable example. Two German-question sentences were removed through the mark fault: the draft
+writes the mark after the full stop, so the mark starts the next sentence and each sentence is judged against the
+previous sentence's passage.
+
+### The three rules as built (stated before reading the gate half)
+
+1. Citation marks written after the closing punctuation, on the same line, belong to the sentence before them,
+   unless a small letter follows ("[E2] describes ...": the mark is then the subject of the next sentence).
+2. No sentence end where the next would start with a small letter, or after letters each followed by a full stop
+   ("e.g.", "i.e.", "z.B."). This is by form, with no list of abbreviations. A blank line always ends a sentence.
+   Fenced code is never cut.
+3. A cited sentence with no name passes when every number of it is in a cited passage, and at least half of its
+   distinctive words are too, and the numbers and distinctive words found there are at least 3. A distinctive word
+   (compared by its first letters, all but the last three, at least four) is one that at least one passage of the
+   answer's evidence holds and at most half of them do. A no-name sentence whose numbers or distinctive words are not
+   in its passage is still removed.
+
+The setting of rule 3 was chosen on the rules half (seed 20261121). Supported sentences removed there were 17 on
+main; 9 with a share of one half and 2 or 3 anchors, 10 with two thirds, 12 with three quarters, 15 with all. Every
+setting accepts the same 91 of 238 rules-half probes as main. I took the strictest setting at the minimum: a share of
+one half, 3 anchors. One disclosure: before that choice I had run the setting with 2 anchors once against the full
+probe set (153 accepted), so I had seen that line before choosing.
+
+### How often the faults occur (measured, 213 stored drafts: 104 labelled first drafts and their retries, 80 step 2 capture drafts, 7 prod)
+
+| Fault, on main's cut | Units |
+|---|---|
+| Mark after the full stop that starts the next sentence | 6 |
+| Mark after the full stop used as the subject of the next sentence (kept with it) | 14 |
+| Cited sentence running over a blank line, outside code | 45, in 36 drafts |
+| Cut after an abbreviation or before a small letter | 4 |
+
+### Gate (measured by replay; no model call)
+
+| | Must hold | On main | Measured | |
+|---|---|---|---|---|
+| Supported sentences removed, gate half | at most 3 of 245, not more than main | 3 of 245 | 1 of 247 | pass |
+| Supported sentences removed, rules half (reported) | | 17 of 255 | 9 of 257 | |
+| The 8 supported sentences removed on prod | at least 80 % kept | 0 kept | 8 of 8 kept | pass |
+| Unsupported sentences main removes (all 515) | all still removed | 4 | 4 of 4 | pass |
+| Unsupported sentences accepted (all 515) | not more than main | 11 | 11 | pass |
+| Wrong-passage probes accepted | not more than main | 151 of 482 | 153 of 482 | **fail** |
+| Sentences judged against the previous sentence's mark | none | 6 | 0 | pass |
+| Units running over a blank line | none | 45 | 0 | pass |
+| New capture: supported sentences removed | at most 3 % | | not run | |
+| New capture: second drafts, failed text | no more than main, none | | not run | |
+| Translations in the new capture | marks equal, no English fallback | | not run | |
+| CI | green | | the record only | |
+
+The probes are rebuilt from the first diagnosis on the 104 English first drafts. A probe is a sentence main accepts,
+re-cited to a passage from another file. There are 482; main accepts 151. Both extra probes are gate-half no-name
+sentences that rule 3 accepts against another file's passage. That passage shares some of their words (opening hours
+and connectors in a charging-point page; feeder connections and cancellation in a SIRI call structure), but does not
+hold the claim. Rules 1 and 2 alone accept 151, the same as main.
+
+The prod drafts: the trace keeps the removed sentences and passage ids, not the draft. I found every passage by its
+id in the stored dev captures. I rebuilt the German-question draft from its served English text and the two removed
+units. The other six sentences were replayed alone, with the answer's passages at their marks. On main the replay
+removes all 8, as prod did (**measured**). That the dev passages equal prod's is **believed** (same ids).
+
+### Labels
+
+I read all 8 prod sentences and every sentence whose label had to be carried to a changed cut. No unit of the new cut
+needed a new label: each overlaps main units with one label. Nothing was delegated.
+
+### Open (seen after the numbers, not added)
+
+- Rules 1 and 2 alone keep the probes at 151 and the gate half at 3 supported removed. They keep only the 2 mark-fault
+  sentences of the 8 on prod, so they would not meet the prod line of this gate; they would need a gate of their own.
+- Rule 3 with a check that the distinctive words found are not mostly words that other passages hold too, or with
+  distinctive words counted against the index instead of the six passages.
+- The lift case (a true sentence that also cites a wrong passage) stays open.
+
+## 11. Record: step 2 follow-up re-run, 2026-11-21
+
+**The re-run passed its gate, with one line relaxed by the owner. The three rules of section 10 are back unchanged, on
+by default with the sentence check.**
+
+### The relaxed line
+
+After the first run (section 10) the owner decided to accept two extra wrong-passage probes: at most 153 of 482, where
+main accepts 151. The reason: the three rules keep all 8 supported sentences prod removed, halve the supported
+sentences removed in the labelled set (20 to 10), and leave the unsupported sentences accepted at 11. No rule was
+changed: same settings (a share of one half, 3 anchors).
+
+### Replay on the final code (measured)
+
+The verdicts on all 213 stored drafts are identical to those of commit 33508b7. So every replay line of section 10
+stands: gate half 1 of 247 supported removed, rules half 9 of 257, the 8 prod sentences kept, unsupported removed 4 of
+4 and accepted 11, probes 153, no mark or blank-line fault left.
+
+### Capture
+
+Dev, in process, one question at a time, every run rolled back, 16:02 to 16:05 CET. Ten questions, twice each:
+- the 4 prod questions (the German one in a wording I assumed from its English form in the prod trace);
+- 6 questions of the step 2 capture that had removals or cut faults.
+
+Main's code ran 5 of them at 16:02.
+
+| | Must hold | Main, same hour | Measured | |
+|---|---|---|---|---|
+| Supported sentences removed | at most 3 % of the cited sentences, each read | 10 of 104 on the same drafts | 3 of 104 (2.9 %) | pass, on one borderline label |
+| Second drafts | not more than main | 0 of 5 | 0 of 20 | pass |
+| Answers with failed text | none | | 0 | pass |
+| Translations | marks equal, no English fallback | | 6 of 6 | pass |
+| No-name sentences rule 3 accepts that main removes, not supported | at most 1 | | 0 of 5 | pass |
+| Wrong-passage probes (relaxed) | at most 153 | 151 | 153 | pass |
+| CI | green, Retrieval Benchmark present and green on the code | | see the PR | |
+
+The 5 removed sentences, each read:
+- **Supported, 3:**
+  - a lane class definition (the purpose check, as before);
+  - "run times between stops are given as 15 minutes each" (rule 3: too few anchors);
+  - an interval element list (the purpose check on "flags").
+- **Unsupported, 1:** the lift sentence that also cites the lift-call definition.
+- **Borderline, 1:** a passenger-spot sentence. It ties the spot to "an allocation", which its passage does not say;
+  the first readers labelled the same pattern unsupported. Counted supported, the line would be 4 of 104 (3.8 %) and
+  fail. I count it unsupported.
+
+The no-name sentences that rule 3 accepts and main removes: 5, all supported, one borderline ("passing times for
+vehicle journeys", read from journey ids). The cut rule kept one more, the half sentence after "i.e.". It is now
+whole and supported.
+
+One check needs explaining. Main's old whole-draft check fails one served answer: the old cut splits after "i.e." and
+judges the half sentence alone. The new check passes it.
+
+Time on the same 5 questions: 4.6 s median (10 runs), main 4.8 s (5 runs).
+
+### Model calls
+
+65 in all: Haiku 55, the classifier model 10 (the existing language naming).
+
+### Believed, not measured
+
+- That the dev passages equal prod's (same ids).
+- That the German wording I used asks what prod was asked.
+- That the borderline labels are read as I read them; one decides the supported-removed line.

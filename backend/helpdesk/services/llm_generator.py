@@ -480,6 +480,53 @@ def _citation_segments(sentence: str) -> list[tuple[str, str]]:
 PLAIN_SENTENCE_MIN_OVERLAP = 0.6
 
 
+# A sentence with no name in it is checked by what it does hold (plan 2026-11-21, step 2 follow-up): its numbers, and
+# its distinctive words, the words found in some passages of the answer's evidence but not in most of them. Words
+# are compared by their first letters (FACT_STEM_KEEP letters fewer than the word, at least FACT_STEM_MIN), so a
+# plural or another form of the same word matches.
+FACT_STEM_MIN = 4
+FACT_STEM_KEEP = 3
+FACT_MIN_ANCHORS = 3
+FACT_MIN_FOUND_SHARE = 0.5
+_FACT_NUMBER = re.compile(r"(?<![\w.])\d+(?:[.:/]\d+)*")
+
+
+def _fact_stem(word: str) -> str:
+    return word[: max(FACT_STEM_MIN, len(word) - FACT_STEM_KEEP)]
+
+
+def _stem_in(stem: str, text: str) -> bool:
+    return re.search(r"(?<![^\W\d_])" + re.escape(stem), text) is not None
+
+
+def _plain_facts_grounded(sentence: str, cited_chunks: list[dict], chunks: list[dict]) -> bool:
+    """Whether a cited sentence without names is held by its cited passages.
+
+    - Every number of the sentence is in a cited passage.
+    - Its distinctive words are the words that some passages of the evidence hold, but no more than half of them:
+      words every passage has ("timetable" among timetable passages) say nothing about where a claim comes from.
+      At least half of them are in a cited passage (a claim worded from another passage fails), and
+    - the numbers and the distinctive words found in a cited passage are at least FACT_MIN_ANCHORS.
+    """
+    if not cited_chunks:
+        return False
+    plain = CITATION_PATTERN.sub(" ", sentence).lower()
+    cited = " ".join(str(c.get("text", "")) for c in cited_chunks).lower()
+    passages = [str(c.get("text", "")).lower() for c in chunks[:6]] or [cited]
+    numbers = list(dict.fromkeys(_FACT_NUMBER.findall(plain)))
+    if any(re.search(r"(?<![\d.])" + re.escape(n) + r"(?!\d)", cited) is None for n in numbers):
+        return False
+    distinctive = []
+    for stem in dict.fromkeys(_fact_stem(w) for w in _CONTENT_WORD_PATTERN.findall(plain)):
+        holding = sum(1 for text in passages if _stem_in(stem, text))
+        if 0 < holding <= len(passages) // 2:
+            distinctive.append(stem)
+    found = [stem for stem in distinctive if _stem_in(stem, cited)]
+    if distinctive and len(found) < FACT_MIN_FOUND_SHARE * len(distinctive):
+        return False
+    return len(numbers) + len(found) >= FACT_MIN_ANCHORS
+
+
 def _plain_sentence_grounded(sentence: str, cited_chunks: list[dict]) -> bool:
     """Whether each citation's own text in a sentence without technical terms is worded from its block.
 
@@ -631,6 +678,8 @@ def _sentence_grounding_error(sentence: str, chunks: list[dict], inflected: bool
             return None  # 'The block states that "Many NeTEx concepts are taken directly from Transmodel" [E3].'
         if _plain_sentence_grounded(sentence, cited_chunks):
             return None  # "A journey pattern is an ordered list of scheduled stop points ... [E1]."
+        if _plain_facts_grounded(sentence, cited_chunks, chunks):
+            return None  # "Two clockwise and two anticlockwise journeys start at stop A [E1]."
         if found_citations:  # Has citations but NO specific terms = potential hallucination
             # No citations, no terms, not code = hallucination
             return (
@@ -2212,32 +2261,68 @@ def _sentence_check_enabled() -> bool:
     return bool(getattr(settings, "ANSWER_CHECK_BY_SENTENCE_ENABLED", True))
 
 
+_MARK_RUN = re.compile(r"[ \t]*\[E\d+\](?:[ \t]*\[E\d+\])*[.!?:;,]?")
+_BLANK_LINE = re.compile(r"\n[ \t]*\n")
+
+
 def _sentence_spans(answer: str) -> list[tuple[int, int]]:
     """(start, end) of each sentence the check judges, in the answer's own offsets.
 
-    Cut after . ! ? and white space, as _validate_citation_grounding cuts, but never inside a parenthesis:
-    "(e.g. a station)" or "(z. B. ...)" stays in its sentence. A parenthesis does not run over a line break.
+    A sentence ends at . ! ? before white space, as _validate_citation_grounding cuts, with four differences:
+    - never inside a parenthesis ("(e.g. a station)"); a parenthesis does not run over a line break;
+    - citation marks written after the closing punctuation on the same line ("... a quay. [E2] [E4] Next") belong
+      to the sentence before them, unless a small letter follows them ("[E2] describes ...": the mark is the subject);
+    - no end where the next sentence would start with a small letter ("i.e. seats"), or after a word that holds a
+      full stop of its own ("e.g.", "i.e.");
+    - a blank line always ends a sentence, so none runs over two paragraphs. Fenced code is never cut.
     """
+    code = [(m.start(), m.end()) for m in FENCED_CODE_BLOCK_PATTERN.finditer(answer)]
     spans: list[tuple[int, int]] = []
     start = depth = 0
     index, length = 0, len(answer)
+
+    def cut(end: int, resume: int) -> int:
+        nonlocal start
+        spans.append((start, end))
+        while resume < length and answer[resume].isspace():
+            resume += 1
+        start = resume
+        return resume
+
     while index < length:
+        block = next(((cs, ce) for cs, ce in code if cs <= index < ce), None)
+        if block:
+            index = block[1]
+            continue
         char = answer[index]
         if char == "\n":
             depth = 0
+            blank = _BLANK_LINE.match(answer, index)
+            if blank:
+                index = cut(index, blank.end())
+                continue
         if char == "(":
             depth += 1
         elif char == ")":
             depth = max(0, depth - 1)
         elif char.isspace() and index and answer[index - 1] in ".!?" and not depth:
-            spans.append((start, index))
-            while index < length and answer[index].isspace():
+            end = index
+            marks = _MARK_RUN.match(answer, index)
+            if marks and answer[marks.end() :].lstrip()[:1].islower():
+                marks = None  # "[E2] describes the import node": the mark is the subject of the next sentence
+            if marks:
+                end = marks.end()
+            following = answer[end:].lstrip()
+            # "e.g.", "i.e.", "z.B.": letters, each followed by a full stop.
+            abbreviation = re.search(r"(?<![^\s(])(?:[^\W\d_]\.){2,}$", answer[start:index]) is not None
+            if not marks and (abbreviation or following[:1].islower()):
                 index += 1
-            start = index
+                continue
+            index = cut(end, end)
             continue
         index += 1
     spans.append((start, length))
-    return [(s, e) for s, e in spans if e > s]
+    return [(s, e) for s, e in spans if answer[s:e].strip()]
 
 
 def _sentence_verdicts(answer: str, chunks: list[dict], inflected: bool = False) -> list[dict]:
