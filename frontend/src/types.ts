@@ -92,6 +92,14 @@ export interface AnswerTrace {
   llmAnswerValidated?: boolean | null;
   /** The text left out next to a block from the schema (it failed validation and could not be kept); null otherwise. */
   llmDroppedAnswer?: string | null;
+  /** For a question not in English: the checked English answer and how its rendering into the question's language went. */
+  llmAnswerRendering?: {
+    language: string;
+    attempts: number;
+    problems: string[];
+    englishAnswer: string;
+    served: "rendering" | "english";
+  } | null;
 }
 
 export interface CrossStandardEvidencePartition {
