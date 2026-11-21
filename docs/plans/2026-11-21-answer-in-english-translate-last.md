@@ -632,3 +632,68 @@ needed a new label: each overlaps main units with one label. Nothing was delegat
 - Rule 3 with a check that the distinctive words found are not mostly words that other passages hold too, or with
   distinctive words counted against the index instead of the six passages.
 - The lift case (a true sentence that also cites a wrong passage) stays open.
+
+## 11. Record: step 2 follow-up re-run, 2026-11-21
+
+**The re-run passed its gate, with one line relaxed by the owner. The three rules of section 10 are back unchanged, on
+by default with the sentence check.**
+
+### The relaxed line
+
+After the first run (section 10) the owner decided to accept two extra wrong-passage probes: at most 153 of 482, where
+main accepts 151. The reason: the three rules keep all 8 supported sentences prod removed, halve the supported
+sentences removed in the labelled set (20 to 10), and leave the unsupported sentences accepted at 11. No rule was
+changed: same settings (a share of one half, 3 anchors).
+
+### Replay on the final code (measured)
+
+The verdicts on all 213 stored drafts are identical to those of commit 33508b7. So every replay line of section 10
+stands: gate half 1 of 247 supported removed, rules half 9 of 257, the 8 prod sentences kept, unsupported removed 4 of
+4 and accepted 11, probes 153, no mark or blank-line fault left.
+
+### Capture
+
+Dev, in process, one question at a time, every run rolled back, 16:02 to 16:05 CET. Ten questions, twice each:
+- the 4 prod questions (the German one in a wording I assumed from its English form in the prod trace);
+- 6 questions of the step 2 capture that had removals or cut faults.
+
+Main's code ran 5 of them at 16:02.
+
+| | Must hold | Main, same hour | Measured | |
+|---|---|---|---|---|
+| Supported sentences removed | at most 3 % of the cited sentences, each read | 10 of 104 on the same drafts | 3 of 104 (2.9 %) | pass, on one borderline label |
+| Second drafts | not more than main | 0 of 5 | 0 of 20 | pass |
+| Answers with failed text | none | | 0 | pass |
+| Translations | marks equal, no English fallback | | 6 of 6 | pass |
+| No-name sentences rule 3 accepts that main removes, not supported | at most 1 | | 0 of 5 | pass |
+| Wrong-passage probes (relaxed) | at most 153 | 151 | 153 | pass |
+| CI | green, Retrieval Benchmark present and green on the code | | see the PR | |
+
+The 5 removed sentences, each read:
+- **Supported, 3:**
+  - a lane class definition (the purpose check, as before);
+  - "run times between stops are given as 15 minutes each" (rule 3: too few anchors);
+  - an interval element list (the purpose check on "flags").
+- **Unsupported, 1:** the lift sentence that also cites the lift-call definition.
+- **Borderline, 1:** a passenger-spot sentence. It ties the spot to "an allocation", which its passage does not say;
+  the first readers labelled the same pattern unsupported. Counted supported, the line would be 4 of 104 (3.8 %) and
+  fail. I count it unsupported.
+
+The no-name sentences that rule 3 accepts and main removes: 5, all supported, one borderline ("passing times for
+vehicle journeys", read from journey ids). The cut rule kept one more, the half sentence after "i.e.". It is now
+whole and supported.
+
+One check needs explaining. Main's old whole-draft check fails one served answer: the old cut splits after "i.e." and
+judges the half sentence alone. The new check passes it.
+
+Time on the same 5 questions: 4.6 s median (10 runs), main 4.8 s (5 runs).
+
+### Model calls
+
+65 in all: Haiku 55, the classifier model 10 (the existing language naming).
+
+### Believed, not measured
+
+- That the dev passages equal prod's (same ids).
+- That the German wording I used asks what prod was asked.
+- That the borderline labels are read as I read them; one decides the supported-removed line.
