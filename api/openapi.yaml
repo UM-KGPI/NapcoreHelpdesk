@@ -1831,6 +1831,16 @@ components:
             failed validation on both attempts and was left out, because it held a code block found neither in
             the evidence nor in the shown example, or citations the policy does not allow (the block then stands
             alone); null otherwise. Other text that failed validation is kept and marked by llmAnswerValidated.
+        llmAnswerRendering:
+          type: [object, "null"]
+          description: >-
+            For a question not in English (ANSWER_TRANSLATE_LAST_ENABLED): the answer was written and checked in
+            English and then rendered into the question's language. language, attempts (1 or 2), problems (why
+            a rendering was refused: a citation mark, name, code, number or quote it did not keep, its length,
+            its language), englishAnswer (the checked English text) and served ("rendering", or "english" when
+            both renderings were refused and the English answer was served with a note). Null without a
+            rendering.
+          additionalProperties: true
         llmAnswerValidated:
           type: [boolean, "null"]
           description: >-

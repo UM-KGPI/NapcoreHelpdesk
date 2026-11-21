@@ -215,6 +215,7 @@ class LanguageFromTheSearchTranslationTests(SimpleTestCase):
         cache.clear()
         request_timing.start()
 
+    @override_settings(ANSWER_TRANSLATE_LAST_ENABLED=False)
     @patch("helpdesk.services.llm_generator._classify_question_language_with_llm", return_value="Slovenian")
     @patch("helpdesk.services.llm_generator._request_chat_completion")
     def test_the_refusal_uses_the_language_the_search_translation_found(self, chat_mock, classify_mock):
@@ -229,6 +230,23 @@ class LanguageFromTheSearchTranslationTests(SimpleTestCase):
         self.assertEqual(english, ENGLISH)
         self.assertEqual(_render(NOT_RELEVANT_MESSAGE, english=english), SLOVENIAN)
         self.assertEqual(classify_mock.call_count, 1)
+        self.assertIn("Slovenian", chat_mock.call_args.kwargs["messages"][0]["content"])
+
+    @patch("helpdesk.services.llm_generator._classify_question_language_with_llm")
+    @patch("helpdesk.services.llm_generator._request_chat_completion")
+    def test_the_search_translation_names_the_language_in_the_same_call(self, chat_mock, classify_mock):
+        """Answer translated last (the default): the search translation names the language; no classifier call."""
+        from helpdesk.services.llm_generator import english_search_query
+
+        chat_mock.side_effect = [
+            {"choices": [{"message": {"content": json.dumps({"evidence": "kaj so", "language": "Slovenian", "text": ENGLISH})}}]},
+            _reply(SLOVENIAN),
+        ]
+        english = english_search_query(QUESTION)
+        self.assertEqual(english, ENGLISH)
+        self.assertEqual(_render(NOT_RELEVANT_MESSAGE, english=english), SLOVENIAN)
+        classify_mock.assert_not_called()
+        self.assertEqual(chat_mock.call_count, 2)
         self.assertIn("Slovenian", chat_mock.call_args.kwargs["messages"][0]["content"])
 
     @patch("helpdesk.services.llm_generator.question_language", return_value="German")

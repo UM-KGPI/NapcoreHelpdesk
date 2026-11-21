@@ -67,7 +67,11 @@ class PromptTests(SimpleTestCase):
         self.assertIn("Detect the language of the question and respond in that same language.", system)
 
 
-@override_settings(LLM_ENABLED=True, LLM_PROVIDER="openai-compatible", LLM_API_BASE_URL="https://llm.example.test")
+# The answer written in the question's language (the setting off); with it on see test_translate_last.
+@override_settings(
+    LLM_ENABLED=True, LLM_PROVIDER="openai-compatible", LLM_API_BASE_URL="https://llm.example.test",
+    ANSWER_TRANSLATE_LAST_ENABLED=False,
+)
 class NonStreamingPathTests(SimpleTestCase):
     @patch("helpdesk.services.llm_generator._validate_grounded_example_output")
     @patch("helpdesk.services.llm_generator._validate_generated_answer")
