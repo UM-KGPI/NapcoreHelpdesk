@@ -147,13 +147,20 @@ def _load_ontology_from_graphdb(endpoint_url: str, wait_seconds: float = 0) -> d
                 time.sleep(pause)
                 pause = min(pause * 2, _STARTUP_BACKOFF_MAX_SECONDS)
 
-    # Labels for standard-specific concepts (netex, opra, siri, transmodel)
+    # Labels for standard-specific concepts (netex, opra, siri, transmodel). Properties are not concepts: their
+    # labels are relation or attribute names ("with", "used in", "vehicleType"), and as concepts they matched
+    # chunks by those words. A class is kept even when it is also typed as a property. The domain/range links
+    # between classes are read below; property_terms has its own index of property names.
     labels_rows = _sparql_get(
         "labels",
         "SELECT ?concept ?label WHERE {"
         " ?concept <http://www.w3.org/2004/02/skos/core#prefLabel>|"
         "<http://www.w3.org/2004/02/skos/core#altLabel>|"
         "<http://www.w3.org/2000/01/rdf-schema#label> ?label ."
+        " FILTER(EXISTS { ?concept a <http://www.w3.org/2002/07/owl#Class> } ||"
+        " NOT EXISTS { ?concept a ?propertyType ."
+        " VALUES ?propertyType { <http://www.w3.org/2002/07/owl#ObjectProperty>"
+        " <http://www.w3.org/2002/07/owl#DatatypeProperty> } })"
         " FILTER(!CONTAINS(STR(?concept), 'www.w3.org'))"
         " FILTER(!CONTAINS(STR(?concept), 'purl.org'))"
         " }"
