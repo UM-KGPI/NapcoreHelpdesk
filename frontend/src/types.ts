@@ -105,6 +105,18 @@ export interface AnswerTrace {
     marksMovedFromMidSentence?: number;
     monitor?: Record<string, string[]> | null;
   } | null;
+  /** The answer check by sentence: per draft, each removed sentence with its reason and the passage ids it was judged against. */
+  llmSentenceCheck?: {
+    outcome: string | null;
+    drafts: Array<{
+      attempt: number;
+      citedSentences: number;
+      kept: number;
+      removed: Array<{ sentence: string; reason: string; citations: string[]; passages: string[] }>;
+      wholeAnswerFailure: string | null;
+      tooLittle: boolean;
+    }>;
+  } | null;
 }
 
 export interface CrossStandardEvidencePartition {

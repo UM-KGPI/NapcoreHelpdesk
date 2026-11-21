@@ -1843,12 +1843,22 @@ components:
             and quotes of the English answer that the translation lacks; for monitoring only). Null without a
             rendering.
           additionalProperties: true
+        llmSentenceCheck:
+          type: [object, "null"]
+          description: >-
+            The answer check by sentence (ANSWER_CHECK_BY_SENTENCE_ENABLED). drafts: one entry per draft (attempt,
+            citedSentences, kept, removed, wholeAnswerFailure, tooLittle); each removed sentence has its sentence,
+            reason, citations and passages (the chunk ids it was judged against). outcome: served, "served,
+            sentences removed", "rewrite", "rewrite with note", "first draft with note" or refused. Null when the
+            whole draft was checked as before.
+          additionalProperties: true
         llmAnswerValidated:
           type: [boolean, "null"]
           description: >-
             False when the answer text was served although its retry also failed validation (it is then
             marked for review, its confidence capped at 0.80, and the page says it was not confirmed against
-            the sources); null when no LLM answer was generated.
+            the sources; only with ANSWER_CHECK_BY_SENTENCE_ENABLED=False); null when no LLM answer was generated.
+            With the sentence check on, the served text always passed the check.
         generatedExample:
           oneOf:
             - $ref: '#/components/schemas/GeneratedExample'

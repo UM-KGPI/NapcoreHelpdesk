@@ -410,7 +410,8 @@ class LLMGeneratorTests(SimpleTestCase):
         self.assertNotIn("<", result["answer"])
 
 
-    @override_settings(LLM_ENABLED=True, LLM_PROVIDER="openai-compatible", LLM_API_BASE_URL="https://llm.example.test", LLM_STREAMING=True)
+    @override_settings(LLM_ENABLED=True, LLM_PROVIDER="openai-compatible", LLM_API_BASE_URL="https://llm.example.test", LLM_STREAMING=True,
+                       ANSWER_CHECK_BY_SENTENCE_ENABLED=False)
     @patch("helpdesk.services.llm_generator._validate_grounded_example_output")
     @patch("helpdesk.services.llm_generator._validate_answer_language")
     @patch("helpdesk.services.llm_generator._validate_generated_answer")

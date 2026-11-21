@@ -1511,6 +1511,7 @@ class HelpdeskApiTests(APITestCase):
         LLM_STREAMING=True,
         CONTROLLER_LLM_ENABLED=False,
         SEARCH_TRANSLATION_ENABLED=False,
+        ANSWER_CHECK_BY_SENTENCE_ENABLED=False,  # a twice-rejected draft is served marked only in the old mode
     )
     @patch("urllib.request.urlopen", side_effect=AssertionError("no network in tests"))
     @patch("helpdesk.services.llm_generator.question_language", return_value="Slovenian")

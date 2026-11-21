@@ -219,6 +219,7 @@ class FirstAnswerThinkingTests(SimpleTestCase):
                 answer()
             self.assertEqual(self._thinking_per_call(chat_mock), ["disabled"])
 
+    @override_settings(ANSWER_CHECK_BY_SENTENCE_ENABLED=False)
     def test_a_rejected_first_answer_is_retried_with_thinking(self, chat_mock, _l, _e):
         for answer in (
             lambda: generate_answer_llm(question=_QUESTION, chunks=CHUNKS, scope=["NeTEx"]),
