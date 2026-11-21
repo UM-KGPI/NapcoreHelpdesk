@@ -275,12 +275,13 @@ def concept_excerpt(content: str, element: str, max_chars: int = EXCERPT_CHARS) 
     return content[start : start + max_chars]
 
 
-def format_examples_as_chunks(examples: list[dict]) -> list[dict]:
+def format_examples_as_chunks(examples: list[dict], commit_sha: str = "") -> list[dict]:
     """Convert example metadata to chunk format for LLM context.
 
     Each chunk represents one example file with metadata for attribution.
     Includes match type and mode-agnostic reasoning for cross-mode examples.
-    Attempts to load actual XML content to provide concrete evidence.
+    Attempts to load actual XML content to provide concrete evidence. `commit_sha` is the commit the
+    example repository was indexed at, when known; without it the chunk carries an empty commit.
     """
     chunks = []
     for example in examples:
@@ -335,6 +336,7 @@ def format_examples_as_chunks(examples: list[dict]) -> list[dict]:
             "match_type": match_type,
             "similarity_reason": similarity_reason,
             "repository_url": "https://github.com/TransmodelEcosystem/NeTEx",
+            "commit_sha": commit_sha or "",
             "embedding_vector": None,  # Will be computed on-demand during ranking
             "heading": "",
         }
