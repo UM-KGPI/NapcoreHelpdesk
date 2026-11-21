@@ -697,3 +697,80 @@ Time on the same 5 questions: 4.6 s median (10 runs), main 4.8 s (5 runs).
 - That the dev passages equal prod's (same ids).
 - That the German wording I used asks what prod was asked.
 - That the borderline labels are read as I read them; one decides the supported-removed line.
+
+## 12. Record: the wrong mark and the purpose check, 2026-11-21
+
+**This step failed its gate on two lines. The code is reverted;** it stays in the history (commit 25212f8).
+- An added wrong mark was dropped in 68 % of the new probes; the line asks for at least 90 %.
+- The kept sentences carry no wrong mark on main, so "fewer than main" could not hold.
+
+The capture was not run and no model call was made.
+
+### Why (prod 0.97.250, measured)
+
+In 10 runs of 5 questions, 2 of 63 cited sentences were removed. Both are true, and both cite one passage too many: a
+stop assignment sentence also cites an example file without that element; a timetable frame sentence also cites
+another Transmodel definition. The lift sentence of my captures is the same case. Two more supported sentences were
+removed by the purpose check: a lane class definition taken from a DATEX class passage, and "the inclusion flags
+`StartIncluded`", where "flags" was read as a verb.
+
+### The rules as built (stated before measuring)
+
+- **A, the wrong mark.**
+  - Marks with only spaces or punctuation between them form a run: one clause.
+  - A mark grounds its clause when the sentence, with the other marks of its run taken out, passes today's grounding
+    test, unchanged.
+  - In a run where at least one mark grounds, the other marks are dropped. The sentence is kept only if it passes the
+    same test with them dropped; otherwise it fails as today and nothing is dropped.
+  - A run of one mark is judged as today.
+  - The trace records each dropped mark with its passage id.
+- **B, the purpose check.** Two changes.
+  - A passage also counts as defining an element when its heading names the element as a whole word ("DATEX II class
+    Lane (namespace ...)"). This is a test of the passage's metadata; the existing list of document kinds stays, and
+    none is added.
+  - An ambiguous purpose word ("flags", "marks") is read as a noun when one or two plain words after an article come
+    before it and a name follows it ("the boundary flags `StartIncluded`").
+
+### Labels
+
+I relabelled the case "a true claim that also cites a wrong passage" as two facts: the claim is supported, the mark is
+wrong. This touches 2 labelled sentences (the two lift sentences). Outside the labelled set it touches 3 lift sentences
+of my captures and the 2 prod sentences.
+
+### Gate (measured by replay; no model call)
+
+| | Must hold | Main | Measured | |
+|---|---|---|---|---|
+| Supported sentences removed, gate half | not more than main | 3 of 249 (1 of 247 with the old labels) | 1 of 249 | pass |
+| Supported sentences removed, rules half (reported) | | 9 of 257 | 3 of 257 | |
+| Unsupported claims main removes | all still removed | 2 | 2 of 2 | pass |
+| Unsupported claims accepted | not more than main | 11 | 11 | pass |
+| Wrong marks left on kept sentences, labelled set | fewer than main | 0 | 0 | **fail** |
+| Wrong-passage probes, single mark | not more than main | 153 of 482 | 153 of 482 | pass |
+| New probes: kept, added wrong mark dropped | at least 90 % | not applicable | 338 of 499 (68 %) | **fail** |
+| Unsupported purpose claims main removes | all still removed | 0 of 8 removed are unsupported | 0 | pass |
+| The two prod sentences and the lift sentence | kept, wrong mark dropped | removed | kept, wrong mark dropped (all 5 lift runs too) | pass |
+| Capture lines | | | not run | |
+
+How I counted the wrong marks: I read all 176 marks of the 82 kept sentences with more than one mark in the labelled
+set. I found no mark whose passage holds nothing of its clause.
+
+Why 161 added wrong marks stand:
+- 121: the added passage holds one of the sentence's names, and today's test asks for one name per mark;
+- 18: sentences without names;
+- 13: the legislation test;
+- 9: other.
+
+Rule A uses that test, so it cannot tell these marks from right ones. On main the same probes give 298 sentences
+removed and 201 kept with the wrong mark.
+
+One mark Rule A dropped was right: a sentence writes "STOP ASSIGNMENT" and its schema passage holds "StopAssignment",
+which today's test does not find as written.
+
+Rule B kept 7 of the 8 supported sentences main removes through the purpose check.
+
+### Open (seen after the numbers, not added)
+
+- Rule B alone: it keeps 7 of 8 supported purpose removals and touches no other line. It would need its own gate.
+- Rule A with a stricter test per mark (more than one name, or the clause's distinctive words), so that a passage
+  which merely shares a name does not count as grounding.
