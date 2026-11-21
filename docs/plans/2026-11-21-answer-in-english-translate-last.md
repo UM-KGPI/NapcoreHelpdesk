@@ -119,3 +119,118 @@ share of answers with a second draft and with unconfirmed text read from the log
 - **The yardstick is small**: 40 questions, one reader for most labels.
 - **Believed, not checked:** that English drafts for non-English questions are rejected as rarely as drafts for
   English questions. That prod behaves as dev does here.
+
+## 6. Record: step 1, 2026-11-21
+
+**Step 1 failed its gate on three lines. The code is reverted.** It stays in the history (commit b9c9ff6) for a
+re-run. Step 2 is not started.
+
+### What the code did (b9c9ff6)
+
+- The search translation call also names the question's language, with evidence words first and a choice from
+  the detector's own list of names. A detection on 8 words or more is kept, as before. No separate naming call on
+  this path. A question the detector reads as English makes no call.
+- The answer prompt gets the English form of the question and asks for English. The checks run as for an English
+  question. The retry is unchanged.
+- The checked answer is rendered into the question's language by one Haiku call, without thinking, streamed to
+  the user. Fenced code blocks are replaced by placeholders and never sent. The rendering is compared with the
+  English text in code: the same citation marks, every code span, URL, tag, quote and name by form (PascalCase,
+  camelCase, ALL-CAPS, with a digit or underscore), the same numbers, no new name or code span, length 0.5 to 2.5,
+  not cut off, and the app's language check. A refused rendering is made once more, with the reason; a second
+  refusal serves the English answer with a note.
+- Refusals and fixed messages were not changed: they read the language the request noted, now from the
+  translation call.
+- `ANSWER_TRANSLATE_LAST_ENABLED=False` gives the old path. The trace got `llmAnswerRendering`.
+
+### How today's path was checked first (measured)
+
+Called by hand with the model mocked, on a short Slovenian question: the search translation calls the classifier
+(Sonnet) and the translation (Haiku), and the answer path calls the classifier again. The prompt names Slovenian
+and holds the question as asked. That is the 6-call path of section 1.
+
+### Capture
+
+Dev, in process, one question at a time, every run rolled back (no `aenf-*` event left), 21 Nov 12:00 to 12:09 CET.
+The 9 non-English questions of the first capture and 10 I wrote (short, in Slovenian, Croatian, Czech, Slovak,
+Polish, Spanish, Italian, Danish, Swedish, Norwegian), twice each: 38 runs. As control 3 English questions the
+detector gives no language, twice. As reference 5 non-English questions once on today's code, 12:00 to 12:01.
+
+### Gate (measured unless marked)
+
+| | Must hold | Today | Measured | |
+|---|---|---|---|---|
+| First drafts rejected, not English | at most 30 % | 15 of 18 | 9 of 36 (25 %) | pass |
+| Served as not validated, not English | at most 2 of 38 | 12 of 18 | 5 of 38 | **fail** |
+| Model calls per answer, median | at most 4 | 6 | 3 (reference today: 5) | pass |
+| Median answer time | at most 10 s | 13.0 s when rejected | 10.0 s (reference today: 13.4 s) | pass, on the line |
+| Rendering in the question's language | every run | | 27 of 36 | **fail** |
+| Marks, names, code, numbers kept | every run | | 28 of 28 served renderings | pass |
+| Claims the checked answer lacks | none | | 1 | **fail** |
+| English questions | identical, no extra call | | 206 of 206 stored validator calls identical; 6 of 6 named English | pass |
+| Retrieval and example benchmarks | unchanged | | retrieval code not touched | pass (see below) |
+| CI | green | | green on the code (b9c9ff6, PR #575, backend tests included) | pass |
+
+Two runs abstained before a draft (36 runs with a draft). The time to the first word was 7.0 s median; the
+rendering's first token came 0.6 to 0.8 s after its call started.
+
+### Why the three lines failed
+
+- **Not validated, 5 runs.** All are English drafts rejected twice as "without specific technical content":
+  sentences about an example or a relation with no name in them (cause C3 of the diagnosis). That is step 2's
+  ground, not a language effect (measured: the reasons read one by one).
+- **Rendering not in the question's language, 9 runs.** 8 were served in English after two refused renderings:
+  - 4 (two Portuguese questions, both runs): the abbreviation EU, which Portuguese writes UE. The check wants
+    every ALL-CAPS word kept.
+  - 1: a capitalised word and a unit ("TYPES", "15mn").
+  - 1: a quote holding code spans. The check cut the spans out of the quote and then looked for the cut text, a
+    bug in the check.
+  - 1: a legislation quote rendered in Slovenian, against the rule that quotes stay as written.
+  - 1: the model dropped three citation marks, twice. A right refusal.
+
+  One run was rendered in Croatian for a Slovenian question: the call named Croatian. It is the question of #244,
+  short, and the other run named it right.
+- **An added sentence, 1 run.** A Czech rendering opened with a sentence about sources and translation that the
+  English answer does not have. The check compares names, numbers and marks; it cannot see an added plain
+  sentence. Read one by one, the other 27 renderings say what the English says (one reader; headings were added
+  in 3, no claim in them).
+
+### Language naming by the translation call (measured, 38 runs and 6 English)
+
+| Pair or language | Runs | Wrong |
+|---|---|---|
+| Slovenian / Croatian | 12 / 2 | 1 (Slovenian named Croatian) |
+| Czech / Slovak / Polish | 2 / 2 / 2 | 0 |
+| Spanish / Portuguese / Italian | 2 / 6 / 2 | 0 |
+| Danish / Swedish / Norwegian | 2 / 2 / 2 | 0 |
+| German | 2 | 0 |
+| English, detector gives none | 6 | 0 |
+
+The detector alone named 6 of my 10 short questions wrong or not at all. Today's Haiku translation named the
+#244 question Croatian too; the Sonnet classifier then corrected it.
+
+### Retrieval and example benchmarks
+
+Not re-run. The retrieval code is not touched, and the CI benchmarks run with the model off, where the search
+translation returns nothing before any changed line (measured: read in the code). With the model on, the English
+form of a non-English question comes from a changed prompt; in 5 of 9 questions it differed from the first capture only
+by an article or a pronoun, which the old prompt also varied between runs (measured). The example benchmark has
+one non-English question; its English form was not compared (believed unchanged in meaning).
+
+### Model calls
+
+191 in all: 181 Haiku and 10 Sonnet. The Sonnet calls are today's code in the 5 reference runs. 11 Haiku calls
+went to two smoke runs while building, before the capture. One fixed-text rendering in a background thread may be
+missing from the count.
+
+### Believed, not measured
+
+- That the rendering adds no claim in the 27 other renderings I read: one reader.
+- That prod behaves as dev does here.
+
+### Open (seen after the numbers, not added)
+
+- Keep only names written in code or with inner capitals; let an ALL-CAPS abbreviation take the language's form.
+- Fix the quote check for quotes that hold code spans; decide whether a legislation quote stays in English.
+- Name the language with the separate classifier, once per question, as section 5 says if this line fails.
+- Count sentences, or compare them one by one, to catch an added plain sentence.
+- With these, a re-run with the same gate. The not-validated line needs step 2.
