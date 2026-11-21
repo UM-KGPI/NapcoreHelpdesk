@@ -214,3 +214,59 @@ class StreamingTests(SimpleTestCase):
             events = list(stream_answer_llm(question=QUESTION, chunks=CHUNKS))
         self.assertEqual(events[-1][1]["answer"], INSUFFICIENT_EVIDENCE_MESSAGE)
         self.assertFalse(events[-1][1]["evidence_answers_question"])
+
+
+TIMETABLE = {
+    "repositoryUrl": "https://github.com/NeTEx-CEN/NeTEx",
+    "commitSha": "abc",
+    "chunkId": "chunk-timetable",
+    "sourcePath": "examples/timetable.xml",
+    "docType": "example",
+    "text": "There are five stops: A, B, C, D, E. There are four journeys, two clockwise, two anticlockwise, both "
+    "starting at A. Run times: A to B 15mn, B to C 15mn.",
+}
+OTHER = [
+    {"chunkId": f"chunk-{n}", "sourcePath": f"xsd/other_{n}.xsd", "docType": "schema", "text": text}
+    for n, text in enumerate(
+        ["A Line has a PublicCode.", "A StopPlace contains Quay elements.", "A fare product has a price."]
+    )
+]
+
+
+class CutTests(SimpleTestCase):
+    def test_a_mark_after_the_full_stop_belongs_to_the_sentence_before(self):
+        answer = "A `StopPlace` contains `Quay` elements. [E1] [E2] A `Line` has a `PublicCode`. [E2]"
+        sentences = [answer[s:e] for s, e in _sentence_spans(answer)]
+        self.assertEqual(
+            sentences, ["A `StopPlace` contains `Quay` elements. [E1] [E2]", "A `Line` has a `PublicCode`. [E2]"]
+        )
+
+    def test_a_mark_followed_by_a_small_letter_is_the_subject_of_the_next_sentence(self):
+        answer = "The blocks cover lines. [E2] describes a `Line` with a `PublicCode`."
+        sentences = [answer[s:e] for s, e in _sentence_spans(answer)]
+        self.assertEqual(sentences[1], "[E2] describes a `Line` with a `PublicCode`.")
+
+    def test_no_cut_after_an_abbreviation_or_before_a_small_letter(self):
+        answer = "Spots are seats, i.e. seats in that space [E1]. Use e.g. `Quay` here [E1]. Next one [E2]."
+        self.assertEqual(len(_sentence_spans(answer)), 3)
+
+    def test_a_blank_line_ends_a_sentence(self):
+        answer = "A `StopPlace` holds quays [E1]\n\n**Lines** A `Line` has a `PublicCode` [E2]."
+        self.assertEqual(len(_sentence_spans(answer)), 2)
+
+
+class PlainSentenceTests(SimpleTestCase):
+    def test_a_sentence_without_names_is_kept_when_its_facts_are_in_the_cited_passage(self):
+        chunks = [TIMETABLE, *OTHER]
+        answer = "Two clockwise and two anticlockwise journeys start at stop A, with 15 minutes per leg [E1]."
+        self.assertIsNone(_sentence_verdicts(answer, chunks)[0]["reason"])
+
+    def test_a_sentence_without_names_is_removed_when_its_facts_are_not_in_the_cited_passage(self):
+        chunks = [TIMETABLE, *OTHER]
+        answer = "Two clockwise and two anticlockwise journeys start at stop A, with 15 minutes per leg [E2]."
+        self.assertIn("without specific technical content", _sentence_verdicts(answer, chunks)[0]["reason"])
+
+    def test_a_number_not_in_the_cited_passage_removes_the_sentence(self):
+        chunks = [TIMETABLE, *OTHER]
+        answer = "Two clockwise and two anticlockwise journeys start at stop A, with 20 minutes per leg [E1]."
+        self.assertIn("without specific technical content", _sentence_verdicts(answer, chunks)[0]["reason"])
