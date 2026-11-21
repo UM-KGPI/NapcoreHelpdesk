@@ -772,32 +772,13 @@ _AMBIGUOUS_PURPOSE_VERB_PATTERN = re.compile(
 )
 
 
-# The ambiguous word is a noun when one or two plain words after an article or possessive come before it and the names
-# it stands for follow it: "the boundary flags `StartIncluded` and `EndIncluded`". After a name, or followed by a plain
-# word, it stays a verb: "the `Cancellation` element flags whether ...".
-_NOUN_PHRASE_BEFORE = re.compile(r"\b(?:the|a|an|its|their|these|those)\s+(?:[\w-]+\s+){1,2}$", re.IGNORECASE)
-_NAME_AFTER = re.compile(r"\s+[`<]")
-
-
 def _has_purpose_claim(sentence: str) -> bool:
-    if _ELEMENT_PURPOSE_CLAIM_PATTERN.search(sentence):
-        return True
-    return any(
-        not (_NOUN_PHRASE_BEFORE.search(sentence[: match.start()]) and _NAME_AFTER.match(sentence, match.end()))
-        for match in _AMBIGUOUS_PURPOSE_VERB_PATTERN.finditer(sentence)
-    )
+    return bool(_ELEMENT_PURPOSE_CLAIM_PATTERN.search(sentence) or _AMBIGUOUS_PURPOSE_VERB_PATTERN.search(sentence))
 
 # Chunk doc types that can plausibly carry a definition/explanation of an
 # element's purpose. "example" chunks are raw XML/JSON instances — the
 # presence of an element there proves it exists, not what it means.
 _DEFINITIONAL_DOC_TYPES = {"schema", "frame", "object", "ontology-definition", "ontology-relation", "guide"}
-
-
-def _passage_is_about(element_name: str, chunk: dict) -> bool:
-    """Whether the passage is the element's own entry, whatever kind of document holds it: its heading names the
-    element as a whole word ("DATEX II class Lane (namespace ...)" for `Lane`). Example files have no such heading."""
-    heading = str(chunk.get("heading") or "")
-    return bool(element_name) and re.search(r"(?<![\w])" + re.escape(element_name) + r"(?![\w])", heading) is not None
 
 
 def _element_has_definition_in_evidence(element_name: str, chunks: list[dict]) -> bool:
@@ -813,7 +794,7 @@ def _element_has_definition_in_evidence(element_name: str, chunks: list[dict]) -
     """
     for chunk in chunks:
         doc_type = str(chunk.get("docType", "") or "").lower()
-        if doc_type not in _DEFINITIONAL_DOC_TYPES and not _passage_is_about(element_name, chunk):
+        if doc_type not in _DEFINITIONAL_DOC_TYPES:
             continue
         chunk_text = str(chunk.get("text", ""))
         if element_name.lower() in chunk_text.lower():
@@ -2344,53 +2325,6 @@ def _sentence_spans(answer: str) -> list[tuple[int, int]]:
     return [(s, e) for s, e in spans if answer[s:e].strip()]
 
 
-def _mark_runs(sentence: str) -> list[list[re.Match]]:
-    """The sentence's citation marks in runs: marks with nothing but spaces or punctuation between them ("[E4][E5]",
-    "[E2] [E1]") stand for one clause."""
-    runs: list[list[re.Match]] = []
-    for match in CITATION_PATTERN.finditer(sentence):
-        if runs and not _has_words(sentence[runs[-1][-1].end() : match.start()]) and not re.search(
-            r"\d", sentence[runs[-1][-1].end() : match.start()]
-        ):
-            runs[-1].append(match)
-        else:
-            runs.append([match])
-    return runs
-
-
-def _without_marks(sentence: str, marks: list[re.Match]) -> str:
-    for match in sorted(marks, key=lambda m: m.start(), reverse=True):
-        sentence = sentence[: match.start()] + sentence[match.end() :]
-    return sentence
-
-
-def _grounding_with_marks_dropped(sentence: str, chunks: list[dict], inflected: bool = False) -> tuple[str | None, list[re.Match]]:
-    """(why the sentence is not grounded, or None; the marks to drop).
-
-    A mark grounds its clause when the sentence, with the other marks of its run taken out, passes the citation
-    grounding test (_sentence_grounding_error, unchanged). In a run where at least one mark grounds, the marks that do
-    not are dropped. The sentence is kept when, with those marks dropped, it passes the same test; otherwise it fails
-    as before and nothing is dropped. A run of one mark is judged as before.
-    """
-    reason = _sentence_grounding_error(sentence, chunks, inflected)
-    drop: list[re.Match] = []
-    for run in _mark_runs(sentence):
-        if len(run) < 2:
-            continue
-        grounds = [
-            mark
-            for mark in run
-            if _sentence_grounding_error(_without_marks(sentence, [m for m in run if m is not mark]), chunks, inflected) is None
-        ]
-        if grounds:
-            drop.extend(mark for mark in run if mark not in grounds)
-    if not drop:
-        return reason, []
-    if _sentence_grounding_error(_without_marks(sentence, drop), chunks, inflected) is not None:
-        return reason, []
-    return None, drop
-
-
 def _sentence_verdicts(answer: str, chunks: list[dict], inflected: bool = False) -> list[dict]:
     """A verdict for every cited sentence: {"start", "end", "sentence", "citations", "passages", "reason"}.
 
@@ -2405,19 +2339,7 @@ def _sentence_verdicts(answer: str, chunks: list[dict], inflected: bool = False)
             continue
         # The purpose check reads prose only, as _validate_no_unsupported_element_purpose_claims does.
         prose = FENCED_CODE_BLOCK_PATTERN.sub(" ", answer[start:end]).replace("\n", " ")
-        reason, dropped = _grounding_with_marks_dropped(sentence, chunks, inflected)
-        reason = reason or _sentence_purpose_error(prose, chunks)
-        dropped_marks = [] if reason else [
-            {
-                "start": start + m.start(),
-                "end": start + m.end(),
-                "citation": f"E{m.group(1)}",
-                "passage": str(chunks[int(m.group(1)) - 1].get("chunkId") or chunks[int(m.group(1)) - 1].get("sourcePath") or "")
-                if 0 < int(m.group(1)) <= len(chunks)
-                else "",
-            }
-            for m in dropped
-        ]
+        reason = _sentence_grounding_error(sentence, chunks, inflected) or _sentence_purpose_error(prose, chunks)
         passages = [
             str(chunks[int(c) - 1].get("chunkId") or chunks[int(c) - 1].get("sourcePath") or "")
             for c in cited
@@ -2432,7 +2354,6 @@ def _sentence_verdicts(answer: str, chunks: list[dict], inflected: bool = False)
                 "passages": passages,
                 "reason": reason,
                 "hasWords": _has_words(CITATION_PATTERN.sub("", sentence)),
-                "droppedMarks": dropped_marks,
             }
         )
     # A mark standing alone ("[E3].") supports the sentence before it and goes with it.
@@ -2454,8 +2375,7 @@ def _without_sentences(answer: str, verdicts: list[dict]) -> str:
     label line ("**Elements:**", "Key points:") whose content was all removed.
     """
     removed = [(v["start"], v["end"]) for v in verdicts if v["reason"]]
-    marks = [(m["start"], m["end"]) for v in verdicts if not v["reason"] for m in v.get("droppedMarks") or []]
-    if not removed and not marks:
+    if not removed:
         return answer
     code = [(m.start(), m.end()) for m in FENCED_CODE_BLOCK_PATTERN.finditer(answer)]
     drop = [False] * len(answer)
@@ -2465,11 +2385,6 @@ def _without_sentences(answer: str, verdicts: list[dict]) -> str:
         for index in range(start, end):
             if answer[index] != "\n" and not any(cs <= index < ce for cs, ce in code):
                 drop[index] = True
-    for start, end in marks:
-        while start > 0 and answer[start - 1] in " \t":
-            start -= 1  # the space before a dropped mark goes with it
-        for index in range(start, end):
-            drop[index] = True
     lines: list[tuple[str, bool]] = []  # (text left, a sentence was removed from it)
     position = 0
     for raw in answer.split("\n"):
@@ -2593,13 +2508,6 @@ def _sentence_check_record(attempt: int, checked: dict) -> dict:
         "citedSentences": len(judged),
         "kept": sum(1 for v in judged if not v["reason"]),
         "removed": _removed_record(checked["verdicts"]),
-        # A mark dropped from a kept sentence: its passage does not ground the sentence, another mark of its run does.
-        "droppedMarks": [
-            {"sentence": v["sentence"][:300], "citation": m["citation"], "passage": m["passage"]}
-            for v in checked["verdicts"]
-            if not v["reason"]
-            for m in v.get("droppedMarks") or []
-        ],
         "wholeAnswerFailure": (checked["whole"] or None) and checked["whole"][:300],
         "tooLittle": checked["tooLittle"],
     }
