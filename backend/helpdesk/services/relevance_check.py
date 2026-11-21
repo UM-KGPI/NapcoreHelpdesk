@@ -6,7 +6,6 @@ failure returns None so the caller falls back to those keyword rules and the que
 
 from __future__ import annotations
 
-from functools import lru_cache
 import json
 import logging
 import re
@@ -72,14 +71,18 @@ def _verdict(content: str) -> bool:
     raise ValueError("reply is neither RELEVANT nor IRRELEVANT")
 
 
-@lru_cache(maxsize=512)
 def _ask(question: str) -> bool:
+    # Not cached: a verdict kept per process repeated a minority IRRELEVANT for every later asker until the
+    # backend restarted. Without thinking (Claude) or at temperature 0 (the other gateways) the verdict is as
+    # stable as the endpoint allows; Claude takes no temperature.
     if _uses_anthropic():
         payload = anthropic_controller_call(
             messages=[{"role": "user", "content": _PROMPT.format(question=question)}],
             max_tokens=controller_max_tokens(8),
             timeout_seconds=int(getattr(settings, "RELEVANCE_CHECK_TIMEOUT_SECONDS", 10)),
             json_answer=False,
+            # Claude takes "disabled" only at effort high or below.
+            thinking="disabled" if settings.CONTROLLER_LLM_ANTHROPIC_EFFORT in ("low", "medium", "high") else "adaptive",
         )
         return _verdict(payload["choices"][0]["message"]["content"])
 
