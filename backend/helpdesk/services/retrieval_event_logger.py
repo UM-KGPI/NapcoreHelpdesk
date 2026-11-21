@@ -28,10 +28,12 @@ def log_retrieval_events(question_event: QuestionEvent, chunks: list[dict]) -> l
             retrieval_event_id=retrieval_event_id,
             defaults={
                 "question_event": question_event,
-                "repository_url": chunk.get("repositoryUrl", ""),
-                "commit_sha": chunk.get("commitSha", ""),
-                "source_path": chunk.get("sourcePath", ""),
-                "chunk_id": chunk.get("chunkId", ""),
+                # `or ""`: a key present with None (chunk built from an object lacking the field) must not
+                # fail the NOT NULL column; telemetry never costs an answer.
+                "repository_url": chunk.get("repositoryUrl") or "",
+                "commit_sha": chunk.get("commitSha") or "",
+                "source_path": chunk.get("sourcePath") or "",
+                "chunk_id": chunk.get("chunkId") or "",
                 "score": float(chunk.get("score") or 0.0),
             },
         )

@@ -2514,7 +2514,9 @@ def _retrieve_chunks_once(
                     password=getattr(settings, "GRAPHDB_PASSWORD", ""),
                 )
                 if example_files:
-                    example_chunks = format_examples_as_chunks(example_files)
+                    example_chunks = format_examples_as_chunks(
+                        example_files, commit_sha=indexed_commit_shas().get("NeTEx", "")
+                    )
                     example_chunks_added = len(example_chunks)
                     if probe is not None:
                         probe("graph_examples", example_chunks)
