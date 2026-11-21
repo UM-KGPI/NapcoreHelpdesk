@@ -234,3 +234,97 @@ missing from the count.
 - Name the language with the separate classifier, once per question, as section 5 says if this line fails.
 - Count sentences, or compare them one by one, to catch an added plain sentence.
 - With these, a re-run with the same gate. The not-validated line needs step 2.
+
+## 7. Record: step 1 re-run, 2026-11-21
+
+**The re-run failed its gate on one line: 9 of 38 answers were served in English after two refused renderings.**
+The code is reverted. It stays in the history (commit 920ee40) for a later run.
+
+### What changed against b9c9ff6
+
+1. **Language naming.** The existing naming call (`_classify_question_language_with_llm`, the configured
+   classifier model) runs where it runs today, but once per question. Its name wins over the translation's and is
+   noted for the request; both answer paths and the fixed messages read the note. When the detector names a short
+   non-English question, the naming call and the search translation run at the same time. When the detector names
+   no language, the naming call runs first and the translation only if the question is not English, so a short
+   English question costs one call.
+2. **The comparison.** Kept verbatim: citation marks, code spans and fenced code, names with inner capitals or an
+   underscore, file names, links, tags, numbers, and text in double quotes. A plain abbreviation may take the form
+   the language uses. Quotes are read with their code spans in place (the bug of section 6).
+3. **Added sentences.** The rendering must have the same headings and list items as the English answer, and as
+   many sentences or one fewer, never more. A sentence ends at . ! ? after a word of three letters or more, or
+   after a closing mark, before a capital letter. I chose no tolerance upwards because one more sentence is how an
+   added sentence shows; one fewer is allowed because joining two sentences adds nothing. The prompt now asks for
+   a translation sentence by sentence, and says that quoted text stays in the source's language (the default while
+   the question is open).
+
+### Capture
+
+Dev, in process, one question at a time, every run rolled back. The same 19 non-English questions twice (38 runs),
+12:45 to 12:53 CET; the same 3 English control questions twice; 5 reference runs on today's code (0.97.246) at
+12:44 to 12:45.
+
+### Gate (measured)
+
+| | Must hold | First run | Re-run | |
+|---|---|---|---|---|
+| First drafts rejected, not English | at most 30 % | 9 of 36 | 9 of 37 (24 %) | pass |
+| Answer in a language other than the question's, not a fallback | none | 1 | 0 | pass |
+| Served in English as a fallback | at most 2 of 38, each a right refusal | 8 | 9 | **fail** |
+| Marks, code, code-form names, numbers kept in every served rendering | every run | 28 of 28 | 28 of 28 | pass |
+| Claims or sentences the checked English answer lacks, read one by one | none | 1 | no claim, no sentence; 4 added a bold title | pass on claims (see below) |
+| Served as not validated, not English | at most 6 of 38, causes shared with English | 5 | 3 | pass |
+| Model calls per non-English answer, median | at most 4 | 3 | 4 | pass |
+| Median answer time, not English | at most 11 s, under today's | 10.0 s | 10.2 s; today 12.3 s | pass |
+| English questions | replay identical, no extra call | held | 206 of 206 identical; one naming call where today two | pass |
+| CI | green, Retrieval Benchmark check present and green | | all green on the code (920ee40, PR #582), Retrieval Benchmark (Pre-Merge) included | pass |
+
+The "not validated" line is looser than in section 3 on purpose. These answers fail the unchanged English check
+for facts with no name in them (generic wording, a term not found in the block, a sentence with no term); English
+answers fail it the same way. This step must not make that worse; step 2 must bring it to none. The 3 here:
+"only generic language", "terms not in the cited block", "without specific technical content".
+
+### Why the fallback line failed (each read)
+
+All 9 are right refusals by the check; the rendering did something it was told not to do:
+
+- 5 runs: the model translated a verbatim quote (a definition or an act's wording) on both attempts.
+- 2 runs: the model dropped citation marks on both attempts.
+- 1 run: the model wrote the whole rendering in German for a Slovenian question, twice; the language check caught it.
+- 1 run: two sentences more than the English answer, twice.
+
+So the comparison works; the rendering prompt does not hold the model to it. Quotes are the main cause, and they
+come from the open decision on quotes: with quotes allowed in the question's language, 5 of the 9 would not have been refused
+(believed, not measured).
+
+### Reading the 28 renderings against the English
+
+No added or changed claim (one reader). Four renderings added a bold title line the English does not have (for
+example the question's topic as a title). They are not sentences and say nothing new; I count them as passing the
+claims line, and the sentence check does not see them. One Slovenian rendering has a word with two Cyrillic letters
+in it.
+
+### Language naming (measured)
+
+The naming call ran in 32 of 38 runs (not for questions of 8 words or more, as today). Wrong: none served. The
+naming call said "Serbian" for the Croatian question both times; that name is not in the detector's list, so the
+translation's "Croatian" was used. The Slovenian question that the translation named Croatian in both runs was
+named Slovenian by the naming call both times. English control: 6 of 6 English, one naming call each.
+
+### Model calls
+
+229 in all: Haiku 180, the classifier model 49. Of the classifier calls, 10 are today's code in the reference runs
+and 39 are the naming call of this re-run, the use the app has today, once per question. One smoke run (5 calls) is
+included. This is over the budget of about 200.
+
+### Retrieval and example benchmarks
+
+The retrieval code is not touched. The translation prompt is that of b9c9ff6; section 6 says what that changes.
+
+### Open (seen after the numbers, not added)
+
+- Decide the quote rule. If quotes may be translated, drop the quote check or keep the original next to the
+  translation.
+- A rendering that drops marks or writes another language twice may need a third attempt or a smaller unit
+  (paragraph by paragraph).
+- Catch an added title line (a bold line without a sentence end).
