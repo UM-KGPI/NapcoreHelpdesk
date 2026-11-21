@@ -123,6 +123,49 @@ def chat_completion(
     }
 
 
+def stream_text(
+    *,
+    api_key: str,
+    model: str,
+    messages: list[dict],
+    max_tokens: int,
+    timeout_seconds: float,
+    effort: str = "low",
+    thinking: str = "disabled",
+):
+    """Call the Messages API with streaming; yield the text as it is written and return the stop reason.
+
+    For a plain-text reply that is shown while it is written (the answer's rendering into the question's
+    language, llm_generator). Errors are raised as AnthropicRequestError, as in chat_completion.
+    """
+
+    system, turns = to_messages_api(messages)
+    params: dict = {
+        "model": model,
+        "max_tokens": int(max_tokens),
+        "messages": turns,
+        "output_config": {"effort": effort},
+    }
+    if system:
+        params["system"] = system
+    if thinking == "disabled":
+        params["thinking"] = {"type": "disabled"}
+    try:
+        client = _client(api_key).with_options(timeout=timeout_seconds, max_retries=1)
+        with client.messages.stream(**params) as stream:
+            for text in stream.text_stream:
+                if text:
+                    yield text
+            final = stream.get_final_message()
+    except anthropic.APIStatusError as exc:
+        raise AnthropicRequestError(f"Anthropic API error {exc.status_code}: {str(exc)[:300]}") from exc
+    except anthropic.APIConnectionError as exc:  # includes timeouts
+        raise AnthropicRequestError(f"Anthropic API request failed: {exc}") from exc
+    if final.stop_reason == "refusal":
+        raise AnthropicRequestError("Anthropic model declined the request (refusal).")
+    return final.stop_reason
+
+
 def check_models(*, api_key: str) -> dict:
     """Health probe in check_gateway_models' shape: a free GET /v1/models listing the key's models."""
 

@@ -12,8 +12,10 @@ Created: 2026-03-29  |  Modified: 2026-06-28
 
 from __future__ import annotations
 
+import contextvars
 import json
 from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor
 import logging
 import re
 import ssl
@@ -1374,6 +1376,17 @@ def english_search_query(question: str) -> str | None:
     if not getattr(settings, "SEARCH_TRANSLATION_ENABLED", True) or not getattr(settings, "LLM_ENABLED", False):
         return None
     base_url = (settings.LLM_API_BASE_URL or "").strip()
+    if _translate_last():
+        if not base_url:
+            return None
+        language, english = _language_and_english_form(question)
+        from helpdesk.services import request_timing
+
+        # The answer path and a refusal in the question's language (fixed_text_language) read both from here.
+        request_timing.note(("question_language", _language_key(question)), language)
+        request_timing.note(("english_question", _language_key(question)), english)
+        request_timing.note(("translated", _language_key(question)), True)
+        return english
     language = question_language(question)
     if not base_url or not language or language == "English":
         return None
@@ -1429,6 +1442,148 @@ def english_search_query(question: str) -> str | None:
             _CONFIRMED_ENGLISH.popitem(last=False)
         return None
     return text if text and text.lower() != question.strip().lower() else None
+
+
+def _translate_last() -> bool:
+    """A question not in English is answered and checked in English and rendered into its language last."""
+    return bool(getattr(settings, "ANSWER_TRANSLATE_LAST_ENABLED", True))
+
+
+# The search translation's instruction when it also names the question's language for the answer (one call
+# instead of the separate classifier). The translation part is the same words as in english_search_query.
+TRANSLATION_AND_LANGUAGE_PROMPT = (
+    "Translate the user's question into English for a search. Keep standard and schema names "
+    "(NeTEx, SIRI, OpRa, Transmodel, StopPlace, MMTIS ...) unchanged. Any other abbreviation is "
+    "translated like a word: write the English abbreviation of the term it stands for, as in "
+    "PAN, PAP or NZP -> NAP (national access point) and STI or ITS -> ITS (intelligent transport "
+    "systems). Also name the language the question is written in, ignoring those names. Closely related "
+    "languages are easy to confuse: decide by the words, particles, endings and spellings that belong to only "
+    "one of them, not by the language family, and list those words first. "
+    "Name the language as one of these: {names}. "
+    'Reply with JSON only: {{"evidence": "<the words that decide the language, at most 10 words>", '
+    '"language": "<the language\'s name>", "text": "<English question>"}}.'
+).format(names=", ".join(sorted(LANGDETECT_LANGUAGE_NAMES.values())))
+
+
+_NAMING_EXECUTOR = ThreadPoolExecutor(max_workers=4, thread_name_prefix="language-naming")
+
+
+def _translation_call(question: str) -> tuple[str, str]:
+    """One search translation call: (the language it names, the English text). Raises on a failed call."""
+    response = _request_chat_completion(
+        api_base_url=(settings.LLM_API_BASE_URL or "").strip(),
+        api_key=(settings.LLM_API_KEY or "").strip(),
+        model=settings.LLM_MODEL,
+        timeout_seconds=min(settings.LLM_TIMEOUT_SECONDS, SEARCH_TRANSLATION_TIMEOUT_SECONDS),
+        temperature=0.0,
+        max_tokens=answer_max_tokens(250),
+        messages=[
+            {"role": "system", "content": TRANSLATION_AND_LANGUAGE_PROMPT},
+            {"role": "user", "content": question},
+        ],
+    )
+    content = response["choices"][0]["message"]["content"]
+    named = ""
+    try:
+        payload = json.loads(re.search(r"\{.*\}", content, re.DOTALL).group(0), strict=False)
+        named = str(payload.get("language") or "").strip().title()
+        text = payload.get("text") or next(
+            (v for k, v in payload.items() if k not in ("language", "evidence") and isinstance(v, str) and v.strip()),
+            "",
+        )
+    except (ValueError, AttributeError):
+        text = content
+    return named, str(text).strip()
+
+
+def _classified(question: str) -> str | None:
+    try:
+        return _classify_question_language_with_llm(question)
+    except Exception:
+        logger.warning("Language naming failed for %r", question, exc_info=True)
+        return None
+
+
+def _confirm_english(question: str) -> None:
+    key = _language_key(question)
+    _CONFIRMED_ENGLISH[key] = None
+    _CONFIRMED_ENGLISH.move_to_end(key)
+    while len(_CONFIRMED_ENGLISH) > _CONFIRMED_ENGLISH_SIZE:
+        _CONFIRMED_ENGLISH.popitem(last=False)
+
+
+def _language_and_english_form(question: str) -> tuple[str | None, str | None]:
+    """(the question's language, its English form or None), with the language named once per question.
+
+    English by the word detector (or found English before): no call. The language-naming call
+    (_classify_question_language_with_llm, LANGUAGE_CLASSIFIER_MODEL) is made where question_language makes it:
+    when the detector names no language, or a language other than English on fewer than
+    MIN_TRUSTED_DETECTION_WORDS words. Its name wins over the translation call's. With no language detected it
+    runs first, and the translation only when the question is not English; with a short non-English detection the
+    two calls run at the same time. A longer detection is kept as in question_language; the translation naming
+    English then makes the question English, as before.
+    """
+    english_name = LANGDETECT_LANGUAGE_NAMES["en"]
+    if _language_key(question) in _CONFIRMED_ENGLISH:
+        return english_name, None
+    detected = detect_question_language(question)
+    if detected == english_name:
+        return english_name, None
+    classified = None
+    pending = None
+    if detected is None:
+        classified = _classified(question)
+        if classified == english_name:
+            _confirm_english(question)
+            return english_name, None
+    elif natural_word_count(question) < MIN_TRUSTED_DETECTION_WORDS:
+        pending = _NAMING_EXECUTOR.submit(contextvars.copy_context().run, _classified, question)
+    try:
+        named, text = _translation_call(question)
+    except Exception:
+        logger.warning("English search query failed for %r", question, exc_info=True)
+        named, text = "", ""
+    if pending is not None:
+        try:
+            classified = pending.result()
+        except Exception:
+            classified = None
+    if classified == english_name or (not classified and named == english_name):
+        logger.info("Question detected as %s is English according to the naming call: %r", detected, question)
+        _confirm_english(question)
+        return english_name, None
+    trusted = detected if detected and natural_word_count(question) >= MIN_TRUSTED_DETECTION_WORDS else None
+    language = classified or trusted or (named if named in LANGDETECT_LANGUAGE_NAMES.values() else None) or detected
+    english = text if text and text.lower() != question.strip().lower() else None
+    return language, english
+
+
+def _answer_languages(question: str) -> tuple[str, str | None, str | None]:
+    """(the question the answer prompt gets, the language the draft is written in, the language it is rendered
+    into last or None).
+
+    Setting off (ANSWER_TRANSLATE_LAST_ENABLED): the question as asked, in its own language, no rendering. On: a
+    question not in English with an English form is answered in English from that form and rendered last. The
+    language and the English form come from this request's search translation (english_search_query) and cost
+    nothing more; outside a request they are found here. Without an English form (the
+    translation failed) the answer is written in the question's language; with SEARCH_TRANSLATION_ENABLED off,
+    everything is as with this setting off.
+    """
+    if not _translate_last() or not getattr(settings, "SEARCH_TRANSLATION_ENABLED", True):
+        return question, question_language(question), None
+    from helpdesk.services import request_timing
+
+    key = _language_key(question)
+    if request_timing.noted(("translated", key)):
+        language = request_timing.noted(("question_language", key))
+        english = request_timing.noted(("english_question", key))
+    else:
+        language, english = _language_and_english_form(question)
+    if not language or language == LANGDETECT_LANGUAGE_NAMES["en"]:
+        return question, language, None
+    if not english:
+        return question, language, None
+    return english, LANGDETECT_LANGUAGE_NAMES["en"], language
 
 
 LEGISLATION_RULE = (
@@ -2104,6 +2259,300 @@ def _append_feedback_message(
     ]
 
 
+# --- The checked English answer rendered into the question's language (plan 2026-11-21, step 1) ---
+#
+# The code takes the citation marks out of the checked English answer and remembers which piece (sentence, list
+# item, heading) carried each. One call translates the pieces, as numbered lines; the model never sees a mark. The
+# code puts every mark back at the end of its piece, so the served answer holds exactly the checked marks. Fenced
+# code blocks are never sent (placeholders). Only the language check can refuse a translation.
+
+RENDERING_ATTEMPTS = 2
+_CODE_BLOCK = re.compile(r"```.*?```", re.DOTALL)
+_PLACEHOLDER = re.compile(r"⟦(\d+)⟧")
+_MARK = re.compile(r"\s*\[E\d+\]")
+_CODE_SPAN = re.compile(r"`([^`\n]+)`")
+_URL = re.compile(r"https?://[^\s)\]>`\"”»]+[^\s)\]>`\"”».,;:]")
+_NUMBER = re.compile(r"\d+(?:[.,:/-]\d+)*")
+_QUOTED = re.compile(r"[\"“”„]([^\"“”„\n]{2,}?)[\"“”]")
+# A sentence ends at . ! ? after a word of three letters or more (not "e.g.") or after a closing mark, perhaps
+# followed by citation marks, before white space and a capital letter or an opening mark.
+_SENTENCE_BREAK = re.compile(
+    r"(?:(?<=[^\W\d_]{3})|(?<=[\])`\"”»*]))[.!?](?:\s*\[E\d+\])*(?=\s+[*\"„«(`]*[^\W\d_a-z])"
+)
+_LINE_PREFIX = re.compile(r"^(\s*(?:#{1,6}\s+|[-*+]\s+|\d+[.)]\s+)?)")
+_NUMBERED_LINE = re.compile(r"^\s*(\d+)\s*\|\s?(.*)$")
+_PIECE_TAIL = re.compile(r"[\s.!?:;,]*$")
+_MARK_END_TAIL = re.compile(r"^[\s.!?:;,\]\)\"”»*]*$")
+RENDERING_NOTE = "This answer is shown in English: its translation could not be checked."
+
+
+def _rendering_instruction(language: str, question: str) -> str:
+    return (
+        f"Translate each numbered line of the user's text into {language}. The text is the answer of a helpdesk on "
+        f"transport data standards to this question: «{question}». It was checked against its sources, so each "
+        "translated line must say exactly what its line says, no more and no less.\n"
+        "- Reply with the same numbered lines: one line per input line, starting with the same number and a "
+        "vertical bar (like 3| ...), in the same order, and nothing before or after them.\n"
+        "- Translate every line on its own: do not merge, split, add or drop lines.\n"
+        "- Keep unchanged: text in backticks, XML tags, element, attribute and class names, identifiers, file "
+        "names, URLs, every number as written, and the names of standards, acts and organisations.\n"
+        "- Keep the markdown inside a line, such as bold.\n"
+        f"- Write natural, grammatical {language}."
+    )
+
+
+def _masked(text: str) -> tuple[str, list[str]]:
+    """The text with each fenced code block replaced by ⟦n⟧, and the blocks."""
+    blocks: list[str] = []
+
+    def keep(match: re.Match) -> str:
+        blocks.append(match.group(0))
+        return f"⟦{len(blocks)}⟧"
+
+    return _CODE_BLOCK.sub(keep, text), blocks
+
+
+def _unmasked(text: str, blocks: list[str]) -> str:
+    return _PLACEHOLDER.sub(
+        lambda m: blocks[int(m.group(1)) - 1] if 0 < int(m.group(1)) <= len(blocks) else m.group(0), text
+    )
+
+
+def _pieces(masked: str) -> tuple[list[dict], str]:
+    """The answer cut into pieces without their marks: [{"text", "marks", "paragraph", "before", "moved"}], and the
+    text after the last piece. "before" is the layout between the previous piece and this one (spaces, line
+    breaks, list and heading markers, code placeholders), kept by the code. "moved" counts the marks that stood in
+    the middle of the piece."""
+    pieces: list[dict] = []
+    pending = ""
+    for paragraph_no, paragraph in enumerate(re.split(r"\n[ \t]*\n", masked)):
+        if paragraph_no:
+            pending += "\n\n"
+        for line_no, line in enumerate(paragraph.split("\n")):
+            if line_no:
+                pending += "\n"
+            prefix = _LINE_PREFIX.match(line).group(1)
+            body = line[len(prefix):]
+            pending += prefix
+            if not body.strip() or _PLACEHOLDER.fullmatch(body.strip()):
+                pending += body
+                continue
+            starts = [0] + [m.end() for m in _SENTENCE_BREAK.finditer(body)]
+            for index, start in enumerate(starts):
+                end = starts[index + 1] if index + 1 < len(starts) else len(body)
+                chunk = body[start:end]
+                lead = chunk[: len(chunk) - len(chunk.lstrip())]
+                chunk = chunk.strip()
+                if not chunk:
+                    pending += lead
+                    continue
+                marks = [m.group(0).strip() for m in _MARK.finditer(chunk)]
+                moved = sum(1 for m in _MARK.finditer(chunk) if not _MARK_END_TAIL.match(_MARK.sub("", chunk[m.end():])))
+                text = _MARK.sub("", chunk).strip()
+                pieces.append(
+                    {"text": text, "marks": marks, "paragraph": paragraph_no, "before": pending + lead, "moved": moved}
+                )
+                pending = ""
+    return pieces, pending
+
+
+def _with_marks(text: str, marks: list[str]) -> str:
+    """The marks at the end of the text, before its closing punctuation."""
+    if not marks:
+        return text
+    tail = _PIECE_TAIL.search(text.rstrip()).group(0)
+    body = text.rstrip()[: len(text.rstrip()) - len(tail)]
+    return f"{body} {' '.join(marks)}{tail.strip()}"
+
+
+def _numbered_lines(reply: str) -> dict[int, str]:
+    """Numbered lines of a reply: {number: text}; a number given twice counts once (the first)."""
+    found: dict[int, str] = {}
+    for line in reply.split("\n"):
+        match = _NUMBERED_LINE.match(line)
+        if match and int(match.group(1)) not in found:
+            found[int(match.group(1))] = match.group(2).strip()
+    return found
+
+
+def _assembled(pieces: list[dict], tail: str, lines: dict[int, str]) -> tuple[str, bool]:
+    """(the translation with every mark back, placed by paragraph). By piece when every piece came back once; else
+    the lines of each paragraph are joined and its marks go at the end of the paragraph."""
+    if set(lines) == set(range(1, len(pieces) + 1)):
+        return "".join(p["before"] + _with_marks(lines[i], p["marks"]) for i, p in enumerate(pieces, start=1)) + tail, False
+    out = []
+    last = max((p["paragraph"] for p in pieces), default=0)
+    extra = [lines[n] for n in sorted(lines) if not 1 <= n <= len(pieces)]
+    for paragraph in sorted({p["paragraph"] for p in pieces}):
+        members = [(i, p) for i, p in enumerate(pieces, start=1) if p["paragraph"] == paragraph]
+        texts = [lines[i] for i, _ in members if i in lines] + (extra if paragraph == last else [])
+        marks = [m for _, p in members for m in p["marks"]]
+        first = members[0][1]
+        # The layout between the paragraph's pieces is lost with them: its lines are joined by a space.
+        out.append(first["before"] + _with_marks(" ".join(texts), marks))
+    return "".join(out) + tail, True
+
+
+def _rendering_monitor(english: str, rendered: str) -> dict:
+    """For the trace only: what of the English answer the translation does not have (nothing is refused for it)."""
+    def missing(pattern, inner=False):
+        found = pattern.findall(english)
+        return [x for x in dict.fromkeys(found) if (f"`{x}`" if inner else x) not in rendered]
+
+    plain_english = _CODE_SPAN.sub(" ", _URL.sub(" ", CITATION_PATTERN.sub(" ", english)))
+    plain_rendered = _CODE_SPAN.sub(" ", _URL.sub(" ", CITATION_PATTERN.sub(" ", rendered)))
+    numbers = set(_NUMBER.findall(_PLACEHOLDER.sub(" ", plain_rendered)))
+    return {
+        "missingCodeSpans": missing(_CODE_SPAN, inner=True),
+        "missingNumbers": [n for n in dict.fromkeys(_NUMBER.findall(_PLACEHOLDER.sub(" ", plain_english))) if n not in numbers],
+        "missingLinks": missing(_URL),
+        "missingQuotes": [q for q in dict.fromkeys(_QUOTED.findall(english)) if q not in rendered],
+    }
+
+
+def _rendering_text_stream(messages: list[dict]) -> Generator[str, None, str | None]:
+    """One rendering call: yield its text as it is written; return the stop reason (None when unknown)."""
+    from helpdesk.services import request_timing
+
+    base_url = (settings.LLM_API_BASE_URL or "").strip()
+    api_key = (settings.LLM_API_KEY or "").strip()
+    max_tokens = answer_max_tokens(max(2000, 2 * int(settings.LLM_MAX_TOKENS)))
+    with request_timing.timed("llmMs", "llmCalls"):
+        try:
+            if settings.LLM_PROVIDER == anthropic_chat.PROVIDER:
+                return (
+                    yield from anthropic_chat.stream_text(
+                        api_key=settings.ANTHROPIC_API_KEY,
+                        model=settings.LLM_MODEL,
+                        messages=messages,
+                        max_tokens=max_tokens,
+                        timeout_seconds=settings.LLM_TIMEOUT_SECONDS,
+                        effort=settings.LLM_ANTHROPIC_EFFORT,
+                        thinking="disabled",
+                    )
+                )
+            if settings.LLM_STREAMING:
+                yield from _stream_request_chat_completion_untimed(
+                    api_base_url=base_url,
+                    api_key=api_key,
+                    model=settings.LLM_MODEL,
+                    timeout_seconds=settings.LLM_TIMEOUT_SECONDS,
+                    temperature=0.0,
+                    max_tokens=max_tokens,
+                    messages=messages,
+                )
+                return None
+            payload = _request_chat_completion_untimed(
+                api_base_url=base_url,
+                api_key=api_key,
+                model=settings.LLM_MODEL,
+                timeout_seconds=settings.LLM_TIMEOUT_SECONDS,
+                temperature=0.0,
+                max_tokens=max_tokens,
+                messages=messages,
+                thinking="disabled",
+            )
+            choice = (payload.get("choices") or [{}])[0]
+            yield str((choice.get("message") or {}).get("content") or "")
+            return choice.get("finish_reason")
+        except (error.URLError, anthropic_chat.AnthropicRequestError, OSError, ValueError) as exc:
+            raise LLMGenerationError(f"Rendering request failed: {exc}") from exc
+
+
+def _rendered_answer(
+    answer: str, language: str, question: str, english_question: str | None, stream: bool
+) -> Generator[tuple[str, str], None, tuple[str, dict]]:
+    """The checked English answer in the question's language: yields ("token", text) piece by piece while the
+    first attempt is written (stream=True) and returns (answer to serve, record for the trace).
+
+    One call translates the numbered pieces; the code puts the marks back. Pieces that do not come back one for one
+    are translated once more; then the marks of a paragraph go at its end. A translation in another language is made
+    once more; then the English answer is served with a short note. Nothing else refuses a translation.
+    """
+    masked, blocks = _masked(answer)
+    pieces, tail = _pieces(masked)
+    record: dict = {
+        "language": language, "attempts": 0, "problems": [], "englishAnswer": answer, "served": "english",
+        "pieces": len(pieces), "piecesReturned": None, "placedByParagraph": False,
+        "marksMovedFromMidSentence": sum(p["moved"] for p in pieces), "monitor": None,
+    }
+    if not pieces:
+        record["served"] = "rendering"
+        return answer, record
+    numbered = "\n".join(f"{i}| {p['text']}" for i, p in enumerate(pieces, start=1))
+    instruction = _rendering_instruction(language, question)
+    candidates: list[tuple[str, bool, int]] = []
+    for attempt in range(1, RENDERING_ATTEMPTS + 1):
+        record["attempts"] = attempt
+        system = instruction
+        if record["problems"]:
+            system = f"{instruction}\nAn earlier reply was refused: {record['problems'][-1]}."
+        messages = [{"role": "system", "content": system}, {"role": "user", "content": numbered}]
+        parts: list[str] = []
+        shown = 0  # pieces already sent to the user, in order
+        try:
+            call = _rendering_text_stream(messages)
+            while True:
+                try:
+                    delta = next(call)
+                except StopIteration:
+                    break
+                parts.append(delta)
+                if stream and attempt == 1:
+                    reply = "".join(parts)
+                    complete = reply[: reply.rfind("\n") + 1] if "\n" in reply else ""
+                    lines = _numbered_lines(complete)
+                    while shown + 1 in lines:
+                        piece = pieces[shown]
+                        yield ("token", _unmasked(piece["before"] + _with_marks(lines[shown + 1], piece["marks"]), blocks))
+                        shown += 1
+        except LLMGenerationError as exc:
+            logger.warning("Answer rendering in %s failed (attempt %d): %s", language, attempt, exc)
+            record["problems"].append(f"call failed: {str(exc)[:200]}")
+            continue
+        lines = _numbered_lines("".join(parts))
+        record["piecesReturned"] = len(lines)
+        text, by_paragraph = _assembled(pieces, tail, lines)
+        if stream and attempt == 1 and not by_paragraph:
+            # The last line has no line break after it; the text after the last piece (a code block) comes last.
+            rest = "".join(
+                p["before"] + _with_marks(lines[i], p["marks"]) for i, p in enumerate(pieces, start=1) if i > shown
+            )
+            if rest + tail:
+                yield ("token", _unmasked(rest + tail, blocks))
+        try:
+            _validate_answer_language(answer=_PLACEHOLDER.sub(" ", text), question="", target_language=language)
+        except LLMGenerationError as exc:
+            logger.warning("Answer rendering in %s refused (attempt %d): %s", language, attempt, exc)
+            record["problems"].append(str(exc)[:200])
+            continue
+        candidates.append((text, by_paragraph, len(lines)))
+        if not by_paragraph:
+            break
+        record["problems"].append(
+            f"{len(lines)} numbered lines came back for {len(pieces)}; reply with exactly the lines 1 to {len(pieces)}"
+        )
+    if candidates:
+        text, by_paragraph, returned = next((c for c in candidates if not c[1]), candidates[-1])
+        record.update(served="rendering", placedByParagraph=by_paragraph, piecesReturned=returned)
+        rendered = _unmasked(text, blocks)
+        record["monitor"] = _rendering_monitor(answer, rendered)
+        return rendered, record
+    from helpdesk.services.fixed_text_language import in_question_language
+
+    note = in_question_language(RENDERING_NOTE, question=question, english_question=english_question or question)
+    return f"{answer}\n\n*{note}*", record
+
+
+def _consumed(generator: Generator) -> object:
+    """Run a generator to its end, dropping what it yields; its return value."""
+    while True:
+        try:
+            next(generator)
+        except StopIteration as done:
+            return done.value
+
+
 def generate_answer_llm(
     question: str,
     chunks: list[dict],
@@ -2139,10 +2588,12 @@ def generate_answer_llm(
 
     max_chunks = max(1, int(getattr(settings, "LLM_MAX_EVIDENCE_CHUNKS", 6)))
     max_chars_per_chunk = max(200, int(getattr(settings, "LLM_MAX_EVIDENCE_CHARS_PER_CHUNK", 1200)))
-    # Detected once: the prompt names it, and _validate_answer_language checks the answer against it.
-    target_language = question_language(question)
+    # Detected once: the prompt names it, and _validate_answer_language checks the answer against it. With
+    # ANSWER_TRANSLATE_LAST_ENABLED a question not in English is answered from its English form, in English,
+    # and the checked answer is rendered into render_language last.
+    prompt_question, target_language, render_language = _answer_languages(question)
     messages = _build_messages(
-        question=question,
+        question=prompt_question,
         chunks=chunks,
         scope=scope,
         max_chunks=max_chunks,
@@ -2205,7 +2656,7 @@ def generate_answer_llm(
         )
         if (example_elements or structure_element) and not answer.strip():
             return _nothing_to_add(chunks)
-        _validate_answer_language(answer=answer, question=question, target_language=target_language)
+        _validate_answer_language(answer=answer, question=prompt_question, target_language=target_language)
         _validate_generated_answer(answer=answer, chunks=chunks, inflected=_not_english(target_language))
     except LLMGenerationError as first_error:
         rejected_answer = answer or ""
@@ -2259,7 +2710,7 @@ def generate_answer_llm(
         if (example_elements or structure_element) and not answer.strip():
             return _nothing_to_add(chunks)
         try:
-            _validate_answer_language(answer=answer, question=question, target_language=target_language)
+            _validate_answer_language(answer=answer, question=prompt_question, target_language=target_language)
             _validate_generated_answer(answer=answer, chunks=chunks, inflected=_not_english(target_language))
         except LLMGenerationError as retry_error:
             # Retry failed validation too, but it did produce an answer. Keep it
@@ -2273,7 +2724,7 @@ def generate_answer_llm(
             rejection_reason = f"{rejection_reason} | retry also failed: {retry_error}"[:500]
             answer_validated = False
 
-    _validate_grounded_example_output(question=question, answer=answer, chunks=chunks, shown_fragment=example_fragment)
+    _validate_grounded_example_output(question=prompt_question, answer=answer, chunks=chunks, shown_fragment=example_fragment)
 
     top_score = chunks[0].get("score", 0.0) if chunks else 0.0
     confidence = min(0.94, max(0.60, float(top_score)))
@@ -2312,8 +2763,15 @@ def generate_answer_llm(
     if not answer_validated:
         confidence = min(confidence, UNVALIDATED_ANSWER_MAX_CONFIDENCE)
 
+    rendering = None
+    if render_language:
+        answer, rendering = _consumed(
+            _rendered_answer(answer, render_language, question, prompt_question, stream=False)
+        )
+
     return {
         "answer": answer,
+        "rendering": rendering,
         "confidence": confidence,
         "review_required": confidence < 0.82 or not answer_validated,
         "answer_validated": answer_validated,
@@ -2453,10 +2911,12 @@ def stream_answer_llm(
     # Detect once and share: _build_messages uses it for the prompt's language
     # instruction, and the _validate_answer_language() calls below compare
     # against it.
-    detected_language = question_language(question)
+    # With ANSWER_TRANSLATE_LAST_ENABLED a question not in English is answered from its English form, in
+    # English, and the checked answer is rendered into render_language last (_rendered_answer).
+    prompt_question, detected_language, render_language = _answer_languages(question)
     effective_language = detected_language
     messages = _build_messages(
-        question=question,
+        question=prompt_question,
         chunks=chunks,
         scope=scope,
         max_chunks=max_chunks,
@@ -2545,9 +3005,9 @@ def stream_answer_llm(
         full_answer = _strip_stray_list_markers(full_answer)
         full_answer = _strip_non_evidence_markup(full_answer)
         full_answer = _complete_xml_snippets(full_answer)
-        _validate_answer_language(answer=full_answer, question=question, target_language=effective_language)
+        _validate_answer_language(answer=full_answer, question=prompt_question, target_language=effective_language)
         _validate_generated_answer(answer=full_answer, chunks=chunks, inflected=_not_english(effective_language))
-        _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks, shown_fragment=example_fragment)
+        _validate_grounded_example_output(question=prompt_question, answer=full_answer, chunks=chunks, shown_fragment=example_fragment)
     except LLMGenerationError as first_error:
         rejected_answer = full_answer if "full_answer" in dir() else ""
         rejection_reason = str(first_error)
@@ -2581,9 +3041,9 @@ def stream_answer_llm(
         full_answer = _strip_non_evidence_markup(full_answer)
         full_answer = _complete_xml_snippets(full_answer)
         try:
-            _validate_answer_language(answer=full_answer, question=question, target_language=effective_language)
+            _validate_answer_language(answer=full_answer, question=prompt_question, target_language=effective_language)
             _validate_generated_answer(answer=full_answer, chunks=chunks, inflected=_not_english(effective_language))
-            _validate_grounded_example_output(question=question, answer=full_answer, chunks=chunks, shown_fragment=example_fragment)
+            _validate_grounded_example_output(question=prompt_question, answer=full_answer, chunks=chunks, shown_fragment=example_fragment)
         except LLMGenerationError as retry_error:
             # Retry failed validation too. A real, on-topic answer that fails a strict
             # grounding heuristic is still far more useful than the generic
@@ -2607,14 +3067,22 @@ def stream_answer_llm(
     # only valid content. Emit multi-character slices, not single characters:
     # each yield becomes one SSE event, and per-character events inflate the
     # event count by an order of magnitude for no smoother rendering.
-    chunk_size = 24
-    for start in range(0, len(full_answer), chunk_size):
-        yield ("token", full_answer[start : start + chunk_size])
+    rendering = None
+    if render_language:
+        # The rendering is sent as it is written: the wait for the first words grows by one call's start only.
+        full_answer, rendering = yield from _rendered_answer(
+            full_answer, render_language, question, prompt_question, stream=True
+        )
+    else:
+        chunk_size = 24
+        for start in range(0, len(full_answer), chunk_size):
+            yield ("token", full_answer[start : start + chunk_size])
 
     yield (
         "done",
         {
             "answer": full_answer,
+            "rendering": rendering,
             "confidence": confidence,
             "review_required": confidence < 0.82 or not answer_validated,
             "answer_validated": answer_validated,

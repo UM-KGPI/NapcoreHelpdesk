@@ -234,3 +234,205 @@ missing from the count.
 - Name the language with the separate classifier, once per question, as section 5 says if this line fails.
 - Count sentences, or compare them one by one, to catch an added plain sentence.
 - With these, a re-run with the same gate. The not-validated line needs step 2.
+
+## 7. Record: step 1 re-run, 2026-11-21
+
+**The re-run failed its gate on one line: 9 of 38 answers were served in English after two refused renderings.**
+The code is reverted. It stays in the history (commit 920ee40) for a later run.
+
+### What changed against b9c9ff6
+
+1. **Language naming.** The existing naming call (`_classify_question_language_with_llm`, the configured
+   classifier model) runs where it runs today, but once per question. Its name wins over the translation's and is
+   noted for the request; both answer paths and the fixed messages read the note. When the detector names a short
+   non-English question, the naming call and the search translation run at the same time. When the detector names
+   no language, the naming call runs first and the translation only if the question is not English, so a short
+   English question costs one call.
+2. **The comparison.** Kept verbatim: citation marks, code spans and fenced code, names with inner capitals or an
+   underscore, file names, links, tags, numbers, and text in double quotes. A plain abbreviation may take the form
+   the language uses. Quotes are read with their code spans in place (the bug of section 6).
+3. **Added sentences.** The rendering must have the same headings and list items as the English answer, and as
+   many sentences or one fewer, never more. A sentence ends at . ! ? after a word of three letters or more, or
+   after a closing mark, before a capital letter. I chose no tolerance upwards because one more sentence is how an
+   added sentence shows; one fewer is allowed because joining two sentences adds nothing. The prompt now asks for
+   a translation sentence by sentence, and says that quoted text stays in the source's language (the default while
+   the question is open).
+
+### Capture
+
+Dev, in process, one question at a time, every run rolled back. The same 19 non-English questions twice (38 runs),
+12:45 to 12:53 CET; the same 3 English control questions twice; 5 reference runs on today's code (0.97.246) at
+12:44 to 12:45.
+
+### Gate (measured)
+
+| | Must hold | First run | Re-run | |
+|---|---|---|---|---|
+| First drafts rejected, not English | at most 30 % | 9 of 36 | 9 of 37 (24 %) | pass |
+| Answer in a language other than the question's, not a fallback | none | 1 | 0 | pass |
+| Served in English as a fallback | at most 2 of 38, each a right refusal | 8 | 9 | **fail** |
+| Marks, code, code-form names, numbers kept in every served rendering | every run | 28 of 28 | 28 of 28 | pass |
+| Claims or sentences the checked English answer lacks, read one by one | none | 1 | no claim, no sentence; 4 added a bold title | pass on claims (see below) |
+| Served as not validated, not English | at most 6 of 38, causes shared with English | 5 | 3 | pass |
+| Model calls per non-English answer, median | at most 4 | 3 | 4 | pass |
+| Median answer time, not English | at most 11 s, under today's | 10.0 s | 10.2 s; today 12.3 s | pass |
+| English questions | replay identical, no extra call | held | 206 of 206 identical; one naming call where today two | pass |
+| CI | green, Retrieval Benchmark check present and green | | all green on the code (920ee40, PR #582), Retrieval Benchmark (Pre-Merge) included | pass |
+
+The "not validated" line is looser than in section 3 on purpose. These answers fail the unchanged English check
+for facts with no name in them (generic wording, a term not found in the block, a sentence with no term); English
+answers fail it the same way. This step must not make that worse; step 2 must bring it to none. The 3 here:
+"only generic language", "terms not in the cited block", "without specific technical content".
+
+### Why the fallback line failed (each read)
+
+All 9 are right refusals by the check; the rendering did something it was told not to do:
+
+- 5 runs: the model translated a verbatim quote (a definition or an act's wording) on both attempts.
+- 2 runs: the model dropped citation marks on both attempts.
+- 1 run: the model wrote the whole rendering in German for a Slovenian question, twice; the language check caught it.
+- 1 run: two sentences more than the English answer, twice.
+
+So the comparison works; the rendering prompt does not hold the model to it. Quotes are the main cause, and they
+come from the open decision on quotes: with quotes allowed in the question's language, 5 of the 9 would not have been refused
+(believed, not measured).
+
+### Reading the 28 renderings against the English
+
+No added or changed claim (one reader). Four renderings added a bold title line the English does not have (for
+example the question's topic as a title). They are not sentences and say nothing new; I count them as passing the
+claims line, and the sentence check does not see them. One Slovenian rendering has a word with two Cyrillic letters
+in it.
+
+### Language naming (measured)
+
+The naming call ran in 32 of 38 runs (not for questions of 8 words or more, as today). Wrong: none served. The
+naming call said "Serbian" for the Croatian question both times; that name is not in the detector's list, so the
+translation's "Croatian" was used. The Slovenian question that the translation named Croatian in both runs was
+named Slovenian by the naming call both times. English control: 6 of 6 English, one naming call each.
+
+### Model calls
+
+229 in all: Haiku 180, the classifier model 49. Of the classifier calls, 10 are today's code in the reference runs
+and 39 are the naming call of this re-run, the use the app has today, once per question. One smoke run (5 calls) is
+included. This is over the budget of about 200.
+
+### Retrieval and example benchmarks
+
+The retrieval code is not touched. The translation prompt is that of b9c9ff6; section 6 says what that changes.
+
+### Open (seen after the numbers, not added)
+
+- Decide the quote rule. If quotes may be translated, drop the quote check or keep the original next to the
+  translation.
+- A rendering that drops marks or writes another language twice may need a third attempt or a smaller unit
+  (paragraph by paragraph).
+- Catch an added title line (a bold line without a sentence end).
+
+## 8. Record: step 1, third run, marks put back by code, 2026-11-21
+
+**The third run passed its gate. The behaviour is on by default; `ANSWER_TRANSLATE_LAST_ENABLED=False` turns it off
+(a restart, no deploy).**
+
+A correction to section 7 first, checked in the stored rendering calls: in run p09 r1 the rendering did not drop a
+citation mark, it added one (the English had 7 marks, both renderings 8: a sentence without a mark was split and
+the new sentence got one). In run p37 r2 the rendering did drop marks (8 in the English, 6 in both renderings).
+
+### The algorithm (my decision after section 7: the simpler one)
+
+Up to and including the check, as in section 7: the question is translated, the language is named once by the
+separate call, the draft is written in English and checked, with today's retry. Then:
+
+1. The code cuts the checked English answer into pieces: paragraphs, then lines (list items, headings), then
+   sentences. It takes the citation marks out and remembers which piece carried each. Code blocks stay out as
+   placeholders, and the code keeps the layout between pieces.
+2. One Haiku call translates the pieces as numbered lines ("3| ..."), and answers with the same numbered lines. I
+   chose numbered lines because a line is matched by its number without JSON, and a line is complete when its
+   line break arrives: each piece is shown to the user as soon as it is written, with its marks and layout, never
+   the numbers. The model never sees a mark.
+3. The code puts every mark back at the end of its piece, before the closing punctuation. When the lines do not
+   come back one for one, the pieces are translated once more; if they still do not match, the marks of a
+   paragraph go at the end of that paragraph. A mark that stood in the middle of a sentence goes to its end.
+4. Only the existing language check runs on the translation. A wrong language is translated once more; a second
+   wrong language serves the English answer with a short note. Nothing else refuses a translation.
+5. The trace (`llmAnswerRendering`) records for monitoring: code spans, numbers, links and quotes of the English
+   answer that the translation lacks, the number of pieces sent and returned, whether marks were placed by
+   paragraph, and how many marks moved from the middle of a sentence.
+
+The comparison rules of sections 6 and 7 (names, numbers, quotes, sentence counts as reasons to refuse) are gone.
+
+### Capture
+
+Dev, in process, one question at a time, every run rolled back. The same 19 non-English questions twice (38 runs),
+13:23 to 13:29 CET; the same 3 English control questions twice; 5 reference runs on today's code (0.97.246),
+13:22 to 13:23.
+
+### Gate (measured)
+
+| | Must hold | Measured | |
+|---|---|---|---|
+| Answer served in a language other than the question's | none, except an English fallback | none | pass |
+| English fallback | at most 1 of 38, only after the language check failed twice | 0 | pass (see the refusal below) |
+| Marks of the served answer equal the checked answer's (separate script) | every run | 36 of 36 translated runs | pass |
+| Marks placed by paragraph | at most 4 of 38 | 0 | pass |
+| A claim the English lacks, or a mark on a piece that says something its English piece does not (read piece by piece) | none | none | pass |
+| Numbers and code spans of the English answer in the translation | all, in at least 36 of 38 runs | all, in 36 of 36 translated runs | pass |
+| First drafts rejected, not English | at most 30 % | 9 of 36 (25 %) | pass |
+| Served as not validated | at most 6 of 38, causes shared with English | 1 ("without specific technical content") | pass |
+| Model calls per answer, median | at most 4 | 4 | pass |
+| Median answer time | at most 11 s, under today's | 9.4 s; today 12.9 s; slowest 16.0 s (a rejected draft) | pass |
+| English questions | replay identical, no extra call | 206 of 206 stored validator calls identical; one naming call each, where today makes two | pass |
+| CI | green, Retrieval Benchmark present and green on the code commit | see the PR | |
+
+Two runs were refusals before any draft (the scope check), so 36 runs had an answer to translate. One of the two
+refusals came in English: the fixed refusal text (fixed_text_language) waits at most 3 s for its rendering, and
+this one took longer. That mechanism is not part of this step and did not change; it is not a fallback of the
+translation. The first words came after 7.1 s median (today 12.8 s), at most 13.5 s.
+
+### How the marks were placed (measured)
+
+- By piece in all 36 runs; every translation came back with its pieces one for one on the first attempt. No second
+  translation was needed, for pieces or for language.
+- 55 of 263 marks (21 %) stood in the middle of an English sentence and moved to its end. Mostly they are lists of
+  the same block ("[E1]; ... [E1]; ... [E1]."), which become "[E1] [E1] [E1] [E1]." at the end.
+- In 6 runs the English answer used a mark as a word ("described in [E2]", "[E1] is the file ...", "None of the
+  blocks [E1] to [E6]"). Without the mark the sentence has a hole; most translations read well with the mark put
+  back at the end, but in 2 runs a sentence that named several blocks one by one now carries all their marks at its
+  end, so it is no longer clear which block says what. The claims are the English ones; their attribution inside
+  the sentence is lost.
+
+### Reading every translation piece by piece (one reader)
+
+No added claim, and no mark on a piece that says something its English piece does not. Quotes were translated in 4
+runs, as allowed now. Small faults of wording: a typo in a Slovak word, an odd compound in Norwegian, a doubled
+"in seconds, to the second" in Croatian. Two pieces held two English sentences each (the cut missed a sentence end
+after a short word); they were translated whole.
+
+### Monitoring differences (trace only)
+
+Code spans missing: 0. Numbers missing: 0. Links missing: 0. Quotes not kept verbatim: 4 runs (translated).
+
+### Language naming (measured)
+
+No wrong language served. The Slovenian question that the translation names Croatian was named Slovenian by the
+naming call in both runs. The naming call said "Serbian" for the Croatian question in both runs; that name is not in
+the detector's list, so the translation's "Croatian" was used.
+
+### Model calls
+
+207 in all: Haiku 158, the classifier model 49. Of the classifier calls, 10 are today's code in the reference runs,
+38 are the naming call (once per question, as the app uses it today) and 1 is a smoke run.
+
+### Believed, not measured
+
+- That one reader catches every changed claim.
+- That prod behaves as dev does here; prod has other questions and longer answers.
+- That a translation call failing to match its pieces is rare; it did not happen in 36 runs, so the paragraph
+  placement is tested only with the model mocked.
+
+### Open (seen after the numbers, not added)
+
+- Marks used as words in the English answer: the answer prompt could ask for marks only at the end of a statement.
+- Lists of different blocks in one sentence lose their attribution inside the sentence; cutting pieces at ";"
+  would keep it, at the cost of shorter pieces.
+- The fixed refusal text waits 3 s for its rendering; a slow call shows the English refusal.
