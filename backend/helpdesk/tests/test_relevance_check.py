@@ -20,15 +20,13 @@ LLM_SETTINGS = dict(
     CONTROLLER_LLM_API_MODEL="m",
     CONTROLLER_LLM_API_KEY="k",
     CONTROLLER_LLM_VERIFY_SSL=True,
+    CONTROLLER_LLM_PROVIDER="openai-compatible",
 )
 
 
 @override_settings(**LLM_SETTINGS)
 @patch("helpdesk.services.relevance_check.resolve_effective_model", side_effect=lambda **kw: kw["configured_model"])
 class IsRelevantTests(SimpleTestCase):
-    def setUp(self):
-        relevance_check._ask.cache_clear()
-
     def test_reads_the_verdict(self, _model):
         with patch("helpdesk.services.relevance_check.request.urlopen", return_value=_response("IRRELEVANT")):
             self.assertIs(is_relevant("What is the weather?"), False)
@@ -41,7 +39,6 @@ class IsRelevantTests(SimpleTestCase):
 
     def test_unusable_replies_return_none(self, _model):
         for content in ("", "maybe", "I am not sure"):
-            relevance_check._ask.cache_clear()
             with patch("helpdesk.services.relevance_check.request.urlopen", return_value=_response(content)):
                 self.assertIsNone(is_relevant("question"), content)
 
@@ -51,17 +48,54 @@ class IsRelevantTests(SimpleTestCase):
         with patch("helpdesk.services.relevance_check.request.urlopen", return_value=_response("RELEVANT")):
             self.assertIs(is_relevant("question"), True)
 
-    def test_a_repeated_question_is_asked_once(self, _model):
+    def test_a_verdict_is_not_kept_a_repeated_question_is_asked_again(self, _model):
+        with patch("helpdesk.services.relevance_check.request.urlopen", return_value=_response("IRRELEVANT")):
+            self.assertIs(is_relevant("metadata"), False)
+        replies = [_response("RELEVANT"), _response("RELEVANT")]
+        with patch("helpdesk.services.relevance_check.request.urlopen", side_effect=replies) as urlopen:
+            self.assertIs(is_relevant("  metadata "), True)
+            self.assertIs(is_relevant("metadata"), True)
+        self.assertEqual(urlopen.call_count, 2)
+
+    def test_the_other_gateways_are_asked_at_temperature_zero(self, _model):
         with patch("helpdesk.services.relevance_check.request.urlopen", return_value=_response("RELEVANT")) as urlopen:
-            is_relevant("stop point")
-            is_relevant("  stop point ")
-        self.assertEqual(urlopen.call_count, 1)
+            is_relevant("fares")
+        body = json.loads(urlopen.call_args.args[0].data)
+        self.assertEqual(body["temperature"], 0.0)
+        self.assertIn("Question: fares", body["messages"][0]["content"])
 
     @override_settings(CONTROLLER_LLM_API_BASE_URL="")
     def test_unconfigured_returns_none_without_a_call(self, _model):
         with patch("helpdesk.services.relevance_check.request.urlopen") as urlopen:
             self.assertIsNone(is_relevant("question"))
         urlopen.assert_not_called()
+
+
+def _claude_reply(content: str) -> dict:
+    return {"choices": [{"message": {"content": content}}]}
+
+
+@override_settings(CONTROLLER_LLM_PROVIDER="anthropic", CONTROLLER_LLM_ANTHROPIC_EFFORT="low")
+class ClaudePathTests(SimpleTestCase):
+    def test_claude_answers_without_thinking(self):
+        with patch("helpdesk.services.relevance_check.anthropic_controller_call", return_value=_claude_reply("RELEVANT")) as call:
+            self.assertIs(is_relevant("Dataset licence?"), True)
+        self.assertEqual(call.call_args.kwargs["thinking"], "disabled")
+        self.assertIn("Question: Dataset licence?", call.call_args.kwargs["messages"][0]["content"])
+
+    @override_settings(CONTROLLER_LLM_ANTHROPIC_EFFORT="xhigh")
+    def test_above_effort_high_thinking_stays_on(self):
+        # Claude rejects thinking "disabled" above effort high; the call would fail and the keyword refusal stand.
+        with patch("helpdesk.services.relevance_check.anthropic_controller_call", return_value=_claude_reply("RELEVANT")) as call:
+            is_relevant("fares")
+        self.assertEqual(call.call_args.kwargs["thinking"], "adaptive")
+
+    def test_each_ask_is_a_new_call(self):
+        replies = [_claude_reply("IRRELEVANT"), _claude_reply("RELEVANT")]
+        with patch("helpdesk.services.relevance_check.anthropic_controller_call", side_effect=replies) as call:
+            self.assertIs(is_relevant("What is metadata?"), False)
+            self.assertIs(is_relevant("What is metadata?"), True)
+        self.assertEqual(call.call_count, 2)
 
 
 class ArtifactTermTests(SimpleTestCase):

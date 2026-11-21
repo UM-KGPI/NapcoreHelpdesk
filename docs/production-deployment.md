@@ -638,7 +638,7 @@ the failure is remembered for ten minutes before the next try.
 | Setting | Default | Meaning |
 | --- | --- | --- |
 | `CACHE_URL` | set in `docker-compose.prod.yml` to `redis://redis:6379/2` | The Django cache, shared by the gunicorn workers. Empty: each worker keeps its own cache in memory. Databases 0 and 1 are Celery's. |
-| `FIXED_TEXT_TRANSLATION_TIMEOUT_SECONDS` | `3` | How long a refusal waits for a rendering the first time. A slower rendering is still cached when it arrives. `0` keeps refusals in English. |
+| `FIXED_TEXT_TRANSLATION_TIMEOUT_SECONDS` | `4` | How long a refusal waits for a rendering the first time. A slower rendering is still cached when it arrives. `0` keeps refusals in English. Raised from 3 on 2026-11-21: the long relevance-check refusal took 2.2–3.3 s to render (Slovenian 2.8–3.3 s), so 3 s showed some first refusals in English. |
 | `FIXED_TEXT_TRANSLATION_MODEL` | `LLM_MODEL` | The model that renders the texts. |
 
 The cache key is made from the language, the model, the instruction and the text, so changing a text or the
@@ -805,7 +805,9 @@ confirm it cites the SIRI repository. Only then switch on the daily refresh (7.3
 `RELEVANCE_CHECK_ENABLED` is off by default. When on, a question the keyword rules refuse (no standards concept
 matched, no standard and no artifact named) is put to the controller model, which answers RELEVANT or
 IRRELEVANT; RELEVANT answers it, a failed call keeps the keyword refusal. Questions the keyword rules let through
-are not asked about. A question sent with a `standardsScope` (API clients; the chat page sends none) is neither
+are not asked about. The verdict is not cached: each such question is asked again (one Haiku call, under a second),
+so a wrong verdict does not stay until the backend restarts. On Claude the call runs without thinking (Claude takes
+no temperature; the other gateways get temperature 0). A question sent with a `standardsScope` (API clients; the chat page sends none) is neither
 refused by the keyword rules nor put to the check, with the check on or off, so "Is this mandatory?" with a
 scope reaches the answer model (a fix was measured and reverted, record §7). Measured effect:
 `docs/plans/2026-11-14-refused-questions.md`. First prove the model call works from the server (it prints `None` when it does not):
