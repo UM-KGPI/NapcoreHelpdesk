@@ -672,6 +672,14 @@ def question_alias_matches(text: str, concept_ids: Iterable[str]) -> dict[str, l
     return matches
 
 
+def alias_is_concept_name(concept_id: str, alias: str) -> bool:
+    """True when the alias is one word and is the concept's own name: netex:Journey "journey", opra:Opra "opra"
+    (the local name lowercased, characters other than letters and digits left out)."""
+    tokens = _alias_tokens(alias)
+    local = re.sub(r"[^a-z0-9]", "", concept_id.partition(":")[2].lower())
+    return len(tokens) == 1 and bool(local) and tokens[0] == local
+
+
 # Chunk texts' concepts, for ranking: a question's retrieval passes score largely the same chunks, and
 # matching every label against a chunk took ~40 ms (4.5 s per example question, local 2026-11-08). An entry
 # holds the alias table it was made from, the reload count and the extractor, and is used only while all three
