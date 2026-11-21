@@ -2296,7 +2296,12 @@ gate line, the higher hit@6, then MRR@6, a tie to W1.
    57 in both runs, against 38 and 38; the same questions found).
 7. Median time not more than 0.2 s above the reference: **met**. Run back to back, it was 679 ms against 750 ms and
    701 ms against 739 ms. Fewer concepts go to graph expansion, so W1 is faster.
-8. CI green on the PR with the benchmark baseline file untouched: see the PR.
+8. CI green on the PR with the benchmark baseline file untouched: **met** on PR #574 (1,277 backend tests, the 3
+   new database-backed ones among them). The PR is stacked on #572, so the retrieval benchmark does not start by
+   itself; I started it by hand on the branch. Its figures did not move: hit@10 0.537 (baseline mode) and 0.544
+   (graph), MRR@10 0.261 and 0.272. CI runs with the ontology empty, so no concept is extracted there. I changed no
+   baseline and no threshold. The first CI run failed on one of my new tests: the test's base class patched the
+   rare terms to none. I fixed the test, not the code.
 
 **What changed.** A third kind, `common`, in `retrieval_gateway.no_boost_question_concepts`, which now takes the
 question's rare terms. `semantic_graph.alias_is_concept_name` tells whether a one-word alias is the concept's own
