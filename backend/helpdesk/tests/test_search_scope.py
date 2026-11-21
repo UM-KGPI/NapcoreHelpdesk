@@ -50,22 +50,10 @@ class SearchScopeTests(SimpleTestCase):
             self.assertEqual(_search_scope(_query(), [], [], True, "What is metadata?"), [])
 
 
-_EMPTY_TRACE = {
-    "graphRagVariant": "control",
-    "graphExpansionHops": 0,
-    "graphExpansionSource": "none",
-    "graphConceptIds": [],
-    "graphCandidatesAdded": 0,
-    "graphEvidenceCount": 0,
-    "graphScoreContribution": 0.0,
-    "allCandidates": [],
-}
-
-
 @override_settings(LLM_ENABLED=False)
 @patch("helpdesk.services.llm_generator.english_search_query", return_value=None)
 @patch("helpdesk.api.views.semantic_abstention_message", return_value=None)
-@patch("helpdesk.api.views.retrieve_chunks_with_trace", return_value=([], _EMPTY_TRACE))
+@patch("helpdesk.api.views.retrieve_chunks_with_trace", return_value=([], {}))
 @patch("helpdesk.api.views.select_effective_scope", return_value=([], False))
 class SearchScopeApiTests(APITestCase):
     def _headers(self) -> dict:
