@@ -1312,6 +1312,7 @@ class NoBoostConceptPathTests(TestCase):
 
     QUESTION = "How is an accident described with a closed lane?"
     ALIASES = {"transmodel:with": {"with"}, "netex:Accident": {"accident"}, "tnits:Among": {"with"}}
+    RARE: tuple[str, ...] = ()  # what question_rare_lexemes returns
 
     def setUp(self):
         from helpdesk.models import SourceChunk
@@ -1346,7 +1347,7 @@ class NoBoostConceptPathTests(TestCase):
                 patch.object(retrieval_gateway, "_postgres_hybrid_candidates", return_value=list(self.pool)), \
                 patch.object(retrieval_gateway, "_path_hint_candidates", return_value=[]), \
                 patch.object(retrieval_gateway, "_lexical_recall_candidates", return_value=[]), \
-                patch.object(retrieval_gateway, "question_rare_lexemes", return_value=[]), \
+                patch.object(retrieval_gateway, "question_rare_lexemes", return_value=list(self.RARE)), \
                 patch.object(retrieval_gateway, "build_text_embedding", return_value=[1.0] + [0.0] * 1535), \
                 retrieval_gateway.retrieval_probe(probe):
             chunks, trace = retrieval_gateway.retrieve_chunks_with_trace(
@@ -1458,6 +1459,7 @@ class NoBoostCommonOwnNamePathTests(NoBoostConceptPathTests):
     vectors."""
 
     ALIASES = {"netex:Accident": {"accident"}, "netex:Lane": {"lane"}}
+    RARE = ("lane",)
 
     def setUp(self):
         from helpdesk.models import SourceChunk
@@ -1480,8 +1482,7 @@ class NoBoostCommonOwnNamePathTests(NoBoostConceptPathTests):
     def _run_semantic(self, setting):
         from helpdesk.services import retrieval_gateway
 
-        with patch.object(retrieval_gateway, "semantic_enabled", return_value=True), \
-                patch.object(retrieval_gateway, "question_rare_lexemes", return_value=["lane"]):
+        with patch.object(retrieval_gateway, "semantic_enabled", return_value=True):
             _ids, graph, trace = self._run(setting)
         return graph, trace
 
