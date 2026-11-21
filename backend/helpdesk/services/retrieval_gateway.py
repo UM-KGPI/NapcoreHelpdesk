@@ -1460,6 +1460,8 @@ _STANDARD_SCOPE_ALIASES = {
 _GENERIC_GRAPH_CONCEPTS: frozenset[str] = frozenset({
     "netex:NeTEx",
     "siri:SIRI",
+    "transmodel:when",
+    "transmodel:usedIn",
     "transmodel:NeTEx",
 })
 
