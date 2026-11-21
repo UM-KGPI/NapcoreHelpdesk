@@ -305,3 +305,145 @@ the check off: nothing.
   without the scope. The two prompt variants measured either let vague questions through under a scope or reject
   this one.
 - The relevance check's cache keeps a wrong verdict for the life of the process; the same holds without a scope.
+
+## 8. Scope check from the index, no kept verdict, every source searched (2026-11-21): gate not met, code reverted
+
+Short questions the sources answer were refused by the scope check before retrieval. A diagnosis the same day
+(own measuring set: 66 questions that reach the check, 32 answerable, 34 that must stay refused) found three causes:
+the check's list of what is covered does not name the general data subjects the sources hold (metadata, licences,
+data quality and validation, mandatory data), its vagueness rule refuses short questions, and a question that names no
+standard is never searched in the opt-in sources, where 13 of the 32 have their answer. I built the remedy as one step
+and measured it against a gate fixed before the run. **It fails three lines. The code is reverted on the branch; this
+record stays.**
+
+### 8.1 Diagnosis (by hand, main at 0.97.248)
+
+- The coverage text lives only in `relevance_check._PROMPT`. The refusal the check gives
+  (`semantic_abstention.NOT_RELEVANT_MESSAGE`) names the same sources in short. `measure_scope_options` keeps its own
+  one-line descriptions (a measuring command, not the app's path).
+- A question that names no standard gets an empty effective scope (`select_effective_scope`). Retrieval with an empty
+  scope leaves out every chunk of an opt-in source that is not also a core standard (`_scope_query_filter`, again in
+  `_scope_matches`). The logic that gives each opt-in source its own share of candidates runs only when the scope
+  holds more than one source.
+- `_ask` was `lru_cache(512)`: one verdict per process per question text, failures not kept. Nothing else uses it; tests
+  and the capture scripts clear it.
+- What the index holds (dev index, read only): files and chunks per source, the acts in the EU legislation source
+  (MMTIS 2017/1926 consolidated and 2024/490, ITS Directive consolidated and 2023/2661, TEL TSI 2026/253, INSPIRE
+  Directive 2007/2/EC and Regulation 1089/2010), the NAPCORE files, the schema file topics of NeTEx, SIRI and OpRa, the
+  terms the acts define, the headings of the document sources. Found on the way: the RTTI, SRTI and truck parking
+  regulations are not in the EU legislation source; NAPCORE's site holds copies of them (2015/962, 2022/670,
+  886/2013, 885/2013).
+
+### 8.2 Design (as measured)
+
+1. The coverage list rewritten from that inventory, per source: what kind of files and which subjects. The rule:
+   "irrelevant" only for another subject (general knowledge, travel information itself, other software, other
+   standards) or no subject at all (greets, thanks, asks for help without saying with what). The refusal text was left
+   as it is (same sources named; a test ties the two).
+2. No cached verdict. On Claude the call runs without thinking (Haiku takes no temperature; "disabled" only up to
+   effort high, so above that thinking stays on). The other gateways already ask at temperature 0.
+3. A question the check let through is searched in every source (core and opt-in), so each opt-in source gets its own
+   share. The answer keeps the question's own scope. Every other question is searched as before.
+4. `FIXED_TEXT_TRANSLATION_TIMEOUT_SECONDS` default 3 → 4 (deploy moves an old 3 to 4).
+
+The prompt was frozen at commit 5f25ec0 (15:04) before the held-out set was opened; it was not changed after.
+
+### 8.3 Gate
+
+Held-out set: 30 short "in" and 25 "out" questions written by someone who had not seen the prompt or the code. All 30
+"in" questions have an answering passage in the dev index (found and read by hand). The check was called directly, 3
+runs each, on the 66 and the 55. Full answers ran in process on the dev stack, once each, inside rolled-back
+transactions. Main for the full answers is 0.97.248; the yardstick compares the branch rebased on 0.97.249 with
+0.97.249.
+
+| | Must hold | Result | |
+|---|---|---|---|
+| Answerable wrongly refused, the 32 | at most 1 in any run | 0, 0, 0 (today 6) | met |
+| Held-out answerable (30 with a passage) wrongly refused | at most 10 % in any run | 0 %, 0 %, 0 % | met |
+| Must-refuse let through, the 34 | none, except "Is my data good?" | 3 in every run: "Is my data good?", "Explain the data format.", "What are the rules?" (3 of 3 each) | **not met** |
+| Held-out out-of-scope let through | none | "explain this" 3 of 3; nothing in the index answers it (no subject) | **not met** |
+| Unstable verdicts (66 + 55) | at most 1 | 0 of 121 (today 3 of 66) | met |
+| Full answers: the 13 opt-in answerable cite their source | at least 9 | 8 of 13 | **not met** |
+| Full answers to questions let through: statements not from a retrieved passage | none | none found in the 9 answers read one by one; 21 not read that way | not decided |
+| The 25 must-stay-refused benchmark questions answered | not more than main | branch 3, main 3 | met by count |
+| App-path retrieval yardstick (149) | identical to main question by question | 132 of 149 on both, 124 in base mode on both; 6 questions differ in the order of their top 6 (graph mode), and main differs from itself on 6 of the same questions in a second run | not met to the letter; within main's own variance |
+| Time | check not slower than today's median by more than 0.3 s | median 0.800 s vs 0.775 s | met |
+| CI | green, Retrieval Benchmark present and green on the code commit | green on the rebased code commit | met |
+
+Details:
+
+- **Let through.** "Explain the data format." and "What are the rules?" now have a subject for the check (a data
+  format, rules), so the narrowed rule lets them pass. Today's prompt refused both 3 of 3, and so did the diagnosis' variant (a) 2 of 2:
+  my wording of the "relevant" rule ("another subject of transport data ... that such documents describe") is wider
+  than its wording. In the full answers
+  "Explain the data format." was refused by the answer model; "What are the rules?" was answered from NAPCORE, DATEX II
+  and the RTTI text (quality "rules", the list of delegated regulations, the DATEX II rules of procedure, traffic
+  regulations). Every statement I read is in its evidence blocks, but it answers a question nobody asked. "explain
+  this" and "Is my data good?" were refused by the answer model.
+- **Cite their source** counts an answer whose evidence (the cited blocks) holds a passage of the source that has the
+  answering passage. The five that miss: "Kaj so to metapodatki?" and "What is metadata?" were answered from NAPCORE's
+  metadata page and mobilityDCAT-AP (the definition in MMTIS Art. 2 did not come up; by reading, the answer is right);
+  "How are static data described?" had MMTIS Art. 2(4) in block 6 but cited only NAPCORE and DATEX II and said the
+  evidence has no definition; "How are dynamical data described?" got no act; "Speed limit updates?" got no TN-ITS
+  passage and was refused by the answer model. The 17 held-out "in" questions whose answer is only in opt-in sources:
+  8 of 17 by the same count; three of them (dataset metadata, open licence, who is responsible for quality) do not
+  reach the check, so they are searched as today.
+- **Must-stay-refused.** Branch: "How does it work?", "What does GTFS say about stop times?" (both as on main) and
+  "What are the rules?" (new, from the widened search). Main: the same two and "What is the DATEX II equivalent of an
+  OpRa capacity indicator?", which the branch refused: that question names standards, so its path did not change
+  (variance).
+- **Yardstick.** `run_retrieval_benchmark --app-conditions --app-scope`, ontology loaded, no model calls, 337 GraphDB
+  calls and 0 failures per run; branch (rebased) and 0.97.249 twice, 15:23–15:46. Branch against main: q048, q050,
+  q071, q073, q134, q146 differ; main against main: q048, q050, q071, q073, q134, q135. Every difference is the order
+  or choice of example files among equally hit questions. None of these questions goes through the changed code (they
+  never reach the scope check).
+- **Time.** The check: 396 calls, mean 0.807 s, median 0.800 s, p90 0.89 s, max 1.45 s; today (diagnosis, 198 calls)
+  mean 0.912 s, median 0.775 s, p90 1.41 s, max 2.85 s. Searching every source: retrieval 1.05–2.78 s per search
+  against 0.29–0.88 s unscoped for the same questions; a full answer mean 6.7 s (13 questions), 7.4 s (17), max 13.6 s.
+- **Model calls.** Scope check 449 (Haiku; 396 direct, 51 inside the answer runs, 2 smoke). Other Haiku 87 (answer
+  model, its checks, refusal renderings). The app's language naming on Sonnet 27 (existing use). One call to the
+  default model was stopped by my guard before it was sent.
+
+### 8.4 Claims
+
+- Measured: every number in 8.3.
+- Believed: that thinking off is what made the verdict stable (0 of 121 unstable); the prompt changed at the same time.
+  That the widened search would not change core-standard answers for questions the check lets through: not measured
+  (in the diagnosis' retrieval, a parking question got one NeTEx passage and five opt-in ones).
+- Assumed: that "cite their source" means the source of the answering passage found by hand, not any source that
+  answers.
+
+### 8.5 Open (thought of after the numbers, not tried)
+
+- A rule that a subject must be a thing the sources hold (a data object, an act, a process), not a bare kind of word
+  ("rules", "format", "this").
+- Parts 2 and 4 do not depend on the prompt: the verdict without a cache and without thinking, and the 4 s wait. They
+  could be measured alone.
+- Part 3 brings opt-in passages to these questions (8 of 13 with the source of the answering passage; 12 of 13
+  answered, each with opt-in passages in its evidence), but also lets a question with no real subject be answered
+  from them, and costs about 1 s of retrieval.
+
+## 9. The verdict not kept and asked without thinking, prompt unchanged (2026-11-21, step S1): gate met
+
+The two parts of §8 that do not depend on the wording, measured alone with today's prompt: the check's verdict is no
+longer cached per process, the check runs without thinking on Claude (Haiku takes no temperature; "disabled" only up
+to effort high, so above that thinking stays on; the other gateways already ask at temperature 0), and
+`FIXED_TEXT_TRANSLATION_TIMEOUT_SECONDS` defaults to 4 instead of 3 (deploy moves an old 3 to 4). The check called
+directly on the 66 questions of the diagnosis set, 3 runs, 0.97.249 plus this change.
+
+| | Must hold | Result | |
+|---|---|---|---|
+| Answerable wrongly refused, the 32 | not more than 5 in any run | 3, 3, 4 (today: 6 questions refused at least once, 13 of 96 calls) | met |
+| Must-refuse let through, the 34 | none in any run | 0, 0, 0 | met |
+| Questions with an unstable verdict | at most 1 | 1 ("Dataset licence?", refused 1 of 3) | met |
+| A repeat of the same question is asked again | unit test and one direct check | test with the model mocked; direct: two calls for two asks, both without thinking | met |
+| The check's median time | at most 0.3 s above today's 0.775 s | 0.841 s (mean 0.857, max 1.40) | met |
+| CI | green, Retrieval Benchmark present and green on the code commit | green on 3a6e352 | met |
+
+Refused in every run: "What is metadata?", "Which data are mandatory?" and a prod question on validating data, the
+same three that today's prompt refuses every run (§8 diagnosis). "Kaj so to metapodatki?" and "Delayed journeys
+example?", refused in some runs today, were accepted 3 of 3. So the change takes away the variance; the refusals that
+are left come from the wording (**measured**). 200 Haiku calls (198 + 2 for the direct check).
+
+Believed, not measured: that thinking off, not chance, made "Kaj so to metapodatki?" stable (3 runs). This branch
+also carries the record of §8 (PR #588).
