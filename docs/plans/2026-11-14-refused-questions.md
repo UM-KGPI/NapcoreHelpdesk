@@ -447,3 +447,76 @@ are left come from the wording (**measured**). 200 Haiku calls (198 + 2 for the 
 
 Believed, not measured: that thinking off, not chance, made "Kaj so to metapodatki?" stable (3 runs). This branch
 also carries the record of §8 (PR #588).
+
+## 10. Scope check wording, second attempt, every source searched (2026-11-21, step S2): gate not met, code reverted
+
+Built on step S1 (§9). The list of what is covered is written from the index as in §8. The rule for "irrelevant" now
+asks for a subject the question itself names, so that the sources could be searched for it: a general word the
+question only points at ("the procedure", "this file") is not a subject until the question says what it belongs to.
+A question the check lets through and that names no standard is searched in every source, as in §8. **The gate fails
+on three lines (questions with no subject let through in one run of the second held-out set, one of them answered
+with content; 8 of 13 opt-in answers from an answering source; one statement not in any passage). The code is
+reverted on the branch; this record stays.**
+
+I tried the wording once before freezing it: 54 calls on 28 of the 66, 13 of the first held-out set and 13 questions
+of my own (6 with a named subject, 7 that only point at something). All came out as intended. The prompt was frozen at
+commit 77e0c0c (16:04:49) before the second held-out set was opened; it was not changed after. The second held-out
+set: 35 "out" (15 of them with no real subject) and 20 "in", written without sight of any prompt; 19 of the 20 "in"
+have an answering passage in the dev index (found by hand); "Is DATEX II free to use?" has none and is left out.
+
+| | Must hold | Result | |
+|---|---|---|---|
+| Answerable wrongly refused, the 32 | at most 1 in any run | 0, 0, 0 | met |
+| First held-out "in" (30) wrongly refused | at most 10 % | 0 %, 0 %, 0 % | met |
+| Second held-out "in" (19 with a passage) wrongly refused | at most 10 % | 0 %, 0 %, 0 % | met |
+| Must-refuse let through, the 34 | none, except "Is my data good?" | 0, 0, 0 ("Is my data good?" refused too) | met |
+| First held-out "out" let through | none | 0, 0, 0 | met |
+| Second held-out "out" let through | at most 1 of 35 in any run, none then answered with content | 1, 1, 3: "Price of a bus ticket?" 3 of 3, "Show an example" and "What is the difference?" 1 of 3 each; the bus ticket question was answered with content | **not met** |
+| Unstable verdicts, all sets (176) | at most 2 | 2 ("Show an example", "What is the difference?") | met |
+| The 13 opt-in answerable: answered from a source whose cited passage answers | at least 9 | 8 | **not met** |
+| Full answers read one by one | no statement that is not in a retrieved passage | one found | **not met** |
+| The 25 must-stay-refused benchmark questions answered | not more than main | 2 and 2 (the same two) | met |
+| App-path yardstick | hit@6 not under main's; no question differs branch–main that does not differ main–main | hit@6 132 of 149 in all four runs (base 124); main against main differs on q048, q050, q071, q073, q134, q135, q146 (order of example files); every branch–main difference is among those | met |
+| Time | reported | check median 0.782 s (mean 0.809, max 1.58); widened retrieval 1.05–2.53 s; full answer mean 6.8 s, max 12.4 s | |
+| CI | green, Retrieval Benchmark present and green on the code commit | green on 77e0c0c, Retrieval Benchmark included | met |
+
+The 13 opt-in answerable questions, read against the passages the answer cited:
+
+| Question | Answering source cited | Reading |
+|---|---|---|
+| Which formats count as machine-readable? | NAPCORE (FAQs on the delegated regulations) | yes |
+| Kaj so to metapodatki? | mobilityDCAT-AP (metadata entry), NAPCORE | yes |
+| How are static data described? | no: MMTIS Art. 2(4) was retrieved but not used; the answer says there is no definition | no |
+| How are dynamical data described? | NAPCORE (RTTI/SRTI data dictionaries, DD 2015/962) | yes |
+| A prod question on validating data | NAPCORE (M3.9, data insights), INSPIRE | yes |
+| Speed limit updates? | INSPIRE and NAPCORE describe speed limits, not their updates; no TN-ITS passage | no |
+| What is metadata? | mobilityDCAT-AP, NAPCORE | yes |
+| How to describe a dataset? | mobilityDCAT-AP (properties for dataset) | yes |
+| Dataset licence? | mobilityDCAT-AP (CMC mapping), NAPCORE FAQ | yes |
+| What is static data? | MMTIS Art. 2(4) | yes |
+| What is dynamic data? | no: MMTIS Art. 2(3) not retrieved; the answer assembles examples | no |
+| Who must publish data? | no: the publisher role of mobilityDCAT-AP, not who is obliged (MMTIS not retrieved) | no |
+| Which data are mandatory? | no: the MMTIS Annex not retrieved; INSPIRE and TEL TSI items | no |
+
+The statement not in a passage: the answer to "What is dynamic data?" opens with "Dynamic data is defined in the
+NAPCORE M3.1a document as data that changes over time"; the M3.1a passage says no such thing. The other twelve read
+sentence by sentence against their passages: the claims are in them; "Speed limit updates?" adds a gloss
+("continuous updates") to a code value. The three let-through "out" questions: two refused by the check in the full
+run; "Price of a bus ticket?" never reaches the check in the app (a standards concept matches, so it is searched as
+today) and was answered from NeTEx fare examples. The must-stay-refused answers ("How does it work?", "What does GTFS
+say about stop times?") are on the keyword path, the same on both.
+
+Model calls for S1 and S2 together: scope check 825 (Haiku), other Haiku 45, the app's language naming on Sonnet 13.
+
+Claims: every number above is **measured**. **Believed**: that "Price of a bus ticket?" is answered on main too (it
+does not reach the check; not run on main). That the answer numbering ([E1]…) matches the blocks the model saw: my
+capture records the retrieval, and for some answers the model's blocks include ontology definitions the capture does
+not list, so the reading was done by content.
+
+Open, not tried (thought of after the numbers): the remaining misses are retrieval, not the check: for four of the five
+the act that answers (MMTIS Art. 2, 3, Annex) is not among the six passages when every source competes. A share of
+the evidence for each source that has a match (as `_with_scope_coverage` does for two to six scopes) might bring it in.
+"Show an example" and "What is the difference?" are minority RELEVANT verdicts on questions with no subject.
+
+Yardstick runs, 16:17–16:48, in the order main, branch, main, branch; no model calls, 337 GraphDB calls and 0
+failures each. This branch carries S1's commits (§9) and the record of §8 (PR #588) until those are merged.
