@@ -1743,9 +1743,6 @@ class QuestionAnswerView(APIView):
             "llmRejectedAnswer": (generated.get("rejected_answer") if isinstance(locals().get("generated"), dict) else None),
             "llmRejectionReason": (generated.get("rejection_reason") if isinstance(locals().get("generated"), dict) else None),
             "llmDroppedAnswer": dropped_answer,
-            # A question not in English: the checked English answer and how its rendering into the question's
-            # language went (llm_generator._rendered_answer); None when no rendering was made.
-            "llmAnswerRendering": (generated.get("rendering") if isinstance(locals().get("generated"), dict) else None),
             "presenceEvidence": [c.get("sourcePath") for c in presence],
             # False when the answer was served although its retry failed validation too (it is then marked
             # for review); None when no LLM answer was generated.
@@ -2452,9 +2449,6 @@ class QuestionAnswerStreamView(APIView):
             "llmRejectedAnswer": (generated.get("rejected_answer") if isinstance(locals().get("generated"), dict) else None),
             "llmRejectionReason": (generated.get("rejection_reason") if isinstance(locals().get("generated"), dict) else None),
             "llmDroppedAnswer": dropped_answer,
-            # A question not in English: the checked English answer and how its rendering into the question's
-            # language went (llm_generator._rendered_answer); None when no rendering was made.
-            "llmAnswerRendering": (generated.get("rendering") if isinstance(locals().get("generated"), dict) else None),
             "presenceEvidence": [c.get("sourcePath") for c in presence],
             # False when the answer was served although its retry failed validation too (it is then marked
             # for review); None when no LLM answer was generated.

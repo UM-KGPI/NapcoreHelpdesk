@@ -45,13 +45,6 @@ LLM settings are configured through:
 - `LLM_MAX_TOKENS`
 - `LLM_TEMPERATURE`
 
-A question not in English is answered in English, the language of the sources, and checked in English; the
-checked answer is then rendered into the question's language by one more `LLM_MODEL` call and streamed to the
-user. The rendering must keep every citation mark, code span, identifier, number and quoted text (compared in
-code); a rendering that fails is made once more, and after a second failure the English answer is served with a
-note. The question's language comes from the search translation call. `ANSWER_TRANSLATE_LAST_ENABLED=False`
-turns this off: the answer is then written in the question's language, as before (a restart, no deploy).
-
 ## Versioning
 - Single source of truth: repository-root `VERSION` file.
 - Frontend display uses `VITE_APP_VERSION` when provided, otherwise uses the root `VERSION` file at build time.
