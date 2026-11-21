@@ -2325,3 +2325,72 @@ need no database passed locally, without a `.env` and with models off. The 3 dat
   between the two was not part of the grid.
 - The Accident class is still outside the 6 (7th in the ranked stage).
 - The old cut loses three questions with this kind.
+
+### OWL properties are not concepts: the gate failed, the code is reverted (2026-11-21, dev database `napcore_helpdesk` and copy `napcore_helpdesk_s6pre`, read only, main at 6239d45, 0.97.250)
+
+I tried an idea parked on 9 November: leave the ontologies' object and datatype properties out of the concept table
+when it is loaded. A class that is also typed as a property stays. It failed the gate on hit@6, on MRR@6 and on the
+DATEX II Accident question, so the code is reverted and this is a record only. Files are in
+`.claude/skills/measure-on-copy/runs/p1/`. Every run took the application's path, with no model call and GraphDB
+SELECT only. Each run reported its concept count: 4,616 on main, 3,147 with the change. Every run made 288–337
+GraphDB calls with 0 failures.
+
+**Diagnosis** (measured, on main's code).
+- GraphDB has 5,517 property IRIs. 1,469 of them are in the concept table. 111 of these are TN-ITS attribute
+  names.
+- 61 of the 149 questions extract a property concept. In 27 of them all such concepts are already suppressed by
+  stop, loose or common. 34 keep an unsuppressed one. The most frequent are usedIn (6), usedFor (5), monitoring
+  (5) and linkedTo (4).
+- The Accident question has one property concept, transmodel:with. It is already suppressed as a stop word.
+  Without properties its other concepts stay the same. So the change could not reach it, and it did not.
+- An unsuppressed property concept gives +0.20 to a passage whose text carries its label. It has no relation edges,
+  so it adds no graph expansion. It adds no element names.
+- Unchanged without properties (measured): all 201,113 relation edges; the property-terms index (1,937 word pairs,
+  identical); the other concepts and element names of every question; the named values of the 47
+  example-generation questions. The table's own load equals the in-process counterfactual (same concepts, labels
+  and relations).
+- The stop kind is almost unused without properties. No benchmark question keeps a stop-only concept. Two aliases
+  in the table are stop words, the TN-ITS operator values AND and OR. I did not change the kind.
+
+**Runs.**
+
+| run | hit@6 | MRR@6 | right source first | fewer than 6 | median (graph) |
+|---|---|---|---|---|---|
+| main, counterfactual reference | 132 | 0.6808 | 89 | 15 | 865 ms |
+| counterfactual, properties out | 131 | 0.6805 | 89 | 16 | 648 ms |
+| main, run 1 / run 2 (same hour) | 132, 132 | 0.6808, 0.6811 | 89 | 15 | 709, 732 ms |
+| P1, run 1 / run 2 | 131, 131 | 0.6805, 0.6805 | 89 | 16 | 651, 667 ms |
+
+- P1 against main: q146 lost (5th or 4th → –). q031 2nd → 1st, q072 3rd → 2nd, q111 1st → 2nd. Nothing gained.
+  Both P1 runs equal the counterfactual.
+- Main's two runs differ only in q146, at 5th and 4th.
+
+**The gate** (fixed before the runs).
+1. hit@6 not under main's same-hour figure (132): **failed** (131 and 131).
+2. MRR@6 not under main's (0.6808 and 0.6811): **failed** (0.6805 and 0.6805).
+3. At most 2 questions leave 1st, at most 2 lost from the 6: met (q111; q146).
+4. Accident question: the class row in the 6 served, and (a), (b), (d) keep it: **failed**. It is 7th in the ranked
+   stage on main and with the change, and not served in either. (a) 1st, (b) 1st, (d) 4th, unchanged.
+5. Old cut not under 132: met (133 against main's 132; q147 gained; MRR@6 0.6418 against 0.6440).
+6. Answer sources not under the same-hour reference: met (38 of 57 in both runs, against 38 and 38; the same
+   questions).
+7. Median time not more than 0.2 s above the reference: met (651 against 709 ms, 667 against 732 ms).
+8. Concept benchmark not under main: met (identical, line by line: app 20 of 26). With the model off there is no
+   translation, so the 23 of 26 measured on 9 November is not comparable.
+9. TN-ITS check: met. I wrote 10 questions with attribute names in plain words, scope TN-ITS. The answering
+   passage is the property's own definition in the TN-ITS ontology file. Main serves 4 of the 10 (ranks 4, 1, 1,
+   1). The change serves the same 4, and one falls from 1st to 2nd. The other 6 are not served by main either:
+   their passages share one file with other TN-ITS ontology passages, and only one piece per file is served. So
+   this check is weak.
+10. CI: the PR is documentation only. The retrieval benchmark check does not run for it.
+
+**Believed, not checked.**
+- That q146 is lost because the boost from transmodel:timeFor and transmodel:usedFor is gone. It is the same
+  fragile question that moved between 4th and 6th in the earlier steps.
+- Another agent used the dev stack all afternoon. My benchmark runs did not overlap with its benchmarks, but the
+  times may be disturbed: main's median ranged from 709 to 865 ms.
+
+**Open.**
+- The Accident class is still 7th. Properties are not the cause: its only property concept was already suppressed.
+- Dropping own-name concepts entirely (measured before at 133, with four questions leaving 1st) was not part of this
+  step.
