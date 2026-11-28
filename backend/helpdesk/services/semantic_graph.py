@@ -1,0 +1,1116 @@
+"""
+Semantic graph construction and SPARQL pattern matching over ontology data.
+
+Builds in-memory concept graphs from loaded ontology triples and executes
+graph traversal queries to find related concepts, hierarchies, and
+cross-standard alignments used during answer generation and rule evaluation.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Created: 2026-04-15  |  Modified: 2026-06-28
+"""
+
+from __future__ import annotations
+
+import collections
+import hashlib
+import logging
+import os
+import re
+import threading
+import time
+from functools import lru_cache
+from pathlib import Path
+from typing import Iterable
+from urllib.error import HTTPError, URLError
+
+from django.utils import timezone
+
+from helpdesk.models import SourceChunk
+
+logger = logging.getLogger(__name__)
+
+
+def _env_truthy(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+STRICT_ONTOLOGY_VALIDATION = _env_truthy("NAPCORE_ONTOLOGY_STRICT_VALIDATION", default=False)
+SKIP_GRAPHDB_IMPORT = _env_truthy("NAPCORE_SKIP_GRAPHDB_IMPORT", default=False)
+
+
+# Separates the parts of a local name qualified by a namespace or package ("Common.Vehicle").
+CONCEPT_NAME_SEPARATOR = "."
+
+_IRI_PREFIX_MAP: dict[str, str] = {
+    "https://netex.org.uk/netex/2.0#": "netex",
+    "https://netex.org.uk/netex/2.0/": "netex",
+    "http://napcore.example.org/ontology/netex#": "netex",
+    "https://netex.org.uk/netex/2.0#": "netex",
+    "https://netex.org.uk/netex/2.0/": "netex",
+    "https://napcore.eu/ontology/netex#": "netex",
+    "http://napcore.eu/ontology/netex#": "netex",
+    "http://napcore.example.org/ontology/netex#": "netex",
+    "https://transmodel-cen.eu/opra/1.0#": "opra",
+    "https://transmodel-cen.eu/opra/1.0/": "opra",
+    "https://napcore.eu/ontology/opra#": "opra",
+    "http://napcore.eu/ontology/opra#": "opra",
+    "http://napcore.example.org/ontology/opra#": "opra",
+    "https://siri.org.uk/siri/1.3#": "siri",
+    "https://siri.org.uk/siri/1.3/": "siri",
+    "http://napcore.example.org/ontology/siri#": "siri",
+    "https://transmodel-cen.eu/6.2/": "transmodel",
+    "https://transmodel-cen.eu/6.2#": "transmodel",
+    "http://spec.tn-its.eu/owl/tnits-owl#": "tnits",
+    "https://docs.datex2.eu/v3.7/model#": "datex",
+}
+
+
+def iri_to_concept_id(iri: str) -> str | None:
+    """The concept ID ("netex:StopPlace") of an IRI in a loaded standard ontology, else None."""
+    for prefix_iri, ns in _IRI_PREFIX_MAP.items():
+        if iri.startswith(prefix_iri):
+            return f"{ns}:{iri[len(prefix_iri):]}"
+    return None
+
+
+_STARTUP_WAIT_DEFAULT_SECONDS = 120
+_STARTUP_BACKOFF_FIRST_SECONDS = 1.0
+_STARTUP_BACKOFF_MAX_SECONDS = 10.0
+
+
+def _is_startup_failure(exc: BaseException) -> bool:
+    """True for a failure that GraphDB shows while it is still starting.
+
+    Connection refused, name not yet resolvable, a timeout, a dropped connection
+    and an HTTP 5xx. Other HTTP answers (401, 404, ...) will not mend by waiting.
+    """
+    if isinstance(exc, HTTPError):
+        return exc.code >= 500
+    return isinstance(exc, (URLError, TimeoutError, ConnectionError))
+
+
+class OntologyQueryError(RuntimeError):
+    """One of the ontology load's SPARQL queries failed (an error, not an empty result)."""
+
+    def __init__(self, query_name: str, cause: BaseException):
+        super().__init__(f"ontology query '{query_name}' failed: {cause}")
+        self.query_name = query_name
+        self.cause = cause
+
+
+def relation_name(property_id: str, domain_id: str) -> str:
+    """The name a relation has in the tables: the local name of its property without the domain's local name in front."""
+    name = property_id.partition(":")[2]
+    domain_local = domain_id.partition(":")[2]
+    return name[len(domain_local) + 1 :] if name.startswith(domain_local + CONCEPT_NAME_SEPARATOR) else name
+
+
+def _load_ontology_from_graphdb(endpoint_url: str, wait_seconds: float = 0) -> dict | None:
+    """Load concept aliases from a live GraphDB SPARQL endpoint.
+
+    Returns an ontology dict with namespaces/concepts keys, or None if
+    GraphDB returns no concept data. While GraphDB shows start-up failures
+    (see _is_startup_failure) a request is repeated with a growing pause until
+    `wait_seconds` have passed since this load began. A query that still fails
+    after that raises OntologyQueryError naming it: an ontology missing the
+    rows of one query (relations, subclasses) must not be used as if complete.
+    A query that succeeds with no rows is not a failure.
+    """
+    import json as _json
+    from urllib.parse import quote_plus
+    from urllib.request import Request, urlopen
+
+    _iri_to_concept_id = iri_to_concept_id
+    deadline = time.monotonic() + max(0, wait_seconds)
+
+    def _sparql_get(query_name: str, sparql: str) -> list[dict]:
+        url = f"{endpoint_url.rstrip('/')}?query={quote_plus(sparql)}"
+        req = Request(url, headers={"Accept": "application/sparql-results+json"})
+        pause = _STARTUP_BACKOFF_FIRST_SECONDS
+        retry = 0
+        while True:
+            try:
+                with urlopen(req, timeout=60) as resp:
+                    data = _json.loads(resp.read())
+                    return [
+                        {k: v.get("value", "") for k, v in b.items()}
+                        for b in data.get("results", {}).get("bindings", [])
+                    ]
+            except Exception as exc:
+                remaining = deadline - time.monotonic()
+                if not _is_startup_failure(exc) or remaining <= 0:
+                    logger.error("GraphDB ontology load: query '%s' failed: %s", query_name, exc)
+                    raise OntologyQueryError(query_name, exc) from exc
+                pause = min(pause, remaining)
+                retry += 1
+                logger.warning(
+                    "GraphDB ontology load: query '%s' failed: %s; retry %d in %.1f s (waiting up to %d s more)",
+                    query_name,
+                    exc,
+                    retry,
+                    pause,
+                    remaining,
+                )
+                time.sleep(pause)
+                pause = min(pause * 2, _STARTUP_BACKOFF_MAX_SECONDS)
+
+    # Labels for standard-specific concepts (netex, opra, siri, transmodel)
+    labels_rows = _sparql_get(
+        "labels",
+        "SELECT ?concept ?label WHERE {"
+        " ?concept <http://www.w3.org/2004/02/skos/core#prefLabel>|"
+        "<http://www.w3.org/2004/02/skos/core#altLabel>|"
+        "<http://www.w3.org/2000/01/rdf-schema#label> ?label ."
+        " FILTER(!CONTAINS(STR(?concept), 'www.w3.org'))"
+        " FILTER(!CONTAINS(STR(?concept), 'purl.org'))"
+        " }"
+    )
+    if not labels_rows:
+        return None
+
+    # skos:related links declared directly in standards ontologies (e.g. SIRI ~99 links)
+    skos_related_rows = _sparql_get(
+        "skos:related",
+        "SELECT DISTINCT ?concept ?related WHERE {"
+        " ?concept <http://www.w3.org/2004/02/skos/core#related> ?related ."
+        " FILTER(!CONTAINS(STR(?concept), 'www.w3.org'))"
+        " FILTER(!CONTAINS(STR(?concept), 'purl.org'))"
+        " FILTER(!CONTAINS(STR(?related), 'www.w3.org'))"
+        " FILTER(!CONTAINS(STR(?related), 'purl.org'))"
+        " }"
+    )
+
+    # owl:ObjectProperty domain→range links (e.g. OpRa hasTrip, hasLeg, departFrom, …)
+    object_property_rows = _sparql_get(
+        "object properties",
+        "SELECT DISTINCT ?concept ?related WHERE {"
+        " ?prop a <http://www.w3.org/2002/07/owl#ObjectProperty> ;"
+        "       <http://www.w3.org/2000/01/rdf-schema#domain> ?concept ;"
+        "       <http://www.w3.org/2000/01/rdf-schema#range> ?related ."
+        " FILTER(!CONTAINS(STR(?concept), 'www.w3.org'))"
+        " FILTER(!CONTAINS(STR(?concept), 'purl.org'))"
+        " FILTER(!CONTAINS(STR(?related), 'www.w3.org'))"
+        " FILTER(!CONTAINS(STR(?related), 'purl.org'))"
+        " }"
+    )
+
+    # rdfs:subClassOf links (e.g. netex:ServiceJourney -> netex:Journey). Bridges an
+    # abstract/base concept to the concrete subtypes that carry its real properties
+    # (ServiceJourney has lineRef, the abstract Journey base class does not), so a
+    # question anchored on the abstract concept can still reach them one hop away.
+    # Kept directed (class -> subclass, see "narrower" below): followed upward,
+    # every class reaches framework roots like netex:DataManagedObject.
+    subclass_rows = _sparql_get(
+        "subclasses",
+        "SELECT DISTINCT ?concept ?related WHERE {"
+        " ?concept <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?related ."
+        " FILTER(!CONTAINS(STR(?concept), 'www.w3.org'))"
+        " FILTER(!CONTAINS(STR(?concept), 'purl.org'))"
+        " FILTER(!CONTAINS(STR(?related), 'www.w3.org'))"
+        " FILTER(!CONTAINS(STR(?related), 'purl.org'))"
+        " }"
+    )
+
+    # Directed relations, asserted subclass links and class definitions, for semantic paths
+    # (services/semantic_path.py). Read inside named graphs (GRAPH ?g): the statements the ontology files hold. The
+    # queries above read the default graph, which with GraphDB's inference also holds the closure (every class
+    # a subclass of all its ancestors), and a path may not use a link the ontology does not state. A property is
+    # read with its pairs only when its domain/range pairing is known: one domain, or one range (a property with
+    # several domains and several ranges is one IRI shared by many relations, and the pairing is lost). A failure
+    # here leaves the paths without data; it does not fail the ontology load.
+    relation_rows: list[dict] = []
+    subclass_edge_rows: list[dict] = []
+    definition_rows: list[dict] = []
+    not_w3 = (
+        " FILTER(!CONTAINS(STR(?concept), 'www.w3.org'))"
+        " FILTER(!CONTAINS(STR(?concept), 'purl.org'))"
+        " FILTER(!CONTAINS(STR(?related), 'www.w3.org'))"
+        " FILTER(!CONTAINS(STR(?related), 'purl.org'))"
+    )
+    try:
+        relation_rows = _sparql_get(
+            "directed relations",
+            "SELECT DISTINCT ?prop ?concept ?related WHERE {"
+            " GRAPH ?g { ?prop a <http://www.w3.org/2002/07/owl#ObjectProperty> ;"
+            "       <http://www.w3.org/2000/01/rdf-schema#domain> ?concept ;"
+            "       <http://www.w3.org/2000/01/rdf-schema#range> ?related }"
+            + not_w3
+            + " { SELECT ?prop WHERE { GRAPH ?h { ?prop a <http://www.w3.org/2002/07/owl#ObjectProperty> ;"
+            "       <http://www.w3.org/2000/01/rdf-schema#domain> ?d ;"
+            "       <http://www.w3.org/2000/01/rdf-schema#range> ?r } }"
+            "   GROUP BY ?prop HAVING (COUNT(DISTINCT ?d) = 1 || COUNT(DISTINCT ?r) = 1) }"
+            " }",
+        )
+        subclass_edge_rows = _sparql_get(
+            "asserted subclasses",
+            "SELECT DISTINCT ?concept ?related WHERE {"
+            " GRAPH ?g { ?concept <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?related }" + not_w3 + " }",
+        )
+        definition_rows = _sparql_get(
+            "class definitions",
+            "SELECT DISTINCT ?concept ?definition WHERE {"
+            " GRAPH ?g { ?concept a <http://www.w3.org/2002/07/owl#Class> ;"
+            "          <http://www.w3.org/2004/02/skos/core#definition> ?definition }"
+            " FILTER(!CONTAINS(STR(?concept), 'www.w3.org'))"
+            " FILTER(!CONTAINS(STR(?concept), 'purl.org'))"
+            " }",
+        )
+    except OntologyQueryError:
+        logger.warning("GraphDB ontology load: relations or definitions unreadable; semantic paths have no data", exc_info=True)
+        relation_rows, subclass_edge_rows, definition_rows = [], [], []
+
+    # The members a class card is built from (services/class_card.py), only for the ontologies the card setting names:
+    # with it empty nothing is queried. A failure leaves the cards without data; it does not fail the ontology load.
+    member_rows: dict[str, list[dict]] = {}
+    from helpdesk.services import class_card
+
+    if class_card.enabled():
+        try:
+            member_rows = class_card.read_member_rows(_sparql_get, _IRI_PREFIX_MAP)
+        except OntologyQueryError:
+            logger.warning("GraphDB ontology load: class members unreadable; class cards have no data", exc_info=True)
+            member_rows = {}
+
+    concepts: dict[str, dict] = {}
+    for row in labels_rows:
+        concept_id = _iri_to_concept_id(row.get("concept", ""))
+        label = row.get("label", "").strip()
+        if not concept_id or not label:
+            continue
+        entry = concepts.setdefault(concept_id, {"labels": [], "related_to": [], "narrower": []})
+        if label not in entry["labels"]:
+            entry["labels"].append(label)
+
+    for row in subclass_rows:
+        subclass_id = _iri_to_concept_id(row.get("concept", ""))
+        superclass_id = _iri_to_concept_id(row.get("related", ""))
+        if not subclass_id or not superclass_id or subclass_id == superclass_id:
+            continue
+        if subclass_id not in concepts or superclass_id not in concepts:
+            continue
+        narrower = concepts[superclass_id].setdefault("narrower", [])
+        if subclass_id not in narrower:
+            narrower.append(subclass_id)
+
+    # Populate related_to from skos:related and owl:ObjectProperty domain→range.
+    # Both directions are added so graph traversal is bidirectional.
+    for row in (*skos_related_rows, *object_property_rows):
+        concept_id = _iri_to_concept_id(row.get("concept", ""))
+        related_id = _iri_to_concept_id(row.get("related", ""))
+        if not concept_id or not related_id or concept_id == related_id:
+            continue
+        # Only link concepts that are known (appeared in labels query)
+        if concept_id not in concepts or related_id not in concepts:
+            continue
+        related_list = concepts[concept_id].setdefault("related_to", [])
+        if related_id not in related_list:
+            related_list.append(related_id)
+        # Reverse edge
+        reverse_list = concepts[related_id].setdefault("related_to", [])
+        if concept_id not in reverse_list:
+            reverse_list.append(concept_id)
+
+    relations: list[tuple[str, str, str]] = []
+    for row in relation_rows:
+        domain_id = _iri_to_concept_id(row.get("concept", ""))
+        range_id = _iri_to_concept_id(row.get("related", ""))
+        property_id = _iri_to_concept_id(row.get("prop", ""))
+        if not domain_id or not range_id or not property_id or domain_id == range_id:
+            continue
+        if domain_id not in concepts or range_id not in concepts:
+            continue
+        relations.append((domain_id, range_id, relation_name(property_id, domain_id)))
+    subclass_edges: set[tuple[str, str]] = set()
+    for row in subclass_edge_rows:
+        sub_id = _iri_to_concept_id(row.get("concept", ""))
+        super_id = _iri_to_concept_id(row.get("related", ""))
+        if sub_id and super_id and sub_id != super_id and sub_id in concepts and super_id in concepts:
+            subclass_edges.add((sub_id, super_id))
+    for row in definition_rows:
+        concept_id = _iri_to_concept_id(row.get("concept", ""))
+        definition = " ".join(row.get("definition", "").split())
+        if concept_id in concepts and definition and "definition" not in concepts[concept_id]:
+            concepts[concept_id]["definition"] = definition
+
+    _total_relations = sum(len(c.get("related_to", [])) for c in concepts.values()) // 2
+    if _total_relations:
+        logger.info("Loaded %d standards concept relations from GraphDB", _total_relations)
+
+    namespaces = {
+        "netex": "https://netex.org.uk/netex/2.0",
+        "opra": "https://transmodel-cen.eu/opra/1.0",
+        "siri": "https://siri.org.uk/siri/1.3",
+        "transmodel": "https://transmodel-cen.eu/6.2",
+        "tnits": "http://spec.tn-its.eu/owl/tnits-owl",
+        "datex": "https://docs.datex2.eu/v3.7/model",
+    }
+    loaded = {"namespaces": namespaces, "concepts": concepts, "relations": sorted(set(relations)), "subclass_edges": sorted(subclass_edges)}
+    if any(member_rows.values()):
+        loaded["members"] = member_rows
+    return loaded
+
+
+def _startup_wait_seconds() -> float:
+    from django.conf import settings
+
+    return float(getattr(settings, "GRAPHDB_STARTUP_WAIT_SECONDS", _STARTUP_WAIT_DEFAULT_SECONDS))
+
+
+def _load_ontology(wait_seconds: float | None = None) -> dict:
+    """Load standards ontology exclusively from GraphDB.
+
+    `wait_seconds` bounds how long a refused or not-yet-ready GraphDB is waited
+    for (default: the GRAPHDB_STARTUP_WAIT_SECONDS setting); a re-read in a
+    running process passes 0 so a request is never held up. After the bound the
+    load fails exactly as it does without waiting.
+
+    Returns dict with keys: namespaces, concepts, relationships.
+    Raises RuntimeError when GraphDB is not configured or contains no concept
+    data. This service intentionally avoids any YAML fallback.
+    """
+    if SKIP_GRAPHDB_IMPORT or not _env_truthy("GRAPHDB_ENABLED", default=False):
+        logger.info("Skipping GraphDB ontology import; returning empty ontology for local checks.")
+        return {"namespaces": {}, "concepts": {}, "relationships": []}
+
+    endpoint = os.getenv("GRAPHDB_SPARQL_ENDPOINT", "").strip()
+    if not endpoint:
+        raise RuntimeError(
+            "GRAPHDB_SPARQL_ENDPOINT is required. Local glossary-file fallback is disabled."
+        )
+
+    if wait_seconds is None:
+        wait_seconds = _startup_wait_seconds()
+    try:
+        graphdb_result = _load_ontology_from_graphdb(endpoint, wait_seconds)
+    except OntologyQueryError as exc:
+        raise RuntimeError(
+            f"Failed to load standards ontology from GraphDB endpoint: {endpoint}: {exc}"
+        ) from exc
+    if graphdb_result and graphdb_result.get("concepts"):
+        logger.info(
+            "Loaded standards ontology from GraphDB: %d concepts",
+            len(graphdb_result["concepts"]),
+        )
+        return graphdb_result
+
+    raise RuntimeError(
+        f"Failed to load standards ontology concepts from GraphDB endpoint: {endpoint}"
+    )
+
+
+def _build_concept_aliases_from_ontology(ontology: dict) -> dict[str, set[str]]:
+    """Build GRAPH_CONCEPT_ALIASES from ontology concept labels.
+
+    Converts concept IDs (with colons as is from YAML keys) to sets of labels.
+    """
+    aliases = {}
+    concepts = ontology.get("concepts", {})
+    for concept_id, concept_data in concepts.items():
+        labels = concept_data.get("labels", [])
+        if labels:
+            aliases[concept_id] = set(labels)
+    return aliases
+
+
+_TRANSMODEL_ALIGN_ENTRY_PATTERN = re.compile(
+    r"^(?P<std>[a-z]+):(?P<local>[A-Za-z0-9_]+)\s*\n\s*skos:exactMatch\s+tm:(?P<tm_class>[A-Z0-9_]+)\s*;",
+    re.MULTILINE,
+)
+
+
+def _parse_transmodel_alignment_file(path: Path) -> dict[str, str]:
+    """Parse one generated transmodel-<standard>-align.ttl file.
+
+    Returns {"<standard>:<Class>": "transmodel:<TM_CLASS>"} for every
+    skos:exactMatch entry. Pure text parsing (no rdflib dependency, no
+    GraphDB) so this loads in every environment, GraphDB-enabled or not.
+    """
+    try:
+        content = path.read_text(encoding="utf-8")
+    except OSError:
+        logger.warning("Transmodel alignment file not found: %s", path)
+        return {}
+
+    mapping: dict[str, str] = {}
+    for match in _TRANSMODEL_ALIGN_ENTRY_PATTERN.finditer(content):
+        concept_id = f"{match.group('std')}:{match.group('local')}"
+        mapping[concept_id] = f"transmodel:{match.group('tm_class')}"
+    return mapping
+
+
+def _load_transmodel_pivot_from_static_files() -> tuple[dict[str, str], dict[str, set[str]]]:
+    """Build the Transmodel cross-standard pivot from the committed alignment TTLs.
+
+    Standard concepts that share a direct skos:exactMatch to the same
+    Transmodel class are treated as siblings. Sourced entirely from
+    docs/ontology/alignments/transmodel-{netex,siri,opra}-align.ttl, which
+    build_transmodel_alignment.py generates offline from the standards' own
+    TTLs and never touches GraphDB -- so this pivot has no GraphDB-
+    availability dependency at all and cannot go silently empty because
+    GraphDB happened to be unreachable when this worker process started.
+    """
+    ontology_dir = Path(__file__).resolve().parents[3] / "docs" / "ontology" / "alignments"
+    concept_to_transmodel: dict[str, str] = {}
+    for standard in ("netex", "siri", "opra"):
+        align_path = ontology_dir / f"transmodel-{standard}-align.ttl"
+        concept_to_transmodel.update(_parse_transmodel_alignment_file(align_path))
+
+    transmodel_to_concepts: dict[str, set[str]] = {}
+    for concept_id, tm_id in concept_to_transmodel.items():
+        transmodel_to_concepts.setdefault(tm_id, set()).add(concept_id)
+
+    return concept_to_transmodel, transmodel_to_concepts
+
+
+# Load ontologies at module initialization
+# When this process read the labels; None when GraphDB import is skipped (tests, local checks).
+_ONTOLOGY_READ_AT = None if SKIP_GRAPHDB_IMPORT else timezone.now()
+_ONTOLOGY = _load_ontology()
+GRAPH_CONCEPT_ALIASES = _build_concept_aliases_from_ontology(_ONTOLOGY)
+
+# Static, GraphDB-independent cross-standard pivot (see docstring above).
+CONCEPT_TO_TRANSMODEL, TRANSMODEL_TO_CONCEPTS = _load_transmodel_pivot_from_static_files()
+
+_FALLBACK_GRAPH_CONCEPT_ALIASES = {
+    "opra:DelayedJourney": {"delayed journey", "delayed journeys"},
+    "opra:DelayStatistics": {"delay statistics", "delaystatistics", "delayed journey statistics"},
+    "opra:LateDatedVehicleJourneyEntry": {
+        "latedatedvehiclejourneyentry",
+        "late dated vehicle journey entry",
+        "late dated vehicle journey",
+    },
+    "netex:VehicleJourney": {"vehicle journey"},
+    "netex:ScheduledStopPoint": {"scheduled stop point"},
+    "netex:StopPlace": {"stop place"},
+    "netex:ServiceJourneyPattern": {"service journey pattern"},
+}
+
+
+TOKEN_PATTERN = re.compile(r"[a-z0-9]+")
+
+
+def _concept_namespace(concept_id: str) -> str:
+    return (concept_id.split(":", 1)[0] if ":" in concept_id else "unknown").lower()
+
+
+# Concepts of sources searched only when a question names them (retrieval_gateway.OPT_IN_SCOPES), by concept
+# namespace. Like those sources' text passages, they are kept out of every question whose scope does not name
+# the source: TN-ITS labels such as "Dataset" or "Identifier" must not steer a public transport question.
+OPT_IN_CONCEPT_SOURCES = {"tnits": "TN-ITS"}
+
+
+def concept_in_scope(concept_id: str, scope: list[str] | None) -> bool:
+    """Whether a concept may be used for a question with this scope (see OPT_IN_CONCEPT_SOURCES)."""
+    source = OPT_IN_CONCEPT_SOURCES.get(_concept_namespace(concept_id))
+    return source is None or source.lower() in {(name or "").strip().lower() for name in scope or []}
+
+
+def concepts_in_scope(concepts: Iterable[str], scope: list[str] | None) -> set[str]:
+    return {concept for concept in concepts if concept_in_scope(concept, scope)}
+
+
+
+
+def _normalize_for_matching(text: str) -> str:
+    """Lowercase and collapse non-alphanumeric runs for tolerant alias matching."""
+
+    tokens = TOKEN_PATTERN.findall((text or "").lower())
+    return " ".join(tokens)
+
+
+# extract_graph_concepts tests every alias (several thousand) against one text, so
+# tokenizing the alias and the text once each, not once per pair, keeps retrieval
+# from spending seconds per question re-splitting the same strings.
+@lru_cache(maxsize=None)
+def _alias_tokens(alias: str) -> tuple[str, ...]:
+    return tuple(_normalize_for_matching(alias).split())
+
+
+@lru_cache(maxsize=256)
+def _text_tokens(normalized_text: str) -> frozenset[str]:
+    return frozenset(normalized_text.split())
+
+
+def _alias_matches_text(alias: str, normalized_text: str) -> bool:
+    alias_tokens = _alias_tokens(alias)
+    if not alias_tokens:
+        return False
+    normalized_alias = " ".join(alias_tokens)
+
+    # 1-2 char labels (e.g. transmodel:a label="a", transmodel:in label="in") are
+    # too short to be semantically distinctive and produce false positives by
+    # matching common English articles/prepositions in any question text.
+    if len(alias_tokens) == 1 and len(normalized_alias) <= 2:
+        return False
+
+    # Single-token aliases must appear as complete words to avoid false substring matches.
+    # "line" must not match "linetype"; "siri" must not match "expiry"; "when" must not
+    # match "whenever".  The token-subset fallback below already handles multi-token
+    # aliases like "type of line", so this guard only fires for single-token ones.
+    text_tokens = _text_tokens(normalized_text)
+    if len(alias_tokens) == 1:
+        return normalized_alias in text_tokens
+
+    # Multi-token aliases match by token subset, not substring: a raw substring check
+    # (`normalized_alias in normalized_text`) would also match across a word boundary
+    # it shouldn't -- e.g. alias "is on" is a substring of "what is onwardcall" (the
+    # end of "is" plus the start of "onwardcall"), even though "on" is never a real
+    # token in that text. The subset check already catches every genuine match a
+    # substring check would (every word in the alias has to appear as its own token
+    # somewhere in the text), including scattered phrase variants like "delayed
+    # vehicle journeys" matching alias "delayed journey", without that false-positive
+    # class.
+    if text_tokens.issuperset(alias_tokens):
+        return True
+
+    # A PascalCase class name typed with no internal space (e.g. "OnwardCall" for
+    # alias "onward call") lowercases to one glued token ("onwardcall") with no
+    # separator left to split on, so the subset check above can't see it. Checking
+    # whether the alias's words concatenated form a single existing text token
+    # covers this generally, for every multi-word alias, without touching how the
+    # question text itself is tokenized -- unlike splitting camelCase in the text,
+    # which would also wrongly split standard names like "NeTEx" into "Ne"/"TEx".
+    return "".join(alias_tokens) in text_tokens
+
+
+# A question word stands for a longer model word when the model word only adds
+# a short prefix: "charging" for "recharging", "booking" for "prebooking". The
+# word must be long enough to be distinctive, so "line" never matches "deadline".
+_MIN_PREFIXED_WORD = 5
+_MAX_MODEL_PREFIX = 3
+
+
+def _word_variant_kind(model_word: str, question_word: str) -> str | None:
+    """'exact' for the same word or a plural of it, 'prefixed' when the model
+    word is the question word with a short prefix, otherwise None."""
+    if model_word == question_word:
+        return "exact"
+    for left, right in ((model_word, question_word), (question_word, model_word)):
+        if len(left) >= 3 and right in (left + "s", left + "es"):
+            return "exact"
+    for word in {question_word, question_word[:-1] if question_word.endswith("s") else question_word}:
+        extra = len(model_word) - len(word)
+        if len(word) >= _MIN_PREFIXED_WORD and 0 < extra <= _MAX_MODEL_PREFIX and model_word.endswith(word):
+            return "prefixed"
+    return None
+
+
+def _is_class_concept(concept_id: str) -> bool:
+    """Classes are named in PascalCase (netex:RechargingStation) or upper case
+    (transmodel:RECHARGING_STATION); associations start lower case (transmodel:relatesTo)."""
+    local = concept_id.split(":", 1)[-1]
+    return bool(local) and local[0].isupper()
+
+
+def _alias_matches_question(alias: str, normalized_text: str) -> bool:
+    """Alias match for a user's question, tolerant of everyday wording.
+
+    Besides the strict match used for indexing (_alias_matches_text), each word of
+    a multi-word label may appear in the question as a plural or without a short
+    prefix ("charging stations" for the label "recharging station"). At least one
+    label word must appear as itself or its plural, so a label is never reached
+    through prefix-stripped words alone."""
+    if _alias_matches_text(alias, normalized_text):
+        return True
+    alias_tokens = _alias_tokens(alias)
+    if len(alias_tokens) < 2:
+        return False
+    text_tokens = _text_tokens(normalized_text)
+    kinds = []
+    for alias_token in alias_tokens:
+        token_kinds = {_word_variant_kind(alias_token, text_token) for text_token in text_tokens} - {None}
+        if not token_kinds:
+            return False
+        kinds.append("exact" if "exact" in token_kinds else "prefixed")
+    return "exact" in kinds
+
+
+def _build_graph_relations_from_ontology(ontology: dict) -> dict[str, set[str]]:
+    """Build GRAPH_RELATIONS from ontology concept relationships.
+
+    Creates bidirectional edges: if A.related_to includes B, then:
+    - A -> B (explicit relationship)
+    - B -> A (implicit reverse relationship)
+    """
+    relations = {}
+    concepts = ontology.get("concepts", {})
+
+    for concept_id, concept_data in concepts.items():
+        related = concept_data.get("related_to", [])
+        if related:
+            if concept_id not in relations:
+                relations[concept_id] = set()
+            relations[concept_id].update(related)
+
+    # Add reverse relationships (bidirectional)
+    for concept_id, related_set in list(relations.items()):
+        for related_concept in related_set:
+            if related_concept not in relations:
+                relations[related_concept] = set()
+            relations[related_concept].add(concept_id)
+
+    # Class -> subclass only, added after the reverse pass so it stays one-way:
+    # an abstract concept reaches its concrete subtypes, but a subtype never
+    # climbs to framework roots (netex:DataManagedObject has 92 subclasses).
+    for concept_id, concept_data in concepts.items():
+        narrower = concept_data.get("narrower", [])
+        if narrower:
+            relations.setdefault(concept_id, set()).update(narrower)
+
+    # Cross-standard bridge: concepts mapped to the same Transmodel class are
+    # treated as directly related so one-hop expansion can traverse standard
+    # boundaries. See expand_graph_concepts for the matching pivot phase.
+    for aligned_concepts in TRANSMODEL_TO_CONCEPTS.values():
+        if len(aligned_concepts) < 2:
+            continue
+        sorted_ids = sorted(aligned_concepts)
+        for concept_id in sorted_ids:
+            relations.setdefault(concept_id, set())
+            relations[concept_id].update({other for other in sorted_ids if other != concept_id})
+
+    return relations
+
+
+# Build graph relations from ontology
+GRAPH_RELATIONS = _build_graph_relations_from_ontology(_ONTOLOGY)
+
+
+def _build_directed_from_ontology(ontology: dict) -> dict:
+    """The ontology's moves for semantic paths (services/semantic_path.py): supertypes, subtypes, relations from
+    domain to range with their names, and class definitions. Everything in it was read from the ontology."""
+    concepts = ontology.get("concepts", {})
+    supers: dict[str, list[str]] = {}
+    subs: dict[str, list[str]] = {}
+    for sub_id, super_id in ontology.get("subclass_edges", []):  # asserted links only, not the inferred closure
+        subs.setdefault(super_id, []).append(sub_id)
+        supers.setdefault(sub_id, []).append(super_id)
+    out: dict[str, list[tuple[str, str]]] = {}
+    for domain_id, range_id, name in ontology.get("relations", []):
+        out.setdefault(domain_id, []).append((range_id, name))
+    return {
+        "supers": {key: sorted(value) for key, value in supers.items()},
+        "subs": {key: sorted(value) for key, value in subs.items()},
+        "out": {key: sorted(value) for key, value in out.items()},
+        "definitions": {cid: data["definition"] for cid, data in concepts.items() if data.get("definition")},
+    }
+
+
+# Updated in place on a re-read, like GRAPH_RELATIONS (other modules hold the reference).
+DIRECTED_RELATIONS = _build_directed_from_ontology(_ONTOLOGY)
+
+
+def _build_members_from_ontology(ontology: dict) -> dict:
+    """The members a class card is built from (services/class_card.py): empty unless the card setting names an
+    ontology and its members were read with the ontology. They are no concept, alias or relation."""
+    rows = ontology.get("members")
+    if not rows:
+        return {}
+    from helpdesk.services import class_card
+
+    return class_card.build_members(rows, iri_to_concept_id, relation_name)
+
+
+# Updated in place on a re-read, like DIRECTED_RELATIONS.
+CLASS_MEMBERS = _build_members_from_ontology(_ONTOLOGY)
+
+# A source's own ontology (mobilityDCAT-AP, TN-ITS) is loaded by the nightly refresh or an editor's harvest,
+# usually after this process read the labels above. gunicorn workers are not recycled, so without a re-read its
+# concepts would be matched only from the next restart. At most every ONTOLOGY_RECHECK_SECONDS, a question checks
+# whether any ontology was loaded after the last read, and if so the tables are rebuilt in place (other modules
+# hold references to them).
+ONTOLOGY_RECHECK_SECONDS = 300
+_last_ontology_check = time.monotonic()
+_ontology_reload_lock = threading.Lock()
+
+
+def reload_ontology_if_updated() -> bool:
+    """Re-read the concept labels and relations if an ontology was loaded since they were read; True if re-read."""
+    global _ONTOLOGY_READ_AT, _last_ontology_check
+    if _ONTOLOGY_READ_AT is None or time.monotonic() - _last_ontology_check < ONTOLOGY_RECHECK_SECONDS:
+        return False
+    if not _ontology_reload_lock.acquire(blocking=False):
+        return False
+    try:
+        _last_ontology_check = time.monotonic()
+        from django.db.models import Max
+
+        from helpdesk.models import OntologyAssetVersion
+
+        latest = OntologyAssetVersion.objects.aggregate(latest=Max("last_loaded_at"))["latest"]
+        if latest is None or latest <= _ONTOLOGY_READ_AT:
+            return False
+        read_at = timezone.now()
+        ontology = _load_ontology(wait_seconds=0)
+        aliases = _build_concept_aliases_from_ontology(ontology)
+        if not aliases:
+            return False
+        relations = _build_graph_relations_from_ontology(ontology)
+        GRAPH_CONCEPT_ALIASES.clear()
+        GRAPH_CONCEPT_ALIASES.update(aliases)
+        global _ALIAS_GENERATION
+        _ALIAS_GENERATION += 1
+        GRAPH_RELATIONS.clear()
+        GRAPH_RELATIONS.update(relations)
+        DIRECTED_RELATIONS.clear()
+        DIRECTED_RELATIONS.update(_build_directed_from_ontology(ontology))
+        CLASS_MEMBERS.clear()
+        CLASS_MEMBERS.update(_build_members_from_ontology(ontology))
+        _ONTOLOGY_READ_AT = read_at
+        logger.info("Re-read the standards ontology after an ontology load: %d concepts", len(aliases))
+        return True
+    except Exception:  # keep answering with the ontology already read, never replace it with a partial one
+        logger.error("Re-reading the standards ontology failed; keeping the one already read", exc_info=True)
+        return False
+    finally:
+        _ontology_reload_lock.release()
+
+
+def extract_graph_concepts(text: str, *, word_variants: bool = False, scope: list[str] | None = None) -> set[str]:
+    """Concepts whose labels occur in the text.
+
+    word_variants is for a user's question: class labels then also match plurals
+    and words without a short prefix (see _alias_matches_question). Indexed chunk
+    text keeps the strict match. Concepts of opt-in sources count only when `scope`
+    names the source (concept_in_scope)."""
+    reload_ontology_if_updated()
+    normalized_text = _normalize_for_matching(text)
+    concepts: set[str] = set()
+    for concept_id, aliases in (GRAPH_CONCEPT_ALIASES or _FALLBACK_GRAPH_CONCEPT_ALIASES).items():
+        if not concept_in_scope(concept_id, scope):
+            continue
+        # Word variants are for class names only. Association labels such as
+        # "relates to" or "used as" are verb phrases, and their verb forms would
+        # match ordinary question wording.
+        loose = word_variants and _is_class_concept(concept_id)
+        matches = _alias_matches_question if loose else _alias_matches_text
+        if any(matches(alias, normalized_text) for alias in aliases):
+            concepts.add(concept_id)
+    return concepts
+
+
+def question_alias_matches(text: str, concept_ids: Iterable[str]) -> dict[str, list[tuple[str, bool]]]:
+    """How each concept's labels match a user's question, as extract_graph_concepts(word_variants=True) matches
+    them: {concept: [(alias, as_written)]}, as_written False when the alias matched only through the question's
+    word variants (_alias_matches_question). Concepts and aliases in sorted order; concepts with no match left out."""
+    normalized_text = _normalize_for_matching(text)
+    aliases_by_concept = GRAPH_CONCEPT_ALIASES or _FALLBACK_GRAPH_CONCEPT_ALIASES
+    matches: dict[str, list[tuple[str, bool]]] = {}
+    for concept_id in sorted(set(concept_ids)):
+        loose = _is_class_concept(concept_id)
+        found = []
+        for alias in sorted(aliases_by_concept.get(concept_id) or ()):
+            if _alias_matches_text(alias, normalized_text):
+                found.append((alias, True))
+            elif loose and _alias_matches_question(alias, normalized_text):
+                found.append((alias, False))
+        if found:
+            matches[concept_id] = found
+    return matches
+
+
+def concepts_inside_longer_terms(text: str, concept_ids: Iterable[str]) -> set[str]:
+    """The concepts all of whose alias matches in the question lie inside a longer alias that another of these
+    concepts matches in it: "journey" and "vehicle" in "vehicle journey", "line" in "line network". Whole words only
+    (the words of the shorter alias are a run of the longer alias's words); matches as in question_alias_matches,
+    loose ones included on both sides. A concept with no match is not returned."""
+    terms = {
+        concept: [" ".join(_alias_tokens(alias)) for alias, _ in found]
+        for concept, found in question_alias_matches(text, concept_ids).items()
+    }
+    inside: set[str] = set()
+    for concept, own in terms.items():
+        others = [f" {term} " for other, found in terms.items() if other != concept for term in found]
+        if all(any(len(longer) - 2 > len(term) and f" {term} " in longer for longer in others) for term in own):
+            inside.add(concept)
+    return inside
+
+
+def local_own_name(local: str) -> str:
+    """The own name in a local name. Qualified by a namespace or package ("Common.Vehicle", "Situation.Accident.impact"):
+    what follows the last separator ("Vehicle", "impact"). A relation written name first, its classes after it
+    ("in.STOP_PLACE.QUAY": a lower-case first part, then class names): the first part ("in"). Unqualified local names
+    are returned as they are."""
+    head, separator, _ = local.partition(CONCEPT_NAME_SEPARATOR)
+    if separator and head[:1].islower():
+        return head
+    return local.rpartition(CONCEPT_NAME_SEPARATOR)[2]
+
+
+def concept_own_name(concept_id: str) -> str:
+    """The concept's own name (local_own_name of its local name)."""
+    return local_own_name(concept_id.partition(":")[2])
+
+
+def alias_is_concept_name(concept_id: str, alias: str) -> bool:
+    """True when the alias is one word and is the concept's own name: netex:Journey "journey", opra:Opra "opra",
+    datex:Common.Vehicle "vehicle" (concept_own_name lowercased, characters other than letters and digits left out)."""
+    tokens = _alias_tokens(alias)
+    local = re.sub(r"[^a-z0-9]", "", concept_own_name(concept_id).lower())
+    return len(tokens) == 1 and bool(local) and tokens[0] == local
+
+
+# Chunk texts' concepts, for ranking: a question's retrieval passes score largely the same chunks, and
+# matching every label against a chunk took ~40 ms (4.5 s per example question, local 2026-11-08). An entry
+# holds the alias table it was made from, the reload count and the extractor, and is used only while all three
+# are current (a reload rebuilds the table in place; tests replace the table or the extractor).
+_ALIAS_GENERATION = 0
+_TEXT_CONCEPT_CACHE: "collections.OrderedDict[tuple, tuple]" = collections.OrderedDict()
+TEXT_CONCEPT_CACHE_SIZE = 4096
+_text_concept_cache_lock = threading.Lock()
+
+
+def extract_text_concepts_cached(text: str, scope: list[str] | None = None, extractor=None) -> set[str]:
+    """extractor(text, scope=scope) for indexed chunk text (strict matching), cached; extractor defaults to
+    extract_graph_concepts (a caller passes the one it has imported, so a test's patch of it holds)."""
+    extractor = extractor or extract_graph_concepts
+    reload_ontology_if_updated()
+    aliases = GRAPH_CONCEPT_ALIASES or _FALLBACK_GRAPH_CONCEPT_ALIASES
+    key = (text, tuple(scope) if scope else None)
+    with _text_concept_cache_lock:
+        entry = _TEXT_CONCEPT_CACHE.get(key)
+        if entry is not None and entry[0] is aliases and entry[1] == _ALIAS_GENERATION and entry[2] is extractor:
+            _TEXT_CONCEPT_CACHE.move_to_end(key)
+            return set(entry[3])
+    concepts = set(extractor(text, scope=scope))
+    with _text_concept_cache_lock:
+        _TEXT_CONCEPT_CACHE[key] = (aliases, _ALIAS_GENERATION, extractor, frozenset(concepts))
+        while len(_TEXT_CONCEPT_CACHE) > TEXT_CONCEPT_CACHE_SIZE:
+            _TEXT_CONCEPT_CACHE.popitem(last=False)
+    return concepts
+
+
+def concepts_named_by_terms(terms: list[str]) -> set[str]:
+    """Class concepts named by model terms, such as the terms an LLM gives for a
+    question's everyday wording. Each term counts only for the class labels it
+    matches with the most words, so "SCHEDULED STOP POINT" yields the scheduled
+    stop point and not every concept labelled "point". A term that matches no
+    label (an invented name) yields nothing."""
+    concepts: set[str] = set()
+    aliases_by_concept = GRAPH_CONCEPT_ALIASES or _FALLBACK_GRAPH_CONCEPT_ALIASES
+    for term in terms:
+        normalized_term = _normalize_for_matching(term)
+        if not normalized_term:
+            continue
+        best_length, best = 0, set()
+        for concept_id, aliases in aliases_by_concept.items():
+            if not _is_class_concept(concept_id) or not concept_in_scope(concept_id, None):
+                continue
+            for alias in aliases:
+                length = len(_normalize_for_matching(alias).split())
+                if length < best_length or not _alias_matches_question(alias, normalized_term):
+                    continue
+                if length > best_length:
+                    best_length, best = length, set()
+                best.add(concept_id)
+        concepts |= best
+    return concepts
+
+
+def get_concept_canonical_terms(concept_ids: set[str]) -> list[str]:
+    """Return the most representative phrase label for each concept ID.
+
+    Picks the longest alias as the most specific canonical term for each
+    concept.  Used to augment query text before embedding so the embedding
+    space sees domain vocabulary aligned with indexed document language.
+    """
+    terms: list[str] = []
+    for concept_id in sorted(concept_ids):  # sorted for determinism
+        aliases = GRAPH_CONCEPT_ALIASES.get(concept_id, set())
+        if aliases:
+            terms.append(max(aliases, key=len))
+    return terms
+
+
+def get_concept_transmodel_ids(concept_ids: set[str]) -> set[str]:
+    """Return resolved Transmodel concept IDs for ontology concept IDs.
+
+    Looks up CONCEPT_TO_TRANSMODEL, which has no GraphDB dependency (see
+    _load_transmodel_pivot_from_static_files).
+    """
+
+    return {
+        CONCEPT_TO_TRANSMODEL[concept_id]
+        for concept_id in concept_ids
+        if concept_id in CONCEPT_TO_TRANSMODEL
+    }
+
+
+def _expand_transmodel_concepts(transmodel_ids: set[str]) -> set[str]:
+    """Return the sibling glossary concepts sharing each given Transmodel ID.
+
+    No multi-hop needed here: the alignment files only record direct
+    skos:exactMatch pairs, not a Transmodel-internal relation graph, so a
+    sibling group is already the full pivot in one step.
+    """
+    expanded: set[str] = set()
+    for transmodel_id in transmodel_ids:
+        expanded.update(TRANSMODEL_TO_CONCEPTS.get(transmodel_id, set()))
+    return expanded
+
+
+def expand_graph_concepts_with_distance(concepts: set[str], hops: int = 1) -> dict[str, int]:
+    """Like expand_graph_concepts, but also returns each concept's hop distance
+    from the seed set (0 for the seeds). Lets a caller truncate an oversized
+    expansion by keeping the closest concepts first, instead of an arbitrary
+    tiebreak (e.g. alphabetical) that lets unrelated far concepts crowd out
+    relevant near ones whenever a seed has many direct neighbors.
+    """
+    distances: dict[str, int] = {concept_id: 0 for concept_id in concepts}
+
+    for equivalent in _expand_transmodel_concepts(get_concept_transmodel_ids(set(distances))):
+        distances.setdefault(equivalent, 0)
+
+    frontier = set(distances)
+    for hop in range(1, max(0, hops) + 1):
+        next_frontier: set[str] = set()
+        for concept_id in frontier:
+            for neighbor in GRAPH_RELATIONS.get(concept_id, set()):
+                if neighbor not in distances:
+                    distances[neighbor] = hop
+                    next_frontier.add(neighbor)
+
+        # Keep Transmodel-equivalent concepts synchronized as the frontier grows.
+        for equivalent in _expand_transmodel_concepts(get_concept_transmodel_ids(next_frontier)):
+            if equivalent not in distances:
+                distances[equivalent] = hop
+                next_frontier.add(equivalent)
+
+        frontier = next_frontier
+        if not frontier:
+            break
+    return distances
+
+
+def expand_graph_concepts(concepts: set[str], hops: int = 1) -> set[str]:
+    return set(expand_graph_concepts_with_distance(concepts, hops=hops))
+
+
+def build_semantic_graph_snapshot(chunks: Iterable[SourceChunk]) -> dict:
+    repository_nodes: dict[str, dict] = {}
+    document_nodes: dict[str, dict] = {}
+    concept_nodes: dict[str, dict] = {}
+    chunk_nodes: dict[str, dict] = {}
+    repository_document_edges: list[dict] = []
+    document_chunk_edges: list[dict] = []
+    mention_edges: list[dict] = []
+
+    for chunk in chunks:
+        chunk_text = "\n".join(
+            [chunk.text, chunk.source_path, chunk.label, getattr(chunk, "heading", "") or ""]
+        )
+        concepts = extract_graph_concepts(chunk_text)
+        if not concepts:
+            continue
+
+        repository_key = hashlib.sha1(chunk.repository_url.encode("utf-8")).hexdigest()[:16]
+        repository_id = f"repository:{repository_key}"
+        document_key = hashlib.sha1(
+            f"{chunk.repository_url}|{chunk.source_path}".encode("utf-8")
+        ).hexdigest()[:20]
+        document_id = f"document:{document_key}"
+
+        repository_name = chunk.repository_url.rstrip("/").split("/")[-1] if chunk.repository_url else ""
+        repository_nodes[repository_id] = {
+            "id": repository_id,
+            "type": "Repository",
+            "repositoryUrl": chunk.repository_url,
+            "name": repository_name,
+        }
+        document_nodes[document_id] = {
+            "id": document_id,
+            "type": "Document",
+            "documentId": document_key,
+            "repositoryUrl": chunk.repository_url,
+            "sourcePath": chunk.source_path,
+            "commitSha": chunk.commit_sha,
+            "docType": getattr(chunk, "doc_type", "") or "",
+        }
+
+        chunk_nodes[chunk.chunk_id] = {
+            "id": f"chunk:{chunk.chunk_id}",
+            "type": "Chunk",
+            "chunkId": chunk.chunk_id,
+            "repositoryUrl": chunk.repository_url,
+            "sourcePath": chunk.source_path,
+            "commitSha": chunk.commit_sha,
+            "qualityScore": float(chunk.quality_score),
+            "standardsScope": chunk.standards_scope or [],
+            "docType": getattr(chunk, "doc_type", "") or "",
+        }
+
+        repository_document_edges.append(
+            {
+                "type": "CONTAINS_DOCUMENT",
+                "from": repository_id,
+                "to": document_id,
+            }
+        )
+        document_chunk_edges.append(
+            {
+                "type": "HAS_CHUNK",
+                "from": document_id,
+                "to": f"chunk:{chunk.chunk_id}",
+            }
+        )
+
+        for concept_id in sorted(concepts):
+            concept_nodes[concept_id] = {
+                "id": f"concept:{concept_id}",
+                "type": "Concept",
+                "conceptId": concept_id,
+                "namespace": _concept_namespace(concept_id),
+            }
+            mention_edges.append(
+                {
+                    "type": "MENTIONS_CONCEPT",
+                    "from": f"chunk:{chunk.chunk_id}",
+                    "to": f"concept:{concept_id}",
+                    "sourceUrl": chunk.repository_url,
+                    "sourcePath": chunk.source_path,
+                    "commitSha": chunk.commit_sha,
+                }
+            )
+
+    related_edges: list[dict] = []
+    for source_concept, neighbors in GRAPH_RELATIONS.items():
+        if source_concept not in concept_nodes:
+            continue
+        for target_concept in sorted(neighbors):
+            if target_concept not in concept_nodes:
+                continue
+            related_edges.append(
+                {
+                    "type": "RELATED_TO",
+                    "from": f"concept:{source_concept}",
+                    "to": f"concept:{target_concept}",
+                    "relationType": "semantic-proximity",
+                }
+            )
+
+    return {
+        "nodes": [
+            *repository_nodes.values(),
+            *document_nodes.values(),
+            *concept_nodes.values(),
+            *chunk_nodes.values(),
+        ],
+        "edges": [
+            *repository_document_edges,
+            *document_chunk_edges,
+            *mention_edges,
+            *related_edges,
+        ],
+        "stats": {
+            "repositoryNodeCount": len(repository_nodes),
+            "documentNodeCount": len(document_nodes),
+            "conceptNodeCount": len(concept_nodes),
+            "chunkNodeCount": len(chunk_nodes),
+            "repositoryDocumentEdgeCount": len(repository_document_edges),
+            "documentChunkEdgeCount": len(document_chunk_edges),
+            "mentionEdgeCount": len(mention_edges),
+            "relatedEdgeCount": len(related_edges),
+        },
+    }

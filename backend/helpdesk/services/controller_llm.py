@@ -1,0 +1,368 @@
+"""
+LLM-based routing controller for the answer orchestration pipeline.
+
+Classifies incoming questions into a route decision (FAQ, RAG, or abstain)
+using a lightweight LLM call. Falls back gracefully when the model is
+unavailable or exceeds the timeout, returning a neutral decision that
+allows downstream handlers to apply their own heuristics.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Created: 2026-05-06  |  Modified: 2026-06-28
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from functools import lru_cache
+import json
+import re
+import ssl
+import subprocess
+from urllib import error, request
+
+from django.conf import settings
+
+from helpdesk.services import anthropic_chat
+from helpdesk.services.llm_options import controller_max_tokens, controller_request_options
+from helpdesk.services.llm_model_recovery import (
+    extract_authorized_model,
+    remember_correction,
+    resolve_effective_model,
+)
+
+
+class ControllerLLMError(Exception):
+    """Raised when controller decisioning cannot be completed safely."""
+
+
+@dataclass(frozen=True)
+class ControllerDecision:
+    route: str
+    intent: str
+    confidence: float
+
+
+_JSON_OBJECT_PATTERN = re.compile(r"\{[\s\S]*?\}")
+_ALLOWED_ROUTES = {"faq", "rag"}
+
+
+def _extract_json_payload(text: str) -> dict:
+    """Extract a JSON object from mixed llama-cli output (logs + model text)."""
+
+    candidate_payload: dict | None = None
+    for match in _JSON_OBJECT_PATTERN.findall(text or ""):
+        if '"route"' not in match:
+            continue
+        try:
+            parsed = json.loads(match)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(parsed, dict):
+            candidate_payload = parsed
+
+    if candidate_payload is None:
+        raise ControllerLLMError("Controller output did not include a valid JSON payload.")
+
+    return candidate_payload
+
+
+def _build_ssl_context() -> ssl.SSLContext:
+    if not getattr(settings, "CONTROLLER_LLM_VERIFY_SSL", True):
+        return ssl._create_unverified_context()
+
+    context = ssl.create_default_context()
+    ca_bundle = getattr(settings, "CONTROLLER_LLM_CA_BUNDLE", "").strip()
+    if ca_bundle:
+        context.load_verify_locations(cafile=ca_bundle)
+    return context
+
+
+def _validate_payload(payload: dict) -> ControllerDecision:
+    route = str(payload.get("route", "")).strip().lower()
+    if route not in _ALLOWED_ROUTES:
+        has_faq = "faq" in route
+        has_rag = "rag" in route
+        if has_rag and not has_faq:
+            route = "rag"
+        elif has_faq and not has_rag:
+            route = "faq"
+        elif has_faq and has_rag:
+            # Ambiguous placeholder outputs (for example "faq|rag") default to safer RAG path.
+            route = "rag"
+
+    if route not in _ALLOWED_ROUTES:
+        raise ControllerLLMError("Controller route must be 'faq' or 'rag'.")
+
+    intent = str(payload.get("intent", "unknown")).strip() or "unknown"
+
+    try:
+        confidence = float(payload.get("confidence", 0.0))
+    except (TypeError, ValueError) as exc:
+        raise ControllerLLMError("Controller confidence must be numeric.") from exc
+
+    confidence = max(0.0, min(1.0, confidence))
+    return ControllerDecision(route=route, intent=intent, confidence=confidence)
+
+
+def _build_prompt(question: str, requested_scope: list[str], semantic_query: dict | None = None) -> str:
+    scope_text = ", ".join(requested_scope) if requested_scope else "unspecified"
+    semantic_text = json.dumps(semantic_query or {}, ensure_ascii=True)
+
+    return (
+        "You are a controller for a standards helpdesk pipeline. "
+        "Choose route='faq' only when the question likely matches a stable canonical FAQ intent (general guidance, best practices, definitions). "
+        "Choose route='rag' for: specific implementation details, code/XML examples, demonstration requests, novel questions, cross-standard queries, or any request asking to 'show', 'demonstrate', 'provide example', or referencing concrete artifacts. "
+        "Return ONLY strict JSON with this schema: "
+        '{"route":"faq|rag"}. '\
+        "Do not include markdown, explanations, or extra keys.\n\n"
+        f"Question: {question}\n"
+        f"RequestedScope: {scope_text}\n"
+        f"SemanticQuery: {semantic_text}\n"
+    )
+
+
+# Providers reached over HTTP; the others run a local model binary (subprocess).
+HTTP_PROVIDERS = {"openai-compatible", anthropic_chat.PROVIDER}
+
+
+def anthropic_controller_call(
+    *, messages: list[dict], max_tokens: int, timeout_seconds: float, json_answer: bool, thinking: str = "adaptive"
+) -> dict:
+    """One controller-endpoint call to Claude (routing, vocabulary bridge, relevance check).
+
+    thinking="disabled" answers without thinking (the relevance check's one-word verdict).
+    """
+
+    return anthropic_chat.chat_completion(
+        api_key=settings.ANTHROPIC_API_KEY,
+        model=settings.CONTROLLER_LLM_API_MODEL.strip(),
+        messages=messages,
+        max_tokens=max_tokens,
+        timeout_seconds=timeout_seconds,
+        effort=settings.CONTROLLER_LLM_ANTHROPIC_EFFORT,
+        json_answer=json_answer,
+        thinking=thinking,
+    )
+
+
+def _uses_anthropic() -> bool:
+    return getattr(settings, "CONTROLLER_LLM_PROVIDER", "").strip().lower() == anthropic_chat.PROVIDER
+
+
+def _decide_via_http(*, question: str, requested_scope: list[str], semantic_query: dict | None = None) -> ControllerDecision:
+    base_url = getattr(settings, "CONTROLLER_LLM_API_BASE_URL", "").strip()
+    model = getattr(settings, "CONTROLLER_LLM_API_MODEL", "").strip()
+    timeout_seconds = int(getattr(settings, "CONTROLLER_LLM_TIMEOUT_SECONDS", 5))
+    max_tokens = controller_max_tokens(int(getattr(settings, "CONTROLLER_LLM_MAX_TOKENS", 96)))
+
+    if _uses_anthropic():
+        if not model:
+            raise ControllerLLMError("Controller Anthropic provider requires CONTROLLER_LLM_API_MODEL.")
+        prompt = _build_prompt(question=question, requested_scope=requested_scope, semantic_query=semantic_query)
+        try:
+            payload = anthropic_controller_call(
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=max_tokens,
+                timeout_seconds=timeout_seconds,
+                json_answer=True,
+            )
+        except anthropic_chat.AnthropicRequestError as exc:
+            raise ControllerLLMError(f"Controller request failed: {exc}") from exc
+        return _decision_from_payload(payload)
+
+    if not base_url or not model:
+        raise ControllerLLMError("Controller HTTP provider requires base URL and model.")
+
+    api_key = getattr(settings, "CONTROLLER_LLM_API_KEY", "").strip()
+
+    def _build_request(model_to_use: str) -> request.Request:
+        body = {
+            "model": model_to_use,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": _build_prompt(
+                        question=question,
+                        requested_scope=requested_scope,
+                        semantic_query=semantic_query,
+                    ),
+                }
+            ],
+            "temperature": float(getattr(settings, "CONTROLLER_LLM_TEMPERATURE", 0.0)),
+            "max_tokens": max_tokens,
+            # JSON mode, and thinking off: a reasoning model can spend the whole small budget on
+            # reasoning and emit no JSON at all. Optional per gateway (services/llm_options.py).
+            **controller_request_options(),
+        }
+        headers = {"Content-Type": "application/json"}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        return request.Request(
+            url=f"{base_url.rstrip('/')}/chat/completions",
+            data=json.dumps(body).encode("utf-8"),
+            method="POST",
+            headers=headers,
+        )
+
+    def _send(model_to_use: str) -> dict:
+        with request.urlopen(
+            _build_request(model_to_use),
+            timeout=timeout_seconds,
+            context=_build_ssl_context(),
+        ) as response:
+            return json.loads(response.read().decode("utf-8"))
+
+    # Resolve drift proactively against the live gateway (cached after the
+    # first check per process) instead of only reacting after a 403.
+    effective_model = resolve_effective_model(
+        api_base_url=base_url,
+        api_key=api_key,
+        configured_model=model,
+        verify_ssl=getattr(settings, "CONTROLLER_LLM_VERIFY_SSL", True),
+        ca_bundle=getattr(settings, "CONTROLLER_LLM_CA_BUNDLE", "").strip(),
+        source="controller_routing",
+    )
+    try:
+        payload = _send(effective_model)
+    except error.HTTPError as exc:
+        if exc.code != 403:
+            raise ControllerLLMError(f"Controller HTTP error: {exc.code}") from exc
+        try:
+            error_body = exc.read().decode("utf-8")
+        except Exception:  # pragma: no cover
+            error_body = ""
+        corrected_model = extract_authorized_model(error_body)
+        if not corrected_model or corrected_model == effective_model:
+            raise ControllerLLMError(f"Controller HTTP error: {exc.code}") from exc
+        remember_correction(
+            api_base_url=base_url,
+            configured_model=model,
+            corrected_model=corrected_model,
+            source="controller_routing",
+        )
+        try:
+            payload = _send(corrected_model)
+        except error.HTTPError as retry_exc:
+            raise ControllerLLMError(f"Controller HTTP error: {retry_exc.code}") from retry_exc
+        except Exception as retry_exc:
+            raise ControllerLLMError(f"Controller HTTP request failed: {retry_exc}") from retry_exc
+    except Exception as exc:
+        raise ControllerLLMError(f"Controller HTTP request failed: {exc}") from exc
+
+    return _decision_from_payload(payload)
+
+
+def _decision_from_payload(payload: dict) -> ControllerDecision:
+    choices = payload.get("choices") or []
+    if not choices:
+        raise ControllerLLMError("Controller HTTP response has no choices.")
+
+    message = choices[0].get("message", {})
+    content = str(message.get("content") or "").strip()
+    if not content:
+        raise ControllerLLMError("Controller HTTP response was empty.")
+
+    decision_payload = _extract_json_payload(content)
+    return _validate_payload(decision_payload)
+
+
+@lru_cache(maxsize=256)
+def _decide_route_cached(
+    question: str,
+    scope_key: tuple[str, ...],
+    semantic_key: str,
+    provider: str,
+    model_key: str,
+) -> ControllerDecision:
+    """Dispatch to the configured provider; results cached per (inputs, config).
+
+    The controller runs at temperature 0, so identical inputs yield the same
+    decision — repeat questions skip the model call. Provider and model are
+    part of the key so config changes are not served stale decisions; failures
+    raise and are never cached, so they retry on the next request.
+    """
+    requested_scope = list(scope_key)
+    semantic_query = json.loads(semantic_key)
+
+    if provider in HTTP_PROVIDERS:
+        return _decide_via_http(
+            question=question,
+            requested_scope=requested_scope,
+            semantic_query=semantic_query,
+        )
+
+    executable = getattr(settings, "CONTROLLER_LLM_EXECUTABLE", "").strip()
+    model_path = getattr(settings, "CONTROLLER_LLM_MODEL_PATH", "").strip()
+    if not executable or not model_path:
+        raise ControllerLLMError("Controller LLM executable/model path is not configured.")
+
+    command = [
+        executable,
+        "--device",
+        getattr(settings, "CONTROLLER_LLM_DEVICE", "none"),
+        "-m",
+        model_path,
+        "-c",
+        str(getattr(settings, "CONTROLLER_LLM_CTX_SIZE", 2048)),
+        "-n",
+        str(getattr(settings, "CONTROLLER_LLM_MAX_TOKENS", 96)),
+        "-t",
+        str(getattr(settings, "CONTROLLER_LLM_THREADS", 8)),
+        "--temp",
+        str(getattr(settings, "CONTROLLER_LLM_TEMPERATURE", 0.0)),
+        "--reasoning",
+        "off",
+        "--simple-io",
+        "-no-cnv",
+        "-st",
+        "-p",
+        _build_prompt(question=question, requested_scope=requested_scope, semantic_query=semantic_query),
+    ]
+
+    try:
+        result = subprocess.run(
+            command,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=int(getattr(settings, "CONTROLLER_LLM_TIMEOUT_SECONDS", 5)),
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise ControllerLLMError("Controller LLM timed out.") from exc
+    except FileNotFoundError as exc:
+        raise ControllerLLMError("Controller LLM executable was not found.") from exc
+    except OSError as exc:
+        raise ControllerLLMError(f"Controller LLM executable error: {exc}") from exc
+    except subprocess.CalledProcessError as exc:
+        message = (exc.stderr or exc.stdout or "").strip()
+        raise ControllerLLMError(f"Controller LLM failed: {message[:400]}") from exc
+
+    mixed_output = "\n".join([result.stdout or "", result.stderr or ""]).strip()
+    payload = _extract_json_payload(mixed_output)
+    return _validate_payload(payload)
+
+
+def decide_route_with_controller_llm(
+    *,
+    question: str,
+    requested_scope: list[str],
+    semantic_query: dict | None = None,
+) -> ControllerDecision | None:
+    """Return FAQ/RAG route from local controller model when enabled."""
+
+    if not getattr(settings, "CONTROLLER_LLM_ENABLED", False):
+        return None
+
+    provider = getattr(settings, "CONTROLLER_LLM_PROVIDER", "subprocess").strip().lower() or "subprocess"
+    if provider in HTTP_PROVIDERS:
+        model_key = getattr(settings, "CONTROLLER_LLM_API_MODEL", "").strip()
+    else:
+        model_key = getattr(settings, "CONTROLLER_LLM_MODEL_PATH", "").strip()
+
+    return _decide_route_cached(
+        question.strip(),
+        tuple(requested_scope or ()),
+        json.dumps(semantic_query or {}, sort_keys=True, ensure_ascii=True),
+        provider,
+        model_key,
+    )

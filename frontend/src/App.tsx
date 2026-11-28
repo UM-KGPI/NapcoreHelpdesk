@@ -1,0 +1,1175 @@
+/**
+ * Root application: routing, global auth state, and editorial workflow handlers.
+ *
+ * All server state (asked questions, board items, FAQs) is owned here and
+ * passed down as props to keep child components pure and testable.
+ *
+ * Key design decisions:
+ *   boardStatusMap is kept separate from boardResult so the Status column in
+ *   Questions Asked can refresh independently of which queue filter or page
+ *   is active. It is populated with a dedicated unfiltered fetch (pageSize 100,
+ *   the backend cap) rather than derived from boardResult.
+ *
+ *   onQuickTransition triggers onLoadAskedQuestions only for the 'revoke' action
+ *   because revoke moves an approved item back into the asked-questions view.
+ *   Other transitions change only the queue status, already reflected by the
+ *   boardStatusMap refresh that always runs.
+ *
+ *   onDeleteQuestionEvent also removes matching items from boardResult
+ *   client-side to keep Questions in Review in sync without a round-trip;
+ *   the backend ON DELETE CASCADE handles DB consistency.
+ *
+ * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+ * Created: 2026-03-28  |  Modified: 2026-06-28
+ */
+
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { BrowserRouter, Navigate, Route, Routes, useSearchParams } from "react-router-dom";
+
+import { isNetworkFailure, recoverAnswer } from "./answerRecovery";
+import { HelpdeskApiClient, StreamUnavailableError } from "./api";
+import { AuthProvider } from "./auth-context";
+import AboutPage from "./components/AboutPage";
+import EditorConsoleWorkspace from "./components/EditorConsoleWorkspace";
+import EditorAccess from "./components/EditorAccess";
+import EditorPageLayout from "./components/EditorPageLayout";
+import QuestionDetailPage from "./components/QuestionDetailPage";
+import SharedAppLayout from "./components/SharedAppLayout";
+import UserChatWorkspace, { type ChatTurn } from "./components/UserChatWorkspace";
+import { chatTurnsFromQuestionEvent } from "./questionEventTurns";
+import type {
+  AnswerResponse,
+  AskedQuestionRow,
+  EditorialBoardItem,
+  EditorialBoardResponse,
+  IndexRepositoryResponse,
+  QuestionEventDetail,
+  StandardsScope,
+} from "./types";
+
+const TRANSITION_ACTIONS = [
+  "request_changes",
+  "approve",
+  "reject",
+  "publish",
+  "revoke",
+  "reopen",
+] as const;
+const TOKEN_STORAGE_KEY = "napcore.helpdesk.jwt";
+// The token of a signed-in editor account (GitHub); the token above stays the anonymous one.
+const EDITOR_TOKEN_STORAGE_KEY = "napcore.helpdesk.editorJwt";
+const AUTO_TOKEN_STORAGE_KEY = "napcore.helpdesk.autoToken";
+
+type TransitionAction = (typeof TRANSITION_ACTIONS)[number];
+
+type IndexRepoPreset = {
+  id: string;
+  label: string;
+  repoUrl: string;
+  repoPath: string;
+  profile: string;
+};
+
+const DEFAULT_INDEX_REPO_PRESETS: IndexRepoPreset[] = [
+  {
+    id: "netex",
+    label: "NeTEx",
+    repoUrl: "https://github.com/TransmodelEcosystem/NeTEx",
+    repoPath: "/app/repos/NeTEx",
+    profile: "netex",
+  },
+  {
+    id: "opra",
+    label: "OpRa",
+    repoUrl: "https://github.com/TransmodelEcosystem/OpRa",
+    repoPath: "/app/repos/OpRa",
+    profile: "opra",
+  },
+  {
+    id: "siri",
+    label: "SIRI",
+    repoUrl: "https://github.com/TransmodelEcosystem/SIRI",
+    repoPath: "/app/repos/SIRI",
+    profile: "siri",
+  },
+  {
+    id: "mobilitydcat-ap",
+    label: "mobilityDCAT-AP",
+    repoUrl: "https://github.com/mobilityDCAT-AP/mobilityDCAT-AP",
+    repoPath: "/app/repos/mobilityDCAT-AP",
+    profile: "mobilitydcat-ap",
+  },
+  {
+    id: "tn-its",
+    label: "TN-ITS",
+    repoUrl: "https://github.com/ERTICO-TN-ITS/TN-ITS-Open",
+    repoPath: "/app/repos/TN-ITS-Open",
+    profile: "tn-its",
+  },
+];
+
+const INDEX_REPO_PRESETS_CONFIG_PATH = `${import.meta.env.BASE_URL}index-repo-presets.json`;
+
+function isIndexRepoPreset(value: unknown): value is IndexRepoPreset {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  return (
+    typeof candidate.id === "string" &&
+    typeof candidate.label === "string" &&
+    typeof candidate.repoUrl === "string" &&
+    typeof candidate.repoPath === "string" &&
+    typeof candidate.profile === "string"
+  );
+}
+
+function createRequestId(): string {
+  return `req-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+const BROWSER_LANGUAGE_NAMES: Record<string, string> = {
+  en: "English", nb: "Norwegian", no: "Norwegian", nn: "Norwegian Nynorsk",
+  sl: "Slovenian", de: "German", fr: "French", es: "Spanish", it: "Italian",
+  nl: "Dutch", pl: "Polish", pt: "Portuguese", sv: "Swedish", da: "Danish",
+  fi: "Finnish", cs: "Czech", sk: "Slovak", hu: "Hungarian", ro: "Romanian",
+  hr: "Croatian", bg: "Bulgarian", el: "Greek", lt: "Lithuanian", lv: "Latvian",
+  et: "Estonian", mt: "Maltese", ga: "Irish",
+};
+
+function detectBrowserLanguage(): string {
+  const tag = (navigator.languages?.[0] ?? navigator.language ?? "en").split("-")[0].toLowerCase();
+  return BROWSER_LANGUAGE_NAMES[tag] ?? "English";
+}
+
+// The GitHub sign-in callback returns to the editor with #token=... or #authError=...&authMessage=...
+// Read it once and remove it from the address bar.
+function readSignInResult(): { token: string; error: string } {
+  const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const token = params.get("token") ?? "";
+  const error = params.get("authError") ? params.get("authMessage") || params.get("authError") || "" : "";
+  if (token || error) {
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+  }
+  return { token, error };
+}
+
+const SIGN_IN_RESULT = readSignInResult();
+
+function isJwtExpired(token: string): boolean {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return false;
+    const payload = JSON.parse(atob(parts[1])) as Record<string, unknown>;
+    const exp = typeof payload.exp === "number" ? payload.exp : null;
+    if (exp === null) return false;
+    return Date.now() / 1000 > exp;
+  } catch {
+    return false;
+  }
+}
+
+// Wrapper for user chat to handle ?questionId= query parameter
+function UserChatWithQueryParams(
+  props: Omit<React.ComponentProps<typeof UserChatWorkspace>, "onLoadHistoricalQuestion">
+) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [enhancedTurns, setEnhancedTurns] = useState<typeof props.chatTurns>(props.chatTurns);
+  const prevChatLengthRef = useRef(props.chatTurns.length);
+
+  const loadQuestionDetails = (requestId: string) => {
+    if (!props.token) return;
+
+    props.setChatPrompt("");
+
+    const baseUrl = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+      ? "http://localhost:8000/api/v1"
+      : `${window.location.origin}${import.meta.env.BASE_URL}api/v1`;
+
+    fetch(`${baseUrl}/questions/events/${requestId}`, {
+      headers: { Authorization: `Bearer ${props.token}` },
+    })
+      .then(res => {
+        if (!res.ok) throw new Error(`API error: ${res.status}`);
+        return res.json();
+      })
+      .then((detail) => {
+        setEnhancedTurns(chatTurnsFromQuestionEvent(detail));
+      })
+      .catch((error) => {
+        console.error(`Failed to load question ${requestId}:`, error);
+      });
+  };
+
+  // Sync with parent chatTurns when no query parameter or when new questions are asked
+  useEffect(() => {
+    const questionId = searchParams.get("questionId");
+
+    // If new turns have been added (user asked a new question), clear the questionId and show new turns
+    if (questionId && props.chatTurns.length > prevChatLengthRef.current) {
+      setSearchParams({});
+      setEnhancedTurns(props.chatTurns);
+    } else if (!questionId) {
+      setEnhancedTurns(props.chatTurns);
+    }
+
+    prevChatLengthRef.current = props.chatTurns.length;
+  }, [props.chatTurns, searchParams, setSearchParams]);
+
+  // Load historical question when query parameter present
+  useEffect(() => {
+    const questionId = searchParams.get("questionId");
+    if (!questionId || !props.token) return;
+    loadQuestionDetails(questionId);
+  }, [searchParams, props.token]);
+
+  const handleLoadHistoricalQuestion = (requestId: string) => {
+    setSearchParams({ questionId: requestId });
+  };
+
+  return <UserChatWorkspace {...props} chatTurns={enhancedTurns} onLoadHistoricalQuestion={handleLoadHistoricalQuestion} />;
+}
+
+// Wrapper component to handle ?questionId= query parameter for question detail page
+function QuestionDetailWithQueryParams(props: {
+  token: string;
+  onSetAnswerFeedback: (
+    requestId: string,
+    payload: {
+      userLikes?: boolean;
+      userDislikes?: boolean;
+      answerSuccess?: boolean | null;
+      citationClicksDelta?: number;
+    }
+  ) => Promise<void>;
+}) {
+  const [searchParams] = useSearchParams();
+  const questionId = searchParams.get("questionId");
+
+  if (!questionId) {
+    return (
+      <div className="workspace-section">
+        <div className="panel">
+          <p>No question ID provided.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <QuestionDetailPage questionId={questionId} token={props.token} onSetAnswerFeedback={props.onSetAnswerFeedback} />;
+}
+
+// Wrapper component to handle ?questionId= query parameter in editor
+function EditorWithQueryParams(props: React.ComponentProps<typeof EditorConsoleWorkspace>) {
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const questionId = searchParams.get("questionId");
+    if (questionId) {
+      props.setSelectedQuestionEventId(questionId);
+    }
+  }, [searchParams, props.setSelectedQuestionEventId]);
+
+  return <EditorConsoleWorkspace {...props} />;
+}
+
+export default function App() {
+  const frontendVersion = import.meta.env.VITE_APP_VERSION ?? '0.6.1';
+  const [apiBaseUrl, setApiBaseUrl] = useState(() => {
+    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    return isDev ? 'http://localhost:8000/api/v1' : `${window.location.origin}${import.meta.env.BASE_URL}api/v1`;
+  });
+  const [editorToken, setEditorToken] = useState(() => {
+    const stored = SIGN_IN_RESULT.token || (localStorage.getItem(EDITOR_TOKEN_STORAGE_KEY) ?? "");
+    return stored && !isJwtExpired(stored) ? stored : "";
+  });
+  const [signInError, setSignInError] = useState(SIGN_IN_RESULT.error);
+  const [readerToken, setReaderToken] = useState(() => {
+    const stored = localStorage.getItem(TOKEN_STORAGE_KEY) ?? "";
+    if (stored && isJwtExpired(stored)) {
+      localStorage.removeItem(TOKEN_STORAGE_KEY);
+      return "";
+    }
+    return stored;
+  });
+  const [autoTokenEnabled, setAutoTokenEnabled] = useState(() => {
+    const saved = localStorage.getItem(AUTO_TOKEN_STORAGE_KEY);
+    return saved ? saved === "true" : true;
+  });
+  // Requests go out with the editor's token when someone is signed in, else the anonymous one.
+  const token = editorToken || readerToken;
+
+  const [question, setQuestion] = useState("How to use NeTEx for exchanging a timetable?");
+  const [sessionId] = useState("sess-local");
+  const userId = "user-local";
+  const [standardsScope] = useState<StandardsScope[]>([]);
+
+  const [answerResult, setAnswerResult] = useState<AnswerResponse | null>(null);
+  const [askedQuestions, setAskedQuestions] = useState<AskedQuestionRow[]>([]);
+  const [selectedQuestionEventId, setSelectedQuestionEventId] = useState("");
+  const [boardResult, setBoardResult] = useState<EditorialBoardResponse | null>(null);
+  const [faqItems, setFaqItems] = useState<EditorialBoardItem[]>([]);
+  const [boardStatusMap, setBoardStatusMap] = useState<Map<string, string>>(new Map());
+
+  const [indexRepoPresets, setIndexRepoPresets] = useState<IndexRepoPreset[]>(DEFAULT_INDEX_REPO_PRESETS);
+  const [indexPresetId, setIndexPresetId] = useState(DEFAULT_INDEX_REPO_PRESETS[0].id);
+  const [indexRepoUrl, setIndexRepoUrl] = useState(DEFAULT_INDEX_REPO_PRESETS[0].repoUrl);
+  const [indexRepoPath, setIndexRepoPath] = useState(DEFAULT_INDEX_REPO_PRESETS[0].repoPath);
+  const [indexProfile, setIndexProfile] = useState(DEFAULT_INDEX_REPO_PRESETS[0].profile);
+  const [indexIncremental, setIndexIncremental] = useState(true);
+  const [indexPrune, setIndexPrune] = useState(true);
+  const [indexIncludeIssues, setIndexIncludeIssues] = useState(false);
+  const [indexAutoAllowRepository, setIndexAutoAllowRepository] = useState(true);
+  const [indexResult, setIndexResult] = useState<IndexRepositoryResponse | null>(null);
+  const [indexBusy, setIndexBusy] = useState(false);
+
+  const [chatPrompt, setChatPrompt] = useState("");
+  const [chatTurns, setChatTurns] = useState<ChatTurn[]>([]);
+
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [backendBuildRef, setBackendBuildRef] = useState("");
+  const [backendVersion, setBackendVersion] = useState("");
+  // The version shown is the running service's (from /health/live), so a long-lived dev frontend
+  // container never shows the version it was created with; the build-time value is the fallback.
+  const appVersion = backendVersion ? (backendBuildRef ? `${backendVersion}+${backendBuildRef}` : backendVersion) : frontendVersion;
+  const client = useMemo(() => new HelpdeskApiClient({ baseUrl: apiBaseUrl, token }), [apiBaseUrl, token]);
+  const authValue = useMemo(
+    () => ({
+      apiBaseUrl,
+      setApiBaseUrl,
+      token,
+      setToken: setReaderToken,
+      autoTokenEnabled,
+      setAutoTokenEnabled,
+    }),
+    [apiBaseUrl, token, autoTokenEnabled]
+  );
+
+  useEffect(() => {
+    localStorage.setItem(TOKEN_STORAGE_KEY, readerToken);
+  }, [readerToken]);
+
+  useEffect(() => {
+    localStorage.setItem(EDITOR_TOKEN_STORAGE_KEY, editorToken);
+  }, [editorToken]);
+
+  useEffect(() => {
+    localStorage.setItem(AUTO_TOKEN_STORAGE_KEY, String(autoTokenEnabled));
+  }, [autoTokenEnabled]);
+
+  useEffect(() => {
+    async function fetchBuildRef(): Promise<void> {
+      try {
+        const response = await fetch(`${apiBaseUrl}/health/live`, { cache: "no-store" });
+        if (!response.ok) return;
+        const data: unknown = await response.json();
+        if (typeof data === "object" && data !== null) {
+          const { buildRef, version } = data as Record<string, unknown>;
+          if (typeof buildRef === "string") {
+            setBackendBuildRef(buildRef);
+          }
+          if (typeof version === "string" && version) {
+            setBackendVersion(version);
+          }
+        }
+      } catch {
+        // Health endpoint unavailable; continue without build ref
+      }
+    }
+
+    void fetchBuildRef();
+  }, [apiBaseUrl]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadIndexRepoPresets(): Promise<void> {
+      try {
+        const response = await fetch(INDEX_REPO_PRESETS_CONFIG_PATH, { cache: "no-store" });
+        if (!response.ok) {
+          return;
+        }
+
+        const payload: unknown = await response.json();
+        if (!Array.isArray(payload)) {
+          return;
+        }
+
+        const presets = payload.filter(isIndexRepoPreset);
+        if (!presets.length || cancelled) {
+          return;
+        }
+
+        setIndexRepoPresets(presets);
+        setIndexPresetId(presets[0].id);
+        setIndexRepoUrl(presets[0].repoUrl);
+        setIndexRepoPath(presets[0].repoPath);
+        setIndexProfile(presets[0].profile);
+      } catch {
+        // Keep bundled defaults when external config is unavailable.
+      }
+    }
+
+    void loadIndexRepoPresets();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function ensureDevToken(): Promise<void> {
+      if (!autoTokenEnabled) {
+        return;
+      }
+      try {
+        const devClient = new HelpdeskApiClient({ baseUrl: apiBaseUrl, token: "" });
+        const issued = await devClient.issueDevToken();
+        if (!cancelled) {
+          setReaderToken(issued.token);
+        }
+      } catch {
+        // Keep manual token mode if the dev endpoint is disabled.
+      }
+    }
+
+    void ensureDevToken();
+    return () => {
+      cancelled = true;
+    };
+  }, [apiBaseUrl, autoTokenEnabled]);
+
+  async function refreshBoardStatusMap(): Promise<void> {
+    try {
+      const result = await client.listEditorialBoard({ page: 1, pageSize: 100 });
+      const map = new Map<string, string>();
+      for (const item of result.items) map.set(item.requestId, item.status);
+      setBoardStatusMap(map);
+    } catch {
+      // best-effort: status column may be stale but should not block question loading
+    }
+  }
+
+  async function onDeleteQuestionEvent(questionEventIds: string[]): Promise<void> {
+    setBusy(true);
+    setError(null);
+    try {
+      await Promise.all(questionEventIds.map((id) => client.deleteQuestionEvent(id)));
+      const deletedSet = new Set(questionEventIds);
+      setAskedQuestions((prev) => prev.filter((q) => !deletedSet.has(q.questionEventId)));
+      setBoardResult((prev) => prev ? { ...prev, items: prev.items.filter((b) => !deletedSet.has(b.questionEventId)) } : prev);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onLoadAskedQuestions(): Promise<void> {
+    setBusy(true);
+    setError(null);
+    try {
+      const [result] = await Promise.all([
+        client.listQuestionEvents({ page: 1, pageSize: 100 }),
+        refreshBoardStatusMap(),
+      ]);
+      setAskedQuestions(result.items);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function refreshDevTokenAfterUnauthorized(caught: unknown): Promise<string | null> {
+    const message = caught instanceof Error ? caught.message : String(caught);
+    if (!autoTokenEnabled || !message.startsWith("UNAUTHORIZED:")) {
+      return null;
+    }
+
+    try {
+      const devClient = new HelpdeskApiClient({ baseUrl: apiBaseUrl, token: "" });
+      const issued = await devClient.issueDevToken();
+      setReaderToken(issued.token);
+      // An editor token refused by the server (expired, account disabled) ends the sign-in.
+      setEditorToken("");
+      return issued.token;
+    } catch {
+      return null;
+    }
+  }
+
+  function onSelectIndexPreset(presetId: string): void {
+    setIndexPresetId(presetId);
+    const preset = indexRepoPresets.find((item) => item.id === presetId);
+    if (!preset) {
+      return;
+    }
+
+    setIndexRepoUrl(preset.repoUrl);
+    setIndexRepoPath(preset.repoPath);
+    setIndexProfile(preset.profile);
+  }
+
+  async function onSendChat(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    const prompt = chatPrompt.trim();
+    if (!prompt) {
+      return;
+    }
+
+    const requestId = createRequestId();
+    const assistantTurnId = `a-${requestId}`;
+    setChatTurns((prev) => {
+      // Sending the same question again after it failed does not add it a second time.
+      const last = prev[prev.length - 1];
+      if (last && last.role === "user" && last.text === prompt) {
+        return prev;
+      }
+      return [
+        ...prev,
+        {
+          id: `u-${requestId}`,
+          role: "user",
+          text: prompt,
+          createdAt: new Date().toISOString(),
+        },
+      ];
+    });
+
+    setBusy(true);
+    setError(null);
+
+    const answerPayload = {
+      question: prompt,
+      sessionId,
+      userId,
+      standardsScope: standardsScope.length > 0 ? standardsScope : undefined,
+      language: detectBrowserLanguage(),
+      generationProfile: "llm-ready" as const,
+      controllerProfile: "llm-ready" as const,
+      options: {
+        maxCitations: 5,
+        allowAbstain: true,
+        faqMinConfidence: 0.85,
+        retrievalTopK: 6,
+        retrievalMinScore: 0.62,
+      },
+    };
+
+    const useStreaming = true;
+
+    const handleStreamToken = (delta: string) => {
+      setChatTurns((prev) =>
+        prev.map((t) =>
+          t.id === assistantTurnId ? { ...t, text: t.text + delta } : t
+        )
+      );
+    };
+
+    try {
+      if (useStreaming) {
+        // Insert a placeholder assistant turn immediately so the user sees typing start.
+        setChatTurns((prev) => [
+          ...prev,
+          {
+            id: assistantTurnId,
+            role: "assistant",
+            text: "",
+            createdAt: new Date().toISOString(),
+          },
+        ]);
+
+        let result: import("./types").AnswerResponse;
+        try {
+          result = await client.answerQuestionStream(answerPayload, requestId, handleStreamToken);
+        } catch (streamErr) {
+          // Only a missing streaming endpoint is retried with the regular one. Any other
+          // failure (a proxy timeout, a stream cut off) means the server already ran the
+          // whole pipeline once; repeating it would double the wait and likely fail again.
+          if (!(streamErr instanceof StreamUnavailableError)) {
+            if (!isNetworkFailure(streamErr)) {
+              throw streamErr;
+            }
+            // The network dropped the connection (mobile Safari: "Load failed"), but the server finishes the
+            // answer anyway and saves it under this request id: fetch it instead of asking again.
+            setChatTurns((prev) =>
+              prev.map((t) =>
+                t.id === assistantTurnId
+                  ? { ...t, text: "The connection was interrupted. Fetching your answer…" }
+                  : t
+              )
+            );
+            const recovered = await recoverAnswer(client, requestId);
+            if (!recovered) {
+              setChatTurns((prev) => prev.filter((t) => t.id !== assistantTurnId));
+              throw new Error(
+                "The connection was interrupted before the answer arrived. Please send the question again."
+              );
+            }
+            result = recovered;
+            setChatTurns((prev) =>
+              prev.map((t) =>
+                t.id === assistantTurnId
+                  ? { ...t, text: result.answer, answer: result, requestId: result.trace.requestId }
+                  : t
+              )
+            );
+            setAnswerResult(result);
+            setQuestion(prompt);
+            setChatPrompt("");
+            return;
+          }
+          // Remove the placeholder turn first, then fall through to the non-streaming path.
+          setChatTurns((prev) => prev.filter((t) => t.id !== assistantTurnId));
+          result = await client.answerQuestion(answerPayload, requestId);
+          setChatTurns((prev) => [
+            ...prev,
+            {
+              id: assistantTurnId,
+              role: "assistant",
+              text: result.answer,
+              createdAt: new Date().toISOString(),
+              answer: result,
+              requestId: result.trace.requestId,
+            },
+          ]);
+          setAnswerResult(result);
+          setQuestion(prompt);
+          setChatPrompt("");
+          return;
+        }
+
+        // Streaming completed: update the placeholder turn with full metadata.
+        setChatTurns((prev) =>
+          prev.map((t) =>
+            t.id === assistantTurnId
+              ? { ...t, text: result.answer, answer: result, requestId: result.trace.requestId }
+              : t
+          )
+        );
+        setAnswerResult(result);
+        setQuestion(prompt);
+        setChatPrompt("");
+        return;
+      }
+
+      const result = await client.answerQuestion(answerPayload, requestId);
+
+      setAnswerResult(result);
+      setQuestion(prompt);
+      setChatTurns((prev) => [
+        ...prev,
+        {
+          id: assistantTurnId,
+          role: "assistant",
+          text: result.answer,
+          createdAt: new Date().toISOString(),
+          answer: result,
+          requestId: result.trace.requestId,
+        },
+      ]);
+      setChatPrompt("");
+    } catch (caught) {
+      // Remove any streaming placeholder turn on error.
+      setChatTurns((prev) => prev.filter((t) => t.id !== assistantTurnId || t.text !== ""));
+      const refreshedToken = await refreshDevTokenAfterUnauthorized(caught);
+      if (refreshedToken) {
+        try {
+          const retryClient = new HelpdeskApiClient({ baseUrl: apiBaseUrl, token: refreshedToken });
+          const result = await retryClient.answerQuestion(answerPayload, requestId);
+
+          setAnswerResult(result);
+          setQuestion(prompt);
+          setChatTurns((prev) => [
+            ...prev,
+            {
+              id: assistantTurnId,
+              role: "assistant",
+              text: result.answer,
+              createdAt: new Date().toISOString(),
+              answer: result,
+              requestId: result.trace.requestId,
+            },
+          ]);
+          setChatPrompt("");
+          return;
+        } catch (retryCaught) {
+          setError(retryCaught instanceof Error ? retryCaught.message : String(retryCaught));
+          return;
+        }
+      }
+      setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onAskQuestion(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    setBusy(true);
+    setError(null);
+
+    try {
+      const requestId = createRequestId();
+      const answerPayload = {
+        question,
+        sessionId,
+        userId,
+        standardsScope,
+        language: detectBrowserLanguage(),
+        generationProfile: "llm-ready" as const,
+        controllerProfile: "llm-ready" as const,
+        options: {
+          maxCitations: 5,
+          allowAbstain: true,
+          faqMinConfidence: 0.85,
+          retrievalTopK: 6,
+          retrievalMinScore: 0.62,
+        },
+      };
+
+      const useStreaming = true;
+      if (useStreaming) {
+        setAnswerResult({
+          answerId: `streaming-${requestId}`,
+          mode: "rag",
+          confidence: 0,
+          answer: "",
+          citations: [],
+          abstained: false,
+          abstentionReason: null,
+          reviewRequired: true,
+          trace: {
+            requestId,
+            questionEventId: `streaming-${requestId}`,
+            matchedFaqEntryId: null,
+            retrievalEventIds: [],
+          },
+        });
+
+        const result = await client.answerQuestionStream(
+          answerPayload,
+          requestId,
+          (delta) => {
+            setAnswerResult((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    answer: prev.answer + delta,
+                  }
+                : prev
+            );
+          }
+        );
+        setAnswerResult(result);
+        setAskedQuestions((prev) => {
+          const row: AskedQuestionRow = {
+            question,
+            askedAt: new Date().toISOString(),
+            requestId: result.trace.requestId,
+            questionEventId: result.trace.questionEventId,
+            mode: result.mode,
+            confidence: result.confidence,
+            reviewRequired: result.reviewRequired,
+            userLikes: false,
+            userDislikes: false,
+            answerSuccess: null,
+          };
+          const next = [row, ...prev.filter((item) => item.requestId !== row.requestId)];
+          return next.slice(0, 200);
+        });
+        return;
+      }
+
+      const result = await client.answerQuestion(answerPayload, requestId);
+      setAnswerResult(result);
+      setAskedQuestions((prev) => {
+        const row: AskedQuestionRow = {
+          question,
+          askedAt: new Date().toISOString(),
+          requestId: result.trace.requestId,
+          questionEventId: result.trace.questionEventId,
+          mode: result.mode,
+          confidence: result.confidence,
+          reviewRequired: result.reviewRequired,
+          userLikes: false,
+          userDislikes: false,
+          answerSuccess: null,
+        };
+        const next = [row, ...prev.filter((item) => item.requestId !== row.requestId)];
+        return next.slice(0, 200);
+      });
+    } catch (caught) {
+      const refreshedToken = await refreshDevTokenAfterUnauthorized(caught);
+      if (refreshedToken) {
+        try {
+          const retryClient = new HelpdeskApiClient({ baseUrl: apiBaseUrl, token: refreshedToken });
+          const requestId = createRequestId();
+          const answerPayload = {
+            question,
+            sessionId,
+            userId,
+            standardsScope,
+            language: detectBrowserLanguage(),
+            generationProfile: "llm-ready" as const,
+            controllerProfile: "llm-ready" as const,
+            options: {
+              maxCitations: 5,
+              allowAbstain: true,
+              faqMinConfidence: 0.85,
+              retrievalTopK: 6,
+              retrievalMinScore: 0.62,
+            },
+          };
+
+          const useStreaming = true;
+          if (useStreaming) {
+            setAnswerResult({
+              answerId: `streaming-${requestId}`,
+              mode: "rag",
+              confidence: 0,
+              answer: "",
+              citations: [],
+              abstained: false,
+              abstentionReason: null,
+              reviewRequired: true,
+              trace: {
+                requestId,
+                questionEventId: `streaming-${requestId}`,
+                matchedFaqEntryId: null,
+                retrievalEventIds: [],
+              },
+            });
+
+            const result = await retryClient.answerQuestionStream(
+              answerPayload,
+              requestId,
+              (delta) => {
+                setAnswerResult((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        answer: prev.answer + delta,
+                      }
+                    : prev
+                );
+              }
+            );
+            setAnswerResult(result);
+            setAskedQuestions((prev) => {
+              const row: AskedQuestionRow = {
+                question,
+                askedAt: new Date().toISOString(),
+                requestId: result.trace.requestId,
+                questionEventId: result.trace.questionEventId,
+                mode: result.mode,
+                confidence: result.confidence,
+                reviewRequired: result.reviewRequired,
+                userLikes: false,
+                userDislikes: false,
+                answerSuccess: null,
+              };
+              const next = [row, ...prev.filter((item) => item.requestId !== row.requestId)];
+              return next.slice(0, 200);
+            });
+            return;
+          }
+
+          const result = await retryClient.answerQuestion(answerPayload, requestId);
+          setAnswerResult(result);
+          setAskedQuestions((prev) => {
+            const row: AskedQuestionRow = {
+              question,
+              askedAt: new Date().toISOString(),
+              requestId: result.trace.requestId,
+              questionEventId: result.trace.questionEventId,
+              mode: result.mode,
+              confidence: result.confidence,
+              reviewRequired: result.reviewRequired,
+              userLikes: false,
+              userDislikes: false,
+              answerSuccess: null,
+            };
+            const next = [row, ...prev.filter((item) => item.requestId !== row.requestId)];
+            return next.slice(0, 200);
+          });
+          return;
+        } catch (retryCaught) {
+          setError(retryCaught instanceof Error ? retryCaught.message : String(retryCaught));
+          return;
+        }
+      }
+      setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onSetAnswerFeedback(
+    requestId: string,
+    payload: {
+      userLikes?: boolean;
+      userDislikes?: boolean;
+      answerSuccess?: boolean | null;
+      citationClicksDelta?: number;
+    }
+  ): Promise<void> {
+    setError(null);
+    try {
+      const result = await client.submitAnswerFeedback({
+        requestId,
+        ...payload,
+      });
+
+      setChatTurns((prev) =>
+        prev.map((turn) => {
+          if (!turn.answer) {
+            return turn;
+          }
+          const turnRequestId = turn.requestId ?? turn.answer.trace.requestId;
+          if (turnRequestId !== result.requestId) {
+            return turn;
+          }
+          return {
+            ...turn,
+            answer: {
+              ...turn.answer,
+              trace: {
+                ...turn.answer.trace,
+                userLikes: result.userLikes,
+                userDislikes: result.userDislikes,
+                answerSuccess: result.answerSuccess,
+                citationClickCount: result.citationClickCount,
+              },
+            },
+          };
+        })
+      );
+
+      setAnswerResult((prev) => {
+        if (!prev || prev.trace.requestId !== result.requestId) {
+          return prev;
+        }
+        return {
+          ...prev,
+          trace: {
+            ...prev.trace,
+            userLikes: result.userLikes,
+            userDislikes: result.userDislikes,
+            answerSuccess: result.answerSuccess,
+            citationClickCount: result.citationClickCount,
+          },
+        };
+      });
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    }
+  }
+
+  async function onQueueEditorial(questionEventIdOverride?: string): Promise<void> {
+    const questionEventId = questionEventIdOverride || selectedQuestionEventId || answerResult?.trace.questionEventId;
+    if (!questionEventId) {
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    try {
+      await client.routeToEditorialQueue({ questionEventId });
+      await Promise.all([onLoadEditorialBoard(), refreshBoardStatusMap()]);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onLoadEditorialBoard(): Promise<void> {
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await client.listEditorialBoard({ page: 1, pageSize: 50 });
+      setBoardResult(result);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onLoadFaq(): Promise<void> {
+    setBusy(true);
+    setError(null);
+    try {
+      const approved = await client.listEditorialBoard({ status: "approved", page: 1, pageSize: 100 });
+      setFaqItems(approved.items);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onLoadQuestionEventDetail(questionEventId: string): Promise<QuestionEventDetail> {
+    try {
+      return await client.getQuestionEventDetail(questionEventId);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+      throw caught;
+    }
+  }
+
+  async function onQuickTransition(item: EditorialBoardItem, action: TransitionAction): Promise<void> {
+    setBusy(true);
+    setError(null);
+    try {
+      await client.transitionEditorialQueue({
+        queueItemId: item.queueItemId,
+        action,
+        comment: `board action: ${action}`,
+      });
+      const refreshes: Promise<void>[] = [onLoadEditorialBoard(), refreshBoardStatusMap(), onLoadFaq()];
+      if (action === "revoke") refreshes.push(onLoadAskedQuestions());
+      await Promise.all(refreshes);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onIndexRepository(): Promise<void> {
+    setBusy(true);
+    setIndexBusy(true);
+    setError(null);
+    setIndexResult(null);
+    try {
+      const result = await client.indexRepository({
+        repoUrl: indexRepoUrl,
+        repoPath: indexRepoPath,
+        profile: indexProfile,
+        incremental: indexIncremental,
+        prune: indexPrune,
+        includeIssues: indexIncludeIssues,
+        autoAllowRepository: indexAutoAllowRepository,
+      });
+      setIndexResult(result);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setIndexBusy(false);
+      setBusy(false);
+    }
+  }
+
+  return (
+    <AuthProvider value={authValue}>
+      <BrowserRouter basename="/napcore-helpdesk">
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <SharedAppLayout
+                appVersion={appVersion}
+                backendBuildRef={backendBuildRef}
+                apiBaseUrl={apiBaseUrl}
+              />
+            }
+          >
+            <Route index element={<Navigate to="user" replace />} />
+            <Route
+              path="user"
+              element={
+                <UserChatWithQueryParams
+                  chatPrompt={chatPrompt}
+                  chatTurns={chatTurns}
+                  token={token}
+                  busy={busy}
+                  apiBaseUrl={apiBaseUrl}
+                  setChatPrompt={setChatPrompt}
+                  onSendChat={onSendChat}
+                  onSetAnswerFeedback={onSetAnswerFeedback}
+                />
+              }
+            />
+            <Route
+              path="editor"
+              element={
+                <EditorPageLayout>
+                  <EditorAccess
+                    client={client}
+                    token={token}
+                    signInError={signInError}
+                    onSignOut={() => {
+                      setEditorToken("");
+                      setSignInError("");
+                    }}
+                  >
+                  <EditorWithQueryParams
+                  question={question}
+                  answerResult={answerResult}
+                  askedQuestions={askedQuestions}
+                  selectedQuestionEventId={selectedQuestionEventId}
+                  boardResult={boardResult}
+                  faqItems={faqItems}
+                  boardStatusMap={boardStatusMap}
+                  busy={busy}
+                  token={token}
+                  apiClient={client}
+                  setQuestion={setQuestion}
+                  setSelectedQuestionEventId={setSelectedQuestionEventId}
+                  onAskQuestion={onAskQuestion}
+                  onLoadAskedQuestions={onLoadAskedQuestions}
+                  onQueueEditorial={onQueueEditorial}
+                  onDeleteQuestionEvent={onDeleteQuestionEvent}
+                  onLoadEditorialBoard={onLoadEditorialBoard}
+                  onLoadFaq={onLoadFaq}
+                  onLoadQuestionEventDetail={onLoadQuestionEventDetail}
+                  onQuickTransition={onQuickTransition}
+                  indexRepoUrl={indexRepoUrl}
+                  indexRepoPath={indexRepoPath}
+                  indexProfile={indexProfile}
+                  indexPresetId={indexPresetId}
+                  indexRepoPresets={indexRepoPresets}
+                  indexIncremental={indexIncremental}
+                  indexPrune={indexPrune}
+                  indexIncludeIssues={indexIncludeIssues}
+                  indexAutoAllowRepository={indexAutoAllowRepository}
+                  indexResult={indexResult}
+                  indexBusy={indexBusy}
+                  setIndexRepoUrl={setIndexRepoUrl}
+                  setIndexRepoPath={setIndexRepoPath}
+                  setIndexProfile={setIndexProfile}
+                  onSelectIndexPreset={onSelectIndexPreset}
+                  setIndexIncremental={setIndexIncremental}
+                  setIndexPrune={setIndexPrune}
+                  setIndexIncludeIssues={setIndexIncludeIssues}
+                  setIndexAutoAllowRepository={setIndexAutoAllowRepository}
+                  onIndexRepository={onIndexRepository}
+                  />
+                  </EditorAccess>
+                </EditorPageLayout>
+              }
+            />
+            <Route
+              path="question"
+              element={
+                <QuestionDetailWithQueryParams
+                  token={token}
+                  onSetAnswerFeedback={onSetAnswerFeedback}
+                />
+              }
+            />
+            <Route path="about" element={<AboutPage appVersion={appVersion} backendBuildRef={backendBuildRef} />} />
+          </Route>
+        </Routes>
+
+        {error && <div className="error-banner">{error}</div>}
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}

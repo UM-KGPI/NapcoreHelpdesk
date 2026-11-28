@@ -1,0 +1,132 @@
+"""Ask the controller model whether a question is about the standards this helpdesk covers.
+
+Used for questions that name no standard and no artifact, where keyword rules are unreliable. Any
+failure returns None so the caller falls back to those keyword rules and the question is not blocked.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import re
+from urllib import request
+
+from django.conf import settings
+
+from helpdesk.services.controller_llm import _build_ssl_context, _uses_anthropic, anthropic_controller_call
+from helpdesk.services.llm_options import controller_max_tokens, controller_request_options
+from helpdesk.services.llm_model_recovery import resolve_effective_model
+
+logger = logging.getLogger(__name__)
+
+# A CamelCase term (ServiceJourneyPattern, PtSituationElement) names a concrete artifact.
+_CAMEL_CASE_TERM = re.compile(r"\b[A-Z][a-z]+[A-Z][A-Za-z]+\b")
+_IRRELEVANT = re.compile(r"\birrelevant\b", re.IGNORECASE)
+_RELEVANT = re.compile(r"\brelevant\b", re.IGNORECASE)
+
+_PROMPT = """You screen questions for a helpdesk about European public-transport data standards:
+- NeTEx: static data (timetables, networks, lines, stops, fares, accessibility, vehicles and operators).
+- SIRI: real-time data exchange (vehicle monitoring, estimated and production timetables, stop monitoring, connection monitoring, facility monitoring such as lifts and escalators, situation exchange such as disruptions and roadworks, general messages).
+- OpRa (Operational Raw Data): a format for exchanging historical operational data (offer, demand, capacity, efficiency, passenger counts, delays and cancellations).
+- Transmodel: the reference model behind them.
+- mobilityDCAT-AP (also DCAT-AP): the metadata profile for describing datasets on National Access Points (NAPs).
+- DATEX II: road traffic and travel information (situations such as roadworks and accidents, traffic data, variable message signs, parking, energy infrastructure and charging points, traffic management and regulations, location referencing), also TN-ITS road attribute updates.
+- EU legislation on transport data: the MMTIS Delegated Regulation (EU) 2017/1926 and its 2024 amendment, the ITS Directive 2010/40/EU and its 2023 amendment, and the TEL TSI (which travel and traffic data must be made available, through National Access Points and in which standards, and the terms these acts define).
+- INSPIRE: the EU spatial data rules (Directive 2007/2/EC, Regulation 1089/2010) that MMTIS requires for the spatial network, in particular the Transport Networks theme (road, rail, water, air and cable networks).
+- NAPCORE: the EU coordination platform of the National Access Points and National Bodies (its working groups, deliverables, data quality frameworks, compliance assessment and the EU legislation the NAPs implement).
+
+Decide whether the question can be answered from the documentation of those standards, the legislation and NAPCORE's material.
+- "relevant": it is about transport data, concepts, messages, modelling or legal requirements that these sources cover, even if phrased briefly or in another language.
+- "irrelevant": it is about something else (general knowledge, other software, other standards such as GTFS or OpenStreetMap) or it is too vague to tell what is being asked.
+
+Question: {question}
+
+Answer with exactly one word: RELEVANT or IRRELEVANT."""
+
+
+def has_artifact_term(question: str) -> bool:
+    return bool(_CAMEL_CASE_TERM.search(question or ""))
+
+
+def _enabled() -> bool:
+    return bool(getattr(settings, "RELEVANCE_CHECK_ENABLED", False))
+
+
+def relevance_check_enabled() -> bool:
+    return _enabled()
+
+
+def _verdict(content: str) -> bool:
+    """RELEVANT or IRRELEVANT, read from the reply.
+
+    Plain text on purpose: with response_format=json_object the gateway's model garbles the key
+    (`{": true}`), while the verdict itself stays right.
+    """
+
+    text = content or ""
+    if _IRRELEVANT.search(text):
+        return False
+    if _RELEVANT.search(text):
+        return True
+    raise ValueError("reply is neither RELEVANT nor IRRELEVANT")
+
+
+def _ask(question: str) -> bool:
+    # Not cached: a verdict kept per process repeated a minority IRRELEVANT for every later asker until the
+    # backend restarted. Without thinking (Claude) or at temperature 0 (the other gateways) the verdict is as
+    # stable as the endpoint allows; Claude takes no temperature.
+    if _uses_anthropic():
+        payload = anthropic_controller_call(
+            messages=[{"role": "user", "content": _PROMPT.format(question=question)}],
+            max_tokens=controller_max_tokens(8),
+            timeout_seconds=int(getattr(settings, "RELEVANCE_CHECK_TIMEOUT_SECONDS", 10)),
+            json_answer=False,
+            # Claude takes "disabled" only at effort high or below.
+            thinking="disabled" if settings.CONTROLLER_LLM_ANTHROPIC_EFFORT in ("low", "medium", "high") else "adaptive",
+        )
+        return _verdict(payload["choices"][0]["message"]["content"])
+
+    base_url = getattr(settings, "CONTROLLER_LLM_API_BASE_URL", "").strip()
+    model = getattr(settings, "CONTROLLER_LLM_API_MODEL", "").strip()
+    if not base_url or not model:
+        raise ValueError("controller LLM is not configured")
+    api_key = getattr(settings, "CONTROLLER_LLM_API_KEY", "").strip()
+
+    effective_model = resolve_effective_model(
+        api_base_url=base_url,
+        api_key=api_key,
+        configured_model=model,
+        verify_ssl=getattr(settings, "CONTROLLER_LLM_VERIFY_SSL", True),
+        ca_bundle=getattr(settings, "CONTROLLER_LLM_CA_BUNDLE", "").strip(),
+        source="relevance_check",
+    )
+    body = {
+        "model": effective_model,
+        "messages": [{"role": "user", "content": _PROMPT.format(question=question)}],
+        "temperature": 0.0,
+        "max_tokens": controller_max_tokens(8),
+        **controller_request_options(json_mode=False),
+    }
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    http_request = request.Request(
+        url=f"{base_url.rstrip('/')}/chat/completions",
+        data=json.dumps(body).encode("utf-8"),
+        method="POST",
+        headers=headers,
+    )
+    timeout = int(getattr(settings, "RELEVANCE_CHECK_TIMEOUT_SECONDS", 10))
+    with request.urlopen(http_request, timeout=timeout, context=_build_ssl_context()) as response:
+        payload = json.loads(response.read().decode("utf-8"))
+    return _verdict(payload["choices"][0]["message"]["content"])
+
+
+def is_relevant(question: str) -> bool | None:
+    """True or False when the model decides, None when it could not (never raises)."""
+
+    try:
+        return _ask(question.strip())
+    except Exception:
+        logger.warning("Relevance check failed; falling back to keyword rules", exc_info=True)
+        return None

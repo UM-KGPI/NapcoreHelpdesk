@@ -1,0 +1,2744 @@
+openapi: 3.1.0
+info:
+  title: NAPCORE Helpdesk API
+  version: 1.0.0
+  summary: FAQ-first plus RAG-fallback API with strict source-grounding guardrails
+  description: |
+    API contract for the NAPCORE Helpdesk.
+    The service answers questions using FAQ-first lookup with RAG fallback,
+    enforces approved GitHub repository boundaries, and returns abstention
+    when evidence is insufficient.
+servers:
+  - url: https://api.example.org
+    description: Production placeholder
+  - url: http://localhost:8000
+    description: Local development
+security:
+  - bearerAuth: []
+tags:
+  - name: Operations
+    description: Operational health and readiness checks
+  - name: Auth
+    description: Development authentication helpers
+  - name: QnA
+    description: Question answering and orchestration
+  - name: FAQOps
+    description: FAQ operations and promotion candidates
+  - name: Editorial
+    description: Editorial workflow integrations
+paths:
+  /api/v1/health/live:
+    get:
+      tags: [Operations]
+      summary: Liveness probe
+      operationId: healthLive
+      security: []
+      responses:
+        '200':
+          description: Service process is alive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '429':
+          description: Probe rate limit reached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/health/ready:
+    get:
+      tags: [Operations]
+      summary: Readiness probe
+      operationId: healthReady
+      security: []
+      responses:
+        '200':
+          description: Service dependencies are ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '429':
+          description: Probe rate limit reached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Dependency unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /api/v1/health/llm:
+    get:
+      tags: [Operations]
+      summary: LLM gateway status (configured vs. gateway-authorized model)
+      description: |
+        Diagnostic endpoint, not a traffic-gating readiness probe: always
+        returns 200, with health conveyed only through the body's `status`
+        field. Reports configured vs. active model, live gateway
+        reachability, and whether the model-drift self-heal has already
+        corrected anything this process, for both answer generation and
+        controller routing.
+      operationId: healthLlm
+      security: []
+      parameters:
+        - name: live
+          in: query
+          required: false
+          description: When false, skips the live gateway probe and reports cached state only
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: LLM status returned (body status may be ok, degraded, error, disabled, or unknown)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LlmStatusResponse'
+  /api/v1/auth/dev-token:
+    post:
+      tags: [Auth]
+      summary: Issue a short-lived development JWT
+      description: |
+        Convenience endpoint for local development only; returns 403 unless
+        DEV_JWT_AUTO_ISSUE is enabled in the deployment's configuration.
+      operationId: issueDevToken
+      security: []
+      responses:
+        '200':
+          description: Development token issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DevTokenResponse'
+        '403':
+          description: Dev token endpoint is disabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/questions/answer:
+    post:
+      tags: [QnA]
+      summary: Answer question with FAQ-first and RAG fallback
+      operationId: answerQuestion
+      parameters:
+        - name: X-Request-Id
+          in: header
+          required: true
+          description: Request correlation identifier
+          schema:
+            type: string
+            minLength: 1
+        - name: X-User-Id
+          in: header
+          required: false
+          schema:
+            type: string
+        - name: X-Session-Id
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnswerRequest'
+            examples:
+              default:
+                value:
+                  question: How to use NeTEx for exchanging a timetable?
+                  sessionId: sess-123
+                  userId: user-42
+                  standardsScope: [NeTEx, SIRI]
+                  language: en
+                  options:
+                    maxCitations: 5
+                    allowAbstain: true
+                    faqMinConfidence: 0.85
+                    retrievalTopK: 6
+                    retrievalMinScore: 0.62
+                    graphRagEnabled: false
+      responses:
+        '200':
+          description: Answer produced in faq, rag, or abstain mode
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnswerResponse'
+              examples:
+                faq:
+                  value:
+                    answerId: ans-001
+                    mode: faq
+                    confidence: 0.93
+                    answer: Start with the relevant timetable frame.
+                    citations:
+                      - repositoryUrl: https://github.com/TransmodelEcosystem/NeTEx
+                        commitSha: abc1234
+                        sourcePath: docs/timetable-guide.md
+                        chunkId: c-001
+                        label: Timetable overview
+                    abstained: false
+                    abstentionReason: null
+                    reviewRequired: false
+                    trace:
+                      requestId: req-001
+                      questionEventId: qe-001
+                      matchedFaqEntryId: faq-001
+                      retrievalEventIds: []
+                      graphExpansionHops: 0
+                      graphConceptIds: []
+                      graphEvidenceCount: 0
+                      graphScoreContribution: 0.0
+                      repositoryCoverageCount: 1
+                      conceptCoverageCount: 0
+                      semanticAlignmentScore: 0.0
+                rag:
+                  value:
+                    answerId: ans-002
+                    mode: rag
+                    confidence: 0.77
+                    answer: For timetable exchange, start by defining service and timetable frames.
+                    citations:
+                      - repositoryUrl: https://github.com/TransmodelEcosystem/NeTEx
+                        commitSha: abc1234
+                        sourcePath: profile/part-2.xml
+                        chunkId: c-067
+                        label: Service frame example
+                    abstained: false
+                    abstentionReason: null
+                    reviewRequired: true
+                    trace:
+                      requestId: req-002
+                      questionEventId: qe-002
+                      matchedFaqEntryId: null
+                      retrievalEventIds: [re-991]
+                      evidenceLinkIds: [el-51]
+                      graphExpansionHops: 1
+                      graphConceptIds: [opra:delay-statistics, opra:delayed-journey]
+                      graphEvidenceCount: 1
+                      graphScoreContribution: 0.09
+                      repositoryCoverageCount: 2
+                      conceptCoverageCount: 2
+                      semanticAlignmentScore: 0.61
+                abstain:
+                  value:
+                    answerId: ans-003
+                    mode: abstain
+                    confidence: 0
+                    answer: I do not have sufficient approved-source evidence to answer this safely.
+                    citations: []
+                    abstained: true
+                    abstentionReason: INSUFFICIENT_EVIDENCE
+                    reviewRequired: false
+                    trace:
+                      requestId: req-003
+                      questionEventId: qe-003
+                      matchedFaqEntryId: null
+                      retrievalEventIds: [re-992]
+                      graphExpansionHops: 0
+                      graphConceptIds: []
+                      graphEvidenceCount: 0
+                      graphScoreContribution: 0.0
+                      repositoryCoverageCount: 0
+                      conceptCoverageCount: 0
+                      semanticAlignmentScore: 0.0
+        '400':
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Policy conflict (for example unsupported claims)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Valid request but cannot be answered within policy constraints
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/questions/answer/stream:
+    post:
+      tags: [QnA]
+      summary: Stream question narration with FAQ-first and RAG fallback
+      operationId: streamAnswerQuestion
+      parameters:
+        - name: X-Request-Id
+          in: header
+          required: true
+          description: Request correlation identifier
+          schema:
+            type: string
+            minLength: 1
+        - name: X-User-Id
+          in: header
+          required: false
+          schema:
+            type: string
+        - name: X-Session-Id
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnswerRequest'
+      responses:
+        '200':
+          description: Server-sent events stream with status updates, token deltas and final answer payload
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: >-
+                  SSE payloads encoded as data events. Status events
+                  ({"type":"status","stage":"received|retrieving|generating|retrying"})
+                  arrive before each slow step, then token deltas and a final done event.
+                  Clients should ignore event types they do not know.
+        '400':
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Policy conflict (for example unsupported claims)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Valid request but cannot be answered within policy constraints
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/questions/trending:
+    get:
+      tags: [QnA]
+      summary: List top user-liked questions
+      operationId: listTrendingQuestions
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+            default: 3
+      responses:
+        '200':
+          description: Trending questions returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrendingQuestionsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/questions/feedback:
+    post:
+      tags: [QnA]
+      summary: Persist user feedback for an answer by request ID
+      operationId: saveAnswerFeedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnswerFeedbackRequest'
+            examples:
+              like:
+                value:
+                  requestId: req-abc123
+                  userLikes: true
+                  userDislikes: false
+              citationClick:
+                value:
+                  requestId: req-abc123
+                  citationClicksDelta: 1
+              success:
+                value:
+                  requestId: req-abc123
+                  answerSuccess: true
+      responses:
+        '200':
+          description: Feedback persisted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnswerFeedbackResponse'
+        '400':
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: requestId not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/questions/events:
+    get:
+      tags: [QnA]
+      summary: List persisted question events for editorial intake
+      operationId: listQuestionEvents
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 100
+        - name: mode
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [faq, rag, abstain]
+        - name: reviewRequired
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Question events returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionEventsResponse'
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/questions/events/{questionEventId}:
+    get:
+      tags: [QnA]
+      summary: Get full detail for one question event
+      description: |
+        Accepts either the numeric database ID or the request ID (req-...)
+        as the path parameter.
+      operationId: getQuestionEventDetail
+      parameters:
+        - name: questionEventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Question event detail returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionEventDetailResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Question event not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [QnA]
+      summary: Delete a question event
+      operationId: deleteQuestionEvent
+      parameters:
+        - name: questionEventId
+          in: path
+          required: true
+          description: Numeric database ID
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Question event deleted
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Question event not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/faqs/promotion-candidates:
+    get:
+      tags: [FAQOps]
+      summary: List FAQ promotion candidates from question telemetry
+      operationId: listPromotionCandidates
+      parameters:
+        - name: windowDays
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 14
+        - name: minCount
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 5
+        - name: onlyUnresolved
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Promotion candidates returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromotionCandidatesResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/editorial/queue:
+    get:
+      tags: [Editorial]
+      summary: List editorial queue board items
+      operationId: listEditorialQueue
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [in_review, approved, rejected, revoked, published]
+        - name: reason
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [LOW_CONFIDENCE, CITATION_GAP, POLICY_REVIEW, USER_ESCALATION]
+        - name: priority
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [low, normal, high]
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Editorial queue board items returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditorialBoardResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Editorial]
+      summary: Route an answer outcome to editorial queue
+      operationId: routeToEditorialQueue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditorialQueueRequest'
+      responses:
+        '200':
+          description: Queue action accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditorialQueueResponse'
+        '400':
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/editorial/semantic-clusters:
+    get:
+      tags: [Editorial]
+      summary: Run semantic clustering over recent question events
+      operationId: runEditorialSemanticClustering
+      parameters:
+        - name: windowDays
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 30
+        - name: minClusterSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 2
+            default: 2
+        - name: similarityThreshold
+          in: query
+          required: false
+          schema:
+            type: number
+            minimum: 0
+            maximum: 1
+            default: 0.82
+        - name: maxEvents
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 2000
+            default: 500
+      responses:
+        '200':
+          description: Semantic clusters returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditorialSemanticClustersResponse'
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/editorial/queue/transition:
+    post:
+      tags: [Editorial]
+      summary: Apply an editorial workflow transition action
+      operationId: transitionEditorialQueue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditorialQueueTransitionRequest'
+      responses:
+        '200':
+          description: Transition applied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditorialQueueTransitionResponse'
+        '400':
+          description: Invalid request payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden transition for caller roles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Invalid transition for current queue state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/editorial/queue/metrics:
+    get:
+      tags: [Editorial]
+      summary: Return editorial board KPI metrics
+      operationId: getEditorialQueueMetrics
+      parameters:
+        - name: windowDays
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 30
+        - name: slaHours
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 72
+      responses:
+        '200':
+          description: Editorial queue metrics returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditorialQueueMetricsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/admin/index:
+    post:
+      tags: [Operations]
+      summary: Trigger source repository ingestion
+      operationId: indexRepository
+      description: |
+        Runs an ingestion pass against a locally cloned repository.
+        Repository URLs are checked against the configured allow-list,
+        with optional auto-add when autoAllowRepository=true.
+        Requires admin or publisher role.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IndexRepositoryRequest'
+            examples:
+              netex_incremental:
+                value:
+                  repoUrl: https://github.com/TransmodelEcosystem/NeTEx
+                  repoPath: /data/repos/NeTEx
+                  profile: netex
+                  incremental: true
+                  prune: false
+                  includeIssues: true
+                  autoAllowRepository: true
+      responses:
+        '200':
+          description: Ingestion completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IndexRepositoryResponse'
+        '400':
+          description: Invalid request or repo path does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Role insufficient or repository not allow-listed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/admin/sources:
+    get:
+      tags: [Operations]
+      summary: List the configured harvest sources
+      operationId: listSources
+      description: |
+        The repositories the knowledge base is harvested from, with what is indexed now and,
+        for a repository that publishes its own ontology, the loaded ontology version.
+        Requires admin or publisher role.
+      responses:
+        '200':
+          description: Configured sources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourcesResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Role insufficient
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/admin/sources/harvest:
+    post:
+      tags: [Operations]
+      summary: Queue a harvest of one configured source
+      operationId: harvestSource
+      description: |
+        Fetches the source repository into its checkout, indexes changed files (all files with full=true),
+        and loads its ontology into GraphDB when it changed. Runs in the background worker; poll the job.
+        Requires admin or publisher role.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HarvestSourceRequest'
+      responses:
+        '202':
+          description: Harvest queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarvestSourceAccepted'
+        '400':
+          description: Unknown source
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Role insufficient
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/admin/sources/harvest/{jobId}:
+    get:
+      tags: [Operations]
+      summary: State of a queued harvest
+      operationId: getHarvestJob
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job state; result holds the refresh report once finished
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarvestJobResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Role insufficient
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/auth/config:
+    get:
+      tags: [Auth]
+      summary: Whether the editor offers GitHub sign-in
+      operationId: getAuthConfig
+      security: []
+      responses:
+        '200':
+          description: Sign-in configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [githubSignIn]
+                properties:
+                  githubSignIn:
+                    type: boolean
+  /api/v1/auth/github/login:
+    get:
+      tags: [Auth]
+      summary: Start the GitHub sign-in
+      operationId: startGitHubSignIn
+      description: Sets a short-lived state cookie and redirects the browser to GitHub.
+      security: []
+      responses:
+        '302':
+          description: Redirect to GitHub
+        '404':
+          description: GitHub sign-in is not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/auth/github/callback:
+    get:
+      tags: [Auth]
+      summary: GitHub sign-in callback
+      operationId: finishGitHubSignIn
+      description: |
+        Checks the state against the cookie, identifies the GitHub user and redirects to the editor
+        with the token in the URL fragment (#token=...&expiresIn=...), or with #authError=...&authMessage=...
+        (NOT_INVITED, ACCOUNT_DISABLED, NO_ROLES, STATE_MISMATCH, GITHUB_DENIED, GITHUB_ERROR).
+      security: []
+      parameters:
+        - {name: code, in: query, schema: {type: string}}
+        - {name: state, in: query, schema: {type: string}}
+      responses:
+        '302':
+          description: Redirect to the editor
+  /api/v1/auth/me:
+    get:
+      tags: [Auth]
+      summary: Who the token belongs to
+      operationId: getMe
+      responses:
+        '200':
+          description: The editor account or the anonymous reader
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthMe'
+        '401':
+          description: Unauthorized, or the editor account is disabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/auth/users:
+    get:
+      tags: [Auth]
+      summary: List editor accounts
+      operationId: listUsers
+      description: Requires the admin role.
+      responses:
+        '200':
+          description: Editor accounts
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [requestId, users, roles]
+                properties:
+                  requestId:
+                    type: string
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EditorUser'
+                  roles:
+                    type: array
+                    items:
+                      type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags: [Auth]
+      summary: Invite a GitHub login with roles
+      operationId: inviteUser
+      description: Requires the admin role. The invitation is bound to the GitHub user at the first sign-in.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [githubLogin, roles]
+              properties:
+                githubLogin:
+                  type: string
+                roles:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: string
+                    enum: [editor, reviewer, publisher, admin]
+              additionalProperties: false
+      responses:
+        '201':
+          description: Account created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditorUserResponse'
+        '400':
+          description: Invalid login or roles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: The login already has an account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/auth/users/{accountId}:
+    parameters:
+      - {name: accountId, in: path, required: true, schema: {type: integer}}
+    patch:
+      tags: [Auth]
+      summary: Change roles or disable/enable an editor account
+      operationId: updateUser
+      description: Requires the admin role. The last active admin keeps the admin role and stays enabled.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                roles:
+                  type: array
+                  items:
+                    type: string
+                    enum: [editor, reviewer, publisher, admin]
+                isActive:
+                  type: boolean
+              additionalProperties: false
+      responses:
+        '200':
+          description: Account updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditorUserResponse'
+        '400':
+          description: Invalid roles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No such account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Would remove the last active admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [Auth]
+      summary: Remove an editor account
+      operationId: deleteUser
+      description: Requires the admin role. The last active admin cannot be removed.
+      responses:
+        '204':
+          description: Account removed
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Not an admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No such account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Would remove the last active admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    AnswerRequest:
+      type: object
+      required: [question]
+      properties:
+        question:
+          type: string
+          minLength: 1
+        sessionId:
+          type: string
+        userId:
+          type: string
+        standardsScope:
+          type: array
+          items:
+            type: string
+            enum: [Transmodel, NeTEx, SIRI, OpRa, Profile Documentation, EU legislation, mobilityDCAT-AP, NAPCORE, INSPIRE, DATEX II, TN-ITS]
+        language:
+          type: string
+          default: en
+        generationProfile:
+          type: string
+          enum: [deterministic-grounded, llm-ready]
+          default: llm-ready
+        controllerProfile:
+          type: string
+          enum: [deterministic-grounded, llm-ready]
+        options:
+          $ref: '#/components/schemas/AnswerOptions'
+      additionalProperties: false
+    HealthResponse:
+      type: object
+      required: [status, service, check, version, buildRef]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+        service:
+          type: string
+        check:
+          type: string
+          enum: [live, ready]
+        version:
+          type: string
+        buildRef:
+          type: string
+        database:
+          type: string
+        conceptVectors:
+          type: [integer, "null"]
+          description: >-
+            Ready check: how many ontology classes the concept index holds (finding concepts by meaning);
+            0 while it is being built, null when it cannot be read. Answers fall back to label words without it.
+        conceptIndexComplete:
+          type: boolean
+          description: >-
+            Ready check: whether a build of the concept index has gone through every class. Until then answers
+            find concepts by label words only.
+      additionalProperties: false
+    LlmProviderStatus:
+      type: object
+      required: [provider, enabled, status]
+      properties:
+        provider:
+          type: string
+          enum: [answer_generation, controller_routing]
+        enabled:
+          type: boolean
+        status:
+          type: string
+          enum: [ok, degraded, error, disabled, unknown]
+        apiBaseUrl:
+          type: string
+        configuredModel:
+          type: string
+        activeModel:
+          type: string
+        autoCorrected:
+          type: boolean
+        gatewayReachable:
+          type: boolean
+        authorizedModels:
+          type: array
+          items:
+            type: string
+        configuredModelAuthorized:
+          type: boolean
+        probeError:
+          type: string
+      additionalProperties: false
+    LlmStatusResponse:
+      type: object
+      required: [status, service, check, version, buildRef, llm, controllerLlm]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded, error, disabled, unknown]
+        service:
+          type: string
+        check:
+          type: string
+          enum: [llm]
+        version:
+          type: string
+        buildRef:
+          type: string
+        llm:
+          $ref: '#/components/schemas/LlmProviderStatus'
+        controllerLlm:
+          $ref: '#/components/schemas/LlmProviderStatus'
+      additionalProperties: false
+    DevTokenResponse:
+      type: object
+      required: [token, tokenType, expiresInSeconds, subject, roles]
+      properties:
+        token:
+          type: string
+        tokenType:
+          type: string
+          enum: [Bearer]
+        expiresInSeconds:
+          type: integer
+          minimum: 0
+        subject:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+      additionalProperties: false
+    AnswerOptions:
+      type: object
+      properties:
+        maxCitations:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 5
+        allowAbstain:
+          type: boolean
+          default: true
+        faqMinConfidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.85
+        retrievalTopK:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 6
+        retrievalMinScore:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.62
+        graphRagEnabled:
+          type: boolean
+          default: false
+      additionalProperties: false
+    AnswerResponse:
+      type: object
+      required:
+        [answerId, mode, confidence, answer, citations, abstained, reviewRequired, trace]
+      properties:
+        answerId:
+          type: string
+        mode:
+          type: string
+          enum: [faq, rag, abstain]
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        answer:
+          type: string
+        citations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Citation'
+        legalContext:
+          type: array
+          description: >-
+            Provisions of the indexed EU acts that name a standard the answer is about (e.g. MMTIS Art. 4 for
+            NeTEx), as EUR-Lex links. Empty for refusals, answers about no named standard, and answers
+            already about legislation.
+          items:
+            $ref: '#/components/schemas/LegalContextItem'
+        abstained:
+          type: boolean
+        abstentionReason:
+          type: [string, "null"]
+          enum:
+            [INSUFFICIENT_EVIDENCE, POLICY_BLOCK, RETRIEVAL_LOW_QUALITY, UNKNOWN, null]
+        reviewRequired:
+          type: boolean
+        generatedExample:
+          description: >-
+            A NeTEx XML fragment generated for a question that asks for an example with concrete values,
+            validated against NeTEx_publication.xsd of the indexed NeTEx checkout. Null when the question
+            does not ask for one.
+          oneOf:
+            - $ref: '#/components/schemas/GeneratedExample'
+            - type: "null"
+        schemaStructure:
+          oneOf:
+            - $ref: '#/components/schemas/SchemaStructure'
+            - type: "null"
+        trace:
+          $ref: '#/components/schemas/AnswerTrace'
+      additionalProperties: false
+    SchemaStructure:
+      type: object
+      description: >-
+        What an element contains according to the NeTEx schema, for "what does X contain" questions: its own
+        child elements first, then those inherited from each base type, and its attributes, each with the
+        schema's definition. Taken from the XSD index with no model involved.
+      required: [element, groups, attributes]
+      properties:
+        element:
+          type: string
+          example: StopPlace
+        documentation:
+          type: string
+        source:
+          type: string
+          description: The schema file that declares the element.
+          example: xsd/netex_part_1/part1_ifopt/netex_ifopt_stopPlace_version.xsd
+        groups:
+          type: array
+          items:
+            type: object
+            required: [owner, inherited, children]
+            properties:
+              owner:
+                type: string
+                description: The element whose type declares these children (the element itself, or a base type's element).
+              inherited:
+                type: boolean
+              children:
+                type: array
+                items:
+                  type: object
+                  required: [name, documentation]
+                  properties:
+                    name:
+                      type: string
+                    documentation:
+                      type: string
+                  additionalProperties: false
+            additionalProperties: false
+        attributes:
+          type: array
+          items:
+            type: object
+            required: [name, documentation, owner]
+            properties:
+              name:
+                type: string
+              documentation:
+                type: string
+              owner:
+                type: string
+            additionalProperties: false
+      additionalProperties: false
+    GeneratedExample:
+      type: object
+      required: [valid, attempts]
+      properties:
+        valid:
+          type: boolean
+          description: >-
+            True when there is an example to show: a generated fragment that passed the XSD and holds every value
+            of the question, or an excerpt of the standard's examples with the asked-for shape (see origin).
+        attempts:
+          type: integer
+          minimum: 0
+        xml:
+          type: string
+          description: One NeTEx frame, indented; present only when valid.
+        document:
+          type: string
+          description: >-
+            The validated document: a minimal PublicationDelivery around the frame; present only when valid.
+        schema:
+          type: string
+          example: xsd/NeTEx_publication.xsd
+        schemaVersion:
+          type: string
+          example: "2.0"
+        schemaCommit:
+          type: string
+        valuePlaces:
+          type: array
+          description: >-
+            Where each value of the question sits in the validated fragment: the element holding it (or
+            Element/@attribute) and that element's ancestors from the frame down. Present only when valid.
+          items:
+            type: object
+            required: [value, element, path]
+            properties:
+              value:
+                type: string
+                example: "49"
+              element:
+                type: string
+                example: SeatingCapacity
+              path:
+                type: array
+                items:
+                  type: string
+                example: [ResourceFrame, vehicleTypes, VehicleType, capacities, PassengerCapacity]
+              count:
+                type: integer
+                minimum: 1
+                description: For a count in the question ("two quays"), how many of the element the fragment has.
+            additionalProperties: false
+        origin:
+          type: string
+          enum: [generated, standard]
+          description: >-
+            generated: written for the question and validated against the XSD. standard: an excerpt of one of
+            the standard's own example files with the shape the question asks for (counts, no other values).
+        validated:
+          type: boolean
+          description: Whether the fragment passed the XSD on its own; an excerpt can fail on references outside it.
+        excerpt:
+          type: boolean
+          description: >-
+            For origin standard, true when the object was larger than a screen and was cut to what the question
+            asks for (its simple elements, the path to the asked-for parts, those parts whole), with
+            "<!-- … -->" where elements were left out.
+        sourcePath:
+          type: string
+          description: For origin standard, the example file the excerpt comes from.
+        sourceUrl:
+          type: string
+        repositoryUrl:
+          type: string
+        elementNotes:
+          type: array
+          description: >-
+            What each element of the fragment is, in the words of the NeTEx schema (xsd:documentation,
+            chosen through the parent element's type); one note per element name, in document order.
+            Present only when valid.
+          items:
+            type: object
+            required: [name, documentation]
+            properties:
+              name:
+                type: string
+                example: SeatingCapacity
+              documentation:
+                type: string
+                example: The seating capacity of vehicles of the type. For a requirement this is the minimum needed.
+            additionalProperties: false
+        evidenceChunkIds:
+          type: array
+          items:
+            type: string
+        errors:
+          type: array
+          description: Why no valid fragment was produced; present only when not valid.
+          items:
+            type: string
+        generationMs:
+          type: integer
+          description: Time spent waiting for the model, over all attempts.
+        validationMs:
+          type: integer
+          description: Time spent waiting for the NeTEx validator, over all attempts.
+        schemaDeclarations:
+          type: integer
+          minimum: 0
+          description: >-
+            How many NeTEx schema element declarations matching the question's words were given to the model
+            as evidence, besides the retrieved blocks.
+      additionalProperties: false
+    Citation:
+      type: object
+      required: [repositoryUrl, commitSha, sourcePath, chunkId]
+      properties:
+        repositoryUrl:
+          type: string
+          format: uri
+        commitSha:
+          type: string
+        sourcePath:
+          type: string
+        chunkId:
+          type: string
+        label:
+          type: string
+        title:
+          type: string
+          description: Readable name of a cited part of an EU act (e.g. "MMTIS Art. 4"); absent for other sources.
+      additionalProperties: false
+    LegalContextItem:
+      type: object
+      required: [label, url]
+      properties:
+        label:
+          type: string
+          example: MMTIS Art. 4
+        url:
+          type: string
+          format: uri
+      additionalProperties: false
+    AnswerTrace:
+      type: object
+      required:
+        [requestId, questionEventId, retrievalEventIds, graphExpansionHops, graphConceptIds, graphEvidenceCount, graphScoreContribution, repositoryCoverageCount, conceptCoverageCount, semanticAlignmentScore]
+      properties:
+        requestId:
+          type: string
+        questionEventId:
+          type: string
+        matchedFaqEntryId:
+          type: [string, "null"]
+        retrievalEventIds:
+          type: array
+          items:
+            type: string
+        searchTranslation:
+          type: [string, "null"]
+          description: English rendering of a non-English question, also used for the search (and for parsing when the question as asked matched nothing); null for English questions.
+        evidenceLinkIds:
+          type: array
+          items:
+            type: string
+        provenanceIds:
+          type: array
+          items:
+            type: string
+        ruleHitsCount:
+          type: integer
+          minimum: 0
+        ruleConclusions:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        ontologyVersions:
+          type: array
+          items:
+            $ref: '#/components/schemas/OntologyVersionTrace'
+        graphExpansionHops:
+          type: integer
+          minimum: 0
+        graphConceptIds:
+          type: array
+          items:
+            type: string
+        graphEvidenceCount:
+          type: integer
+          minimum: 0
+        graphScoreContribution:
+          type: number
+          minimum: 0
+        repositoryCoverageCount:
+          type: integer
+          minimum: 0
+        conceptCoverageCount:
+          type: integer
+          minimum: 0
+        semanticAlignmentScore:
+          type: number
+          minimum: 0
+          maximum: 1
+        semanticQuery:
+          $ref: '#/components/schemas/SemanticQuery'
+        semanticDisambiguationRequired:
+          type: boolean
+        semanticDisambiguationPrompt:
+          type: [string, "null"]
+        semanticFallback:
+          type: [string, "null"]
+          enum: [NO_CONCEPT_MATCH, AMBIGUOUS_CORE_CONCEPT, PARTIAL_EVIDENCE, null]
+        semanticProvisional:
+          type: boolean
+        semanticProvisionalReason:
+          type: [string, "null"]
+          enum: [LOW_RETRIEVAL_CONFIDENCE, LIMITED_EVIDENCE_COVERAGE, CROSS_STANDARD_GAP, null]
+        evidenceCoverageLevel:
+          type: string
+          enum: [low, medium, high]
+        crossStandardConflict:
+          type: boolean
+        crossStandardConflictType:
+          type: [string, "null"]
+          enum: [NORMATIVE_STRENGTH_MISMATCH, EVIDENCE_COVERAGE_ASYMMETRY, null]
+        crossStandardEvidencePartitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CrossStandardEvidencePartition'
+        userLikes:
+          type: boolean
+        userDislikes:
+          type: boolean
+        answerSuccess:
+          type: [boolean, "null"]
+        citationClickCount:
+          type: integer
+          minimum: 0
+        exampleChunksAdded:
+          type: integer
+          minimum: 0
+        ontologyDefinitionsAdded:
+          type: integer
+          minimum: 0
+        llmRejectedAnswer:
+          type: [string, "null"]
+        llmRejectionReason:
+          type: [string, "null"]
+        presenceEvidence:
+          type: array
+          items:
+            type: string
+          description: >-
+            For a "does the standard have X?" question: the source paths of the evidence put first (the
+            Transmodel definition of X, stating which standards implement it, and the schema elements named
+            after X). Empty for other questions.
+        timingsMs:
+          type: object
+          description: >-
+            Where the answer's time went, in milliseconds: parseMs, retrievalMs and retrievalCalls (all retrieval
+            calls), llmMs, llmCalls and llmOutputTokens (all model calls; output tokens include thinking),
+            exampleMs (the example's lookup or generation) and totalMs. A key is missing when its step did not run.
+          additionalProperties:
+            type: [number, "null"]
+        retrievalLatencyMs:
+          type: number
+          description: The last retrieval call's own duration in milliseconds.
+        retrievalStageTimingsMs:
+          type: object
+          description: The last retrieval call's duration per stage, in milliseconds.
+          additionalProperties:
+            type: number
+        llmDroppedAnswer:
+          type: [string, "null"]
+          description: >-
+            Next to a block from the schema (an example or what an element contains): the answer text that
+            failed validation on both attempts and was left out, because it held a code block found neither in
+            the evidence nor in the shown example, or citations the policy does not allow (the block then stands
+            alone); null otherwise. Other text that failed validation is kept and marked by llmAnswerValidated.
+        llmAnswerRendering:
+          type: [object, "null"]
+          description: >-
+            For a question not in English (ANSWER_TRANSLATE_LAST_ENABLED): the answer was written and checked in
+            English and then translated into the question's language, with the citation marks put back by code.
+            language, attempts (1 or 2), problems (why an attempt was not used: its language, or pieces that did
+            not come back one for one), englishAnswer (the checked English text), served ("rendering", or
+            "english" when the language was wrong twice), pieces and piecesReturned, placedByParagraph (marks put
+            at the end of their paragraph), marksMovedFromMidSentence, and monitor (code spans, numbers, links
+            and quotes of the English answer that the translation lacks; for monitoring only). Null without a
+            rendering.
+          additionalProperties: true
+        llmSentenceCheck:
+          type: [object, "null"]
+          description: >-
+            The answer check by sentence (ANSWER_CHECK_BY_SENTENCE_ENABLED). drafts: one entry per draft (attempt,
+            citedSentences, kept, removed, wholeAnswerFailure, tooLittle); each removed sentence has its sentence,
+            reason, citations and passages (the chunk ids it was judged against). outcome: served, "served,
+            sentences removed", "rewrite", "rewrite with note", "first draft with note" or refused. Null when the
+            whole draft was checked as before.
+          additionalProperties: true
+        llmAnswerValidated:
+          type: [boolean, "null"]
+          description: >-
+            False when the answer text was served although its retry also failed validation (it is then
+            marked for review, its confidence capped at 0.80, and the page says it was not confirmed against
+            the sources; only with ANSWER_CHECK_BY_SENTENCE_ENABLED=False); null when no LLM answer was generated.
+            With the sentence check on, the served text always passed the check.
+        generatedExample:
+          oneOf:
+            - $ref: '#/components/schemas/GeneratedExample'
+            - type: "null"
+        schemaStructure:
+          oneOf:
+            - $ref: '#/components/schemas/SchemaStructure'
+            - type: "null"
+      additionalProperties: false
+    AnswerFeedbackRequest:
+      type: object
+      required: [requestId]
+      properties:
+        requestId:
+          type: string
+        userLikes:
+          type: boolean
+        userDislikes:
+          type: boolean
+        answerSuccess:
+          type: [boolean, "null"]
+        citationClicksDelta:
+          type: integer
+          minimum: 0
+          default: 0
+      additionalProperties: false
+    AnswerFeedbackResponse:
+      type: object
+      required: [requestId, questionEventId, userLikes, userDislikes, answerSuccess, citationClickCount]
+      properties:
+        requestId:
+          type: string
+        questionEventId:
+          type: string
+        userLikes:
+          type: boolean
+        userDislikes:
+          type: boolean
+        answerSuccess:
+          type: [boolean, "null"]
+        citationClickCount:
+          type: integer
+          minimum: 0
+      additionalProperties: false
+    AskedQuestionRow:
+      type: object
+      required: [question, askedAt, requestId, questionEventId, mode, confidence, reviewRequired]
+      properties:
+        question:
+          type: string
+        askedAt:
+          type: string
+          format: date-time
+        requestId:
+          type: string
+        questionEventId:
+          type: string
+        mode:
+          type: string
+          enum: [faq, rag, abstain]
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        reviewRequired:
+          type: boolean
+      additionalProperties: false
+    QuestionEventsResponse:
+      type: object
+      required: [page, pageSize, total, items]
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+        total:
+          type: integer
+          minimum: 0
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AskedQuestionRow'
+      additionalProperties: false
+    TrendingQuestionItem:
+      type: object
+      required: [question, answer, askedAt, requestId, questionEventId, mode, confidence]
+      properties:
+        question:
+          type: string
+        answer:
+          type: string
+        askedAt:
+          type: string
+          format: date-time
+        requestId:
+          type: string
+        questionEventId:
+          type: string
+        mode:
+          type: string
+          enum: [faq, rag, abstain]
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+      additionalProperties: false
+    TrendingQuestionsResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrendingQuestionItem'
+      additionalProperties: false
+    QuestionEventDetailResponse:
+      type: object
+      required: [questionEventId, requestId, question, answer, mode, confidence, citations, trace, createdAt]
+      properties:
+        questionEventId:
+          type: string
+        requestId:
+          type: string
+        question:
+          type: string
+        answer:
+          type: string
+        mode:
+          type: string
+          enum: [faq, rag, abstain]
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        citations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Citation'
+        legalContext:
+          type: array
+          description: >-
+            Provisions of the indexed EU acts that name a standard the answer is about (e.g. MMTIS Art. 4 for
+            NeTEx), as EUR-Lex links. Empty for refusals, answers about no named standard, and answers
+            already about legislation.
+          items:
+            $ref: '#/components/schemas/LegalContextItem'
+        generatedExample:
+          oneOf:
+            - $ref: '#/components/schemas/GeneratedExample'
+            - type: "null"
+        schemaStructure:
+          oneOf:
+            - $ref: '#/components/schemas/SchemaStructure'
+            - type: "null"
+        trace:
+          type: object
+          description: Same shape as AnswerTrace, persisted at answer time
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    SemanticQuery:
+      type: object
+      required:
+        [intent, normativity, coreConcept, coreConcepts, ambiguousCoreConcept, candidateStandards, originalTerms, confidence]
+      properties:
+        intent:
+          type: string
+        normativity:
+          type: string
+          enum: [mandatory, recommended, optional, unspecified]
+        coreConcept:
+          type: string
+        coreConcepts:
+          type: array
+          items:
+            type: string
+        ambiguousCoreConcept:
+          type: boolean
+        candidateStandards:
+          type: array
+          items:
+            type: string
+        originalTerms:
+          type: array
+          items:
+            type: string
+        confidence:
+          $ref: '#/components/schemas/SemanticQueryConfidence'
+      additionalProperties: false
+    SemanticQueryConfidence:
+      type: object
+      required: [intent, concept]
+      properties:
+        intent:
+          type: number
+          minimum: 0
+          maximum: 1
+        concept:
+          type: number
+          minimum: 0
+          maximum: 1
+      additionalProperties: false
+    CrossStandardEvidencePartition:
+      type: object
+      required: [standard, evidenceCount, avgScore, topSourcePaths, normativitySignals]
+      properties:
+        standard:
+          type: string
+        evidenceCount:
+          type: integer
+          minimum: 0
+        avgScore:
+          type: number
+          minimum: 0
+          maximum: 1
+        topSourcePaths:
+          type: array
+          items:
+            type: string
+        normativitySignals:
+          type: array
+          items:
+            type: string
+            enum: [mandatory, optional]
+      additionalProperties: false
+    OntologyVersionTrace:
+      type: object
+      required: [ontologyKey, version, graphUri, contentHash]
+      properties:
+        ontologyKey:
+          type: string
+        version:
+          type: string
+        graphUri:
+          type: string
+        contentHash:
+          type: string
+      additionalProperties: false
+    PromotionCandidatesResponse:
+      type: object
+      required: [windowDays, minCount, items]
+      properties:
+        windowDays:
+          type: integer
+        minCount:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromotionCandidate'
+      additionalProperties: false
+    PromotionCandidate:
+      type: object
+      required:
+        [questionEventId, normalizedIntent, questionCount, notHelpfulRate, lastAskedAt, recommendedAction]
+      properties:
+        questionEventId:
+          type: string
+        normalizedIntent:
+          type: string
+        questionCount:
+          type: integer
+        notHelpfulRate:
+          type: number
+          minimum: 0
+          maximum: 1
+        lastAskedAt:
+          type: string
+          format: date-time
+        recommendedAction:
+          type: string
+          enum: [CREATE_FAQ_DRAFT, REVIEW_EXISTING_FAQ, MONITOR]
+      additionalProperties: false
+    EditorialSemanticClustersResponse:
+      type: object
+      required:
+        [generatedAt, windowDays, minClusterSize, similarityThreshold, maxEvents, totalEvents, clusteredEvents, singletonEvents, clusters]
+      properties:
+        generatedAt:
+          type: string
+          format: date-time
+        windowDays:
+          type: integer
+        minClusterSize:
+          type: integer
+        similarityThreshold:
+          type: number
+          minimum: 0
+          maximum: 1
+        maxEvents:
+          type: integer
+        totalEvents:
+          type: integer
+          minimum: 0
+        clusteredEvents:
+          type: integer
+          minimum: 0
+        singletonEvents:
+          type: integer
+          minimum: 0
+        clusters:
+          type: array
+          items:
+            $ref: '#/components/schemas/EditorialSemanticCluster'
+      additionalProperties: false
+    EditorialSemanticCluster:
+      type: object
+      required:
+        [clusterId, labelHint, validationSignal, memberCount, averageSimilarity, latestAskedAt, questionEventIds, sampleQuestions, keywordAggregation, members]
+      properties:
+        clusterId:
+          type: string
+        labelHint:
+          type: string
+        validationSignal:
+          type: string
+          enum: [strong, medium, weak]
+        memberCount:
+          type: integer
+          minimum: 1
+        averageSimilarity:
+          type: number
+          minimum: 0
+          maximum: 1
+        latestAskedAt:
+          type: string
+          format: date-time
+        questionEventIds:
+          type: array
+          items:
+            type: string
+        sampleQuestions:
+          type: array
+          items:
+            type: string
+        keywordAggregation:
+          $ref: '#/components/schemas/KeywordAggregation'
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/EditorialSemanticClusterMember'
+      additionalProperties: false
+    KeywordAggregation:
+      type: object
+      required: [topKeywords, topBigrams, lexicalCohesion]
+      properties:
+        topKeywords:
+          type: array
+          items:
+            $ref: '#/components/schemas/KeywordCount'
+        topBigrams:
+          type: array
+          items:
+            $ref: '#/components/schemas/NgramCount'
+        lexicalCohesion:
+          type: number
+          minimum: 0
+          maximum: 1
+      additionalProperties: false
+    KeywordCount:
+      type: object
+      required: [token, count]
+      properties:
+        token:
+          type: string
+        count:
+          type: integer
+          minimum: 1
+      additionalProperties: false
+    NgramCount:
+      type: object
+      required: [ngram, count]
+      properties:
+        ngram:
+          type: string
+        count:
+          type: integer
+          minimum: 1
+      additionalProperties: false
+    EditorialSemanticClusterMember:
+      type: object
+      required: [questionEventId, question, askedAt, requestId, mode, reviewRequired, abstained]
+      properties:
+        questionEventId:
+          type: string
+        question:
+          type: string
+        askedAt:
+          type: string
+          format: date-time
+        requestId:
+          type: string
+        mode:
+          type: string
+          enum: [faq, rag, abstain]
+        reviewRequired:
+          type: boolean
+        abstained:
+          type: boolean
+      additionalProperties: false
+    EditorialQueueRequest:
+      type: object
+      required: [questionEventId, reason]
+      properties:
+        questionEventId:
+          type: string
+        reason:
+          type: string
+          enum: [LOW_CONFIDENCE, CITATION_GAP, POLICY_REVIEW, USER_ESCALATION]
+        priority:
+          type: string
+          enum: [low, normal, high]
+          default: normal
+      additionalProperties: false
+    EditorialQueueResponse:
+      type: object
+      required: [queued, queueItemId, status]
+      properties:
+        queued:
+          type: boolean
+        queueItemId:
+          type: string
+        status:
+          type: string
+          enum: [in_review, approved, rejected, revoked, published]
+      additionalProperties: false
+    EditorialQueueTransitionRequest:
+      type: object
+      required: [queueItemId, action]
+      properties:
+        queueItemId:
+          type: string
+          format: uuid
+        action:
+          type: string
+          enum: [approve, reject, publish, reopen, revoke]
+        comment:
+          type: string
+      additionalProperties: false
+    EditorialQueueTransitionResponse:
+      type: object
+      required: [queueItemId, status, transition]
+      properties:
+        queueItemId:
+          type: string
+        status:
+          type: string
+          enum: [in_review, approved, rejected, revoked, published]
+        transition:
+          $ref: '#/components/schemas/EditorialTransition'
+      additionalProperties: false
+    EditorialTransition:
+      type: object
+      required: [action, fromStatus, toStatus, actorId, actorRoles]
+      properties:
+        action:
+          type: string
+          enum: [approve, reject, publish, reopen, revoke]
+        fromStatus:
+          type: string
+          enum: [in_review, approved, rejected, revoked, published]
+        toStatus:
+          type: string
+          enum: [in_review, approved, rejected, revoked, published]
+        actorId:
+          type: string
+        actorRoles:
+          type: array
+          items:
+            type: string
+      additionalProperties: false
+    EditorialBoardResponse:
+      type: object
+      required: [page, pageSize, total, actorRoles, items]
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+        total:
+          type: integer
+          minimum: 0
+        actorRoles:
+          type: array
+          items:
+            type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EditorialBoardItem'
+      additionalProperties: false
+    EditorialBoardItem:
+      type: object
+      required:
+        [queueItemId, status, reason, priority, questionEventId, requestId, question, createdAt, updatedAt, allowedActions]
+      properties:
+        queueItemId:
+          type: string
+        status:
+          type: string
+          enum: [in_review, approved, rejected, revoked, published]
+        reason:
+          type: string
+          enum: [LOW_CONFIDENCE, CITATION_GAP, POLICY_REVIEW, USER_ESCALATION]
+        priority:
+          type: string
+          enum: [low, normal, high]
+        questionEventId:
+          type: string
+        requestId:
+          type: string
+        question:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        allowedActions:
+          type: array
+          items:
+            type: string
+            enum:
+              [submit_for_review, request_changes, approve, reject, publish, reopen]
+      additionalProperties: false
+    EditorialQueueMetricsResponse:
+      type: object
+      required:
+        [windowDays, slaHours, generatedAt, totalItems, unresolvedItems, overdueItems, byStatus, byPriority, byReason, agingBuckets, feedbackToday, feedbackWindow]
+      properties:
+        windowDays:
+          type: integer
+          minimum: 1
+        slaHours:
+          type: integer
+          minimum: 1
+        generatedAt:
+          type: string
+          format: date-time
+        totalItems:
+          type: integer
+          minimum: 0
+        unresolvedItems:
+          type: integer
+          minimum: 0
+        overdueItems:
+          type: integer
+          minimum: 0
+        byStatus:
+          type: object
+          required: [in_review, approved, rejected, revoked, published]
+          properties:
+            in_review:
+              type: integer
+              minimum: 0
+            approved:
+              type: integer
+              minimum: 0
+            rejected:
+              type: integer
+              minimum: 0
+            revoked:
+              type: integer
+              minimum: 0
+            published:
+              type: integer
+              minimum: 0
+          additionalProperties: false
+        byPriority:
+          type: object
+          required: [low, normal, high]
+          properties:
+            low:
+              type: integer
+              minimum: 0
+            normal:
+              type: integer
+              minimum: 0
+            high:
+              type: integer
+              minimum: 0
+          additionalProperties: false
+        byReason:
+          type: object
+          required: [LOW_CONFIDENCE, CITATION_GAP, POLICY_REVIEW, USER_ESCALATION]
+          properties:
+            LOW_CONFIDENCE:
+              type: integer
+              minimum: 0
+            CITATION_GAP:
+              type: integer
+              minimum: 0
+            POLICY_REVIEW:
+              type: integer
+              minimum: 0
+            USER_ESCALATION:
+              type: integer
+              minimum: 0
+          additionalProperties: false
+        agingBuckets:
+          type: object
+          required: [lt24h, h24to72, gt72h]
+          properties:
+            lt24h:
+              type: integer
+              minimum: 0
+            h24to72:
+              type: integer
+              minimum: 0
+            gt72h:
+              type: integer
+              minimum: 0
+          additionalProperties: false
+        feedbackToday:
+          type: object
+          required: [likes, dislikes, answerSuccess, citationClicks]
+          properties:
+            likes:
+              type: integer
+              minimum: 0
+            dislikes:
+              type: integer
+              minimum: 0
+            answerSuccess:
+              type: integer
+              minimum: 0
+            citationClicks:
+              type: integer
+              minimum: 0
+          additionalProperties: false
+        feedbackWindow:
+          type: object
+          required: [likes, dislikes, answerSuccess, citationClicks]
+          properties:
+            likes:
+              type: integer
+              minimum: 0
+            dislikes:
+              type: integer
+              minimum: 0
+            answerSuccess:
+              type: integer
+              minimum: 0
+            citationClicks:
+              type: integer
+              minimum: 0
+          additionalProperties: false
+      additionalProperties: false
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, requestId]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            requestId:
+              type: string
+          additionalProperties: false
+      additionalProperties: false
+    IndexRepositoryRequest:
+      type: object
+      required: [repoUrl, repoPath]
+      properties:
+        repoUrl:
+          type: string
+          format: uri
+          description: Approved repository URL (must be in ALLOWED_SOURCE_REPOSITORIES)
+        repoPath:
+          type: string
+          description: Absolute local filesystem path to an already-cloned repository
+        profile:
+          type: string
+          default: default
+          description: Index profile name (corresponds to index_profiles/<profile>.yaml)
+        incremental:
+          type: boolean
+          default: true
+          description: Skip files whose per-file content hash is unchanged
+        prune:
+          type: boolean
+          default: false
+          description: Delete chunks for files no longer present in the repository
+        includeIssues:
+          type: boolean
+          default: false
+          description: Fetch and index GitHub issues/comments in addition to repository files
+        autoAllowRepository:
+          type: boolean
+          default: true
+          description: Add unknown repository URL to in-process allow-list before indexing
+      additionalProperties: false
+    HarvestSourceRequest:
+      type: object
+      required: [source]
+      properties:
+        source:
+          type: string
+          description: Configured source name (see GET /api/v1/admin/sources)
+        full:
+          type: boolean
+          default: false
+          description: Re-index all files and reload the ontology even if unchanged
+      additionalProperties: false
+    HarvestSourceAccepted:
+      type: object
+      required: [requestId, jobId, source, state]
+      properties:
+        requestId:
+          type: string
+        jobId:
+          type: string
+        source:
+          type: string
+        state:
+          type: string
+          enum: [queued]
+    HarvestJobResponse:
+      type: object
+      required: [requestId, jobId, state, result, error]
+      properties:
+        requestId:
+          type: string
+        jobId:
+          type: string
+        state:
+          type: string
+          enum: [queued, running, finished, error]
+        result:
+          type: [object, "null"]
+          description: Refresh report, status ok|partial|failed|skipped with one result row per source
+          additionalProperties: true
+        error:
+          type: [string, "null"]
+    HarvestSource:
+      type: object
+      required: [name, repositoryUrl, profile, checkoutPresent, indexedChunks, indexedCommit, indexedAt, ontology]
+      properties:
+        name:
+          type: string
+        repositoryUrl:
+          type: string
+          format: uri
+        profile:
+          type: string
+        checkoutPresent:
+          type: boolean
+        indexedChunks:
+          type: integer
+          minimum: 0
+        indexedCommit:
+          type: [string, "null"]
+        indexedAt:
+          type: [string, "null"]
+          format: date-time
+        ontology:
+          type: [object, "null"]
+          properties:
+            key:
+              type: string
+            graphUri:
+              type: string
+              format: uri
+            version:
+              type: [string, "null"]
+            lastLoadedAt:
+              type: [string, "null"]
+              format: date-time
+    SourcesResponse:
+      type: object
+      required: [requestId, sources]
+      properties:
+        requestId:
+          type: string
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/HarvestSource'
+    EditorUser:
+      type: object
+      required: [id, githubLogin, name, avatarUrl, roles, isActive, signedInOnce, invitedBy, lastLoginAt, createdAt]
+      properties:
+        id:
+          type: integer
+        githubLogin:
+          type: string
+        name:
+          type: string
+        avatarUrl:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [editor, reviewer, publisher, admin]
+        isActive:
+          type: boolean
+        signedInOnce:
+          type: boolean
+        invitedBy:
+          type: string
+        lastLoginAt:
+          type: [string, "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+    EditorUserResponse:
+      type: object
+      required: [requestId, user]
+      properties:
+        requestId:
+          type: string
+        user:
+          $ref: '#/components/schemas/EditorUser'
+    AuthMe:
+      type: object
+      required: [subject, kind, roles, account, githubSignIn]
+      properties:
+        subject:
+          type: string
+        kind:
+          type: string
+          enum: [account, anonymous]
+        roles:
+          type: array
+          items:
+            type: string
+        account:
+          oneOf:
+            - $ref: '#/components/schemas/EditorUser'
+            - type: "null"
+        githubSignIn:
+          type: boolean
+    IndexRepositoryResponse:
+      type: object
+      required: [status, requestId, repositoryUrl, repositoryPath, profile, incremental, prune, autoAllowedRepository, scannedFiles, skippedFiles, createdChunks, updatedChunks, deletedChunks]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        requestId:
+          type: string
+        repositoryUrl:
+          type: string
+          format: uri
+        repositoryPath:
+          type: string
+        profile:
+          type: string
+        incremental:
+          type: boolean
+        prune:
+          type: boolean
+        autoAllowedRepository:
+          type: boolean
+        scannedFiles:
+          type: integer
+          minimum: 0
+        skippedFiles:
+          type: integer
+          minimum: 0
+        createdChunks:
+          type: integer
+          minimum: 0
+        updatedChunks:
+          type: integer
+          minimum: 0
+        deletedChunks:
+          type: integer
+          minimum: 0
+      additionalProperties: false

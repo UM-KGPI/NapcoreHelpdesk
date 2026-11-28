@@ -1,0 +1,453 @@
+"""
+Retrieve XML example files linked to schema concepts via semantic relationships.
+
+Uses skos:seeAlso triples in GraphDB examples graph to find relevant examples
+for modeling and implementation questions.
+
+Created: 2026-07-01
+"""
+
+from __future__ import annotations
+
+import logging
+import re
+from typing import Optional
+from urllib.parse import unquote
+
+logger = logging.getLogger(__name__)
+
+
+def retrieve_concept_examples(
+    concept_ids: set[str],
+    endpoint: str,
+    repository: str,
+    timeout_seconds: int = 3,
+    username: str = "",
+    password: str = "",
+) -> list[dict]:
+    """Retrieve example files linked to concepts via skos:isRelatedTo.
+
+    Examples are stored in centralized examples.ttl using skos:isRelatedTo
+    triples that link example files to domain concepts.
+
+    Args:
+        concept_ids: Set of concept URIs (e.g., {"netex:TemplateServiceJourney"})
+        endpoint: GraphDB SPARQL endpoint URL
+        repository: Repository name
+        timeout_seconds: Query timeout
+        username: GraphDB username
+        password: GraphDB password
+
+    Returns:
+        List of example metadata dicts with file paths and descriptions
+    """
+    if not concept_ids:
+        return []
+
+    try:
+        from helpdesk.services.graphdb_client import execute_sparql_query
+
+        # Build SPARQL query for examples linked to concepts
+        concept_uris = " ".join(
+            [f"<{_ensure_uri(cid)}>" for cid in sorted(concept_ids)]
+        )
+
+        sparql_query = f"""
+        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX dct: <http://purl.org/dc/terms/>
+
+        SELECT ?concept ?example ?label ?source
+        WHERE {{
+          VALUES ?concept {{ {concept_uris} }}
+          ?example skos:isRelatedTo ?concept .
+          ?example rdfs:label ?label ;
+                   dct:source ?source .
+        }}
+        ORDER BY ?concept ?example
+        LIMIT 20
+        """
+
+        results = execute_sparql_query(
+            sparql_query=sparql_query,
+            endpoint=endpoint,
+            repository=repository,
+            timeout_seconds=timeout_seconds,
+            username=username,
+            password=password,
+        )
+
+        if not results:
+            return []
+
+        examples = []
+        for binding in results.get("results", {}).get("bindings", []):
+            example_iri = binding.get("example", {}).get("value", "")
+            source_path = binding.get("source", {}).get("value", "")
+
+            # URL-decode the source path back to original file path
+            decoded_path = unquote(source_path) if source_path else ""
+
+            examples.append(
+                {
+                    "iri": example_iri,
+                    "file_path": decoded_path,
+                    "concept": binding.get("concept", {}).get("value", ""),
+                    "type": "xml-example",
+                    "source": f"examples/{decoded_path}" if decoded_path else "",
+                    "match_type": "exact",
+                    "similarity_reason": "Direct link to requested concept",
+                }
+            )
+
+        logger.debug(f"Retrieved {len(examples)} examples for {len(concept_ids)} concepts")
+        return examples
+
+    except Exception as e:
+        logger.warning(f"Failed to retrieve examples: {e}")
+        return []
+
+
+def retrieve_concept_examples_with_fallback(
+    concept_ids: set[str],
+    requested_mode: Optional[str] = None,
+    endpoint: str = "",
+    repository: str = "",
+    timeout_seconds: int = 3,
+    username: str = "",
+    password: str = "",
+) -> list[dict]:
+    """Retrieve examples with smart fallback using semantic reasoning.
+
+    Uses ontology hierarchy to suggest adaptable examples when exact matches
+    don't exist. Ranks by semantic proximity to requested transport mode.
+
+    Args:
+        concept_ids: Set of concept URIs (e.g., {"netex:TemplateServiceJourney"})
+        requested_mode: Optional transport mode ("ferry", "bus", "rail", etc.)
+        endpoint: GraphDB SPARQL endpoint URL
+        repository: Repository name
+        timeout_seconds: Query timeout
+        username: GraphDB username
+        password: GraphDB password
+
+    Returns:
+        List of example metadata dicts ranked by relevance (exact > semantic > adaptable)
+    """
+    if not concept_ids:
+        return []
+
+    try:
+        from helpdesk.services.graphdb_client import execute_sparql_query
+
+        # First try: exact examples for requested mode
+        exact_examples = retrieve_concept_examples(
+            concept_ids, endpoint, repository, timeout_seconds, username, password
+        )
+        if exact_examples:
+            return exact_examples
+
+        # No exact matches - use semantic reasoning for fallback.
+        # SPARQL has no CASE expression (that is SQL): GraphDB answered HTTP 400 to every call of this query
+        # until the ORDER BY below was written with IF.
+        concept_uris = " ".join(
+            [f"<{_ensure_uri(cid)}>" for cid in sorted(concept_ids)]
+        )
+
+        # Build mode-agnostic SPARQL query with template-to-concrete inference
+        # All transport modes are semantically equivalent for NeTEx structural concepts
+        # Examples from any mode (bus, ferry, rail) are directly applicable to any other mode
+        # Additionally: examples of concrete types (ServiceJourney) also demonstrate templates (TemplateServiceJourney)
+        sparql_query = f"""
+        PREFIX netex: <https://netex.org.uk/netex/2.0#>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+        PREFIX dct: <http://purl.org/dc/terms/>
+
+        SELECT ?example ?concept ?label ?source ?matchType ?reason
+        WHERE {{
+          VALUES ?requestConcept {{ {concept_uris} }}
+
+          # Tier 1: Direct examples linked to requested concept via skos:isRelatedTo
+          # Examples are centralized in examples.ttl with skos:isRelatedTo relationships
+          {{
+            ?example skos:isRelatedTo ?requestConcept .
+            BIND("direct_example" AS ?matchType)
+            BIND("Example file linked to requested concept" AS ?reason)
+            BIND(?requestConcept AS ?concept)
+          }}
+
+          # Tier 2: Examples of concrete implementations that demonstrate the template
+          # e.g., ServiceJourney examples also demonstrate TemplateServiceJourney
+          UNION {{
+            ?example skos:isRelatedTo ?concrete .
+            {{
+              VALUES (?template ?concrete) {{
+                (netex:TemplateServiceJourney netex:ServiceJourney)
+                (netex:TemplateServiceJourney netex:DatedServiceJourney)
+                (netex:TemplateServiceJourney netex:JourneyPattern)
+                (netex:TemplateServiceJourney netex:ServiceJourneyPattern)
+              }}
+            }}
+            FILTER(?requestConcept = ?template)
+            BIND("template_realization" AS ?matchType)
+            BIND(CONCAT("Example of ", STRAFTER(STR(?concrete), "#"), " demonstrates the TemplateServiceJourney pattern") AS ?reason)
+            BIND(?template AS ?concept)
+          }}
+
+          ?example rdfs:label ?label ;
+                   dct:source ?source .
+        }}
+        ORDER BY
+          IF(?matchType = "direct_example", 1, IF(?matchType = "template_realization", 2, 3))
+          ?concept ?example
+        LIMIT 20
+        """
+
+        results = execute_sparql_query(
+            sparql_query=sparql_query,
+            endpoint=endpoint,
+            repository=repository,
+            timeout_seconds=timeout_seconds,
+            username=username,
+            password=password,
+        )
+
+        if not results:
+            logger.debug(f"No fallback examples found for {len(concept_ids)} concepts")
+            return []
+
+        examples = []
+        seen = set()
+        for binding in results.get("results", {}).get("bindings", []):
+            example_iri = binding.get("example", {}).get("value", "")
+            if example_iri in seen:
+                continue
+            seen.add(example_iri)
+
+            source_path = binding.get("source", {}).get("value", "")
+            decoded_path = unquote(source_path) if source_path else ""
+
+            match_type = binding.get("matchType", {}).get("value", "adaptable_class")
+            reason = binding.get("reason", {}).get("value", "Semantic fallback match")
+
+            examples.append(
+                {
+                    "iri": example_iri,
+                    "file_path": decoded_path,
+                    "concept": binding.get("concept", {}).get("value", ""),
+                    "type": "xml-example",
+                    "source": f"examples/{decoded_path}" if decoded_path else "",
+                    "match_type": match_type,
+                    "similarity_reason": reason,
+                }
+            )
+
+        logger.debug(
+            f"Retrieved {len(examples)} fallback examples for {len(concept_ids)} concepts "
+            f"(requested mode: {requested_mode})"
+        )
+        return examples
+
+    except Exception as e:
+        logger.warning(f"Failed to retrieve fallback examples: {e}")
+        return []
+
+
+
+EXCERPT_CHARS = 2000
+
+
+def concept_excerpt(content: str, element: str, max_chars: int = EXCERPT_CHARS) -> str:
+    """The part of an example file that shows `element`, not just the file head.
+
+    NeTEx examples open with a long PublicationDelivery header and frames: in the
+    TemplateServiceJourney examples the element first appears 3,000 to 6,700
+    characters in, so the first 2,000 characters never contain it. Start a little
+    before the first <element ...> instead; fall back to the head when absent.
+    """
+    if len(content) <= max_chars:
+        return content
+    match = re.search(rf"<{re.escape(element)}[\s>/]", content) if element else None
+    if not match:
+        return content[:max_chars]
+    start = content.rfind("\n", 0, max(0, match.start() - max_chars // 5)) + 1
+    return content[start : start + max_chars]
+
+
+def format_examples_as_chunks(examples: list[dict], commit_sha: str = "") -> list[dict]:
+    """Convert example metadata to chunk format for LLM context.
+
+    Each chunk represents one example file with metadata for attribution.
+    Includes match type and mode-agnostic reasoning for cross-mode examples.
+    Attempts to load actual XML content to provide concrete evidence. `commit_sha` is the commit the
+    example repository was indexed at, when known; without it the chunk carries an empty commit.
+    """
+    chunks = []
+    for example in examples:
+        match_type = example.get("match_type", "exact")
+        similarity_reason = example.get("similarity_reason", "Direct match")
+
+        # Quality scores: examples of requested concepts should rank highly
+        # Direct examples get maximum score since they're explicitly linked to concepts
+        if match_type in ("direct_example", "mode_agnostic", "applicable", "exact"):
+            quality_score = 0.95  # Maximum quality for directly linked examples
+        elif match_type == "template_realization":
+            quality_score = 0.90  # High quality for template demonstrations
+        else:
+            quality_score = 0.85  # Good quality for other semantic matches
+
+        # Include match context in text for LLM understanding
+        match_context = f"[{match_type.upper()}] {similarity_reason}\n" if match_type not in ("exact", "applicable", "direct_example") else ""
+
+        chunk_id_str = f"example-{example['iri'].replace('/', '-')[-32:]}"
+        chunk_id_int = hash(chunk_id_str) % (10 ** 8)
+
+        # Try to load actual XML content
+        file_content = _load_example_file_content(example["file_path"])
+        element = re.split(r"[#/:]", example.get("concept", ""))[-1]
+
+        # Build chunk text with actual content if available, fallback to metadata
+        if file_content:
+            chunk_text = (
+                f"{match_context}"
+                f"Example XML file: {example['file_path']}\n"
+                f"Related concept: {example['concept']}\n\n"
+                f"Content excerpt:\n{concept_excerpt(file_content, element)}"
+            )
+        else:
+            chunk_text = (
+                f"{match_context}"
+                f"XML example file: {example['file_path']}\n"
+                f"Related concept: {example['concept']}"
+            )
+
+        chunk = {
+            "id": chunk_id_int,
+            "chunkId": chunk_id_str,
+            "chunk_id": chunk_id_str,
+            "retrievalEventId": f"example-{chunk_id_int}",
+            "source_path": example["file_path"],
+            "label": f"Example: {example['file_path'].split('/')[-1]}",
+            "text": chunk_text,
+            "doc_type": "xml-example",
+            "quality_score": quality_score,
+            "standards_scope": _extract_standard_from_concept(example["concept"]),
+            "match_type": match_type,
+            "similarity_reason": similarity_reason,
+            "repository_url": "https://github.com/TransmodelEcosystem/NeTEx",
+            "commit_sha": commit_sha or "",
+            "embedding_vector": None,  # Will be computed on-demand during ranking
+            "heading": "",
+        }
+        chunks.append(chunk)
+
+    return chunks
+
+
+def _load_example_file_content(file_path: str) -> str:
+    """Load and extract text content from example XML files.
+
+    Attempts to load from known repository locations. File paths are stored as
+    relative paths (e.g., "examples/ActualServiceDimensions.xml") but the source
+    standard (NeTEx, OpRa, SIRI) isn't recorded, so we try all repositories.
+
+    Returns the file's text (callers cut an excerpt), or empty string if not found.
+
+    Args:
+        file_path: Relative path like "examples/path/to/file.xml"
+
+    Returns:
+        Full text of the XML file, or empty string if not found
+    """
+    if not file_path:
+        return ""
+
+    try:
+        from pathlib import Path
+        from django.conf import settings
+
+        # Get repository paths from environment or use defaults
+        netex_root = getattr(settings, "NETEX_REPO_PATH", "/workspace/NeTEx")
+        opra_root = getattr(settings, "OPRA_REPO_PATH", "/workspace/OpRa")
+        siri_root = getattr(settings, "SIRI_REPO_PATH", "/workspace/SIRI")
+
+        # Try each standard repository
+        # Examples can come from any standard, so we check all
+        possible_roots = [
+            Path(netex_root),
+            Path(opra_root),
+            Path(siri_root),
+            # Host development paths
+            Path("/Users/andrejt/Research/repositories/git/NeTEx"),
+            Path("/Users/andrejt/Research/repositories/git/OpRa"),
+            Path("/Users/andrejt/Research/repositories/git/SIRI"),
+        ]
+
+        # Try direct path first
+        for root in possible_roots:
+            full_path = root / file_path
+            if full_path.exists() and full_path.is_file():
+                try:
+                    with open(full_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        return f.read()
+                except Exception:
+                    continue
+
+        # Try searching by filename if direct path failed
+        # (e.g., "examples/ActualServiceDimensions.xml" -> "ActualServiceDimensions.xml")
+        if "/" in file_path:
+            filename = Path(file_path).name
+            for root in possible_roots:
+                # Search root/examples/ directory for the filename
+                examples_dir = root / "examples"
+                if examples_dir.exists():
+                    for found_file in examples_dir.rglob(filename):
+                        if found_file.is_file():
+                            try:
+                                with open(found_file, 'r', encoding='utf-8', errors='ignore') as f:
+                                    return f.read()
+                            except Exception:
+                                continue
+
+        logger.debug(f"Example file not found: {file_path}")
+        return ""
+
+    except Exception as e:
+        logger.debug(f"Failed to load example file {file_path}: {e}")
+        return ""
+
+
+def _ensure_uri(concept_id: str) -> str:
+    """Ensure concept_id is a full URI."""
+    if concept_id.startswith("http"):
+        return concept_id
+    # Map common prefixes to URIs
+    prefix_map = {
+        "netex": "https://netex.org.uk/netex/2.0#",
+        "opra": "https://transmodel-cen.eu/opra/1.0#",
+        "siri": "https://siri.org.uk/siri/1.3#",
+        "transmodel": "https://transmodel-cen.eu/6.2/",
+    }
+    for prefix, namespace in prefix_map.items():
+        if concept_id.startswith(f"{prefix}:"):
+            local_name = concept_id.split(":", 1)[1]
+            return f"{namespace}{local_name}"
+    return concept_id
+
+
+def _extract_standard_from_concept(concept_uri: str) -> list[str]:
+    """Extract standard name from concept URI."""
+    if not concept_uri:
+        return []
+
+    if "netex.org.uk" in concept_uri:
+        return ["NeTEx"]
+    elif "opra" in concept_uri.lower():
+        return ["OpRa"]
+    elif "siri" in concept_uri.lower():
+        return ["SIRI"]
+    elif "transmodel" in concept_uri.lower():
+        return ["Transmodel"]
+
+    return []

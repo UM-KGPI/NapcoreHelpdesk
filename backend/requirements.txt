@@ -1,0 +1,27 @@
+Django>=5.0,<6.0
+djangorestframework>=3.15,<4.0
+django-cors-headers>=4.3,<5.0
+psycopg[binary]>=3.2,<4.0
+pgvector>=0.3,<1.0
+django-environ>=0.11,<1.0
+celery>=5.4,<6.0
+# kombu 5.7 needs redis-py>=6.4 and stops the worker with VersionMismatch on redis 5.x;
+# keep the pair together (prod outage 2026-11-03 after an unpinned rebuild).
+kombu>=5.6,<5.7
+redis>=5.0,<6.0
+PyJWT>=2.8,<3.0
+# Claude provider (LLM_PROVIDER=anthropic, helpdesk/services/anthropic_chat.py).
+anthropic>=2.4,<3.0
+# napcore.eu deliverables as text (index_napcore_site --fetch, helpdesk/services/napcore_site.py).
+pypdf>=6.21,<7.0
+jsonschema>=4.22,<5.0
+PyYAML>=6.0,<7.0
+certifi>=2024.8.30,<2027.0.0
+langdetect>=1.0.9,<2.0
+# Semantic embeddings (embedding service only; see helpdesk/embedding_service.py).
+fastembed>=0.9.1,<0.10
+# NeTEx XSD validation of generated example fragments (helpdesk/services/netex_example_generator.py).
+lxml>=6.0,<7.0
+# Triple counts in the plan of load_graphdb_ontologies (helpdesk/management/commands/load_graphdb_ontologies.py);
+# also the offline ontology generators. Needs pyparsing only on Python 3.11 and later.
+rdflib>=7.6,<8.0

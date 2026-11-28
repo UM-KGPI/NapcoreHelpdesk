@@ -1,0 +1,56 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv
+venv
+
+# Local environment files
+.env
+.env.*
+!.env.*.example
+
+# Django / local DB
+backend/celerybeat-schedule
+
+# Local backup artifacts
+.backups/
+.mylocal/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+
+
+# Docs symlinks / local-only testing output
+docs/testing
+
+# Docs symlinks / local-only testing output (root-level variants)
+/ontology/
+repos/
+
+# Local helper scripts (tracked ones stay tracked)
+scripts/
+
+# Secrets (license files, credentials - never commit)
+secrets/
+graphdb.license
+.git-credentials
+
+# Maintenance-mode flag (the production deploy script); the directory itself is tracked
+/maintenance/*
+!/maintenance/README
+
+# Transmodel EA HTML export, cloned by the production deploy script from its own repository (issue #151)
+/transmodel-html/

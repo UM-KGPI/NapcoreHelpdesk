@@ -1,0 +1,430 @@
+/**
+ * End-user Q&A chat interface with streaming answer display.
+ *
+ * Presents a conversational turn list and pipes SSE token deltas from the
+ * streaming endpoint into the active assistant message in real time.
+ * useLayoutEffect is used (not useEffect) for scroll-to-bottom to avoid a
+ * visible layout flash after each token appended to the message.
+ *
+ * Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+ * Created: 2026-03-29  |  Modified: 2026-11-06
+ */
+
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { FormEvent } from "react";
+
+import type { AnswerResponse } from "../types";
+import { citationDisplayName, citationMarker, groupCitationsBySource } from "../citationLabels";
+import GeneratedExampleBlock from "./GeneratedExample";
+import AnswerBody from "./AnswerBody";
+import { blockText, copiedAnswerText } from "./answerText";
+import LegalContext from "./LegalContext";
+import InspiredByOthersPanel from "./InspiredByOthersPanel";
+
+// Most answers take 7-15 s. Past this, say that it is slow, so a long wait doesn't look like a hang.
+export const SLOW_ANSWER_MS = 20_000;
+
+export interface ChatTurn {
+  id: string;
+  role: "user" | "assistant";
+  text: string;
+  createdAt: string;
+  answer?: AnswerResponse;
+  requestId?: string;
+}
+
+interface UserChatWorkspaceProps {
+  chatPrompt: string;
+  chatTurns: ChatTurn[];
+  token: string;
+  busy: boolean;
+  apiBaseUrl: string;
+  setChatPrompt: (value: string) => void;
+  onSendChat: (event: FormEvent<HTMLFormElement>) => Promise<void>;
+  onSetAnswerFeedback: (
+    requestId: string,
+    payload: {
+      userLikes?: boolean;
+      userDislikes?: boolean;
+      answerSuccess?: boolean | null;
+      citationClicksDelta?: number;
+    }
+  ) => Promise<void>;
+  onLoadHistoricalQuestion: (requestId: string) => void;
+}
+
+// Export chat to a Markdown text file: hidden for now (copy answer covers the single answer); the
+// code stays for later use. Set to true to show the 💾 button again.
+const SHOW_EXPORT_CHAT = false;
+
+export default function UserChatWorkspace(props: UserChatWorkspaceProps) {
+  const {
+    chatPrompt,
+    chatTurns,
+    token,
+    busy,
+    apiBaseUrl,
+    setChatPrompt,
+    onSendChat,
+    onSetAnswerFeedback,
+    onLoadHistoricalQuestion,
+  } = props;
+
+  const latestUserTurnId = [...chatTurns].reverse().find((turn) => turn.role === "user")?.id;
+  const chatLogRef = useRef<HTMLDivElement | null>(null);
+  const latestUserTurnRef = useRef<HTMLElement | null>(null);
+  const [feedbackPendingByRequestId, setFeedbackPendingByRequestId] = useState<Record<string, boolean>>({});
+  const [answerIsSlow, setAnswerIsSlow] = useState(false);
+
+  useEffect(() => {
+    setAnswerIsSlow(false);
+    if (!busy) return;
+    const timer = setTimeout(() => setAnswerIsSlow(true), SLOW_ANSWER_MS);
+    return () => clearTimeout(timer);
+  }, [busy]);
+
+  const buildAnswerWithEvidenceText = (turn: ChatTurn): string => copiedAnswerText(turn.text, turn.answer);
+
+  const copyAnswerToClipboard = async (turn: ChatTurn) => {
+    const text = buildAnswerWithEvidenceText(turn);
+    if (!text) {
+      return;
+    }
+
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+
+    const temp = document.createElement("textarea");
+    temp.value = text;
+    temp.setAttribute("readonly", "true");
+    temp.style.position = "absolute";
+    temp.style.left = "-9999px";
+    document.body.appendChild(temp);
+    temp.select();
+    document.execCommand("copy");
+    document.body.removeChild(temp);
+  };
+
+  const copyDeepLinkToClipboard = async (turn: ChatTurn) => {
+    const questionId = turn.requestId ?? turn.answer?.trace.requestId;
+    if (!questionId) {
+      return;
+    }
+
+    const baseUrl = window.location.origin;
+    const deepLink = `${baseUrl}/napcore-helpdesk/question?questionId=${questionId}`;
+
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(deepLink);
+      return;
+    }
+
+    const temp = document.createElement("textarea");
+    temp.value = deepLink;
+    temp.setAttribute("readonly", "true");
+    temp.style.position = "absolute";
+    temp.style.left = "-9999px";
+    document.body.appendChild(temp);
+    temp.select();
+    document.execCommand("copy");
+    document.body.removeChild(temp);
+  };
+
+  const exportChatAsTextMarkdown = () => {
+    const lines: string[] = [];
+    lines.push("# NAPCORE Helpdesk Chat Export");
+    lines.push("");
+    lines.push(`Generated: ${new Date().toISOString()}`);
+    lines.push("");
+
+    for (const turn of chatTurns) {
+      lines.push(`## ${turn.role === "assistant" ? "Assistant" : "User"}`);
+      lines.push(`Timestamp: ${turn.createdAt}`);
+      lines.push("");
+      const exampleText = turn.role === "assistant" ? blockText(turn.answer?.generatedExample, turn.answer?.schemaStructure) : "";
+      if (exampleText) {
+        lines.push(exampleText);
+        if (turn.text.trim()) {
+          lines.push("");
+        }
+      }
+      lines.push(turn.text || "");
+      if (turn.answer && turn.answer.citations.length > 0) {
+        lines.push("");
+        lines.push("### Evidence list");
+        turn.answer.citations.forEach((citation, index) => {
+          lines.push(
+            `- ${citationMarker(citation, index)} ${citationDisplayName(citation)} | ${citation.sourcePath} | ${citation.repositoryUrl}`
+          );
+        });
+      }
+      if (turn.answer && (turn.answer.legalContext ?? []).length > 0) {
+        lines.push("");
+        lines.push("### Legal context");
+        (turn.answer.legalContext ?? []).forEach((item) => lines.push(`- ${item.label} | ${item.url}`));
+      }
+      if (turn.answer) {
+        const feedbackLike = turn.answer.trace.userLikes ?? false;
+        const feedbackDislike = turn.answer.trace.userDislikes ?? false;
+        lines.push("");
+        lines.push(
+          `Trace: requestId=${turn.requestId ?? turn.answer.trace.requestId}; mode=${turn.answer.mode}; confidence=${turn.answer.confidence.toFixed(2)}; userLikes=${String(feedbackLike)}; userDislikes=${String(feedbackDislike)}; answerSuccess=${String(turn.answer.trace.answerSuccess ?? null)}; citationClickCount=${String(turn.answer.trace.citationClickCount ?? 0)}`
+        );
+      }
+      lines.push("");
+    }
+
+    const fileText = lines.join("\n");
+    const blob = new Blob([fileText], { type: "text/plain;charset=utf-8" });
+    const link = document.createElement("a");
+    const exportId = "chat";
+    link.href = URL.createObjectURL(blob);
+    link.download = `${exportId}-${Date.now()}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  };
+
+  const setFeedback = async (
+    requestId: string,
+    payload: {
+      userLikes?: boolean;
+      userDislikes?: boolean;
+      answerSuccess?: boolean | null;
+      citationClicksDelta?: number;
+    }
+  ) => {
+    setFeedbackPendingByRequestId((prev) => ({ ...prev, [requestId]: true }));
+    try {
+      await onSetAnswerFeedback(requestId, payload);
+    } finally {
+      setFeedbackPendingByRequestId((prev) => {
+        const next = { ...prev };
+        delete next[requestId];
+        return next;
+      });
+    }
+  };
+
+  const alignLatestUserBubbleToTop = () => {
+    if (!latestUserTurnRef.current || !chatLogRef.current) {
+      return;
+    }
+
+    const chatLog = chatLogRef.current;
+    const latestUserTurn = latestUserTurnRef.current;
+    const containerRect = chatLog.getBoundingClientRect();
+    const bubbleRect = latestUserTurn.getBoundingClientRect();
+    const delta = bubbleRect.top - containerRect.top;
+    chatLog.scrollTop = Math.max(0, chatLog.scrollTop + delta - 8);
+  };
+
+  useLayoutEffect(() => {
+    if (!latestUserTurnRef.current || !chatLogRef.current) {
+      return;
+    }
+
+    alignLatestUserBubbleToTop();
+    const frameId = window.requestAnimationFrame(alignLatestUserBubbleToTop);
+    return () => window.cancelAnimationFrame(frameId);
+  }, [latestUserTurnId, chatTurns.length]);
+
+  return (
+    <section className="panel chat-panel user-workspace">
+
+        <details className="getting-started-inline collapsible-panel">
+          <summary className="collapsible-summary getting-started-summary">
+            <span>📖 Getting Started</span>
+          </summary>
+          <div className="collapsible-body welcome-grid">
+            <div>
+              <strong>1. Ask plainly</strong>
+              <p className="muted">Type the standards question in your own words. The assistant grounds the answer in indexed source material.</p>
+            </div>
+            <div>
+              <strong>2. Review answer</strong>
+              <p className="muted">Check the returned answer and references, and inspect the overall quality of the response.</p>
+            </div>
+            <div>
+              <strong>3. Follow up</strong>
+              <p className="muted">Ask further questions in the same session; each question is answered independently, the assistant does not retain prior turns as context.</p>
+            </div>
+          </div>
+        </details>
+
+        <InspiredByOthersPanel
+          token={token}
+          apiBaseUrl={apiBaseUrl}
+          onLoadQuestion={onLoadHistoricalQuestion}
+        />
+
+        <div
+          className={`chat-log ${chatTurns.length === 0 ? "chat-log-empty" : ""}`}
+          aria-live="polite"
+          ref={chatLogRef}
+        >
+          {chatTurns.map((turn) => (
+            <article
+              key={turn.id}
+              ref={turn.id === latestUserTurnId ? latestUserTurnRef : undefined}
+              className={`chat-bubble ${turn.role === "user" ? "chat-user" : "chat-assistant"}`}
+            >
+              <p className="chat-role">{turn.role}</p>
+              {turn.role === "assistant" ? (
+                <AnswerBody
+                  text={turn.text}
+                  example={turn.answer?.generatedExample}
+                  structure={turn.answer?.schemaStructure}
+                  unvalidated={turn.answer?.trace?.llmAnswerValidated === false}
+                />
+              ) : (
+                <p>{turn.text}</p>
+              )}
+              {turn.answer && (
+                <>
+                  <div className="chat-answer-actions" role="group" aria-label="Answer actions">
+                    <div className="chat-answer-actions-feedback">
+                      <button
+                        type="button"
+                        className={`chat-icon-button ${(turn.answer.trace.userLikes ?? false) ? "chat-icon-button-active" : ""}`}
+                        onClick={() => {
+                          const requestId = turn.requestId ?? turn.answer?.trace.requestId;
+                          if (!requestId) {
+                            return;
+                          }
+                          const currentLike = turn.answer?.trace.userLikes ?? false;
+                          void setFeedback(requestId, { userLikes: !currentLike, userDislikes: false, answerSuccess: currentLike ? null : true });
+                        }}
+                        disabled={feedbackPendingByRequestId[turn.requestId ?? turn.answer.trace.requestId] === true}
+                        title="Good answer"
+                        aria-label="Good answer"
+                      >
+                        👍
+                      </button>
+                      <button
+                        type="button"
+                        className={`chat-icon-button ${(turn.answer.trace.userDislikes ?? false) ? "chat-icon-button-active" : ""}`}
+                        onClick={() => {
+                          const requestId = turn.requestId ?? turn.answer?.trace.requestId;
+                          if (!requestId) {
+                            return;
+                          }
+                          const currentDislike = turn.answer?.trace.userDislikes ?? false;
+                          void setFeedback(requestId, { userLikes: false, userDislikes: !currentDislike, answerSuccess: currentDislike ? null : false });
+                        }}
+                        disabled={feedbackPendingByRequestId[turn.requestId ?? turn.answer.trace.requestId] === true}
+                        title="Answer could be better"
+                        aria-label="Answer could be better"
+                      >
+                        👎
+                      </button>
+                    </div>
+                    <div className="chat-answer-actions-tools">
+                      <button
+                        type="button"
+                        className="chat-icon-button"
+                        onClick={() => {
+                          void copyAnswerToClipboard(turn);
+                        }}
+                        title="Copy answer to clipboard"
+                        aria-label="Copy answer to clipboard"
+                      >
+                        📋
+                      </button>
+                      {SHOW_EXPORT_CHAT && (<button
+                          type="button"
+                          className="chat-icon-button"
+                          onClick={exportChatAsTextMarkdown}
+                          title="Export chat to Markdown text file"
+                          aria-label="Export chat to Markdown text file"
+                        >
+                          💾
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="chat-icon-button"
+                        onClick={() => {
+                          void copyDeepLinkToClipboard(turn);
+                        }}
+                        title="Copy deep link to share this Q&A"
+                        aria-label="Copy deep link to share this Q&A"
+                      >
+                        🔗
+                      </button>
+                    </div>
+                  </div>
+                  {turn.answer.citations.length > 0 && (
+                    <>
+                      <p className="tiny"><strong>Evidence list</strong></p>
+                      <ul>
+                        {groupCitationsBySource(turn.answer.citations).map((group) => (
+                          <li key={`${turn.id}-${group.primary.chunkId}`}>
+                            <strong>{group.markers.join(" ")}</strong>{" "}
+                            <a
+                              href={group.primary.repositoryUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={() => {
+                                const requestId = turn.requestId ?? turn.answer?.trace.requestId;
+                                if (!requestId) {
+                                  return;
+                                }
+                                void onSetAnswerFeedback(requestId, { citationClicksDelta: 1 });
+                              }}
+                            >
+                              {citationDisplayName(group.primary)}
+                            </a>
+                            {!group.primary.title && citationDisplayName(group.primary) !== group.primary.sourcePath && (
+                              <span className="muted"> · {group.primary.sourcePath}</span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                  {!turn.answer.generatedExample?.valid && <GeneratedExampleBlock example={turn.answer.generatedExample} />}
+                  <LegalContext items={turn.answer.legalContext} />
+                </>
+              )}
+            </article>
+          ))}
+        </div>
+
+        <form onSubmit={onSendChat} className="stack">
+          <textarea
+            value={chatPrompt}
+            onChange={(event) => setChatPrompt(event.target.value)}
+            rows={3}
+            placeholder={
+              chatTurns.length === 0
+                ? "Ask a question here, e.g. How is a journey departure time represented in NeTEx XML?"
+                : "Ask a question here"
+            }
+            required
+            aria-label="Question input"
+          />
+
+          <div className="chat-actions">
+            <button type="submit" disabled={busy || !token || !chatPrompt.trim()}>Send</button>
+          </div>
+
+          {busy && (
+            <div className="chat-progress" role="status" aria-live="polite" aria-label="Generating answer">
+              <div className="chat-progress-bar" />
+              <p className="chat-progress-label muted tiny">Generating answer...</p>
+              {answerIsSlow && (
+                <p className="chat-progress-slow tiny">
+                  This is taking longer than usual. The answer is still being prepared; please keep this page open.
+                </p>
+              )}
+            </div>
+          )}
+        </form>
+
+      </section>
+  );
+}

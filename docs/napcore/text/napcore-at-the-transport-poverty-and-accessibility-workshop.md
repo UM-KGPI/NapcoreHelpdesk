@@ -1,0 +1,9 @@
+url: https://napcore.eu/napcore-at-the-transport-poverty-and-accessibility-workshop/
+title: NAPCORE at the Transport Poverty and Accessibility workshop
+modified: 2026-07-27T10:06:15
+
+#### NAPCORE at the Transport Poverty and Accessibility workshop
+In Seville lives a “NAP Super user” when it comes to data on multimodal mobility. Indeed, the Transport Networks team in the JRC (Unit C6) of the European Commission uses data from NAPs all over Europe to feed its Transport Poverty Hub.
+This team organised a workshop about transport poverty and accessibility on the 10th and 11th of June.
+Transport poverty is composed out of four key dimensions: affordability, availability, accessibility and adequacy. The accessibility question is whether essential services and facilities such as schools, shops and hospitals are only accessible by car. This phenomenon is mapped Europe-wide at a fine geographical level by JRC Unit C6 in the Transport Poverty Hub. The researchers use our national access points for this purpose. David Schoenmaekers is the coordinator of our working group on multimodal mobility and was invited to explain the content of the NAPs for multimodal mobility services and what NAPCORE is all about.
+The various sessions further mapped out the social issues of transport poverty and whether or not transport is accessible. Experts gave insights in the variety across regions and groups of people, including several aspects of discrimination (“double-vulnerability analyses”). Research is being carried out on how to measure transport poverty, what data and indicators are best fitted. Solutions were sought in two directions. Firstly, of course, a lot of attention was paid to improving the transport offer, with a better developed network of public transport, but also micromobility and transport on demand. Secondly, attention was paid to bringing the services and facilities closer to the people, so that the demand for transport is reduced.

@@ -1,0 +1,146 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix netex: <https://netex.org.uk/netex/2.0#> .
+@prefix rule: <https://napcore.eu/ontology/rules#> .
+
+<https://napcore.eu/ontology/netex-artifact-rules/v1.0>
+    a owl:Ontology ;
+    rdfs:label "NeTEx artifact-derived rules ontology"@en ;
+    owl:versionInfo "netex-artifact-rules-v1.0" ;
+    rdfs:comment "Normative NeTEx constraints derived from XSD artifacts. This module is standard-scoped and version-scoped."@en .
+
+rule:ArtifactDerivedRule a owl:Class ;
+    rdfs:label "Artifact-derived rule"@en .
+
+rule:OptionalElementRule a owl:Class ;
+    rdfs:subClassOf rule:ArtifactDerivedRule ;
+    rdfs:label "Optional element rule"@en .
+
+rule:MandatoryContainmentRule a owl:Class ;
+    rdfs:subClassOf rule:ArtifactDerivedRule ;
+    rdfs:label "Mandatory containment rule"@en .
+
+rule:MandatoryAttributeRule a owl:Class ;
+    rdfs:subClassOf rule:ArtifactDerivedRule ;
+    rdfs:label "Mandatory attribute rule"@en .
+
+rule:appliesTo a owl:ObjectProperty .
+rule:subject a owl:ObjectProperty .
+rule:object a owl:ObjectProperty .
+rule:minOccurs a owl:DatatypeProperty .
+rule:maxOccurs a owl:DatatypeProperty .
+rule:attributeName a owl:DatatypeProperty .
+rule:derivedFromSchema a owl:DatatypeProperty .
+rule:derivedFromXPath a owl:DatatypeProperty .
+
+rule:ServiceJourneyPattern_Optional
+    a rule:OptionalElementRule ;
+    rule:appliesTo netex:ServiceJourneyPattern ;
+    rule:minOccurs 0 ;
+    rule:maxOccurs "unbounded" ;
+    rule:derivedFromSchema "ServiceJourney.xsd" ;
+    rule:derivedFromXPath "/Service/ServiceJourneyPattern" .
+
+rule:Service_requires_Timetable
+    a rule:MandatoryContainmentRule ;
+    rule:subject netex:Service ;
+    rule:object netex:Timetable ;
+    rule:minOccurs 1 ;
+    rule:maxOccurs 1 ;
+    rule:derivedFromSchema "Service.xsd" ;
+    rule:derivedFromXPath "/Service/Timetable" .
+
+rule:Service_requires_ID
+    a rule:MandatoryAttributeRule ;
+    rule:appliesTo netex:Service ;
+    rule:attributeName "id" ;
+    rule:derivedFromSchema "CommonTypes.xsd" ;
+    rule:derivedFromXPath "/Service/@id" .
+
+#################################################################
+# Fare Framework Rules (derived from netex_part_3/part3_fares XSDs)
+#################################################################
+
+rule:FareFrame_requires_Tariff
+    a rule:MandatoryContainmentRule ;
+    rule:subject netex:FareFrame ;
+    rule:object netex:Tariff ;
+    rule:minOccurs 1 ;
+    rule:maxOccurs "unbounded" ;
+    rule:derivedFromSchema "netex_fareFrame_version.xsd" ;
+    rule:derivedFromXPath "/FareFrame/tariffs/Tariff" .
+
+rule:FareFrame_requires_FareProduct
+    a rule:MandatoryContainmentRule ;
+    rule:subject netex:FareFrame ;
+    rule:object netex:FareProduct ;
+    rule:minOccurs 1 ;
+    rule:maxOccurs "unbounded" ;
+    rule:derivedFromSchema "netex_fareFrame_version.xsd" ;
+    rule:derivedFromXPath "/FareFrame/fareProducts/PreassignedFareProduct" .
+
+rule:Tariff_requires_FareStructureElement
+    a rule:MandatoryContainmentRule ;
+    rule:subject netex:Tariff ;
+    rule:object netex:FareStructureElement ;
+    rule:minOccurs 1 ;
+    rule:maxOccurs "unbounded" ;
+    rule:derivedFromSchema "netex_fareStructureElement_version.xsd" ;
+    rule:derivedFromXPath "/Tariff/fareStructureElements/FareStructureElement" .
+
+rule:FareProduct_requires_ValidableElement
+    a rule:MandatoryContainmentRule ;
+    rule:subject netex:FareProduct ;
+    rule:object netex:ValidableElement ;
+    rule:minOccurs 1 ;
+    rule:maxOccurs "unbounded" ;
+    rule:derivedFromSchema "netex_fareProduct_version.xsd" ;
+    rule:derivedFromXPath "/PreassignedFareProduct/validableElements/ValidableElement" .
+
+rule:SalesOfferPackage_requires_FareProduct
+    a rule:MandatoryContainmentRule ;
+    rule:subject netex:SalesOfferPackage ;
+    rule:object netex:FareProduct ;
+    rule:minOccurs 1 ;
+    rule:maxOccurs "unbounded" ;
+    rule:derivedFromSchema "netex_salesOfferPackage_version.xsd" ;
+    rule:derivedFromXPath "/SalesOfferPackage/salesOfferPackageElements/SalesOfferPackageElement/fareProductRef" .
+
+rule:FareTable_requires_Cell
+    a rule:MandatoryContainmentRule ;
+    rule:subject netex:FareTable ;
+    rule:object netex:Cell ;
+    rule:minOccurs 1 ;
+    rule:maxOccurs "unbounded" ;
+    rule:derivedFromSchema "netex_fareTable_version.xsd" ;
+    rule:derivedFromXPath "/FareTable/cells/Cell" .
+
+rule:FareFrame_requires_ID
+    a rule:MandatoryAttributeRule ;
+    rule:appliesTo netex:FareFrame ;
+    rule:attributeName "id" ;
+    rule:derivedFromSchema "CommonTypes.xsd" ;
+    rule:derivedFromXPath "/FareFrame/@id" .
+
+rule:Tariff_requires_ID
+    a rule:MandatoryAttributeRule ;
+    rule:appliesTo netex:Tariff ;
+    rule:attributeName "id" ;
+    rule:derivedFromSchema "CommonTypes.xsd" ;
+    rule:derivedFromXPath "/Tariff/@id" .
+
+rule:FareProduct_requires_ID
+    a rule:MandatoryAttributeRule ;
+    rule:appliesTo netex:FareProduct ;
+    rule:attributeName "id" ;
+    rule:derivedFromSchema "CommonTypes.xsd" ;
+    rule:derivedFromXPath "/PreassignedFareProduct/@id" .
+
+rule:SalesOfferPackage_requires_ID
+    a rule:MandatoryAttributeRule ;
+    rule:appliesTo netex:SalesOfferPackage ;
+    rule:attributeName "id" ;
+    rule:derivedFromSchema "CommonTypes.xsd" ;
+    rule:derivedFromXPath "/SalesOfferPackage/@id" .

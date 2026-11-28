@@ -1,0 +1,192 @@
+"""
+DRF serializers for all public API endpoints.
+
+Each serializer validates only its own boundary: request payloads are validated
+here, while business-rule enforcement (role checks, workflow transitions) is
+delegated to the service layer. Serializers deliberately do not reach into the
+ORM; they return plain validated dicts.
+
+Requirements & design: Andrej Tibaut, Sara Guerra de Oliveira (UM KGPI)
+Created: 2026-03-28  |  Modified: 2026-06-28
+"""
+
+from rest_framework import serializers
+
+
+STANDARDS_SCOPE_CHOICES = ["Transmodel", "NeTEx", "SIRI", "OpRa", "EU legislation", "mobilityDCAT-AP", "NAPCORE", "INSPIRE", "DATEX II", "TN-ITS"]
+
+
+class AnswerOptionsSerializer(serializers.Serializer):
+    """Optional tuning knobs for FAQ/RAG orchestration behavior."""
+
+    # Upper bound for returned citation objects in the response payload.
+    maxCitations = serializers.IntegerField(required=False, min_value=1, max_value=20, default=5)
+
+    # If true, the service may abstain instead of returning weak/unsafe answers.
+    allowAbstain = serializers.BooleanField(required=False, default=True)
+
+    # Minimum FAQ match confidence required to accept FAQ-first path.
+    faqMinConfidence = serializers.FloatField(required=False, min_value=0.0, max_value=1.0, default=0.85)
+
+    # Retrieval candidate limits for RAG fallback.
+    retrievalTopK = serializers.IntegerField(required=False, min_value=1, max_value=20, default=6)
+    retrievalMinScore = serializers.FloatField(required=False, min_value=0.0, max_value=1.0, default=0.62)
+
+    # Feature-flagged graph-aware retrieval expansion for semantic PoC.
+    graphRagEnabled = serializers.BooleanField(required=False)
+
+
+class AnswerRequestSerializer(serializers.Serializer):
+    """Primary request payload for the answer orchestration endpoint."""
+
+    question = serializers.CharField()
+    sessionId = serializers.CharField(required=False, allow_blank=True)
+    userId = serializers.CharField(required=False, allow_blank=True)
+    # Scope filter aligns request processing with known standards families.
+    standardsScope = serializers.ListField(
+        child=serializers.ChoiceField(choices=STANDARDS_SCOPE_CHOICES),
+        required=False,
+        allow_empty=True,
+    )
+    language = serializers.CharField(required=False, default="en")
+    generationProfile = serializers.ChoiceField(
+        choices=["deterministic-grounded", "llm-ready"],
+        required=False,
+        default="llm-ready",
+    )
+    controllerProfile = serializers.ChoiceField(
+        choices=["deterministic-grounded", "llm-ready"],
+        required=False,
+    )
+    options = AnswerOptionsSerializer(required=False)
+
+
+class AnswerFeedbackRequestSerializer(serializers.Serializer):
+    """Payload for persisting per-answer user feedback by request ID."""
+
+    requestId = serializers.CharField()
+    userLikes = serializers.BooleanField(required=False)
+    userDislikes = serializers.BooleanField(required=False)
+    answerSuccess = serializers.BooleanField(required=False, allow_null=True)
+    citationClicksDelta = serializers.IntegerField(required=False, min_value=0, default=0)
+
+    def validate(self, attrs):
+        if attrs.get("userLikes") is True and attrs.get("userDislikes") is True:
+            raise serializers.ValidationError("userLikes and userDislikes cannot both be true.")
+        return attrs
+
+
+class QuestionEventsListQuerySerializer(serializers.Serializer):
+    """Query params for listing persisted question events for editor review intake."""
+
+    page = serializers.IntegerField(required=False, min_value=1, default=1)
+    pageSize = serializers.IntegerField(required=False, min_value=1, max_value=200, default=100)
+    mode = serializers.ChoiceField(choices=["faq", "rag", "abstain"], required=False)
+    reviewRequired = serializers.BooleanField(required=False, allow_null=True, default=None)
+    userLikes = serializers.BooleanField(required=False, allow_null=True, default=None)
+    userDislikes = serializers.BooleanField(required=False, allow_null=True, default=None)
+    answerSuccess = serializers.BooleanField(required=False, allow_null=True, default=None)
+    search = serializers.CharField(required=False, allow_blank=True, default="")
+
+
+class PromotionCandidatesQuerySerializer(serializers.Serializer):
+    """Query params for generating FAQ promotion candidates from telemetry."""
+
+    windowDays = serializers.IntegerField(required=False, min_value=1, default=14)
+    minCount = serializers.IntegerField(required=False, min_value=1, default=5)
+    onlyUnresolved = serializers.BooleanField(required=False, default=False)
+
+
+class SemanticClustersQuerySerializer(serializers.Serializer):
+    """Query params for semantic clustering over recent question events."""
+
+    windowDays = serializers.IntegerField(required=False, min_value=1, default=30)
+    minClusterSize = serializers.IntegerField(required=False, min_value=2, default=2)
+    similarityThreshold = serializers.FloatField(required=False, min_value=0.0, max_value=1.0, default=0.82)
+    maxEvents = serializers.IntegerField(required=False, min_value=1, max_value=2000, default=500)
+
+
+class EditorialQueueRequestSerializer(serializers.Serializer):
+    """Payload for routing question outcomes into editorial queue."""
+
+    questionEventId = serializers.CharField()
+    reason = serializers.ChoiceField(
+        choices=["LOW_CONFIDENCE", "CITATION_GAP", "POLICY_REVIEW", "USER_ESCALATION"],
+        required=False,
+        default="USER_ESCALATION",
+    )
+    priority = serializers.ChoiceField(
+        choices=["low", "normal", "high"], required=False, default="normal"
+    )
+
+
+class EditorialQueueListQuerySerializer(serializers.Serializer):
+    """Query params for listing editorial queue board items with paging and filters."""
+
+    status = serializers.ChoiceField(
+        choices=["in_review", "approved", "rejected", "revoked", "published"],
+        required=False,
+    )
+    reason = serializers.ChoiceField(
+        choices=["LOW_CONFIDENCE", "CITATION_GAP", "POLICY_REVIEW", "USER_ESCALATION"],
+        required=False,
+    )
+    priority = serializers.ChoiceField(
+        choices=["low", "normal", "high"],
+        required=False,
+    )
+    search = serializers.CharField(required=False, allow_blank=True, default="")
+    page = serializers.IntegerField(required=False, min_value=1, default=1)
+    pageSize = serializers.IntegerField(required=False, min_value=1, max_value=100, default=20)
+
+
+class EditorialQueueMetricsQuerySerializer(serializers.Serializer):
+    """Query params for computing editorial board KPI aggregates."""
+
+    windowDays = serializers.IntegerField(required=False, min_value=1, default=30)
+    slaHours = serializers.IntegerField(required=False, min_value=1, default=72)
+
+
+class EditorialQueueTransitionRequestSerializer(serializers.Serializer):
+    """Payload for transitioning editorial queue item state with workflow actions."""
+
+    queueItemId = serializers.UUIDField()
+    action = serializers.ChoiceField(
+        choices=[
+            "request_changes",
+            "approve",
+            "reject",
+            "revoke",
+            "publish",
+            "reopen",
+        ]
+    )
+    comment = serializers.CharField(required=False, allow_blank=True, default="")
+
+
+class HarvestSourceRequestSerializer(serializers.Serializer):
+    """Payload for harvesting one configured source from the editor (Harvest & Index)."""
+
+    source = serializers.CharField()
+    # Re-index every file, not only changed ones, and reload the ontology even if unchanged.
+    full = serializers.BooleanField(required=False, default=False)
+
+
+class IndexRepositoryRequestSerializer(serializers.Serializer):
+    """Payload for triggering a source repository ingestion run."""
+
+    repoUrl = serializers.CharField()
+    repoPath = serializers.CharField()
+    profile = serializers.CharField(required=False, default="default")
+    incremental = serializers.BooleanField(required=False, default=True)
+    prune = serializers.BooleanField(required=False, default=False)
+    autoAllowRepository = serializers.BooleanField(required=False, default=True)
+    includeIssues = serializers.BooleanField(required=False, default=False)
+
+
+class ErrorResponseSerializer(serializers.Serializer):
+    """Reusable error structure mirroring OpenAPI error envelope fields."""
+
+    code = serializers.CharField()
+    message = serializers.CharField()
+    details = serializers.DictField(required=False)
